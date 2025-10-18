@@ -65,7 +65,7 @@ function BlogThree() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -73,7 +73,7 @@ function BlogThree() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
@@ -116,7 +116,7 @@ function BlogThree() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -124,7 +124,7 @@ function BlogThree() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 						>
@@ -163,7 +163,7 @@ function BlogThree() {
 										<br />dla zespołów do 8 użytkowników
 									</p>
 									<Link
-										href="/team-registration"
+										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
 										Załóż darmowy zespół
@@ -249,7 +249,7 @@ function BlogThree() {
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="/team-registration" className="underline">załóż darmowy zespół i zacznij planować urlopy online</Link>.
+					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">załóż darmowy zespół i zacznij planować urlopy online</Link>.
 				</p>
 			</article>
 

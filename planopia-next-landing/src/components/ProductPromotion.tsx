@@ -122,7 +122,7 @@ function ProductPromotion() {
 							Blog
 						</Link>
 						<Link
-  href="/login"
+  href="https://app.planopia.pl/"
   onClick={toggleMenu}
   className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 >
@@ -130,7 +130,7 @@ function ProductPromotion() {
 </Link>
 
 <Link
-  href="/team-registration" // <- tutaj raczej kierujesz na rejestrację zespołu
+  href="https://app.planopia.pl/team-registration" // <- tutaj raczej kierujesz na rejestrację zespołu
   onClick={toggleMenu}
   className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 >
@@ -178,7 +178,7 @@ function ProductPromotion() {
 							Blog
 						</Link>
 						<Link
-  href="/login"
+  href="https://app.planopia.pl/"
   onClick={toggleMenu}
   className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 >
@@ -186,7 +186,7 @@ function ProductPromotion() {
 </Link>
 
 <Link
-  href="/team-registration" // <- tu najlepiej daj ścieżkę do rejestracji zespołu
+  href="https://app.planopia.pl/team-registration" // <- tu najlepiej daj ścieżkę do rejestracji zespołu
   onClick={toggleMenu}
   className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 >
@@ -212,7 +212,7 @@ function ProductPromotion() {
 							Planopia pomaga zespołom i firmom uporządkować czas pracy i urlopy.
 							</h2>
 							<Link
-								href="/team-registration"
+								href="https://app.planopia.pl/team-registration"
 								className="bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-2">
 								Załóż darmowy zespół
 							</Link>
@@ -370,7 +370,7 @@ function ProductPromotion() {
     </div>
 	
 	<Link
-								href="/team-registration"
+								href="https://app.planopia.pl/team-registration"
 								className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition mt-4 for">
 								Załóż darmowy zespół
 							</Link>

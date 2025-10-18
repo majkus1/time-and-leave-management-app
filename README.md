@@ -1,6 +1,7 @@
 # 🏢 Planopia - Enterprise Time & Leave Management System
 
 [![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)](https://reactjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.6-000000?logo=next.js)](https://nextjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.4.0-47A248?logo=mongodb)](https://mongodb.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript)](https://javascript.info/)
@@ -8,14 +9,28 @@
 > **A comprehensive SaaS solution for enterprise time tracking, leave management, and team coordination with multi-tenant architecture and role-based access control.**
 
 ## 🚀 **Live Demo**
-- **Production**: [planopia.pl](https://planopia.pl)
+- **Landing Pages**: [planopia.pl](https://planopia.pl) (Next.js 15)
+- **Business App**: [app.planopia.pl](https://app.planopia.pl) (React 18)
 - **English Version**: [planopia.pl/en](https://planopia.pl/en)
 
 ---
 
 ## 📋 **Overview**
 
-Planopia is a full-stack enterprise application designed to streamline workforce management for teams and companies. It replaces traditional Excel-based time tracking with a modern, automated solution that handles time logging, leave requests, approvals, and team coordination.
+Planopia is a full-stack enterprise application designed to streamline workforce management for teams and companies. It consists of two main components:
+
+### **🌐 Landing Pages (Next.js 15)**
+- **SEO-optimized marketing pages** for both Polish and English markets
+- **Blog system** with articles about time tracking and leave management
+- **Contact forms** with email integration
+- **Modern design** with Tailwind CSS and responsive layout
+- **Performance optimized** with static generation and image optimization
+
+### **🏢 Business Application (React 18)**
+- **Time tracking system** replacing traditional Excel-based solutions
+- **Leave management** with automated workflows and approvals
+- **Team coordination** with role-based access control
+- **Multi-tenant architecture** for isolated team data
 
 ### **Key Business Value**
 - **Free for up to 8 users** - Perfect for small teams
@@ -70,15 +85,19 @@ Planopia is a full-stack enterprise application designed to streamline workforce
 ## 🛠️ **Technology Stack**
 
 ### **Frontend**
-- **React 18.2** with functional components and hooks
-- **JavaScript (ES6+)** for modern development
-- **Vite** for fast development and building
+- **React 18.2** with functional components and hooks (Business App)
+- **Next.js 15** with App Router and TypeScript (Landing Pages)
+- **JavaScript (ES6+)** and **TypeScript** for modern development
+- **Vite** for fast development and building (React app)
+- **Turbopack** for ultra-fast builds (Next.js)
 - **Tailwind CSS** for responsive design
 - **FullCalendar** for calendar functionality
-- **React Router** for navigation
+- **React Router** for navigation (React app)
+- **Next.js Router** for navigation (Next.js app)
 - **Axios** for API communication
 - **i18next** for internationalization
-- **React Helmet** for SEO optimization
+- **React Helmet** for SEO optimization (React app)
+- **Next.js Metadata API** for SEO optimization (Next.js app)
 
 ### **Backend**
 - **Node.js** with Express.js framework
@@ -92,11 +111,14 @@ Planopia is a full-stack enterprise application designed to streamline workforce
 - **CORS** for cross-origin requests
 
 ### **DevOps & Deployment**
-- **Netlify** for frontend hosting
+- **Vercel** for Next.js landing pages hosting
+- **Netlify** for React business app hosting
+- **Render.com** for Node.js backend hosting
 - **MongoDB Atlas** for database hosting
 - **Environment-based configuration**
 - **PWA support** with service workers
 - **Responsive design** for all devices
+- **CDN** and global edge network (Vercel)
 
 ---
 
@@ -104,6 +126,7 @@ Planopia is a full-stack enterprise application designed to streamline workforce
 
 ### **Frontend Architecture**
 ```
+# React Business App (client/)
 client/
 ├── src/
 │   ├── components/          # Reusable UI components
@@ -116,6 +139,23 @@ client/
 │   ├── utils/              # Helper functions
 │   ├── hooks/              # Custom React hooks
 │   └── config/             # Configuration files
+
+# Next.js Landing Pages (planopia-next-landing/)
+planopia-next-landing/
+├── src/
+│   ├── app/                # Next.js App Router
+│   │   ├── layout.tsx      # Root layout with SEO
+│   │   ├── page.tsx        # Homepage (Polish)
+│   │   ├── en/             # English version
+│   │   ├── blog/           # Blog articles (Polish)
+│   │   ├── en/blog/        # Blog articles (English)
+│   │   └── api/            # API routes
+│   ├── components/         # React components
+│   │   ├── ProductPromotion.tsx    # Main landing page (PL)
+│   │   ├── ENProductPromotion.tsx  # Main landing page (EN)
+│   │   ├── Blog*.tsx       # Blog components
+│   │   └── GoogleAnalytics.tsx    # Analytics integration
+│   └── config.js           # Configuration
 ```
 
 ### **Backend Architecture**
@@ -303,8 +343,9 @@ npm run dev
 ## 🚀 **Deployment**
 
 ### **Production Environment**
-- **Frontend**: Deployed on Netlify with CDN
-- **Backend**: Node.js server with PM2
+- **Landing Pages**: Deployed on Vercel with global CDN (Next.js 15)
+- **Business App**: Deployed on Netlify with CDN (React 18)
+- **Backend**: Node.js server on Render.com
 - **Database**: MongoDB Atlas with replica sets
 - **Email**: SMTP service integration
 - **Monitoring**: Application performance monitoring

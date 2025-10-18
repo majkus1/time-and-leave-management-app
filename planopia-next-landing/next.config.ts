@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Cache busting - wymusza nowy build
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
+  
   // Optymalizacje SEO i wydajności
   compress: true,
   poweredByHeader: false,

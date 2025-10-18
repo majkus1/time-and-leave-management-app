@@ -121,13 +121,13 @@ function ENProductPromotion() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Login
 						</Link>
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
@@ -173,7 +173,7 @@ function ENProductPromotion() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -181,7 +181,7 @@ function ENProductPromotion() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 						>
@@ -206,7 +206,7 @@ function ENProductPromotion() {
 								Planopia helps teams and companies organize working hours and leave management.
 							</h2>
 							<Link
-								href="/team-registration"
+								href="https://app.planopia.pl/team-registration"
 								className="bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-2"
 							>
 								Create a free team
@@ -360,7 +360,7 @@ function ENProductPromotion() {
 					</div>
 				
 					<Link
-						href="/team-registration"
+						href="https://app.planopia.pl/team-registration"
 						className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition mt-4 for"
 					>
 						Create a free team

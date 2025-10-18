@@ -66,7 +66,7 @@ function ENBlogThree() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -74,7 +74,7 @@ function ENBlogThree() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
@@ -118,7 +118,7 @@ function ENBlogThree() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -126,7 +126,7 @@ function ENBlogThree() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 						>
@@ -165,7 +165,7 @@ function ENBlogThree() {
 									<br />for teams up to 8 users
 									</p>
 									<Link
-										href="/team-registration"
+										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
 										Create a free team
@@ -251,7 +251,7 @@ function ENBlogThree() {
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Try Planopia — <Link href="/team-registration" className="underline">create your free team and start planning leave online</Link>.
+					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">create your free team and start planning leave online</Link>.
 				</p>
 			</article>
 

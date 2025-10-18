@@ -70,14 +70,14 @@ function ENBlogFour() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 						>
 							Login
 						</Link>
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
@@ -119,14 +119,14 @@ function ENBlogFour() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 						>
 							Login
 						</Link>
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 						>
@@ -153,7 +153,7 @@ function ENBlogFour() {
 							</p>
 							<div className="text-center">
 								<Link
-									href="/team-registration"
+									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 								>
 									Create free team today
@@ -377,7 +377,7 @@ function ENBlogFour() {
 							Join thousands of companies already using Planopia!
 						</p>
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
 							Create free team today

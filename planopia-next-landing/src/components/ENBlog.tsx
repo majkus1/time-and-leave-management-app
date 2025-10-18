@@ -59,7 +59,7 @@ function ENBlog() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -67,7 +67,7 @@ function ENBlog() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
@@ -110,7 +110,7 @@ function ENBlog() {
 							Blog
 						</Link>
 						<Link
-							href="/login"
+							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
 							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
 						>
@@ -118,7 +118,7 @@ function ENBlog() {
 						</Link>
 
 						<Link
-							href="/team-registration"
+							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
 							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
 						>
