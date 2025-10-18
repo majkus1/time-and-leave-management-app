@@ -1,24 +1,4 @@
 import type { Metadata } from "next";
-import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
-import "../globals.css";
-
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const teko = Teko({
-  variable: "--font-teko",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const titilliumWeb = Titillium_Web({
-  variable: "--font-titillium-web",
-  subsets: ["latin"],
-  weight: ["200", "300", "400", "600", "700", "900"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -95,7 +75,7 @@ export default function EnglishLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${openSans.variable} ${teko.variable} ${titilliumWeb.variable}`}>
+    <div>
       {children}
     </div>
   );

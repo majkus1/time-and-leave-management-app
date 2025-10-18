@@ -44,6 +44,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     
+    // Blog articles - High priority (electronic time tracking)
+    {
+      url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/electronic-time-tracking',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    
+    // Blog articles - High priority (leave management)
+    {
+      url: 'https://planopia.pl/blog/zarzadzanie-urlopami',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/leave-management',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    
     // Blog articles - Medium priority
     {
       url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',
