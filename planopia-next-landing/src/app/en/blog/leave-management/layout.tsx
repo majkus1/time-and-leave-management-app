@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 	},
 	metadataBase: new URL('https://planopia.pl'),
 	alternates: {
-		canonical: '/en/blog/leave-management',
+		canonical: 'https://planopia.pl/en/blog/leave-management',
 		languages: {
 			'pl-PL': '/blog/zarzadzanie-urlopami',
 			'en-US': '/en/blog/leave-management',

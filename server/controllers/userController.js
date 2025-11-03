@@ -2,7 +2,7 @@ const { firmDb } = require('../db/db')
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
-const { sendEmail } = require('../services/emailService')
+const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
 
@@ -75,14 +75,18 @@ exports.register = async (req, res) => {
 
 		
 		const subject = 'Witamy w Planopia - Ustaw swoje hasło'
-		const body = `
-			<p>Witaj ${firstName}!</p>
-			<p>Zostałeś dodany do zespołu ${team.name} w aplikacji Planopia.</p>
-			<p>Aby ustawić swoje hasło i rozpocząć pracę, kliknij poniższy link:</p>
-			<p><a href="${link}">${link}</a></p>
-			<p>Link jest aktywny przez 24 godziny.</p>
-			<p>Pozdrawiamy,<br>Zespół Planopia</p>
+		const content = `
+			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(firstName)}</strong>!</p>
+			<p style="margin: 0 0 16px 0;">Zostałeś dodany do zespołu <strong>${escapeHtml(team.name)}</strong> w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.</p>
+			<p style="margin: 0 0 24px 0;">Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>24 godziny</strong>. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.</p>
 		`
+		const body = getEmailTemplate(
+			'Witamy w Planopia',
+			content,
+			'Ustaw hasło',
+			link
+		)
 
 		await sendEmail(username, link, subject, body)
 
@@ -202,12 +206,24 @@ exports.resetPasswordRequest = async (req, res) => {
 		})
 
 		const resetLink = `${appUrl}/new-password/${token}`
+		
+		const content = `
+			<p style="margin: 0 0 16px 0;">Otrzymaliśmy prośbę o reset hasła do Twojego konta w systemie Planopia.</p>
+			<p style="margin: 0 0 24px 0;">Jeśli to Ty wysłałeś tę prośbę, kliknij przycisk poniżej, aby ustawić nowe hasło:</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>1 godzinę</strong>. Jeśli nie chcesz resetować hasła, zignoruj tę wiadomość.</p>
+		`
+		const body = getEmailTemplate(
+			'Reset hasła - Planopia',
+			content,
+			'Resetuj hasło',
+			resetLink
+		)
 
 		await sendEmail(
 			email,
 			resetLink,
 			t('resetpass.subject'),
-			`<p>${t('resetpass.body', { link: resetLink })}</p><p>${t('resetpass.linkActive')}</p>`
+			body
 		)
 
 		await createLog(user._id, 'RESET_PASSWORD_REQUEST', 'Password reset link sent')

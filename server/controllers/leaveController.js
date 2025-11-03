@@ -1,7 +1,7 @@
 const { firmDb } = require('../db/db')
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const User = require('../models/user')(firmDb)
-const { sendEmail } = require('../services/emailService')
+const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { appUrl } = require('../config')
 
@@ -30,17 +30,44 @@ exports.submitLeaveRequest = async (req, res) => {
 			sup => sup.username !== user.username
 		)
 
+		const typeText = t(type)
+		const content = `
+			<p style="margin: 0 0 16px 0;">Otrzymałeś nową prośbę urlopową do zatwierdzenia.</p>
+			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<table style="width: 100%; border-collapse: collapse;">
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
+						<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.type')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${typeText}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.dates')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${daysRequested}</td>
+					</tr>
+				</table>
+			</div>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.</p>
+		`
+		
 		const emailPromises = supervisors.map(supervisor =>
 			sendEmail(
 				supervisor.username,
 				`${appUrl}/leave-requests/${userId}`,
 				t('email.leaveform.title'),
-				`<h3>${t('email.leaveform.title')}</h3>
-				<p><b>${t('email.leaveform.employee')}:</b> ${user.firstName} ${user.lastName}</p>
-				<p><b>${t('email.leaveform.type')}:</b> ${t(type)}</p>
-				<p><b>${t('email.leaveform.dates')}:</b> ${startDate} - ${endDate}</p>
-				<p><b>${t('email.leaveform.days')}:</b> ${daysRequested}</p>
-				<p><a href="${appUrl}/leave-requests/${userId}">${t('email.leaveform.goToRequest')}</a></p>`
+				getEmailTemplate(
+					t('email.leaveform.title'),
+					content,
+					t('email.leaveform.goToRequest'),
+					`${appUrl}/leave-requests/${userId}`
+				)
 			)
 		)
 
@@ -53,17 +80,43 @@ exports.submitLeaveRequest = async (req, res) => {
 		})
 
 		
+		const hrContent = `
+			<p style="margin: 0 0 16px 0;">Otrzymałeś nową prośbę urlopową do przeglądu.</p>
+			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<table style="width: 100%; border-collapse: collapse;">
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
+						<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.type')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${typeText}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.dates')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${daysRequested}</td>
+					</tr>
+				</table>
+			</div>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć.</p>
+		`
+		
 		const hrEmailPromises = hrUsers.map(hr =>
 			sendEmail(
 				hr.username,
 				`${appUrl}/leave-requests/${userId}`,
 				t('email.leaveform.title'),
-				`<h3>${t('email.leaveform.title')}</h3>
-    <p><b>${t('email.leaveform.employee')}:</b> ${user.firstName} ${user.lastName}</p>
-    <p><b>${t('email.leaveform.type')}:</b> ${t(type)}</p>
-    <p><b>${t('email.leaveform.dates')}:</b> ${startDate} - ${endDate}</p>
-    <p><b>${t('email.leaveform.days')}:</b> ${daysRequested}</p>
-    <p><a href="${appUrl}/leave-requests/${userId}">${t('email.leaveform.goToRequest')}</a></p>`
+				getEmailTemplate(
+					t('email.leaveform.title'),
+					hrContent,
+					t('email.leaveform.goToRequest'),
+					`${appUrl}/leave-requests/${userId}`
+				)
 			)
 		)
 

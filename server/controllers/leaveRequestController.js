@@ -1,6 +1,6 @@
 const { firmDb } = require('../db/db')
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
-const { sendEmailToHR, sendEmail } = require('../services/emailService')
+const { sendEmailToHR, sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const User = require('../models/user')(firmDb)
 const { appUrl } = require('../config')
 
@@ -212,21 +212,45 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		leaveRequest.updatedBy = req.user.userId
 		await leaveRequest.save()
 
-		const updatedByInfo = `<p><b>${t('email.leaveRequest.updatedBy')}:</b> ${updatedByUser.firstName} ${
-			updatedByUser.lastName
-		}</p>`
-
+		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
+		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
+		const statusText = t(leaveRequest.status)
+		const typeText = t(leaveRequest.type)
 		
-		const mailContent = `
-		  <p><b>${t('email.leaveRequest.employee')}:</b> ${user.firstName} ${user.lastName}</p>
-		  <p><b>${t('email.leaveRequest.type')}:</b> ${t(leaveRequest.type)}</p>
-		  <p><b>${t('email.leaveRequest.dates')}:</b> ${leaveRequest.startDate.toISOString().split('T')[0]} - ${
-			leaveRequest.endDate.toISOString().split('T')[0]
-		}</p>
-		  <p><b>${t('email.leaveRequest.days')}:</b> ${leaveRequest.daysRequested}</p>
-		  ${updatedByInfo}
-		  <p><a href="${appUrl}/leave-requests/${user._id}">${t('email.leaveRequest.goToRequest')}</a></p>
+		const content = `
+			<p style="margin: 0 0 16px 0;">Twoja prośba urlopowa została <strong>${statusText}</strong>.</p>
+			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<table style="width: 100%; border-collapse: collapse;">
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveRequest.employee')}:</td>
+						<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.type')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${typeText}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.dates')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.days')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${leaveRequest.daysRequested}</td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.updatedBy')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(updatedByUser.firstName)} ${escapeHtml(updatedByUser.lastName)}</td>
+					</tr>
+				</table>
+			</div>
 		`
+		const mailContent = getEmailTemplate(
+			`${typeText} - ${statusText}`,
+			content,
+			t('email.leaveRequest.goToRequest'),
+			`${appUrl}/leave-requests/${user._id}`
+		)
 
 		await sendEmail(
 			user.username,

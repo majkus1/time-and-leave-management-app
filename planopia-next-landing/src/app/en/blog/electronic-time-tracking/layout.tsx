@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 	},
 	metadataBase: new URL('https://planopia.pl'),
 	alternates: {
-		canonical: '/en/blog/electronic-time-tracking',
+		canonical: 'https://planopia.pl/en/blog/electronic-time-tracking',
 		languages: {
 			'pl-PL': '/blog/elektroniczna-ewidencja-czasu-pracy',
 			'en-US': '/en/blog/electronic-time-tracking',
