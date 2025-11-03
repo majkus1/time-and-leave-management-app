@@ -11,7 +11,12 @@
 			"type": "Rodzaj",
 			"dates": "Daty",
 			"days": "Liczba dni",
-			"goToRequest": "Przejdź do zgłoszenia"
+			"goToRequest": "Przejdź do zgłoszenia",
+			"newRequestSupervisor": "Otrzymałeś nową prośbę urlopową do zatwierdzenia.",
+			"newRequestHR": "Otrzymałeś nową prośbę urlopową do przeglądu.",
+			"requestDetails": "Szczegóły wniosku:",
+			"clickButtonToReview": "Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.",
+			"clickButtonToView": "Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć."
 		},
 		"welcome": {
 			"subject": "Witaj w planopia.pl",
@@ -32,7 +37,12 @@
 			"accessDenied": "Brak dostępu",
 			"notFound": "Zgłoszenie nie zostało znalezione",
 			"titlemail": "Zgłoszenie o",
-			"titlemailsecond": "Zgłoszenie urlopu/nieobecności"
+			"titlemailsecond": "Zgłoszenie urlopu/nieobecności",
+			"requestUpdated": "Twoja prośba urlopowa została",
+			"requestUpdatedHR": "Prośba urlopowa została",
+			"requestDetails": "Szczegóły wniosku:",
+			"footerNotification": "To powiadomienie zostało wysłane automatycznie z systemu Planopia.",
+			"footerCopyright": "© {{year}} Planopia. Wszelkie prawa zastrzeżone."
 		}
 	},
 	"leaveform": {

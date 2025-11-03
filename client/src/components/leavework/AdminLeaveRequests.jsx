@@ -74,11 +74,22 @@ function AdminLeaveRequests() {
 
 	const updateLeaveRequestStatus = async (id, newStatus) => {
 		try {
-			await axios.patch(`${API_URL}/api/leaveworks/leave-requests/${id}`, { status: newStatus })
+			const response = await axios.patch(`${API_URL}/api/leaveworks/leave-requests/${id}`, { status: newStatus })
 
-			fetchLeaveRequests()
+			// Aktualizuj lokalnie stan przed odświeżeniem listy
+			if (response.data.leaveRequest) {
+				setLeaveRequests(prevRequests =>
+					prevRequests.map(request =>
+						request._id === id ? { ...request, ...response.data.leaveRequest } : request
+					)
+				)
+			}
+
+			// Odśwież listę aby mieć najnowsze dane
+			await fetchLeaveRequests()
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
+			alert(t('adminleavereq.updateError') || 'Nie udało się zaktualizować statusu wniosku')
 		}
 	}
 
@@ -139,6 +150,19 @@ function AdminLeaveRequests() {
 						</>
 					)}
 					<br></br>
+					<div style={{ 
+						marginTop: '8px', 
+						marginBottom: '8px',
+						padding: '10px 12px',
+						backgroundColor: '#fff3cd',
+						border: '1px solid #ffc107',
+						borderRadius: '6px',
+						fontSize: '13px',
+						color: '#856404',
+						maxWidth: '600px'
+					}}>
+						<strong>💡 {t('adminleavereq.reminder')}</strong>
+					</div>
 					{showVacationUpdateMessage && (
 						<p style={{ display: 'inline-block' }} className="update-days">
 							{t('adminleavereq.updatedays')}

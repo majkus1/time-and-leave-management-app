@@ -32,7 +32,14 @@ exports.register = async (req, res) => {
 			})
 		}
 
-		if (team.currentUserCount >= team.maxUsers) {
+		// Policz rzeczywistą liczbę użytkowników w zespole
+		const actualUserCount = await User.countDocuments({ teamId })
+		
+		if (actualUserCount >= team.maxUsers) {
+			// Zaktualizuj currentUserCount aby było zgodne z rzeczywistością
+			team.currentUserCount = actualUserCount
+			await team.save()
+			
 			return res.status(400).json({ 
 				success: false, 
 				message: `Osiągnięto limit użytkowników (${team.maxUsers}). Nie można dodać więcej użytkowników.` 
@@ -61,8 +68,9 @@ exports.register = async (req, res) => {
 
 		await newUser.save()
 
-	
-		team.currentUserCount += 1
+		// Policz rzeczywistą liczbę użytkowników i zaktualizuj currentUserCount
+		const updatedUserCount = await User.countDocuments({ teamId })
+		team.currentUserCount = updatedUserCount
 		await team.save()
 
 		

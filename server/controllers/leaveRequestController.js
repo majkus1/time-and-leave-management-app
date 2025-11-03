@@ -217,10 +217,13 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		const statusText = t(leaveRequest.status)
 		const typeText = t(leaveRequest.type)
 		
+		// Utworz updatedByInfo dla sendEmailToHR
+		const updatedByInfo = `<p><b>${t('email.leaveRequest.updatedBy')}:</b> ${escapeHtml(updatedByUser.firstName)} ${escapeHtml(updatedByUser.lastName)}</p>`
+		
 		const content = `
-			<p style="margin: 0 0 16px 0;">Twoja prośba urlopowa została <strong>${statusText}</strong>.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.leaveRequest.requestUpdated')} <strong>${statusText}</strong>.</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
-				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveRequest.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveRequest.employee')}:</td>
@@ -249,21 +252,35 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			`${typeText} - ${statusText}`,
 			content,
 			t('email.leaveRequest.goToRequest'),
-			`${appUrl}/leave-requests/${user._id}`
+			`${appUrl}/leave-requests/${user._id}`,
+			t
 		)
 
-		await sendEmail(
-			user.username,
-			null,
-			`${t('email.leaveRequest.titlemail')} ${t(leaveRequest.type)} ${t(status)}`,
-			mailContent
-		)
+		try {
+			await sendEmail(
+				user.username,
+				null,
+				`${t('email.leaveRequest.titlemail')} ${t(leaveRequest.type)} ${t(status)}`,
+				mailContent
+			)
+		} catch (emailError) {
+			console.error('Error sending email to user:', emailError)
+			// Nie przerywaj procesu jeśli email nie zadziała
+		}
 
-		
-		console.log('Debug - Przed wywołaniem sendEmailToHR, teamId:', req.user.teamId)
-		await sendEmailToHR(leaveRequest, user, updatedByUser, t, updatedByInfo, req.user.teamId)
+		try {
+			await sendEmailToHR(leaveRequest, user, updatedByUser, t, updatedByInfo, req.user.teamId)
+		} catch (hrEmailError) {
+			console.error('Error sending email to HR:', hrEmailError)
+			// Nie przerywaj procesu jeśli email do HR nie zadziała
+		}
 
-		res.status(200).json({ message: 'Status updated successfully.', leaveRequest })
+		// Pobierz zaktualizowany leaveRequest z populate
+		const updatedLeaveRequest = await LeaveRequest.findById(id)
+			.populate('updatedBy', 'firstName lastName')
+			.lean()
+
+		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
 	} catch (error) {
 		console.error('Error updating leave request status:', error)
 		res.status(500).send('Failed to update leave request status.')

@@ -197,7 +197,7 @@ function Sidebar() {
 						</div>
 					)}
 
-					{/* Super Admin Links */}
+					{/* Admin Links */}
 					{isAdmin(role) && (
 						<div className="admin-section">
 							

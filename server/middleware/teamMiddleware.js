@@ -59,6 +59,7 @@ const checkUserLimit = async (req, res, next) => {
 	try {
 		const { firmDb } = require('../db/db');
 		const Team = require('../models/Team')(firmDb);
+		const User = require('../models/user')(firmDb);
 
 		const team = await Team.findById(req.user.teamId);
 		if (!team) {
@@ -68,7 +69,16 @@ const checkUserLimit = async (req, res, next) => {
 			});
 		}
 
-		if (team.currentUserCount >= team.maxUsers) {
+		// Policz rzeczywistą liczbę użytkowników w zespole
+		const actualUserCount = await User.countDocuments({ teamId: req.user.teamId });
+		
+		// Zaktualizuj currentUserCount jeśli jest nieaktualne
+		if (team.currentUserCount !== actualUserCount) {
+			team.currentUserCount = actualUserCount;
+			await team.save();
+		}
+
+		if (actualUserCount >= team.maxUsers) {
 			return res.status(400).json({
 				success: false,
 				message: `Osiągnięto limit użytkowników (${team.maxUsers}). Nie można dodać więcej użytkowników.`

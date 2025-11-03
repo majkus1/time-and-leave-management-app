@@ -214,14 +214,23 @@ exports.checkUserLimit = async (req, res) => {
 			});
 		}
 
-		const canAddUser = team.currentUserCount < team.maxUsers;
+		// Policz rzeczywistą liczbę użytkowników w zespole
+		const actualUserCount = await User.countDocuments({ teamId });
+		
+		// Zaktualizuj currentUserCount jeśli jest nieaktualne
+		if (team.currentUserCount !== actualUserCount) {
+			team.currentUserCount = actualUserCount;
+			await team.save();
+		}
+
+		const canAddUser = actualUserCount < team.maxUsers;
 
 		res.json({
 			success: true,
 			canAddUser,
-			currentCount: team.currentUserCount,
+			currentCount: actualUserCount,
 			maxUsers: team.maxUsers,
-			remainingSlots: Math.max(0, team.maxUsers - team.currentUserCount)
+			remainingSlots: Math.max(0, team.maxUsers - actualUserCount)
 		});
 
 	} catch (error) {

@@ -32,9 +32,9 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		const typeText = t(type)
 		const content = `
-			<p style="margin: 0 0 16px 0;">Otrzymałeś nową prośbę urlopową do zatwierdzenia.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.leaveform.newRequestSupervisor')}</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
-				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
@@ -54,7 +54,7 @@ exports.submitLeaveRequest = async (req, res) => {
 					</tr>
 				</table>
 			</div>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>
 		`
 		
 		const emailPromises = supervisors.map(supervisor =>
@@ -66,7 +66,8 @@ exports.submitLeaveRequest = async (req, res) => {
 					t('email.leaveform.title'),
 					content,
 					t('email.leaveform.goToRequest'),
-					`${appUrl}/leave-requests/${userId}`
+					`${appUrl}/leave-requests/${userId}`,
+					t
 				)
 			)
 		)
@@ -81,9 +82,9 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		
 		const hrContent = `
-			<p style="margin: 0 0 16px 0;">Otrzymałeś nową prośbę urlopową do przeglądu.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.leaveform.newRequestHR')}</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
-				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
@@ -103,7 +104,7 @@ exports.submitLeaveRequest = async (req, res) => {
 					</tr>
 				</table>
 			</div>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć.</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToView')}</p>
 		`
 		
 		const hrEmailPromises = hrUsers.map(hr =>
@@ -115,7 +116,8 @@ exports.submitLeaveRequest = async (req, res) => {
 					t('email.leaveform.title'),
 					hrContent,
 					t('email.leaveform.goToRequest'),
-					`${appUrl}/leave-requests/${userId}`
+					`${appUrl}/leave-requests/${userId}`,
+					t
 				)
 			)
 		)

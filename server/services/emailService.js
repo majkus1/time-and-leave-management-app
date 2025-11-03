@@ -15,10 +15,15 @@ const escapeHtml = (text) => {
 }
 
 // Funkcja generująca profesjonalny szablon email HTML
-const getEmailTemplate = (title, content, buttonText = null, buttonLink = null) => {
+const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, t = null) => {
+	// Jeśli funkcja tłumaczeń jest dostępna, użyj jej, w przeciwnym razie użyj domyślnych tekstów polskich
+	const footerNotification = t ? t('email.leaveRequest.footerNotification') : 'To powiadomienie zostało wysłane automatycznie z systemu Planopia.'
+	const footerCopyright = t ? t('email.leaveRequest.footerCopyright').replace('{{year}}', new Date().getFullYear()) : `© ${new Date().getFullYear()} Planopia. Wszelkie prawa zastrzeżone.`
+	const lang = t ? (t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en') : 'pl'
+	
 	return `
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="${lang}">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,8 +62,8 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null) 
 					<tr>
 						<td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
 							<p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5; text-align: center;">
-								To powiadomienie zostało wysłane automatycznie z systemu Planopia.<br>
-								<span style="color: #9ca3af;">© ${new Date().getFullYear()} Planopia. Wszelkie prawa zastrzeżone.</span>
+								${footerNotification}<br>
+								<span style="color: #9ca3af;">${footerCopyright}</span>
 							</p>
 						</td>
 					</tr>
@@ -111,9 +116,9 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		const typeText = t(leaveRequest.type)
 		
 		const content = `
-			<p style="margin: 0 0 16px 0;">Prośba urlopowa została <strong>${statusText}</strong>.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.leaveRequest.requestUpdatedHR')} <strong>${statusText}</strong>.</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
-				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">Szczegóły wniosku:</p>
+				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveRequest.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveRequest.employee')}:</td>
@@ -148,7 +153,8 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 					`${typeText} - ${statusText}`,
 					content,
 					t('email.leaveRequest.goToRequest'),
-					`${appUrl}/leave-requests/${user._id}`
+					`${appUrl}/leave-requests/${user._id}`,
+					t
 				)
 			)
 		)

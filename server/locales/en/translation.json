@@ -11,7 +11,12 @@
 			"type": "Type",
 			"dates": "Dates",
 			"days": "Number of days",
-			"goToRequest": "Go to request"
+			"goToRequest": "Go to request",
+			"newRequestSupervisor": "You have received a new leave request for approval.",
+			"newRequestHR": "You have received a new leave request for review.",
+			"requestDetails": "Request details:",
+			"clickButtonToReview": "Click the button below to go to the request and approve or reject it.",
+			"clickButtonToView": "Click the button below to go to the request and review it."
 		},
 		"welcome": {
 			"subject": "Welcome to planopia.pl",
@@ -32,7 +37,12 @@
 			"accessDenied": "Access denied",
 			"notFound": "Request not found",
 			"titlemail": "Notification of",
-			"titlemailsecond": "Notification of absence"
+			"titlemailsecond": "Notification of absence",
+			"requestUpdated": "Your leave request has been",
+			"requestUpdatedHR": "Leave request has been",
+			"requestDetails": "Request details:",
+			"footerNotification": "This notification was automatically sent from the Planopia system.",
+			"footerCopyright": "© {{year}} Planopia. All rights reserved."
 		}
 	},
 	"leaveform": {
