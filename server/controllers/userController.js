@@ -260,6 +260,7 @@ exports.getUserProfile = async (req, res) => {
 			return res.status(404).send('User not found')
 		}
 		res.json({
+			_id: user._id,
 			firstName: user.firstName,
 			lastName: user.lastName,
 			position: user.position,
@@ -440,26 +441,114 @@ exports.updateUserRoles = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
 	const { userId } = req.params
-
-	const allowedRoles = ['Admin']
-	if (!allowedRoles.some(role => req.user.roles.includes(role))) {
-		return res.status(403).send('Access denied')
-	}
+	const isSelfDeletion = req.user.userId === userId
 
 	try {
 		const user = await User.findById(userId)
 		if (!user) {
-			return res.status(404).send('Użytkownik nie znaleziony')
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
 		}
 
+		// Jeśli usuwasz założyciela zespołu - przekaż administrację innemu adminowi
+		if (user.isTeamAdmin) {
+			// Znajdź innego administratora w zespole
+			const otherAdmins = await User.find({ 
+				teamId: user.teamId, 
+				roles: { $in: ['Admin'] },
+				isTeamAdmin: false,
+				_id: { $ne: userId }
+			})
+			
+			if (otherAdmins.length === 0) {
+				return res.status(400).json({ 
+					message: 'Nie można usunąć założyciela zespołu. Najpierw dodaj innego administratora i przekaż mu administrację.' 
+				})
+			}
+			
+			// Przekaż administrację pierwszemu znalezionemu adminowi
+			const newTeamAdmin = otherAdmins[0]
+			newTeamAdmin.isTeamAdmin = true
+			await newTeamAdmin.save()
+			
+			// Zaktualizuj dane zespołu
+			const team = await Team.findById(user.teamId)
+			if (team) {
+				team.adminEmail = newTeamAdmin.username
+				team.adminFirstName = newTeamAdmin.firstName
+				team.adminLastName = newTeamAdmin.lastName
+				await team.save()
+			}
+			
+			// Log transferu administracji
+			await createLog(req.user.userId, 'TRANSFER_TEAM_ADMIN', `Przekazano administrację zespołu użytkownikowi ${newTeamAdmin.username}`, req.user.userId)
+		}
+
+		// Sprawdź czy użytkownik jest w tym samym zespole (jeśli nie usuwasz siebie)
+		if (!isSelfDeletion && user.teamId.toString() !== req.user.teamId.toString()) {
+			return res.status(403).json({ message: 'Nie można usunąć użytkownika z innego zespołu' })
+		}
+
+		// Jeśli usuwasz siebie - zawsze dozwolone (jeśli nie jest założycielem)
+		if (isSelfDeletion) {
+			// Sprawdź czy nie jest ostatnim adminem w zespole (nie licząc założyciela)
+			if (user.roles && user.roles.includes('Admin')) {
+				const teamAdmins = await User.find({ 
+					teamId: user.teamId, 
+					roles: { $in: ['Admin'] },
+					isTeamAdmin: false 
+				})
+				
+				if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
+					return res.status(400).json({ 
+						message: 'Nie można usunąć konta - jesteś ostatnim administratorem w zespole. Najpierw dodaj innego administratora.' 
+					})
+				}
+			}
+		} else {
+			// Jeśli usuwasz innego użytkownika - tylko Admin może
+			const allowedRoles = ['Admin']
+			if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+				return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może usuwać innych użytkowników' })
+			}
+
+			// Sprawdź czy nie usuwasz ostatniego admina w zespole (nie licząc założyciela)
+			if (user.roles && user.roles.includes('Admin')) {
+				const teamAdmins = await User.find({ 
+					teamId: user.teamId, 
+					roles: { $in: ['Admin'] },
+					isTeamAdmin: false 
+				})
+				
+				if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
+					return res.status(400).json({ 
+						message: 'Nie można usunąć ostatniego administratora w zespole. Najpierw dodaj innego administratora.' 
+					})
+				}
+			}
+		}
+
+		// Usuń użytkownika
 		await User.deleteOne({ _id: userId })
 
-		await createLog(req.user.userId, 'DELETE_USER', `Deleted user ${user.username}`, req.user.userId)
+		// Zmniejsz licznik użytkowników w zespole
+		const team = await Team.findById(user.teamId)
+		if (team && team.currentUserCount > 0) {
+			team.currentUserCount -= 1
+			await team.save()
+		}
 
-		res.status(200).json({ message: 'Użytkownik został usunięty pomyślnie' })
+		// Log tylko jeśli admin usuwa innego użytkownika (nie samego siebie)
+		if (!isSelfDeletion) {
+			await createLog(req.user.userId, 'DELETE_USER', `Usunięto użytkownika ${user.username}`, req.user.userId)
+		}
+
+		res.status(200).json({ 
+			message: 'Użytkownik został usunięty pomyślnie',
+			selfDeleted: isSelfDeletion 
+		})
 	} catch (error) {
 		console.error('Błąd podczas usuwania użytkownika:', error)
-		res.status(500).send('Nie udało się usunąć użytkownika')
+		res.status(500).json({ message: 'Nie udało się usunąć użytkownika' })
 	}
 }
 

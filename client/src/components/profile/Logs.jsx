@@ -3,6 +3,8 @@ import axios from 'axios'
 import Sidebar from '../dashboard/Sidebar'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 
 function Logs() {
@@ -17,6 +19,12 @@ function Logs() {
 	const [departments, setDepartments] = useState([])
 	const [editedDepartment, setEditedDepartment] = useState('')
 	const [departmentMode, setDepartmentMode] = useState('choose')
+	const { role } = useAuth()
+	const navigate = useNavigate()
+	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
+	const [isDeleting, setIsDeleting] = useState(false)
+
+	const isAdmin = role && role.includes('Admin')
 
 	const availableRoles = [
 		'Admin',
@@ -146,6 +154,43 @@ function Logs() {
 		}
 	}
 
+	const handleDeleteClick = (user) => {
+		setDeleteModal({ show: true, user })
+	}
+
+	const handleDeleteCancel = () => {
+		setDeleteModal({ show: false, user: null })
+	}
+
+	const handleDeleteConfirm = async () => {
+		if (!deleteModal.user) return
+		
+		setIsDeleting(true)
+		try {
+			const response = await axios.delete(`${API_URL}/api/users/${deleteModal.user._id}`, {
+				withCredentials: true
+			})
+			
+			// Sprawdź czy użytkownik usunął siebie
+			if (response.data.selfDeleted) {
+				// Wyloguj użytkownika
+				alert(t('logs.deleteSelfSuccess'))
+				window.location.href = '/login'
+				return
+			}
+			
+			alert(response.data.message || t('logs.deleteSuccess'))
+			setUsers(prevUsers => prevUsers.filter(user => user._id !== deleteModal.user._id))
+			setDeleteModal({ show: false, user: null })
+		} catch (error) {
+			const errorMessage = error.response?.data?.message || t('logs.deleteError')
+			alert(errorMessage)
+			console.error('Error deleting user:', error)
+		} finally {
+			setIsDeleting(false)
+		}
+	}
+
 	return (
 		<>
 			<Sidebar />
@@ -270,7 +315,8 @@ function Logs() {
 										<div style={{ 
 											display: 'flex', 
 											gap: '10px', 
-											justifyContent: 'center'
+											justifyContent: 'center',
+											alignItems: 'center'
 										}}>
 										<button
 											className="btn btn-primary"
@@ -300,6 +346,31 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
+										{isAdmin && !user.isTeamAdmin && (
+											<button
+												onClick={() => handleDeleteClick(user)}
+												title={t('logs.deleteUser')}
+												style={{ 
+													padding: '8px 12px',
+													borderRadius: '6px',
+													border: 'none',
+													backgroundColor: '#dc3545',
+													color: 'white',
+													cursor: 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center'
+												}}
+												onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
+												onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+													<path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+												</svg>
+											</button>
+										)}
 													</div>
 									</td>
 								</tr>
@@ -724,6 +795,37 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
+										{isAdmin && !user.isTeamAdmin && (
+											<button
+												onClick={() => handleDeleteClick(user)}
+												title={t('logs.deleteUser')}
+												style={{ 
+													flex: 1,
+													minWidth: '120px',
+													padding: '12px 16px',
+													borderRadius: '8px',
+													border: 'none',
+													backgroundColor: '#dc3545',
+													color: 'white',
+													cursor: 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													gap: '8px',
+													fontSize: '14px',
+													fontWeight: '500'
+												}}
+												onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
+												onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+													<path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+												</svg>
+												{t('logs.deleteUser')}
+											</button>
+										)}
 									</div>
 								</div>
 
@@ -1031,6 +1133,107 @@ function Logs() {
 				</div>
 			)}
 			</div>
+
+			{/* Modal potwierdzenia usunięcia */}
+			{deleteModal.show && deleteModal.user && (
+				<div style={{
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					backgroundColor: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 1000,
+					padding: '20px'
+				}} onClick={handleDeleteCancel}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '500px',
+						width: '100%',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+						<h3 style={{
+							margin: '0 0 20px 0',
+							color: '#1f2937',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('logs.deleteConfirmTitle')}
+						</h3>
+						<p style={{
+							margin: '0 0 30px 0',
+							color: '#4b5563',
+							fontSize: '16px',
+							lineHeight: '1.6'
+						}}>
+							{t('logs.deleteConfirmMessage', { username: deleteModal.user.username })}
+						</p>
+						<div style={{
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={handleDeleteCancel}
+								disabled={isDeleting}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: isDeleting ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#f9fafb')}
+								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = 'white')}>
+								{t('logs.cancel')}
+							</button>
+							<button
+								onClick={handleDeleteConfirm}
+								disabled={isDeleting}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: 'none',
+									backgroundColor: '#dc3545',
+									color: 'white',
+									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: isDeleting ? 0.5 : 1,
+									display: 'flex',
+									alignItems: 'center',
+									gap: '8px'
+								}}
+								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#c82333')}
+								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc3545')}>
+								{isDeleting ? (
+									<>
+										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										{t('logs.deleting')}
+									</>
+								) : (
+									t('logs.deleteConfirm')
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* CSS dla responsywności */}
 			<style jsx>{`

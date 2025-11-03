@@ -4,6 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 
 function ChangePassword() {
@@ -14,8 +15,12 @@ function ChangePassword() {
 	const [isPasswordLoading, setIsPasswordLoading] = useState(false)
 	const [isPositionLoading, setIsPositionLoading] = useState(false)
 	const { t, i18n } = useTranslation()
-	const { role } = useAuth()
+	const { role, username, teamId } = useAuth()
 	const [loading, setLoading] = useState(true)
+	const navigate = useNavigate()
+	const [deleteModal, setDeleteModal] = useState(false)
+	const [isDeleting, setIsDeleting] = useState(false)
+	const [userId, setUserId] = useState(null)
 
 	const isPasswordValid = newPassword => {
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
@@ -27,6 +32,7 @@ function ChangePassword() {
 			try {
 				const response = await axios.get(`${API_URL}/api/users/profile`)
 				setPosition(response.data.position || '')
+				setUserId(response.data._id || null)
 			} catch (error) {
 				console.error('Błąd podczas pobierania danych użytkownika:', error)
 			} finally {
@@ -199,8 +205,184 @@ function ChangePassword() {
 											)}
 										</button>
 									</form>
+
+									{/* Sekcja usuwania konta */}
+									<div style={{ 
+										marginTop: '50px', 
+										paddingTop: '30px', 
+										borderTop: '2px solid #e5e7eb' 
+									}}>
+										<h4 style={{ 
+											color: '#dc3545', 
+											marginBottom: '15px',
+											fontSize: '18px',
+											fontWeight: '600'
+										}}>
+											{t('editprofile.deleteAccountTitle')}
+										</h4>
+										<p style={{ 
+											color: '#6b7280', 
+											marginBottom: '20px',
+											fontSize: '14px',
+											lineHeight: '1.6'
+										}}>
+											{t('editprofile.deleteAccountDescription')}
+										</p>
+										<button
+											type="button"
+											onClick={() => setDeleteModal(true)}
+											style={{
+												padding: '12px 24px',
+												borderRadius: '6px',
+												border: '1px solid #dc3545',
+												backgroundColor: 'white',
+												color: '#dc3545',
+												cursor: 'pointer',
+												fontSize: '14px',
+												fontWeight: '500',
+												transition: 'all 0.2s'
+											}}
+											onMouseEnter={(e) => {
+												e.target.style.backgroundColor = '#dc3545'
+												e.target.style.color = 'white'
+											}}
+											onMouseLeave={(e) => {
+												e.target.style.backgroundColor = 'white'
+												e.target.style.color = '#dc3545'
+											}}>
+											{t('editprofile.deleteAccountButton')}
+										</button>
+									</div>
 								</div>
 							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal potwierdzenia usunięcia konta */}
+			{deleteModal && (
+				<div style={{
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					backgroundColor: 'rgba(0, 0, 0, 0.5)',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					zIndex: 1000,
+					padding: '20px'
+				}} onClick={() => setDeleteModal(false)}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '500px',
+						width: '100%',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+						<h3 style={{
+							margin: '0 0 20px 0',
+							color: '#dc3545',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('editprofile.deleteAccountConfirmTitle')}
+						</h3>
+						<p style={{
+							margin: '0 0 10px 0',
+							color: '#1f2937',
+							fontSize: '16px',
+							fontWeight: '600',
+							lineHeight: '1.6'
+						}}>
+							{t('editprofile.deleteAccountConfirmMessage')}
+						</p>
+						<p style={{
+							margin: '0 0 30px 0',
+							color: '#6b7280',
+							fontSize: '14px',
+							lineHeight: '1.6'
+						}}>
+							{t('editprofile.deleteAccountWarning')}
+						</p>
+						<div style={{
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={() => setDeleteModal(false)}
+								disabled={isDeleting}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: isDeleting ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#f9fafb')}
+								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = 'white')}>
+								{t('editprofile.cancel')}
+							</button>
+							<button
+								onClick={async () => {
+									if (!userId) return
+									setIsDeleting(true)
+									try {
+										const response = await axios.delete(`${API_URL}/api/users/${userId}`, {
+											withCredentials: true
+										})
+										
+										alert(t('editprofile.deleteAccountSuccess'))
+										window.location.href = '/login'
+									} catch (error) {
+										const errorMessage = error.response?.data?.message || t('editprofile.deleteAccountError')
+										alert(errorMessage)
+										console.error('Error deleting account:', error)
+									} finally {
+										setIsDeleting(false)
+										setDeleteModal(false)
+									}
+								}}
+								disabled={isDeleting}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: 'none',
+									backgroundColor: '#dc3545',
+									color: 'white',
+									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: isDeleting ? 0.5 : 1,
+									display: 'flex',
+									alignItems: 'center',
+									gap: '8px'
+								}}
+								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#c82333')}
+								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc3545')}>
+								{isDeleting ? (
+									<>
+										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										{t('editprofile.deleting')}
+									</>
+								) : (
+									t('editprofile.deleteAccountConfirm')
+								)}
+							</button>
 						</div>
 					</div>
 				</div>
