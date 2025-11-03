@@ -18,7 +18,7 @@ function BlogOne() {
 						"@type": "BlogPosting",
 						"headline": "Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm",
 						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Pozwala prowadzić rejestrację godzin pracy, nadgodzin i urlopów w prosty sposób. Dostępna darmowa wersja do 8 użytkowników.",
-						"image": "https://planopia.pl/img/desktop.png",
+						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -43,7 +43,7 @@ function BlogOne() {
 						href="/"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -188,12 +188,12 @@ function BlogOne() {
 						</div>
 
 						<img
-							src="/img/desktop.png"
+							src="/img/desktop.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 						/>
 						<img
-							src="/img/mobile.png"
+							src="/img/mobile.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 						/>
@@ -258,7 +258,7 @@ function BlogOne() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)

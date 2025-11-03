@@ -40,7 +40,7 @@ function BlogThree() {
 			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
 				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
 					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -185,12 +185,12 @@ function BlogThree() {
 						</div>
 
 						<img
-							src="/img/desktop.png"
+							src="/img/desktop.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 						/>
 						<img
-							src="/img/mobile.png"
+							src="/img/mobile.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 						/>
@@ -255,7 +255,7 @@ function BlogThree() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)

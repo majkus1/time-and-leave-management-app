@@ -29,11 +29,11 @@ function BlogFour() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/new-logoplanopia.png"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"description": "Odkryj Planopię - darmową aplikację do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 8 osób. Pełna funkcjonalność bez opłat.",
-						"image": "https://planopia.pl/img/desktop.png"
+						"image": "https://planopia.pl/img/desktop.webp"
 					})
 				}}
 			/>
@@ -45,7 +45,7 @@ function BlogFour() {
 						href="/"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -388,7 +388,7 @@ function BlogFour() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)

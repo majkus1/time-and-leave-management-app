@@ -18,7 +18,7 @@ function ENBlogOne() {
 						"@type": "BlogPosting",
 						"headline": "Online Time Tracking – modern solutions for businesses",
 						"description": "Planopia is a modern online time tracking app for businesses. Track working hours, overtime, and leaves in a simple way. Free version available for up to 8 users.",
-						"image": "https://planopia.pl/img/desktop.png",
+						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -43,7 +43,7 @@ function ENBlogOne() {
 						href="/en"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -187,12 +187,12 @@ function ENBlogOne() {
 					</div>
 
 					<img
-						src="/img/desktop-en.png"
+						src="/img/desktop-en.webp"
 						alt="Program do planowania urlopów – Planopia"
 						className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 					/>
 					<img
-						src="/img/mobile-en.png"
+						src="/img/mobile-en.webp"
 						alt="Program do planowania urlopów – Planopia"
 						className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 					/>
@@ -257,7 +257,7 @@ function ENBlogOne() {
 
 		{/* FOOTER */}
 		<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-			<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+			<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 		</footer>
 	</>
 )

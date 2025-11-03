@@ -18,7 +18,7 @@ function ENBlogThree() {
 						"@type": "BlogPosting",
 						"headline": "Employee Leave Planning – Best Tools and Practices",
 						"description": "Learn how to improve leave planning and absence management in your company. Planopia offers an online leave calendar, approval workflow, and reports. Free plan for up to 8 users.",
-						"image": "https://planopia.pl/img/desktop.png",
+						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -40,7 +40,7 @@ function ENBlogThree() {
 			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
 				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
 					<Link href="/en" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -187,12 +187,12 @@ function ENBlogThree() {
 						</div>
 
 						<img
-							src="/img/desktop-en.png"
+							src="/img/desktop-en.webp"
 							alt="Leave planning software – Planopia"
 							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 						/>
 						<img
-							src="/img/mobile-en.png"
+							src="/img/mobile-en.webp"
 							alt="Leave planning app – Planopia"
 							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 						/>
@@ -257,7 +257,7 @@ function ENBlogThree() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)

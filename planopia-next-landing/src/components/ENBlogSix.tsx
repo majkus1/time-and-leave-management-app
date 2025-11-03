@@ -29,11 +29,11 @@ function ENBlogSix() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/new-logoplanopia.png"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"description": "Complete guide to leave management in a company. Learn how to effectively plan, track, and approve leave requests. Planopia - free leave management software.",
-						"image": "https://planopia.pl/img/desktop.png"
+						"image": "https://planopia.pl/img/desktop.webp"
 					})
 				}}
 			/>
@@ -45,7 +45,7 @@ function ENBlogSix() {
 						href="/en"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -424,7 +424,7 @@ function ENBlogSix() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)

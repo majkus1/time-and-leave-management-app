@@ -30,6 +30,7 @@ i18n
 					login: {
 						password: 'Password',
 						loginto: 'Log in',
+						loggingIn: 'Logging in...',
 						forgotpass: 'I dont remember my password',
 						failed: 'Login failed',
 						alerttoomanyreq: 'Too many login attempts. Please try again in 15 minutes.',
@@ -39,6 +40,7 @@ i18n
 					resetpass: {
 						txt1: 'Reset password',
 						txt3: 'Send reset link',
+						sending: 'Sending...',
 						messok: 'If the email address is registered, an email with a password reset link will be sent.',
 						messfail: 'If the email address is registered, an email with a password reset link will be sent.',
 						toomany: 'Too many password reset attempts. Please try again in 15 minutes.',
@@ -49,6 +51,7 @@ i18n
 						newpassone: 'New password',
 						newpassrepeat: 'Confirm new password',
 						btnsuccess: 'Confirm',
+						saving: 'Saving...',
 						messone: 'Passwords do not match, please try again.',
 						messtwo: 'Your password has been successfully set!',
 						messthree: 'Error setting password, please try again.',
@@ -97,6 +100,7 @@ i18n
 						headertxt: 'Edit profile',
 						positionlabel: 'Position',
 						confirmposition: 'Update position',
+						saving: 'Saving...',
 						changepassh4: 'Change password',
 						rolelabel: 'Role',
 						currentpasslabel: 'Current password',
@@ -129,6 +133,7 @@ i18n
 						substitute: 'Substitute:',
 						addinfo: 'Additional information:',
 						submit: 'Submit request',
+						submitting: 'Submitting...',
 						optional: 'Optional',
 						typeLabel: 'Type',
 						date: 'Dates',
@@ -329,6 +334,7 @@ i18n
 					login: {
 						password: 'Hasło',
 						loginto: 'Zaloguj się',
+						loggingIn: 'Logowanie...',
 						forgotpass: 'Nie pamiętam hasła',
 						failed: 'Logowanie nie powiodło się',
 						alerttoomanyreq: 'Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.',
@@ -338,6 +344,7 @@ i18n
 					resetpass: {
 						txt1: 'Resetowanie hasła',
 						txt3: 'Wyślij link resetujący',
+						sending: 'Wysyłanie...',
 						messok:
 							'Jeśli adres e-mail jest zarejestrowany, wiadomość z linkiem do resetowania hasła zostanie wysłana.',
 						messfail:
@@ -350,6 +357,7 @@ i18n
 						newpassone: 'Nowe hasło',
 						newpassrepeat: 'Potwierdź nowe hasło',
 						btnsuccess: 'Zatwierdź',
+						saving: 'Zapisywanie...',
 						messone: 'Hasła nie pasują do siebie, spróbuj ponownie.',
 						messtwo: 'Twoje hasło zostało pomyślnie ustawione!',
 						messthree: 'Błąd przy ustawianiu hasła, spróbuj ponownie.',
@@ -396,6 +404,7 @@ i18n
 						headertxt: 'Edytuj profil',
 						positionlabel: 'Stanowisko',
 						confirmposition: 'Zaktualizuj stanowisko',
+						saving: 'Zapisywanie...',
 						changepassh4: 'Zmiana hasła',
 						rolelabel: 'Rola',
 						currentpasslabel: 'Obecne hasło',
@@ -428,6 +437,7 @@ i18n
 						substitute: 'Osoba zastępująca:',
 						addinfo: 'Informacje dodatkowe:',
 						submit: 'Wyślij wniosek',
+						submitting: 'Wysyłanie...',
 						optional: 'Opcjonalnie',
 						typeLabel: 'Rodzaj',
 						date: 'Data',

@@ -97,7 +97,7 @@ function ProductPromotion() {
 						href="/"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
+						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<a
@@ -218,7 +218,7 @@ function ProductPromotion() {
 							</Link>
 						</div>
 						<img
-							src="/img/headerimage.png"
+							src="/img/headerimage.webp"
 							alt="biznesmen zaznaczający aplikację"
 							className="rounded-xl w-full h-auto aspect-[3/2]"
 						/>
@@ -242,7 +242,7 @@ function ProductPromotion() {
         <div className="mt-8 grid sm:grid-cols-2 gap-4">
           {/* 1 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-            <img src="img/schedule time works.png" className='icon-landing-about'/>
+            <img src="img/schedule time works.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
               <p className="font-semibold text-gray-900">Ewidencja czasu pracy</p>
               <p className="text-sm text-gray-600">Kalendarz, nadgodziny i podsumowania pracy.</p>
@@ -250,7 +250,7 @@ function ProductPromotion() {
           </div>
           {/* 2 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="img/sunbed.png" className='icon-landing-about'/>
+		  <img src="img/sunbed.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
               <p className="font-semibold text-gray-900">Urlopy i nieobecności</p>
               <p className="text-sm text-gray-600">Wnioski, akceptacje, powiadomienia.</p>
@@ -258,7 +258,7 @@ function ProductPromotion() {
           </div>
           {/* 3 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="img/pdf.png" className='icon-landing-about'/>
+		  <img src="img/pdf.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
 			<p className="font-semibold text-gray-900">Dokumenty</p>
 <p className="text-sm text-gray-600">Generowanie PDF: kalendarze pracy i wnioski urlopowe zawsze pod ręką.</p>
@@ -267,7 +267,7 @@ function ProductPromotion() {
           </div>
           {/* 4 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="img/verified.png" className='icon-landing-about'/>
+		  <img src="img/verified.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
               <p className="font-semibold text-gray-900">Bezpieczeństwo</p>
               <p className="text-sm text-gray-600">Bezpieczne logowanie i szyfrowane połączenia chronią Twoją firmę.</p>
@@ -276,7 +276,7 @@ function ProductPromotion() {
           </div>
           {/* 5 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="img/booking.png" className='icon-landing-about'/>
+		  <img src="img/booking.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
               <p className="font-semibold text-gray-900">PWA i mobile</p>
               <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak appki.</p>
@@ -285,7 +285,7 @@ function ProductPromotion() {
           </div>
           {/* 6 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="img/technical-support.png" className='icon-landing-about'/>
+		  <img src="img/technical-support.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
 			<p className="font-semibold text-gray-900">Indywidualne wsparcie</p>
 <p className="text-sm text-gray-600">Czat i pomoc dla Twojego zespołu — w razie pytań lub problemów.</p>
@@ -309,12 +309,12 @@ function ProductPromotion() {
 {/* Obraz / screen produktu */}
 <div className="relative flex justify-center items-center mockup-rotator">
   <img
-    src="img/desktop.png"
+    src="img/desktop.webp"
     alt="Planopia – widok desktop"
     className="rounded-xl shadow-xl ring-1 ring-black/5 desktop-mockup"
   />
   <img
-    src="img/mobile.png"
+    src="img/mobile.webp"
     alt="Planopia – widok mobile"
     className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
   />
@@ -433,7 +433,7 @@ function ProductPromotion() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 text-left">
         {/* Więcej użytkowników */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/add-user.png" className='icon-landing-about'/>
+		<img src="img/add-user.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Nielimitowana liczba użytkowników</p>
             <p className="text-sm text-gray-600">Rośniesz bez ograniczeń — dodawaj kolejne osoby.</p>
@@ -442,7 +442,7 @@ function ProductPromotion() {
 
         {/* Personalizacja wyglądu */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/creativity.png" className='icon-landing-about'/>
+		<img src="img/creativity.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Wygląd dopasowany do firmy</p>
             <p className="text-sm text-gray-600">Twoje logo, kolory i branding w całej aplikacji.</p>
@@ -451,7 +451,7 @@ function ProductPromotion() {
 
         {/* Funkcje na życzenie */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/settings.png" className='icon-landing-about'/>
+		<img src="img/settings.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Funkcje na życzenie</p>
             <p className="text-sm text-gray-600">Dodatki i modyfikacje pod procesy w Twojej firmie.</p>
@@ -460,7 +460,7 @@ function ProductPromotion() {
 
         {/* Integracje */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-          <img src="img/add.png" className='icon-landing-about'/>
+          <img src="img/add.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Integracje na zamówienie</p>
             <p className="text-sm text-gray-600">RCP, importy, automaty — łączymy Planopię z Twoimi systemami.</p>
@@ -469,7 +469,7 @@ function ProductPromotion() {
 
         {/* Wsparcie 24/7 */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/technical-support.png" className='icon-landing-about'/>
+		<img src="img/technical-support.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Indywidualne wsparcie 24/7</p>
             <p className="text-sm text-gray-600">Czat i szybka pomoc, gdy czegoś potrzebujesz.</p>
@@ -478,7 +478,7 @@ function ProductPromotion() {
 
         {/* Dedykowane środowisko */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/database.png" className='icon-landing-about'/>
+		<img src="img/database.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Osobne środowisko</p>
             <p className="text-sm text-gray-600">Dedykowana subdomena i odizolowana baza danych.</p>
@@ -487,7 +487,7 @@ function ProductPromotion() {
 
         {/* Mobile / PWA */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="img/booking.png" className='icon-landing-about'/>
+		<img src="img/booking.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">PWA i mobile</p>
             <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak aplikacji mobilnej.</p>
@@ -631,7 +631,7 @@ function ProductPromotion() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
+				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 				{/* <a href="/blog/jak-usprawnic-firme" className="text-sm text-gray-600 hover:underline mt-2 block">
 					Aplikacja do ewidencji czasu pracy może usprawnić Twoją firmę
 				</a> */}

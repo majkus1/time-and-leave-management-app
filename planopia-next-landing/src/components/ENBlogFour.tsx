@@ -29,11 +29,11 @@ function ENBlogFour() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/new-logoplanopia.png"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"description": "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 8 people. Full functionality without any costs.",
-						"image": "https://planopia.pl/img/desktop.png"
+						"image": "https://planopia.pl/img/desktop.webp"
 					})
 				}}
 			/>
@@ -45,7 +45,7 @@ function ENBlogFour() {
 						href="/en"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
 					<nav className="hidden flex space-x-8 navdesktop">
 						<Link
@@ -388,7 +388,7 @@ function ENBlogFour() {
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
-				<img src="/img/new-logoplanopia.png" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
+				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>
 	)
