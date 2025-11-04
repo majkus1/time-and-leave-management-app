@@ -56,6 +56,7 @@ i18n
 						messtwo: 'Your password has been successfully set!',
 						messthree: 'Error setting password, please try again.',
 						position: 'Job position',
+						positionInfo: 'You can edit your position later in your user panel.',
 						h2n: 'Set password and job position',
 						invalidPassword:
 							'The password must have at least 8 characters, contain a lowercase letter, an uppercase letter, a digit, and a special character.',
@@ -371,7 +372,7 @@ i18n
 						messfail:
 							'Jeśli adres e-mail jest zarejestrowany, wiadomość z linkiem do resetowania hasła zostanie wysłana.',
 						toomany: 'Zbyt wiele prób resetowania hasła. Spróbuj ponownie za 15 minut.',
-						backto: '< Wróc do logowania',
+						backto: '< Wróć do logowania',
 					},
 					newpass: {
 						h2: 'Ustaw hasło',
@@ -383,6 +384,7 @@ i18n
 						messtwo: 'Twoje hasło zostało pomyślnie ustawione!',
 						messthree: 'Błąd przy ustawianiu hasła, spróbuj ponownie.',
 						position: 'Stanowisko',
+						positionInfo: 'Stanowisko można później edytować w panelu użytkownika.',
 						h2n: 'Ustaw hasło i stanowisko',
 						invalidPassword:
 							'Hasło musi mieć co najmniej 8 znaków, zawierać małą i dużą literę, cyfrę oraz znak specjalny.',

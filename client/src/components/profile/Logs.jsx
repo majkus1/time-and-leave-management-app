@@ -19,12 +19,15 @@ function Logs() {
 	const [departments, setDepartments] = useState([])
 	const [editedDepartment, setEditedDepartment] = useState('')
 	const [departmentMode, setDepartmentMode] = useState('choose')
-	const { role } = useAuth()
+	const { role, username } = useAuth()
 	const navigate = useNavigate()
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
 	const [isDeleting, setIsDeleting] = useState(false)
+	const [resendingLink, setResendingLink] = useState(false)
+	const [sendingApology, setSendingApology] = useState(false)
 
 	const isAdmin = role && role.includes('Admin')
+	const isSuperAdmin = username === 'michalipka1@gmail.com'
 
 	const availableRoles = [
 		'Admin',
@@ -191,6 +194,51 @@ function Logs() {
 		}
 	}
 
+	const handleResendPasswordLink = async (userId) => {
+		if (!window.confirm('Czy na pewno chcesz wysłać ponownie link do ustawienia hasła?')) {
+			return
+		}
+
+		setResendingLink(true)
+		try {
+			const response = await axios.post(`${API_URL}/api/users/${userId}/resend-password-link`, {}, {
+				withCredentials: true
+			})
+			
+			alert(response.data.message || 'Link został wysłany pomyślnie')
+			// Odśwież listę użytkowników aby zaktualizować status
+			const usersResponse = await axios.get(`${API_URL}/api/users/all-users`, { withCredentials: true })
+			setUsers(usersResponse.data)
+		} catch (error) {
+			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania linku'
+			alert(errorMessage)
+			console.error('Error resending password link:', error)
+		} finally {
+			setResendingLink(false)
+		}
+	}
+
+	const handleSendApologyEmail = async (userId) => {
+		if (!window.confirm('Czy na pewno chcesz wysłać email informacyjny z przeprosinami?')) {
+			return
+		}
+
+		setSendingApology(true)
+		try {
+			const response = await axios.post(`${API_URL}/api/users/${userId}/send-apology-email`, {}, {
+				withCredentials: true
+			})
+			
+			alert(response.data.message || 'Email został wysłany pomyślnie')
+		} catch (error) {
+			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania emaila'
+			alert(errorMessage)
+			console.error('Error sending apology email:', error)
+		} finally {
+			setSendingApology(false)
+		}
+	}
+
 	return (
 		<>
 			<Sidebar />
@@ -201,7 +249,16 @@ function Logs() {
 				margin: '0 auto'
 			}}>
 				<div className="logs-header" style={{ marginBottom: '30px', textAlign: 'center' }}>
-					
+					{isSuperAdmin && (
+						<h2 style={{ 
+							color: '#2c3e50', 
+							marginBottom: '10px',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							Super Admin - Wszyscy użytkownicy
+						</h2>
+					)}
 				</div>
 
 				{error && (
@@ -305,6 +362,26 @@ function Logs() {
 														Dział: {user.department}
 													</div>
 												)}
+												{isSuperAdmin && user.teamName && (
+													<div style={{ 
+														fontSize: '12px', 
+														color: '#3498db', 
+														marginTop: '3px',
+														fontWeight: '500'
+													}}>
+														Zespół: {user.teamName}
+													</div>
+												)}
+												{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+													<div style={{ 
+														fontSize: '12px', 
+														color: '#dc3545', 
+														marginTop: '3px',
+														fontWeight: '600'
+													}}>
+														⚠️ Brak hasła
+													</div>
+												)}
 											</div>
 										</div>
 									</td>
@@ -346,7 +423,61 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
-										{isAdmin && !user.isTeamAdmin && (
+										{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+											<button
+												onClick={() => handleResendPasswordLink(user._id)}
+												disabled={resendingLink}
+												title="Wyślij ponownie link do ustawienia hasła"
+												style={{ 
+													padding: '8px 12px',
+													borderRadius: '6px',
+													border: 'none',
+													backgroundColor: '#28a745',
+													color: 'white',
+													cursor: resendingLink ? 'not-allowed' : 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													opacity: resendingLink ? 0.6 : 1
+												}}
+												onMouseEnter={(e) => !resendingLink && (e.target.style.backgroundColor = '#218838')}
+												onMouseLeave={(e) => !resendingLink && (e.target.style.backgroundColor = '#28a745')}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+													<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+												</svg>
+											</button>
+										)}
+										{isSuperAdmin && (user.username === 'klaudia.b.lubszczyk@gmail.com' || user.username === 'lipkam420@gmail.com') && (
+											<button
+												onClick={() => handleSendApologyEmail(user._id)}
+												disabled={sendingApology}
+												title="Wyślij email informacyjny z przeprosinami"
+												style={{ 
+													padding: '8px 12px',
+													borderRadius: '6px',
+													border: 'none',
+													backgroundColor: '#ff9800',
+													color: 'white',
+													cursor: sendingApology ? 'not-allowed' : 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													opacity: sendingApology ? 0.6 : 1,
+													marginLeft: '5px'
+												}}
+												onMouseEnter={(e) => !sendingApology && (e.target.style.backgroundColor = '#f57c00')}
+												onMouseLeave={(e) => !sendingApology && (e.target.style.backgroundColor = '#ff9800')}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+												</svg>
+											</button>
+										)}
+										{(isAdmin || isSuperAdmin) && !user.isTeamAdmin && (
 											<button
 												onClick={() => handleDeleteClick(user)}
 												title={t('logs.deleteUser')}
@@ -754,6 +885,26 @@ function Logs() {
 													Dział: {user.department}
 												</div>
 											)}
+											{isSuperAdmin && user.teamName && (
+												<div style={{ 
+													fontSize: '12px', 
+													color: '#3498db',
+													fontWeight: '500',
+													marginTop: '3px'
+												}}>
+													Zespół: {user.teamName}
+												</div>
+											)}
+											{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+												<div style={{ 
+													fontSize: '12px', 
+													color: '#dc3545',
+													fontWeight: '600',
+													marginTop: '3px'
+												}}>
+													⚠️ Brak hasła
+												</div>
+											)}
 										</div>
 									</div>
 
@@ -795,7 +946,72 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
-										{isAdmin && !user.isTeamAdmin && (
+										{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+											<button
+												onClick={() => handleResendPasswordLink(user._id)}
+												disabled={resendingLink}
+												title="Wyślij ponownie link do ustawienia hasła"
+												style={{ 
+													flex: 1,
+													minWidth: '120px',
+													padding: '12px 16px',
+													borderRadius: '8px',
+													border: 'none',
+													backgroundColor: '#28a745',
+													color: 'white',
+													cursor: resendingLink ? 'not-allowed' : 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													gap: '8px',
+													fontSize: '14px',
+													fontWeight: '500',
+													opacity: resendingLink ? 0.6 : 1
+												}}
+												onMouseEnter={(e) => !resendingLink && (e.target.style.backgroundColor = '#218838')}
+												onMouseLeave={(e) => !resendingLink && (e.target.style.backgroundColor = '#28a745')}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+													<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+												</svg>
+												Wyślij link
+											</button>
+										)}
+										{isSuperAdmin && (user.username === 'klaudia.b.lubszczyk@gmail.com' || user.username === 'lipkam420@gmail.com') && (
+											<button
+												onClick={() => handleSendApologyEmail(user._id)}
+												disabled={sendingApology}
+												title="Wyślij email informacyjny z przeprosinami"
+												style={{ 
+													flex: 1,
+													minWidth: '120px',
+													padding: '12px 16px',
+													borderRadius: '8px',
+													border: 'none',
+													backgroundColor: '#ff9800',
+													color: 'white',
+													cursor: sendingApology ? 'not-allowed' : 'pointer',
+													transition: 'all 0.2s',
+													boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													gap: '8px',
+													fontSize: '14px',
+													fontWeight: '500',
+													opacity: sendingApology ? 0.6 : 1
+												}}
+												onMouseEnter={(e) => !sendingApology && (e.target.style.backgroundColor = '#f57c00')}
+												onMouseLeave={(e) => !sendingApology && (e.target.style.backgroundColor = '#ff9800')}>
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+													<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+												</svg>
+												Email info
+											</button>
+										)}
+										{(isAdmin || isSuperAdmin) && !user.isTeamAdmin && (
 											<button
 												onClick={() => handleDeleteClick(user)}
 												title={t('logs.deleteUser')}

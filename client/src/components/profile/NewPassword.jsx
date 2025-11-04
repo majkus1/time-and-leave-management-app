@@ -34,7 +34,7 @@ function NewPassword() {
 		}
 		setIsLoading(true)
 		try {
-			const response = await axios.post(`${API_URL}/api/users/new-password`, {
+			const response = await axios.post(`${API_URL}/api/public/new-password`, {
 				newPassword: password,
 				token,
 			})

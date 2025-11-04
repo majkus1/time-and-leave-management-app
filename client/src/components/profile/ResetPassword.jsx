@@ -21,7 +21,7 @@ function ResetPassword() {
 		e.preventDefault()
 		setIsLoading(true)
 		try {
-			const response = await axios.post(`${API_URL}/api/users/reset-password-request`, { email })
+			const response = await axios.post(`${API_URL}/api/public/reset-password-request`, { email })
 			alert(t('resetpass.messok'))
 			setTimeout(() => {
 				navigate('/login')

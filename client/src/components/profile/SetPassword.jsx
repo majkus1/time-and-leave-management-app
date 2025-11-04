@@ -35,7 +35,7 @@ function SetPassword() {
 		}
 		setIsLoading(true)
 		try {
-			const response = await axios.post(`${API_URL}/api/users/set-password/${token}`, {
+			const response = await axios.post(`${API_URL}/api/public/set-password/${token}`, {
 				password,
 				position,
 			})
@@ -114,8 +114,11 @@ function SetPassword() {
 								onChange={e => setPosition(e.target.value)}
 								required
 								placeholder={t('newpass.position')}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 mt-3"
+								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 mt-3"
 							/>
+							<small className="text-gray-500 block mb-4" style={{ fontSize: '14px', marginTop: '4px' }}>
+								{t('newpass.positionInfo') || 'Stanowisko można później edytować w panelu użytkownika.'}
+							</small>
 
 							
 							<button
@@ -140,7 +143,29 @@ function SetPassword() {
 			</div>
 			<Link
 				to="/login"
-				style={{ margin: '20px', fontSize: '14px', textDecoration: 'none', color: 'blue', opacity: '0.6' }}>
+				style={{ 
+					display: 'inline-block',
+					margin: '20px auto',
+					padding: '10px 20px',
+					fontSize: '14px',
+					textDecoration: 'none',
+					color: '#6b7280',
+					backgroundColor: '#f3f4f6',
+					borderRadius: '6px',
+					border: '1px solid #e5e7eb',
+					transition: 'all 0.2s',
+					textAlign: 'center'
+				}}
+				onMouseEnter={(e) => {
+					e.target.style.backgroundColor = '#e5e7eb'
+					e.target.style.color = '#374151'
+					e.target.style.borderColor = '#d1d5db'
+				}}
+				onMouseLeave={(e) => {
+					e.target.style.backgroundColor = '#f3f4f6'
+					e.target.style.color = '#6b7280'
+					e.target.style.borderColor = '#e5e7eb'
+				}}>
 				{t('resetpass.backto')}
 			</Link>
 		</div>

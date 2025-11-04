@@ -2,6 +2,8 @@ require('dotenv').config()
 const express = require('express')
 const router = express.Router()
 const nodemailer = require('nodemailer')
+const userController = require('../controllers/userController')
+const { resetPasswordLimiter } = require('../utils/rateLimiters')
 
 router.post('/request-demo', async (req, res) => {
 	const { email } = req.body
@@ -73,5 +75,10 @@ router.post('/schedule-call', async (req, res) => {
 		res.status(500).json({ message: 'Błąd serwera przy wysyłce emaila' })
 	}
 })
+
+// Publiczne endpointy do resetowania i ustawiania hasła (bez CSRF)
+router.post('/reset-password-request', resetPasswordLimiter, userController.resetPasswordRequest)
+router.post('/set-password/:token', userController.setPassword)
+router.post('/new-password', userController.resetPassword)
 
 module.exports = router

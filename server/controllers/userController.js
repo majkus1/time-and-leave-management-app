@@ -302,11 +302,44 @@ exports.getAllVisibleUsers = async (req, res) => {
         const currentUser = await User.findById(req.user.userId);
         if (!currentUser) return res.status(404).send('Użytkownik nie znaleziony');
 
-        
-        const teamFilter = { teamId: currentUser.teamId };
+        // Sprawdź czy to super admin
+        const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
 
-        // Każda rola w zespole widzi wszystkich użytkowników ze swojego zespołu
-        // (z wyjątkiem szczególnie wrażliwych informacji)
+        if (isSuperAdmin) {
+            // Super admin widzi wszystkich użytkowników ze wszystkich zespołów
+            const users = await User.find({}).select('username firstName lastName roles position department teamId password').lean();
+            
+            // Pobierz informacje o zespołach dla każdego użytkownika
+            const usersWithTeams = await Promise.all(
+                users.map(async (user) => {
+                    const team = await Team.findById(user.teamId).select('name adminEmail').lean();
+                    return {
+                        ...user,
+                        teamName: team ? team.name : 'Nieznany zespół',
+                        teamAdminEmail: team ? team.adminEmail : null,
+                        hasPassword: !!user.password // Dodaj informację czy użytkownik ma hasło
+                    };
+                })
+            );
+            
+            return res.json(usersWithTeams);
+        }
+
+        // Zwykły użytkownik widzi tylko użytkowników ze swojego zespołu
+        const teamFilter = { teamId: currentUser.teamId };
+        
+        // Jeśli to admin, dodaj informację o haśle
+        const isAdmin = currentUser.roles && currentUser.roles.includes('Admin');
+        if (isAdmin) {
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean();
+            const usersWithPasswordInfo = users.map(user => ({
+                ...user,
+                hasPassword: !!user.password
+            }));
+            return res.json(usersWithPasswordInfo);
+        }
+        
+        // Zwykły użytkownik (nie admin) - bez informacji o haśle
         const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId');
         return res.json(users);
 
@@ -738,4 +771,152 @@ exports.refreshToken = (req, res) => {
 
 		res.json({ message: 'Token refreshed' })
 	})
+}
+
+// Endpoint do regeneracji i wysłania linku ustawienia hasła dla użytkowników bez hasła
+exports.resendPasswordLink = async (req, res) => {
+	try {
+		const currentUser = await User.findById(req.user.userId)
+		if (!currentUser) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Sprawdź czy to super admin lub admin zespołu
+		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com'
+		const isTeamAdmin = currentUser.roles && currentUser.roles.includes('Admin')
+		
+		if (!isSuperAdmin && !isTeamAdmin) {
+			return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może regenerować linki' })
+		}
+
+		const { userId } = req.params
+		const user = await User.findById(userId)
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Jeśli to admin zespołu (nie super admin), sprawdź czy użytkownik jest w tym samym zespole
+		if (!isSuperAdmin && isTeamAdmin) {
+			if (user.teamId.toString() !== currentUser.teamId.toString()) {
+				return res.status(403).json({ message: 'Brak uprawnień - możesz wysyłać linki tylko użytkownikom ze swojego zespołu' })
+			}
+		}
+
+		// Jeśli użytkownik już ma hasło, nie można regenerować linku
+		if (user.password) {
+			return res.status(400).json({ message: 'Użytkownik już ma ustawione hasło' })
+		}
+
+		// Pobierz informacje o zespole
+		const team = await Team.findById(user.teamId)
+		if (!team) {
+			return res.status(404).json({ message: 'Zespół nie znaleziony' })
+		}
+
+		// Generuj nowy token
+		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+			expiresIn: '24h',
+		})
+
+		const link = `${appUrl}/set-password/${token}`
+
+		// Przygotuj email
+		const subject = 'Witamy w Planopia - Ustaw swoje hasło'
+		const content = `
+			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(user.firstName)}</strong>!</p>
+			<p style="margin: 0 0 16px 0;">Zostałeś dodany do zespołu <strong>${escapeHtml(team.name)}</strong> w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.</p>
+			<p style="margin: 0 0 24px 0;">Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>24 godziny</strong>. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.</p>
+		`
+		const body = getEmailTemplate(
+			'Witamy w Planopia',
+			content,
+			'Ustaw hasło',
+			link
+		)
+
+		// Wyślij email
+		try {
+			await sendEmail(user.username, link, subject, body)
+			await createLog(req.user.userId, 'RESEND_PASSWORD_LINK', `Regenerated and sent password link to ${user.username}`)
+			
+			res.status(200).json({
+				success: true,
+				message: `Link do ustawienia hasła został wysłany na adres ${user.username}`
+			})
+		} catch (emailError) {
+			console.error('Error sending email:', emailError)
+			res.status(500).json({
+				success: false,
+				message: 'Użytkownik został utworzony, ale nie udało się wysłać emaila. Link: ' + link
+			})
+		}
+
+	} catch (error) {
+		console.error('Error resending password link:', error)
+		res.status(500).json({
+			success: false,
+			message: 'Błąd serwera podczas regeneracji linku'
+		})
+	}
+}
+
+// Endpoint do wysyłania specjalnego emaila informacyjnego (tylko dla super admina)
+exports.sendApologyEmail = async (req, res) => {
+	try {
+		const currentUser = await User.findById(req.user.userId)
+		if (!currentUser) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Tylko super admin może wysyłać ten email
+		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com'
+		if (!isSuperAdmin) {
+			return res.status(403).json({ message: 'Brak uprawnień - tylko super admin może wysyłać ten email' })
+		}
+
+		const { userId } = req.params
+		const user = await User.findById(userId)
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Przygotuj email z przeprosinami (bez przycisku ustawienia hasła)
+		const subject = 'Planopia - Informacja o naprawie systemu'
+		const content = `
+			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(user.firstName)}</strong>!</p>
+			<p style="margin: 0 0 16px 0;">Chcielibyśmy przeprosić za problemy techniczne, które wystąpiły w naszej aplikacji podczas dodawania nowych użytkowników.</p>
+			<p style="margin: 0 0 24px 0;">Problem został już naprawiony, a zaproszenia do systemu zostały ponownie wysłane na skrzynki pocztowe wszystkich zaproszonych użytkowników.</p>
+		`
+		const body = getEmailTemplate(
+			'Planopia - Informacja o naprawie systemu',
+			content,
+			null, // Brak przycisku
+			null  // Brak linku
+		)
+
+		// Wyślij email
+		try {
+			await sendEmail(user.username, null, subject, body)
+			await createLog(req.user.userId, 'SEND_APOLOGY_EMAIL', `Sent apology email to ${user.username}`)
+			
+			res.status(200).json({
+				success: true,
+				message: `Email informacyjny został wysłany na adres ${user.username}`
+			})
+		} catch (emailError) {
+			console.error('Error sending email:', emailError)
+			res.status(500).json({
+				success: false,
+				message: 'Nie udało się wysłać emaila'
+			})
+		}
+
+	} catch (error) {
+		console.error('Error sending apology email:', error)
+		res.status(500).json({
+			success: false,
+			message: 'Błąd serwera podczas wysyłania emaila'
+		})
+	}
 }

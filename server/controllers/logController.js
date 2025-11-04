@@ -18,8 +18,19 @@ exports.getLogs = async (req, res) => {
 
 exports.getLogsByUser = async (req, res) => {
 	try {
+		const User = require('../models/user')(require('../db/db').firmDb)
+		const currentUser = await User.findById(req.user.userId)
+		
+		if (!currentUser) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
+		// Sprawdź czy to super admin lub Admin
+		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com'
 		const allowedRoles = ['Admin']
-		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+		const isAdmin = allowedRoles.some(role => req.user.roles.includes(role))
+		
+		if (!isSuperAdmin && !isAdmin) {
 			return res.status(403).send('Access denied')
 		}
 
