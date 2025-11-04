@@ -55,8 +55,7 @@ const teamSchema = new mongoose.Schema({
 	timestamps: true
 });
 
-teamSchema.index({ name: 1 });
-teamSchema.index({ adminEmail: 1 });
+// name i adminEmail już mają indeksy przez unique: true, więc nie trzeba ich duplikować
 teamSchema.index({ isActive: 1 });
 
 module.exports = conn => (conn.models.Team || conn.model('Team', teamSchema));

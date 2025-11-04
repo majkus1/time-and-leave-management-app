@@ -5,25 +5,19 @@ const Department = require('../models/Department')(firmDb);
 
 exports.getDepartments = async (req, res) => {
 	try {
-		console.log('getDepartments called with req.user:', req.user);
 		const teamId = req.user.teamId;
-		console.log('getDepartments called with teamId:', teamId);
 		
 		let departments = await Department.find({ teamId, isActive: true }).select('name');
-		console.log('Found departments in Department collection:', departments);
 		
 		if (departments.length === 0) {
-			console.log('No departments in Department collection, falling back to User collection');
 			const userDepartments = await User.distinct('department', { 
 				teamId, 
 				department: { $ne: null, $ne: '' } 
 			});
-			console.log('Found departments in User collection:', userDepartments);
 			departments = userDepartments.map(name => ({ name }));
 		}
 		
 		const departmentNames = departments.map(dept => dept.name);
-		console.log('Returning department names:', departmentNames);
 		
 		res.json(departmentNames);
 	} catch (error) {

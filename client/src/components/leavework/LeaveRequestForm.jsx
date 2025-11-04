@@ -70,7 +70,7 @@ function LeaveRequestForm() {
 			await axios.post(`${API_URL}/api/leaveworks/leave-request`, data)
 			alert(t('leaveform.alertsucces'))
 			fetchLeaveRequests()
-			setType('Urlop wypoczynkowy')
+			setType('leaveform.option1')
 			setStartDate('')
 			setEndDate('')
 			setDaysRequested(0)

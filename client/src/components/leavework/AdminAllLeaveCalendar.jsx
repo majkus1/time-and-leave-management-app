@@ -24,43 +24,38 @@ function AdminAllLeaveCalendar() {
 	const { t, i18n } = useTranslation()
 	const { role, logout, username, teamId } = useAuth()
 	const [loading, setLoading] = useState(true)
+	const isSuperAdmin = username === 'michalipka1@gmail.com'
 
-	// Sprawdź czy teamId jest dostępny
+	// Sprawdź czy teamId jest dostępny (tylko dla zwykłych użytkowników)
 	useEffect(() => {
-		if (!teamId) {
-			console.log('AdminAllLeaveCalendar: teamId is null, cannot load data')
+		if (!isSuperAdmin && !teamId) {
 			setLoading(false)
 			setError('Team ID is not available')
 		}
-	}, [teamId])
+	}, [teamId, isSuperAdmin])
 
 	useEffect(() => {
-		if (teamId) {
+		if (isSuperAdmin || teamId) {
 			fetchUsers()
 		}
-	}, [teamId])
+	}, [teamId, isSuperAdmin])
 
 	useEffect(() => {
-		if (users.length > 0 && teamId) {
-			console.log('Users loaded, now fetching leave plans')
+		if (users.length > 0 && (isSuperAdmin || teamId)) {
 			fetchAllLeavePlans()
 			fetchAcceptedLeaveRequests()
 		}
-	}, [users, teamId])
+	}, [users, teamId, isSuperAdmin])
 
 	const fetchUsers = async () => {
 		try {
 			setLoading(true)
 			setError('') 
 			
-			console.log('Fetching users with teamId:', teamId)
-			
 			const response = await axios.get(`${API_URL}/api/users/all-users`, {
 				withCredentials: true
 			})
 			
-			console.log('Users loaded:', response.data.length)
-			console.log('Users data:', response.data)
 			setUsers(response.data)
 		} catch (error) {
 			console.error('Error fetching users:', error)
@@ -73,27 +68,22 @@ function AdminAllLeaveCalendar() {
 
 	const fetchAllLeavePlans = async () => {
 		try {
-			console.log('Fetching leave plans for users:', users.length)
-			
-			
 			const response = await axios.get(`${API_URL}/api/planlea/admin/all-leave-plans`, {
 				withCredentials: true
 			})
 			
-			console.log('All leave plans loaded:', response.data.length)
+			// Jeśli super admin - pokaż wszystkie plany, jeśli nie - filtruj tylko dla użytkowników z zespołu
+			let filteredPlans
+			if (isSuperAdmin) {
+				filteredPlans = response.data
+			} else {
+				filteredPlans = response.data.filter(plan => {
+					const hasUser = users.some(user => user._id === plan.userId)
+					return hasUser
+				})
+			}
 			
-			
-			const teamLeavePlans = response.data.filter(plan => {
-				
-				const hasUser = users.some(user => user._id === plan.userId)
-				if (hasUser) {
-					console.log('Plan for user:', plan.userId, 'included')
-				}
-				return hasUser
-			})
-			
-			console.log('Team leave plans filtered:', teamLeavePlans.length)
-			setLeavePlans(teamLeavePlans)
+			setLeavePlans(filteredPlans)
 		} catch (error) {
 			console.error('Failed to fetch leave plans:', error)
 			setError(t('list.error'))
@@ -102,27 +92,31 @@ function AdminAllLeaveCalendar() {
 
 	const fetchAcceptedLeaveRequests = async () => {
 		try {
-			console.log('Fetching accepted leave requests')
-			
 			const response = await axios.get(`${API_URL}/api/leaveworks/accepted-leave-requests`, {
 				withCredentials: true
 			})
 			
-			console.log('Accepted leave requests loaded:', response.data.length)
-			console.log('Sample request data:', response.data[0])
+			// Jeśli super admin - pokaż wszystkie wnioski, jeśli nie - filtruj tylko dla użytkowników z zespołu
+			let filteredRequests
+			if (isSuperAdmin) {
+				filteredRequests = response.data.filter(request => {
+					if (!request.userId || !request.userId._id) {
+						return false
+					}
+					return true
+				})
+			} else {
+				// Filtruj tylko wnioski użytkowników z tego samego teamu i sprawdź czy userId istnieje
+				filteredRequests = response.data.filter(request => {
+					if (!request.userId || !request.userId._id) {
+						return false
+					}
+					const hasUser = users.some(user => user._id === request.userId._id)
+					return hasUser
+				})
+			}
 			
-			// Filtruj tylko wnioski użytkowników z tego samego teamu i sprawdź czy userId istnieje
-			const teamLeaveRequests = response.data.filter(request => {
-				if (!request.userId || !request.userId._id) {
-					console.log('Request without userId:', request)
-					return false
-				}
-				const hasUser = users.some(user => user._id === request.userId._id)
-				return hasUser
-			})
-			
-			console.log('Team leave requests filtered:', teamLeaveRequests.length)
-			setAcceptedLeaveRequests(teamLeaveRequests)
+			setAcceptedLeaveRequests(filteredRequests)
 		} catch (error) {
 			console.error('Failed to fetch accepted leave requests:', error)
 			setError(t('list.error'))
@@ -243,15 +237,22 @@ function AdminAllLeaveCalendar() {
 							// Zaakceptowane wnioski urlopowe
 							...acceptedLeaveRequests
 								.filter(request => request.userId && request.userId.username) // Dodatkowe zabezpieczenie
-								.map(request => ({
-									title: `${request.userId.firstName} ${request.userId.lastName} (${t(request.type)})`,
-									start: request.startDate,
-									end: request.endDate,
-									allDay: true,
-									backgroundColor: getColorForUser(request.userId.username),
-									borderColor: getColorForUser(request.userId.username),
-									extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
-								}))
+								.map(request => {
+									// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
+									const endDate = new Date(request.endDate)
+									endDate.setDate(endDate.getDate() + 1)
+									const endDateStr = endDate.toISOString().split('T')[0]
+									
+									return {
+										title: `${request.userId.firstName} ${request.userId.lastName} (${t(request.type)})`,
+										start: request.startDate,
+										end: endDateStr,
+										allDay: true,
+										backgroundColor: getColorForUser(request.userId.username),
+										borderColor: getColorForUser(request.userId.username),
+										extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
+									}
+								})
 						]}
 						ref={calendarRef}
 						datesSet={handleMonthChange}

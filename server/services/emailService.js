@@ -87,14 +87,12 @@ const sendEmail = async (to, link, subject, html) => {
 		},
 	})
 
-	const info = await transporter.sendMail({
+	await transporter.sendMail({
 		from: '"Planopia" <michalipka1@gmail.com>',
 		to,
 		subject,
 		html,
 	})
-
-	console.log('Message sent: %s', info.messageId)
 }
 
 
@@ -106,7 +104,6 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		})
 
 		if (hrUsers.length === 0) {
-			console.log('Brak użytkowników HR w tym zespole')
 			return
 		}
 
@@ -160,7 +157,6 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		)
 
 		await Promise.all(emailPromises)
-		console.log('Email sent to HR users successfully (team scoped, all departments)')
 	} catch (error) {
 		console.error('Błąd podczas wysyłania maila do HR:', error)
 	}

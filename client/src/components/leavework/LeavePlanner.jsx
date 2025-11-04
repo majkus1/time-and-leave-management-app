@@ -52,21 +52,15 @@ function LeavePlanner() {
 
 	const fetchAcceptedLeaveRequests = async () => {
 		try {
-			console.log('Fetching accepted leave requests for current user')
-			
 			const response = await axios.get(`${API_URL}/api/leaveworks/user-accepted-leave-requests`, {
 				withCredentials: true
 			})
-			
-			console.log('Accepted leave requests loaded:', response.data.length)
-			console.log('Sample request data:', response.data[0])
 			
 			// Filtruj tylko wnioski z poprawnymi datami
 			const validRequests = response.data.filter(request => 
 				request.startDate && request.endDate && request.userId
 			)
 			
-			console.log('Valid requests filtered:', validRequests.length)
 			setAcceptedLeaveRequests(validRequests)
 		} catch (error) {
 			console.error('Error fetching accepted leave requests:', error)
@@ -119,7 +113,6 @@ function LeavePlanner() {
 			toggleDate(date)
 		} else if (type === 'request') {
 			// Dla zaakceptowanych wniosków - tylko informacja
-			console.log('To jest zaakceptowany wniosek urlopowy - nie można go edytować')
 		}
 	}
 
@@ -265,15 +258,22 @@ function LeavePlanner() {
 								// Zaakceptowane wnioski urlopowe (tylko do wyświetlania)
 								...acceptedLeaveRequests
 									.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
-									.map(request => ({
-										title: `${t(request.type)}`,
-										start: request.startDate,
-										end: request.endDate,
-										allDay: true,
-										backgroundColor: 'green',
-										borderColor: 'darkgreen',
-										extendedProps: { type: 'request', requestId: request._id }
-									}))
+									.map(request => {
+										// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
+										const endDate = new Date(request.endDate)
+										endDate.setDate(endDate.getDate() + 1)
+										const endDateStr = endDate.toISOString().split('T')[0]
+										
+										return {
+											title: `${t(request.type)}`,
+											start: request.startDate,
+											end: endDateStr,
+											allDay: true,
+											backgroundColor: 'green',
+											borderColor: 'darkgreen',
+											extendedProps: { type: 'request', requestId: request._id }
+										}
+									})
 							]}
 							dateClick={info => toggleDate(info.dateStr)}
 							ref={calendarRef}

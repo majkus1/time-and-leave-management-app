@@ -124,8 +124,6 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		await Promise.all(hrEmailPromises)
 
-		console.log('Wysłano wszystkie maile do przełożonych i HR w obrębie zespołu')
-
 		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
 	} catch (error) {
 		console.error('Błąd podczas zgłaszania nieobecności:', error)

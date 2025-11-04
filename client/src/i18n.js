@@ -254,7 +254,11 @@ i18n
 						successMessage: 'User created successfully!\n\nThe user will be able to set their password and position by clicking the link in the email.',
 						errorGeneric: 'Error creating user',
 						errorUserLimit: 'User limit reached ({maxUsers}). Cannot add more users.',
-						errorTeamNotFound: 'Team not found'
+						errorTeamNotFound: 'Team not found',
+						teamInfoTitle: 'Team Information:',
+						userLimit: 'User limit:',
+						remainingSlots: 'Remaining slots:',
+						limitReached: 'User limit reached!'
 					},
 					logs: {
 						user: 'User',
@@ -580,7 +584,11 @@ i18n
 						successMessage: 'Użytkownik został utworzony pomyślnie!\n\nUżytkownik będzie mógł ustawić swoje hasło i stanowisko po kliknięciu w link w emailu.',
 						errorGeneric: 'Błąd podczas tworzenia użytkownika',
 						errorUserLimit: 'Osiągnięto limit użytkowników ({maxUsers}). Nie można dodać więcej użytkowników.',
-						errorTeamNotFound: 'Zespół nie został znaleziony'
+						errorTeamNotFound: 'Zespół nie został znaleziony',
+						teamInfoTitle: 'Informacje o zespole:',
+						userLimit: 'Limit użytkowników:',
+						remainingSlots: 'Pozostałe miejsca:',
+						limitReached: 'Osiągnięto limit użytkowników!'
 					},
 					logs: {
 						user: 'Użytkownik',

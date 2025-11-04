@@ -36,10 +36,10 @@ i18next
 		},
 	})
 
-firmDb.on('connected', () => console.log('Firm DB connected.'))
-firmDb.on('error', err => console.log('Firm DB error:', err))
-centralTicketConnection.on('connected', () => console.log('Central tickets DB connected.'))
-centralTicketConnection.on('error', err => console.log('Central tickets DB error:', err))
+firmDb.on('connected', () => {})
+firmDb.on('error', err => console.error('Firm DB error:', err))
+centralTicketConnection.on('connected', () => {})
+centralTicketConnection.on('error', err => console.error('Central tickets DB error:', err))
 
 // mongoose
 // 	.connect(process.env.DB_URI, {
@@ -87,6 +87,4 @@ app.use('/api/tickets', ticketsRoutes)
 app.use('/api/departments', require('./routes/department'))
 app.use('/uploads', express.static('uploads'))
 
-app.listen(process.env.PORT || 3000, () => {
-	console.log(`Server is running on port ${process.env.PORT || 3000}`)
-})
+app.listen(process.env.PORT || 3000, () => {})

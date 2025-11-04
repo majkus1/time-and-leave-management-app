@@ -68,7 +68,6 @@ exports.deleteWorkday = async (req, res) => {
 // 	}
 // }
 exports.getUserWorkdays = async (req, res) => {
-	console.log("req.user in workdays:", req.user);
 	try {
 		const { userId } = req.params;
 		const requestingUser = await User.findById(req.user.userId);

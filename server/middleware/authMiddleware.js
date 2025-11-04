@@ -16,7 +16,6 @@ const authenticateToken = (req, res, next) => {
       username: decoded.username,
       isTeamAdmin: decoded.isTeamAdmin
     };
-    console.log("Authenticated user:", req.user);
     next();
   } catch (error) {
     console.error('Error in auth middleware:', error);

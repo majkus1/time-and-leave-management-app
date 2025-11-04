@@ -35,9 +35,7 @@ function CreateUser() {
 
     const fetchDepartments = async () => {
         try {
-            console.log('CreateUser: Fetching departments...');
             const response = await axios.get(`${API_URL}/api/departments`, { withCredentials: true })
-            console.log('CreateUser: Departments response:', response.data);
             setDepartments(response.data)
         } catch (error) {
             console.error('CreateUser: Błąd pobierania departmentów:', error)
@@ -47,8 +45,10 @@ function CreateUser() {
     }
 
     const fetchTeamInfo = async () => {
+        if (!teamId) return // Super admin może nie mieć teamId, więc nie sprawdzamy limitu
+        
         try {
-            const response = await axios.get(`${API_URL}/api/teams/${teamId}/check-limit`, {
+            const response = await axios.post(`${API_URL}/api/teams/${teamId}/check-limit`, {}, {
                 withCredentials: true
             })
             setTeamInfo(response.data)
@@ -131,17 +131,17 @@ function CreateUser() {
                                 <h4><img src="img/add-group.png" alt="ikonka w sidebar" /> {t('newuser.h4')}</h4>
                                 
                                 {teamInfo && (
-                                    <div className={`mb-4 p-3 rounded-md ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                                        <h6 className="font-semibold mb-2">Informacje o zespole:</h6>
+                                    <div className={`mb-4 p-3 rounded-md mt-4 ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                        <h6 className="font-semibold mb-2">{t('newuser.teamInfoTitle')}</h6>
                                         <p className="text-sm mb-1">
-                                            <strong>Limit użytkowników:</strong> {teamInfo.currentCount} / {teamInfo.maxUsers}
+                                            <strong>{t('newuser.userLimit')}</strong> {teamInfo.currentCount} / {teamInfo.maxUsers}
                                         </p>
                                         <p className="text-sm mb-1">
-                                            <strong>Pozostałe miejsca:</strong> {teamInfo.remainingSlots}
+                                            <strong>{t('newuser.remainingSlots')}</strong> {teamInfo.remainingSlots}
                                         </p>
                                         {!teamInfo.canAddUser && (
                                             <p className="text-sm text-red-600 font-semibold">
-                                                Osiągnięto limit użytkowników!
+                                                {t('newuser.limitReached')}
                                             </p>
                                         )}
                                     </div>

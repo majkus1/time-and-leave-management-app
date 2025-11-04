@@ -181,10 +181,6 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 	const { t } = req
 
 	try {
-		
-		console.log('Debug - req.user:', req.user)
-		console.log('Debug - req.user.teamId:', req.user.teamId)
-
 		const leaveRequest = await LeaveRequest.findById(id)
 		if (!leaveRequest) {
 			return res.status(404).send('Leave request not found.')
@@ -345,19 +341,34 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 		const requestingUser = await User.findById(req.user.userId)
 		if (!requestingUser) return res.status(404).send('Brak użytkownika')
 
-		// Każda rola w zespole może widzieć zaakceptowane wnioski ze swojego zespołu
-		// Najpierw pobierz wszystkich użytkowników z tego samego zespołu
-		const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
-		const teamUserIds = teamUsers.map(user => user._id)
+		// Sprawdź czy to super admin
+		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
 
-		// Pobierz zaakceptowane wnioski tylko dla użytkowników z tego samego zespołu
-		const acceptedLeaveRequests = await LeaveRequest.find({ 
-			status: 'status.accepted',
-			userId: { $in: teamUserIds }
-		})
-			.populate('userId', 'firstName lastName username department')
-			.populate('updatedBy', 'firstName lastName')
-			.sort({ startDate: 1 })
+		let acceptedLeaveRequests
+		
+		if (isSuperAdmin) {
+			// Super admin widzi wszystkie zaakceptowane wnioski ze wszystkich zespołów
+			acceptedLeaveRequests = await LeaveRequest.find({ 
+				status: 'status.accepted'
+			})
+				.populate('userId', 'firstName lastName username department')
+				.populate('updatedBy', 'firstName lastName')
+				.sort({ startDate: 1 })
+		} else {
+			// Każda rola w zespole może widzieć zaakceptowane wnioski ze swojego zespołu
+			// Najpierw pobierz wszystkich użytkowników z tego samego zespołu
+			const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
+			const teamUserIds = teamUsers.map(user => user._id)
+
+			// Pobierz zaakceptowane wnioski tylko dla użytkowników z tego samego zespołu
+			acceptedLeaveRequests = await LeaveRequest.find({ 
+				status: 'status.accepted',
+				userId: { $in: teamUserIds }
+			})
+				.populate('userId', 'firstName lastName username department')
+				.populate('updatedBy', 'firstName lastName')
+				.sort({ startDate: 1 })
+		}
 
 		res.status(200).json(acceptedLeaveRequests)
 	} catch (error) {
