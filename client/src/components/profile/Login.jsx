@@ -11,6 +11,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useAlert } from '../../context/AlertContext'
+import Loader from '../Loader'
 
 function Login() {
 	// const [username, setUsername] = useState('')
@@ -23,7 +25,8 @@ function Login() {
 	const location = useLocation()
 	const from = location.state?.from?.pathname || '/dashboard'
 	const { t, i18n } = useTranslation()
-	const { setLoggedIn, setRole, setUsername, setTeamId, setIsTeamAdmin } = useAuth()
+	const { setLoggedIn, setRole, setUsername, setTeamId, setIsTeamAdmin, loggedIn, isCheckingAuth } = useAuth()
+	const { showAlert } = useAlert()
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -55,7 +58,7 @@ function Login() {
 			setErrorMessage(t('login.failed'))
 
 			if (error.response?.status === 429) {
-				alert('Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.')
+				await showAlert('Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.')
 			}
 		} finally {
 			setIsLoading(false)
@@ -64,6 +67,21 @@ function Login() {
 
 	const handleUsernameChange = e => {
 		setUsername(e.target.value.toLowerCase())
+	}
+
+	// Jeśli sprawdzamy autoryzację, pokaż loader
+	if (isCheckingAuth) {
+		return (
+			<div className="alllogin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+				<Loader />
+			</div>
+		)
+	}
+
+	// Jeśli użytkownik jest już zalogowany, przekieruj (to powinno być obsłużone przez App.jsx, ale na wszelki wypadek)
+	if (loggedIn) {
+		navigate('/dashboard', { replace: true })
+		return null
 	}
 
 	return (

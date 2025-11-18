@@ -4,6 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
 
 function LeaveRequestForm() {
 	const [type, setType] = useState('leaveform.option1')
@@ -17,6 +18,7 @@ function LeaveRequestForm() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { t, i18n } = useTranslation()
 	const [loading, setLoading] = useState(true)
+	const { showAlert } = useAlert()
 
 	useEffect(() => {
 		fetchAvailableLeaveDays()
@@ -68,7 +70,7 @@ function LeaveRequestForm() {
 		try {
 			const data = { type, startDate, endDate, daysRequested, replacement, additionalInfo }
 			await axios.post(`${API_URL}/api/leaveworks/leave-request`, data)
-			alert(t('leaveform.alertsucces'))
+			await showAlert(t('leaveform.alertsucces'))
 			fetchLeaveRequests()
 			setType('leaveform.option1')
 			setStartDate('')
@@ -78,7 +80,7 @@ function LeaveRequestForm() {
 			setAdditionalInfo('')
 		} catch (error) {
 			console.error('Błąd podczas wysyłania wniosku:', error)
-			alert(t('leaveform.alertfail'))
+			await showAlert(t('leaveform.alertfail'))
 		} finally {
 			setIsSubmitting(false)
 		}

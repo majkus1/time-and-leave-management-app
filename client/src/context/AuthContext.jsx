@@ -12,16 +12,21 @@ export const AuthProvider = ({ children }) => {
 	const [username, setUsername] = useState(null)
 	const [teamId, setTeamId] = useState(null)
 	const [isTeamAdmin, setIsTeamAdmin] = useState(false)
+	const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
 	const location = useLocation()
 
-	const publicPaths = [ '/reset-password', '/new-password', '/set-password' ]
+	// const publicPaths = [ '/reset-password', '/new-password', '/set-password' ]
 
 	useEffect(() => {
-		if (publicPaths.includes(location.pathname)) {
-			return
-		}
+		// Dla publicznych ścieżek (set-password, new-password, reset-password) nie sprawdzamy autoryzacji
+		// if (publicPaths.some(path => location.pathname.startsWith(path))) {
+		// 	setIsCheckingAuth(false)
+		// 	return
+		// }
 
+		// Dla innych ścieżek sprawdzamy status logowania
+		setIsCheckingAuth(true)
 		axios
 			.get(`${API_URL}/api/users/me`, { withCredentials: true })
 			.then(res => {
@@ -38,7 +43,10 @@ export const AuthProvider = ({ children }) => {
 				setTeamId(null)
 				setIsTeamAdmin(false)
 			})
-	}, [])
+			.finally(() => {
+				setIsCheckingAuth(false)
+			})
+	}, [location.pathname])
 
 	const logout = async () => {
 		try {
@@ -74,6 +82,7 @@ export const AuthProvider = ({ children }) => {
 				username,
 				teamId,
 				isTeamAdmin,
+				isCheckingAuth,
 				setLoggedIn,
 				setRole,
 				setUsername,

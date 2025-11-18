@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
+import { useAlert } from '../../context/AlertContext'
 
 function SetPassword() {
 	const [password, setPassword] = useState('')
@@ -12,6 +13,7 @@ function SetPassword() {
 	const { token } = useParams()
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
+	const { showAlert } = useAlert()
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -26,11 +28,11 @@ function SetPassword() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 		if (password !== confirmPassword) {
-			alert(t('newpass.messone'))
+			await showAlert(t('newpass.messone'))
 			return
 		}
 		if (!isPasswordValid(password)) {
-			alert(t('newpass.invalidPassword'))
+			await showAlert(t('newpass.invalidPassword'))
 			return
 		}
 		setIsLoading(true)
@@ -39,11 +41,11 @@ function SetPassword() {
 				password,
 				position,
 			})
-			alert(t('newpass.messtwo'))
+			await showAlert(t('newpass.messtwo'))
 			navigate('/login')
 		} catch (error) {
 			console.error('Error setting password:', error)
-			alert(t('newpass.messthree'))
+			await showAlert(t('newpass.messthree'))
 		} finally {
 			setIsLoading(false)
 		}

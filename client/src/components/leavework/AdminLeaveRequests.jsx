@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
 
 function AdminLeaveRequests() {
 	const { userId } = useParams()
@@ -16,6 +17,7 @@ function AdminLeaveRequests() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const [loading, setLoading] = useState(true)
+	const { showAlert } = useAlert()
 
 	useEffect(() => {
 		fetchLeaveRequests()
@@ -65,7 +67,7 @@ function AdminLeaveRequests() {
 				`${API_URL}/api/vacations/${userId}/vacation-days`,
 				{ vacationDays }
 			)
-			alert(t('adminleavereq.alert'))
+			await showAlert(t('adminleavereq.alert'))
 			fetchVacationDays()
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji liczby dni urlopu:', error)
@@ -89,7 +91,7 @@ function AdminLeaveRequests() {
 			await fetchLeaveRequests()
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
-			alert(t('adminleavereq.updateError') || 'Nie udało się zaktualizować statusu wniosku')
+			await showAlert(t('adminleavereq.updateError') || 'Nie udało się zaktualizować statusu wniosku')
 		}
 	}
 

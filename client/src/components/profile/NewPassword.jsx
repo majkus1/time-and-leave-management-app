@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
+import { useAlert } from '../../context/AlertContext'
 
 function NewPassword() {
 	const [password, setPassword] = useState('')
@@ -11,6 +12,7 @@ function NewPassword() {
 	const { token } = useParams()
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
+	const { showAlert } = useAlert()
 
 	const isPasswordValid = password => {
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
@@ -25,11 +27,11 @@ function NewPassword() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 		if (password !== confirmPassword) {
-			alert(t('newpass.messone'))
+			await showAlert(t('newpass.messone'))
 			return
 		}
 		if (!isPasswordValid(password)) {
-			alert(t('newpass.invalidPassword'))
+			await showAlert(t('newpass.invalidPassword'))
 			return
 		}
 		setIsLoading(true)
@@ -38,10 +40,10 @@ function NewPassword() {
 				newPassword: password,
 				token,
 			})
-			alert(t('newpass.messtwo'))
+			await showAlert(t('newpass.messtwo'))
 			navigate('/')
 		} catch (error) {
-			alert(t('newpass.messthree'))
+			await showAlert(t('newpass.messthree'))
 		} finally {
 			setIsLoading(false)
 		}

@@ -37,6 +37,7 @@ import { API_URL } from './config.js'
 import '../src/style.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
+import { AlertProvider } from './context/AlertContext'
 
 axios.defaults.withCredentials = true
 
@@ -179,9 +180,11 @@ function AppContent() {
 function App() {
 	return (
 		<Router>
-			<AuthProvider>
-				<AppContent />
-			</AuthProvider>
+			<AlertProvider>
+				<AuthProvider>
+					<AppContent />
+				</AuthProvider>
+			</AlertProvider>
 		</Router>
 	)
 }

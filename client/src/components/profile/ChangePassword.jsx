@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
 
 function ChangePassword() {
 	const [currentPassword, setCurrentPassword] = useState('')
@@ -18,6 +19,7 @@ function ChangePassword() {
 	const { role, username, teamId } = useAuth()
 	const [loading, setLoading] = useState(true)
 	const navigate = useNavigate()
+	const { showAlert } = useAlert()
 	const [deleteModal, setDeleteModal] = useState(false)
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [userId, setUserId] = useState(null)
@@ -45,11 +47,11 @@ function ChangePassword() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 		if (newPassword !== confirmPassword) {
-			alert(t('editprofile.notsamepass'))
+			await showAlert(t('editprofile.notsamepass'))
 			return
 		}
 		if (!isPasswordValid(newPassword)) {
-			alert(t('newpass.invalidPassword'))
+			await showAlert(t('newpass.invalidPassword'))
 			return
 		}
 		setIsPasswordLoading(true)
@@ -58,9 +60,9 @@ function ChangePassword() {
 				currentPassword,
 				newPassword,
 			})
-			alert(t('editprofile.successchangepass'))
+			await showAlert(t('editprofile.successchangepass'))
 		} catch (error) {
-			alert(t('editprofile.failchangepass'))
+			await showAlert(t('editprofile.failchangepass'))
 			console.error(error)
 		} finally {
 			setIsPasswordLoading(false)
@@ -71,9 +73,9 @@ function ChangePassword() {
 		setIsPositionLoading(true)
 		try {
 			await axios.put(`${API_URL}/api/users/update-position`, { position })
-			alert(t('editprofile.successchangepos'))
+			await showAlert(t('editprofile.successchangepos'))
 		} catch (error) {
-			alert(t('editprofile.failchangepos'))
+			await showAlert(t('editprofile.failchangepos'))
 			console.error(error)
 		} finally {
 			setIsPositionLoading(false)
@@ -342,11 +344,11 @@ function ChangePassword() {
 											withCredentials: true
 										})
 										
-										alert(t('editprofile.deleteAccountSuccess'))
+										await showAlert(t('editprofile.deleteAccountSuccess'))
 										window.location.href = '/login'
 									} catch (error) {
 										const errorMessage = error.response?.data?.message || t('editprofile.deleteAccountError')
-										alert(errorMessage)
+										await showAlert(errorMessage)
 										console.error('Error deleting account:', error)
 									} finally {
 										setIsDeleting(false)

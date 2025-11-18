@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { useAlert } from '../../context/AlertContext'
+import { useAuth } from '../../context/AuthContext'
+import Loader from '../Loader'
 
 function ResetPassword() {
 	const [email, setEmail] = useState('')
@@ -11,6 +14,8 @@ function ResetPassword() {
 	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
+	const { showAlert } = useAlert()
+	const { isCheckingAuth, loggedIn } = useAuth()
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -22,14 +27,14 @@ function ResetPassword() {
 		setIsLoading(true)
 		try {
 			const response = await axios.post(`${API_URL}/api/public/reset-password-request`, { email })
-			alert(t('resetpass.messok'))
+			await showAlert(t('resetpass.messok'))
 			setTimeout(() => {
 				navigate('/login')
 			}, 5000)
 		} catch (error) {
-			alert(t('resetpass.messfail'))
+			await showAlert(t('resetpass.messfail'))
 			if (error.response?.status === 429) {
-				alert(t('resetpass.toomany'))
+				await showAlert(t('resetpass.toomany'))
 			}
 		} finally {
 			setIsLoading(false)
@@ -38,6 +43,21 @@ function ResetPassword() {
 
 	const handleEmailChange = e => {
 		setEmail(e.target.value.toLowerCase())
+	}
+
+	// Jeśli sprawdzamy autoryzację, pokaż loader
+	if (isCheckingAuth) {
+		return (
+			<div className="alllogin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+				<Loader />
+			</div>
+		)
+	}
+
+	// Jeśli użytkownik jest już zalogowany, przekieruj
+	if (loggedIn) {
+		navigate('/dashboard', { replace: true })
+		return null
 	}
 
 	return (

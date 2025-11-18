@@ -4,6 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useAlert } from '../../context/AlertContext'
 
 const availableRoles = [
     'Admin',
@@ -25,6 +26,7 @@ function CreateUser() {
     const [isLoading, setIsLoading] = useState(false)
     const { t } = useTranslation()
     const { teamId } = useAuth()
+    const { showAlert } = useAlert()
 
     useEffect(() => {
         if (teamId) {
@@ -81,7 +83,7 @@ function CreateUser() {
         e.preventDefault()
         
         if (teamInfo && !teamInfo.canAddUser) {
-            alert(t('newuser.errorUserLimit', { maxUsers: teamInfo.maxUsers }))
+            await showAlert(t('newuser.errorUserLimit', { maxUsers: teamInfo.maxUsers }))
             return
         }
 
@@ -98,7 +100,7 @@ function CreateUser() {
             })
             
             if (response.data.success) {
-                alert(t('newuser.successMessage', { email: username }))
+                await showAlert(t('newuser.successMessage', { email: username }))
                 
                 setUsername('')
                 setFirstName('')
@@ -111,9 +113,9 @@ function CreateUser() {
         } catch (error) {
             const code = error.response?.data?.code
             if (code === 'USER_EXISTS') {
-                alert(t('newuser.error_user_exists'))
+                await showAlert(t('newuser.error_user_exists'))
             } else {
-                alert(error.response?.data?.message || t('newuser.errorGeneric'))
+                await showAlert(error.response?.data?.message || t('newuser.errorGeneric'))
             }
         } finally {
             setIsLoading(false)

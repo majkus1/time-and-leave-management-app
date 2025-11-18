@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
 
 function Logs() {
 	const [users, setUsers] = useState([])
@@ -21,6 +22,7 @@ function Logs() {
 	const [departmentMode, setDepartmentMode] = useState('choose')
 	const { role, username } = useAuth()
 	const navigate = useNavigate()
+	const { showAlert, showConfirm } = useAlert()
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
 	const [isDeleting, setIsDeleting] = useState(false)
 	const [resendingLink, setResendingLink] = useState(false)
@@ -150,7 +152,7 @@ function Logs() {
 			// Resetuj tryb do wyboru działu i odśwież listę
 			setDepartmentMode('choose')
 			setEditingUser(null)
-			alert(t('logs.alert'))
+			await showAlert(t('logs.alert'))
 		} catch (error) {
 			console.error('Error updating roles/department:', error)
 			setError(t('logs.alerttwo'))
@@ -177,17 +179,17 @@ function Logs() {
 			// Sprawdź czy użytkownik usunął siebie
 			if (response.data.selfDeleted) {
 				// Wyloguj użytkownika
-				alert(t('logs.deleteSelfSuccess'))
+				await showAlert(t('logs.deleteSelfSuccess'))
 				window.location.href = '/login'
 				return
 			}
 			
-			alert(response.data.message || t('logs.deleteSuccess'))
+			await showAlert(response.data.message || t('logs.deleteSuccess'))
 			setUsers(prevUsers => prevUsers.filter(user => user._id !== deleteModal.user._id))
 			setDeleteModal({ show: false, user: null })
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || t('logs.deleteError')
-			alert(errorMessage)
+			await showAlert(errorMessage)
 			console.error('Error deleting user:', error)
 		} finally {
 			setIsDeleting(false)
@@ -195,7 +197,8 @@ function Logs() {
 	}
 
 	const handleResendPasswordLink = async (userId) => {
-		if (!window.confirm('Czy na pewno chcesz wysłać ponownie link do ustawienia hasła?')) {
+		const confirmed = await showConfirm('Czy na pewno chcesz wysłać ponownie link do ustawienia hasła?')
+		if (!confirmed) {
 			return
 		}
 
@@ -205,13 +208,13 @@ function Logs() {
 				withCredentials: true
 			})
 			
-			alert(response.data.message || 'Link został wysłany pomyślnie')
+			await showAlert(response.data.message || 'Link został wysłany pomyślnie')
 			// Odśwież listę użytkowników aby zaktualizować status
 			const usersResponse = await axios.get(`${API_URL}/api/users/all-users`, { withCredentials: true })
 			setUsers(usersResponse.data)
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania linku'
-			alert(errorMessage)
+			await showAlert(errorMessage)
 			console.error('Error resending password link:', error)
 		} finally {
 			setResendingLink(false)
@@ -219,7 +222,8 @@ function Logs() {
 	}
 
 	const handleSendApologyEmail = async (userId) => {
-		if (!window.confirm('Czy na pewno chcesz wysłać email informacyjny z przeprosinami?')) {
+		const confirmed = await showConfirm('Czy na pewno chcesz wysłać email informacyjny z przeprosinami?')
+		if (!confirmed) {
 			return
 		}
 
@@ -229,10 +233,10 @@ function Logs() {
 				withCredentials: true
 			})
 			
-			alert(response.data.message || 'Email został wysłany pomyślnie')
+			await showAlert(response.data.message || 'Email został wysłany pomyślnie')
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania emaila'
-			alert(errorMessage)
+			await showAlert(errorMessage)
 			console.error('Error sending apology email:', error)
 		} finally {
 			setSendingApology(false)

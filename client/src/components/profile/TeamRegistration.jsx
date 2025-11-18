@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import { API_URL } from '../../config'
+import { useAlert } from '../../context/AlertContext'
+import Loader from '../Loader'
 
 const TeamRegistration = () => {
 	const [formData, setFormData] = useState({
@@ -16,8 +18,9 @@ const TeamRegistration = () => {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 	const navigate = useNavigate()
-	const { setLoggedIn, setRole, setUsername, setTeamId, refreshUserData } = useAuth()
+	const { setLoggedIn, setRole, setUsername, setTeamId, refreshUserData, loggedIn, isCheckingAuth } = useAuth()
 	const { t, i18n } = useTranslation()
+	const { showAlert } = useAlert()
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -45,7 +48,7 @@ const TeamRegistration = () => {
 				// Odśwież wszystkie dane użytkownika z serwera
 				await refreshUserData()
 
-				alert(t('newteam.successMessage'))
+				await showAlert(t('newteam.successMessage'))
 				
 				navigate('/dashboard')
 			}
@@ -72,6 +75,21 @@ const TeamRegistration = () => {
 		} finally {
 			setLoading(false)
 		}
+	}
+
+	// Jeśli sprawdzamy autoryzację, pokaż loader
+	if (isCheckingAuth) {
+		return (
+			<div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+				<Loader />
+			</div>
+		)
+	}
+
+	// Jeśli użytkownik jest już zalogowany, przekieruj
+	if (loggedIn) {
+		navigate('/dashboard', { replace: true })
+		return null
 	}
 
 	return (

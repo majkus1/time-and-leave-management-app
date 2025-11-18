@@ -7,6 +7,7 @@ import Modal from 'react-modal'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
 
 Modal.setAppElement('#root')
 
@@ -31,6 +32,7 @@ function MonthlyCalendar() {
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
 	const [loading, setLoading] = useState(true)
+	const { showAlert } = useAlert()
 
 	const fetchWorkdays = async cancelToken => {
 		try {
@@ -133,13 +135,13 @@ function MonthlyCalendar() {
 		setTotalOtherAbsences(otherAbsences)
 	}
 
-	const handleDateClick = info => {
+	const handleDateClick = async info => {
 		const eventsOnDate = workdays.filter(
 			day => new Date(day.date).toDateString() === new Date(info.dateStr).toDateString()
 		)
 
 		if (eventsOnDate.length >= 1) {
-			alert(t('workcalendar.oneactionforday'))
+			await showAlert(t('workcalendar.oneactionforday'))
 			return
 		}
 
@@ -344,9 +346,9 @@ function MonthlyCalendar() {
 					<input
 						type="checkbox"
 						checked={isConfirmed}
-						onChange={() => {
-							toggleConfirmationStatus()
-							alert(isConfirmed ? t('workcalendar.cancelconfirm') : t('workcalendar.successconfirm'))
+						onChange={async () => {
+							await toggleConfirmationStatus()
+							await showAlert(isConfirmed ? t('workcalendar.cancelconfirm') : t('workcalendar.successconfirm'))
 						}}
 						style={{ marginRight: '10px', transform: 'scale(2)', cursor: 'pointer' }}
 					/>
@@ -357,9 +359,9 @@ function MonthlyCalendar() {
 </h3> */}
 
 <button
-  onClick={() => {
-    toggleConfirmationStatus()
-    alert(
+  onClick={async () => {
+    await toggleConfirmationStatus()
+    await showAlert(
       isConfirmed
         ? t('workcalendar.cancelconfirm')
         : t('workcalendar.successconfirm')
