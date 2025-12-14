@@ -17,6 +17,7 @@ function Logs() {
 	const { t, i18n } = useTranslation()
 	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
 	const [departmentMode, setDepartmentMode] = useState('choose')
+	const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
 	const { role, username, teamId } = useAuth()
 	const navigate = useNavigate()
 	const { showAlert, showConfirm } = useAlert()
@@ -39,7 +40,7 @@ function Logs() {
 	const { data: users = [], isLoading: loadingUsers } = useUsers()
 	// Pobierz działy dla edytowanego użytkownika (jeśli edytujemy) lub dla własnego zespołu
 	const editingUserTeamId = editingUser?.teamId || teamId
-	const { data: departments = [] } = useDepartments(editingUserTeamId)
+	const { data: departments = [], refetch: refetchDepartments } = useDepartments(editingUserTeamId)
 	const updateUserRolesMutation = useUpdateUserRoles()
 	const deleteUserMutation = useDeleteUser()
 	const createDepartmentMutation = useCreateDepartment()
@@ -157,6 +158,7 @@ function Logs() {
 		setEditedDepartments(userDepartments)
 		
 		setDepartmentMode('choose')  // Zawsze zaczynaj od trybu wyboru
+		setNewDepartmentName('')  // Resetuj nazwę nowego działu
 	}
 
 	const handleRoleChange = role => {
@@ -169,6 +171,63 @@ function Logs() {
 				? prev.filter(d => d !== dept) // Usuń jeśli już jest
 				: [...prev, dept] // Dodaj jeśli nie ma
 		)
+	}
+
+	const handleAddNewDepartment = async () => {
+		const value = newDepartmentName.trim()
+		
+		// Walidacja długości
+		if (value.length < 2) {
+			await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+			return
+		}
+		if (value.length > 100) {
+			await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+			return
+		}
+		
+		if (!value) {
+			return
+		}
+		
+		// Użyj teamId użytkownika, którego edytujemy (nie super admina)
+		const userTeamId = editingUser?.teamId || teamId
+		
+		if (!userTeamId) {
+			await showAlert('Błąd: Nie można określić zespołu użytkownika')
+			return
+		}
+		
+		// Sprawdź czy dział już istnieje
+		if (departments.includes(value)) {
+			await showAlert('Dział o tej nazwie już istnieje')
+			return
+		}
+		
+		// Sprawdź czy dział już jest w edytowanych działach
+		if (editedDepartments.includes(value)) {
+			await showAlert('Dział już został dodany')
+			return
+		}
+		
+		try {
+			// Utwórz nowy dział w bazie jeśli nie istnieje
+			if (!departments.includes(value)) {
+				await createDepartmentMutation.mutateAsync({ name: value, teamId: userTeamId })
+				// Odśwież listę działów
+				await refetchDepartments()
+			}
+			
+			// Dodaj do wybranych działów
+			setEditedDepartments([...editedDepartments, value])
+			setNewDepartmentName('')
+			setDepartmentMode('choose')
+			await showAlert('Dział został dodany pomyślnie')
+		} catch (error) {
+			console.error('Error creating department:', error)
+			const errorMessage = error.response?.data?.message || 'Błąd podczas tworzenia działu'
+			await showAlert(errorMessage)
+		}
 	}
 
 	const handleDeleteDepartment = async (deptName) => {
@@ -736,6 +795,7 @@ function Logs() {
 																	className="btn btn-outline-primary"
 																	onClick={() => {
 																		setDepartmentMode('new')
+																		setNewDepartmentName('')
 																	}}
 																	style={{ 
 																		padding: '8px 16px',
@@ -770,25 +830,8 @@ function Logs() {
 																	<input
 																		type="text"
 																		placeholder={t('newuser.department4')}
-																		onKeyDown={async (e) => {
-																			if (e.key === 'Enter') {
-																				e.preventDefault()
-																				const value = e.target.value.trim()
-																				// Walidacja długości (minimum 2 znaki)
-																				if (value.length < 2) {
-																					await showAlert('Nazwa działu musi mieć minimum 2 znaki')
-																					return
-																				}
-																				if (value.length > 100) {
-																					await showAlert('Nazwa działu może mieć maksimum 100 znaków')
-																					return
-																				}
-																				if (value && !editedDepartments.includes(value)) {
-																					setEditedDepartments([...editedDepartments, value])
-																					e.target.value = ''
-																				}
-																			}
-																		}}
+																		value={newDepartmentName}
+																		onChange={(e) => setNewDepartmentName(e.target.value)}
 																		style={{ 
 																			width: '100%',
 																			padding: '12px',
@@ -804,12 +847,29 @@ function Logs() {
 																</div>
 																
 																<div style={{ display: 'flex', gap: '10px' }}>
-																	
-																	
+																	<button
+																		type="button"
+																		className="btn btn-primary"
+																		onClick={handleAddNewDepartment}
+																		disabled={!newDepartmentName.trim()}
+																		style={{ 
+																			padding: '8px 16px',
+																			borderRadius: '6px',
+																			border: '1px solid #3498db',
+																			backgroundColor: '#3498db',
+																			color: 'white',
+																			cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
+																			opacity: newDepartmentName.trim() ? 1 : 0.5
+																		}}>
+																		{t('newuser.departmentAddButton')}
+																	</button>
 																	<button
 																		type="button"
 																		className="btn btn-outline-primary"
-																		onClick={() => setDepartmentMode('choose')}
+																		onClick={() => {
+																			setDepartmentMode('choose')
+																			setNewDepartmentName('')
+																		}}
 																		style={{ 
 																			padding: '8px 16px',
 																			borderRadius: '6px',
@@ -1307,6 +1367,7 @@ function Logs() {
 														className="btn btn-outline-primary"
 														onClick={() => {
 															setDepartmentMode('new')
+															setNewDepartmentName('')
 														}}
 														style={{ 
 															width: '100%',
@@ -1343,25 +1404,8 @@ function Logs() {
 														<input
 															type="text"
 															placeholder={t('newuser.department4')}
-															onKeyDown={async (e) => {
-																if (e.key === 'Enter') {
-																	e.preventDefault()
-																	const value = e.target.value.trim()
-																	// Walidacja długości (minimum 2 znaki)
-																	if (value.length < 2) {
-																		await showAlert('Nazwa działu musi mieć minimum 2 znaki')
-																		return
-																	}
-																	if (value.length > 100) {
-																		await showAlert('Nazwa działu może mieć maksimum 100 znaków')
-																		return
-																	}
-																	if (value && !editedDepartments.includes(value)) {
-																		setEditedDepartments([...editedDepartments, value])
-																		e.target.value = ''
-																	}
-																}
-															}}
+															value={newDepartmentName}
+															onChange={(e) => setNewDepartmentName(e.target.value)}
 															style={{ 
 																width: '100%',
 																padding: '12px',
@@ -1379,8 +1423,29 @@ function Logs() {
 													<div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
 														<button
 															type="button"
+															className="btn btn-primary"
+															onClick={handleAddNewDepartment}
+															disabled={!newDepartmentName.trim()}
+															style={{ 
+																width: '100%',
+																padding: '12px 16px',
+																borderRadius: '8px',
+																border: '1px solid #3498db',
+																backgroundColor: '#3498db',
+																color: 'white',
+																fontSize: '14px',
+																cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
+																opacity: newDepartmentName.trim() ? 1 : 0.5
+															}}>
+															{t('newuser.departmentAddButton')}
+														</button>
+														<button
+															type="button"
 															className="btn btn-outline-primary"
-															onClick={() => setDepartmentMode('choose')}
+															onClick={() => {
+																setDepartmentMode('choose')
+																setNewDepartmentName('')
+															}}
 															style={{ 
 																width: '100%',
 																padding: '12px 16px',
