@@ -17,7 +17,7 @@ function Logs() {
 	const { t, i18n } = useTranslation()
 	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
 	const [departmentMode, setDepartmentMode] = useState('choose')
-	const { role, username } = useAuth()
+	const { role, username, teamId } = useAuth()
 	const navigate = useNavigate()
 	const { showAlert, showConfirm } = useAlert()
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
@@ -186,6 +186,21 @@ function Logs() {
 
 	const handleSaveRoles = async userId => {
 		try {
+			// Sprawdź czy są nowe działy, które nie istnieją w liście działów
+			const newDepartments = editedDepartments.filter(dept => !departments.includes(dept))
+			
+			// Utwórz nowe działy jeśli istnieją
+			if (newDepartments.length > 0 && teamId) {
+				for (const deptName of newDepartments) {
+					try {
+						await createDepartmentMutation.mutateAsync({ name: deptName, teamId })
+					} catch (error) {
+						console.error(`Error creating department ${deptName}:`, error)
+						// Kontynuuj nawet jeśli jeden dział się nie udał
+					}
+				}
+			}
+			
 			// Zaktualizuj użytkownika z nowymi rolami i działami (tablica)
 			await updateUserRolesMutation.mutateAsync({
 				userId,

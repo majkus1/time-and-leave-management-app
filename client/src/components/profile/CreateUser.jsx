@@ -55,7 +55,7 @@ function CreateUser() {
             // Utwórz nowy dział jeśli nie istnieje
             if (!departments.includes(value)) {
                 try {
-                    await createDepartmentMutation.mutateAsync(value)
+                    await createDepartmentMutation.mutateAsync({ name: value, teamId })
                     // Odśwież listę działów
                     await refetchDepartments()
                 } catch (error) {
@@ -85,7 +85,7 @@ function CreateUser() {
         try {
             // Jeśli użytkownik dodał nowy dział, utwórz go
             if (departmentMode === 'new' && newDepartmentName && !departments.includes(newDepartmentName)) {
-                await createDepartmentMutation.mutateAsync(newDepartmentName)
+                await createDepartmentMutation.mutateAsync({ name: newDepartmentName, teamId })
                 // Dodaj nowy dział do wybranych
                 if (!selectedDepartments.includes(newDepartmentName)) {
                     setSelectedDepartments([...selectedDepartments, newDepartmentName])

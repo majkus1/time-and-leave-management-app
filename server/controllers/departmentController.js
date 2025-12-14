@@ -44,8 +44,24 @@ exports.getDepartments = async (req, res) => {
 
 exports.createDepartment = async (req, res) => {
 	try {
-		const { name } = req.body;
-		const teamId = req.user.teamId;
+		const { name, teamId: bodyTeamId } = req.body;
+		
+		// Pobierz użytkownika z bazy danych
+		const user = await User.findById(req.user.userId);
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
+		}
+		
+		// Sprawdź czy to super admin
+		const isSuperAdmin = user.username === 'michalipka1@gmail.com';
+		
+		// Pobierz teamId z request body (dla super admina) lub z req.user lub z użytkownika
+		let teamId = bodyTeamId || req.user.teamId || user.teamId;
+		
+		// Dla super admina, teamId MUSI być w body
+		if (isSuperAdmin && !bodyTeamId) {
+			return res.status(400).json({ message: 'Dla super admina teamId jest wymagane w body requestu' });
+		}
 
 		if (!name || !teamId) {
 			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
@@ -62,7 +78,7 @@ exports.createDepartment = async (req, res) => {
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment });
 	} catch (error) {
 		console.error('Error in createDepartment:', error);
-		res.status(500).json({ message: 'Błąd tworzenia działu' });
+		res.status(500).json({ message: 'Błąd tworzenia działu', error: error.message });
 	}
 };
 

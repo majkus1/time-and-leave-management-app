@@ -22,10 +22,10 @@ export const useCreateDepartment = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async (name) => {
+		mutationFn: async ({ name, teamId }) => {
 			const response = await axios.post(
 				`${API_URL}/api/departments`,
-				{ name },
+				{ name, teamId },
 				{ withCredentials: true }
 			)
 			return response.data
