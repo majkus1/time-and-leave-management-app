@@ -51,6 +51,17 @@ function CreateUser() {
 
     const handleAddDepartment = async () => {
         const value = newDepartmentName.trim()
+        
+        // Walidacja długości
+        if (value.length < 2) {
+            await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+            return
+        }
+        if (value.length > 100) {
+            await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+            return
+        }
+        
         if (value && !selectedDepartments.includes(value)) {
             // Utwórz nowy dział jeśli nie istnieje
             if (!departments.includes(value)) {
@@ -60,6 +71,9 @@ function CreateUser() {
                     await refetchDepartments()
                 } catch (error) {
                     console.error('Error creating department:', error)
+                    const errorMessage = error.response?.data?.message || 'Błąd podczas tworzenia działu'
+                    await showAlert(errorMessage)
+                    return
                 }
             }
             // Dodaj do wybranych i przełącz na tryb wyboru
@@ -85,10 +99,28 @@ function CreateUser() {
         try {
             // Jeśli użytkownik dodał nowy dział, utwórz go
             if (departmentMode === 'new' && newDepartmentName && !departments.includes(newDepartmentName)) {
-                await createDepartmentMutation.mutateAsync({ name: newDepartmentName, teamId })
-                // Dodaj nowy dział do wybranych
-                if (!selectedDepartments.includes(newDepartmentName)) {
-                    setSelectedDepartments([...selectedDepartments, newDepartmentName])
+                const trimmedName = newDepartmentName.trim()
+                
+                // Walidacja długości
+                if (trimmedName.length < 2) {
+                    await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+                    return
+                }
+                if (trimmedName.length > 100) {
+                    await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+                    return
+                }
+                
+                try {
+                    await createDepartmentMutation.mutateAsync({ name: trimmedName, teamId })
+                    // Dodaj nowy dział do wybranych
+                    if (!selectedDepartments.includes(trimmedName)) {
+                        setSelectedDepartments([...selectedDepartments, trimmedName])
+                    }
+                } catch (error) {
+                    const errorMessage = error.response?.data?.message || 'Błąd podczas tworzenia działu'
+                    await showAlert(errorMessage)
+                    return
                 }
             }
 

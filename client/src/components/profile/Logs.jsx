@@ -204,6 +204,13 @@ function Logs() {
 				return
 			}
 			
+			// Walidacja długości działów przed zapisem
+			const invalidDepartments = editedDepartments.filter(dept => dept.length < 2 || dept.length > 100)
+			if (invalidDepartments.length > 0) {
+				await showAlert('Niektóre działy mają nieprawidłową długość (minimum 2, maksimum 100 znaków)')
+				return
+			}
+			
 			// Sprawdź czy są nowe działy, które nie istnieją w liście działów
 			const newDepartments = editedDepartments.filter(dept => !departments.includes(dept))
 			
@@ -214,7 +221,10 @@ function Logs() {
 						await createDepartmentMutation.mutateAsync({ name: deptName, teamId: userTeamId })
 					} catch (error) {
 						console.error(`Error creating department ${deptName}:`, error)
-						// Kontynuuj nawet jeśli jeden dział się nie udał
+						const errorMessage = error.response?.data?.message || `Błąd podczas tworzenia działu "${deptName}"`
+						await showAlert(errorMessage)
+						// Nie kontynuuj jeśli wystąpił błąd
+						return
 					}
 				}
 			}
@@ -760,10 +770,19 @@ function Logs() {
 																	<input
 																		type="text"
 																		placeholder={t('newuser.department4')}
-																		onKeyDown={(e) => {
+																		onKeyDown={async (e) => {
 																			if (e.key === 'Enter') {
 																				e.preventDefault()
 																				const value = e.target.value.trim()
+																				// Walidacja długości (minimum 2 znaki)
+																				if (value.length < 2) {
+																					await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+																					return
+																				}
+																				if (value.length > 100) {
+																					await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+																					return
+																				}
 																				if (value && !editedDepartments.includes(value)) {
 																					setEditedDepartments([...editedDepartments, value])
 																					e.target.value = ''
@@ -1324,10 +1343,19 @@ function Logs() {
 														<input
 															type="text"
 															placeholder={t('newuser.department4')}
-															onKeyDown={(e) => {
+															onKeyDown={async (e) => {
 																if (e.key === 'Enter') {
 																	e.preventDefault()
 																	const value = e.target.value.trim()
+																	// Walidacja długości (minimum 2 znaki)
+																	if (value.length < 2) {
+																		await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+																		return
+																	}
+																	if (value.length > 100) {
+																		await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+																		return
+																	}
 																	if (value && !editedDepartments.includes(value)) {
 																		setEditedDepartments([...editedDepartments, value])
 																		e.target.value = ''

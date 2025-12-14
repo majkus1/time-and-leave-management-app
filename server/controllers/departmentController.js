@@ -85,12 +85,28 @@ exports.createDepartment = async (req, res) => {
 			return res.status(400).json({ message: 'Dział o takiej nazwie już istnieje w tym zespole' });
 		}
 
-		const newDepartment = new Department({ name, teamId });
+		// Walidacja długości nazwy
+		const trimmedName = name.trim();
+		if (trimmedName.length < 2) {
+			return res.status(400).json({ message: 'Nazwa działu musi mieć minimum 2 znaki' });
+		}
+		if (trimmedName.length > 100) {
+			return res.status(400).json({ message: 'Nazwa działu może mieć maksimum 100 znaków' });
+		}
+
+		const newDepartment = new Department({ name: trimmedName, teamId });
 		await newDepartment.save();
 
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment });
 	} catch (error) {
 		console.error('Error in createDepartment:', error);
+		
+		// Obsługa błędów walidacji Mongoose
+		if (error.name === 'ValidationError') {
+			const messages = Object.values(error.errors).map(err => err.message);
+			return res.status(400).json({ message: messages.join(', ') });
+		}
+		
 		res.status(500).json({ message: 'Błąd tworzenia działu', error: error.message });
 	}
 };
