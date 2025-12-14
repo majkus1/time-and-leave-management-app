@@ -29,7 +29,7 @@ function CreateUser() {
     const { showAlert } = useAlert()
 
     // TanStack Query hooks
-    const { data: departments = [], refetch: refetchDepartments } = useDepartments()
+    const { data: departments = [], refetch: refetchDepartments } = useDepartments(teamId)
     const { data: teamInfo } = useTeamInfo(teamId)
     const createDepartmentMutation = useCreateDepartment()
     const createUserMutation = useCreateUser()

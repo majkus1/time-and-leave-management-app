@@ -3,11 +3,13 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 
 // Query hook - pobieranie działów
-export const useDepartments = () => {
+export const useDepartments = (teamId = null) => {
 	return useQuery({
-		queryKey: ['departments'],
+		queryKey: ['departments', teamId],
 		queryFn: async () => {
+			const params = teamId ? { teamId } : {}
 			const response = await axios.get(`${API_URL}/api/departments`, {
+				params,
 				withCredentials: true,
 			})
 			return response.data
@@ -31,6 +33,7 @@ export const useCreateDepartment = () => {
 			return response.data
 		},
 		onSuccess: () => {
+			// Invalidate all department queries (dla różnych teamId)
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
 		},
 	})
@@ -41,10 +44,11 @@ export const useDeleteDepartment = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async (name) => {
+		mutationFn: async ({ name, teamId }) => {
+			const params = teamId ? { teamId } : {}
 			const response = await axios.delete(
 				`${API_URL}/api/departments/${encodeURIComponent(name)}`,
-				{ withCredentials: true }
+				{ params, withCredentials: true }
 			)
 			return response.data
 		},

@@ -37,7 +37,9 @@ function Logs() {
 
 	// TanStack Query hooks
 	const { data: users = [], isLoading: loadingUsers } = useUsers()
-	const { data: departments = [] } = useDepartments()
+	// Pobierz działy dla edytowanego użytkownika (jeśli edytujemy) lub dla własnego zespołu
+	const editingUserTeamId = editingUser?.teamId || teamId
+	const { data: departments = [] } = useDepartments(editingUserTeamId)
 	const updateUserRolesMutation = useUpdateUserRoles()
 	const deleteUserMutation = useDeleteUser()
 	const createDepartmentMutation = useCreateDepartment()
@@ -174,7 +176,15 @@ function Logs() {
 		if (!confirmed) return
 
 		try {
-			await deleteDepartmentMutation.mutateAsync(deptName)
+			// Użyj teamId użytkownika, którego edytujemy (nie super admina)
+			const userTeamId = editingUser?.teamId || teamId
+			
+			if (!userTeamId) {
+				await showAlert('Błąd: Nie można określić zespołu użytkownika')
+				return
+			}
+			
+			await deleteDepartmentMutation.mutateAsync({ name: deptName, teamId: userTeamId })
 			// Usuń dział z edytowanych działów jeśli był zaznaczony
 			setEditedDepartments(prev => prev.filter(d => d !== deptName))
 			await showAlert(t('newuser.deleteDepartmentSuccess'))
@@ -186,14 +196,22 @@ function Logs() {
 
 	const handleSaveRoles = async userId => {
 		try {
+			// Użyj teamId użytkownika, którego edytujemy (nie super admina)
+			const userTeamId = editingUser?.teamId || teamId
+			
+			if (!userTeamId) {
+				await showAlert('Błąd: Nie można określić zespołu użytkownika')
+				return
+			}
+			
 			// Sprawdź czy są nowe działy, które nie istnieją w liście działów
 			const newDepartments = editedDepartments.filter(dept => !departments.includes(dept))
 			
-			// Utwórz nowe działy jeśli istnieją
-			if (newDepartments.length > 0 && teamId) {
+			// Utwórz nowe działy jeśli istnieją - używając teamId użytkownika
+			if (newDepartments.length > 0) {
 				for (const deptName of newDepartments) {
 					try {
-						await createDepartmentMutation.mutateAsync({ name: deptName, teamId })
+						await createDepartmentMutation.mutateAsync({ name: deptName, teamId: userTeamId })
 					} catch (error) {
 						console.error(`Error creating department ${deptName}:`, error)
 						// Kontynuuj nawet jeśli jeden dział się nie udał

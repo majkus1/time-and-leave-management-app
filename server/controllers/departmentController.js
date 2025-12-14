@@ -5,7 +5,20 @@ const Department = require('../models/Department')(firmDb);
 
 exports.getDepartments = async (req, res) => {
 	try {
-		const teamId = req.user.teamId;
+		// Pobierz teamId z query params (dla super admina) lub z req.user
+		let teamId = req.query.teamId || req.user.teamId;
+		
+		// Jeśli nadal nie ma teamId, pobierz z użytkownika z bazy danych
+		if (!teamId) {
+			const user = await User.findById(req.user.userId);
+			if (user) {
+				teamId = user.teamId;
+			}
+		}
+		
+		if (!teamId) {
+			return res.status(400).json({ message: 'teamId jest wymagane' });
+		}
 		
 		let departments = await Department.find({ teamId, isActive: true }).select('name');
 		
@@ -85,7 +98,24 @@ exports.createDepartment = async (req, res) => {
 exports.deleteDepartment = async (req, res) => {
 	try {
 		const { name } = req.params;
-		const teamId = req.user.teamId;
+		const { teamId: bodyTeamId } = req.query; // teamId z query params
+		
+		// Pobierz użytkownika z bazy danych
+		const user = await User.findById(req.user.userId);
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
+		}
+		
+		// Sprawdź czy to super admin
+		const isSuperAdmin = user.username === 'michalipka1@gmail.com';
+		
+		// Pobierz teamId z query params (dla super admina) lub z req.user lub z użytkownika
+		let teamId = bodyTeamId || req.user.teamId || user.teamId;
+		
+		// Dla super admina, teamId MUSI być w query params
+		if (isSuperAdmin && !bodyTeamId) {
+			return res.status(400).json({ message: 'Dla super admina teamId jest wymagane w query params' });
+		}
 
 		if (!name || !teamId) {
 			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
