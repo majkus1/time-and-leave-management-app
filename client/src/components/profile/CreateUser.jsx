@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 import Sidebar from '../dashboard/Sidebar'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
+import { useDepartments, useCreateDepartment } from '../../hooks/useDepartments'
+import { useTeamInfo } from '../../hooks/useTeam'
+import { useCreateUser } from '../../hooks/useUsers'
 
 const availableRoles = [
     'Admin',
@@ -19,45 +21,18 @@ function CreateUser() {
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [selectedRoles, setSelectedRoles] = useState([])
-    const [department, setDepartment] = useState('')
-    const [departments, setDepartments] = useState([])
+    const [selectedDepartments, setSelectedDepartments] = useState([]) // Tablica wybranych działów
+    const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
     const [departmentMode, setDepartmentMode] = useState('choose')
-    const [teamInfo, setTeamInfo] = useState(null)
-    const [isLoading, setIsLoading] = useState(false)
     const { t } = useTranslation()
     const { teamId } = useAuth()
     const { showAlert } = useAlert()
 
-    useEffect(() => {
-        if (teamId) {
-            fetchDepartments()
-            fetchTeamInfo()
-        }
-    }, [teamId])
-
-    const fetchDepartments = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/api/departments`, { withCredentials: true })
-            setDepartments(response.data)
-        } catch (error) {
-            console.error('CreateUser: Błąd pobierania departmentów:', error)
-            console.error('CreateUser: Error response:', error.response?.data);
-            setDepartments([])
-        }
-    }
-
-    const fetchTeamInfo = async () => {
-        if (!teamId) return // Super admin może nie mieć teamId, więc nie sprawdzamy limitu
-        
-        try {
-            const response = await axios.post(`${API_URL}/api/teams/${teamId}/check-limit`, {}, {
-                withCredentials: true
-            })
-            setTeamInfo(response.data)
-        } catch (error) {
-            console.error('Error fetching team info:', error)
-        }
-    }
+    // TanStack Query hooks
+    const { data: departments = [], refetch: refetchDepartments } = useDepartments()
+    const { data: teamInfo } = useTeamInfo(teamId)
+    const createDepartmentMutation = useCreateDepartment()
+    const createUserMutation = useCreateUser()
 
     const handleRoleClick = role => {
         setSelectedRoles(prev => prev.includes(role)
@@ -66,12 +41,32 @@ function CreateUser() {
         )
     }
 
-    const handleDepartmentSelect = (e) => {
-        setDepartment(e.target.value)
+    const handleDepartmentToggle = (dept) => {
+        setSelectedDepartments(prev => 
+            prev.includes(dept) 
+                ? prev.filter(d => d !== dept) // Usuń jeśli już jest
+                : [...prev, dept] // Dodaj jeśli nie ma
+        )
     }
 
-    const handleDepartmentInput = (e) => {
-        setDepartment(e.target.value)
+    const handleAddDepartment = async () => {
+        const value = newDepartmentName.trim()
+        if (value && !selectedDepartments.includes(value)) {
+            // Utwórz nowy dział jeśli nie istnieje
+            if (!departments.includes(value)) {
+                try {
+                    await createDepartmentMutation.mutateAsync(value)
+                    // Odśwież listę działów
+                    await refetchDepartments()
+                } catch (error) {
+                    console.error('Error creating department:', error)
+                }
+            }
+            // Dodaj do wybranych i przełącz na tryb wyboru
+            setSelectedDepartments([...selectedDepartments, value])
+            setNewDepartmentName('')
+            setDepartmentMode('choose')
+        }
     }
 
     const handleUsernameChange = e => {
@@ -87,28 +82,35 @@ function CreateUser() {
             return
         }
 
-        setIsLoading(true)
         try {
-            if (departmentMode === 'new' && department && !departments.includes(department)) {
-                await axios.post(`${API_URL}/api/departments`, { name: department }, { withCredentials: true })
-                await fetchDepartments()
+            // Jeśli użytkownik dodał nowy dział, utwórz go
+            if (departmentMode === 'new' && newDepartmentName && !departments.includes(newDepartmentName)) {
+                await createDepartmentMutation.mutateAsync(newDepartmentName)
+                // Dodaj nowy dział do wybranych
+                if (!selectedDepartments.includes(newDepartmentName)) {
+                    setSelectedDepartments([...selectedDepartments, newDepartmentName])
+                }
             }
 
-            const newUser = { username, firstName, lastName, roles: selectedRoles, department }
-            const response = await axios.post(`${API_URL}/api/users/register`, newUser, {
-                withCredentials: true
-            })
+            const newUser = { 
+                username, 
+                firstName, 
+                lastName, 
+                roles: selectedRoles, 
+                department: selectedDepartments // Wyślij tablicę działów
+            }
+            const response = await createUserMutation.mutateAsync(newUser)
             
-            if (response.data.success) {
+            if (response?.success) {
                 await showAlert(t('newuser.successMessage', { email: username }))
                 
                 setUsername('')
                 setFirstName('')
                 setLastName('')
                 setSelectedRoles([])
-                setDepartment('')
-                
-                fetchTeamInfo()
+                setSelectedDepartments([])
+                setNewDepartmentName('')
+                setDepartmentMode('choose')
             }
         } catch (error) {
             const code = error.response?.data?.code
@@ -117,15 +119,13 @@ function CreateUser() {
             } else {
                 await showAlert(error.response?.data?.message || t('newuser.errorGeneric'))
             }
-        } finally {
-            setIsLoading(false)
         }
     }
 
     return (
         <>
             <Sidebar />
-            <div className="container my-5 d-flex justify-content-center align-items-center">
+            <div className="container my-5 d-flex justify-content-center align-items-center newboxuser">
                 <div className="row justify-content-start">
                     <div className="col-md-8">
                         <div>
@@ -133,7 +133,7 @@ function CreateUser() {
                                 <h4><img src="img/add-group.png" alt="ikonka w sidebar" /> {t('newuser.h4')}</h4>
                                 
                                 {teamInfo && (
-                                    <div className={`mb-4 p-3 rounded-md mt-4 ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                    <div className={`mb-4 p-3 rounded-md mt-4 ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} padds`} style={{ padding: '10px' }}>
                                         <h6 className="font-semibold mb-2">{t('newuser.teamInfoTitle')}</h6>
                                         <p className="text-sm mb-1">
                                             <strong>{t('newuser.userLimit')}</strong> {teamInfo.currentCount} / {teamInfo.maxUsers}
@@ -201,27 +201,29 @@ function CreateUser() {
 									</div>
 
                                     <div className="mt-8">
-                                        <label className="block text-sm font-medium text-gray-700 mb-4 mr-3">{t('newuser.department')}</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-4 mr-3">
+                                            {t('newuser.department')} 
+                                            {selectedDepartments.length > 0 && ` (${selectedDepartments.length} ${selectedDepartments.length === 1 ? t('newuser.departmentSelected') : t('newuser.departmentSelectedPlural')})`}
+                                        </label>
                                         {departments.length > 0 && departmentMode === 'choose' ? (
                                             <>
-                                                <div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
                                                     {departments.map(dep => (
-                                                        <label key={dep} className="me-3">
+                                                        <label key={dep} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                                             <input
-                                                                type="radio"
-                                                                name="department"
-                                                                value={dep}
-                                                                checked={department === dep}
-                                                                onChange={handleDepartmentSelect}
-                                                            />{' '}
-                                                            {dep}
+                                                                type="checkbox"
+                                                                checked={selectedDepartments.includes(dep)}
+                                                                onChange={() => handleDepartmentToggle(dep)}
+                                                                style={{ marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer' }}
+                                                            />
+                                                            <span>{dep}</span>
                                                         </label>
                                                     ))}
                                                 </div>
                                                 <button
                                                     type="button"
                                                     className="btn btn-link p-2 ms-2 to-left-max"
-                                                    onClick={() => { setDepartment(''); setDepartmentMode('new') }}
+                                                    onClick={() => { setNewDepartmentName(''); setDepartmentMode('new') }}
                                                 >{t('newuser.department2')}</button>
                                             </>
                                         ) : (
@@ -229,15 +231,30 @@ function CreateUser() {
                                                 <input
                                                     type="text"
                                                     placeholder={t('newuser.department4')}
-                                                    value={department}
-                                                    onChange={handleDepartmentInput}
+                                                    value={newDepartmentName}
+                                                    onChange={(e) => setNewDepartmentName(e.target.value)}
+                                                    onKeyDown={async (e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault()
+                                                            await handleAddDepartment()
+                                                        }
+                                                    }}
                                                     className="w-full border border-gray-300 rounded-md px-4 py-2"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddDepartment}
+                                                    disabled={!newDepartmentName.trim()}
+                                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    style={{ marginBottom: '10px', marginRight: '10px', marginTop: '10px' }}
+                                                >
+                                                    {t('newuser.departmentAddButton')}
+                                                </button>
                                                 {departments.length > 0 && (
                                                     <button
                                                         type="button"
                                                         className="btn btn-link p-2 ms-2 to-left-max"
-                                                        onClick={() => setDepartmentMode('choose')}
+                                                        onClick={() => { setNewDepartmentName(''); setDepartmentMode('choose') }}
                                                     >{t('newuser.department3')}</button>
                                                 )}
                                             </>
@@ -257,9 +274,9 @@ function CreateUser() {
                                     </div>
                                     <button 
                                         type="submit" 
-                                        disabled={isLoading || (teamInfo && !teamInfo.canAddUser)}
+                                        disabled={createUserMutation.isLoading || (teamInfo && !teamInfo.canAddUser)}
                                         className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition mb-5 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        {isLoading ? 'Tworzenie użytkownika...' : t('newuser.register')}
+                                        {createUserMutation.isLoading ? 'Tworzenie użytkownika...' : t('newuser.register')}
                                     </button>
                                 </form>
                             </div>

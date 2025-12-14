@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -10,11 +9,12 @@ import html2canvas from 'html2canvas'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useUser } from '../../hooks/useUsers'
+import { useUserWorkdays } from '../../hooks/useWorkdays'
+import { useCalendarConfirmation } from '../../hooks/useCalendar'
 
 function UserCalendar() {
 	const { userId } = useParams()
-	const [user, setUser] = useState(null)
-	const [workdays, setWorkdays] = useState([])
 	const [totalHours, setTotalHours] = useState(0)
 	const [totalLeaveDays, setTotalLeaveDays] = useState(0)
 	const [totalLeaveHours, setTotalLeaveHours] = useState(0)
@@ -22,66 +22,65 @@ function UserCalendar() {
 	const [totalOtherAbsences, setTotalOtherAbsences] = useState(0)
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-	const [isConfirmed, setIsConfirmed] = useState(false)
 	const [additionalHours, setAdditionalHours] = useState(0)
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
-
+	
+	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
-		fetchUserDetails()
-		fetchUserWorkdays()
-	}, [userId])
+		const updateCalendarSize = () => {
+			if (calendarRef.current) {
+				const calendarApi = calendarRef.current.getApi()
+				// Użyj setTimeout aby dać czas na zakończenie animacji CSS
+				setTimeout(() => {
+					calendarApi.updateSize()
+				}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
+			}
+		}
+
+		// Obserwuj zmiany klasy body (sidebar-collapsed)
+		const observer = new MutationObserver(() => {
+			updateCalendarSize()
+		})
+
+		// Obserwuj zmiany klasy body
+		if (document.body) {
+			observer.observe(document.body, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
+		}
+
+		// Obserwuj zmiany rozmiaru okna
+		const handleResize = () => {
+			updateCalendarSize()
+		}
+		window.addEventListener('resize', handleResize)
+
+		// Odśwież po załadowaniu
+		updateCalendarSize()
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', handleResize)
+		}
+	}, [])
+
+	// TanStack Query hooks
+	const { data: user, isLoading: loadingUser } = useUser(userId)
+	const { data: workdays = [], isLoading: loadingWorkdays } = useUserWorkdays(userId)
+	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
+		currentMonth,
+		currentYear,
+		userId
+	)
+
+	const loading = loadingUser || loadingWorkdays || loadingConfirmation
 
 	useEffect(() => {
 		calculateTotals(workdays, currentMonth, currentYear)
 	}, [workdays, currentMonth, currentYear])
-
-	useEffect(() => {
-		checkConfirmationStatus()
-	}, [currentMonth, currentYear, userId])
-
-	const fetchUserDetails = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/users/${userId}`)
-			// console.log('Fetched user details:', response.data)
-			setUser(response.data)
-		} catch (error) {
-			console.error('Failed to fetch user details:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const fetchUserWorkdays = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/workdays/user/${userId}`)
-			// console.log('Fetched workdays:', response.data)
-			setWorkdays(response.data)
-		} catch (error) {
-			console.error('Failed to fetch workdays:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const checkConfirmationStatus = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/calendar/confirmation-status/${userId}`, {
-				params: { month: currentMonth, year: currentYear }
-			})
-			setIsConfirmed(response.data.isConfirmed || false)
-		} catch (error) {
-			console.error('Failed to check confirmation status:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	useEffect(() => {
-		checkConfirmationStatus()
-	}, [currentMonth, currentYear, userId])
 
 	const calculateTotals = (workdays, month, year) => {
 		let hours = 0
@@ -198,7 +197,7 @@ function UserCalendar() {
 				<button onClick={generatePDF} className="btn-pdf btn btn-primary">
 				{t('workcalendar.genepdf')}
 				</button>
-				<label style={{ marginLeft: '30px' }} className="flex items-center space-x-2">
+				<label style={{ marginLeft: '10px' }} className="flex items-center space-x-2">
 				{t('workcalendar.monthlabel')}
 					<select value={currentMonth} onChange={handleMonthSelect} style={{ marginRight: '5px', marginLeft: '5px' }} className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 						{Array.from({ length: 12 }, (_, i) => (
@@ -222,8 +221,7 @@ function UserCalendar() {
 					</select>
 				</label>
 				<div ref={pdfRef} style={{ 
-					marginTop: '30px', 
-					padding: '20px',
+					marginTop: '15px',
 					backgroundColor: '#ffffff',
 					borderRadius: '8px'
 				}}>
@@ -233,7 +231,8 @@ function UserCalendar() {
 							padding: '15px',
 							backgroundColor: '#f8fafc',
 							borderRadius: '6px',
-							borderLeft: '4px solid #3b82f6'
+							borderLeft: '4px solid #3b82f6',
+							marginLeft: '5px'
 						}}>
 							<h3 style={{ 
 								margin: '0',

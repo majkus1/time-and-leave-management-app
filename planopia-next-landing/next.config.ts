@@ -52,13 +52,16 @@ const nextConfig: NextConfig = {
   
   // Redirects dla SEO
   async redirects() {
-    return [
+    const redirects = [
       {
         source: '/home',
         destination: '/',
         permanent: true,
       },
     ];
+    
+    // Redirect www to non-www (obsługiwane przez Vercel lub middleware)
+    return redirects;
   },
   
 };

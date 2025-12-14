@@ -1,127 +1,105 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import Sidebar from '../dashboard/Sidebar'
-import axios from 'axios'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
+import { useUsers } from '../../hooks/useUsers'
+import { useAllLeavePlans } from '../../hooks/useLeavePlans'
+import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 
 function AdminAllLeaveCalendar() {
-	const [leavePlans, setLeavePlans] = useState([])
-	const [acceptedLeaveRequests, setAcceptedLeaveRequests] = useState([])
 	const colorsRef = useRef({})
 	const usedColors = useRef(new Set())
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
-	const [users, setUsers] = useState([])
+	
+	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
+	useEffect(() => {
+		const updateCalendarSize = () => {
+			if (calendarRef.current) {
+				const calendarApi = calendarRef.current.getApi()
+				// Użyj setTimeout aby dać czas na zakończenie animacji CSS
+				setTimeout(() => {
+					calendarApi.updateSize()
+				}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
+			}
+		}
+
+		// Obserwuj zmiany klasy body (sidebar-collapsed)
+		const observer = new MutationObserver(() => {
+			updateCalendarSize()
+		})
+
+		// Obserwuj zmiany klasy body
+		if (document.body) {
+			observer.observe(document.body, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
+		}
+
+		// Obserwuj zmiany rozmiaru okna
+		const handleResize = () => {
+			updateCalendarSize()
+		}
+		window.addEventListener('resize', handleResize)
+
+		// Odśwież po załadowaniu
+		updateCalendarSize()
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', handleResize)
+		}
+	}, [])
 	const [selectedUser, setSelectedUser] = useState(null)
-	const [error, setError] = useState('')
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { role, logout, username, teamId } = useAuth()
-	const [loading, setLoading] = useState(true)
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
 
-	// Sprawdź czy teamId jest dostępny (tylko dla zwykłych użytkowników)
-	useEffect(() => {
-		if (!isSuperAdmin && !teamId) {
-			setLoading(false)
-			setError('Team ID is not available')
-		}
-	}, [teamId, isSuperAdmin])
+	// TanStack Query hooks
+	const { data: users = [], isLoading: loadingUsers, error: usersError } = useUsers()
+	const { data: allLeavePlans = [], isLoading: loadingPlans, error: plansError } = useAllLeavePlans()
+	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 
-	useEffect(() => {
-		if (isSuperAdmin || teamId) {
-			fetchUsers()
-		}
-	}, [teamId, isSuperAdmin])
+	const loading = loadingUsers || loadingPlans || loadingRequests
+	const error = usersError || plansError || requestsError
 
-	useEffect(() => {
-		if (users.length > 0 && (isSuperAdmin || teamId)) {
-			fetchAllLeavePlans()
-			fetchAcceptedLeaveRequests()
-		}
-	}, [users, teamId, isSuperAdmin])
-
-	const fetchUsers = async () => {
-		try {
-			setLoading(true)
-			setError('') 
-			
-			const response = await axios.get(`${API_URL}/api/users/all-users`, {
-				withCredentials: true
+	// Filtrowanie danych na podstawie uprawnień
+	const leavePlans = useMemo(() => {
+		if (isSuperAdmin) {
+			return allLeavePlans
+		} else {
+			return allLeavePlans.filter(plan => {
+				const hasUser = users.some(user => user._id === plan.userId)
+				return hasUser
 			})
-			
-			setUsers(response.data)
-		} catch (error) {
-			console.error('Error fetching users:', error)
-			console.error('Error response:', error.response?.data)
-			setError(t('list.error'))
-		} finally {
-			setLoading(false)
 		}
-	}
+	}, [allLeavePlans, users, isSuperAdmin])
 
-	const fetchAllLeavePlans = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/planlea/admin/all-leave-plans`, {
-				withCredentials: true
+	const acceptedLeaveRequests = useMemo(() => {
+		if (isSuperAdmin) {
+			return allAcceptedRequests.filter(request => {
+				if (!request.userId || !request.userId._id) {
+					return false
+				}
+				return true
 			})
-			
-			// Jeśli super admin - pokaż wszystkie plany, jeśli nie - filtruj tylko dla użytkowników z zespołu
-			let filteredPlans
-			if (isSuperAdmin) {
-				filteredPlans = response.data
-			} else {
-				filteredPlans = response.data.filter(plan => {
-					const hasUser = users.some(user => user._id === plan.userId)
-					return hasUser
-				})
-			}
-			
-			setLeavePlans(filteredPlans)
-		} catch (error) {
-			console.error('Failed to fetch leave plans:', error)
-			setError(t('list.error'))
-		}
-	}
-
-	const fetchAcceptedLeaveRequests = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/leaveworks/accepted-leave-requests`, {
-				withCredentials: true
+		} else {
+			return allAcceptedRequests.filter(request => {
+				if (!request.userId || !request.userId._id) {
+					return false
+				}
+				const hasUser = users.some(user => user._id === request.userId._id)
+				return hasUser
 			})
-			
-			// Jeśli super admin - pokaż wszystkie wnioski, jeśli nie - filtruj tylko dla użytkowników z zespołu
-			let filteredRequests
-			if (isSuperAdmin) {
-				filteredRequests = response.data.filter(request => {
-					if (!request.userId || !request.userId._id) {
-						return false
-					}
-					return true
-				})
-			} else {
-				// Filtruj tylko wnioski użytkowników z tego samego teamu i sprawdź czy userId istnieje
-				filteredRequests = response.data.filter(request => {
-					if (!request.userId || !request.userId._id) {
-						return false
-					}
-					const hasUser = users.some(user => user._id === request.userId._id)
-					return hasUser
-				})
-			}
-			
-			setAcceptedLeaveRequests(filteredRequests)
-		} catch (error) {
-			console.error('Failed to fetch accepted leave requests:', error)
-			setError(t('list.error'))
 		}
-	}
+	}, [allAcceptedRequests, users, isSuperAdmin])
 
 	const generateUniqueColor = () => {
 		let color
@@ -176,10 +154,10 @@ function AdminAllLeaveCalendar() {
 					<Loader />
 				</div>
 			) : (
-			<div id='all-leaveplans' style={{ padding: "20px" }}>
+			<div id='all-leaveplans'>
 				<h3><img src="img/schedule.png" alt="ikonka w sidebar" /> {t('planslist.h3')}</h3>
 				<hr />
-				{error && <p style={{ color: 'red' }}>{error}</p>}
+				{error && <p style={{ color: 'red' }}>{error.message || t('planslist.error')}</p>}
                 <p>{t('planslist.emplo')}</p>
 				<ul style={{ listStyle: 'inherit', marginLeft: '20px' }}>
 					{users.map(user => (

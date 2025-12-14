@@ -455,10 +455,6 @@ span {
 	color: #1f2d3d !important;
 }
 
-#root > div > div.container.my-5.d-flex.justify-content-center.align-items-center {
-	margin-bottom: 0px !important;
-	margin-top: 25px !important;
-}
 
 #role {
 	margin-left: 10px;
@@ -595,7 +591,6 @@ select {
 	display: flex;
 	justify-content: start;
 	align-items: start;
-	margin-top: 25px !important;
 	margin-bottom: 0px !important;
 	margin-left: -10px;
 }
@@ -647,11 +642,20 @@ select {
 	.d-md-none {
 		display: none !important;
 	}
+	
+	/* Gdy sidebar jest otwarty - normalne marginesy */
 	.logs-container {
 		margin-left: 300px !important;
+		width: calc(100% - 300px);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
-	.content.p-3 {
-		margin-left: 300px;
+	.content.p-3, #leave-request-form {
+		margin-left: 280px !important;
+        width: calc(100% - 280px);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	#leave-request-form {
+		padding-left: 30px !important;
 	}
 	/* Enhanced sidebar styles handle width and shadow */
 	.closesidebar {
@@ -659,31 +663,105 @@ select {
 	}
 	.ReactModal__Content {
 		margin-left: 250px;
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	#userandlogs {
 		margin-left: 310px;
 		width: calc(100% - 350px);
-	}
-	#leave-request-form {
-		margin-left: 320px !important;
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	.container {
 		margin-left: 280px !important;
 		width: calc(100% - 280px);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	#leave-planner {
-		margin-left: 300px;
+		margin-left: 280px !important;
+        width: calc(100% - 280px);
+		padding-left: 30px;
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	#all-leaveplans,
 	#list-employee,
 	#calendars-works-review,
 	#leave-requests-review,
 	#pdf-leave-request,
-	.tickets {
-		margin-left: 290px !important;
+	.leave-calendar-plans-one-employee,
+	.tickets,
+	.newboxuser,
+	.logs-container {
+		margin-left: 280px !important;
+        width: calc(100% - 280px);
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
+	
+	/* Gdy sidebar jest schowany - zmniejszone marginesy */
+	body.sidebar-collapsed .logs-container {
+		margin-left: 20px !important;
+		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed .content.p-3,
+	body.sidebar-collapsed #leave-request-form {
+		margin-left: 20px !important;
+		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed .ReactModal__Content {
+		margin-left: 20px;
+	}
+	body.sidebar-collapsed #userandlogs {
+		margin-left: 20px;
+		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed .container {
+		margin-left: 20px !important;
+		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed #leave-planner {
+		margin-left: 20px !important;
+		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed #all-leaveplans,
+	body.sidebar-collapsed #list-employee,
+	body.sidebar-collapsed #calendars-works-review,
+	body.sidebar-collapsed #leave-requests-review,
+	body.sidebar-collapsed #pdf-leave-request,
+	body.sidebar-collapsed .leave-calendar-plans-one-employee,
+	body.sidebar-collapsed .tickets,
+	body.sidebar-collapsed .newboxuser,
+	body.sidebar-collapsed .logs-container {
+		margin-left: 20px !important;
+		width: calc(100% - 20px);
+	}
+	.tickets {
+		margin-top: 25px !important;
+		padding-left: 30px !important;
+	}
+	.logs-container {
+		padding-left: 30px !important;
+		margin-top: 25px !important;
+	}
+	.newboxuser {
+		margin-top: 25px !important;
+		padding-left: 15px !important;
+	}
+	#leave-requests-review {
+		margin-top: 25px;
+		padding-left: 30px;
+	}
+	#all-leaveplans {
+		padding-left: 30px;
+		margin-top: 25px;
+	}
+	#calendars-works-review {
+		margin-top: 25px !important;
+		padding-left: 15px;
+		}
+		.p-3 {
+			padding-left: 15px !important;
+		}
 	#list-employee {
-		padding: 20px;
+		margin-top: 25px;
+		padding-left: 30px;
 	}
 	.btn-pdf,
 	.btn-print-leavereq {
@@ -693,8 +771,11 @@ select {
 		margin-left: 0 !important;
 	}
 	.leave-calendar-plans-one-employee {
-		margin-left: 280px;
-		margin-top: 20px;
+		margin-top: 25px;
+		padding-left: 15px;
+	}
+	.leave-calendar-plans-one-employee h3 {
+		padding-left: 15px;
 	}
 	.newbutton-confirmmonth {
 		position: absolute;
@@ -730,6 +811,11 @@ h5 {
 	justify-content: center;
 	padding-left: 20px;
 	padding-right: 20px;
+}
+
+.set-pass {
+	padding-bottom: 20px !important;
+	padding-top: 20px !important;
 }
 
 th,
@@ -849,11 +935,6 @@ td {
 	text-align: left;
 }
 
-#leave-request-form {
-	margin-top: 50px !important;
-	margin: 10px;
-}
-
 #userandlogs {
 	margin-top: 50px;
 }
@@ -894,14 +975,6 @@ hr {
 	padding-left: 0;
 }
 
-#all-leaveplans {
-	margin-top: 25px;
-}
-
-#list-employee {
-	margin-top: 35px;
-	margin-left: 15px;
-}
 
 .btn-pdf {
 	display: none;
@@ -912,11 +985,6 @@ hr {
 
 #calendars-works-review {
 	margin-top: 50px;
-}
-
-#leave-requests-review {
-	margin-top: 30px;
-	padding: 10px;
 }
 
 #pdf-leave-request {
@@ -1579,28 +1647,18 @@ textarea {
    */
 
 @media (max-width: 1024px) {
-	.p-3,
+	/* .p-3,
 	.card-body {
 		padding: 0 !important;
-	}
-	#leave-request-form {
-		margin-top: 25px !important;
-		margin-left: 10px !important;
-	}
-	#leave-planner,
-	#all-leaveplans {
-		margin-top: 0 !important;
-		padding-left: 10px !important;
-	}
+	} */
+	
 	#list-employee {
 		margin-top: 20px !important;
 	}
 	#calendars-works-review {
 		margin-top: 25px !important;
 	}
-	#leave-requests-review {
-		margin-top: 20px !important;
-	}
+	
 	#userandlogs {
 		margin-top: 10px !important;
 	}
@@ -1731,7 +1789,7 @@ textarea {
 }
 
 .allfrommonth-p img {
-	width: 38px;
+	width: 30px;
 	margin-right: 10px;
 }
 
@@ -1951,8 +2009,23 @@ section {
 .mobile-navbar {
 	padding: 15px;
 	background: white;
-	position: relative;
+	position: fixed;
 	z-index: 1060;
+	width: 100%;
+	top: 0;
+	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-navbar.navbar-visible {
+	transform: translateY(0);
+	opacity: 1;
+}
+
+.mobile-navbar.navbar-hidden {
+	transform: translateY(-100%);
+	opacity: 0;
+	pointer-events: none;
 }
 
 .mobile-logo {
@@ -1996,6 +2069,59 @@ section {
 	transform: rotate(-45deg) translate(6px, -6px);
 }
 
+/* Sidebar Toggle Buttons */
+.sidebar-toggle-btn {
+	position: fixed;
+	top: 20px;
+	left: 260px;
+	z-index: 1050;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: white;
+	border: 2px solid #e5e7eb;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	color: #213555;
+}
+
+.sidebar-toggle-btn:hover {
+	background: #f3f4f6;
+	border-color: #213555;
+	transform: scale(1.1);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle-btn.desktop-only {
+	display: none;
+}
+
+@media (min-width: 1500px) {
+	.sidebar-toggle-btn.desktop-only {
+		display: flex;
+	}
+}
+
+.sidebar-collapsed-btn {
+	left: 10px !important;
+	display: none;
+}
+
+@media (min-width: 1500px) {
+	.sidebar-collapsed-btn {
+		display: flex;
+	}
+	
+	/* Ukryj przycisk poza sidebarem gdy sidebar jest schowany */
+	body.sidebar-collapsed .sidebar-toggle-btn.desktop-only {
+		display: none !important;
+	}
+}
+
 /* Enhanced Sidebar - White background to match app */
 .sidebar {
 	position: fixed;
@@ -2003,6 +2129,7 @@ section {
 	bottom: 0;
 	left: 0;
 	width: 280px;
+	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	background: #ffffff;
 	color: #213555;
 	transform: translateX(-100%);
@@ -2022,8 +2149,51 @@ section {
 	opacity: 1;
 }
 
+@media (min-width: 1500px) {
+	.sidebar.collapsed {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+	
+	.sidebar.opened:not(.collapsed) {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
 .sidebar.animating {
 	transition: all 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Sidebar Inner Toggle Button */
+.sidebar-inner-toggle-btn {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	background: rgba(33, 53, 85, 0.1);
+	border: 2px solid transparent;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	color: #213555;
+	z-index: 10;
+}
+
+.sidebar-inner-toggle-btn:hover {
+	background: rgba(33, 53, 85, 0.2);
+	border-color: #213555;
+	transform: scale(1.05);
+}
+
+@media (max-width: 1500px) {
+	.sidebar-inner-toggle-btn {
+		display: none;
+	}
 }
 
 /* Language Selector */
@@ -2077,6 +2247,7 @@ section {
 	justify-content: center;
 	padding: 20px;
 	margin-bottom: 20px;
+	padding-bottom: 0;
 }
 
 .sidebar-logo img {
@@ -2353,17 +2524,16 @@ section {
 
 	/* Enhanced sidebar styles handle transforms */
 
-	.sidebar-close-btn {
+	/* .sidebar-close-btn {
 		display: none;
-	}
+	} */
 }
 
-@media (max-width: 1023px) {
+/* @media (max-width: 1023px) {
 	.sidebar {
 		width: 100%;
-		max-width: 320px;
 	}
-}
+} */
 
 @media (max-width: 480px) {
 	.sidebar {
@@ -2462,4 +2632,133 @@ section {
 	.btn-print-leavereq {
 		display: block !important;
 	}
+	.sidebar-close-btn {
+		display: none;
+	}
+}
+
+#root > div > div.container.my-5 {
+	margin-top: 25px !important
+}
+
+.p-3 {
+	padding-top: 25px !important;
+}
+
+@media (max-width: 1500px) {
+	.sidebar {
+		width: 100% !important;
+	}
+	#root > div > div.container.my-5, .calendar-section {
+		margin-top: 95px !important;
+	}
+	.p-3,
+	.card-body {
+		padding: 0 !important;
+		padding-bottom: 15px !important;
+	}
+	#leave-request-form {
+		margin-top: 95px !important;
+		padding-left: 15px;
+		padding-bottom: 10px;
+	}
+	#leave-planner, #all-leaveplans {
+		margin-top: 95px !important;
+		padding-left: 15px;
+		padding-right: 15px;
+		padding-bottom: 10px;
+	}
+	.leave-calendar-plans-one-employee {
+		margin-top: 95px !important;
+		padding-left: 15px;
+		padding-right: 15px;
+		padding-bottom: 10px;
+	}
+	#list-employee {
+		margin-top: 95px;
+		margin-left: 15px;
+		padding-bottom: 10px;
+	}
+	#calendars-works-review {
+		margin-top: 95px !important;
+		padding: 5px !important;
+		padding-bottom: 10px;
+	}
+	#list-employee, #leave-requests-review {
+		margin-top: 95px !important;
+		padding-left: 15px;
+		padding-right: 15px;
+		padding-bottom: 10px;
+	}
+	.newboxuser, .logs-container, .tickets {
+		margin-top: 95px !important;
+		padding-left: 15px !important;
+		padding-right: 15px !important;
+		padding-bottom: 10px;
+	}
+}
+
+#leave-request-form {
+	margin-top: 25px;
+	padding-right: 15px;
+}
+
+@media (min-width: 500px) and (max-width: 1500px) {
+	.sidebar-navigation {
+    width: 350px;
+	margin: 0 auto;
+	}
+	.logout-btn {
+		margin: 0 auto;
+		width: 300px;
+	}
+}
+
+.padds {
+	padding: 10px !important;
+}
+
+.card-body {
+	padding: 0px !important;
+}
+
+/* Responsywność dla Logs.jsx */
+@media (min-width: 768px) {
+	.logs-desktop-view {
+		display: block !important;
+	}
+	.logs-mobile-view {
+		display: none !important;
+	}
+}
+
+@media (max-width: 767px) {
+	.logs-desktop-view {
+		display: none !important;
+	}
+	.logs-mobile-view {
+		display: block !important;
+	}
+}
+
+.p-3 {
+	padding-bottom: 15px !important;
+}
+
+.fc-dayGridMonth-view {
+	margin-bottom: 20px !important;
+}
+
+.boxlog .card-body {
+	padding: 20px !important;
+}
+
+.sidebar-toggle-btn {
+	margin-left: -20px;
+	margin-top: -18px;
+}
+
+.sidebar-inner-toggle-btn {
+	margin-right: -18px;
+	margin-top: -18px;
 }

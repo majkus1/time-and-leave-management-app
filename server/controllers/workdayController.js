@@ -85,10 +85,16 @@ exports.getUserWorkdays = async (req, res) => {
 
 		
 		const userToView = await User.findById(userId);
+		
+		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
+		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
+		const userToViewDepts = Array.isArray(userToView?.department) ? userToView.department : (userToView?.department ? [userToView.department] : [])
+		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
+		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
 			userToView &&
-			requestingUser.department === userToView.department;
+			hasCommonDepartment;
 
 		if (!(isAdmin || isHR || isSelf || isSupervisorOfDepartment)) {
 			return res.status(403).send('Access denied');

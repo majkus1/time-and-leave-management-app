@@ -10,11 +10,27 @@ exports.getDepartments = async (req, res) => {
 		let departments = await Department.find({ teamId, isActive: true }).select('name');
 		
 		if (departments.length === 0) {
-			const userDepartments = await User.distinct('department', { 
+			// Dla wielu działów - pobierz wszystkie unikalne działy z tablicy department użytkowników
+			const users = await User.find({ 
 				teamId, 
-				department: { $ne: null, $ne: '' } 
+				department: { $ne: null, $ne: [], $exists: true } 
+			}).select('department');
+			
+			// Zbierz wszystkie unikalne działy z tablic
+			const allDepartments = new Set();
+			users.forEach(user => {
+				if (Array.isArray(user.department)) {
+					user.department.forEach(dept => {
+						if (dept && dept.trim() !== '') {
+							allDepartments.add(dept);
+						}
+					});
+				} else if (user.department && user.department.trim() !== '') {
+					allDepartments.add(user.department);
+				}
 			});
-			departments = userDepartments.map(name => ({ name }));
+			
+			departments = Array.from(allDepartments).map(name => ({ name }));
 		}
 		
 		const departmentNames = departments.map(dept => dept.name);
@@ -47,5 +63,39 @@ exports.createDepartment = async (req, res) => {
 	} catch (error) {
 		console.error('Error in createDepartment:', error);
 		res.status(500).json({ message: 'Błąd tworzenia działu' });
+	}
+};
+
+exports.deleteDepartment = async (req, res) => {
+	try {
+		const { name } = req.params;
+		const teamId = req.user.teamId;
+
+		if (!name || !teamId) {
+			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
+		}
+
+		// Usuń dział z kolekcji Department (ustaw isActive na false)
+		const department = await Department.findOne({ name, teamId });
+		if (department) {
+			department.isActive = false;
+			await department.save();
+		}
+
+		// Usuń dział z wszystkich użytkowników w zespole
+		const users = await User.find({ teamId });
+		for (const user of users) {
+			if (Array.isArray(user.department)) {
+				user.department = user.department.filter(dept => dept !== name);
+			} else if (user.department === name) {
+				user.department = [];
+			}
+			await user.save();
+		}
+
+		res.status(200).json({ message: 'Dział został usunięty' });
+	} catch (error) {
+		console.error('Error in deleteDepartment:', error);
+		res.status(500).json({ message: 'Błąd usuwania działu' });
 	}
 };

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { API_URL } from './config.js';
 
 axios.defaults.withCredentials = true;
+axios.defaults.timeout = 30000; // 30 second default timeout for all requests
 
 const fetchCsrfToken = async () => {
   try {

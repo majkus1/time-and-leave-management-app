@@ -21,4 +21,4 @@ Disallow: /all-leave-plans
 Allow: /
 Allow: /favicon.ico
 
-Sitemap: https://planopia.pl/sitemap.xml
+

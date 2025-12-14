@@ -131,7 +131,38 @@ function NewPassword() {
 			</div>
 			<Link
 				to="/login"
-				style={{ margin: '20px', fontSize: '14px', textDecoration: 'none', color: 'blue', opacity: '0.6' }}>
+				style={{ 
+					display: 'inline-flex',
+					alignItems: 'center',
+					gap: '8px',
+					padding: '12px 24px',
+					fontSize: '14px',
+					fontWeight: '500',
+					textDecoration: 'none',
+					color: '#6b7280',
+					backgroundColor: '#f9fafb',
+					border: '1px solid #e5e7eb',
+					borderRadius: '8px',
+					transition: 'all 0.2s ease',
+					boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+				}}
+				onMouseEnter={(e) => {
+					e.target.style.backgroundColor = '#f3f4f6'
+					e.target.style.borderColor = '#d1d5db'
+					e.target.style.color = '#374151'
+					e.target.style.transform = 'translateY(-1px)'
+					e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
+				}}
+				onMouseLeave={(e) => {
+					e.target.style.backgroundColor = '#f9fafb'
+					e.target.style.borderColor = '#e5e7eb'
+					e.target.style.color = '#6b7280'
+					e.target.style.transform = 'translateY(0)'
+					e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
+				}}>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<path d="M19 12H5M12 19l-7-7 7-7"/>
+					</svg>
 				{t('resetpass.backto')}
 			</Link>
 		</div>

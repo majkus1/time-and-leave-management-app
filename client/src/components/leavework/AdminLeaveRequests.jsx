@@ -1,74 +1,44 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import React, { useState } from 'react'
 import Sidebar from '../dashboard/Sidebar'
 import { useParams, useNavigate } from 'react-router-dom'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
+import { useUser } from '../../hooks/useUsers'
+import { useVacationDays, useUpdateVacationDays } from '../../hooks/useVacation'
+import { useUserLeaveRequests, useUpdateLeaveRequestStatus } from '../../hooks/useLeaveRequests'
 
 function AdminLeaveRequests() {
 	const { userId } = useParams()
-	const [user, setUser] = useState(null)
-	const [leaveRequests, setLeaveRequests] = useState([])
 	const [vacationDays, setVacationDays] = useState(null)
-	const [loadingVacationDays, setLoadingVacationDays] = useState(true)
 	const [showVacationUpdateMessage, setShowVacationUpdateMessage] = useState(false)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
 	const { showAlert } = useAlert()
 
-	useEffect(() => {
-		fetchLeaveRequests()
-		fetchVacationDays()
-		fetchUserDetails()
-	}, [userId])
+	// TanStack Query hooks
+	const { data: user, isLoading: loadingUser } = useUser(userId)
+	const { data: leaveRequests = [], isLoading: loadingRequests } = useUserLeaveRequests(userId)
+	const { data: vacationDaysData, isLoading: loadingVacationDays } = useVacationDays(userId)
+	const updateVacationDaysMutation = useUpdateVacationDays()
+	const updateLeaveRequestStatusMutation = useUpdateLeaveRequestStatus()
 
-	const fetchUserDetails = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/users/${userId}`)
+	const loading = loadingUser || loadingRequests || loadingVacationDays
 
-			setUser(response.data)
-		} catch (error) {
-			console.error('Failed to fetch user details:', error)
-		} finally {
-			setLoading(false)
+	// Sync vacationDays z query data
+	React.useEffect(() => {
+		if (vacationDaysData !== undefined) {
+			setVacationDays(vacationDaysData)
 		}
-	}
-
-	const fetchLeaveRequests = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/leaveworks/leave-requests/${userId}`)
-
-			const sortedRequests = response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-			setLeaveRequests(sortedRequests)
-		} catch (error) {
-			console.error('Błąd podczas pobierania zgłoszeń:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const fetchVacationDays = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/vacations/${userId}/vacation-days`)
-			setVacationDays(response.data.vacationDays)
-		} catch (error) {
-			console.error('Błąd podczas pobierania liczby dni urlopu:', error)
-		} finally {
-			setLoadingVacationDays(false)
-		}
-	}
+	}, [vacationDaysData])
 
 	const updateVacationDays = async () => {
 		try {
-			await axios.patch(
-				`${API_URL}/api/vacations/${userId}/vacation-days`,
-				{ vacationDays }
-			)
+			await updateVacationDaysMutation.mutateAsync({
+				userId,
+				vacationDays,
+			})
 			await showAlert(t('adminleavereq.alert'))
-			fetchVacationDays()
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji liczby dni urlopu:', error)
 		}
@@ -76,19 +46,11 @@ function AdminLeaveRequests() {
 
 	const updateLeaveRequestStatus = async (id, newStatus) => {
 		try {
-			const response = await axios.patch(`${API_URL}/api/leaveworks/leave-requests/${id}`, { status: newStatus })
-
-			// Aktualizuj lokalnie stan przed odświeżeniem listy
-			if (response.data.leaveRequest) {
-				setLeaveRequests(prevRequests =>
-					prevRequests.map(request =>
-						request._id === id ? { ...request, ...response.data.leaveRequest } : request
-					)
-				)
-			}
-
-			// Odśwież listę aby mieć najnowsze dane
-			await fetchLeaveRequests()
+			await updateLeaveRequestStatusMutation.mutateAsync({
+				id,
+				status: newStatus,
+				userId,
+			})
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
 			await showAlert(t('adminleavereq.updateError') || 'Nie udało się zaktualizować statusu wniosku')

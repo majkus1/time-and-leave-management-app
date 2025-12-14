@@ -13,7 +13,7 @@ function Dashboard() {
     <>
       <Sidebar />
       <div className="content p-3">
-        <div className="calendar-section my-4">
+        <div className="calendar-section">
           <MonthlyCalendar />
         </div>
       </div>

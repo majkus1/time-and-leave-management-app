@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
         ],
         required: true
     },
-    department: { type: String },
+    department: { type: [String], default: [] }, // Tablica działów - użytkownik może być w wielu działach
     position: { type: String, required: false },
     leaveDays: { type: Number, default: 0 },
     vacationDays: { type: Number, default: 0 },

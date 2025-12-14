@@ -1,30 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_URL } from '../../config.js'
 import Loader from '../Loader'
+import { useUsers } from '../../hooks/useUsers'
 
 function AdminUserList() {
-	const [users, setUsers] = useState([])
-	const [error, setError] = useState('')
 	const navigate = useNavigate()
-	const [loading, setLoading] = useState(true)
 
-	useEffect(() => {
-		fetchUsers()
-	}, [])
-
-	const fetchUsers = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/users/all-users`)
-			setUsers(response.data)
-		} catch (error) {
-			console.error('Failed to fetch users:', error)
-			setError('Nie udało się pobrać listy użytkowników. Spróbuj zalogować się ponownie.')
-		} finally {
-			setLoading(false)
-		}
-	}
+	// TanStack Query hook
+	const { data: users = [], isLoading: loading, error } = useUsers()
 
 	const handleUserClick = userId => {
 		navigate(`/leave-plans/${userId}`)

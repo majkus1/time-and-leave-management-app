@@ -26,9 +26,16 @@ exports.submitLeaveRequest = async (req, res) => {
 		const user = await User.findById(userId).select('firstName lastName roles department username')
 		if (!user) return res.status(404).send('Użytkownik nie znaleziony.')
 
-		const supervisors = (await findSupervisorsForDepartment(user.department, teamId)).filter(
-			sup => sup.username !== user.username
-		)
+		// Dla wielu działów - znajdź przełożonych dla wszystkich działów użytkownika
+		const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
+		const allSupervisors = []
+		for (const dept of userDepartments) {
+			const deptSupervisors = await findSupervisorsForDepartment(dept, teamId)
+			allSupervisors.push(...deptSupervisors)
+		}
+		// Usuń duplikaty i samego użytkownika
+		const uniqueSupervisors = Array.from(new Map(allSupervisors.map(sup => [sup._id.toString(), sup])).values())
+		const supervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
 
 		const typeText = t(type)
 		const content = `

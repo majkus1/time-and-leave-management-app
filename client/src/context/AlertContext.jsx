@@ -71,6 +71,7 @@ const AlertComponent = ({ type, message, onClose, onConfirm, onCancel, confirmTe
 	return (
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[1px]"
+			style={{ zIndex: 100000000 }}
 			onClick={handleBackdropClick}>
 			<div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
 				<div className="p-6">

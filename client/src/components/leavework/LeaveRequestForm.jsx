@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 import Sidebar from '../dashboard/Sidebar'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
+import { useOwnLeaveRequests, useCreateLeaveRequest } from '../../hooks/useLeaveRequests'
+import { useOwnVacationDays } from '../../hooks/useVacation'
 
 function LeaveRequestForm() {
 	const [type, setType] = useState('leaveform.option1')
@@ -13,17 +13,16 @@ function LeaveRequestForm() {
 	const [daysRequested, setDaysRequested] = useState(0)
 	const [replacement, setReplacement] = useState('')
 	const [additionalInfo, setAdditionalInfo] = useState('')
-	const [leaveRequests, setLeaveRequests] = useState([])
-	const [availableLeaveDays, setAvailableLeaveDays] = useState(0)
-	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
 	const { showAlert } = useAlert()
 
-	useEffect(() => {
-		fetchAvailableLeaveDays()
-		fetchLeaveRequests()
-	}, [])
+	// TanStack Query hooks
+	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
+	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
+	const createLeaveRequestMutation = useCreateLeaveRequest()
+
+	const loading = loadingRequests || loadingVacation
+	const isSubmitting = createLeaveRequestMutation.isLoading
 
 	const leaveTypeMap = {
 		'Urlop wypoczynkowy': 'leaveform.option1',
@@ -33,27 +32,6 @@ function LeaveRequestForm() {
 		'Inna nieobecność': 'leaveform.option5',
 	}
 
-	const fetchAvailableLeaveDays = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/vacations/vacation-days`)
-			setAvailableLeaveDays(response.data.vacationDays)
-		} catch (error) {
-			console.error('Błąd podczas pobierania dostępnych dni urlopu:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const fetchLeaveRequests = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/requlea/ownrequestleave`)
-			setLeaveRequests(response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
-		} catch (error) {
-			console.error('Błąd podczas pobierania zgłoszeń:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
 
 	useEffect(() => {
 		if (startDate && endDate) {
@@ -66,12 +44,10 @@ function LeaveRequestForm() {
 
 	const submitLeaveRequest = async e => {
 		e.preventDefault()
-		setIsSubmitting(true)
 		try {
 			const data = { type, startDate, endDate, daysRequested, replacement, additionalInfo }
-			await axios.post(`${API_URL}/api/leaveworks/leave-request`, data)
+			await createLeaveRequestMutation.mutateAsync(data)
 			await showAlert(t('leaveform.alertsucces'))
-			fetchLeaveRequests()
 			setType('leaveform.option1')
 			setStartDate('')
 			setEndDate('')
@@ -81,8 +57,6 @@ function LeaveRequestForm() {
 		} catch (error) {
 			console.error('Błąd podczas wysyłania wniosku:', error)
 			await showAlert(t('leaveform.alertfail'))
-		} finally {
-			setIsSubmitting(false)
 		}
 	}
 

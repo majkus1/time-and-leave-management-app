@@ -2,17 +2,16 @@ import React, { useState, useEffect, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import axios from 'axios'
 import Modal from 'react-modal'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
+import { useWorkdays, useCreateWorkday, useDeleteWorkday } from '../../hooks/useWorkdays'
+import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 
 Modal.setAppElement('#root')
 
 function MonthlyCalendar() {
-	const [workdays, setWorkdays] = useState([])
 	const [modalIsOpen, setModalIsOpen] = useState(false)
 	const [selectedDate, setSelectedDate] = useState(null)
 	const [hoursWorked, setHoursWorked] = useState('')
@@ -26,60 +25,63 @@ function MonthlyCalendar() {
 	const [totalOtherAbsences, setTotalOtherAbsences] = useState(0)
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-	const [isConfirmed, setIsConfirmed] = useState(false)
 	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
 	const [errorMessage, setErrorMessage] = useState('')
 	const calendarRef = useRef(null)
+	
+	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
+	useEffect(() => {
+		const updateCalendarSize = () => {
+			if (calendarRef.current) {
+				const calendarApi = calendarRef.current.getApi()
+				// Użyj setTimeout aby dać czas na zakończenie animacji CSS
+				setTimeout(() => {
+					calendarApi.updateSize()
+				}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
+			}
+		}
+
+		// Obserwuj zmiany klasy body (sidebar-collapsed)
+		const observer = new MutationObserver(() => {
+			updateCalendarSize()
+		})
+
+		// Obserwuj zmiany klasy body
+		if (document.body) {
+			observer.observe(document.body, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
+		}
+
+		// Obserwuj zmiany rozmiaru okna
+		const handleResize = () => {
+			updateCalendarSize()
+		}
+		window.addEventListener('resize', handleResize)
+
+		// Odśwież po załadowaniu
+		updateCalendarSize()
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', handleResize)
+		}
+	}, [])
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
 	const { showAlert } = useAlert()
 
-	const fetchWorkdays = async cancelToken => {
-		try {
-			const response = await axios.get(`${API_URL}/api/workdays`, {
-				cancelToken,
-			})
-			setWorkdays(response.data)
-		} catch (error) {
-			if (axios.isCancel(error)) {
-				// console.log('Fetch workdays canceled:', error.message);
-			} else {
-				console.error('Failed to fetch workdays:', error)
-			}
-		} finally {
-			setLoading(false)
-		}
-	}
+	// TanStack Query hooks
+	const { data: workdays = [], isLoading: loadingWorkdays } = useWorkdays()
+	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
+		currentMonth,
+		currentYear
+	)
+	const createWorkdayMutation = useCreateWorkday()
+	const deleteWorkdayMutation = useDeleteWorkday()
+	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
-	const checkConfirmationStatus = async cancelToken => {
-		try {
-			const response = await axios.get(`${API_URL}/api/calendar/confirmation-status`, {
-				params: {
-					month: currentMonth,
-					year: currentYear,
-				},
-				cancelToken,
-			})
-			setIsConfirmed(response.data.isConfirmed || false)
-		} catch (error) {
-			if (axios.isCancel(error)) {
-				// console.log('Check confirmation status canceled:', error.message);
-			} else {
-				console.error('Failed to check confirmation status:', error)
-			}
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	useEffect(() => {
-		const source = axios.CancelToken.source()
-		fetchWorkdays(source.token)
-		checkConfirmationStatus(source.token)
-		return () => {
-			source.cancel('Operation cancelled: component unmounted or dependencies changed.')
-		}
-	}, [currentMonth, currentYear])
+	const loading = loadingWorkdays || loadingConfirmation
 
 	useEffect(() => {
 		calculateTotals(workdays, currentMonth, currentYear)
@@ -87,12 +89,14 @@ function MonthlyCalendar() {
 
 	const toggleConfirmationStatus = async () => {
 		try {
-			await axios.post(`${API_URL}/api/calendar/confirm`, {
+			await toggleConfirmationMutation.mutateAsync({
 				month: currentMonth,
 				year: currentYear,
 				isConfirmed: !isConfirmed,
 			})
-			setIsConfirmed(!isConfirmed)
+			await showAlert(
+				isConfirmed ? t('workcalendar.cancelconfirm') : t('workcalendar.successconfirm')
+			)
 		} catch (error) {
 			console.error('Failed to toggle confirmation status:', error)
 		}
@@ -205,17 +209,14 @@ function MonthlyCalendar() {
 			absenceType: absenceType || null,
 		}
 
-		// console.log('Data to be submitted:', data)
-
 		try {
-			await axios.post(`${API_URL}/api/workdays`, data)
+			await createWorkdayMutation.mutateAsync(data)
 			setModalIsOpen(false)
 			setHoursWorked('')
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
 			setAbsenceType('')
 			setErrorMessage('')
-			fetchWorkdays()
 		} catch (error) {
 			console.error('Failed to add workday:', error)
 		}
@@ -223,8 +224,7 @@ function MonthlyCalendar() {
 
 	const handleDelete = async id => {
 		try {
-			await axios.delete(`${API_URL}/api/workdays/${id}`)
-			fetchWorkdays()
+			await deleteWorkdayMutation.mutateAsync(id)
 		} catch (error) {
 			console.error('Failed to delete workday:', error)
 		}
@@ -391,7 +391,7 @@ function MonthlyCalendar() {
     <img
       src="/img/check.png"
       alt=""
-      style={{ width: '38px', marginRight: '8px' }}
+      style={{ width: '30px', marginRight: '8px' }}
     />
     {t('workcalendar.confirmed')}
   </span>
@@ -401,7 +401,7 @@ function MonthlyCalendar() {
       src="/img/check.png"
       alt=""
       style={{
-        width: '38px',
+        width: '30px',
         marginRight: '8px',
         filter: 'grayscale(100%)', // 🔥 wyszarzenie
         opacity: 0.6,              // opcjonalnie przyciemnienie
@@ -442,7 +442,9 @@ function MonthlyCalendar() {
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: 'rgba(0, 0, 0, 0.5)',
+						backgroundColor: 'transparent',
+						backdropFilter: 'blur(1px)',
+						WebkitBackdropFilter: 'blur(1px)',
 					},
 					content: {
 						position: 'relative',
@@ -452,6 +454,7 @@ function MonthlyCalendar() {
 						width: '360px',
 						borderRadius: '1rem',
 						padding: '2rem',
+						backgroundColor: 'white',
 					},
 				}}
 				contentLabel="Dodaj godziny pracy lub nieobecność">

@@ -428,11 +428,17 @@ exports.getUserById = async (req, res) => {
 
 		
 		const userToView = await User.findById(userId)
+		
+		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
+		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
+		const userToViewDepts = Array.isArray(userToView?.department) ? userToView.department : (userToView?.department ? [userToView.department] : [])
+		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
+		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
 			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)') &&
 			userToView &&
-			requestingUser.department === userToView.department
+			hasCommonDepartment
 
 		if (!(isAdmin || isHR || isSelf || isSupervisorOfDepartment)) {
 			return res.status(403).send('Access denied')
@@ -460,13 +466,17 @@ exports.updateUserRoles = async (req, res) => {
 		return res.status(403).send('Access denied');
 	}
 
-	try {
-		const user = await User.findById(userId);
-		if (!user) {
-			return res.status(404).send('Użytkownik nie znaleziony');
-		}
+		try {
+			const user = await User.findById(userId);
+			if (!user) {
+				return res.status(404).send('Użytkownik nie znaleziony');
+			}
 
-		user.roles = roles;
+			user.roles = roles;
+			// Dla wielu działów - upewnij się, że department to tablica
+			if (department !== undefined) {
+				user.department = Array.isArray(department) ? department : (department ? [department] : [])
+			}
 		if (department !== undefined) user.department = department; // DODANE
 		await user.save();
 

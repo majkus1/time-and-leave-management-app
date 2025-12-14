@@ -94,7 +94,13 @@ exports.getUserLeaveRequests = async (req, res) => {
 	) {
 		const userToView = await User.findById(userId)
 		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
-		if (userToView.department !== requestingUser.department) return res.status(403).send('Brak uprawnień')
+		
+		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
+		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
+		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
+		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
+		
+		if (!hasCommonDepartment) return res.status(403).send('Brak uprawnień')
 		// OK
 	} else if (
 		// Pracownik widzi tylko swoje
@@ -192,9 +198,14 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		
 		const isAdmin = requestingUser.roles.includes('Admin')
+		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
+		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
+		const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
+		const hasCommonDepartment = requestingDepts.some(dept => userDepts.includes(dept))
+		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			requestingUser.department === user.department
+			hasCommonDepartment
 
 		const isHR = requestingUser.roles.includes(
 			'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'

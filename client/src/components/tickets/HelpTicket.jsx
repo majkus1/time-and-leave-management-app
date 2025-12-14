@@ -1,18 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react'
-import axios from 'axios'
-import { API_URL } from '../../config.js'
+import React, { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { isAdmin } from '../../utils/roleHelpers'
+import { API_URL } from '../../config.js'
+import { useTickets, useTicket, useCreateTicket, useReplyToTicket, useUpdateTicketStatus } from '../../hooks/useTickets'
 
 const HelpTicket = () => {
 	const { username, role } = useAuth()
-	const [tickets, setTickets] = useState([])
-	const [selectedTicket, setSelectedTicket] = useState(null)
+	const [selectedTicketId, setSelectedTicketId] = useState(null)
 	const [newTicket, setNewTicket] = useState({ topic: '', message: '', attachments: [] })
 	const [reply, setReply] = useState('')
-	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [replyFiles, setReplyFiles] = useState([])
@@ -20,24 +18,17 @@ const HelpTicket = () => {
 	const fileInputRef = useRef(null)
 	const { t } = useTranslation()
 
+	// TanStack Query hooks
+	const { data: tickets = [], isLoading: loadingTickets, error: ticketsError } = useTickets()
+	const { data: selectedTicket, isLoading: loadingTicket } = useTicket(selectedTicketId)
+	const createTicketMutation = useCreateTicket()
+	const replyToTicketMutation = useReplyToTicket()
+	const updateTicketStatusMutation = useUpdateTicketStatus()
+
+	const loading = loadingTickets || loadingTicket
+
 	const handleReplyFileChange = e => {
 		setReplyFiles(Array.from(e.target.files))
-	}
-
-	useEffect(() => {
-		fetchTickets()
-	}, [])
-
-	const fetchTickets = async () => {
-		setLoading(true)
-		try {
-			const res = await axios.get(`${API_URL}/api/tickets/my-tickets`, { withCredentials: true })
-			setTickets(res.data)
-			setError('')
-		} catch (err) {
-			setError(t('tickets.fetchError'))
-		}
-		setLoading(false)
 	}
 
 	const handleNewTicketChange = e => {
@@ -54,7 +45,6 @@ const HelpTicket = () => {
 
 	const handleSendNewTicket = async e => {
 		e.preventDefault()
-		setLoading(true)
 		setSuccess('')
 		setError('')
 		try {
@@ -67,58 +57,39 @@ const HelpTicket = () => {
 				})
 			}
 
-			await axios.post(`${API_URL}/api/tickets/create`, formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-				withCredentials: true
-			})
+			await createTicketMutation.mutateAsync(formData)
 			setSuccess(t('tickets.createSuccess'))
 			setNewTicket({ topic: '', message: '', attachment: null })
-			fetchTickets()
 		} catch (err) {
 			setError(t('tickets.createError'))
 		}
-		setLoading(false)
 	}
 
 	const handleSendReply = async e => {
 		e.preventDefault()
-		setLoading(true)
 		setError('')
+		if (!selectedTicketId) return
+
 		try {
 			const formData = new FormData()
 			formData.append('message', reply)
 			replyFiles.forEach(file => formData.append('attachments', file))
-			await axios.post(`${API_URL}/api/tickets/${selectedTicket._id}/reply`, formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-				withCredentials: true
-			})
+			await replyToTicketMutation.mutateAsync({ ticketId: selectedTicketId, formData })
 			setReply('')
 			setReplyFiles([])
-			fetchTickets()
-			const updatedTicket = await axios.get(`${API_URL}/api/tickets/${selectedTicket._id}`, { withCredentials: true })
-			setSelectedTicket(updatedTicket.data)
 			setSuccess(t('tickets.replySuccess'))
 		} catch (err) {
 			setError(t('tickets.replyError'))
 		}
-		setLoading(false)
 	}
 
-	const handleOpenTicket = async ticket => {
-		setLoading(true)
-		setSelectedTicket(null)
+	const handleOpenTicket = ticket => {
+		setSelectedTicketId(ticket._id)
 		setError('')
-		try {
-			const res = await axios.get(`${API_URL}/api/tickets/${ticket._id}`, { withCredentials: true })
-			setSelectedTicket(res.data)
-		} catch (err) {
-			setError(t('tickets.detailsError'))
-		}
-		setLoading(false)
 	}
 
 	const handleBackToList = () => {
-		setSelectedTicket(null)
+		setSelectedTicketId(null)
 		setReply('')
 		setError('')
 		setSuccess('')
@@ -128,7 +99,7 @@ const HelpTicket = () => {
 		<>
 			<Sidebar />
 
-			<div className="flex-1 p-6 max-w-3xl tickets">
+			<div className="flex-1 max-w-3xl tickets">
 				<h2 className="text-2xl font-bold mb-4"><img src="img/technical-support.png" alt="ikonka w sidebar" /> {t('tickets.title')}</h2>
 				<hr />
 				{!selectedTicket && (
@@ -233,7 +204,7 @@ const HelpTicket = () => {
 					</div>
 				)}
 
-				{selectedTicket && (
+				{selectedTicketId && selectedTicket && (
 					<div className="border bg-white rounded-xl shadow p-5 mt-6">
 						<button className="btn btn-sm btn-outline mb-3" onClick={handleBackToList}>
 							← {t('tickets.backToList')}
@@ -246,13 +217,15 @@ const HelpTicket = () => {
 							<div className="mb-2">
 								<label className="font-semibold mr-2">Status:</label>
 								<select
-									value={selectedTicket.status}
+									value={selectedTicket?.status || ''}
 									onChange={async e => {
 										const newStatus = e.target.value
+										if (!selectedTicketId) return
 										try {
-											await axios.patch(`${API_URL}/api/tickets/${selectedTicket._id}/status`, { status: newStatus }, { withCredentials: true })
-											setSelectedTicket(prev => ({ ...prev, status: newStatus }))
-											fetchTickets()
+											await updateTicketStatusMutation.mutateAsync({
+												ticketId: selectedTicketId,
+												status: newStatus,
+											})
 										} catch (err) {
 											setError(t('tickets.statusUpdateError'))
 										}
@@ -286,7 +259,7 @@ const HelpTicket = () => {
 								: `${t('tickets.nocontent')}`}
 						</p>
 
-						{selectedTicket.messages[0].files && selectedTicket.messages[0].files.length > 0 && (
+						{selectedTicket.messages && selectedTicket.messages[0]?.files && selectedTicket.messages[0].files.length > 0 && (
 							<div className="mb-2">
 								{selectedTicket.messages[0].files.map((file, idx) => (
 									<a

@@ -1,33 +1,16 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../dashboard/Sidebar'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useUsers } from '../../hooks/useUsers'
 
 function VacationListUser() {
-	const [users, setUsers] = useState([])
-	const [error, setError] = useState('')
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
 
-	useEffect(() => {
-		fetchUsers()
-	}, [])
-
-	const fetchUsers = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/users/all-users`)
-			setUsers(response.data)
-		} catch (error) {
-			console.error('Failed to fetch users:', error)
-			setError(t('list.error'))
-		} finally {
-			setLoading(false)
-		}
-	}
+	// TanStack Query hook
+	const { data: users = [], isLoading: loading, error } = useUsers()
 
 	const handleUserClick = userId => {
 		navigate(`/leave-requests/${userId}`)
@@ -44,7 +27,7 @@ function VacationListUser() {
 			<div id="list-employee">
 				<h3><img src="img/trip.png" alt="ikonka w sidebar" /> {t('vacationlisteq.h3')}</h3>
 				<hr />
-				{error && <p style={{ color: 'red' }}>{error}</p>}
+				{error && <p style={{ color: 'red' }}>{t('list.error')}</p>}
 				<h3 style={{ marginTop: '35px' }}>{t('vacationlisteq.request')}</h3>
 				<p>{t('planslist.emplo')}</p>
 				<ul style={{ listStyle: 'inherit', marginLeft: '20px' }}>

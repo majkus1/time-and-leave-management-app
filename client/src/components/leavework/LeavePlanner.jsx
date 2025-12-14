@@ -1,26 +1,66 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import Sidebar from '../dashboard/Sidebar'
-import axios from 'axios'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
+import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
+import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 
 function LeavePlanner() {
-	const [selectedDates, setSelectedDates] = useState([])
-	const [acceptedLeaveRequests, setAcceptedLeaveRequests] = useState([])
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
-
+	
+	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
-		fetchLeavePlans()
-		fetchAcceptedLeaveRequests()
+		const updateCalendarSize = () => {
+			if (calendarRef.current) {
+				const calendarApi = calendarRef.current.getApi()
+				// Użyj setTimeout aby dać czas na zakończenie animacji CSS
+				setTimeout(() => {
+					calendarApi.updateSize()
+				}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
+			}
+		}
+
+		// Obserwuj zmiany klasy body (sidebar-collapsed)
+		const observer = new MutationObserver(() => {
+			updateCalendarSize()
+		})
+
+		// Obserwuj zmiany klasy body
+		if (document.body) {
+			observer.observe(document.body, {
+				attributes: true,
+				attributeFilter: ['class']
+			})
+		}
+
+		// Obserwuj zmiany rozmiaru okna
+		const handleResize = () => {
+			updateCalendarSize()
+		}
+		window.addEventListener('resize', handleResize)
+
+		// Odśwież po załadowaniu
+		updateCalendarSize()
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', handleResize)
+		}
 	}, [])
+
+	// TanStack Query hooks
+	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
+	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
+	const toggleLeavePlanMutation = useToggleLeavePlan()
+	const deleteLeavePlanMutation = useDeleteLeavePlan()
+
+	const loading = loadingPlans || loadingRequests
 
 	const handleMonthSelect = event => {
 		const newMonth = parseInt(event.target.value, 10)
@@ -39,49 +79,15 @@ function LeavePlanner() {
 		calendarApi.gotoDate(new Date(year, month, 1))
 	}
 
-	const fetchLeavePlans = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/planlea/leave-plans`)
-			setSelectedDates(response.data)
-		} catch (error) {
-			console.error('Error fetching leave plans:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	const fetchAcceptedLeaveRequests = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/leaveworks/user-accepted-leave-requests`, {
-				withCredentials: true
-			})
-			
-			// Filtruj tylko wnioski z poprawnymi datami
-			const validRequests = response.data.filter(request => 
-				request.startDate && request.endDate && request.userId
-			)
-			
-			setAcceptedLeaveRequests(validRequests)
-		} catch (error) {
-			console.error('Error fetching accepted leave requests:', error)
-		}
-	}
-
 	const toggleDate = async date => {
 		const formattedDate = new Date(date).toISOString().split('T')[0]
+		const isSelected = selectedDates.includes(formattedDate)
 
 		try {
-			const isSelected = selectedDates.includes(formattedDate)
-
-			if (isSelected) {
-				await axios.delete(`${API_URL}/api/planlea/leave-plans`, {
-					data: { date: formattedDate },
-				})
-				setSelectedDates(selectedDates.filter(d => d !== formattedDate))
-			} else {
-				await axios.post(`${API_URL}/api/planlea/leave-plans`, { date: formattedDate })
-				setSelectedDates([...selectedDates, formattedDate])
-			}
+			await toggleLeavePlanMutation.mutateAsync({
+				date: formattedDate,
+				isSelected,
+			})
 		} catch (error) {
 			console.error('Error toggling date:', error)
 		}
@@ -89,10 +95,7 @@ function LeavePlanner() {
 
 	const removeDate = async date => {
 		try {
-			await axios.delete(`${API_URL}/api/planlea/leave-plans`, {
-				data: { date },
-			})
-			setSelectedDates(selectedDates.filter(d => d !== date))
+			await deleteLeavePlanMutation.mutateAsync(date)
 		} catch (error) {
 			console.error('Error removing date:', error)
 		}
@@ -124,7 +127,7 @@ function LeavePlanner() {
 					<Loader />
 				</div>
 			) : (
-				<div style={{ padding: '20px' }} id="leave-planner">
+				<div id="leave-planner">
 					<h3><img src="img/calendar.png" alt="ikonka w sidebar" /> {t('leaveplanner.mainheader')}</h3>
 					<hr />
 					<div style={{ marginBottom: '20px' }}>

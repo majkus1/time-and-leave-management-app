@@ -6,7 +6,10 @@ import { isAdmin, isHR, isDepartmentSupervisor, isDepartmentViewer, isWorker } f
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
+	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false) // Nowy state dla schowanego sidebaru na desktop
 	const [isAnimating, setIsAnimating] = useState(false)
+	const [isNavbarVisible, setIsNavbarVisible] = useState(true)
+	const [lastScrollY, setLastScrollY] = useState(0)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
@@ -29,16 +32,68 @@ function Sidebar() {
 
 	useEffect(() => {
 		function handleResize() {
-			setIsMenuOpen(window.innerWidth > 1500)
+			const isDesktop = window.innerWidth > 1500
+			setIsMenuOpen(isDesktop)
+			// Na mobile zawsze pokazuj sidebar jako menu overlay
+			if (!isDesktop) {
+				setIsSidebarCollapsed(false)
+			}
 		}
 		window.addEventListener('resize', handleResize)
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
+	// Dodaj klasę do body gdy sidebar jest schowany (dla CSS)
+	useEffect(() => {
+		if (window.innerWidth > 1500) {
+			if (isSidebarCollapsed) {
+				document.body.classList.add('sidebar-collapsed')
+			} else {
+				document.body.classList.remove('sidebar-collapsed')
+			}
+		}
+		return () => {
+			document.body.classList.remove('sidebar-collapsed')
+		}
+	}, [isSidebarCollapsed])
+
+	// Scroll detection for mobile navbar hide/show
+	useEffect(() => {
+		const handleScroll = () => {
+			const currentScrollY = window.scrollY
+			
+			// Show navbar when scrolling up, hide when scrolling down
+			if (currentScrollY < lastScrollY) {
+				// Scrolling up - show navbar
+				setIsNavbarVisible(true)
+			} else if (currentScrollY > lastScrollY && currentScrollY > 10) {
+				// Scrolling down and past 10px - hide navbar
+				setIsNavbarVisible(false)
+			}
+			
+			// Always show navbar at the top
+			if (currentScrollY < 10) {
+				setIsNavbarVisible(true)
+			}
+			
+			setLastScrollY(currentScrollY)
+		}
+
+		window.addEventListener('scroll', handleScroll, { passive: true })
+		return () => window.removeEventListener('scroll', handleScroll)
+	}, [lastScrollY])
+
 	const toggleMenu = () => {
 		if (isAnimating) return
 		setIsAnimating(true)
-		setIsMenuOpen(!isMenuOpen)
+		
+		// Na desktop (>1500px) - toggle collapse
+		if (window.innerWidth > 1500) {
+			setIsSidebarCollapsed(!isSidebarCollapsed)
+		} else {
+			// Na mobile - toggle menu overlay
+			setIsMenuOpen(!isMenuOpen)
+		}
 		
 		// Reset animation flag after transition
 		setTimeout(() => {
@@ -60,9 +115,9 @@ function Sidebar() {
 
 	return (
 		<div className="container-fluid p-0">
-			{/* Mobile Navigation Bar */}
-			{!shouldHideMobileNav && (
-				<nav className="navbar navbar-expand-lg d-md-none mobile-navbar">
+		{/* Mobile Navigation Bar */}
+		{!shouldHideMobileNav && (
+			<nav className={`navbar navbar-expand-lg d-md-none mobile-navbar ${isNavbarVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
 					<Link to="/" className="navbar-brand">
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="mobile-logo" />
 					</Link>
@@ -81,8 +136,50 @@ function Sidebar() {
 				</nav>
 			)}
 
+			{/* Sidebar Toggle Button - tylko na desktop gdy sidebar jest otwarty */}
+			{window.innerWidth > 1500 && !isSidebarCollapsed && (
+				<button
+					onClick={toggleMenu}
+					className="sidebar-toggle-btn desktop-only"
+					aria-label="Hide sidebar"
+					title="Schowaj sidebar"
+				>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+					</svg>
+				</button>
+			)}
+
+			{/* Sidebar Toggle Button - gdy sidebar jest schowany (po lewej stronie) */}
+			{window.innerWidth > 1500 && isSidebarCollapsed && (
+				<button
+					onClick={toggleMenu}
+					className="sidebar-toggle-btn sidebar-collapsed-btn"
+					aria-label="Show sidebar"
+					title="Pokaż sidebar"
+				>
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+					</svg>
+				</button>
+			)}
+
 			{/* Sidebar */}
-			<div className={`sidebar text-white ${isMenuOpen ? 'opened' : 'closed'} ${isAnimating ? 'animating' : ''}`}>
+			<div className={`sidebar text-white ${isMenuOpen && !isSidebarCollapsed ? 'opened' : 'closed'} ${isSidebarCollapsed ? 'collapsed' : ''} ${isAnimating ? 'animating' : ''}`}>
+				{/* Toggle Button - w sidebarze u góry (tylko desktop) */}
+				{window.innerWidth > 1500 && !isSidebarCollapsed && (
+					<button
+						onClick={toggleMenu}
+						className="sidebar-inner-toggle-btn"
+						aria-label="Hide sidebar"
+						title="Schowaj sidebar"
+					>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+						</svg>
+					</button>
+				)}
+				
 				{/* Language Selector */}
 				<div className="language-selector">
 					{Object.keys(lngs).map(lng => (

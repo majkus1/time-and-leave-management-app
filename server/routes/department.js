@@ -6,5 +6,6 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 
 router.get('/', authenticateToken, departmentController.getDepartments);
 router.post('/', authenticateToken, departmentController.createDepartment);
+router.delete('/:name', authenticateToken, departmentController.deleteDepartment);
 
 module.exports = router;

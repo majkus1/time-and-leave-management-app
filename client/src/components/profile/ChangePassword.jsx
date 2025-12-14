@@ -7,42 +7,41 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
+import { useUserProfile, useChangePassword, useUpdatePosition, useDeleteUser } from '../../hooks/useUsers'
 
 function ChangePassword() {
 	const [currentPassword, setCurrentPassword] = useState('')
 	const [newPassword, setNewPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
 	const [position, setPosition] = useState('')
-	const [isPasswordLoading, setIsPasswordLoading] = useState(false)
-	const [isPositionLoading, setIsPositionLoading] = useState(false)
 	const { t, i18n } = useTranslation()
 	const { role, username, teamId } = useAuth()
-	const [loading, setLoading] = useState(true)
 	const navigate = useNavigate()
 	const { showAlert } = useAlert()
 	const [deleteModal, setDeleteModal] = useState(false)
 	const [isDeleting, setIsDeleting] = useState(false)
-	const [userId, setUserId] = useState(null)
+
+	// TanStack Query hooks
+	const { data: userProfile, isLoading: loadingProfile } = useUserProfile()
+	const changePasswordMutation = useChangePassword()
+	const updatePositionMutation = useUpdatePosition()
+	const deleteUserMutation = useDeleteUser()
+
+	const userId = userProfile?._id || null
+	const loading = loadingProfile
+
+	// Sync position from profile
+	useEffect(() => {
+		if (userProfile?.position) {
+			setPosition(userProfile.position)
+		}
+	}, [userProfile])
 
 	const isPasswordValid = newPassword => {
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
 		return regex.test(newPassword)
 	}
 
-	useEffect(() => {
-		const fetchUserData = async () => {
-			try {
-				const response = await axios.get(`${API_URL}/api/users/profile`)
-				setPosition(response.data.position || '')
-				setUserId(response.data._id || null)
-			} catch (error) {
-				console.error('Błąd podczas pobierania danych użytkownika:', error)
-			} finally {
-				setLoading(false)
-			}
-		}
-		fetchUserData()
-	}, [])
 
 	const handleSubmit = async e => {
 		e.preventDefault()
@@ -54,31 +53,25 @@ function ChangePassword() {
 			await showAlert(t('newpass.invalidPassword'))
 			return
 		}
-		setIsPasswordLoading(true)
 		try {
-			await axios.post(`${API_URL}/api/users/change-password`, {
-				currentPassword,
-				newPassword,
-			})
+			await changePasswordMutation.mutateAsync({ currentPassword, newPassword })
 			await showAlert(t('editprofile.successchangepass'))
+			setCurrentPassword('')
+			setNewPassword('')
+			setConfirmPassword('')
 		} catch (error) {
 			await showAlert(t('editprofile.failchangepass'))
 			console.error(error)
-		} finally {
-			setIsPasswordLoading(false)
 		}
 	}
 
 	const handlePositionUpdate = async () => {
-		setIsPositionLoading(true)
 		try {
-			await axios.put(`${API_URL}/api/users/update-position`, { position })
+			await updatePositionMutation.mutateAsync(position)
 			await showAlert(t('editprofile.successchangepos'))
 		} catch (error) {
 			await showAlert(t('editprofile.failchangepos'))
 			console.error(error)
-		} finally {
-			setIsPositionLoading(false)
 		}
 	}
 
@@ -94,7 +87,7 @@ function ChangePassword() {
 					<div className="row justify-content-start">
 						<div className="col-md-8">
 							<div>
-								<div className="card-body">
+								<div className="card-body" style={{ padding: '0px' }}>
 									<h4><img src="img/user-avatar.png" alt="ikonka w sidebar" />{t('editprofile.headertxt')}</h4>
 									<hr />
 
@@ -120,9 +113,9 @@ function ChangePassword() {
 
 										<button
 											type="submit"
-											disabled={isPositionLoading}
+											disabled={updatePositionMutation.isPending}
 											className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition mb-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
-											{isPositionLoading ? (
+											{updatePositionMutation.isPending ? (
 												<span className="flex items-center">
 													<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 														<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -192,9 +185,9 @@ function ChangePassword() {
 
 										<button
 											type="submit"
-											disabled={isPasswordLoading}
+											disabled={changePasswordMutation.isPending}
 											className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition mb-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
-											{isPasswordLoading ? (
+											{changePasswordMutation.isPending ? (
 												<span className="flex items-center">
 													<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 														<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -212,16 +205,17 @@ function ChangePassword() {
 									<div style={{ 
 										marginTop: '50px', 
 										paddingTop: '30px', 
-										borderTop: '2px solid #e5e7eb' 
+										marginBottom: '20px'
 									}}>
 										<h4 style={{ 
 											color: '#dc3545', 
 											marginBottom: '15px',
 											fontSize: '18px',
-											fontWeight: '600'
+											fontWeight: '600',
 										}}>
 											{t('editprofile.deleteAccountTitle')}
 										</h4>
+										<hr className="mb-4" />
 										<p style={{ 
 											color: '#6b7280', 
 											marginBottom: '20px',
@@ -340,10 +334,7 @@ function ChangePassword() {
 									if (!userId) return
 									setIsDeleting(true)
 									try {
-										const response = await axios.delete(`${API_URL}/api/users/${userId}`, {
-											withCredentials: true
-										})
-										
+										await deleteUserMutation.mutateAsync(userId)
 										await showAlert(t('editprofile.deleteAccountSuccess'))
 										window.location.href = '/login'
 									} catch (error) {
@@ -355,7 +346,7 @@ function ChangePassword() {
 										setDeleteModal(false)
 									}
 								}}
-								disabled={isDeleting}
+								disabled={isDeleting || deleteUserMutation.isPending}
 								style={{
 									padding: '10px 20px',
 									borderRadius: '6px',

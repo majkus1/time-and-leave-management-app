@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import axios from 'axios'
 import CreateUser from './components/profile/CreateUser'
 import Login from './components/profile/Login'
@@ -38,6 +39,19 @@ import '../src/style.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { AlertProvider } from './context/AlertContext'
+
+// Setup QueryClient z optymalnymi ustawieniami
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 2 * 60 * 1000, // 2 minuty domyślnie
+			cacheTime: 5 * 60 * 1000, // 5 minut
+			refetchOnWindowFocus: true, // Refetch przy powrocie do zakładki
+			refetchOnReconnect: true, // Refetch po połączeniu z internetem
+			retry: 1, // 1 retry przy błędzie
+		},
+	},
+})
 
 axios.defaults.withCredentials = true
 
@@ -179,13 +193,15 @@ function AppContent() {
 
 function App() {
 	return (
-		<Router>
-			<AlertProvider>
-				<AuthProvider>
-					<AppContent />
-				</AuthProvider>
-			</AlertProvider>
-		</Router>
+		<QueryClientProvider client={queryClient}>
+			<Router>
+				<AlertProvider>
+					<AuthProvider>
+						<AppContent />
+					</AuthProvider>
+				</AlertProvider>
+			</Router>
+		</QueryClientProvider>
 	)
 }
 

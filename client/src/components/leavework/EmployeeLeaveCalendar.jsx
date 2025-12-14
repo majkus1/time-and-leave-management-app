@@ -1,66 +1,63 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import axios from 'axios'
 import { useParams } from 'react-router-dom'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Sidebar from '../dashboard/Sidebar'
 import Loader from '../Loader'
+import { useUser } from '../../hooks/useUsers'
+import { useUserLeavePlans } from '../../hooks/useLeavePlans'
+import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 
 function EmployeeLeaveCalendar() {
 	const { userId } = useParams()
-	const [leavePlans, setLeavePlans] = useState([])
-	const [acceptedLeaveRequests, setAcceptedLeaveRequests] = useState([])
 	const currentYear = new Date().getFullYear()
-	const [user, setUser] = useState(null)
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
 
+	// TanStack Query hooks
+	const { data: user, isLoading: loadingUser } = useUser(userId)
+	const { data: leavePlans = [], isLoading: loadingPlans } = useUserLeavePlans(userId)
+	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useUserAcceptedLeaveRequests(userId)
+
+	const loading = loadingUser || loadingPlans || loadingRequests
+	
+	// Odśwież kalendarze gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
-		fetchUserDetails()
-		fetchLeavePlans()
-		fetchAcceptedLeaveRequests()
-	}, [userId])
-
-	const fetchUserDetails = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/users/${userId}`)
-			setUser(response.data)
-		} catch (error) {
-			console.error('Failed to fetch user details:', error)
-		} finally {
-			setLoading(false)
+		const updateCalendarsSize = () => {
+			// FullCalendar automatycznie nasłuchuje na window resize, więc wywołajmy event resize
+			// Użyj setTimeout aby dać czas na zakończenie animacji CSS
+			setTimeout(() => {
+				window.dispatchEvent(new Event('resize'))
+			}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
 		}
-	}
 
-	const fetchLeavePlans = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/planlea/admin/leave-plans/${userId}`)
-			setLeavePlans(response.data)
-		} catch (error) {
-			console.error('Error fetching leave plans:', error)
-		} finally {
-			setLoading(false)
-		}
-	}
+		// Obserwuj zmiany klasy body (sidebar-collapsed)
+		const observer = new MutationObserver(() => {
+			updateCalendarsSize()
+		})
 
-	const fetchAcceptedLeaveRequests = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/leaveworks/accepted-leave-requests/${userId}`, {
-				withCredentials: true
+		// Obserwuj zmiany klasy body
+		if (document.body) {
+			observer.observe(document.body, {
+				attributes: true,
+				attributeFilter: ['class']
 			})
-			
-			// Filtruj tylko wnioski z poprawnymi datami
-			const validRequests = response.data.filter(request => 
-				request.startDate && request.endDate && request.userId
-			)
-			
-			setAcceptedLeaveRequests(validRequests)
-		} catch (error) {
-			console.error('Error fetching accepted leave requests:', error)
 		}
-	}
+
+		// Obserwuj zmiany rozmiaru okna
+		const handleResize = () => {
+			updateCalendarsSize()
+		}
+		window.addEventListener('resize', handleResize)
+
+		// Odśwież po załadowaniu
+		updateCalendarsSize()
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', handleResize)
+		}
+	}, [])
 
 	const renderMonths = () => {
 	return Array.from({ length: 12 }, (_, month) => (
@@ -117,7 +114,7 @@ function EmployeeLeaveCalendar() {
 			) : (
 			<div className="leave-calendar-plans-one-employee">
 				{user && (
-					<h3 style={{ padding: '20px', paddingLeft: '10px' }}>
+					<h3 style={{ paddingBottom: '20px' }}>
 						<img src="/img/schedule.png" alt="ikonka w sidebar" /> {t('leaveplanone.h3')} {user.firstName} {user.lastName}
 					</h3>
 				)}

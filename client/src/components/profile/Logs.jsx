@@ -1,30 +1,26 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import React, { useState } from 'react'
 import Sidebar from '../dashboard/Sidebar'
-import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
+import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail } from '../../hooks/useUsers'
+import { useDepartments, useCreateDepartment, useDeleteDepartment } from '../../hooks/useDepartments'
+import { useUserLogs } from '../../hooks/useLogs'
 
 function Logs() {
-	const [users, setUsers] = useState([])
-	const [logs, setLogs] = useState({})
 	const [expandedLogs, setExpandedLogs] = useState([])
 	const [editingUser, setEditingUser] = useState(null)
 	const [editedRoles, setEditedRoles] = useState([])
 	const [error, setError] = useState('')
 	const { t, i18n } = useTranslation()
-	const [loading, setLoading] = useState(true)
-	const [departments, setDepartments] = useState([])
-	const [editedDepartment, setEditedDepartment] = useState('')
+	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
 	const [departmentMode, setDepartmentMode] = useState('choose')
 	const { role, username } = useAuth()
 	const navigate = useNavigate()
 	const { showAlert, showConfirm } = useAlert()
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
-	const [isDeleting, setIsDeleting] = useState(false)
 	const [resendingLink, setResendingLink] = useState(false)
 	const [sendingApology, setSendingApology] = useState(false)
 
@@ -39,70 +35,106 @@ function Logs() {
 		'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)',
 	]
 
-	const fetchDepartments = async () => {
-		try {
-			const response = await axios.get(`${API_URL}/api/departments`, { withCredentials: true })
-			// console.log('Departments fetched:', response.data)
-			// console.log('Departments type:', typeof response.data)
-			// console.log('Departments length:', response.data?.length)
-			setDepartments(response.data)
-		} catch (error) {
-			console.error('Błąd pobierania departmentów:', error)
-			console.error('Error response:', error.response?.data);
-		}
-	}
+	// TanStack Query hooks
+	const { data: users = [], isLoading: loadingUsers } = useUsers()
+	const { data: departments = [] } = useDepartments()
+	const updateUserRolesMutation = useUpdateUserRoles()
+	const deleteUserMutation = useDeleteUser()
+	const createDepartmentMutation = useCreateDepartment()
+	const deleteDepartmentMutation = useDeleteDepartment()
+	const resendPasswordLinkMutation = useResendPasswordLink()
+	const sendApologyEmailMutation = useSendApologyEmail()
 
-	const refreshDepartments = async () => {
-		await fetchDepartments()
-	}
-
-	useEffect(() => {
-		const fetchUsers = async () => {
-			try {
-				const response = await axios.get(`${API_URL}/api/users/all-users`, { withCredentials: true })
-				setUsers(response.data)
-			} catch (error) {
-				console.error('Error fetching users:', error)
-				setError('Nie udało się pobrać listy użytkowników')
-			} finally {
-				setLoading(false)
-			}
-		}
-
-		fetchUsers()
-		fetchDepartments()
-	}, [])
-
-	// Debug departments state
-	// useEffect(() => {
-	// 	console.log('Departments state changed:', departments)
-	// }, [departments])
-
-	const fetchLogs = async userId => {
-		try {
-			const response = await axios.get(`${API_URL}/api/userlogs/${userId}`, { withCredentials: true })
-			const filteredLogs = response.data.filter(log => log.action !== 'LOGOUT')
-			setLogs(prevLogs => ({
-				...prevLogs,
-				[userId]: filteredLogs,
-			}))
-		} catch (error) {
-			console.error('Error fetching logs:', error)
-			setError('Nie udało się pobrać logów')
-		} finally {
-			setLoading(false)
-		}
-	}
+	const loading = loadingUsers
 
 	const handleExpandLogs = userId => {
 		if (expandedLogs.includes(userId)) {
 			setExpandedLogs(expandedLogs.filter(id => id !== userId))
 		} else {
 			setExpandedLogs([...expandedLogs, userId])
-			if (!logs[userId]) {
-				fetchLogs(userId)
-			}
 		}
+	}
+
+	// Komponent do renderowania logów dla użytkownika (desktop)
+	const UserLogsTable = ({ userId }) => {
+		const { data: logs = [] } = useUserLogs(userId)
+		return (
+			<>
+				{logs.map((log, logIndex) => (
+					<tr key={log._id} style={{ 
+						backgroundColor: logIndex % 2 === 0 ? '#ffffff' : '#f8f9fa'
+					}}>
+						<td style={{ 
+							padding: '15px', 
+							fontWeight: '500', 
+							color: '#2c3e50'
+						}}>
+							{log.action}
+						</td>
+						<td style={{ 
+							padding: '15px', 
+							color: '#7f8c8d'
+						}}>
+							{log.details}
+						</td>
+						<td style={{ 
+							padding: '15px', 
+							color: '#95a5a6', 
+							fontSize: '14px'
+						}}>
+							{new Date(log.timestamp).toLocaleString()}
+						</td>
+					</tr>
+				))}
+			</>
+		)
+	}
+
+	// Komponent do renderowania logów dla użytkownika (mobile)
+	const UserLogsCards = ({ userId }) => {
+		const { data: logs = [] } = useUserLogs(userId)
+		return (
+			<>
+				{logs.map((log, logIndex) => (
+					<div key={log._id} style={{ 
+						padding: '15px',
+						borderBottom: logIndex < logs.length - 1 ? '1px solid #e9ecef' : 'none',
+						backgroundColor: logIndex % 2 === 0 ? '#ffffff' : '#f8f9fa'
+					}}>
+						<div style={{ 
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'flex-start',
+							marginBottom: '8px',
+							flexWrap: 'wrap',
+							gap: '10px'
+						}}>
+							<div style={{ 
+								fontWeight: '600', 
+								color: '#2c3e50',
+								fontSize: '14px'
+							}}>
+								{log.action}
+							</div>
+							<div style={{ 
+								color: '#95a5a6', 
+								fontSize: '12px',
+								whiteSpace: 'nowrap'
+							}}>
+								{new Date(log.timestamp).toLocaleString()}
+							</div>
+						</div>
+						<div style={{ 
+							color: '#7f8c8d',
+							fontSize: '14px',
+							lineHeight: '1.4'
+						}}>
+							{log.details}
+						</div>
+					</div>
+				))}
+			</>
+		)
 	}
 
 	const handleEditClick = user => {
@@ -116,11 +148,11 @@ function Logs() {
 		setEditingUser(editingUser?._id === user._id ? null : user)
 		setEditedRoles(user.roles || [])
 		
-		// Popraw inicjalizację department - upewnij się, że to string
-		const userDepartment = user.department || ''
-		// console.log('Setting editedDepartment to:', userDepartment)
-		// console.log('editedDepartment type:', typeof userDepartment)
-		setEditedDepartment(userDepartment)
+		// Dla wielu działów - upewnij się, że to tablica
+		const userDepartments = Array.isArray(user.department) 
+			? user.department 
+			: (user.department ? [user.department] : [])
+		setEditedDepartments(userDepartments)
 		
 		setDepartmentMode('choose')  // Zawsze zaczynaj od trybu wyboru
 	}
@@ -129,25 +161,37 @@ function Logs() {
 		setEditedRoles(prevRoles => (prevRoles.includes(role) ? prevRoles.filter(r => r !== role) : [...prevRoles, role]))
 	}
 
+	const handleDepartmentToggle = (dept) => {
+		setEditedDepartments(prev => 
+			prev.includes(dept) 
+				? prev.filter(d => d !== dept) // Usuń jeśli już jest
+				: [...prev, dept] // Dodaj jeśli nie ma
+		)
+	}
+
+	const handleDeleteDepartment = async (deptName) => {
+		const confirmed = await showConfirm(t('newuser.deleteDepartmentConfirm'))
+		if (!confirmed) return
+
+		try {
+			await deleteDepartmentMutation.mutateAsync(deptName)
+			// Usuń dział z edytowanych działów jeśli był zaznaczony
+			setEditedDepartments(prev => prev.filter(d => d !== deptName))
+			await showAlert(t('newuser.deleteDepartmentSuccess'))
+		} catch (error) {
+			console.error('Error deleting department:', error)
+			await showAlert(t('newuser.deleteDepartmentError'))
+		}
+	}
+
 	const handleSaveRoles = async userId => {
 		try {
-			// Jeśli to nowy dział i nie istnieje w liście, dodaj go do kolekcji departments
-			if (departmentMode === 'new' && editedDepartment && !departments.includes(editedDepartment)) {
-				await axios.post(`${API_URL}/api/departments`, { name: editedDepartment }, { withCredentials: true })
-				await refreshDepartments()
-			}
-
-			// Zaktualizuj użytkownika z nowymi rolami i działem
-			await axios.patch(`${API_URL}/api/users/${userId}/roles`, {
+			// Zaktualizuj użytkownika z nowymi rolami i działami (tablica)
+			await updateUserRolesMutation.mutateAsync({
+				userId,
 				roles: editedRoles,
-				department: editedDepartment,
-			}, { withCredentials: true })
-			
-			setUsers(prevUsers =>
-				prevUsers.map(user =>
-					user._id === userId ? { ...user, roles: editedRoles, department: editedDepartment } : user
-				)
-			)
+				department: editedDepartments, // Wyślij tablicę działów
+			})
 			
 			// Resetuj tryb do wyboru działu i odśwież listę
 			setDepartmentMode('choose')
@@ -170,29 +214,23 @@ function Logs() {
 	const handleDeleteConfirm = async () => {
 		if (!deleteModal.user) return
 		
-		setIsDeleting(true)
 		try {
-			const response = await axios.delete(`${API_URL}/api/users/${deleteModal.user._id}`, {
-				withCredentials: true
-			})
+			const response = await deleteUserMutation.mutateAsync(deleteModal.user._id)
 			
 			// Sprawdź czy użytkownik usunął siebie
-			if (response.data.selfDeleted) {
+			if (response?.selfDeleted) {
 				// Wyloguj użytkownika
 				await showAlert(t('logs.deleteSelfSuccess'))
 				window.location.href = '/login'
 				return
 			}
 			
-			await showAlert(response.data.message || t('logs.deleteSuccess'))
-			setUsers(prevUsers => prevUsers.filter(user => user._id !== deleteModal.user._id))
+			await showAlert(response?.message || t('logs.deleteSuccess'))
 			setDeleteModal({ show: false, user: null })
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || t('logs.deleteError')
 			await showAlert(errorMessage)
 			console.error('Error deleting user:', error)
-		} finally {
-			setIsDeleting(false)
 		}
 	}
 
@@ -204,14 +242,8 @@ function Logs() {
 
 		setResendingLink(true)
 		try {
-			const response = await axios.post(`${API_URL}/api/users/${userId}/resend-password-link`, {}, {
-				withCredentials: true
-			})
-			
-			await showAlert(response.data.message || 'Link został wysłany pomyślnie')
-			// Odśwież listę użytkowników aby zaktualizować status
-			const usersResponse = await axios.get(`${API_URL}/api/users/all-users`, { withCredentials: true })
-			setUsers(usersResponse.data)
+			const response = await resendPasswordLinkMutation.mutateAsync(userId)
+			await showAlert(response.message || 'Link został wysłany pomyślnie')
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania linku'
 			await showAlert(errorMessage)
@@ -229,11 +261,8 @@ function Logs() {
 
 		setSendingApology(true)
 		try {
-			const response = await axios.post(`${API_URL}/api/users/${userId}/send-apology-email`, {}, {
-				withCredentials: true
-			})
-			
-			await showAlert(response.data.message || 'Email został wysłany pomyślnie')
+			const response = await sendApologyEmailMutation.mutateAsync(userId)
+			await showAlert(response.message || 'Email został wysłany pomyślnie')
 		} catch (error) {
 			const errorMessage = error.response?.data?.message || 'Błąd podczas wysyłania emaila'
 			await showAlert(errorMessage)
@@ -248,7 +277,6 @@ function Logs() {
 			<Sidebar />
 
 			<div className="logs-container" style={{ 
-				padding: '20px', 
 				maxWidth: '1200px', 
 				margin: '0 auto'
 			}}>
@@ -285,7 +313,7 @@ function Logs() {
 			) : (
 				<div className="logs-content">
 					{/* Desktop view - tabela */}
-					<div className="users-table-container desktop-view" style={{ 
+					<div className="users-table-container logs-desktop-view" style={{ 
 						backgroundColor: 'white', 
 						borderRadius: '12px', 
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -363,7 +391,7 @@ function Logs() {
 														color: '#95a5a6', 
 														marginTop: '3px'
 													}}>
-														Dział: {user.department}
+														Dział: {Array.isArray(user.department) ? user.department.join(', ') : user.department}
 													</div>
 												)}
 												{isSuperAdmin && user.teamName && (
@@ -603,22 +631,57 @@ function Logs() {
 																				<label key={depName} style={{ 
 																					display: 'flex', 
 																					alignItems: 'center',
+																					justifyContent: 'space-between',
 																					padding: '10px',
 																					backgroundColor: 'white',
 																					borderRadius: '6px',
 																					border: '1px solid #dee2e6',
 																					cursor: 'pointer',
-																					transition: 'all 0.2s'
+																					transition: 'all 0.2s',
+																					marginBottom: '8px'
 																				}}>
-																					<input
-																						type="radio"
-																						name={`department-${editingUser?._id}`}
-																						value={depName}
-																						checked={editedDepartment === depName}
-																																											onChange={e => setEditedDepartment(e.target.value)}
-																						style={{ marginRight: '10px', transform: 'scale(1.2)' }}
-																					/>
-																					<span>{depName}</span>
+																					<div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+																						<input
+																							type="checkbox"
+																							checked={editedDepartments.includes(depName)}
+																							onChange={() => handleDepartmentToggle(depName)}
+																							onClick={(e) => e.stopPropagation()}
+																							style={{ marginRight: '10px', transform: 'scale(1.2)', cursor: 'pointer' }}
+																						/>
+																						<span>{depName}</span>
+																					</div>
+																					{isAdmin && (
+																						<button
+																							type="button"
+																							onClick={(e) => {
+																								e.stopPropagation()
+																								handleDeleteDepartment(depName)
+																							}}
+																							style={{
+																								background: 'transparent',
+																								border: 'none',
+																								color: '#dc3545',
+																								cursor: 'pointer',
+																								padding: '4px 8px',
+																								borderRadius: '4px',
+																								fontSize: '18px',
+																								lineHeight: '1',
+																								transition: 'all 0.2s',
+																								marginLeft: '10px'
+																							}}
+																							onMouseEnter={(e) => {
+																								e.target.style.backgroundColor = '#f8d7da'
+																								e.target.style.color = '#721c24'
+																							}}
+																							onMouseLeave={(e) => {
+																								e.target.style.backgroundColor = 'transparent'
+																								e.target.style.color = '#dc3545'
+																							}}
+																							title={t('newuser.deleteDepartmentConfirm')}
+																						>
+																							×
+																						</button>
+																					)}
 																				</label>
 																			);
 																		})}
@@ -629,7 +692,6 @@ function Logs() {
 																	type="button"
 																	className="btn btn-outline-primary"
 																	onClick={() => {
-																		setEditedDepartment('')
 																		setDepartmentMode('new')
 																	}}
 																	style={{ 
@@ -665,8 +727,16 @@ function Logs() {
 																	<input
 																		type="text"
 																		placeholder={t('newuser.department4')}
-																		value={editedDepartment}
-																		onChange={e => setEditedDepartment(e.target.value)}
+																		onKeyDown={(e) => {
+																			if (e.key === 'Enter') {
+																				e.preventDefault()
+																				const value = e.target.value.trim()
+																				if (value && !editedDepartments.includes(value)) {
+																					setEditedDepartments([...editedDepartments, value])
+																					e.target.value = ''
+																				}
+																			}
+																		}}
 																		style={{ 
 																			width: '100%',
 																			padding: '12px',
@@ -676,6 +746,9 @@ function Logs() {
 																			transition: 'border-color 0.2s'
 																		}}
 																	/>
+																	<small style={{ color: '#6c757d', marginTop: '5px', display: 'block' }}>
+																		{t('newuser.departmentPressSave')}
+																	</small>
 																</div>
 																
 																<div style={{ display: 'flex', gap: '10px' }}>
@@ -740,7 +813,7 @@ function Logs() {
 										</td>
 									</tr>
 								)}
-								{expandedLogs.includes(user._id) && logs[user._id] && (
+								{expandedLogs.includes(user._id) && (
 									<tr>
 										<td colSpan="2" style={{ padding: '0' }}>
 											<div style={{ 
@@ -789,32 +862,7 @@ function Logs() {
 															</tr>
 														</thead>
 														<tbody>
-															{logs[user._id].map((log, logIndex) => (
-																<tr key={log._id} style={{ 
-																	backgroundColor: logIndex % 2 === 0 ? '#ffffff' : '#f8f9fa'
-																}}>
-																	<td style={{ 
-																		padding: '15px', 
-																		fontWeight: '500', 
-																		color: '#2c3e50'
-																	}}>
-																		{log.action}
-																	</td>
-																	<td style={{ 
-																		padding: '15px', 
-																		color: '#7f8c8d'
-																	}}>
-																		{log.details}
-																	</td>
-																	<td style={{ 
-																		padding: '15px', 
-																		color: '#95a5a6', 
-																		fontSize: '14px'
-																	}}>
-																		{new Date(log.timestamp).toLocaleString()}
-																	</td>
-																</tr>
-															))}
+															<UserLogsTable userId={user._id} />
 														</tbody>
 													</table>
 												</div>
@@ -829,7 +877,7 @@ function Logs() {
 					</div>
 
 					{/* Mobile view - karty */}
-					<div className="users-cards-container mobile-view" style={{ 
+					<div className="users-cards-container logs-mobile-view" style={{ 
 						display: 'block' // Pokazujemy na mobile
 					}}>
 						{users.map((user, index) => (
@@ -886,7 +934,7 @@ function Logs() {
 													fontSize: '12px', 
 													color: '#95a5a6'
 												}}>
-													Dział: {user.department}
+													Dział: {Array.isArray(user.department) ? user.department.join(', ') : user.department}
 												</div>
 											)}
 											{isSuperAdmin && user.teamName && (
@@ -1144,22 +1192,58 @@ function Logs() {
 																	<label key={depName} style={{ 
 																		display: 'flex', 
 																		alignItems: 'center',
+																		justifyContent: 'space-between',
 																		padding: '12px',
 																		backgroundColor: 'white',
 																		borderRadius: '8px',
 																		border: '1px solid #dee2e6',
 																		cursor: 'pointer',
-																		transition: 'all 0.2s'
+																		transition: 'all 0.2s',
+																		marginBottom: '8px'
 																	}}>
-																		<input
-																			type="radio"
-																			name={`department-mobile-${editingUser?._id}`}
-																			value={depName}
-																			checked={editedDepartment === depName}
-																			onChange={e => setEditedDepartment(e.target.value)}
-																			style={{ marginRight: '12px', transform: 'scale(1.3)', flexShrink: 0 }}
-																		/>
-																		<span>{depName}</span>
+																		<div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+																			<input
+																				type="checkbox"
+																				checked={editedDepartments.includes(depName)}
+																				onChange={() => handleDepartmentToggle(depName)}
+																				onClick={(e) => e.stopPropagation()}
+																				style={{ marginRight: '12px', transform: 'scale(1.3)', flexShrink: 0, cursor: 'pointer' }}
+																			/>
+																			<span>{depName}</span>
+																		</div>
+																		{isAdmin && (
+																			<button
+																				type="button"
+																				onClick={(e) => {
+																					e.stopPropagation()
+																					handleDeleteDepartment(depName)
+																				}}
+																				style={{
+																					background: 'transparent',
+																					border: 'none',
+																					color: '#dc3545',
+																					cursor: 'pointer',
+																					padding: '4px 8px',
+																					borderRadius: '4px',
+																					fontSize: '20px',
+																					lineHeight: '1',
+																					transition: 'all 0.2s',
+																					marginLeft: '10px',
+																					flexShrink: 0
+																				}}
+																				onMouseEnter={(e) => {
+																					e.target.style.backgroundColor = '#f8d7da'
+																					e.target.style.color = '#721c24'
+																				}}
+																				onMouseLeave={(e) => {
+																					e.target.style.backgroundColor = 'transparent'
+																					e.target.style.color = '#dc3545'
+																				}}
+																				title={t('newuser.deleteDepartmentConfirm')}
+																			>
+																				×
+																			</button>
+																		)}
 																	</label>
 																);
 															})}
@@ -1170,7 +1254,6 @@ function Logs() {
 														type="button"
 														className="btn btn-outline-primary"
 														onClick={() => {
-															setEditedDepartment('')
 															setDepartmentMode('new')
 														}}
 														style={{ 
@@ -1208,8 +1291,16 @@ function Logs() {
 														<input
 															type="text"
 															placeholder={t('newuser.department4')}
-															value={editedDepartment}
-															onChange={e => setEditedDepartment(e.target.value)}
+															onKeyDown={(e) => {
+																if (e.key === 'Enter') {
+																	e.preventDefault()
+																	const value = e.target.value.trim()
+																	if (value && !editedDepartments.includes(value)) {
+																		setEditedDepartments([...editedDepartments, value])
+																		e.target.value = ''
+																	}
+																}
+															}}
 															style={{ 
 																width: '100%',
 																padding: '12px',
@@ -1219,6 +1310,9 @@ function Logs() {
 																transition: 'border-color 0.2s'
 															}}
 														/>
+														<small style={{ color: '#6c757d', marginTop: '5px', display: 'block' }}>
+															{t('newuser.departmentPressSave')}
+														</small>
 													</div>
 													
 													<div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
@@ -1285,7 +1379,7 @@ function Logs() {
 								)}
 
 								{/* Panel logów */}
-								{expandedLogs.includes(user._id) && logs[user._id] && (
+								{expandedLogs.includes(user._id) && (
 									<div style={{ 
 										backgroundColor: '#f8f9fa', 
 										padding: '20px',
@@ -1306,44 +1400,7 @@ function Logs() {
 											overflow: 'hidden',
 											boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
 										}}>
-											{logs[user._id].map((log, logIndex) => (
-												<div key={log._id} style={{ 
-													padding: '15px',
-													borderBottom: logIndex < logs[user._id].length - 1 ? '1px solid #e9ecef' : 'none',
-													backgroundColor: logIndex % 2 === 0 ? '#ffffff' : '#f8f9fa'
-												}}>
-													<div style={{ 
-														display: 'flex',
-														justifyContent: 'space-between',
-														alignItems: 'flex-start',
-														marginBottom: '8px',
-														flexWrap: 'wrap',
-														gap: '10px'
-													}}>
-														<div style={{ 
-															fontWeight: '600', 
-															color: '#2c3e50',
-															fontSize: '14px'
-														}}>
-															{log.action}
-														</div>
-														<div style={{ 
-															color: '#95a5a6', 
-															fontSize: '12px',
-															whiteSpace: 'nowrap'
-														}}>
-															{new Date(log.timestamp).toLocaleString()}
-														</div>
-													</div>
-													<div style={{ 
-														color: '#7f8c8d',
-														fontSize: '14px',
-														lineHeight: '1.4'
-													}}>
-														{log.details}
-													</div>
-												</div>
-											))}
+											<UserLogsCards userId={user._id} />
 										</div>
 									</div>
 								)}
@@ -1401,7 +1458,7 @@ function Logs() {
 						}}>
 							<button
 								onClick={handleDeleteCancel}
-								disabled={isDeleting}
+								disabled={deleteUserMutation.isLoading}
 								style={{
 									padding: '10px 20px',
 									borderRadius: '6px',
@@ -1412,7 +1469,7 @@ function Logs() {
 									fontSize: '14px',
 									fontWeight: '500',
 									transition: 'all 0.2s',
-									opacity: isDeleting ? 0.5 : 1
+									opacity: deleteUserMutation.isLoading ? 0.5 : 1
 								}}
 								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#f9fafb')}
 								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = 'white')}>
@@ -1420,7 +1477,7 @@ function Logs() {
 							</button>
 							<button
 								onClick={handleDeleteConfirm}
-								disabled={isDeleting}
+								disabled={deleteUserMutation.isLoading}
 								style={{
 									padding: '10px 20px',
 									borderRadius: '6px',
@@ -1431,14 +1488,14 @@ function Logs() {
 									fontSize: '14px',
 									fontWeight: '500',
 									transition: 'all 0.2s',
-									opacity: isDeleting ? 0.5 : 1,
+									opacity: deleteUserMutation.isLoading ? 0.5 : 1,
 									display: 'flex',
 									alignItems: 'center',
 									gap: '8px'
 								}}
 								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#c82333')}
 								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc3545')}>
-								{isDeleting ? (
+								{deleteUserMutation.isLoading ? (
 									<>
 										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -1455,26 +1512,6 @@ function Logs() {
 				</div>
 			)}
 
-			{/* CSS dla responsywności */}
-			<style jsx>{`
-				@media (min-width: 768px) {
-					.desktop-view {
-						display: block !important;
-					}
-					.mobile-view {
-						display: none !important;
-					}
-				}
-				
-				@media (max-width: 767px) {
-					.desktop-view {
-						display: none !important;
-					}
-					.mobile-view {
-						display: block !important;
-					}
-				}
-			`}</style>
 		</>
 	)
 }
