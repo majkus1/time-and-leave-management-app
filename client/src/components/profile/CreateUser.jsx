@@ -129,7 +129,8 @@ function CreateUser() {
                 firstName, 
                 lastName, 
                 roles: selectedRoles, 
-                department: selectedDepartments // Wyślij tablicę działów
+                department: selectedDepartments, // Wyślij tablicę działów
+                teamId // Przekaż teamId dla invalidacji cache
             }
             const response = await createUserMutation.mutateAsync(newUser)
             

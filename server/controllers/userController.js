@@ -272,7 +272,7 @@ exports.getUserProfile = async (req, res) => {
 			firstName: user.firstName,
 			lastName: user.lastName,
 			position: user.position,
-			role: user.role,
+			roles: user.roles, // Zwracamy roles (tablica) zamiast role
 		})
 	} catch (error) {
 		console.error('Error retrieving user profile:', error)

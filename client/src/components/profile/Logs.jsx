@@ -18,7 +18,7 @@ function Logs() {
 	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
 	const [departmentMode, setDepartmentMode] = useState('choose')
 	const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
-	const { role, username, teamId } = useAuth()
+	const { role, username, teamId, refreshUserData } = useAuth()
 	const navigate = useNavigate()
 	const { showAlert, showConfirm } = useAlert()
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
@@ -295,6 +295,11 @@ function Logs() {
 				department: editedDepartments, // Wyślij tablicę działów
 			})
 			
+			// Jeśli zmieniamy role zalogowanego użytkownika, odśwież AuthContext
+			if (editingUser?._id && editingUser.username === username) {
+				await refreshUserData()
+			}
+			
 			// Resetuj tryb do wyboru działu i odśwież listę
 			setDepartmentMode('choose')
 			setEditingUser(null)
@@ -317,7 +322,10 @@ function Logs() {
 		if (!deleteModal.user) return
 		
 		try {
-			const response = await deleteUserMutation.mutateAsync(deleteModal.user._id)
+			const response = await deleteUserMutation.mutateAsync({
+				userId: deleteModal.user._id,
+				teamId: deleteModal.user.teamId || teamId // Użyj teamId usuwanego użytkownika lub własnego teamId
+			})
 			
 			// Sprawdź czy użytkownik usunął siebie
 			if (response?.selfDeleted) {
@@ -1539,19 +1547,13 @@ function Logs() {
 
 			{/* Modal potwierdzenia usunięcia */}
 			{deleteModal.show && deleteModal.user && (
-				<div style={{
-					position: 'fixed',
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					backgroundColor: 'rgba(0, 0, 0, 0.5)',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					zIndex: 1000,
-					padding: '20px'
-				}} onClick={handleDeleteCancel}>
+				<div 
+					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+					style={{
+						zIndex: 100000000,
+						padding: '20px'
+					}} 
+					onClick={handleDeleteCancel}>
 					<div style={{
 						backgroundColor: 'white',
 						borderRadius: '8px',
@@ -1591,14 +1593,14 @@ function Logs() {
 									border: '1px solid #d1d5db',
 									backgroundColor: 'white',
 									color: '#374151',
-									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									cursor: deleteUserMutation.isLoading ? 'not-allowed' : 'pointer',
 									fontSize: '14px',
 									fontWeight: '500',
 									transition: 'all 0.2s',
 									opacity: deleteUserMutation.isLoading ? 0.5 : 1
 								}}
-								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#f9fafb')}
-								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = 'white')}>
+								onMouseEnter={(e) => !deleteUserMutation.isLoading && (e.target.style.backgroundColor = '#f9fafb')}
+								onMouseLeave={(e) => !deleteUserMutation.isLoading && (e.target.style.backgroundColor = 'white')}>
 								{t('logs.cancel')}
 							</button>
 							<button
@@ -1610,7 +1612,7 @@ function Logs() {
 									border: 'none',
 									backgroundColor: '#dc3545',
 									color: 'white',
-									cursor: isDeleting ? 'not-allowed' : 'pointer',
+									cursor: deleteUserMutation.isLoading ? 'not-allowed' : 'pointer',
 									fontSize: '14px',
 									fontWeight: '500',
 									transition: 'all 0.2s',
@@ -1619,8 +1621,8 @@ function Logs() {
 									alignItems: 'center',
 									gap: '8px'
 								}}
-								onMouseEnter={(e) => !isDeleting && (e.target.style.backgroundColor = '#c82333')}
-								onMouseLeave={(e) => !isDeleting && (e.target.style.backgroundColor = '#dc3545')}>
+								onMouseEnter={(e) => !deleteUserMutation.isLoading && (e.target.style.backgroundColor = '#c82333')}
+								onMouseLeave={(e) => !deleteUserMutation.isLoading && (e.target.style.backgroundColor = '#dc3545')}>
 								{deleteUserMutation.isLoading ? (
 									<>
 										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -131,7 +131,20 @@ function ChangePassword() {
 
 									<div className="mb-3">
 										<label className="form-label">{t('editprofile.rolelabel')}</label>
-										<input type="text" className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 form-control yourrolesinput" value={role} readOnly />
+										<input 
+											type="text" 
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 form-control yourrolesinput" 
+											value={
+												loadingProfile 
+													? t('editprofile.loading') 
+													: (userProfile?.roles && userProfile.roles.length > 0 
+														? userProfile.roles.join(', ') 
+														: (Array.isArray(role) && role.length > 0 
+															? role.join(', ') 
+															: ''))
+											} 
+											readOnly 
+										/>
 									</div>
 
 									<form onSubmit={handleSubmit} className="max-w-md space-y-6 pt-10">

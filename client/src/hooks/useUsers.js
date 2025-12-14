@@ -44,8 +44,16 @@ export const useCreateUser = () => {
 			})
 			return response.data
 		},
-		onSuccess: () => {
+		onSuccess: (data, variables) => {
+			// Invaliduj listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['users'] })
+			// Invaliduj informacje o zespole jeśli teamId jest dostępne
+			if (variables.teamId) {
+				queryClient.invalidateQueries({ queryKey: ['team', variables.teamId, 'info'] })
+			} else {
+				// Fallback: invaliduj wszystkie query team jeśli teamId nie jest dostępne
+				queryClient.invalidateQueries({ queryKey: ['team'] })
+			}
 		},
 	})
 }
@@ -64,8 +72,10 @@ export const useUpdateUserRoles = () => {
 			return response.data
 		},
 		onSuccess: (data, variables) => {
+			// Invaliduj listę użytkowników, konkretnego użytkownika i profil użytkownika
 			queryClient.invalidateQueries({ queryKey: ['users'] })
 			queryClient.invalidateQueries({ queryKey: ['users', variables.userId] })
+			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
 		},
 	})
 }
@@ -75,14 +85,22 @@ export const useDeleteUser = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async (userId) => {
+		mutationFn: async ({ userId, teamId }) => {
 			const response = await axios.delete(`${API_URL}/api/users/${userId}`, {
 				withCredentials: true,
 			})
 			return response.data
 		},
-		onSuccess: () => {
+		onSuccess: (data, variables) => {
+			// Invaliduj listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['users'] })
+			// Invaliduj informacje o zespole jeśli teamId jest dostępne
+			if (variables.teamId) {
+				queryClient.invalidateQueries({ queryKey: ['team', variables.teamId, 'info'] })
+			} else {
+				// Fallback: invaliduj wszystkie query team jeśli teamId nie jest dostępne
+				queryClient.invalidateQueries({ queryKey: ['team'] })
+			}
 		},
 	})
 }
@@ -158,7 +176,9 @@ export const useUpdatePosition = () => {
 			return response.data
 		},
 		onSuccess: () => {
+			// Invaliduj profil użytkownika i całą listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
+			queryClient.invalidateQueries({ queryKey: ['users'] })
 		},
 	})
 }
