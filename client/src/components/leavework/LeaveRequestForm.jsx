@@ -82,7 +82,7 @@ function LeaveRequestForm() {
 				<div id="leave-request-form">
 					<h2 style={{ marginTop: '0px' }}><img src="img/sunbed.png" alt="ikonka w sidebar" />{t('leaveform.header')}</h2>
 					<hr />
-					<p>
+					<p style={{ marginBottom: '20px' }}>
 						{t('leaveform.availableday')}{' '}
 						{availableLeaveDays === 0 ? (
 							<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>

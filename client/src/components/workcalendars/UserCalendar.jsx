@@ -253,7 +253,6 @@ function UserCalendar() {
 					)}
 
 					<div className="calendar-controls" style={{ 
-						marginBottom: '20px',
 						padding: '10px 15px',
 						// backgroundColor: isConfirmed ? '#dcfce7' : '#fef3c7',
 						borderRadius: '6px',
