@@ -32,6 +32,7 @@ import NewPassword from './components/profile/NewPassword'
 // import ENBlogThree from './components/ENBlogThree.jsx'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
+import Loader from './components/Loader'
 import { isAdmin, isHR, isDepartmentSupervisor, isDepartmentViewer, isWorker } from './utils/roleHelpers'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
@@ -57,7 +58,7 @@ axios.defaults.withCredentials = true
 
 function AppContent() {
 	const location = useLocation()
-	const { loggedIn, role, logout } = useAuth()
+	const { loggedIn, role, logout, isCheckingAuth } = useAuth()
 
 	useEffect(() => {
 		const interceptor = axios.interceptors.response.use(
@@ -106,9 +107,14 @@ function AppContent() {
 				<title>Planopia</title>
 			</Helmet>
 
-			<div>
-				<ScrollToHashElement />
-				<ScrollToTop />
+		<div>
+			<ScrollToHashElement />
+			<ScrollToTop />
+			{isCheckingAuth ? (
+				<div className="content-with-loader">
+					<Loader />
+				</div>
+			) : (
 				<Routes>
 					<Route path="/login" element={loggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
 					<Route path="/team-registration" element={loggedIn ? <Navigate to="/dashboard" /> : <TeamRegistration />} />
@@ -186,6 +192,7 @@ function AppContent() {
 						<Route path="/all-leave-plans" element={<AdminAllLeaveCalendar />} />
 					</Route>
 				</Routes>
+			)}
 			</div>
 		</>
 	)

@@ -49,6 +49,10 @@ export const useUpdateVacationDays = () => {
 		onSuccess: (data, variables) => {
 			// Invaliduj dni urlopowe użytkownika, jego dane w liście użytkowników i całą listę
 			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', variables.userId] })
+			// Invaliduj również 'own' vacation days (używane przez LeaveRequestForm)
+			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', 'own'] })
+			// Invaliduj wszystkie query vacation days jako fallback
+			queryClient.invalidateQueries({ queryKey: ['vacation', 'days'] })
 			queryClient.invalidateQueries({ queryKey: ['users', variables.userId] })
 			queryClient.invalidateQueries({ queryKey: ['users'] })
 		},
