@@ -2,7 +2,7 @@
 
 Time tracking and leave management system for teams. Built with React and Node.js.
 
-**Live:** [app.planopia.pl](https://app.planopia.pl)
+**Live:** [planopia.pl](https://planopia.pl)
 
 ## What it does
 
@@ -18,7 +18,14 @@ Planopia helps teams manage work hours and leave requests. Employees log daily h
 
 ## Tech stack
 
-**Frontend:**
+**Landing Page (Next.js):**
+- Next.js 16 with App Router
+- TypeScript
+- SEO optimized with sitemap and robots.txt
+- Blog system for marketing content
+- Multi-language support (Polish/English)
+
+**Business App (React):**
 - React 18 with Vite
 - TanStack Query for data fetching
 - FullCalendar for calendar views
@@ -48,17 +55,21 @@ The app includes several security measures:
 ## Project structure
 
 ```
-├── client/          # React frontend
+├── planopia-next-landing/  # Next.js landing page (SEO, blog, marketing)
 │   └── src/
-│       ├── components/    # UI components
-│       ├── hooks/        # Custom React hooks
-│       ├── context/      # Auth and alert context
-│       └── utils/        # Helper functions
-└── server/          # Node.js backend
-    ├── controllers/      # Request handlers
-    ├── models/          # Database schemas
-    ├── routes/          # API endpoints
-    └── middleware/      # Auth and validation
+│       ├── app/            # Next.js App Router
+│       └── components/     # Landing page components
+├── client/                 # React business app
+│   └── src/
+│       ├── components/     # UI components
+│       ├── hooks/         # Custom React hooks
+│       ├── context/       # Auth and alert context
+│       └── utils/         # Helper functions
+└── server/                 # Node.js backend
+    ├── controllers/       # Request handlers
+    ├── models/           # Database schemas
+    ├── routes/           # API endpoints
+    └── middleware/       # Auth and validation
 ```
 
 ## License
