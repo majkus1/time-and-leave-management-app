@@ -361,11 +361,6 @@ function MonthlyCalendar() {
 <button
   onClick={async () => {
     await toggleConfirmationStatus()
-    await showAlert(
-      isConfirmed
-        ? t('workcalendar.cancelconfirm')
-        : t('workcalendar.successconfirm')
-    )
   }}
   style={{
     marginLeft: '10px',
