@@ -65,10 +65,13 @@ function AppContent() {
 			res => res,
 			async err => {
 				const originalRequest = err.config
+				// Skip refresh if AuthContext is handling it (checkAuth, refreshUserData)
+				// or if this is a refresh-token request itself
 				if (
 					err.response?.status === 401 &&
 					originalRequest.url !== `${API_URL}/api/users/refresh-token` &&
-					!originalRequest._retry
+					!originalRequest._retry &&
+					!originalRequest.skipAuthRefresh
 				) {
 					originalRequest._retry = true
 					try {
