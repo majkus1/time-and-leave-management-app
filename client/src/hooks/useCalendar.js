@@ -18,6 +18,9 @@ export const useCalendarConfirmation = (month, year, userId = null) => {
 		},
 		staleTime: 1 * 60 * 1000, // 1 minuta
 		cacheTime: 5 * 60 * 1000,
+		placeholderData: (previousData) => previousData, // Keep previous data while fetching new to prevent calendar reset
+		refetchOnMount: false, // Don't refetch on mount if data is fresh
+		refetchOnWindowFocus: false, // Don't refetch on window focus
 	})
 }
 
