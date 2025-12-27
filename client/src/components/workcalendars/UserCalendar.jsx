@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import Sidebar from '../dashboard/Sidebar'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import * as XLSX from 'xlsx'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
@@ -24,6 +25,7 @@ function UserCalendar() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [additionalHours, setAdditionalHours] = useState(0)
+	const [isExportingExcel, setIsExportingExcel] = useState(false)
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
@@ -249,6 +251,172 @@ function UserCalendar() {
 		})
 	}
 
+	const generateExcel = () => {
+		if (!user) return
+
+		setIsExportingExcel(true)
+
+		try {
+			// Helper function to format date
+			const formatDate = (date) => {
+				return new Date(date).toLocaleDateString(i18n.resolvedLanguage, {
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit'
+				})
+			}
+
+			// Get all days in the current month
+			const monthStart = new Date(currentYear, currentMonth, 1)
+			const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+			const daysInMonth = monthEnd.getDate()
+
+			// Filter workdays for current month
+			const filteredWorkdays = workdays.filter(day => {
+				const eventDate = new Date(day.date)
+				return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+			})
+
+			// Create a map of workdays by date for quick lookup
+			const workdaysMap = new Map()
+			filteredWorkdays.forEach(day => {
+				const dateKey = new Date(day.date).toDateString()
+				workdaysMap.set(dateKey, day)
+			})
+
+			// Filter accepted leave requests for current month
+			const filteredLeaveRequests = Array.isArray(acceptedLeaveRequests) ? acceptedLeaveRequests.filter(request => {
+				if (!request.startDate || !request.endDate) return false
+				const startDate = new Date(request.startDate)
+				const endDate = new Date(request.endDate)
+				const requestStartMonth = startDate.getMonth()
+				const requestStartYear = startDate.getFullYear()
+				const requestEndMonth = endDate.getMonth()
+				const requestEndYear = endDate.getFullYear()
+
+				return (
+					(requestStartYear === currentYear && requestStartMonth === currentMonth) ||
+					(requestEndYear === currentYear && requestEndMonth === currentMonth) ||
+					(requestStartYear < currentYear && requestEndYear > currentYear) ||
+					(requestStartYear === currentYear && requestEndYear === currentYear && requestStartMonth <= currentMonth && requestEndMonth >= currentMonth)
+				)
+			}) : []
+
+			// Create a map of leave requests by date
+			const leaveRequestsMap = new Map()
+			filteredLeaveRequests.forEach(request => {
+				const startDate = new Date(request.startDate)
+				const endDate = new Date(request.endDate)
+				const currentDate = new Date(startDate)
+				
+				while (currentDate <= endDate) {
+					const dateKey = currentDate.toDateString()
+					if (!leaveRequestsMap.has(dateKey)) {
+						leaveRequestsMap.set(dateKey, [])
+					}
+					leaveRequestsMap.get(dateKey).push(request)
+					currentDate.setDate(currentDate.getDate() + 1)
+				}
+			})
+
+			// Prepare detailed data for all days in month
+			const detailedData = []
+			
+			// Add header row
+			detailedData.push([
+				t('workcalendar.excel.date'),
+				t('workcalendar.excel.hoursWorked'),
+				t('workcalendar.excel.overtime'),
+				t('workcalendar.excel.absenceType'),
+				t('workcalendar.excel.leaveType'),
+				t('workcalendar.excel.notes')
+			])
+
+			// Add data for each day of the month
+			for (let day = 1; day <= daysInMonth; day++) {
+				const currentDate = new Date(currentYear, currentMonth, day)
+				const dateKey = currentDate.toDateString()
+				const workday = workdaysMap.get(dateKey)
+				const leaveRequests = leaveRequestsMap.get(dateKey) || []
+
+				const row = [
+					formatDate(currentDate),
+					workday?.hoursWorked || '',
+					workday?.additionalWorked || '',
+					workday?.absenceType ? t(workday.absenceType) : '',
+					leaveRequests.length > 0 ? leaveRequests.map(r => t(r.type)).join(', ') : '',
+					workday?.realTimeDayWorked || ''
+				]
+
+				detailedData.push(row)
+			}
+
+			// Prepare summary data
+			const summaryData = [
+				[t('workcalendar.excel.summary'), ''],
+				['', ''],
+				[t('workcalendar.allfrommonth1'), totalWorkDays],
+				[t('workcalendar.allfrommonth2'), `${totalHours} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth3'), `${additionalHours} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth4'), totalLeaveDays],
+				[t('workcalendar.allfrommonth5'), totalOtherAbsences],
+				['', ''],
+				[t('workcalendar.excel.employee'), `${user.firstName} ${user.lastName}${user.position ? ` (${user.position})` : ''}`],
+				[t('workcalendar.excel.period'), `${new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })}`],
+				[t('workcalendar.excel.exportDate'), new Date().toLocaleDateString(i18n.resolvedLanguage, { 
+					year: 'numeric', 
+					month: 'long', 
+					day: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				})]
+			]
+
+			// Create workbook
+			const wb = XLSX.utils.book_new()
+
+			// Create detailed sheet
+			const wsDetails = XLSX.utils.aoa_to_sheet(detailedData)
+			
+			// Set column widths for detailed sheet
+			wsDetails['!cols'] = [
+				{ wch: 12 }, // Date
+				{ wch: 15 }, // Hours worked
+				{ wch: 12 }, // Overtime
+				{ wch: 25 }, // Absence type
+				{ wch: 25 }, // Leave type
+				{ wch: 20 }  // Notes
+			]
+
+			// Create summary sheet
+			const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
+			
+			// Set column widths for summary sheet
+			wsSummary['!cols'] = [
+				{ wch: 30 }, // Label
+				{ wch: 20 }  // Value
+			]
+
+			// Add sheets to workbook
+			XLSX.utils.book_append_sheet(wb, wsDetails, t('workcalendar.excel.sheetDetails'))
+			XLSX.utils.book_append_sheet(wb, wsSummary, t('workcalendar.excel.sheetSummary'))
+
+			// Generate filename
+			const monthName = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, { month: 'long' })
+			const filename = `${t('workcalendar.excel.filename')}_${user.firstName}_${user.lastName}_${monthName}_${currentYear}.xlsx`
+
+			// Write and download
+			XLSX.writeFile(wb, filename)
+
+			setIsExportingExcel(false)
+		} catch (error) {
+			console.error('Error generating Excel:', error)
+			setIsExportingExcel(false)
+			// Note: If useAlert is available, you can add it here
+			// For now, error is logged to console
+		}
+	}
+
 	return (
 		<>
 			<Sidebar />
@@ -258,9 +426,40 @@ function UserCalendar() {
 				</div>
 			) : (
 			<div id="calendars-works-review" className='custom-flex'>
-				<button onClick={generatePDF} className="btn-pdf btn btn-primary">
-				{t('workcalendar.genepdf')}
-				</button>
+				<div style={{ display: 'flex', gap: '15px', flexDirection: 'column' }}><div className='pdfexcelbtns' style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start', marginBottom: '15px', marginLeft: '15px' }}>
+					<button 
+						onClick={generatePDF} 
+						className="btn-pdf btn btn-primary"
+						disabled={isExportingExcel}
+					>
+						{t('workcalendar.genepdf')}
+					</button>
+					<button 
+						onClick={generateExcel} 
+						className="btn-excel btn btn-success"
+						disabled={isExportingExcel}
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '8px',
+							opacity: isExportingExcel ? 0.6 : 1,
+							cursor: isExportingExcel ? 'not-allowed' : 'pointer'
+						}}
+					>
+						{isExportingExcel ? (
+							<>
+								<span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '14px', height: '14px' }}></span>
+								{t('workcalendar.exportingExcel')}
+							</>
+						) : (
+							<>
+								
+								{t('workcalendar.exportExcel')}
+							</>
+						)}
+					</button>
+				</div>
+				<div>
 				<label style={{ marginLeft: '10px' }} className="flex items-center space-x-2">
 				{t('workcalendar.monthlabel')}
 					<select value={currentMonth} onChange={handleMonthSelect} style={{ marginRight: '5px', marginLeft: '5px' }} className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -284,6 +483,8 @@ function UserCalendar() {
 						})}
 					</select>
 				</label>
+				</div>
+				</div>
 				<div ref={pdfRef} style={{ 
 					marginTop: '15px',
 					backgroundColor: '#ffffff',

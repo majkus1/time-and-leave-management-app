@@ -977,8 +977,8 @@ hr {
 
 
 .btn-pdf {
-	display: none;
-	position: absolute;
+	display: block;
+	/* position: absolute; */
 	right: 10px;
 	top: 80px;
 }
@@ -2631,6 +2631,10 @@ section {
 	.btn-pdf,
 	.btn-print-leavereq {
 		display: block !important;
+	}
+	.pdfexcelbtns {
+		position: absolute;
+		right: 15px;
 	}
 	.sidebar-close-btn {
 		display: none;
