@@ -139,7 +139,7 @@ function AppContent() {
 						<Route
 							path="/calendars-list"
 							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role) ? (
+								isAdmin(role) || isHR(role) || isDepartmentViewer(role) ? (
 									<AdminUserList />
 								) : (
 									<Navigate to="/" />
@@ -149,7 +149,7 @@ function AppContent() {
 						<Route
 							path="/leave-list"
 							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role) ? (
+								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) ? (
 									<VacationListUser />
 								) : (
 									<Navigate to="/" />
@@ -159,7 +159,7 @@ function AppContent() {
 						<Route
 							path="/leave-requests/:userId"
 							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role) ? (
+								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) ? (
 									<AdminLeaveRequests />
 								) : (
 									<Navigate to="/" />

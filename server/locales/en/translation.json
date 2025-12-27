@@ -22,7 +22,13 @@
 			"subject": "Welcome to planopia.pl",
 			"login": "Login: {{username}}",
 			"password": "Password: Click <a href=\"{{link}}\">here</a> to set your password and position.",
-			"linkActive": "The link will be active for 24 hours."
+			"linkActive": "The link will be active for 24 hours.",
+			"title": "Welcome to Planopia",
+			"greeting": "Hello {{firstName}}!",
+			"teamAdded": "You have been added to the {{teamName}} team in the Planopia application. We're excited to have you join our work time and leave management system.",
+			"setPassword": "To set your password and get started, click the button below:",
+			"linkExpires": "The link is active for 24 hours. If you don't set your password within this time, please contact your team administrator.",
+			"buttonText": "Set password"
 		},
 		"leaveRequest": {
 			"subject": "Leave Request Updated: {{type}} - {{status}}",
@@ -43,6 +49,13 @@
 			"requestDetails": "Request details:",
 			"footerNotification": "This notification was automatically sent from the Planopia system.",
 			"footerCopyright": "© {{year}} Planopia. All rights reserved."
+		},
+		"apology": {
+			"subject": "Planopia - System Fix Information",
+			"title": "Planopia - System Fix Information",
+			"greeting": "Hello {{firstName}}!",
+			"message": "We would like to apologize for the technical issues that occurred in our application when adding new users.",
+			"resolved": "The issue has been fixed, and invitations to the system have been resent to all invited users' email addresses."
 		}
 	},
 	"leaveform": {
@@ -58,11 +71,24 @@
 		"linkActive": "The link will be active for 12 hours.",
 		"sent": "If a user with that email is registered, a password reset link has been sent.",
 		"failed": "Failed to send password reset link.",
-		"noUser": "No user with that email exists."
+		"noUser": "No user with that email exists.",
+		"title": "Password Reset - Planopia",
+		"requestReceived": "We received a request to reset the password for your Planopia account.",
+		"clickButton": "If you sent this request, click the button below to set a new password:",
+		"linkExpires": "The link is active for 1 hour. If you don't want to reset your password, please ignore this message.",
+		"buttonText": "Reset password"
 	},
 	"status": {
 		"pending": "Pending",
 		"accepted": "Accepted",
 		"rejected": "Rejected"
+	},
+	"newuser": {
+		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
+		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
+	},
+	"logs": {
+		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
+		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
 	}
 }

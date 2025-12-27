@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     default: "Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów",
     template: "%s | Planopia"
   },
-  description: "Planopia to darmowa aplikacja online do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 8 osób. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.",
+  description: "Planopia to darmowa aplikacja online do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 4 osób. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.",
   keywords: [
     "darmowa ewidencja czasu pracy",
     "aplikacja do urlopów", 
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl',
     siteName: 'Planopia',
     title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Wypróbuj Planopię za darmo – ewidencja godzin pracy, planowanie urlopów i raporty online. Do 8 użytkowników bez opłat. Plany płatne dla większych firm z dodatkowymi funkcjami.',
+    description: 'Wypróbuj Planopię za darmo – ewidencja godzin pracy, planowanie urlopów i raporty online. Do 4 użytkowników bez opłat. Plany płatne dla większych firm z dodatkowymi funkcjami.',
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Darmowa aplikacja do ewidencji czasu pracy i planowania urlopów dla zespołów do 8 osób. Dla większych firm dostępne są płatne plany z większymi możliwościami.',
+    description: 'Darmowa aplikacja do ewidencji czasu pracy i planowania urlopów dla zespołów do 4 osób. Dla większych firm dostępne są płatne plany z większymi możliwościami.',
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

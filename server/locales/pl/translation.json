@@ -22,7 +22,13 @@
 			"subject": "Witaj w planopia.pl",
 			"login": "Login: {{username}}",
 			"password": "Hasło: Kliknij <a href=\"{{link}}\">tutaj</a>, aby ustawić swoje hasło i stanowisko.",
-			"linkActive": "Link będzie aktywny 24 godziny."
+			"linkActive": "Link będzie aktywny 24 godziny.",
+			"title": "Witamy w Planopia",
+			"greeting": "Witaj {{firstName}}!",
+			"teamAdded": "Zostałeś dodany do zespołu {{teamName}} w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.",
+			"setPassword": "Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:",
+			"linkExpires": "Link jest aktywny przez 24 godziny. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.",
+			"buttonText": "Ustaw hasło"
 		},
 		"leaveRequest": {
 			"subject": "Zaktualizowano zgłoszenie: {{type}} - {{status}}",
@@ -43,6 +49,13 @@
 			"requestDetails": "Szczegóły wniosku:",
 			"footerNotification": "To powiadomienie zostało wysłane automatycznie z systemu Planopia.",
 			"footerCopyright": "© {{year}} Planopia. Wszelkie prawa zastrzeżone."
+		},
+		"apology": {
+			"subject": "Planopia - Informacja o naprawie systemu",
+			"title": "Planopia - Informacja o naprawie systemu",
+			"greeting": "Witaj {{firstName}}!",
+			"message": "Chcielibyśmy przeprosić za problemy techniczne, które wystąpiły w naszej aplikacji podczas dodawania nowych użytkowników.",
+			"resolved": "Problem został już naprawiony, a zaproszenia do systemu zostały ponownie wysłane na skrzynki pocztowe wszystkich zaproszonych użytkowników."
 		}
 	},
 	"leaveform": {
@@ -58,11 +71,24 @@
 		"linkActive": "Link będzie aktywny 12 godzin.",
 		"sent": "Jeśli użytkownik z tym adresem email jest zarejestrowany, link do resetowania hasła został wysłany.",
 		"failed": "Błąd podczas wysyłania linku do resetowania hasła.",
-		"noUser": "Użytkownik o podanym emailu nie istnieje."
+		"noUser": "Użytkownik o podanym emailu nie istnieje.",
+		"title": "Reset hasła - Planopia",
+		"requestReceived": "Otrzymaliśmy prośbę o reset hasła do Twojego konta w systemie Planopia.",
+		"clickButton": "Jeśli to Ty wysłałeś tę prośbę, kliknij przycisk poniżej, aby ustawić nowe hasło:",
+		"linkExpires": "Link jest aktywny przez 1 godzinę. Jeśli nie chcesz resetować hasła, zignoruj tę wiadomość.",
+		"buttonText": "Resetuj hasło"
 	},
 	"status": {
 		"pending": "Oczekuje na akceptację",
 		"accepted": "Zaakceptowano",
 		"rejected": "Odrzucono"
+	},
+	"newuser": {
+		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
+		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
+	},
+	"logs": {
+		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
+		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
 	}
 }

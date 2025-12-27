@@ -22,7 +22,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "Online Time Tracking – best apps and software for companies | Planopia",
-  description: "Discover how to track working hours online. Planopia automates employee attendance, overtime, and leave management. Free plan for up to 8 users!",
+  description: "Discover how to track working hours online. Planopia automates employee attendance, overtime, and leave management. Free plan for up to 4 users!",
   keywords: [
     "online time tracking",
     "time tracking app",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/time-tracking-online',
     siteName: 'Planopia',
     title: 'Online Time Tracking – modern solutions for businesses | Planopia',
-    description: 'Planopia is a modern online time tracking app for businesses. Automate working hours, overtime, and leave management. Free for teams up to 8 users.',
+    description: 'Planopia is a modern online time tracking app for businesses. Automate working hours, overtime, and leave management. Free for teams up to 4 users.',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Online Time Tracking – modern solutions for businesses | Planopia',
-    description: 'Discover Planopia – a simple and powerful app for online time tracking, attendance, and leave management. Free plan available for up to 8 users.',
+    description: 'Discover Planopia – a simple and powerful app for online time tracking, attendance, and leave management. Free plan available for up to 4 users.',
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

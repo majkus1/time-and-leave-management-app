@@ -36,7 +36,29 @@ i18next
 		},
 	})
 
-firmDb.on('connected', () => {})
+firmDb.on('connected', async () => {
+	// Automatically update special teams maxUsers limit on server start
+	try {
+		const Team = require('./models/Team')(firmDb)
+		const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
+		const specialTeams = await Team.find({ name: { $in: specialTeamNames } })
+		
+		for (const team of specialTeams) {
+			if (team.maxUsers !== 11) {
+				// Safety check: only update if team exists and has valid data
+				if (team._id && team.name) {
+					const oldMaxUsers = team.maxUsers
+					team.maxUsers = 11
+					await team.save()
+					console.log(`Updated team "${team.name}" maxUsers from ${oldMaxUsers} to 11`)
+				}
+			}
+		}
+	} catch (error) {
+		console.error('Error updating special teams limit:', error)
+		// Don't crash server if update fails
+	}
+})
 firmDb.on('error', err => console.error('Firm DB error:', err))
 centralTicketConnection.on('connected', () => {})
 centralTicketConnection.on('error', err => console.error('Central tickets DB error:', err))

@@ -8,6 +8,7 @@ import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useWorkdays, useCreateWorkday, useDeleteWorkday } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
+import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 
 Modal.setAppElement('#root')
 
@@ -77,15 +78,16 @@ function MonthlyCalendar() {
 		currentMonth,
 		currentYear
 	)
+	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests()
 	const createWorkdayMutation = useCreateWorkday()
 	const deleteWorkdayMutation = useDeleteWorkday()
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
-	const loading = loadingWorkdays || loadingConfirmation
+	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
 	useEffect(() => {
-		calculateTotals(workdays, currentMonth, currentYear)
-	}, [workdays, currentMonth, currentYear])
+		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear])
 
 	const toggleConfirmationStatus = async () => {
 		try {
@@ -102,7 +104,7 @@ function MonthlyCalendar() {
 		}
 	}
 
-	const calculateTotals = (workdays, month, year) => {
+	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
 		let hours = 0
 		let leaveDays = 0
 		let workDaysSet = new Set()
@@ -123,13 +125,74 @@ function MonthlyCalendar() {
 				overtime += day.additionalWorked
 			}
 			if (day.absenceType) {
-				if (day.absenceType.toLowerCase().includes('urlop') || 'vacation') {
+				const absenceTypeLower = day.absenceType.toLowerCase()
+				if (absenceTypeLower.includes('urlop') || absenceTypeLower.includes('vacation') || absenceTypeLower.includes('leave')) {
 					leaveDays += 1
 				} else {
 					otherAbsences += 1
 				}
 			}
 		})
+
+		// Licz zaakceptowane wnioski urlopowe w danym miesiącu/roku
+		if (Array.isArray(acceptedLeaveRequests)) {
+			acceptedLeaveRequests.forEach(request => {
+			if (!request.startDate || !request.endDate) return
+
+			const startDate = new Date(request.startDate)
+			const endDate = new Date(request.endDate)
+			
+			// Sprawdź czy wniosek ma daty w danym miesiącu/roku
+			const requestStartMonth = startDate.getMonth()
+			const requestStartYear = startDate.getFullYear()
+			const requestEndMonth = endDate.getMonth()
+			const requestEndYear = endDate.getFullYear()
+
+			// Jeśli wniosek ma daty w danym miesiącu/roku
+			if (
+				(requestStartYear === year && requestStartMonth === month) ||
+				(requestEndYear === year && requestEndMonth === month) ||
+				(requestStartYear < year && requestEndYear > year) ||
+				(requestStartYear === year && requestEndYear === year && requestStartMonth <= month && requestEndMonth >= month)
+			) {
+				// Sprawdź typ urlopu - użyj przetłumaczonego tekstu
+				const translatedType = t(request.type).toLowerCase()
+				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
+				
+				if (isVacation) {
+					// Policz dni urlopu w danym miesiącu
+					const monthStart = new Date(year, month, 1)
+					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+					const overlapStart = startDate > monthStart ? startDate : monthStart
+					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
+					
+					if (overlapStart <= overlapEnd) {
+						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
+						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
+						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
+						const diffTime = end - start
+						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+						leaveDays += daysInMonth
+					}
+				} else {
+					// Inna nieobecność - policz dni w danym miesiącu
+					const monthStart = new Date(year, month, 1)
+					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+					const overlapStart = startDate > monthStart ? startDate : monthStart
+					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
+					
+					if (overlapStart <= overlapEnd) {
+						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
+						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
+						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
+						const diffTime = end - start
+						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+						otherAbsences += daysInMonth
+					}
+				}
+			}
+		})
+		}
 
 		setTotalHours(hours)
 		setAdditionalHours(overtime)
@@ -158,7 +221,7 @@ function MonthlyCalendar() {
 		const newYear = info.view.currentStart.getFullYear()
 		setCurrentMonth(newMonth)
 		setCurrentYear(newYear)
-		calculateTotals(workdays, newMonth, newYear)
+		calculateTotals(workdays, acceptedLeaveRequests, newMonth, newYear)
 	}
 
 	const handleMonthSelect = event => {
@@ -231,12 +294,17 @@ function MonthlyCalendar() {
 	}
 
 	const renderEventContent = eventInfo => {
+		// Sprawdź czy to zaakceptowany wniosek urlopowy (nie powinien mieć przycisku 'x')
+		const isLeaveRequest = eventInfo.event.extendedProps?.type === 'leaveRequest'
+		
 		return (
 			<div className={`event-content ${eventInfo.event.extendedProps.isWorkday ? 'event-workday' : 'event-absence'}`}>
 				<span>{eventInfo.event.title}</span>
-				<span className="event-delete" onClick={() => handleDelete(eventInfo.event.id)}>
-					×
-				</span>
+				{!isLeaveRequest && (
+					<span className="event-delete" onClick={() => handleDelete(eventInfo.event.id)}>
+						×
+					</span>
+				)}
 			</div>
 		)
 	}
@@ -327,6 +395,26 @@ function MonthlyCalendar() {
 								id: `${day._id}-realTime`,
 								classNames: 'event-real-time',
 							})),
+						// Zaakceptowane wnioski urlopowe
+						...acceptedLeaveRequests
+							.filter(request => request.startDate && request.endDate)
+							.map(request => {
+								// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
+								const endDate = new Date(request.endDate)
+								endDate.setDate(endDate.getDate() + 1)
+								const endDateStr = endDate.toISOString().split('T')[0]
+								
+								return {
+									title: `${t(request.type)}`,
+									start: request.startDate,
+									end: endDateStr,
+									allDay: true,
+									backgroundColor: '#10b981',
+									borderColor: '#059669',
+									textColor: 'white',
+									extendedProps: { type: 'leaveRequest', requestId: request._id }
+								}
+							}),
 					]}
 					ref={calendarRef}
 					dateClick={handleDateClick}
@@ -452,7 +540,7 @@ function MonthlyCalendar() {
 						backgroundColor: 'white',
 					},
 				}}
-				contentLabel="Dodaj godziny pracy lub nieobecność">
+				contentLabel={t('workcalendar.modalContentLabel')}>
 				<h2 className="text-xl font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
@@ -506,7 +594,7 @@ function MonthlyCalendar() {
 						<button
 							type="submit"
 							className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-							Zapisz
+							{t('workcalendar.save')}
 						</button>
 						<button
 							type="button"
@@ -515,7 +603,7 @@ function MonthlyCalendar() {
 								resetFormFields()
 							}}
 							className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
-							Anuluj
+							{t('workcalendar.cancel')}
 						</button>
 					</div>
 				</form>

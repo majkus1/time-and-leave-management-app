@@ -32,7 +32,7 @@ function AdminUserList() {
 					<ul style={{ listStyle: 'inherit', marginLeft: '20px' }}>
 						{users.map(user => (
 							<li key={user._id} onClick={() => handleUserClick(user._id)} style={{ cursor: 'pointer', marginBottom: '5px' }}>
-								{user.firstName} {user.lastName} – {user.position || 'Brak stanowiska'}
+								{user.firstName} {user.lastName} – {user.position || t('newuser.noPosition')}
 							</li>
 						))}
 					</ul>

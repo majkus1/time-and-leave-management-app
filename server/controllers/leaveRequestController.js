@@ -300,13 +300,34 @@ exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 		const requestingUser = await User.findById(req.user.userId)
 		if (!requestingUser) return res.status(404).send('Brak użytkownika')
 
+		// Sprawdź czy to super admin
+		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
+
 		// Sprawdź uprawnienia - użytkownik może widzieć swoje wnioski lub admin/HR/kierownik może widzieć wnioski innych
 		const isOwnRequest = requestingUser._id.toString() === userId
 		const isAdmin = requestingUser.roles.includes('Admin')
 		const isHR = requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)')
-		const isSupervisor = requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)')
+		
+		// Sprawdź czy przełożony działu ma dostęp do użytkownika z tego samego działu
+		const userToView = await User.findById(userId)
+		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
+		
+		// Sprawdź czy użytkownicy są w tym samym zespole
+		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
+		
+		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
+		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
+		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
+		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
+		
+		const isSupervisorOfDepartment =
+			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
+			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)') &&
+			hasCommonDepartment
 
-		if (!isOwnRequest && !isAdmin && !isHR && !isSupervisor) {
+		// Każdy użytkownik w zespole może widzieć zaakceptowane wnioski innych użytkowników z tego samego zespołu
+		// Super admin widzi wszystkich, admin/HR widzi wszystkich ze swojego zespołu
+		if (!isOwnRequest && !isSuperAdmin && !isSameTeam && !isHR && !isSupervisorOfDepartment) {
 			return res.status(403).send('Brak uprawnień')
 		}
 

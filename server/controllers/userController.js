@@ -5,15 +5,65 @@ const Team = require('../models/Team')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
+const { updateSpecialTeamLimit } = require('./teamController')
 
 const { appUrl } = require('../config')
+
+// Funkcja walidująca role - sprawdza wzajemnie wykluczające się kombinacje ról
+// Przyjmuje opcjonalną funkcję tłumaczeń t() dla komunikatów błędów
+const validateMutuallyExclusiveRoles = (roles, t = null) => {
+	const approveLeavesRole = 'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)'
+	const viewTimesheetsRole = 'Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)'
+	const hrRole = 'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
+	
+	const hasApproveLeaves = roles.includes(approveLeavesRole)
+	const hasViewTimesheets = roles.includes(viewTimesheetsRole)
+	const hasHR = roles.includes(hrRole)
+	
+	// Nie można mieć HR z żadną z pozostałych dwóch ról
+	if (hasHR && (hasApproveLeaves || hasViewTimesheets)) {
+		const message = t ? t('newuser.errorRolesConflict') : 'Nie można mieć jednocześnie roli "Może widzieć wszystkie wnioski i ewidencje (HR)" razem z rolą "Może zatwierdzać urlopy swojego działu" lub "Może widzieć ewidencję czasu pracy swojego działu".'
+		return {
+			valid: false,
+			message,
+			code: 'ROLES_CONFLICT_HR'
+		}
+	}
+	
+	// Nie można mieć wszystkich 3 jednocześnie (dodatkowa kontrola)
+	if (hasApproveLeaves && hasViewTimesheets && hasHR) {
+		const message = t ? t('newuser.errorAllRolesConflict') : 'Nie można mieć jednocześnie wszystkich trzech ról: "Może zatwierdzać urlopy swojego działu", "Może widzieć ewidencję czasu pracy swojego działu" oraz "Może widzieć wszystkie wnioski i ewidencje (HR)".'
+		return {
+			valid: false,
+			message,
+			code: 'ROLES_CONFLICT_ALL'
+		}
+	}
+	
+	return { valid: true }
+}
 
 
 exports.register = async (req, res) => {
 	try {
 		const { username, firstName, lastName, roles, department } = req.body
 		const teamId = req.user.teamId
-		const t = req.t
+
+		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
+		let t = req.t
+		if (!t) {
+			const i18next = require('i18next')
+			const Backend = require('i18next-fs-backend')
+			const i18nInstance = i18next.createInstance()
+			await i18nInstance.use(Backend).init({
+				lng: 'pl', // Default to Polish
+				fallbackLng: 'pl',
+				backend: {
+					loadPath: __dirname + '/../locales/{{lng}}/translation.json',
+				},
+			})
+			t = i18nInstance.t.bind(i18nInstance)
+		}
 
 		
 		if (!req.user.roles.includes('Admin')) {
@@ -31,6 +81,9 @@ exports.register = async (req, res) => {
 				message: 'Zespół nie został znaleziony' 
 			})
 		}
+
+		// Update maxUsers for special teams if needed
+		await updateSpecialTeamLimit(team)
 
 		// Policz rzeczywistą liczbę użytkowników w zespole
 		const actualUserCount = await User.countDocuments({ teamId })
@@ -53,6 +106,16 @@ exports.register = async (req, res) => {
 				success: false, 
 				code: 'USER_EXISTS',
 				message: 'Użytkownik o tym emailu już istnieje w tym zespole' 
+			})
+		}
+
+		// Walidacja wzajemnie wykluczających się ról
+		const roleValidation = validateMutuallyExclusiveRoles(roles, t)
+		if (!roleValidation.valid) {
+			return res.status(400).json({
+				success: false,
+				message: roleValidation.message,
+				code: roleValidation.code
 			})
 		}
 
@@ -81,19 +144,19 @@ exports.register = async (req, res) => {
 		
 		const link = `${appUrl}/set-password/${token}`
 
-		
-		const subject = 'Witamy w Planopia - Ustaw swoje hasło'
+		const subject = t('email.welcome.subject')
 		const content = `
-			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(firstName)}</strong>!</p>
-			<p style="margin: 0 0 16px 0;">Zostałeś dodany do zespołu <strong>${escapeHtml(team.name)}</strong> w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.</p>
-			<p style="margin: 0 0 24px 0;">Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:</p>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>24 godziny</strong>. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.welcome.greeting', { firstName: escapeHtml(firstName) })}</p>
+			<p style="margin: 0 0 16px 0;">${t('email.welcome.teamAdded', { teamName: escapeHtml(team.name) })}</p>
+			<p style="margin: 0 0 24px 0;">${t('email.welcome.setPassword')}</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.welcome.linkExpires')}</p>
 		`
 		const body = getEmailTemplate(
-			'Witamy w Planopia',
+			t('email.welcome.title'),
 			content,
-			'Ustaw hasło',
-			link
+			t('email.welcome.buttonText'),
+			link,
+			t
 		)
 
 		await sendEmail(username, link, subject, body)
@@ -216,15 +279,16 @@ exports.resetPasswordRequest = async (req, res) => {
 		const resetLink = `${appUrl}/new-password/${token}`
 		
 		const content = `
-			<p style="margin: 0 0 16px 0;">Otrzymaliśmy prośbę o reset hasła do Twojego konta w systemie Planopia.</p>
-			<p style="margin: 0 0 24px 0;">Jeśli to Ty wysłałeś tę prośbę, kliknij przycisk poniżej, aby ustawić nowe hasło:</p>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>1 godzinę</strong>. Jeśli nie chcesz resetować hasła, zignoruj tę wiadomość.</p>
+			<p style="margin: 0 0 16px 0;">${t('resetpass.requestReceived')}</p>
+			<p style="margin: 0 0 24px 0;">${t('resetpass.clickButton')}</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('resetpass.linkExpires')}</p>
 		`
 		const body = getEmailTemplate(
-			'Reset hasła - Planopia',
+			t('resetpass.title'),
 			content,
-			'Resetuj hasło',
-			resetLink
+			t('resetpass.buttonText'),
+			resetLink,
+			t
 		)
 
 		await sendEmail(
@@ -328,6 +392,40 @@ exports.getAllVisibleUsers = async (req, res) => {
         // Zwykły użytkownik widzi tylko użytkowników ze swojego zespołu
         const teamFilter = { teamId: currentUser.teamId };
         
+        // Sprawdź czy to przełożony działu - powinien widzieć tylko użytkowników ze swojego działu
+        const isDepartmentSupervisor = currentUser.roles && currentUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)');
+        
+        // Sprawdź czy to przeglądający ewidencję działu - powinien widzieć tylko użytkowników ze swojego działu
+        const isDepartmentViewer = currentUser.roles && currentUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)');
+        
+        // Jeśli to przełożony działu lub przeglądający ewidencję działu, filtruj po działach
+        if (isDepartmentSupervisor || isDepartmentViewer) {
+            const requestingDepts = Array.isArray(currentUser.department) ? currentUser.department : (currentUser.department ? [currentUser.department] : []);
+            
+            if (requestingDepts.length > 0) {
+                // Pobierz wszystkich użytkowników ze swojego zespołu
+                const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId').lean();
+                
+                // Filtruj użytkowników, którzy mają wspólny dział
+                const filteredUsers = allTeamUsers.filter(user => {
+                    const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
+                    
+                    // Jeśli użytkownik nie ma działu, nie pokazuj go (lub zmień na return true jeśli chcesz pokazać)
+                    if (userDepts.length === 0) {
+                        return false; // Nie pokazuj użytkowników bez działu
+                    }
+                    
+                    // Sprawdź czy użytkownik ma przynajmniej jeden dział wspólny
+                    return userDepts.some(dept => requestingDepts.includes(dept));
+                });
+                
+                return res.json(filteredUsers);
+            } else {
+                // Jeśli użytkownik nie ma przypisanego działu, nie pokazuj nikogo
+                return res.json([]);
+            }
+        }
+        
         // Jeśli to admin, dodaj informację o haśle
         const isAdmin = currentUser.roles && currentUser.roles.includes('Admin');
         if (isAdmin) {
@@ -419,6 +517,8 @@ exports.getUserById = async (req, res) => {
 			return res.status(403).send('Brak uprawnień')
 		}
 
+		// Sprawdź czy to super admin
+		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
 		
 		const isAdmin = requestingUser.roles.includes('Admin')
 		const isHR = requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)')
@@ -428,19 +528,26 @@ exports.getUserById = async (req, res) => {
 
 		
 		const userToView = await User.findById(userId)
+		if (!userToView) {
+			return res.status(404).send('User not found')
+		}
+		
+		// Sprawdź czy użytkownicy są w tym samym zespole
+		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
 		
 		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
 		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userToViewDepts = Array.isArray(userToView?.department) ? userToView.department : (userToView?.department ? [userToView.department] : [])
+		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
 		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
 		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
 			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)') &&
-			userToView &&
 			hasCommonDepartment
 
-		if (!(isAdmin || isHR || isSelf || isSupervisorOfDepartment)) {
+		// Każdy użytkownik w zespole może widzieć innych użytkowników z tego samego zespołu
+		// Super admin widzi wszystkich, admin/HR widzi wszystkich ze swojego zespołu
+		if (!(isSuperAdmin || isSameTeam || isHR || isSelf || isSupervisorOfDepartment)) {
 			return res.status(403).send('Access denied')
 		}
 
@@ -465,6 +572,16 @@ exports.updateUserRoles = async (req, res) => {
 	if (!allowedRoles.some(role => req.user.roles.includes(role))) {
 		return res.status(403).send('Access denied');
 	}
+
+		// Walidacja wzajemnie wykluczających się ról
+		const roleValidation = validateMutuallyExclusiveRoles(roles, req.t)
+		if (!roleValidation.valid) {
+			return res.status(400).json({
+				success: false,
+				message: roleValidation.message,
+				code: roleValidation.code
+			})
+		}
 
 		try {
 			const user = await User.findById(userId);
@@ -830,19 +947,36 @@ exports.resendPasswordLink = async (req, res) => {
 
 		const link = `${appUrl}/set-password/${token}`
 
+		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
+		let t = req.t
+		if (!t) {
+			const i18next = require('i18next')
+			const Backend = require('i18next-fs-backend')
+			const i18nInstance = i18next.createInstance()
+			await i18nInstance.use(Backend).init({
+				lng: 'pl', // Default to Polish
+				fallbackLng: 'pl',
+				backend: {
+					loadPath: __dirname + '/../locales/{{lng}}/translation.json',
+				},
+			})
+			t = i18nInstance.t.bind(i18nInstance)
+		}
+
 		// Przygotuj email
-		const subject = 'Witamy w Planopia - Ustaw swoje hasło'
+		const subject = t('email.welcome.subject')
 		const content = `
-			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(user.firstName)}</strong>!</p>
-			<p style="margin: 0 0 16px 0;">Zostałeś dodany do zespołu <strong>${escapeHtml(team.name)}</strong> w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.</p>
-			<p style="margin: 0 0 24px 0;">Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:</p>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">Link jest aktywny przez <strong>24 godziny</strong>. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.welcome.greeting', { firstName: escapeHtml(user.firstName) })}</p>
+			<p style="margin: 0 0 16px 0;">${t('email.welcome.teamAdded', { teamName: escapeHtml(team.name) })}</p>
+			<p style="margin: 0 0 24px 0;">${t('email.welcome.setPassword')}</p>
+			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.welcome.linkExpires')}</p>
 		`
 		const body = getEmailTemplate(
-			'Witamy w Planopia',
+			t('email.welcome.title'),
 			content,
-			'Ustaw hasło',
-			link
+			t('email.welcome.buttonText'),
+			link,
+			t
 		)
 
 		// Wyślij email
@@ -891,18 +1025,35 @@ exports.sendApologyEmail = async (req, res) => {
 			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
 		}
 
+		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
+		let t = req.t
+		if (!t) {
+			const i18next = require('i18next')
+			const Backend = require('i18next-fs-backend')
+			const i18nInstance = i18next.createInstance()
+			await i18nInstance.use(Backend).init({
+				lng: 'pl', // Default to Polish
+				fallbackLng: 'pl',
+				backend: {
+					loadPath: __dirname + '/../locales/{{lng}}/translation.json',
+				},
+			})
+			t = i18nInstance.t.bind(i18nInstance)
+		}
+
 		// Przygotuj email z przeprosinami (bez przycisku ustawienia hasła)
-		const subject = 'Planopia - Informacja o naprawie systemu'
+		const subject = t('email.apology.subject')
 		const content = `
-			<p style="margin: 0 0 16px 0;">Witaj <strong>${escapeHtml(user.firstName)}</strong>!</p>
-			<p style="margin: 0 0 16px 0;">Chcielibyśmy przeprosić za problemy techniczne, które wystąpiły w naszej aplikacji podczas dodawania nowych użytkowników.</p>
-			<p style="margin: 0 0 24px 0;">Problem został już naprawiony, a zaproszenia do systemu zostały ponownie wysłane na skrzynki pocztowe wszystkich zaproszonych użytkowników.</p>
+			<p style="margin: 0 0 16px 0;">${t('email.apology.greeting', { firstName: escapeHtml(user.firstName) })}</p>
+			<p style="margin: 0 0 16px 0;">${t('email.apology.message')}</p>
+			<p style="margin: 0 0 24px 0;">${t('email.apology.resolved')}</p>
 		`
 		const body = getEmailTemplate(
-			'Planopia - Informacja o naprawie systemu',
+			t('email.apology.title'),
 			content,
 			null, // Brak przycisku
-			null  // Brak linku
+			null,  // Brak linku
+			t
 		)
 
 		// Wyślij email

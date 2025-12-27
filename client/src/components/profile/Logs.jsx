@@ -306,7 +306,20 @@ function Logs() {
 			await showAlert(t('logs.alert'))
 		} catch (error) {
 			console.error('Error updating roles/department:', error)
-			setError(t('logs.alerttwo'))
+			const code = error.response?.data?.code
+			let errorMessage = t('logs.alerttwo')
+			
+			// Sprawdź czy to błąd walidacji ról
+			if (code === 'ROLES_CONFLICT_HR' || code === 'ROLES_CONFLICT_ALL') {
+				const translationKey = code === 'ROLES_CONFLICT_HR' ? 'logs.errorRolesConflict' : 'logs.errorAllRolesConflict'
+				errorMessage = t(translationKey)
+			} else if (error.response?.data?.message) {
+				// Jeśli serwer zwrócił przetłumaczony komunikat, użyj go
+				errorMessage = error.response.data.message
+			}
+			
+			setError(errorMessage)
+			await showAlert(errorMessage)
 		}
 	}
 
@@ -493,7 +506,7 @@ function Logs() {
 													fontSize: '14px', 
 													color: '#7f8c8d'
 												}}>
-													{user.roles?.join(', ') || 'Brak ról'}
+													{user.roles?.join(', ') || t('logs.noRole')}
 												</div>
 												{user.department && (
 													<div style={{ 
@@ -521,7 +534,7 @@ function Logs() {
 														marginTop: '3px',
 														fontWeight: '600'
 													}}>
-														⚠️ Brak hasła
+														{t('logs.noPassword')}
 													</div>
 												)}
 											</div>
@@ -1016,7 +1029,9 @@ function Logs() {
 									<div style={{ 
 										display: 'flex', 
 										alignItems: 'center',
-										marginBottom: '15px'
+										marginBottom: '15px',
+										width: '100%',
+										minWidth: 0
 									}}>
 										<div style={{ 
 											width: '50px', 
@@ -1033,26 +1048,33 @@ function Logs() {
 										}}>
 											{user.username.charAt(0).toUpperCase()}
 										</div>
-										<div style={{ flex: 1 }}>
+										<div style={{ flex: 1, minWidth: 0 }}>
 											<div style={{ 
 												fontWeight: '600', 
 												color: '#2c3e50', 
 												marginBottom: '5px',
-												fontSize: '18px'
+												fontSize: '18px',
+												wordBreak: 'break-word',
+												overflowWrap: 'break-word',
+												hyphens: 'auto'
 											}}>
 												{user.username}
 											</div>
 											<div style={{ 
 												fontSize: '14px', 
 												color: '#7f8c8d',
-												marginBottom: '3px'
+												marginBottom: '3px',
+												wordBreak: 'break-word',
+												overflowWrap: 'break-word'
 											}}>
 												{user.roles?.join(', ') || 'Brak ról'}
 											</div>
 											{user.department && (
 												<div style={{ 
 													fontSize: '12px', 
-													color: '#95a5a6'
+													color: '#95a5a6',
+													wordBreak: 'break-word',
+													overflowWrap: 'break-word'
 												}}>
 													Dział: {Array.isArray(user.department) ? user.department.join(', ') : user.department}
 												</div>
@@ -1062,7 +1084,9 @@ function Logs() {
 													fontSize: '12px', 
 													color: '#3498db',
 													fontWeight: '500',
-													marginTop: '3px'
+													marginTop: '3px',
+													wordBreak: 'break-word',
+													overflowWrap: 'break-word'
 												}}>
 													Zespół: {user.teamName}
 												</div>
@@ -1074,7 +1098,7 @@ function Logs() {
 													fontWeight: '600',
 													marginTop: '3px'
 												}}>
-													⚠️ Brak hasła
+													{t('logs.noPassword')}
 												</div>
 											)}
 										</div>

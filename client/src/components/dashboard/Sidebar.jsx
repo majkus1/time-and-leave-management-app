@@ -270,27 +270,32 @@ function Sidebar() {
 						<span className="nav-text">{t('sidebar.btn5')}</span>
 					</NavLink>
 
-					{/* Admin Links */}
-					{(isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role)) && (
+					{/* Admin Links - calendars-list i leave-list w jednym div */}
+					{((isAdmin(role) || isHR(role) || isDepartmentViewer(role) || isDepartmentSupervisor(role))) && (
 						<div className="admin-section">
-							
-							<NavLink
-								to="/calendars-list"
-								className={({ isActive }) => `nav-link ${isListOrCalendarActive || isActive ? 'active' : ''}`}>
-								<div className="nav-icon">
-									<img src="/img/schedule time works.png" alt="Work Calendars" />
-								</div>
-								<span className="nav-text">{t('sidebar.btn6')}</span>
-							</NavLink>
+							{/* calendars-list - dla Admin, HR, DepartmentViewer */}
+							{(isAdmin(role) || isHR(role) || isDepartmentViewer(role)) && (
+								<NavLink
+									to="/calendars-list"
+									className={({ isActive }) => `nav-link ${isListOrCalendarActive || isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/schedule time works.png" alt="Work Calendars" />
+									</div>
+									<span className="nav-text">{t('sidebar.btn6')}</span>
+								</NavLink>
+							)}
 
-							<NavLink
-								to="/leave-list"
-								className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}>
-								<div className="nav-icon">
-									<img src="/img/trip.png" alt="Leave List" />
-								</div>
-								<span className="nav-text">{t('sidebar.btn7')}</span>
-							</NavLink>
+							{/* leave-list - dla Admin, HR, DepartmentSupervisor */}
+							{(isAdmin(role) || isHR(role) || isDepartmentSupervisor(role)) && (
+								<NavLink
+									to="/leave-list"
+									className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/trip.png" alt="Leave List" />
+									</div>
+									<span className="nav-text">{t('sidebar.btn7')}</span>
+								</NavLink>
+							)}
 						</div>
 					)}
 

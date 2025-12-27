@@ -12,6 +12,7 @@ import Loader from '../Loader'
 import { useUser } from '../../hooks/useUsers'
 import { useUserWorkdays } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation } from '../../hooks/useCalendar'
+import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -75,14 +76,15 @@ function UserCalendar() {
 		currentYear,
 		userId
 	)
+	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(userId)
 
-	const loading = loadingUser || loadingWorkdays || loadingConfirmation
+	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
 	useEffect(() => {
-		calculateTotals(workdays, currentMonth, currentYear)
-	}, [workdays, currentMonth, currentYear])
+		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear])
 
-	const calculateTotals = (workdays, month, year) => {
+	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
 		let hours = 0
 		let leaveDays = 0
 		let overtime = 0
@@ -103,13 +105,74 @@ function UserCalendar() {
 				overtime += day.additionalWorked
 			}
 			if (day.absenceType) {
-				if (day.absenceType.toLowerCase().includes('urlop')) {
+				const absenceTypeLower = day.absenceType.toLowerCase()
+				if (absenceTypeLower.includes('urlop') || absenceTypeLower.includes('vacation') || absenceTypeLower.includes('leave')) {
 					leaveDays += 1
 				} else {
 					otherAbsences += 1
 				}
 			}
 		})
+
+		// Licz zaakceptowane wnioski urlopowe w danym miesiącu/roku
+		if (Array.isArray(acceptedLeaveRequests)) {
+			acceptedLeaveRequests.forEach(request => {
+			if (!request.startDate || !request.endDate) return
+
+			const startDate = new Date(request.startDate)
+			const endDate = new Date(request.endDate)
+			
+			// Sprawdź czy wniosek ma daty w danym miesiącu/roku
+			const requestStartMonth = startDate.getMonth()
+			const requestStartYear = startDate.getFullYear()
+			const requestEndMonth = endDate.getMonth()
+			const requestEndYear = endDate.getFullYear()
+
+			// Jeśli wniosek ma daty w danym miesiącu/roku
+			if (
+				(requestStartYear === year && requestStartMonth === month) ||
+				(requestEndYear === year && requestEndMonth === month) ||
+				(requestStartYear < year && requestEndYear > year) ||
+				(requestStartYear === year && requestEndYear === year && requestStartMonth <= month && requestEndMonth >= month)
+			) {
+				// Sprawdź typ urlopu - użyj przetłumaczonego tekstu
+				const translatedType = t(request.type).toLowerCase()
+				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
+				
+				if (isVacation) {
+					// Policz dni urlopu w danym miesiącu
+					const monthStart = new Date(year, month, 1)
+					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+					const overlapStart = startDate > monthStart ? startDate : monthStart
+					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
+					
+					if (overlapStart <= overlapEnd) {
+						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
+						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
+						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
+						const diffTime = end - start
+						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+						leaveDays += daysInMonth
+					}
+				} else {
+					// Inna nieobecność - policz dni w danym miesiącu
+					const monthStart = new Date(year, month, 1)
+					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
+					const overlapStart = startDate > monthStart ? startDate : monthStart
+					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
+					
+					if (overlapStart <= overlapEnd) {
+						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
+						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
+						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
+						const diffTime = end - start
+						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
+						otherAbsences += daysInMonth
+					}
+				}
+			}
+		})
+		}
 
 		setTotalHours(hours)
 		setAdditionalHours(overtime)
@@ -124,6 +187,7 @@ function UserCalendar() {
 		const newYear = info.view.currentStart.getFullYear()
 		setCurrentMonth(newMonth)
 		setCurrentYear(newYear)
+		calculateTotals(workdays, acceptedLeaveRequests, newMonth, newYear)
 	}
 
 	const handleMonthSelect = event => {
@@ -311,6 +375,26 @@ function UserCalendar() {
 											id: `${day._id}-realTime`,
 											classNames: 'event-real-time',
 										})),
+									// Zaakceptowane wnioski urlopowe
+									...acceptedLeaveRequests
+										.filter(request => request.startDate && request.endDate)
+										.map(request => {
+											// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
+											const endDate = new Date(request.endDate)
+											endDate.setDate(endDate.getDate() + 1)
+											const endDateStr = endDate.toISOString().split('T')[0]
+											
+											return {
+												title: `${t(request.type)}`,
+												start: request.startDate,
+												end: endDateStr,
+												allDay: true,
+												backgroundColor: '#10b981',
+												borderColor: '#059669',
+												textColor: 'white',
+												extendedProps: { type: 'leaveRequest', requestId: request._id }
+											}
+										}),
 								]}
 								ref={calendarRef}
 								displayEventTime={false}

@@ -77,13 +77,13 @@ function ProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Darmowa aplikacja online do ewidencji czasu pracy i urlopów dla zespołów do 8 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
+						"description": "Darmowa aplikacja online do ewidencji czasu pracy i urlopów dla zespołów do 4 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
 						"offers": {
 							"@type": "Offer",
 							"price": "0",
 							"priceCurrency": "PLN",
 							"category": "Free",
-							"description": "Darmowy plan dla zespołów do 8 użytkowników"
+							"description": "Darmowy plan dla zespołów do 4 użytkowników"
 						}
 					})
 				}}
@@ -206,7 +206,7 @@ function ProductPromotion() {
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-							Ewidencja czasu pracy i urlopów – darmowa aplikacja do 8 użytkowników
+							Ewidencja czasu pracy i urlopów – darmowa aplikacja do 4 użytkowników
 							</h1>{' '}
 							<h2 className="font-semibold text-gray-800" id="underheader">
 							Planopia pomaga zespołom i firmom uporządkować czas pracy i urlopy.
@@ -342,7 +342,7 @@ function ProductPromotion() {
           <p className="font-semibold text-gray-900">Małe zespoły</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. <span className="font-semibold text-green-700">Do 8 użytkowników za darmo.</span>
+          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. <span className="font-semibold text-green-700">Do 4 użytkowników za darmo.</span>
         </p>
       </div>
 
@@ -383,7 +383,7 @@ function ProductPromotion() {
   <div className="max-w-7xl mx-auto text-center">
     <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Cennik</h2>
 
-	<p className="mt-3 text-gray-600 max-w-3xl">Darmowy plan obejmuje maksymalnie 8 aktywnych użytkowników.<br></br>
+	<p className="mt-3 text-gray-600 max-w-3xl">Darmowy plan obejmuje maksymalnie 4 aktywnych użytkowników.<br></br>
   Po przekroczeniu tego limitu cała organizacja przechodzi na plan płatny 
   i opłata naliczana jest za wszystkich aktywnych użytkowników.</p>
 

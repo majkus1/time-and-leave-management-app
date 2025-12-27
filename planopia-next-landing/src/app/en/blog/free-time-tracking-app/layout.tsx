@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Free Time Tracking App for Work Hours and Leave Management | Planopia",
-  description: "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 8 people. Full functionality without any costs. Start today!",
+  description: "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 4 people. Full functionality without any costs. Start today!",
   keywords: [
     "free time tracking app",
     "free work hours tracking",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/free-time-tracking-app',
     siteName: 'Planopia',
     title: 'Free Time Tracking App for Work Hours and Leave Management | Planopia',
-    description: 'Planopia is a free time tracking app for work hours and leave management. Full functionality for teams up to 8 people. No hidden fees, no time limits.',
+    description: 'Planopia is a free time tracking app for work hours and leave management. Full functionality for teams up to 4 people. No hidden fees, no time limits.',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Free Time Tracking App for Work Hours and Leave Management | Planopia',
-    description: 'Discover Planopia - a free time tracking app for work hours. Full functionality for teams up to 8 people. Start today!',
+    description: 'Discover Planopia - a free time tracking app for work hours. Full functionality for teams up to 4 people. Start today!',
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

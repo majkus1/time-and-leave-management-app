@@ -5,6 +5,19 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createLog } = require('../services/logService');
 
+// Helper function to update maxUsers for special teams
+const updateSpecialTeamLimit = async (team) => {
+	const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
+	if (specialTeamNames.includes(team.name) && team.maxUsers !== 11) {
+		team.maxUsers = 11
+		await team.save()
+	}
+	return team
+}
+
+// Export the function so it can be used in other controllers
+exports.updateSpecialTeamLimit = updateSpecialTeamLimit
+
 exports.registerTeam = async (req, res) => {
 	try {
 		const {
@@ -44,6 +57,11 @@ exports.registerTeam = async (req, res) => {
 		
 		const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
+		// Determine maxUsers based on team name
+		// Special teams get 11 users, others get default 4
+		const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
+		const maxUsers = specialTeamNames.includes(teamName) ? 11 : 4
+
 	
 		const newTeam = new Team({
 			name: teamName,
@@ -51,7 +69,8 @@ exports.registerTeam = async (req, res) => {
 			adminPassword: hashedPassword,
 			adminFirstName,
 			adminLastName,
-			currentUserCount: 1
+			currentUserCount: 1,
+			maxUsers: maxUsers
 		});
 
 		await newTeam.save();
@@ -151,6 +170,9 @@ exports.getTeamInfo = async (req, res) => {
 			});
 		}
 
+		// Update maxUsers for special teams if needed
+		await updateSpecialTeamLimit(team)
+
 		res.json({
 			success: true,
 			team: {
@@ -213,6 +235,9 @@ exports.checkUserLimit = async (req, res) => {
 				message: 'Zespół nie został znaleziony'
 			});
 		}
+
+		// Update maxUsers for special teams if needed
+		await updateSpecialTeamLimit(team)
 
 		// Policz rzeczywistą liczbę użytkowników w zespole
 		const actualUserCount = await User.countDocuments({ teamId });

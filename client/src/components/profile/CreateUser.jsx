@@ -149,7 +149,12 @@ function CreateUser() {
             const code = error.response?.data?.code
             if (code === 'USER_EXISTS') {
                 await showAlert(t('newuser.error_user_exists'))
+            } else if (code === 'ROLES_CONFLICT_HR' || code === 'ROLES_CONFLICT_ALL') {
+                // Użyj tłumaczenia dla konfliktów ról
+                const translationKey = code === 'ROLES_CONFLICT_HR' ? 'newuser.errorRolesConflict' : 'newuser.errorAllRolesConflict'
+                await showAlert(t(translationKey))
             } else {
+                // Jeśli serwer zwrócił przetłumaczony komunikat, użyj go, w przeciwnym razie użyj domyślnego
                 await showAlert(error.response?.data?.message || t('newuser.errorGeneric'))
             }
         }

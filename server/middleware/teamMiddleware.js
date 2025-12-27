@@ -1,5 +1,6 @@
 const { firmDb } = require('../db/db');
 const User = require('../models/user')(firmDb);
+const { updateSpecialTeamLimit } = require('../controllers/teamController');
 
 
 const checkTeamAccess = async (req, res, next) => {
@@ -68,6 +69,9 @@ const checkUserLimit = async (req, res, next) => {
 				message: 'Zespół nie został znaleziony'
 			});
 		}
+
+		// Update maxUsers for special teams if needed
+		await updateSpecialTeamLimit(team)
 
 		// Policz rzeczywistą liczbę użytkowników w zespole
 		const actualUserCount = await User.countDocuments({ teamId: req.user.teamId });

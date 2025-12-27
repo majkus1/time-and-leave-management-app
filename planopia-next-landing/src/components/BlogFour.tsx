@@ -32,7 +32,7 @@ function BlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Odkryj Planopię - darmową aplikację do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 8 osób. Pełna funkcjonalność bez opłat.",
+						"description": "Odkryj Planopię - darmową aplikację do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 4 osób. Pełna funkcjonalność bez opłat.",
 						"image": "https://planopia.pl/img/desktop.webp"
 					})
 				}}
@@ -149,7 +149,7 @@ function BlogFour() {
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
 								Odkryj Planopię - kompletną, darmową aplikację do ewidencji czasu pracy i zarządzania urlopami. 
-								Pełna funkcjonalność dla zespołów do 8 osób bez żadnych opłat.
+								Pełna funkcjonalność dla zespołów do 4 osób bez żadnych opłat.
 							</p>
 							<div className="text-center">
 								<Link
@@ -195,7 +195,7 @@ function BlogFour() {
 						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
-								✅ Darmowa aplikacja do ewidencji czasu pracy dla zespołów do 8 osób
+								✅ Darmowa aplikacja do ewidencji czasu pracy dla zespołów do 4 osób
 							</p>
 							<p className="text-blue-700 mt-2">
 								Bez ukrytych opłat, bez okresów próbnych, bez konieczności podawania danych karty kredytowej.
@@ -334,7 +334,7 @@ function BlogFour() {
 									Czy Planopia jest naprawdę darmowa?
 								</h3>
 								<p className="text-gray-700">
-									Tak! Planopia oferuje pełną funkcjonalność dla zespołów do 8 osób bez żadnych opłat. 
+									Tak! Planopia oferuje pełną funkcjonalność dla zespołów do 4 osób bez żadnych opłat. 
 									Nie ma ukrytych kosztów, okresów próbnych ani konieczności podawania danych karty kredytowej.
 								</p>
 							</div>
@@ -344,7 +344,7 @@ function BlogFour() {
 								</h3>
 								<p className="text-gray-700">
 									Bez ograniczeń czasowych! Darmowa aplikacja do ewidencji czasu pracy Planopia 
-									jest dostępna na zawsze dla zespołów do 8 osób.
+									jest dostępna na zawsze dla zespołów do 4 osób.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
