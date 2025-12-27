@@ -396,7 +396,7 @@ function ProductPromotion() {
       <div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
         <h3 className="text-2xl font-semibold mb-4">Pakiet miesięczny</h3>
         <p className="text-4xl font-bold text-green-600 mb-2">
-          11,10&nbsp;zł <span className="text-lg font-normal text-gray-700">/os./mies. (9,00&nbsp;zł netto)</span>
+          16&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./mies.</span>
         </p>
         <p className="text-gray-600 mb-8">Płatność co miesiąc, możesz zrezygnować w każdej chwili.</p>
         <button
@@ -411,9 +411,9 @@ function ProductPromotion() {
       <div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
         <h3 className="text-2xl font-semibold mb-4">Pakiet roczny</h3>
         <p className="text-4xl font-bold text-blue-600 mb-2">
-          111,00&nbsp;zł <span className="text-lg font-normal text-gray-700">/os./rok (90,24&nbsp;zł netto)</span>
+          160&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./rok</span>
         </p>
-        <p className="text-gray-600 mb-8">2 miesiące gratis przy płatności z góry za cały rok.</p>
+        <p className="text-gray-600 mb-8">Oszczędność przy płatności rocznej — płacisz jak za 10 miesięcy.</p>
         <button
           onClick={() => document.getElementById('kontakt')?.scrollIntoView({ behavior: 'smooth' })}
           className="w-full px-6 py-3 bg-blue-600 text-white rounded-md font-medium shadow hover:bg-blue-700 transition"
@@ -481,7 +481,7 @@ function ProductPromotion() {
 		<img src="img/database.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
           <div>
             <p className="font-semibold text-gray-900">Osobne środowisko</p>
-            <p className="text-sm text-gray-600">Dedykowana subdomena i odizolowana baza danych.</p>
+            <p className="text-sm text-gray-600">Dedykowana subdomena i odizolowana baza danych. <span className="font-semibold">+ 7 USD (ok. 25-30 zł) za osobny serwer — opcjonalne.</span></p>
           </div>
         </div>
 

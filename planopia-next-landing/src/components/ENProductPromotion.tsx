@@ -389,7 +389,7 @@ function ENProductPromotion() {
 						<div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
 							<h3 className="text-2xl font-semibold mb-4">Monthly plan</h3>
 							<p className="text-4xl font-bold text-green-600 mb-2">
-								$3.00 <span className="text-lg font-normal text-gray-700">/user/month</span>
+								$4.50 <span className="text-lg font-normal text-gray-700">/user/month</span>
 							</p>
 							<p className="text-gray-600 mb-8">Pay monthly, cancel anytime.</p>
 							<button
@@ -404,9 +404,9 @@ function ENProductPromotion() {
 						<div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
 							<h3 className="text-2xl font-semibold mb-4">Yearly plan</h3>
 							<p className="text-4xl font-bold text-blue-600 mb-2">
-								$29 <span className="text-lg font-normal text-gray-700">/user/year</span>
+								$45 <span className="text-lg font-normal text-gray-700">/user/year</span>
 							</p>
-							<p className="text-gray-600 mb-8">2 months free when paid upfront for the whole year.</p>
+							<p className="text-gray-600 mb-8">Save with annual payment — pay as for 10 months.</p>
 							<button
 								onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
 								className="w-full px-6 py-3 bg-blue-600 text-white rounded-md font-medium shadow hover:bg-blue-700 transition"
@@ -474,7 +474,7 @@ function ENProductPromotion() {
 								<img src="img/database.png" className="icon-landing-about" alt='icon in secion about app' />
 								<div>
 									<p className="font-semibold text-gray-900">Dedicated environment</p>
-									<p className="text-sm text-gray-600">Unique subdomain and isolated database for your company.</p>
+									<p className="text-sm text-gray-600">Unique subdomain and isolated database for your company. <span className="font-semibold">+ $7 for dedicated server — optional.</span></p>
 								</div>
 							</div>
 
