@@ -28,7 +28,16 @@ export const SocketProvider = ({ children }) => {
 		// Since cookies are httpOnly, they are NOT accessible via document.cookie
 		// But they ARE sent automatically with the socket connection
 		// Server will read the token from socket.handshake.headers.cookie
-		const socketUrl = API_URL.replace('/api', '')
+		// Extract origin from API_URL to get clean URL without path
+		let socketUrl
+		try {
+			const url = new URL(API_URL)
+			socketUrl = url.origin // This gives us 'https://api.planopia.pl' or 'http://localhost:3000'
+		} catch (error) {
+			// Fallback: if URL parsing fails, try replace method
+			console.warn('Failed to parse API_URL, using fallback:', error)
+			socketUrl = API_URL.replace('/api', '').replace(/\/$/, '') // Remove trailing slash if exists
+		}
 		const newSocket = io(socketUrl, {
 			transports: ['websocket', 'polling'],
 			withCredentials: true,
