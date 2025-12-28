@@ -6,6 +6,7 @@ const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailSe
 const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
+const { createChannelForDepartment, createGeneralChannel, syncGeneralChannelMembers } = require('./chatController')
 
 const { appUrl } = require('../config')
 
@@ -130,6 +131,32 @@ exports.register = async (req, res) => {
 		})
 
 		await newUser.save()
+
+		// Create channels for user's departments if they don't exist
+		if (department && Array.isArray(department) && department.length > 0) {
+			for (const deptName of department) {
+				try {
+					await createChannelForDepartment(teamId, deptName)
+				} catch (error) {
+					console.error(`Error creating channel for department ${deptName}:`, error)
+					// Don't fail the request if channel creation fails
+				}
+			}
+		} else if (department && typeof department === 'string') {
+			try {
+				await createChannelForDepartment(teamId, department)
+			} catch (error) {
+				console.error(`Error creating channel for department ${department}:`, error)
+			}
+		}
+
+		// Sync general channel members to include the new user
+		try {
+			await syncGeneralChannelMembers(teamId)
+		} catch (error) {
+			console.error('Error syncing general channel members:', error)
+			// Don't fail the request if sync fails
+		}
 
 		// Policz rzeczywistą liczbę użytkowników i zaktualizuj currentUserCount
 		const updatedUserCount = await User.countDocuments({ teamId })
@@ -727,6 +754,7 @@ exports.getMe = async (req, res) => {
 		if (!user) return res.status(404).json({ message: 'Użytkownik nie został znaleziony' })
 		
 		return res.status(200).json({
+			_id: user._id,
 			roles: user.roles,
 			username: user.username,
 			teamId: user.teamId,

@@ -18,6 +18,9 @@ function Logs() {
 	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
 	const [departmentMode, setDepartmentMode] = useState('choose')
 	const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
+	// Stany dla sekcji działów na górze
+	const [globalDepartmentMode, setGlobalDepartmentMode] = useState('choose')
+	const [globalNewDepartmentName, setGlobalNewDepartmentName] = useState('')
 	const { role, username, teamId, refreshUserData } = useAuth()
 	const navigate = useNavigate()
 	const { showAlert, showConfirm } = useAlert()
@@ -41,6 +44,8 @@ function Logs() {
 	// Pobierz działy dla edytowanego użytkownika (jeśli edytujemy) lub dla własnego zespołu
 	const editingUserTeamId = editingUser?.teamId || teamId
 	const { data: departments = [], refetch: refetchDepartments } = useDepartments(editingUserTeamId)
+	// Pobierz działy dla sekcji na górze (zawsze dla własnego zespołu)
+	const { data: globalDepartments = [], refetch: refetchGlobalDepartments } = useDepartments(teamId)
 	const updateUserRolesMutation = useUpdateUserRoles()
 	const deleteUserMutation = useDeleteUser()
 	const createDepartmentMutation = useCreateDepartment()
@@ -246,6 +251,72 @@ function Logs() {
 			await deleteDepartmentMutation.mutateAsync({ name: deptName, teamId: userTeamId })
 			// Usuń dział z edytowanych działów jeśli był zaznaczony
 			setEditedDepartments(prev => prev.filter(d => d !== deptName))
+			// Odśwież również globalną listę działów
+			await refetchGlobalDepartments()
+			await showAlert(t('newuser.deleteDepartmentSuccess'))
+		} catch (error) {
+			console.error('Error deleting department:', error)
+			await showAlert(t('newuser.deleteDepartmentError'))
+		}
+	}
+
+	// Funkcja do dodawania działu w sekcji na górze
+	const handleAddGlobalDepartment = async () => {
+		const value = globalNewDepartmentName.trim()
+		
+		// Walidacja długości
+		if (value.length < 2) {
+			await showAlert('Nazwa działu musi mieć minimum 2 znaki')
+			return
+		}
+		if (value.length > 100) {
+			await showAlert('Nazwa działu może mieć maksimum 100 znaków')
+			return
+		}
+		
+		if (!value) {
+			return
+		}
+		
+		if (!teamId) {
+			await showAlert('Błąd: Nie można określić zespołu')
+			return
+		}
+		
+		// Sprawdź czy dział już istnieje
+		if (globalDepartments.includes(value)) {
+			await showAlert('Dział o tej nazwie już istnieje')
+			return
+		}
+		
+		try {
+			// Utwórz nowy dział w bazie
+			await createDepartmentMutation.mutateAsync({ name: value, teamId })
+			// Odśwież listę działów
+			await refetchGlobalDepartments()
+			setGlobalNewDepartmentName('')
+			setGlobalDepartmentMode('choose')
+			await showAlert('Dział został dodany pomyślnie')
+		} catch (error) {
+			console.error('Error creating department:', error)
+			const errorMessage = error.response?.data?.message || 'Błąd podczas tworzenia działu'
+			await showAlert(errorMessage)
+		}
+	}
+
+	// Funkcja do usuwania działu z sekcji na górze
+	const handleDeleteGlobalDepartment = async (deptName) => {
+		const confirmed = await showConfirm(t('newuser.deleteDepartmentConfirm'))
+		if (!confirmed) return
+
+		try {
+			if (!teamId) {
+				await showAlert('Błąd: Nie można określić zespołu')
+				return
+			}
+			
+			await deleteDepartmentMutation.mutateAsync({ name: deptName, teamId })
+			await refetchGlobalDepartments()
 			await showAlert(t('newuser.deleteDepartmentSuccess'))
 		} catch (error) {
 			console.error('Error deleting department:', error)
@@ -403,16 +474,217 @@ function Logs() {
 				maxWidth: '1200px', 
 				margin: '0 auto'
 			}}>
+				{/* Nagłówek */}
 				<div className="logs-header" style={{ marginBottom: '30px', textAlign: 'center' }}>
+					<h2 style={{ 
+						color: '#2c3e50', 
+						marginBottom: '20px',
+						fontSize: '28px',
+						fontWeight: '600'
+					}}>
+						<img src="img/contact-list.png" alt="ikonka w sidebar" />{t('logs.title')}
+					</h2>
+					<hr />
 					{isSuperAdmin && (
-						<h2 style={{ 
-							color: '#2c3e50', 
-							marginBottom: '10px',
-							fontSize: '24px',
-							fontWeight: '600'
+						<p style={{ 
+							color: '#7f8c8d', 
+							fontSize: '16px',
+							marginTop: '10px'
 						}}>
 							Super Admin - Wszyscy użytkownicy
-						</h2>
+						</p>
+					)}
+				</div>
+
+				{/* Sekcja działów */}
+				<div style={{ 
+					backgroundColor: 'white',
+					borderRadius: '12px',
+					boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+					padding: '25px',
+					marginBottom: '30px'
+				}}>
+					<h3 style={{ 
+						color: '#2c3e50',
+						marginBottom: '20px',
+						fontSize: '20px',
+						fontWeight: '600',
+						paddingBottom: '10px',
+						borderBottom: '2px solid #3498db'
+					}}>
+						{t('logs.departmentsTitle')}
+					</h3>
+					
+					{/* Tryb wyboru z listy */}
+					{globalDepartmentMode === 'choose' && (
+						<div>
+							{!globalDepartments || globalDepartments.length === 0 ? (
+								<div style={{ 
+									backgroundColor: '#fff3cd', 
+									padding: '15px', 
+									borderRadius: '6px', 
+									border: '1px solid #ffeaa7',
+									color: '#856404',
+									marginBottom: '15px'
+								}}>
+									{t('logs.noDepartments')}
+								</div>
+							) : (
+								<div style={{ 
+									display: 'grid', 
+									gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+									gap: '10px',
+									marginBottom: '15px'
+								}}>
+									{globalDepartments.map((dep) => {
+										const depName = typeof dep === 'object' ? dep.name : dep;
+										return (
+											<div key={depName} style={{ 
+												display: 'flex', 
+												alignItems: 'center',
+												justifyContent: 'space-between',
+												padding: '12px',
+												backgroundColor: '#f8f9fa',
+												borderRadius: '6px',
+												border: '1px solid #dee2e6',
+												transition: 'all 0.2s'
+											}}>
+												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{depName}</span>
+												{isAdmin && (
+													<button
+														type="button"
+														onClick={() => handleDeleteGlobalDepartment(depName)}
+														style={{
+															background: 'transparent',
+															border: 'none',
+															color: '#dc3545',
+															cursor: 'pointer',
+															padding: '4px 8px',
+															borderRadius: '4px',
+															fontSize: '18px',
+															lineHeight: '1',
+															transition: 'all 0.2s',
+															marginLeft: '10px'
+														}}
+														onMouseEnter={(e) => {
+															e.target.style.backgroundColor = '#f8d7da'
+															e.target.style.color = '#721c24'
+														}}
+														onMouseLeave={(e) => {
+															e.target.style.backgroundColor = 'transparent'
+															e.target.style.color = '#dc3545'
+														}}
+														title={t('newuser.deleteDepartmentConfirm')}
+													>
+														×
+													</button>
+												)}
+											</div>
+										);
+									})}
+								</div>
+							)}
+							
+							<button
+								type="button"
+								className="btn btn-outline-primary"
+								onClick={() => {
+									setGlobalDepartmentMode('new')
+									setGlobalNewDepartmentName('')
+								}}
+								style={{ 
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #3498db',
+									backgroundColor: 'transparent',
+									color: '#3498db',
+									transition: 'all 0.2s',
+									fontSize: '14px',
+									fontWeight: '500',
+									cursor: 'pointer'
+								}}>
+								{t('newuser.department2')}
+							</button>
+						</div>
+					)}
+					
+					{/* Tryb dodawania nowego działu */}
+					{globalDepartmentMode === 'new' && (
+						<div style={{ 
+							backgroundColor: '#f8f9fa',
+							padding: '20px',
+							borderRadius: '8px',
+							border: '2px solid #3498db'
+						}}>
+							<div style={{ marginBottom: '15px' }}>
+								<label style={{ 
+									display: 'block',
+									marginBottom: '8px',
+									fontWeight: '600',
+									color: '#2c3e50'
+								}}>
+									{t('newuser.department2')}
+								</label>
+								<input
+									type="text"
+									placeholder={t('newuser.department4')}
+									value={globalNewDepartmentName}
+									onChange={(e) => setGlobalNewDepartmentName(e.target.value)}
+									style={{ 
+										width: '100%',
+										maxWidth: '400px',
+										padding: '12px',
+										border: '1px solid #bdc3c7',
+										borderRadius: '6px',
+										fontSize: '16px',
+										transition: 'border-color 0.2s'
+									}}
+								/>
+								<small style={{ color: '#6c757d', marginTop: '5px', display: 'block' }}>
+									{t('newuser.departmentPressSave')}
+								</small>
+							</div>
+							
+							<div style={{ display: 'flex', gap: '10px' }}>
+								<button
+									type="button"
+									className="btn btn-primary"
+									onClick={handleAddGlobalDepartment}
+									disabled={!globalNewDepartmentName.trim()}
+									style={{ 
+										padding: '10px 20px',
+										borderRadius: '6px',
+										border: '1px solid #3498db',
+										backgroundColor: '#3498db',
+										color: 'white',
+										cursor: globalNewDepartmentName.trim() ? 'pointer' : 'not-allowed',
+										opacity: globalNewDepartmentName.trim() ? 1 : 0.5,
+										fontSize: '14px',
+										fontWeight: '500'
+									}}>
+									{t('newuser.departmentAddButton')}
+								</button>
+								<button
+									type="button"
+									className="btn btn-outline-primary"
+									onClick={() => {
+										setGlobalDepartmentMode('choose')
+										setGlobalNewDepartmentName('')
+									}}
+									style={{ 
+										padding: '10px 20px',
+										borderRadius: '6px',
+										border: '1px solid #3498db',
+										backgroundColor: 'transparent',
+										color: '#3498db',
+										fontSize: '14px',
+										fontWeight: '500',
+										cursor: 'pointer'
+									}}>
+									{t('newuser.department3')}
+								</button>
+							</div>
+						</div>
 					)}
 				</div>
 

@@ -4,6 +4,7 @@ const User = require('../models/user')(firmDb);
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createLog } = require('../services/logService');
+const { createGeneralChannel } = require('./chatController');
 
 // Helper function to update maxUsers for special teams
 const updateSpecialTeamLimit = async (team) => {
@@ -87,6 +88,14 @@ exports.registerTeam = async (req, res) => {
 		});
 
 		await teamAdmin.save();
+
+		// Create general channel for the team
+		try {
+			await createGeneralChannel(newTeam._id);
+		} catch (error) {
+			console.error('Error creating general channel for team:', error);
+			// Don't fail the request if channel creation fails
+		}
 
 		
 		const accessToken = jwt.sign(

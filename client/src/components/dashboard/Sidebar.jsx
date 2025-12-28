@@ -3,6 +3,7 @@ import { Link, useNavigate, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR, isDepartmentSupervisor, isDepartmentViewer, isWorker } from '../../utils/roleHelpers'
+import { useUnreadCount } from '../../hooks/useChat'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -13,7 +14,8 @@ function Sidebar() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
-	const { role, logout, username } = useAuth()
+	const { role, logout, username, loggedIn } = useAuth()
+	const { data: unreadCount = 0 } = useUnreadCount({ enabled: !!loggedIn })
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -236,6 +238,7 @@ function Sidebar() {
 
 					<NavLink
 						to="/dashboard"
+						style={{ marginTop: '20px'}}
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">
 							<img src="/img/clock.png" alt="Dashboard" />
@@ -269,6 +272,34 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn5')}</span>
 					</NavLink>
+
+					<NavLink
+								to="/chat"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+								style={{ position: 'relative', marginTop: '20px' }}>
+								<div className="nav-icon">
+									<img src="/img/chat.png" alt="chat icons" />
+								</div>
+								<span className="nav-text">{t('sidebar.btnChat')}</span>
+								{unreadCount > 0 && (
+									<span className="unread-badge-sidebar" style={{
+										position: 'absolute',
+										right: '10px',
+										top: '50%',
+										transform: 'translateY(-50%)',
+										background: '#e74c3c',
+										color: 'white',
+										borderRadius: '12px',
+										padding: '2px 8px',
+										fontSize: '12px',
+										fontWeight: '600',
+										minWidth: '20px',
+										textAlign: 'center'
+									}}>
+										{unreadCount > 99 ? '99+' : unreadCount}
+									</span>
+								)}
+							</NavLink>
 
 					{/* Admin Links - calendars-list i leave-list w jednym div */}
 					{((isAdmin(role) || isHR(role) || isDepartmentViewer(role) || isDepartmentSupervisor(role))) && (

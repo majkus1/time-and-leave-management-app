@@ -2,6 +2,7 @@
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb);
 const Department = require('../models/Department')(firmDb);
+const { createChannelForDepartment } = require('./chatController');
 
 exports.getDepartments = async (req, res) => {
 	try {
@@ -96,6 +97,14 @@ exports.createDepartment = async (req, res) => {
 
 		const newDepartment = new Department({ name: trimmedName, teamId });
 		await newDepartment.save();
+
+		// Automatically create channel for the new department
+		try {
+			await createChannelForDepartment(teamId, trimmedName);
+		} catch (error) {
+			console.error('Error creating channel for department:', error);
+			// Don't fail the request if channel creation fails
+		}
 
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment });
 	} catch (error) {

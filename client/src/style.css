@@ -689,14 +689,19 @@ select {
 	.leave-calendar-plans-one-employee,
 	.tickets,
 	.newboxuser,
-	.logs-container {
+	.logs-container,
+	.chat-container {
 		margin-left: 280px !important;
         width: calc(100% - 280px);
 		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
+
+	.chat-container {
+		margin-top: 0;
+	}
 	
 	/* Gdy sidebar jest schowany - zmniejszone marginesy */
-	body.sidebar-collapsed .logs-container {
+	body.sidebar-collapsed .logs-container, body.sidebar-collapsed .chat-container {
 		margin-left: 20px !important;
 		width: calc(100% - 20px);
 	}
@@ -1208,9 +1213,9 @@ button, .btn {
 		display: flex;
 		flex-direction: column;
 	}
-	#calendars-works-review .fc-event-title {
+	/* #calendars-works-review .fc-event-title {
 		max-width: 7ch;
-	}
+	} */
 }
 #calendars-works-review .fc-event-title {
 	display: inline-block;
@@ -2624,6 +2629,16 @@ section {
 		animation: none;
 		opacity: 1;
 		transform: none;
+	}
+}
+
+.pdfexcelbtns .btn-primary {
+	display: none;
+}
+
+@media (min-width: 1200px) {
+	.pdfexcelbtns .btn-primary {
+		display: block;
 	}
 }
 

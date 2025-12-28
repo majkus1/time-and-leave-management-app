@@ -463,14 +463,18 @@ function UserCalendar() {
 				<label style={{ marginLeft: '10px' }} className="flex items-center space-x-2">
 				{t('workcalendar.monthlabel')}
 					<select value={currentMonth} onChange={handleMonthSelect} style={{ marginRight: '5px', marginLeft: '5px' }} className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-						{Array.from({ length: 12 }, (_, i) => (
-							<option key={i} value={i}>
-								{new Date(0, i).toLocaleString(i18n.resolvedLanguage, { month: 'long' })}
-							</option>
-						))}
+						{Array.from({ length: 12 }, (_, i) => {
+							const monthName = new Date(0, i).toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+							const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
+							return (
+								<option key={i} value={i}>
+									{capitalizedMonth}
+								</option>
+							)
+						})}
 					</select>
 				</label>
-				<label className="flex items-center space-x-2">
+				<label className="flex items-center space-x-2" style={{ marginLeft: '10px' }}>
 				{t('workcalendar.yearlabel')}
 					<select value={currentYear} onChange={handleYearSelect} style={{ marginLeft: '5px' }} className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
 						{Array.from({ length: 20 }, (_, i) => {
@@ -497,7 +501,8 @@ function UserCalendar() {
 							backgroundColor: '#f8fafc',
 							borderRadius: '6px',
 							borderLeft: '4px solid #3b82f6',
-							marginLeft: '5px'
+							marginLeft: '5px',
+							maxWidth: '700px'
 						}}>
 							<h3 style={{ 
 								margin: '0',

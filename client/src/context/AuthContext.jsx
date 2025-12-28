@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
 	const [loggedIn, setLoggedIn] = useState(null)
 	const [role, setRole] = useState([])
 	const [username, setUsername] = useState(null)
+	const [userId, setUserId] = useState(null)
 	const [teamId, setTeamId] = useState(null)
 	const [isTeamAdmin, setIsTeamAdmin] = useState(false)
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true)
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }) => {
 		setLoggedIn(true)
 		setRole(data.roles || [])
 		setUsername(data.username || null)
+		setUserId(data._id || null)
 		setTeamId(data.teamId || null)
 		setIsTeamAdmin(data.isTeamAdmin || false)
 	}
@@ -46,6 +48,7 @@ export const AuthProvider = ({ children }) => {
 		setLoggedIn(false)
 		setRole([])
 		setUsername(null)
+		setUserId(null)
 		setTeamId(null)
 		setIsTeamAdmin(false)
 	}
@@ -236,6 +239,7 @@ export const AuthProvider = ({ children }) => {
 				loggedIn,
 				role,
 				username,
+				userId,
 				teamId,
 				isTeamAdmin,
 				isCheckingAuth,

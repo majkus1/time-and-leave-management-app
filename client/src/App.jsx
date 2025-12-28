@@ -22,6 +22,7 @@ import EmployeeLeaveCalendar from './components/leavework/EmployeeLeaveCalendar'
 import AdminAllLeaveCalendar from './components/leavework/AdminAllLeaveCalendar'
 import VacationListUser from './components/listusers/VacationListUser'
 import NewPassword from './components/profile/NewPassword'
+import Chat from './components/chat/Chat'
 // import ProductPromotion from './components/ProductPromotion'
 // import ENProductPromotion from './components/ENProductPromotion.jsx'
 // import ENBlogOne from './components/ENBlogOne.jsx'
@@ -40,6 +41,7 @@ import '../src/style.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { AlertProvider } from './context/AlertContext'
+import { SocketProvider } from './context/SocketContext'
 
 // Setup QueryClient z optymalnymi ustawieniami
 const queryClient = new QueryClient({
@@ -133,8 +135,9 @@ function AppContent() {
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/new-password/:token" element={<NewPassword />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
-						<Route path="/dashboard" element={<Dashboard />} />
-						<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
+					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/chat" element={<Chat />} />
+					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />
 						<Route
 							path="/calendars-list"
@@ -207,7 +210,9 @@ function App() {
 			<Router>
 				<AlertProvider>
 					<AuthProvider>
-						<AppContent />
+						<SocketProvider>
+							<AppContent />
+						</SocketProvider>
 					</AuthProvider>
 				</AlertProvider>
 			</Router>

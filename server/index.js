@@ -23,7 +23,16 @@ const xss = require('xss-clean')
 const helmet = require('helmet')
 const { firmDb, centralTicketConnection } = require('./db/db')
 
+const http = require('http')
+const { Server } = require('socket.io')
 const app = express()
+const server = http.createServer(app)
+const io = new Server(server, {
+	cors: {
+		origin: process.env.NODE_ENV === 'production' ? 'https://app.planopia.pl' : 'http://localhost:3001',
+		credentials: true
+	}
+})
 
 i18next
 	.use(Backend)
@@ -53,6 +62,24 @@ firmDb.on('connected', async () => {
 					console.log(`Updated team "${team.name}" maxUsers from ${oldMaxUsers} to 11`)
 				}
 			}
+		}
+
+		// Create or update general channels for all teams
+		try {
+			const Channel = require('./models/Channel')(firmDb)
+			const { createGeneralChannel } = require('./controllers/chatController')
+			const allTeams = await Team.find({ isActive: true })
+			for (const team of allTeams) {
+				try {
+					// This will create if doesn't exist, or update if exists
+					await createGeneralChannel(team._id)
+					console.log(`Synced general channel for team "${team.name}"`)
+				} catch (error) {
+					console.error(`Error syncing general channel for team "${team.name}":`, error)
+				}
+			}
+		} catch (error) {
+			console.error('Error syncing general channels on startup:', error)
 		}
 	} catch (error) {
 		console.error('Error updating special teams limit:', error)
@@ -107,6 +134,97 @@ app.use('/api/leaveworks', leaveRoutes)
 app.use('/api/vacations', vacationRoutes)
 app.use('/api/tickets', ticketsRoutes)
 app.use('/api/departments', require('./routes/department'))
+app.use('/api/chat', require('./routes/chatRoutes'))
 app.use('/uploads', express.static('uploads'))
 
-app.listen(process.env.PORT || 3000, () => {})
+// Socket.io setup
+const jwt = require('jsonwebtoken')
+const User = require('./models/user')(firmDb)
+
+io.use(async (socket, next) => {
+	try {
+		// Try to get token from auth object first (from client)
+		let token = socket.handshake.auth?.token
+		
+		// If no token in auth, try to get from cookies (cookie name is 'token')
+		// Note: httpOnly cookies are not accessible via document.cookie in browser,
+		// but they ARE sent automatically with requests, so socket.io should receive them
+		if (!token) {
+			const cookies = socket.handshake.headers.cookie
+			if (cookies) {
+				// Try 'token' cookie (the actual cookie name used in the app)
+				const tokenMatch = cookies.match(/token=([^;]+)/)
+				if (tokenMatch) {
+					token = decodeURIComponent(tokenMatch[1])
+				}
+			}
+		}
+
+		// Also try authorization header as fallback
+		if (!token) {
+			const authHeader = socket.handshake.headers.authorization
+			if (authHeader && authHeader.startsWith('Bearer ')) {
+				token = authHeader.substring(7)
+			}
+		}
+
+		if (!token) {
+			console.error('Socket auth: No token found in auth object, cookies, or authorization header')
+			return next(new Error('Authentication error: No token provided'))
+		}
+
+		const decoded = jwt.verify(token, process.env.JWT_SECRET)
+		const user = await User.findById(decoded.userId)
+		if (!user) {
+			return next(new Error('User not found'))
+		}
+
+		socket.userId = decoded.userId
+		socket.teamId = user.teamId
+		next()
+	} catch (error) {
+		console.error('Socket authentication error:', error.message)
+		// Don't expose JWT verification errors to client
+		next(new Error('Authentication error'))
+	}
+})
+
+io.on('connection', (socket) => {
+	console.log(`User connected: ${socket.userId}`)
+
+	// Join team room
+	socket.join(`team:${socket.teamId}`)
+
+	// Join channel room
+	socket.on('join-channel', (channelId) => {
+		socket.join(`channel:${channelId}`)
+	})
+
+	// Leave channel room
+	socket.on('leave-channel', (channelId) => {
+		socket.leave(`channel:${channelId}`)
+	})
+
+	// Handle new message
+	socket.on('new-message', async (data) => {
+		const { channelId, message } = data
+		// Broadcast to all users in the channel
+		io.to(`channel:${channelId}`).emit('message-received', message)
+		// Also notify team members about new message
+		io.to(`team:${socket.teamId}`).emit('new-message-notification', {
+			channelId,
+			message
+		})
+	})
+
+	socket.on('disconnect', () => {
+		console.log(`User disconnected: ${socket.userId}`)
+	})
+})
+
+// Export io for use in controllers
+app.io = io
+
+server.listen(process.env.PORT || 3000, () => {
+	console.log(`Server running on port ${process.env.PORT || 3000}`)
+})
