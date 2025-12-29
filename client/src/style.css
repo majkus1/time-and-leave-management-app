@@ -650,6 +650,10 @@ select {
 	.d-md-none {
 		display: none !important;
 	}
+
+	.calendar-controls button:nth-child(3), #calendars-works-review > div:nth-child(1) > div:nth-child(2) > button:nth-child(3) {
+		margin-left: 35px;
+	}
 	
 	/* Gdy sidebar jest otwarty - normalne marginesy */
 	.logs-container {
@@ -1813,8 +1817,12 @@ textarea {
 	/* -webkit-box-shadow: 0px 0px 3px 0px rgba(127, 146, 194, 1);
 	-moz-box-shadow: 0px 0px 3px 0px rgba(127, 146, 194, 1);
 	box-shadow: 0px 0px 3px 0px rgba(127, 146, 194, 1); */
-	padding-top: 10px;
+	padding-top: 15px;
 	border-radius: 8px;
+}
+
+#calendars-works-review .resume-month-work {
+	padding-top: 0;
 }
 
 .allfrommonth-p {
@@ -2891,4 +2899,14 @@ section {
 
 .calendar-controls select {
 	font-weight: bold;
+}
+
+#calendars-works-review {
+	margin-bottom: 10px;
+}
+
+@media (max-width: 1200px) {
+#calendars-works-review .resume-month-work {
+	padding-top: 30px;
+}
 }

@@ -74,6 +74,24 @@ function LeavePlanner() {
 		goToSelectedDate(currentMonth, newYear)
 	}
 
+	const handlePrevMonth = () => {
+		const newDate = new Date(currentYear, currentMonth - 1, 1)
+		const newMonth = newDate.getMonth()
+		const newYear = newDate.getFullYear()
+		setCurrentMonth(newMonth)
+		setCurrentYear(newYear)
+		goToSelectedDate(newMonth, newYear)
+	}
+
+	const handleNextMonth = () => {
+		const newDate = new Date(currentYear, currentMonth + 1, 1)
+		const newMonth = newDate.getMonth()
+		const newYear = newDate.getFullYear()
+		setCurrentMonth(newMonth)
+		setCurrentYear(newYear)
+		goToSelectedDate(newMonth, newYear)
+	}
+
 	const goToSelectedDate = (month, year) => {
 		const calendarApi = calendarRef.current.getApi()
 		calendarApi.gotoDate(new Date(year, month, 1))
@@ -202,30 +220,25 @@ function LeavePlanner() {
 						</div>
 					)}
 
-					<div className="calendar-controls flex flex-wrap gap-4 items-center" style={{ marginTop: '40px' }}>
-						<label className="flex items-center space-x-2">
-							{t('workcalendar.monthlabel')}
-							<select
-								value={currentMonth}
-								onChange={handleMonthSelect}
-								style={{ marginLeft: '5px' }}
-								className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-								{Array.from({ length: 12 }, (_, i) => (
-									<option key={i} value={i}>
-										{new Date(0, i)
-											.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-											.replace(/^./, str => str.toUpperCase())}
-									</option>
-								))}
-							</select>
-						</label>
-						<label style={{ marginLeft: '10px' }} className="flex items-center space-x-2">
-							{t('workcalendar.yearlabel')}
-							<select
-								value={currentYear}
-								onChange={handleYearSelect}
-								style={{ marginLeft: '5px' }}
-								className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px' }}>
+						<select
+							value={currentMonth}
+							onChange={handleMonthSelect}
+							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+							{Array.from({ length: 12 }, (_, i) => (
+								<option key={i} value={i}>
+									{new Date(0, i)
+										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+										.replace(/^./, str => str.toUpperCase())}
+								</option>
+							))}
+						</select>
+						<select
+							value={currentYear}
+							onChange={handleYearSelect}
+							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
 								{Array.from({ length: 20 }, (_, i) => {
 									const year = new Date().getFullYear() - 10 + i
 									return (
@@ -235,7 +248,36 @@ function LeavePlanner() {
 									)
 								})}
 							</select>
-						</label>
+						<button
+							type="button"
+							onClick={handlePrevMonth}
+							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+							onMouseOver={(e) => {
+								e.target.style.backgroundColor = '#f8f9fa'
+								e.target.style.borderColor = '#adb5bd'
+							}}
+							onMouseOut={(e) => {
+								e.target.style.backgroundColor = 'white'
+								e.target.style.borderColor = '#bdc3c7'
+							}}
+						>
+							&lt;
+						</button>
+						<button
+							type="button"
+							onClick={handleNextMonth}
+							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+							onMouseOver={(e) => {
+								e.target.style.backgroundColor = '#f8f9fa'
+								e.target.style.borderColor = '#adb5bd'
+							}}
+							onMouseOut={(e) => {
+								e.target.style.backgroundColor = 'white'
+								e.target.style.borderColor = '#bdc3c7'
+							}}
+						>
+							&gt;
+						</button>
 					</div>
 
 					<div>

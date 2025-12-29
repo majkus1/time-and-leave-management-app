@@ -131,6 +131,36 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		await Promise.all(hrEmailPromises)
 
+		// Jeśli nie znaleziono przełożonych ani HR, wyślij do Adminów
+		if (supervisors.length === 0 && hrUsers.length === 0) {
+			const adminUsers = await User.find({
+				teamId,
+				roles: { $in: ['Admin'] },
+			}).select('username')
+
+			// Usuń samego użytkownika jeśli jest adminem
+			const adminsToNotify = adminUsers.filter(admin => admin.username !== user.username)
+
+			if (adminsToNotify.length > 0) {
+				const adminEmailPromises = adminsToNotify.map(admin =>
+					sendEmail(
+						admin.username,
+						`${appUrl}/leave-requests/${userId}`,
+						t('email.leaveform.title'),
+						getEmailTemplate(
+							t('email.leaveform.title'),
+							content,
+							t('email.leaveform.goToRequest'),
+							`${appUrl}/leave-requests/${userId}`,
+							t
+						)
+					)
+				)
+
+				await Promise.all(adminEmailPromises)
+			}
+		}
+
 		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
 	} catch (error) {
 		console.error('Błąd podczas zgłaszania nieobecności:', error)

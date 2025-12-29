@@ -103,8 +103,20 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			roles: { $in: ['Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'] },
 		})
 
+		// Jeśli nie znaleziono HR, wyślij do Adminów jako fallback
+		let usersToNotify = hrUsers
 		if (hrUsers.length === 0) {
-			return
+			const adminUsers = await User.find({
+				teamId,
+				roles: { $in: ['Admin'] },
+			}).select('username')
+
+			// Usuń użytkownika który złożył wniosek jeśli jest adminem (nie powinien dostawać powiadomienia o swojej własnej zmianie statusu)
+			usersToNotify = adminUsers.filter(admin => admin.username !== user.username)
+
+			if (usersToNotify.length === 0) {
+				return
+			}
 		}
 
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
@@ -141,9 +153,9 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			</div>
 		`
 		
-		const emailPromises = hrUsers.map(hrUser =>
+		const emailPromises = usersToNotify.map(notifyUser =>
 			sendEmail(
-				hrUser.username,
+				notifyUser.username,
 				`${appUrl}/leave-requests/${user._id}`,
 				`${typeText} - ${statusText}`,
 				getEmailTemplate(
