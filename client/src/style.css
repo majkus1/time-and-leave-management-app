@@ -2879,6 +2879,12 @@ section {
 	font-size: 16px !important;
 }
 
+@media (min-width: 1500px) {
+	.fc-dayGridMonth-view p, .fc-dayGridMonth-view span, .fc-event-title {
+		font-size: 16px !important;
+	}
+}
+
 .fc-dayGridMonth-view {
 	margin-bottom: 0 !important;
 }
