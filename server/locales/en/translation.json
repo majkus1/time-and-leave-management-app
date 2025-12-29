@@ -56,6 +56,20 @@
 			"greeting": "Hello {{firstName}}!",
 			"message": "We would like to apologize for the technical issues that occurred in our application when adding new users.",
 			"resolved": "The issue has been fixed, and invitations to the system have been resent to all invited users' email addresses."
+		},
+		"task": {
+			"newTaskTitle": "New task in board",
+			"newTaskSubject": "New task: {{taskTitle}}",
+			"newTaskMessage": "{{creatorName}} added a new task \"{{taskTitle}}\" in board \"{{boardName}}\".",
+			"statusChangedTitle": "Task status changed",
+			"statusChangedSubject": "Task status changed: {{taskTitle}} - {{status}}",
+			"statusChangedMessage": "{{creatorName}} changed the status of task \"{{taskTitle}}\" to \"{{status}}\" in board \"{{boardName}}\".",
+			"taskDetails": "Task details:",
+			"taskTitle": "Task title",
+			"status": "Status",
+			"board": "Board",
+			"description": "Description",
+			"viewBoard": "View board"
 		}
 	},
 	"leaveform": {
@@ -90,5 +104,13 @@
 	"logs": {
 		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
 		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
+	},
+	"boards": {
+		"status": {
+			"todo": "To Do",
+			"in-progress": "In Progress",
+			"review": "Review",
+			"done": "Done"
+		}
 	}
 }

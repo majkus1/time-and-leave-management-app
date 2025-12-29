@@ -2,11 +2,13 @@ const { firmDb } = require('../db/db')
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
+const Board = require('../models/Board')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
 const { createChannelForDepartment, createGeneralChannel, syncGeneralChannelMembers } = require('./chatController')
+const { createBoardForDepartment } = require('./boardController')
 
 const { appUrl } = require('../config')
 
@@ -616,13 +618,62 @@ exports.updateUserRoles = async (req, res) => {
 				return res.status(404).send('Użytkownik nie znaleziony');
 			}
 
+			const oldDepartment = user.department;
 			user.roles = roles;
 			// Dla wielu działów - upewnij się, że department to tablica
 			if (department !== undefined) {
 				user.department = Array.isArray(department) ? department : (department ? [department] : [])
 			}
-		if (department !== undefined) user.department = department; // DODANE
-		await user.save();
+			await user.save();
+
+		// Handle department boards - create for new departments, deactivate for removed departments
+		if (department !== undefined && user.teamId) {
+			const newDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
+			const oldDepartments = Array.isArray(oldDepartment) ? oldDepartment : (oldDepartment ? [oldDepartment] : []);
+			
+			// Find departments that are new (in newDepartments but not in oldDepartments)
+			const departmentsToCreate = newDepartments.filter(dept => !oldDepartments.includes(dept));
+			
+			// Find departments that were removed (in oldDepartments but not in newDepartments)
+			const departmentsToCheck = oldDepartments.filter(dept => !newDepartments.includes(dept));
+			
+			// Create boards for new departments
+			for (const deptName of departmentsToCreate) {
+				try {
+					await createBoardForDepartment(user.teamId, deptName);
+				} catch (error) {
+					console.error(`Error creating board for department "${deptName}" when updating user:`, error);
+					// Don't fail the request if board creation fails
+				}
+			}
+			
+			// Check if removed departments still have users, if not deactivate their boards
+			for (const deptName of departmentsToCheck) {
+				try {
+					const userCount = await User.countDocuments({
+						teamId: user.teamId,
+						$or: [
+							{ department: deptName },
+							{ department: { $in: [deptName] } }
+						]
+					});
+					
+					if (userCount === 0) {
+						const departmentBoard = await Board.findOne({ 
+							teamId: user.teamId, 
+							departmentName: deptName, 
+							type: 'department' 
+						});
+						if (departmentBoard) {
+							departmentBoard.isActive = false;
+							await departmentBoard.save();
+						}
+					}
+				} catch (error) {
+					console.error(`Error checking/deactivating board for department "${deptName}":`, error);
+				}
+			}
+		}
 
 		await createLog(req.user.userId, 'UPDATE_ROLES', `Updated roles for user ${user.username}`, req.user.userId);
 

@@ -56,6 +56,20 @@
 			"greeting": "Witaj {{firstName}}!",
 			"message": "Chcielibyśmy przeprosić za problemy techniczne, które wystąpiły w naszej aplikacji podczas dodawania nowych użytkowników.",
 			"resolved": "Problem został już naprawiony, a zaproszenia do systemu zostały ponownie wysłane na skrzynki pocztowe wszystkich zaproszonych użytkowników."
+		},
+		"task": {
+			"newTaskTitle": "Nowe zadanie w tablicy",
+			"newTaskSubject": "Nowe zadanie: {{taskTitle}}",
+			"newTaskMessage": "{{creatorName}} dodał nowe zadanie \"{{taskTitle}}\" w tablicy \"{{boardName}}\".",
+			"statusChangedTitle": "Zmiana statusu zadania",
+			"statusChangedSubject": "Status zadania zmieniony: {{taskTitle}} - {{status}}",
+			"statusChangedMessage": "{{creatorName}} zmienił status zadania \"{{taskTitle}}\" na \"{{status}}\" w tablicy \"{{boardName}}\".",
+			"taskDetails": "Szczegóły zadania:",
+			"taskTitle": "Tytuł zadania",
+			"status": "Status",
+			"board": "Tablica",
+			"description": "Opis",
+			"viewBoard": "Zobacz tablicę"
 		}
 	},
 	"leaveform": {
@@ -90,5 +104,13 @@
 	"logs": {
 		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
 		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
+	},
+	"boards": {
+		"status": {
+			"todo": "Do zrobienia",
+			"in-progress": "W trakcie",
+			"review": "Do sprawdzenia",
+			"done": "Gotowe"
+		}
 	}
 }

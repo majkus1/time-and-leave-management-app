@@ -274,9 +274,19 @@ function Sidebar() {
 					</NavLink>
 
 					<NavLink
-								to="/chat"
+								to="/boards"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
 								style={{ position: 'relative', marginTop: '20px' }}>
+								<div className="nav-icon">
+								<img src="/img/task-list.png" alt='icon of boards' />
+								</div>
+								<span className="nav-text">{t('sidebar.btnBoards')}</span>
+							</NavLink>
+
+					<NavLink
+								to="/chat"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+								style={{ position: 'relative' }}>
 								<div className="nav-icon">
 									<img src="/img/chat.png" alt="chat icons" />
 								</div>

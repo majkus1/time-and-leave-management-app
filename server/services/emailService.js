@@ -162,9 +162,151 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 	}
 }
 
+// Send task notification to board members
+const sendTaskNotification = async (task, board, createdByUser, t, isStatusChange = false) => {
+	try {
+		// Get board members - for department boards, get users from department
+		let memberIds = []
+		
+		if (board.type === 'department' && board.departmentName) {
+			// For department boards, get all users in that department
+			const departmentUsers = await User.find({
+				teamId: board.teamId,
+				$or: [
+					{ department: board.departmentName },
+					{ department: { $in: [board.departmentName] } }
+				]
+			}).select('_id username')
+			memberIds = departmentUsers.map(u => u._id.toString())
+		} else {
+			// For regular boards, use board.members
+			memberIds = board.members.map(m => m.toString())
+		}
+		
+		// Remove the creator from recipients (they don't need to be notified)
+		memberIds = memberIds.filter(id => id !== createdByUser._id.toString())
+		
+		if (memberIds.length === 0) {
+			return
+		}
+		
+		// Get member users
+		const members = await User.find({ _id: { $in: memberIds } }).select('username firstName lastName')
+		
+		if (members.length === 0) {
+			return
+		}
+		
+		// Get status text - handle different status formats
+		let statusText = task.status
+		try {
+			const statusKey = `boards.status.${task.status}`
+			const translatedStatus = t(statusKey)
+			// Check if translation exists (i18next returns key if translation not found)
+			if (translatedStatus && translatedStatus !== statusKey) {
+				statusText = translatedStatus
+			}
+		} catch (error) {
+			// If translation fails, use original status
+			console.error('Error translating task status:', error)
+		}
+		const boardName = escapeHtml(board.name)
+		const taskTitle = escapeHtml(task.title)
+		const creatorName = `${escapeHtml(createdByUser.firstName)} ${escapeHtml(createdByUser.lastName)}`
+		
+		// Build email content
+		let title, content, subject
+		
+		if (isStatusChange) {
+			title = t('email.task.statusChangedTitle')
+			subject = t('email.task.statusChangedSubject', { taskTitle, status: statusText })
+			content = `
+				<p style="margin: 0 0 16px 0;">${t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName })}</p>
+				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
+					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
+					<table style="width: 100%; border-collapse: collapse;">
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.task.taskTitle')}:</td>
+							<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${taskTitle}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.status')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${statusText}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.board')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${boardName}</td>
+						</tr>
+						${task.description ? `
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.description')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(task.description)}</td>
+						</tr>
+						` : ''}
+					</table>
+				</div>
+			`
+		} else {
+			title = t('email.task.newTaskTitle')
+			subject = t('email.task.newTaskSubject', { taskTitle })
+			content = `
+				<p style="margin: 0 0 16px 0;">${t('email.task.newTaskMessage', { creatorName, taskTitle, boardName })}</p>
+				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
+					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
+					<table style="width: 100%; border-collapse: collapse;">
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.task.taskTitle')}:</td>
+							<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${taskTitle}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.status')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${statusText}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.board')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${boardName}</td>
+						</tr>
+						${task.description ? `
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.description')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(task.description)}</td>
+						</tr>
+						` : ''}
+					</table>
+				</div>
+			`
+		}
+		
+		const boardLink = `${appUrl}/boards/${board._id}`
+		
+		// Send emails to all members
+		const emailPromises = members.map(member =>
+			sendEmail(
+				member.username,
+				boardLink,
+				subject,
+				getEmailTemplate(
+					title,
+					content,
+					t('email.task.viewBoard'),
+					boardLink,
+					t
+				)
+			).catch(error => {
+				console.error(`Error sending task notification email to ${member.username}:`, error)
+			})
+		)
+		
+		await Promise.all(emailPromises)
+	} catch (error) {
+		console.error('Error sending task notification emails:', error)
+	}
+}
+
 module.exports = {
 	sendEmail,
 	sendEmailToHR,
+	sendTaskNotification,
 	escapeHtml,
 	getEmailTemplate,
 }

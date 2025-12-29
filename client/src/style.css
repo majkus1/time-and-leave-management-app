@@ -638,6 +638,10 @@ select {
 	}
 }
 
+.board-list {
+	margin-top: 80px;
+}
+
 @media (min-width: 1500px) {
 	.d-md-none {
 		display: none !important;
@@ -690,7 +694,8 @@ select {
 	.tickets,
 	.newboxuser,
 	.logs-container,
-	.chat-container {
+	.chat-container,
+	.board-list {
 		margin-left: 280px !important;
         width: calc(100% - 280px);
 		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -699,11 +704,24 @@ select {
 	.chat-container {
 		margin-top: 0;
 	}
+
+	.board-list {
+		margin-top: 25px;
+		padding-top: 0 !important;
+		padding-left: 30px !important;
+	}
+
+	.card-list-box-task {
+		max-width: 260px;
+	}
 	
 	/* Gdy sidebar jest schowany - zmniejszone marginesy */
-	body.sidebar-collapsed .logs-container, body.sidebar-collapsed .chat-container {
+	body.sidebar-collapsed .logs-container, body.sidebar-collapsed .chat-container, body.sidebar-collapsed .board-list {
 		margin-left: 20px !important;
 		width: calc(100% - 20px);
+	}
+	body.sidebar-collapsed .card-list-box-task {
+		max-width: 400px;
 	}
 	body.sidebar-collapsed .content.p-3,
 	body.sidebar-collapsed #leave-request-form {

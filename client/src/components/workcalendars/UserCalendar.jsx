@@ -30,6 +30,39 @@ function UserCalendar() {
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
 	
+	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
+	const getOvertimeWord = (count) => {
+		if (i18n.language !== 'pl') {
+			// Dla innych języków użyj standardowego tłumaczenia
+			return count === 1 ? t('workcalendar.overtime1') : t('workcalendar.overtime5plus')
+		}
+		
+		// Polska odmiana:
+		// 1 → "nadgodzina"
+		// 2-4, 22-24, 32-34... → "nadgodziny" (z wyjątkiem 12-14)
+		// 0, 5-21, 25-31... → "nadgodzin"
+		
+		if (count === 1) {
+			return t('workcalendar.overtime1')
+		}
+		
+		const lastDigit = count % 10
+		const lastTwoDigits = count % 100
+		
+		// Wyjątek: 12-14 zawsze używa "nadgodzin"
+		if (lastTwoDigits >= 12 && lastTwoDigits <= 14) {
+			return t('workcalendar.overtime5plus')
+		}
+		
+		// 2-4 używa "nadgodziny"
+		if (lastDigit >= 2 && lastDigit <= 4) {
+			return t('workcalendar.overtime2_4')
+		}
+		
+		// Wszystkie inne (0, 5-21, 25-31...) używa "nadgodzin"
+		return t('workcalendar.overtime5plus')
+	}
+	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
 		const updateCalendarSize = () => {
@@ -560,7 +593,7 @@ function UserCalendar() {
 								events={[
 									...workdays.map(day => ({
 										title: day.hoursWorked
-								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${day.additionalWorked ? ` ${t('workcalendar.include')} ${day.additionalWorked} ${t('workcalendar.overtime')}` : ''}`
+								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${day.additionalWorked ? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}` : ''}`
 								: day.absenceType,
 										start: day.date,
 										backgroundColor: day.hoursWorked ? 'blue' : 'green',
@@ -617,7 +650,7 @@ function UserCalendar() {
 					{t('workcalendar.allfrommonth2')} {totalHours} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth3')} {additionalHours} {t('workcalendar.allfrommonthhours')}
+					{t('workcalendar.allfrommonth3')} {additionalHours} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p>

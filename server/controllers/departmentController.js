@@ -3,6 +3,7 @@ const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb);
 const Department = require('../models/Department')(firmDb);
 const { createChannelForDepartment } = require('./chatController');
+const { createBoardForDepartment } = require('./boardController');
 
 exports.getDepartments = async (req, res) => {
 	try {
@@ -106,6 +107,14 @@ exports.createDepartment = async (req, res) => {
 			// Don't fail the request if channel creation fails
 		}
 
+		// Automatically create board for the new department
+		try {
+			await createBoardForDepartment(teamId, trimmedName);
+		} catch (error) {
+			console.error('Error creating board for department:', error);
+			// Don't fail the request if board creation fails
+		}
+
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment });
 	} catch (error) {
 		console.error('Error in createDepartment:', error);
@@ -162,6 +171,18 @@ exports.deleteDepartment = async (req, res) => {
 				user.department = [];
 			}
 			await user.save();
+		}
+
+		// Deaktywuj tablicę dla tego działu
+		const Board = require('../models/Board')(firmDb);
+		const departmentBoard = await Board.findOne({ 
+			teamId, 
+			departmentName: name, 
+			type: 'department' 
+		});
+		if (departmentBoard) {
+			departmentBoard.isActive = false;
+			await departmentBoard.save();
 		}
 
 		res.status(200).json({ message: 'Dział został usunięty' });

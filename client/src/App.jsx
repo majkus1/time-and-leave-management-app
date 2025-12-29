@@ -23,6 +23,8 @@ import AdminAllLeaveCalendar from './components/leavework/AdminAllLeaveCalendar'
 import VacationListUser from './components/listusers/VacationListUser'
 import NewPassword from './components/profile/NewPassword'
 import Chat from './components/chat/Chat'
+import BoardList from './components/boards/BoardList'
+import Board from './components/boards/Board'
 // import ProductPromotion from './components/ProductPromotion'
 // import ENProductPromotion from './components/ENProductPromotion.jsx'
 // import ENBlogOne from './components/ENBlogOne.jsx'
@@ -136,6 +138,8 @@ function AppContent() {
 					<Route path="/new-password/:token" element={<NewPassword />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
 					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/boards" element={<BoardList />} />
+					<Route path="/boards/:boardId" element={<Board />} />
 					<Route path="/chat" element={<Chat />} />
 					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />

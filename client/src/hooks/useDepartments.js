@@ -35,6 +35,8 @@ export const useCreateDepartment = () => {
 		onSuccess: () => {
 			// Invalidate all department queries (dla różnych teamId)
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
+			// Invaliduj tablice zadań - może zostać utworzona nowa tablica dla działu
+			queryClient.invalidateQueries({ queryKey: ['boards'] })
 		},
 	})
 }
@@ -55,6 +57,8 @@ export const useDeleteDepartment = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
 			queryClient.invalidateQueries({ queryKey: ['users'] })
+			// Invaliduj tablice zadań - tablica działu może zostać deaktywowana
+			queryClient.invalidateQueries({ queryKey: ['boards'] })
 		},
 	})
 }

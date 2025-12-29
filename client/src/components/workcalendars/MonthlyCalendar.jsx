@@ -71,6 +71,39 @@ function MonthlyCalendar() {
 	}, [])
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
+	
+	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
+	const getOvertimeWord = (count) => {
+		if (i18n.language !== 'pl') {
+			// Dla innych języków użyj standardowego tłumaczenia
+			return count === 1 ? t('workcalendar.overtime1') : t('workcalendar.overtime5plus')
+		}
+		
+		// Polska odmiana:
+		// 1 → "nadgodzina"
+		// 2-4, 22-24, 32-34... → "nadgodziny" (z wyjątkiem 12-14)
+		// 0, 5-21, 25-31... → "nadgodzin"
+		
+		if (count === 1) {
+			return t('workcalendar.overtime1')
+		}
+		
+		const lastDigit = count % 10
+		const lastTwoDigits = count % 100
+		
+		// Wyjątek: 12-14 zawsze używa "nadgodzin"
+		if (lastTwoDigits >= 12 && lastTwoDigits <= 14) {
+			return t('workcalendar.overtime5plus')
+		}
+		
+		// 2-4 używa "nadgodziny"
+		if (lastDigit >= 2 && lastDigit <= 4) {
+			return t('workcalendar.overtime2_4')
+		}
+		
+		// Wszystkie inne (0, 5-21, 25-31...) używa "nadgodzin"
+		return t('workcalendar.overtime5plus')
+	}
 
 	// TanStack Query hooks
 	const { data: workdays = [], isLoading: loadingWorkdays } = useWorkdays()
@@ -203,13 +236,39 @@ function MonthlyCalendar() {
 	}
 
 	const handleDateClick = async info => {
+		const clickedDate = new Date(info.dateStr)
+		const clickedDateStr = clickedDate.toDateString()
+		
+		// Sprawdź czy na tym dniu jest już jakieś wydarzenie
 		const eventsOnDate = workdays.filter(
-			day => new Date(day.date).toDateString() === new Date(info.dateStr).toDateString()
+			day => new Date(day.date).toDateString() === clickedDateStr
 		)
 
 		if (eventsOnDate.length >= 1) {
 			await showAlert(t('workcalendar.oneactionforday'))
 			return
+		}
+		
+		// Sprawdź czy ten dzień jest w zakresie zaakceptowanego wniosku urlopowego/nieobecności
+		if (Array.isArray(acceptedLeaveRequests)) {
+			const hasAcceptedRequest = acceptedLeaveRequests.some(request => {
+				if (!request.startDate || !request.endDate) return false
+				
+				const startDate = new Date(request.startDate)
+				const endDate = new Date(request.endDate)
+				
+				// Sprawdź czy kliknięta data jest w zakresie wniosku (włącznie z datą końcową)
+				const clickedDateOnly = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), clickedDate.getDate())
+				const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+				const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+				
+				return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
+			})
+			
+			if (hasAcceptedRequest) {
+				await showAlert(t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością')
+				return
+			}
 		}
 
 		setSelectedDate(info.dateStr)
@@ -372,7 +431,7 @@ function MonthlyCalendar() {
 							title: day.hoursWorked
 								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${
 										day.additionalWorked
-											? ` ${t('workcalendar.include')} ${day.additionalWorked} ${t('workcalendar.overtime')}`
+											? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
 											: ''
 								  }`
 								: day.absenceType,
@@ -503,7 +562,7 @@ function MonthlyCalendar() {
 				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {totalHours} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {additionalHours} {t('workcalendar.allfrommonthhours')}
+				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {additionalHours} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p className='allfrommonth-p'>

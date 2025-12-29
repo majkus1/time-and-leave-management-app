@@ -81,6 +81,71 @@ firmDb.on('connected', async () => {
 		} catch (error) {
 			console.error('Error syncing general channels on startup:', error)
 		}
+
+		// Create or update team boards and department boards for all teams
+		try {
+			const Board = require('./models/Board')(firmDb)
+			const Department = require('./models/Department')(firmDb)
+			const { createTeamBoard, createBoardForDepartment } = require('./controllers/boardController')
+			const allTeams = await Team.find({ isActive: true })
+			
+			for (const team of allTeams) {
+				try {
+					// Create team board
+					await createTeamBoard(team._id)
+					console.log(`Synced team board for team "${team.name}"`)
+					
+					// Get departments for this team
+					const departments = await Department.find({ teamId: team._id, isActive: true }).select('name')
+					
+					// If no departments in Department model, get from users
+					if (departments.length === 0) {
+						const User = require('./models/user')(firmDb)
+						const users = await User.find({ 
+							teamId: team._id, 
+							department: { $ne: null, $ne: [], $exists: true } 
+						}).select('department')
+						
+						const allDepartments = new Set()
+						users.forEach(user => {
+							if (Array.isArray(user.department)) {
+								user.department.forEach(dept => {
+									if (dept && dept.trim() !== '') {
+										allDepartments.add(dept.trim())
+									}
+								})
+							} else if (user.department && user.department.trim() !== '') {
+								allDepartments.add(user.department.trim())
+							}
+						})
+						
+						// Create boards for departments from users
+						for (const deptName of allDepartments) {
+							try {
+								await createBoardForDepartment(team._id, deptName)
+								console.log(`Synced department board "${deptName}" for team "${team.name}"`)
+							} catch (error) {
+								console.error(`Error syncing department board "${deptName}" for team "${team.name}":`, error)
+							}
+						}
+					} else {
+						// Create boards for departments from Department model
+						for (const dept of departments) {
+							try {
+								await createBoardForDepartment(team._id, dept.name)
+								console.log(`Synced department board "${dept.name}" for team "${team.name}"`)
+							} catch (error) {
+								console.error(`Error syncing department board "${dept.name}" for team "${team.name}":`, error)
+							}
+						}
+					}
+				} catch (error) {
+					console.error(`Error syncing boards for team "${team.name}":`, error)
+				}
+			}
+		} catch (error) {
+			console.error('Error syncing boards on startup:', error)
+		}
 	} catch (error) {
 		console.error('Error updating special teams limit:', error)
 		// Don't crash server if update fails
@@ -135,6 +200,7 @@ app.use('/api/vacations', vacationRoutes)
 app.use('/api/tickets', ticketsRoutes)
 app.use('/api/departments', require('./routes/department'))
 app.use('/api/chat', require('./routes/chatRoutes'))
+app.use('/api/boards', require('./routes/boardRoutes'))
 app.use('/uploads', express.static('uploads'))
 
 // Socket.io setup
