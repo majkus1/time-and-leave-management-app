@@ -681,7 +681,7 @@ function Logs() {
 										fontWeight: '500',
 										cursor: 'pointer'
 									}}>
-									{t('newuser.department3')}
+									{t('boards.cancel')}
 								</button>
 							</div>
 						</div>
