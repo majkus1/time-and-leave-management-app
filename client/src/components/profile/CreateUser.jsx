@@ -12,7 +12,7 @@ const availableRoles = [
     'Admin',
     'Pracownik (Worker)',
     'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)',
-    'Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)',
+    'Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)',
     'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
 ];
 
