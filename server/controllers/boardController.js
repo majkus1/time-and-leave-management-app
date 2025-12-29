@@ -224,6 +224,58 @@ exports.getBoard = async (req, res) => {
 	}
 }
 
+// Get board members
+exports.getBoardUsers = async (req, res) => {
+	try {
+		const { boardId } = req.params
+		const userId = req.user.userId
+
+		const board = await Board.findById(boardId)
+		if (!board) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+
+		// Check if user has access
+		const isMember = board.members.some(m => m.toString() === userId)
+		const isTeamBoard = board.isTeamBoard
+		const isDepartmentBoard = board.type === 'department'
+
+		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+
+		// For team boards, get all team users
+		if (isTeamBoard) {
+			const users = await User.find({ teamId: board.teamId })
+				.select('firstName lastName username position')
+				.sort({ firstName: 1, lastName: 1 })
+			return res.json(users)
+		}
+
+		// For department boards, get users from that department
+		if (isDepartmentBoard && board.departmentName) {
+			const users = await User.find({
+				teamId: board.teamId,
+				$or: [
+					{ department: board.departmentName },
+					{ department: { $in: [board.departmentName] } }
+				]
+			}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 })
+			return res.json(users)
+		}
+
+		// For custom boards, get members
+		const users = await User.find({ _id: { $in: board.members } })
+			.select('firstName lastName username position')
+			.sort({ firstName: 1, lastName: 1 })
+
+		res.json(users)
+	} catch (error) {
+		console.error('Error getting board users:', error)
+		res.status(500).json({ message: 'Error getting board users' })
+	}
+}
+
 // Create custom board
 exports.createBoard = async (req, res) => {
 	try {

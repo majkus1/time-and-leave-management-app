@@ -9,6 +9,9 @@ router.get('/channels', authenticateToken, chatController.getUserChannels)
 // Get messages for a channel
 router.get('/channels/:channelId/messages', authenticateToken, chatController.getChannelMessages)
 
+// Get channel users
+router.get('/channels/:channelId/users', authenticateToken, chatController.getChannelUsers)
+
 // Send a message
 router.post('/messages', authenticateToken, chatController.sendMessage)
 

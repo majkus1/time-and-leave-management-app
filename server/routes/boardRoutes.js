@@ -28,6 +28,7 @@ const upload = multer({
 // Board routes
 router.get('/', authenticateToken, boardController.getUserBoards)
 router.get('/:boardId', authenticateToken, boardController.getBoard)
+router.get('/:boardId/users', authenticateToken, boardController.getBoardUsers)
 router.post('/', authenticateToken, boardController.createBoard)
 router.put('/:boardId', authenticateToken, boardController.updateBoard)
 router.delete('/:boardId', authenticateToken, boardController.deleteBoard)

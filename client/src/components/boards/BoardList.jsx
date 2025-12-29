@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
-import { useBoards, useCreateBoard, useDeleteBoard } from '../../hooks/useBoards'
+import { useBoards, useCreateBoard, useDeleteBoard, useBoardUsers } from '../../hooks/useBoards'
 import CreateBoardModal from './CreateBoardModal'
 import EditBoardModal from './EditBoardModal'
+import UsersInfoModal from '../shared/UsersInfoModal'
 import { Link } from 'react-router-dom'
 
 function BoardList() {
@@ -18,7 +19,13 @@ function BoardList() {
 	const deleteBoardMutation = useDeleteBoard()
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 	const [editingBoard, setEditingBoard] = useState(null)
+	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, boardId: null })
 	const isAdmin = role && role.includes('Admin')
+	// Hook dla użytkowników tablicy w modalu
+	const { data: boardUsers = [], isLoading: loadingBoardUsers } = useBoardUsers(
+		usersInfoModal.boardId,
+		usersInfoModal.isOpen
+	)
 
 	const handleDeleteBoard = async (board) => {
 		const confirmed = await showConfirm(
@@ -125,51 +132,81 @@ function BoardList() {
 									{board.type === 'custom' && '⭐ Tablica niestandardowa'}
 								</div>
 							</Link>
-							{!board.isTeamBoard && board.type === 'custom' && (isAdmin || (board.createdBy && board.createdBy._id === userId)) && (
-								<div style={{
-									position: 'absolute',
-									top: '10px',
-									right: '10px',
-									display: 'flex',
-									gap: '8px'
-								}}>
-									<button
-										onClick={(e) => {
-											e.preventDefault()
-											e.stopPropagation()
-											setEditingBoard(board)
-										}}
-										style={{
-											background: '#3498db',
-											border: 'none',
-											color: 'white',
-											cursor: 'pointer',
-											fontSize: '14px',
-											padding: '4px 8px',
-											borderRadius: '4px'
-										}}
-										title={t('boards.edit') || 'Edytuj tablicę'}>
-										✏️
-									</button>
-									<button
-										onClick={(e) => {
-											e.preventDefault()
-											e.stopPropagation()
-											handleDeleteBoard(board)
-										}}
-										style={{
-											background: 'transparent',
-											border: 'none',
-											color: '#dc3545',
-											cursor: 'pointer',
-											fontSize: '20px',
-											padding: '4px 8px'
-										}}
-										title={t('boards.delete') || 'Usuń tablicę'}>
-										×
-									</button>
-								</div>
-							)}
+							<div style={{
+								position: 'absolute',
+								top: '10px',
+								right: '10px',
+								display: 'flex',
+								gap: '8px',
+								alignItems: 'center'
+							}}>
+								<button
+									onClick={(e) => {
+										e.preventDefault()
+										e.stopPropagation()
+										setUsersInfoModal({ isOpen: true, boardId: board._id })
+									}}
+									style={{
+										background: 'transparent',
+										border: 'none',
+										color: '#3498db',
+										cursor: 'pointer',
+										fontSize: '16px',
+										padding: '4px 8px',
+										borderRadius: '4px',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => {
+										e.target.style.backgroundColor = '#ebf5fb'
+										e.target.style.color = '#2980b9'
+									}}
+									onMouseLeave={(e) => {
+										e.target.style.backgroundColor = 'transparent'
+										e.target.style.color = '#3498db'
+									}}
+									title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}>
+									ℹ️
+								</button>
+								{!board.isTeamBoard && board.type === 'custom' && (isAdmin || (board.createdBy && board.createdBy._id === userId)) && (
+									<>
+										<button
+											onClick={(e) => {
+												e.preventDefault()
+												e.stopPropagation()
+												setEditingBoard(board)
+											}}
+											style={{
+												background: '#3498db',
+												border: 'none',
+												color: 'white',
+												cursor: 'pointer',
+												fontSize: '14px',
+												padding: '4px 8px',
+												borderRadius: '4px'
+											}}
+											title={t('boards.edit') || 'Edytuj tablicę'}>
+											✏️
+										</button>
+										<button
+											onClick={(e) => {
+												e.preventDefault()
+												e.stopPropagation()
+												handleDeleteBoard(board)
+											}}
+											style={{
+												background: 'transparent',
+												border: 'none',
+												color: '#dc3545',
+												cursor: 'pointer',
+												fontSize: '20px',
+												padding: '4px 8px'
+											}}
+											title={t('boards.delete') || 'Usuń tablicę'}>
+											×
+										</button>
+									</>
+								)}
+							</div>
 						</div>
 					))}
 				</div>
@@ -205,6 +242,15 @@ function BoardList() {
 					}}
 				/>
 			)}
+
+			{/* Modal z użytkownikami tablicy */}
+			<UsersInfoModal
+				isOpen={usersInfoModal.isOpen}
+				onClose={() => setUsersInfoModal({ isOpen: false, boardId: null })}
+				users={boardUsers}
+				isLoading={loadingBoardUsers}
+				title={t('usersInfo.boardUsers') || 'Użytkownicy tablicy'}
+			/>
 		</>
 	)
 }

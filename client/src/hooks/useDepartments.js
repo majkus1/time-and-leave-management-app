@@ -63,3 +63,21 @@ export const useDeleteDepartment = () => {
 	})
 }
 
+// Get department users
+export const useDepartmentUsers = (departmentName, teamId, enabled = true) => {
+	return useQuery({
+		queryKey: ['departmentUsers', departmentName, teamId],
+		queryFn: async () => {
+			const params = teamId ? { teamId } : {}
+			const response = await axios.get(
+				`${API_URL}/api/departments/${encodeURIComponent(departmentName)}/users`,
+				{ params, withCredentials: true }
+			)
+			return response.data
+		},
+		enabled: enabled && !!departmentName && !!teamId,
+		staleTime: 5 * 1000, // 5 seconds - users can change frequently
+		refetchInterval: 30 * 1000 // Refetch every 30 seconds for real-time updates
+	})
+}
+

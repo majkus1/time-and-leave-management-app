@@ -29,6 +29,15 @@ i18n
 						btnChat: 'Chat',
 						btn10: 'Logout',
 					},
+					usersInfo: {
+						title: 'User List',
+						noUsers: 'No users',
+						close: 'Close',
+						viewUsers: 'View users',
+						departmentUsers: 'Department Users',
+						boardUsers: 'Board Users',
+						channelUsers: 'Channel Users',
+					},
 					boards: {
 						title: 'Task Boards',
 						createBoard: 'Create Board',
@@ -511,6 +520,15 @@ i18n
 						btnBoards: 'Tablice zadań',
 						btnChat: 'Czat',
 						btn10: 'Wyloguj się',
+					},
+					usersInfo: {
+						title: 'Lista użytkowników',
+						noUsers: 'Brak użytkowników',
+						close: 'Zamknij',
+						viewUsers: 'Zobacz użytkowników',
+						departmentUsers: 'Użytkownicy działu',
+						boardUsers: 'Użytkownicy tablicy',
+						channelUsers: 'Użytkownicy czatu',
 					},
 					boards: {
 						title: 'Tablice zadań',

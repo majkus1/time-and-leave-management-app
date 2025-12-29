@@ -191,3 +191,37 @@ exports.deleteDepartment = async (req, res) => {
 		res.status(500).json({ message: 'Błąd usuwania działu' });
 	}
 };
+
+exports.getDepartmentUsers = async (req, res) => {
+	try {
+		const { name } = req.params;
+		const { teamId: bodyTeamId } = req.query;
+		
+		// Pobierz użytkownika z bazy danych
+		const user = await User.findById(req.user.userId);
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
+		}
+		
+		// Pobierz teamId z query params (dla super admina) lub z req.user lub z użytkownika
+		let teamId = bodyTeamId || req.user.teamId || user.teamId;
+		
+		if (!name || !teamId) {
+			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
+		}
+
+		// Znajdź wszystkich użytkowników w zespole, którzy mają ten dział
+		const users = await User.find({
+			teamId,
+			$or: [
+				{ department: name },
+				{ department: { $in: [name] } }
+			]
+		}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 });
+
+		res.json(users);
+	} catch (error) {
+		console.error('Error in getDepartmentUsers:', error);
+		res.status(500).json({ message: 'Błąd pobierania użytkowników działu' });
+	}
+};

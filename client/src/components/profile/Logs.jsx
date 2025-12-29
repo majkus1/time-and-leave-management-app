@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail } from '../../hooks/useUsers'
-import { useDepartments, useCreateDepartment, useDeleteDepartment } from '../../hooks/useDepartments'
+import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs } from '../../hooks/useLogs'
+import UsersInfoModal from '../shared/UsersInfoModal'
 
 function Logs() {
 	const [expandedLogs, setExpandedLogs] = useState([])
@@ -27,6 +28,7 @@ function Logs() {
 	const [deleteModal, setDeleteModal] = useState({ show: false, user: null })
 	const [resendingLink, setResendingLink] = useState(false)
 	const [sendingApology, setSendingApology] = useState(false)
+	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, departmentName: null })
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
@@ -52,6 +54,12 @@ function Logs() {
 	const deleteDepartmentMutation = useDeleteDepartment()
 	const resendPasswordLinkMutation = useResendPasswordLink()
 	const sendApologyEmailMutation = useSendApologyEmail()
+	// Hook dla użytkowników działu w modalu
+	const { data: departmentUsers = [], isLoading: loadingDepartmentUsers } = useDepartmentUsers(
+		usersInfoModal.departmentName,
+		teamId,
+		usersInfoModal.isOpen
+	)
 
 	const loading = loadingUsers
 
@@ -550,35 +558,65 @@ function Logs() {
 												transition: 'all 0.2s'
 											}}>
 												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{depName}</span>
-												{isAdmin && (
+												<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 													<button
 														type="button"
-														onClick={() => handleDeleteGlobalDepartment(depName)}
+														onClick={() => setUsersInfoModal({ isOpen: true, departmentName: depName })}
 														style={{
 															background: 'transparent',
 															border: 'none',
-															color: '#dc3545',
+															color: '#3498db',
 															cursor: 'pointer',
 															padding: '4px 8px',
 															borderRadius: '4px',
-															fontSize: '18px',
+															fontSize: '16px',
 															lineHeight: '1',
 															transition: 'all 0.2s',
-															marginLeft: '10px'
+															display: 'flex',
+															alignItems: 'center',
+															justifyContent: 'center'
 														}}
 														onMouseEnter={(e) => {
-															e.target.style.backgroundColor = '#f8d7da'
-															e.target.style.color = '#721c24'
+															e.target.style.backgroundColor = '#ebf5fb'
+															e.target.style.color = '#2980b9'
 														}}
 														onMouseLeave={(e) => {
 															e.target.style.backgroundColor = 'transparent'
-															e.target.style.color = '#dc3545'
+															e.target.style.color = '#3498db'
 														}}
-														title={t('newuser.deleteDepartmentConfirm')}
+														title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}
 													>
-														×
+														ℹ️
 													</button>
-												)}
+													{isAdmin && (
+														<button
+															type="button"
+															onClick={() => handleDeleteGlobalDepartment(depName)}
+															style={{
+																background: 'transparent',
+																border: 'none',
+																color: '#dc3545',
+																cursor: 'pointer',
+																padding: '4px 8px',
+																borderRadius: '4px',
+																fontSize: '18px',
+																lineHeight: '1',
+																transition: 'all 0.2s'
+															}}
+															onMouseEnter={(e) => {
+																e.target.style.backgroundColor = '#f8d7da'
+																e.target.style.color = '#721c24'
+															}}
+															onMouseLeave={(e) => {
+																e.target.style.backgroundColor = 'transparent'
+																e.target.style.color = '#dc3545'
+															}}
+															title={t('newuser.deleteDepartmentConfirm')}
+														>
+															×
+														</button>
+													)}
+												</div>
 											</div>
 										);
 									})}
@@ -1935,6 +1973,15 @@ function Logs() {
 					</div>
 				</div>
 			)}
+
+			{/* Modal z użytkownikami działu */}
+			<UsersInfoModal
+				isOpen={usersInfoModal.isOpen}
+				onClose={() => setUsersInfoModal({ isOpen: false, departmentName: null })}
+				users={departmentUsers}
+				isLoading={loadingDepartmentUsers}
+				title={usersInfoModal.departmentName ? `${t('usersInfo.departmentUsers') || 'Użytkownicy działu'}: ${usersInfoModal.departmentName}` : (t('usersInfo.title') || 'Lista użytkowników')}
+			/>
 
 		</>
 	)

@@ -2,7 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import './Chat.css'
 
-function ChannelList({ channels, selectedChannel, currentUserId, currentUserRole, onSelectChannel, onAddMembers, onDeleteChannel }) {
+function ChannelList({ channels, selectedChannel, currentUserId, currentUserRole, onSelectChannel, onAddMembers, onDeleteChannel, onViewUsers }) {
 	const { t } = useTranslation()
 	
 	// Check if user is Admin
@@ -77,6 +77,38 @@ function ChannelList({ channels, selectedChannel, currentUserId, currentUserRole
 							)}
 						</div>
 						<div className="channel-actions">
+							{/* Show info button for all channels except private ones */}
+							{channel.type !== 'private' && onViewUsers && (
+								<button
+									className="btn-info-channel"
+									onClick={(e) => {
+										e.stopPropagation()
+										onViewUsers(channel)
+									}}
+									title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}
+									type="button"
+									style={{
+										background: 'transparent',
+										border: 'none',
+										color: '#3498db',
+										cursor: 'pointer',
+										fontSize: '16px',
+										padding: '4px 8px',
+										borderRadius: '4px',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => {
+										e.target.style.backgroundColor = '#ebf5fb'
+										e.target.style.color = '#2980b9'
+									}}
+									onMouseLeave={(e) => {
+										e.target.style.backgroundColor = 'transparent'
+										e.target.style.color = '#3498db'
+									}}
+								>
+									ℹ️
+								</button>
+							)}
 							{/* Show add members button only for custom general channels if user is Admin or creator */}
 							{canEditChannel(channel) && onAddMembers && (
 								<button

@@ -57,6 +57,22 @@ export const useTask = (taskId) => {
 	})
 }
 
+// Get board users
+export const useBoardUsers = (boardId, enabled = true) => {
+	return useQuery({
+		queryKey: ['boardUsers', boardId],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/boards/${boardId}/users`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		enabled: enabled && !!boardId,
+		staleTime: 5 * 1000, // 5 seconds - users can change frequently
+		refetchInterval: 30 * 1000 // Refetch every 30 seconds for real-time updates
+	})
+}
+
 // Create board
 export const useCreateBoard = () => {
 	const queryClient = useQueryClient()

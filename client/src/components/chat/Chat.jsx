@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import Sidebar from '../dashboard/Sidebar'
 import Loader from '../Loader'
-import { useChannels, useChannelMessages, useSendMessage, useUnreadCount, useDeleteChannel } from '../../hooks/useChat'
+import { useChannels, useChannelMessages, useSendMessage, useUnreadCount, useDeleteChannel, useChannelUsers } from '../../hooks/useChat'
 import { useSocket } from '../../context/SocketContext'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
@@ -13,6 +13,7 @@ import MessageInput from './MessageInput'
 import CreateChannelModal from './CreateChannelModal'
 import AddMembersModal from './AddMembersModal'
 import CreatePrivateChatModal from './CreatePrivateChatModal'
+import UsersInfoModal from '../shared/UsersInfoModal'
 import './Chat.css'
 
 function Chat() {
@@ -23,6 +24,7 @@ function Chat() {
 	const [showAddMembersModal, setShowAddMembersModal] = useState(false)
 	const [showPrivateChatModal, setShowPrivateChatModal] = useState(false)
 	const [selectedChannelForMembers, setSelectedChannelForMembers] = useState(null)
+	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, channelId: null })
 	const { t } = useTranslation()
 	const { socket, isConnected } = useSocket()
 	const { userId, role } = useAuth()
@@ -37,6 +39,11 @@ function Chat() {
 	const { mutate: sendMessage } = useSendMessage()
 	const { data: unreadCount = 0 } = useUnreadCount()
 	const { mutate: deleteChannel } = useDeleteChannel()
+	// Hook dla użytkowników czatu w modalu
+	const { data: channelUsers = [], isLoading: loadingChannelUsers } = useChannelUsers(
+		usersInfoModal.channelId,
+		usersInfoModal.isOpen
+	)
 	
 	// Use refs to avoid including refetch functions in dependencies (prevents infinite loops)
 	// Refs are mutable, so we can update them without causing re-renders
@@ -250,6 +257,9 @@ function Chat() {
 						currentUserId={userId}
 						currentUserRole={role}
 						onSelectChannel={setSelectedChannel}
+						onViewUsers={(channel) => {
+							setUsersInfoModal({ isOpen: true, channelId: channel._id })
+						}}
 						onAddMembers={(channel) => {
 							setSelectedChannelForMembers(channel)
 							setShowAddMembersModal(true)
@@ -329,6 +339,15 @@ function Chat() {
 					setSelectedChannel(channel)
 					refetchChannelsRef.current()
 				}}
+			/>
+
+			{/* Modal z użytkownikami czatu */}
+			<UsersInfoModal
+				isOpen={usersInfoModal.isOpen}
+				onClose={() => setUsersInfoModal({ isOpen: false, channelId: null })}
+				users={channelUsers}
+				isLoading={loadingChannelUsers}
+				title={t('usersInfo.channelUsers') || 'Użytkownicy czatu'}
 			/>
 		</>
 	)

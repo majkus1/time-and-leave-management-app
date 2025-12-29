@@ -696,6 +696,59 @@ exports.getTeamMembers = async (req, res) => {
 	}
 }
 
+// Get channel members/users
+exports.getChannelUsers = async (req, res) => {
+	try {
+		const { channelId } = req.params
+		const userId = req.user.userId
+
+		const channel = await Channel.findById(channelId)
+		if (!channel) {
+			return res.status(404).json({ message: 'Channel not found' })
+		}
+
+		// Check if user has access to this channel
+		// For team channels, all team members have access
+		if (channel.isTeamChannel && channel.type === 'general') {
+			const users = await User.find({ teamId: channel.teamId })
+				.select('firstName lastName username position')
+				.sort({ firstName: 1, lastName: 1 })
+			return res.json(users)
+		}
+
+		// For department channels, get users from that department
+		if (channel.type === 'department' && channel.departmentName) {
+			const users = await User.find({
+				teamId: channel.teamId,
+				$or: [
+					{ department: channel.departmentName },
+					{ department: { $in: [channel.departmentName] } }
+				]
+			}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 })
+			return res.json(users)
+		}
+
+		// For private channels, don't show users list (privacy)
+		if (channel.type === 'private') {
+			return res.status(403).json({ message: 'Cannot view members of private channels' })
+		}
+
+		// For custom general channels, get members
+		if (channel.members && channel.members.length > 0) {
+			const users = await User.find({ _id: { $in: channel.members } })
+				.select('firstName lastName username position')
+				.sort({ firstName: 1, lastName: 1 })
+			return res.json(users)
+		}
+
+		// If no members, return empty array
+		res.json([])
+	} catch (error) {
+		console.error('Error getting channel users:', error)
+		res.status(500).json({ message: 'Failed to get channel users' })
+	}
+}
+
 // Create private chat between two users
 exports.createPrivateChat = async (req, res) => {
 	try {

@@ -33,6 +33,22 @@ export const useChannelMessages = (channelId, enabled = true) => {
 	})
 }
 
+// Get channel users
+export const useChannelUsers = (channelId, enabled = true) => {
+	return useQuery({
+		queryKey: ['channelUsers', channelId],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/chat/channels/${channelId}/users`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		enabled: enabled && !!channelId,
+		staleTime: 5 * 1000, // 5 seconds - users can change frequently
+		refetchInterval: 30 * 1000 // Refetch every 30 seconds for real-time updates
+	})
+}
+
 // Send message mutation
 export const useSendMessage = () => {
 	const queryClient = useQueryClient()
