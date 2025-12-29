@@ -35,7 +35,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask }) {
 				backgroundColor: '#f8f9fa',
 				borderRadius: '8px',
 				padding: '16px',
-				margin: '0 10px'
+				margin: '0 0px'
 			}} className='card-list-box-task'>
 			<div style={{
 				display: 'flex',

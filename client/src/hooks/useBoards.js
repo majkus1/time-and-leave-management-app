@@ -152,10 +152,13 @@ export const useUpdateTaskStatus = () => {
 			}, {
 				withCredentials: true
 			})
-			return response.data
+			return { ...response.data, taskId }
 		},
-		onSuccess: (data) => {
+		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', data.boardId] })
+			// Invalidate single task cache so modal shows updated status
+			const taskIdToInvalidate = data._id || variables.taskId
+			queryClient.invalidateQueries({ queryKey: ['task', taskIdToInvalidate] })
 		}
 	})
 }
