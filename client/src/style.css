@@ -642,6 +642,10 @@ select {
 	margin-top: 80px;
 }
 
+.schedule-container {
+	margin-top: 80px;
+}
+
 @media (min-width: 1500px) {
 	.d-md-none {
 		display: none !important;
@@ -695,7 +699,8 @@ select {
 	.newboxuser,
 	.logs-container,
 	.chat-container,
-	.board-list {
+	.board-list,
+	.schedule-container {
 		margin-left: 280px !important;
         width: calc(100% - 280px);
 		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -705,7 +710,7 @@ select {
 		margin-top: 0;
 	}
 
-	.board-list {
+	.board-list, .schedule-container {
 		margin-top: 25px;
 		padding-top: 0 !important;
 		padding-left: 30px !important;
@@ -716,7 +721,7 @@ select {
 	}
 	
 	/* Gdy sidebar jest schowany - zmniejszone marginesy */
-	body.sidebar-collapsed .logs-container, body.sidebar-collapsed .chat-container, body.sidebar-collapsed .board-list {
+	body.sidebar-collapsed .logs-container, body.sidebar-collapsed .chat-container, body.sidebar-collapsed .board-list, body.sidebar-collapsed .schedule-container {
 		margin-left: 20px !important;
 		width: calc(100% - 20px);
 	}
@@ -1070,9 +1075,9 @@ button, .btn {
 	color: white !important;
 }
 
-.fc-event-start {
+/* .fc-event-start {
 	min-height: 30px;
-}
+} */
 
 @media (max-width: 350px) {
 	.logo-sidebar .img-fluid {
@@ -1260,7 +1265,7 @@ button, .btn {
 
 @media (min-width: 1200px) {
 	.resume-month-work {
-		margin-top: 164px;
+		margin-top: 106px;
 	}
 	.small-mt {
 		margin-top: 60px !important;
@@ -1442,6 +1447,10 @@ textarea {
 		width: 800px;
 	}
 
+	.fc-scrollgrid {
+		width: 800px !important;
+	}
+
 	#calendars-works-review .fc-scrollgrid {
 		width: 800px;
 	}
@@ -1451,6 +1460,12 @@ textarea {
 	}
 
 	#all-leaveplans .fc-dayGridMonth-view {
+		overflow: scroll;
+		scrollbar-width: thin;
+		scrollbar-color: #2169dc #f1f1f1;
+	}
+
+	.fc-dayGridMonth-view {
 		overflow: scroll;
 		scrollbar-width: thin;
 		scrollbar-color: #2169dc #f1f1f1;
@@ -1487,7 +1502,16 @@ textarea {
 }
 
 .fc-toolbar-chunk h2 {
-	margin-left: 5px !important;
+	margin-left: 10px !important;
+}
+
+.fc-direction-ltr {
+	box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+	border-radius: 12px;
+}
+
+.calendar-controls {
+	margin-bottom: 20px !important;
 }
 
 .allleaveplans .fc-button-group {
@@ -2126,6 +2150,10 @@ section {
 @media (min-width: 1500px) {
 	.sidebar-toggle-btn.desktop-only {
 		display: flex;
+	}
+	#leave-planner .fc-direction-ltr, #all-leaveplans .fc-direction-ltr {
+		margin-right: 15px;
+		margin-bottom: 15px;
 	}
 }
 
@@ -2798,4 +2826,63 @@ section {
 .sidebar-inner-toggle-btn {
 	margin-right: -18px;
 	margin-top: -18px;
+}
+
+/* Schedule calendar events - ensure full visibility */
+.schedule-container .fc-daygrid-event {
+	white-space: normal !important;
+	overflow: visible !important;
+	height: auto !important;
+	min-height: 20px !important;
+}
+
+.schedule-container .fc-event-title {
+	white-space: normal !important;
+	overflow: visible !important;
+	text-overflow: clip !important;
+	word-wrap: break-word !important;
+	word-break: break-word !important;
+	line-height: 1.4 !important;
+}
+
+.schedule-container .fc-daygrid-event-dot {
+	display: none !important;
+}
+
+.schedule-container .fc-event-main {
+	overflow: visible !important;
+}
+
+.schedule-container .fc-event-main-frame {
+	overflow: visible !important;
+}
+
+.fc-dayGridMonth-view p, .fc-dayGridMonth-view span, .fc-event-title {
+	font-size: 12px !important;
+}
+
+.schedule-container .fc-event-main span {
+	color: white !important;
+	font-weight: bold;
+	padding: 3px;
+}
+
+.fc-header-toolbar {
+	display: none !important;
+}
+
+#calendars-works-review .fc-header-toolbar, .leave-calendar-plans-one-employee .fc-header-toolbar {
+	display: flex !important;
+}
+
+#calendars-works-review .fc-event-title {
+	font-size: 16px !important;
+}
+
+.fc-dayGridMonth-view {
+	margin-bottom: 0 !important;
+}
+
+.calendar-controls select {
+	font-weight: bold;
 }

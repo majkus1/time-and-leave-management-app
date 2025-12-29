@@ -10,7 +10,7 @@ export const isDepartmentSupervisor = roles =>
   roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)');
 
 export const isDepartmentViewer = roles =>
-  roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)');
+  roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)');
 
 export const isWorker = roles =>
   roles.includes('Pracownik (Worker)');

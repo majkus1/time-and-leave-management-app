@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
 const { createChannelForDepartment, createGeneralChannel, syncGeneralChannelMembers } = require('./chatController')
 const { createBoardForDepartment } = require('./boardController')
+const { createScheduleForDepartment } = require('./scheduleController')
 
 const { appUrl } = require('../config')
 
@@ -16,7 +17,7 @@ const { appUrl } = require('../config')
 // Przyjmuje opcjonalną funkcję tłumaczeń t() dla komunikatów błędów
 const validateMutuallyExclusiveRoles = (roles, t = null) => {
 	const approveLeavesRole = 'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)'
-	const viewTimesheetsRole = 'Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)'
+	const viewTimesheetsRole = 'Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)'
 	const hrRole = 'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
 	
 	const hasApproveLeaves = roles.includes(approveLeavesRole)
@@ -25,7 +26,7 @@ const validateMutuallyExclusiveRoles = (roles, t = null) => {
 	
 	// Nie można mieć HR z żadną z pozostałych dwóch ról
 	if (hasHR && (hasApproveLeaves || hasViewTimesheets)) {
-		const message = t ? t('newuser.errorRolesConflict') : 'Nie można mieć jednocześnie roli "Może widzieć wszystkie wnioski i ewidencje (HR)" razem z rolą "Może zatwierdzać urlopy swojego działu" lub "Może widzieć ewidencję czasu pracy swojego działu".'
+		const message = t ? t('newuser.errorRolesConflict') : 'Nie można mieć jednocześnie roli "Może widzieć wszystkie wnioski i ewidencje (HR)" razem z rolą "Może zatwierdzać urlopy swojego działu" lub "Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu".'
 		return {
 			valid: false,
 			message,
@@ -35,7 +36,7 @@ const validateMutuallyExclusiveRoles = (roles, t = null) => {
 	
 	// Nie można mieć wszystkich 3 jednocześnie (dodatkowa kontrola)
 	if (hasApproveLeaves && hasViewTimesheets && hasHR) {
-		const message = t ? t('newuser.errorAllRolesConflict') : 'Nie można mieć jednocześnie wszystkich trzech ról: "Może zatwierdzać urlopy swojego działu", "Może widzieć ewidencję czasu pracy swojego działu" oraz "Może widzieć wszystkie wnioski i ewidencje (HR)".'
+		const message = t ? t('newuser.errorAllRolesConflict') : 'Nie można mieć jednocześnie wszystkich trzech ról: "Może zatwierdzać urlopy swojego działu", "Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu" oraz "Może widzieć wszystkie wnioski i ewidencje (HR)".'
 		return {
 			valid: false,
 			message,
@@ -134,7 +135,7 @@ exports.register = async (req, res) => {
 
 		await newUser.save()
 
-		// Create channels for user's departments if they don't exist
+		// Create channels, boards, and schedules for user's departments if they don't exist
 		if (department && Array.isArray(department) && department.length > 0) {
 			for (const deptName of department) {
 				try {
@@ -143,12 +144,32 @@ exports.register = async (req, res) => {
 					console.error(`Error creating channel for department ${deptName}:`, error)
 					// Don't fail the request if channel creation fails
 				}
+				try {
+					await createBoardForDepartment(teamId, deptName)
+				} catch (error) {
+					console.error(`Error creating board for department ${deptName}:`, error)
+				}
+				try {
+					await createScheduleForDepartment(teamId, deptName)
+				} catch (error) {
+					console.error(`Error creating schedule for department ${deptName}:`, error)
+				}
 			}
 		} else if (department && typeof department === 'string') {
 			try {
 				await createChannelForDepartment(teamId, department)
 			} catch (error) {
 				console.error(`Error creating channel for department ${department}:`, error)
+			}
+			try {
+				await createBoardForDepartment(teamId, department)
+			} catch (error) {
+				console.error(`Error creating board for department ${department}:`, error)
+			}
+			try {
+				await createScheduleForDepartment(teamId, department)
+			} catch (error) {
+				console.error(`Error creating schedule for department ${department}:`, error)
 			}
 		}
 
@@ -425,7 +446,7 @@ exports.getAllVisibleUsers = async (req, res) => {
         const isDepartmentSupervisor = currentUser.roles && currentUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)');
         
         // Sprawdź czy to przeglądający ewidencję działu - powinien widzieć tylko użytkowników ze swojego działu
-        const isDepartmentViewer = currentUser.roles && currentUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)');
+		const isDepartmentViewer = currentUser.roles && currentUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)');
         
         // Jeśli to przełożony działu lub przeglądający ewidencję działu, filtruj po działach
         if (isDepartmentSupervisor || isDepartmentViewer) {
@@ -571,7 +592,7 @@ exports.getUserById = async (req, res) => {
 		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)') &&
+			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)') &&
 			hasCommonDepartment
 
 		// Każdy użytkownik w zespole może widzieć innych użytkowników z tego samego zespołu
@@ -637,13 +658,19 @@ exports.updateUserRoles = async (req, res) => {
 			// Find departments that were removed (in oldDepartments but not in newDepartments)
 			const departmentsToCheck = oldDepartments.filter(dept => !newDepartments.includes(dept));
 			
-			// Create boards for new departments
+			// Create boards and schedules for new departments
 			for (const deptName of departmentsToCreate) {
 				try {
 					await createBoardForDepartment(user.teamId, deptName);
 				} catch (error) {
 					console.error(`Error creating board for department "${deptName}" when updating user:`, error);
 					// Don't fail the request if board creation fails
+				}
+				try {
+					await createScheduleForDepartment(user.teamId, deptName);
+				} catch (error) {
+					console.error(`Error creating schedule for department "${deptName}" when updating user:`, error);
+					// Don't fail the request if schedule creation fails
 				}
 			}
 			

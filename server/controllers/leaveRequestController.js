@@ -90,7 +90,7 @@ exports.getUserLeaveRequests = async (req, res) => {
 	} else if (
 		// Przełożony działu lub ewidencja widzi tylko w swoim dziale
 		requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') ||
-		requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)')
+			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)')
 	) {
 		const userToView = await User.findById(userId)
 		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
@@ -322,7 +322,7 @@ exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 		
 		const isSupervisorOfDepartment =
 			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy swojego działu (View Timesheets Department)') &&
+			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)') &&
 			hasCommonDepartment
 
 		// Każdy użytkownik w zespole może widzieć zaakceptowane wnioski innych użytkowników z tego samego zespołu

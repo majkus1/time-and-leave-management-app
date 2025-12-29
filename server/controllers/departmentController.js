@@ -4,6 +4,7 @@ const User = require('../models/user')(firmDb);
 const Department = require('../models/Department')(firmDb);
 const { createChannelForDepartment } = require('./chatController');
 const { createBoardForDepartment } = require('./boardController');
+const { createScheduleForDepartment } = require('./scheduleController');
 
 exports.getDepartments = async (req, res) => {
 	try {
@@ -113,6 +114,14 @@ exports.createDepartment = async (req, res) => {
 		} catch (error) {
 			console.error('Error creating board for department:', error);
 			// Don't fail the request if board creation fails
+		}
+
+		// Automatically create schedule for the new department
+		try {
+			await createScheduleForDepartment(teamId, trimmedName);
+		} catch (error) {
+			console.error('Error creating schedule for department:', error);
+			// Don't fail the request if schedule creation fails
 		}
 
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment });

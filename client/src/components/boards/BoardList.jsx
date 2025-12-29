@@ -116,7 +116,7 @@ function BoardList() {
 								{board.description && (
 									<p style={{ 
 										color: '#7f8c8d', 
-										fontSize: '14px',
+										fontSize: '16px',
 										marginBottom: '10px'
 									}}>
 										{board.description}
@@ -127,9 +127,9 @@ function BoardList() {
 									color: '#95a5a6',
 									marginTop: '10px'
 								}}>
-									{board.type === 'team' && '📋 Tablica zespołu'}
-									{board.type === 'department' && '🏢 Tablica działu'}
-									{board.type === 'custom' && '⭐ Tablica niestandardowa'}
+									{board.type === 'team' && `📋 ${t('boards.boardType.team')}`}
+									{board.type === 'department' && `🏢 ${t('boards.boardType.department')}`}
+									{board.type === 'custom' && `⭐ ${t('boards.boardType.custom')}`}
 								</div>
 							</Link>
 							<div style={{
@@ -180,7 +180,7 @@ function BoardList() {
 												border: 'none',
 												color: 'white',
 												cursor: 'pointer',
-												fontSize: '14px',
+												fontSize: '16px',
 												padding: '4px 8px',
 												borderRadius: '4px'
 											}}

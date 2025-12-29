@@ -176,7 +176,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 						}}>
 						{STATUSES.map(s => (
 							<option key={s.id} value={s.id}>
-								{t(`boards.status.${s.id}`) || s.label}
+								{t(`boards.status.${s.id}`)}
 							</option>
 						))}
 					</select>
@@ -199,7 +199,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							padding: '8px',
 							border: '1px solid #bdc3c7',
 							borderRadius: '6px',
-							fontSize: '14px'
+							fontSize: '16px'
 						}}
 					/>
 					{selectedFile && (
@@ -208,7 +208,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							padding: '8px',
 							backgroundColor: '#f8f9fa',
 							borderRadius: '6px',
-							fontSize: '14px',
+							fontSize: '16px',
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center'
@@ -242,7 +242,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							backgroundColor: 'white',
 							color: '#2c3e50',
 							cursor: 'pointer',
-							fontSize: '14px',
+							fontSize: '16px',
 							fontWeight: '500'
 						}}>
 						{t('boards.cancel') || 'Anuluj'}
@@ -257,7 +257,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							backgroundColor: '#3498db',
 							color: 'white',
 							cursor: createTaskMutation.isPending ? 'not-allowed' : 'pointer',
-							fontSize: '14px',
+							fontSize: '16px',
 							fontWeight: '500',
 							opacity: createTaskMutation.isPending ? 0.6 : 1
 						}}>

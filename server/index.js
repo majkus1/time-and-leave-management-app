@@ -146,6 +146,71 @@ firmDb.on('connected', async () => {
 		} catch (error) {
 			console.error('Error syncing boards on startup:', error)
 		}
+
+		// Create or update team schedules and department schedules for all teams
+		try {
+			const Schedule = require('./models/Schedule')(firmDb)
+			const Department = require('./models/Department')(firmDb)
+			const { createTeamSchedule, createScheduleForDepartment } = require('./controllers/scheduleController')
+			const allTeams = await Team.find({ isActive: true })
+			
+			for (const team of allTeams) {
+				try {
+					// Create team schedule
+					await createTeamSchedule(team._id)
+					console.log(`Synced team schedule for team "${team.name}"`)
+					
+					// Get departments for this team
+					const departments = await Department.find({ teamId: team._id, isActive: true }).select('name')
+					
+					// If no departments in Department model, get from users
+					if (departments.length === 0) {
+						const User = require('./models/user')(firmDb)
+						const users = await User.find({ 
+							teamId: team._id, 
+							department: { $ne: null, $ne: [], $exists: true } 
+						}).select('department')
+						
+						const allDepartments = new Set()
+						users.forEach(user => {
+							if (Array.isArray(user.department)) {
+								user.department.forEach(dept => {
+									if (dept && dept.trim() !== '') {
+										allDepartments.add(dept.trim())
+									}
+								})
+							} else if (user.department && user.department.trim() !== '') {
+								allDepartments.add(user.department.trim())
+							}
+						})
+						
+						// Create schedules for departments from users
+						for (const deptName of allDepartments) {
+							try {
+								await createScheduleForDepartment(team._id, deptName)
+								console.log(`Synced department schedule "${deptName}" for team "${team.name}"`)
+							} catch (error) {
+								console.error(`Error syncing department schedule "${deptName}" for team "${team.name}":`, error)
+							}
+						}
+					} else {
+						// Create schedules for departments from Department model
+						for (const dept of departments) {
+							try {
+								await createScheduleForDepartment(team._id, dept.name)
+								console.log(`Synced department schedule "${dept.name}" for team "${team.name}"`)
+							} catch (error) {
+								console.error(`Error syncing department schedule "${dept.name}" for team "${team.name}":`, error)
+							}
+						}
+					}
+				} catch (error) {
+					console.error(`Error syncing schedules for team "${team.name}":`, error)
+				}
+			}
+		} catch (error) {
+			console.error('Error syncing schedules on startup:', error)
+		}
 	} catch (error) {
 		console.error('Error updating special teams limit:', error)
 		// Don't crash server if update fails
@@ -201,6 +266,7 @@ app.use('/api/tickets', ticketsRoutes)
 app.use('/api/departments', require('./routes/department'))
 app.use('/api/chat', require('./routes/chatRoutes'))
 app.use('/api/boards', require('./routes/boardRoutes'))
+app.use('/api/schedules', require('./routes/scheduleRoutes'))
 app.use('/uploads', express.static('uploads'))
 
 // Socket.io setup

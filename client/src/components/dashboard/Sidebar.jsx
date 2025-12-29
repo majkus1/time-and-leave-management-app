@@ -247,6 +247,15 @@ function Sidebar() {
 					</NavLink>
 
 					<NavLink
+						to="/schedule"
+						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+						<div className="nav-icon">
+							<img src="/img/project.png" alt="Schedule" />
+						</div>
+						<span className="nav-text">{t('sidebar.btnSchedule')}</span>
+					</NavLink>
+
+					<NavLink
 						to="/leave-request"
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">

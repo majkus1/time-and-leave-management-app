@@ -10,10 +10,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { API_URL } from '../../config.js'
 
 const STATUSES = [
-	{ id: 'todo', label: 'Do zrobienia', color: '#e74c3c' },
-	{ id: 'in-progress', label: 'W trakcie', color: '#f39c12' },
-	{ id: 'review', label: 'Do sprawdzenia', color: '#3498db' },
-	{ id: 'done', label: 'Gotowe', color: '#27ae60' }
+	{ id: 'todo', color: '#e74c3c' },
+	{ id: 'in-progress', color: '#f39c12' },
+	{ id: 'review', color: '#3498db' },
+	{ id: 'done', color: '#27ae60' }
 ]
 
 Modal.setAppElement('#root')
@@ -220,7 +220,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 									padding: '12px',
 									border: '1px solid #bdc3c7',
 									borderRadius: '6px',
-									fontSize: '14px',
+									fontSize: '16px',
 									minHeight: '100px',
 									marginBottom: '10px'
 								}}
@@ -316,7 +316,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 							{currentTask.description && (
 								<p style={{ 
 									color: '#7f8c8d', 
-									fontSize: '14px',
+									fontSize: '16px',
 									marginBottom: '20px',
 									whiteSpace: 'pre-wrap'
 								}}>
@@ -345,13 +345,13 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 							padding: '10px',
 							border: '1px solid #bdc3c7',
 							borderRadius: '6px',
-							fontSize: '14px',
+							fontSize: '16px',
 							backgroundColor: 'white',
 							cursor: 'pointer'
 						}}>
 						{STATUSES.map(status => (
 							<option key={status.id} value={status.id}>
-								{t(`boards.status.${status.id}`) || status.label}
+								{t(`boards.status.${status.id}`)}
 							</option>
 						))}
 					</select>
@@ -461,7 +461,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 							</div>
 						))
 					) : (
-						<p style={{ color: '#95a5a6', fontSize: '14px', fontStyle: 'italic' }}>
+						<p style={{ color: '#95a5a6', fontSize: '16px', fontStyle: 'italic' }}>
 							{t('boards.noAttachments') || 'Brak załączników'}
 						</p>
 					)}
@@ -492,7 +492,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 										}}>
 											{comment.createdBy?.username || 'Unknown'}
 										</div>
-										<div style={{ color: '#7f8c8d', fontSize: '14px' }}>
+										<div style={{ color: '#7f8c8d', fontSize: '16px' }}>
 											{comment.content}
 										</div>
 										<div style={{ 
@@ -534,7 +534,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 									padding: '10px',
 									border: '1px solid #bdc3c7',
 									borderRadius: '6px',
-									fontSize: '14px'
+									fontSize: '16px'
 								}}
 							/>
 							<button
@@ -612,7 +612,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 				{currentTask.description && (
 					<p style={{ 
 						color: '#7f8c8d', 
-						fontSize: '14px',
+						fontSize: '16px',
 						marginBottom: '8px',
 						overflow: 'hidden',
 						textOverflow: 'ellipsis',

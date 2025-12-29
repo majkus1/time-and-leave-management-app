@@ -13,10 +13,10 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
 const STATUSES = [
-	{ id: 'todo', label: 'Do zrobienia', color: '#e74c3c' },
-	{ id: 'in-progress', label: 'W trakcie', color: '#f39c12' },
-	{ id: 'review', label: 'Do sprawdzenia', color: '#3498db' },
-	{ id: 'done', label: 'Gotowe', color: '#27ae60' }
+	{ id: 'todo', color: '#e74c3c' },
+	{ id: 'in-progress', color: '#f39c12' },
+	{ id: 'review', color: '#3498db' },
+	{ id: 'done', color: '#27ae60' }
 ]
 
 function Column({ status, tasks, onTaskClick, onDeleteTask }) {
@@ -25,7 +25,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask }) {
 		id: status.id
 	})
 	
-	const statusLabel = t(`boards.status.${status.id}`) || status.label
+	const statusLabel = t(`boards.status.${status.id}`)
 
 	return (
 		<div
@@ -71,7 +71,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask }) {
 							padding: '20px',
 							textAlign: 'center',
 							color: '#95a5a6',
-							fontSize: '14px'
+							fontSize: '16px'
 						}}>
 							{t('boards.noTasks') || 'Brak zadań'}
 						</div>
@@ -279,7 +279,7 @@ function Board() {
 							{board.name}
 						</h2>
 						{board.description && (
-							<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+							<p style={{ color: '#7f8c8d', fontSize: '16px' }}>
 								{board.description}
 							</p>
 						)}
@@ -364,7 +364,7 @@ function Board() {
 										{draggedTask.description && (
 											<p style={{ 
 												color: '#7f8c8d', 
-												fontSize: '14px',
+												fontSize: '16px',
 												marginBottom: '8px',
 												overflow: 'hidden',
 												textOverflow: 'ellipsis',

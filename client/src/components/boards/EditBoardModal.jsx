@@ -200,7 +200,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 							backgroundColor: 'white',
 							color: '#2c3e50',
 							cursor: 'pointer',
-							fontSize: '14px',
+							fontSize: '16px',
 							fontWeight: '500'
 						}}>
 						{t('boards.cancel') || 'Anuluj'}
@@ -215,7 +215,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 							backgroundColor: '#3498db',
 							color: 'white',
 							cursor: updateBoardMutation.isPending ? 'not-allowed' : 'pointer',
-							fontSize: '14px',
+							fontSize: '16px',
 							fontWeight: '500',
 							opacity: updateBoardMutation.isPending ? 0.6 : 1
 						}}>

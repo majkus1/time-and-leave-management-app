@@ -76,8 +76,9 @@ export const useUpdateUserRoles = () => {
 			queryClient.invalidateQueries({ queryKey: ['users'] })
 			queryClient.invalidateQueries({ queryKey: ['users', variables.userId] })
 			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
-			// Invaliduj tablice zadań - mogą się zmienić po zmianie działu użytkownika
+			// Invaliduj tablice zadań i grafiki - mogą się zmienić po zmianie działu użytkownika
 			queryClient.invalidateQueries({ queryKey: ['boards'] })
+			queryClient.invalidateQueries({ queryKey: ['schedules'] })
 		},
 	})
 }
