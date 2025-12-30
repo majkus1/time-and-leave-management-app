@@ -233,6 +233,11 @@ i18n
 						save: 'Save',
 						cancel: 'Cancel',
 						modalContentLabel: 'Add work hours or absence',
+						delete: 'Delete',
+						deleteConfirm: 'Are you sure you want to delete this entry?',
+						existingEntries: 'Existing entries',
+						addNewEntry: 'Add new entry',
+						entriesForDate: 'Entries for date',
 					},
 					chat: {
 						title: 'Team Chat',
@@ -764,6 +769,11 @@ i18n
 						save: 'Zapisz',
 						cancel: 'Anuluj',
 						modalContentLabel: 'Dodaj godziny pracy lub nieobecność',
+						delete: 'Usuń',
+						deleteConfirm: 'Czy na pewno chcesz usunąć ten wpis?',
+						existingEntries: 'Istniejące wpisy',
+						addNewEntry: 'Dodaj nowy wpis',
+						entriesForDate: 'Wpisy dla daty',
 					},
 					chat: {
 						title: 'Czat zespołu',

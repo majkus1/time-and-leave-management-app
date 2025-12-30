@@ -34,7 +34,7 @@ function ScheduleList() {
 					<img src="/img/project.png" alt="Schedule icon" />
 					{t('schedule.title') || 'Grafiki'}
 				</h2>
-
+				<hr />
 				<div style={{
 					display: 'grid',
 					gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',

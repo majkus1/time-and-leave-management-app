@@ -358,27 +358,6 @@ function Schedule() {
 		return (
 			<div className="event-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 				<span style={{ flex: 1, whiteSpace: 'normal', wordBreak: 'break-word' }}>{eventInfo.event.title}</span>
-				{canEdit && (
-					<span 
-						className="event-delete" 
-						onClick={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
-						const entryId = eventInfo.event.extendedProps?.entryId || eventInfo.event.id
-						handleDeleteEntry(entryId)
-						}}
-						style={{
-							marginLeft: '5px',
-							cursor: 'pointer',
-							color: 'white',
-							fontWeight: 'bold',
-							fontSize: '20px',
-							flexShrink: 0
-						}}
-					>
-						×
-					</span>
-				)}
 			</div>
 		)
 	}
@@ -398,6 +377,7 @@ function Schedule() {
 					<img src="/img/project.png" alt="Schedule icon" />
 					{schedule.name}
 				</h2>
+				<hr />
 
 				<div style={{
 					display: 'flex',

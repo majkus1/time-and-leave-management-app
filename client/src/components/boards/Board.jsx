@@ -283,6 +283,7 @@ function Board() {
 								{board.description}
 							</p>
 						)}
+						<hr />
 					</div>
 					<button
 						onClick={() => {

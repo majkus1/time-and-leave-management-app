@@ -70,7 +70,7 @@ function MonthlyCalendar() {
 		}
 	}, [])
 	const { t, i18n } = useTranslation()
-	const { showAlert } = useAlert()
+	const { showAlert, showConfirm } = useAlert()
 	
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
@@ -106,7 +106,7 @@ function MonthlyCalendar() {
 	}
 
 	// TanStack Query hooks
-	const { data: workdays = [], isLoading: loadingWorkdays } = useWorkdays()
+	const { data: workdays = [], isLoading: loadingWorkdays, refetch: refetchWorkdays } = useWorkdays()
 	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
 		currentMonth,
 		currentYear
@@ -236,42 +236,24 @@ function MonthlyCalendar() {
 	}
 
 	const handleDateClick = async info => {
-		const clickedDate = new Date(info.dateStr)
-		const clickedDateStr = clickedDate.toDateString()
+		// Determine clicked date from event or date click
+		const clickedDate = info.date ? info.dateStr : (info.event ? info.event.startStr : info.dateStr)
 		
-		// Sprawdź czy na tym dniu jest już jakieś wydarzenie
-		const eventsOnDate = workdays.filter(
-			day => new Date(day.date).toDateString() === clickedDateStr
-		)
-
-		if (eventsOnDate.length >= 1) {
-			await showAlert(t('workcalendar.oneactionforday'))
+		// Skip if it's a leave request event (we don't want to edit those)
+		if (info.event && info.event.extendedProps?.type === 'leaveRequest') {
 			return
 		}
-		
-		// Sprawdź czy ten dzień jest w zakresie zaakceptowanego wniosku urlopowego/nieobecności
-		if (Array.isArray(acceptedLeaveRequests)) {
-			const hasAcceptedRequest = acceptedLeaveRequests.some(request => {
-				if (!request.startDate || !request.endDate) return false
-				
-				const startDate = new Date(request.startDate)
-				const endDate = new Date(request.endDate)
-				
-				// Sprawdź czy kliknięta data jest w zakresie wniosku (włącznie z datą końcową)
-				const clickedDateOnly = new Date(clickedDate.getFullYear(), clickedDate.getMonth(), clickedDate.getDate())
-				const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
-				const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-				
-				return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
-			})
-			
-			if (hasAcceptedRequest) {
-				await showAlert(t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością')
-				return
-			}
-		}
 
-		setSelectedDate(info.dateStr)
+		setSelectedDate(clickedDate)
+		
+		// Find existing workdays for this date (excluding realTime entries)
+		const clickedDateObj = new Date(clickedDate)
+		const clickedDateStr = clickedDateObj.toDateString()
+		const existingWorkdays = workdays.filter(day => {
+			const dayDate = new Date(day.date)
+			return dayDate.toDateString() === clickedDateStr
+		})
+		
 		setModalIsOpen(true)
 	}
 
@@ -321,6 +303,43 @@ function MonthlyCalendar() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 
+		// Sprawdź czy dla tej daty nie ma już wpisu
+		if (selectedDate) {
+			const clickedDateObj = new Date(selectedDate)
+			const clickedDateStr = clickedDateObj.toDateString()
+			const existingWorkdays = workdays.filter(day => {
+				const dayDate = new Date(day.date)
+				return dayDate.toDateString() === clickedDateStr
+			})
+
+			if (existingWorkdays.length > 0) {
+				setErrorMessage(t('workcalendar.oneactionforday'))
+				return
+			}
+
+			// Sprawdź czy ten dzień jest w zakresie zaakceptowanego wniosku urlopowego/nieobecności
+			if (Array.isArray(acceptedLeaveRequests)) {
+				const hasAcceptedRequest = acceptedLeaveRequests.some(request => {
+					if (!request.startDate || !request.endDate) return false
+					
+					const startDate = new Date(request.startDate)
+					const endDate = new Date(request.endDate)
+					
+					// Sprawdź czy kliknięta data jest w zakresie wniosku (włącznie z datą końcową)
+					const clickedDateOnly = new Date(clickedDateObj.getFullYear(), clickedDateObj.getMonth(), clickedDateObj.getDate())
+					const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+					const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+					
+					return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
+				})
+				
+				if (hasAcceptedRequest) {
+					setErrorMessage(t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością')
+					return
+				}
+			}
+		}
+
 		if (hoursWorked && absenceType) {
 			setErrorMessage(t('workcalendar.formalerttwo'))
 			return
@@ -351,6 +370,8 @@ function MonthlyCalendar() {
 
 		try {
 			await createWorkdayMutation.mutateAsync(data)
+			// Refresh workdays after creation
+			await refetchWorkdays()
 			setModalIsOpen(false)
 			setHoursWorked('')
 			setAdditionalWorked('')
@@ -363,25 +384,24 @@ function MonthlyCalendar() {
 	}
 
 	const handleDelete = async id => {
+		const confirmed = await showConfirm(
+			t('workcalendar.deleteConfirm') || 'Czy na pewno chcesz usunąć ten wpis?'
+		)
+		if (!confirmed) return
+
 		try {
 			await deleteWorkdayMutation.mutateAsync(id)
+			// Refresh workdays after deletion
+			await refetchWorkdays()
 		} catch (error) {
 			console.error('Failed to delete workday:', error)
 		}
 	}
 
 	const renderEventContent = eventInfo => {
-		// Sprawdź czy to zaakceptowany wniosek urlopowy (nie powinien mieć przycisku 'x')
-		const isLeaveRequest = eventInfo.event.extendedProps?.type === 'leaveRequest'
-		
 		return (
-			<div className={`event-content ${eventInfo.event.extendedProps.isWorkday ? 'event-workday' : 'event-absence'}`}>
+			<div className={`event-content ${eventInfo.event.extendedProps?.isWorkday ? 'event-workday' : 'event-absence'}`}>
 				<span>{eventInfo.event.title}</span>
-				{!isLeaveRequest && (
-					<span className="event-delete" onClick={() => handleDelete(eventInfo.event.id)}>
-						×
-					</span>
-				)}
 			</div>
 		)
 	}
@@ -521,6 +541,7 @@ function MonthlyCalendar() {
 					]}
 					ref={calendarRef}
 					dateClick={handleDateClick}
+					eventClick={handleDateClick}
 					eventContent={renderEventContent}
 					displayEventTime={false}
 					datesSet={handleMonthChange}
@@ -644,72 +665,210 @@ function MonthlyCalendar() {
 					},
 				}}
 				contentLabel={t('workcalendar.modalContentLabel')}>
-				<h2 className="text-xl font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
+				{selectedDate && (
+					<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
+						{t('workcalendar.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
+					</h2>
+				)}
 
-				<form onSubmit={handleSubmit} className="space-y-4">
-					<div>
-						<input
-							type="number"
-							min="1"
-							max="24"
-							placeholder={t('workcalendar.placeholder1')}
-							value={hoursWorked}
-							onChange={e => setHoursWorked(e.target.value)}
-							className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
+				{selectedDate && (() => {
+					const clickedDateObj = new Date(selectedDate)
+					const clickedDateStr = clickedDateObj.toDateString()
+					const existingWorkdays = workdays.filter(day => {
+						const dayDate = new Date(day.date)
+						return dayDate.toDateString() === clickedDateStr
+					})
 
-					<div>
-						<input
-							type="number"
-							min="0"
-							placeholder={t('workcalendar.placeholder2')}
-							value={additionalWorked}
-							onChange={e => setAdditionalWorked(e.target.value)}
-							className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
+					// Check if there's an accepted leave request for this date
+					const hasAcceptedRequest = Array.isArray(acceptedLeaveRequests) && acceptedLeaveRequests.some(request => {
+						if (!request.startDate || !request.endDate) return false
+						
+						const startDate = new Date(request.startDate)
+						const endDate = new Date(request.endDate)
+						
+						// Check if clicked date is within the request range (inclusive)
+						const clickedDateOnly = new Date(clickedDateObj.getFullYear(), clickedDateObj.getMonth(), clickedDateObj.getDate())
+						const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+						const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+						
+						return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
+					})
 
-					<div>
-						<input
-							type="text"
-							placeholder={t('workcalendar.placeholder3')}
-							value={realTimeDayWorked}
-							onChange={e => setRealTimeDayWorked(e.target.value)}
-							className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
+					return existingWorkdays.length > 0 ? (
+						<div style={{ marginBottom: '30px' }}>
+							<h3 style={{
+								marginBottom: '15px',
+								color: '#2c3e50',
+								fontSize: '18px',
+								fontWeight: '600'
+							}}>
+								{t('workcalendar.existingEntries') || 'Istniejące wpisy'}
+							</h3>
+							<div style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '10px'
+							}}>
+								{existingWorkdays.map((workday) => {
+									const displayText = workday.hoursWorked
+										? `${workday.hoursWorked} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${workday.additionalWorked} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
+										: workday.absenceType
+									
+									return (
+										<div key={workday._id} style={{
+											padding: '15px',
+											backgroundColor: '#f8f9fa',
+											borderRadius: '8px',
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											minHeight: '60px'
+										}}>
+											<div style={{ flex: 1 }}>
+												<div style={{
+													fontWeight: '600',
+													color: '#2c3e50',
+													marginBottom: '5px'
+												}}>
+													{displayText}
+												</div>
+											</div>
+											<button
+												type="button"
+												onClick={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+													handleDelete(workday._id)
+												}}
+												style={{
+													background: '#e74c3c',
+													color: 'white',
+													border: 'none',
+													borderRadius: '6px',
+													padding: '8px 16px',
+													cursor: 'pointer',
+													fontSize: '16px',
+													fontWeight: '500',
+													flexShrink: 0,
+													marginLeft: '10px'
+												}}
+											>
+												{t('workcalendar.delete') || 'Usuń'}
+											</button>
+										</div>
+									)
+								})}
+							</div>
+							<div style={{
+								marginTop: '20px',
+								padding: '15px',
+								backgroundColor: '#fff3cd',
+								border: '1px solid #ffc107',
+								borderRadius: '8px',
+								color: '#856404'
+							}}>
+								{t('workcalendar.oneactionforday')}
+							</div>
+							{hasAcceptedRequest && (
+								<div style={{
+									marginTop: '20px',
+									padding: '15px',
+									backgroundColor: '#f8d7da',
+									border: '1px solid #f5c6cb',
+									borderRadius: '8px',
+									color: '#721c24'
+								}}>
+									{t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością'}
+								</div>
+							)}
+						</div>
+					) : hasAcceptedRequest ? (
+						<div style={{
+							padding: '15px',
+							backgroundColor: '#f8d7da',
+							border: '1px solid #f5c6cb',
+							borderRadius: '8px',
+							color: '#721c24'
+						}}>
+							{t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością'}
+						</div>
+					) : (
+						<>
+							<h3 style={{
+								marginBottom: '15px',
+								color: '#2c3e50',
+								fontSize: '18px',
+								fontWeight: '600'
+							}}>
+								{t('workcalendar.addNewEntry') || 'Dodaj nowy wpis'}
+							</h3>
+							<form onSubmit={handleSubmit} className="space-y-4">
+								<div>
+									<input
+										type="number"
+										min="1"
+										max="24"
+										placeholder={t('workcalendar.placeholder1')}
+										value={hoursWorked}
+										onChange={e => setHoursWorked(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
 
-					<div>
-						<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
-						<input
-							type="text"
-							placeholder={t('workcalendar.placeholder4')}
-							value={absenceType}
-							onChange={e => setAbsenceType(e.target.value)}
-							className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
+								<div>
+									<input
+										type="number"
+										min="0"
+										placeholder={t('workcalendar.placeholder2')}
+										value={additionalWorked}
+										onChange={e => setAdditionalWorked(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
 
-					{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+								<div>
+									<input
+										type="text"
+										placeholder={t('workcalendar.placeholder3')}
+										value={realTimeDayWorked}
+										onChange={e => setRealTimeDayWorked(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
 
-					<div className="flex justify-end gap-3 pt-4">
-						<button
-							type="submit"
-							className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-							{t('workcalendar.save')}
-						</button>
-						<button
-							type="button"
-							onClick={() => {
-								setModalIsOpen(false)
-								resetFormFields()
-							}}
-							className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
-							{t('workcalendar.cancel')}
-						</button>
-					</div>
-				</form>
+								<div>
+									<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+									<input
+										type="text"
+										placeholder={t('workcalendar.placeholder4')}
+										value={absenceType}
+										onChange={e => setAbsenceType(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
+
+								{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+
+								<div className="flex justify-end gap-3 pt-4">
+									<button
+										type="submit"
+										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+										{t('workcalendar.save')}
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setModalIsOpen(false)
+											resetFormFields()
+										}}
+										className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+										{t('workcalendar.cancel')}
+									</button>
+								</div>
+							</form>
+						</>
+					)
+				})()}
 			</Modal>
 		</div>
 	)

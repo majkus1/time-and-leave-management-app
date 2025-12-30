@@ -103,7 +103,7 @@ const HelpTicket = () => {
 				<h2 className="text-2xl font-bold mb-4"><img src="img/technical-support.png" alt="ikonka w sidebar" /> {t('tickets.title')}</h2>
 				<hr />
 				{!selectedTicket && (
-					<div className="mb-8 border bg-white rounded-xl shadow p-5">
+					<div className="mb-8 border bg-white rounded-xl shadow p-4">
 						<h3 className="font-semibold text-lg mb-3">{t('tickets.new')}</h3>
 						<form className="flex flex-col gap-3" onSubmit={handleSendNewTicket}>
 							<input
@@ -205,7 +205,7 @@ const HelpTicket = () => {
 				)}
 
 				{selectedTicketId && selectedTicket && (
-					<div className="border bg-white rounded-xl shadow p-5 mt-6">
+					<div className="border bg-white rounded-xl shadow p-4 mt-6">
 						<button className="btn btn-sm btn-outline mb-3" onClick={handleBackToList}>
 							← {t('tickets.backToList')}
 						</button>

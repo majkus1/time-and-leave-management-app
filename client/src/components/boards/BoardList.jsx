@@ -66,6 +66,7 @@ function BoardList() {
 					}}>
 					<img src="/img/task-list.png" alt='icon of boards' />	{t('boards.title') || 'Tablice zadań'}
 					</h2>
+					<hr />
 					<button
 						onClick={() => setIsCreateModalOpen(true)}
 						style={{

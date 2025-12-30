@@ -33,14 +33,27 @@ function Sidebar() {
 	const isLeavePlans = location.pathname === '/all-leave-plans' || location.pathname.startsWith('/leave-plans')
 
 	useEffect(() => {
+		let lastWidth = window.innerWidth
+		
 		function handleResize() {
-			const isDesktop = window.innerWidth > 1500
-			setIsMenuOpen(isDesktop)
+			const currentWidth = window.innerWidth
+			const isDesktop = currentWidth > 1500
+			
+			// Sprawdź czy szerokość się faktycznie zmieniła (prawdziwy resize)
+			const widthChanged = Math.abs(currentWidth - lastWidth) > 10
+			
+			if (widthChanged) {
+				// Tylko przy prawdziwej zmianie rozmiaru okna resetuj stan
+				setIsMenuOpen(isDesktop)
+				lastWidth = currentWidth
+			}
+			
 			// Na mobile zawsze pokazuj sidebar jako menu overlay
 			if (!isDesktop) {
 				setIsSidebarCollapsed(false)
 			}
 		}
+		
 		window.addEventListener('resize', handleResize)
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
