@@ -27,6 +27,7 @@ function MonthlyCalendar() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
+	const [notes, setNotes] = useState('')
 	const [errorMessage, setErrorMessage] = useState('')
 	const calendarRef = useRef(null)
 	
@@ -366,6 +367,7 @@ function MonthlyCalendar() {
 			additionalWorked: hoursWorked ? (additionalWorked ? parseInt(additionalWorked) : null) : null,
 			realTimeDayWorked: hoursWorked ? realTimeDayWorked || null : null,
 			absenceType: absenceType || null,
+			notes: notes || null,
 		}
 
 		try {
@@ -377,6 +379,7 @@ function MonthlyCalendar() {
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
 			setAbsenceType('')
+			setNotes('')
 			setErrorMessage('')
 		} catch (error) {
 			console.error('Failed to add workday:', error)
@@ -411,6 +414,7 @@ function MonthlyCalendar() {
 		setAdditionalWorked('')
 		setRealTimeDayWorked('')
 		setAbsenceType('')
+		setNotes('')
 		setErrorMessage('')
 	}
 
@@ -497,8 +501,8 @@ function MonthlyCalendar() {
 										day.additionalWorked
 											? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
 											: ''
-								  }`
-								: day.absenceType,
+								  }${day.notes ? ` | ${day.notes}` : ''}`
+								: `${day.absenceType}${day.notes ? ` | ${day.notes}` : ''}`,
 							start: day.date,
 							backgroundColor: day.hoursWorked ? 'blue' : 'green',
 							textColor: 'white',
@@ -506,6 +510,7 @@ function MonthlyCalendar() {
 							classNames: day.hoursWorked ? 'event-workday' : 'event-absence',
 							extendedProps: {
 								isWorkday: !!day.hoursWorked,
+								notes: day.notes,
 							},
 						})),
 						...workdays
@@ -649,19 +654,22 @@ function MonthlyCalendar() {
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: 'transparent',
-						backdropFilter: 'blur(1px)',
-						WebkitBackdropFilter: 'blur(1px)',
+						backgroundColor: 'rgba(0, 0, 0, 0.5)',
+						backdropFilter: 'blur(2px)',
+						WebkitBackdropFilter: 'blur(2px)',
 					},
 					content: {
 						position: 'relative',
 						inset: 'unset',
 						margin: '0',
-						maxWidth: '100%',
-						width: '360px',
+						maxWidth: '600px',
+						width: '90%',
+						maxHeight: '90vh',
+						overflowY: 'auto',
 						borderRadius: '1rem',
 						padding: '2rem',
 						backgroundColor: 'white',
+						boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
 					},
 				}}
 				contentLabel={t('workcalendar.modalContentLabel')}>
@@ -732,6 +740,16 @@ function MonthlyCalendar() {
 												}}>
 													{displayText}
 												</div>
+												{workday.notes && (
+													<div style={{
+														fontSize: '14px',
+														color: '#7f8c8d',
+														marginTop: '5px',
+														fontStyle: 'italic'
+													}}>
+														{t('workcalendar.notes') || 'Uwagi'}: {workday.notes}
+													</div>
+												)}
 											</div>
 											<button
 												type="button"
@@ -794,16 +812,9 @@ function MonthlyCalendar() {
 						</div>
 					) : (
 						<>
-							<h3 style={{
-								marginBottom: '15px',
-								color: '#2c3e50',
-								fontSize: '18px',
-								fontWeight: '600'
-							}}>
-								{t('workcalendar.addNewEntry') || 'Dodaj nowy wpis'}
-							</h3>
 							<form onSubmit={handleSubmit} className="space-y-4">
 								<div>
+									<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 									<input
 										type="number"
 										min="1"
@@ -844,6 +855,17 @@ function MonthlyCalendar() {
 										value={absenceType}
 										onChange={e => setAbsenceType(e.target.value)}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
+
+								<div>
+									<label className="text-lg font-semibold mt-4 mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+									<textarea
+										placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+										value={notes}
+										onChange={e => setNotes(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										rows="3"
 									/>
 								</div>
 

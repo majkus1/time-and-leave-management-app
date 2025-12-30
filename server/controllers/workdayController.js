@@ -3,7 +3,7 @@ const Workday = require('../models/Workday')(firmDb)
 const User = require('../models/user')(firmDb)
 
 exports.addWorkday = async (req, res) => {
-	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType } = req.body
+	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 	try {
 		const workday = new Workday({
 			userId: req.user.userId,
@@ -12,6 +12,7 @@ exports.addWorkday = async (req, res) => {
 			additionalWorked,
 			realTimeDayWorked,
 			absenceType,
+			notes,
 		})
 		await workday.save()
 		res.status(201).send('Workday added successfully.')

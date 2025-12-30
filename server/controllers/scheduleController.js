@@ -218,7 +218,7 @@ exports.getScheduleEntries = async (req, res) => {
 exports.upsertScheduleEntry = async (req, res) => {
 	try {
 		const { scheduleId } = req.params
-		const { date, timeFrom, timeTo, employeeId, employeeName } = req.body
+		const { date, timeFrom, timeTo, employeeId, employeeName, notes } = req.body
 
 		if (!date || !timeFrom || !timeTo || !employeeId || !employeeName) {
 			return res.status(400).json({ message: 'Missing required fields' })
@@ -289,7 +289,8 @@ exports.upsertScheduleEntry = async (req, res) => {
 			employeeName: employeeName,
 			timeFrom: timeFrom,
 			timeTo: timeTo,
-			createdBy: userId
+			createdBy: userId,
+			notes: notes || null
 		}
 
 		if (dayIndex === -1) {

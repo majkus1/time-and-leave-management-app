@@ -22,6 +22,9 @@ const workdaySchema = new mongoose.Schema({
 	absenceType: {
 		type: String,
 	},
+	notes: {
+		type: String,
+	},
 })
 
 module.exports = conn => conn.models.Workday || conn.model('Workday', workdaySchema)

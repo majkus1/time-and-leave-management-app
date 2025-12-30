@@ -56,6 +56,7 @@ function Schedule() {
 	const [timeTo, setTimeTo] = useState('16:00')
 	const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
 	const [selectedEmployeeName, setSelectedEmployeeName] = useState('')
+	const [notes, setNotes] = useState('')
 	const calendarRef = useRef(null)
 	const upsertEntryMutation = useUpsertScheduleEntry()
 	const deleteEntryMutation = useDeleteScheduleEntry()
@@ -152,7 +153,7 @@ function Schedule() {
 			return day.entries.map((entry, index) => {
 				const employeeColor = getColorForEmployee(entry.employeeName)
 				return {
-					title: `${entry.employeeName} (${entry.timeFrom} - ${entry.timeTo})`,
+					title: `${entry.employeeName} (${entry.timeFrom} - ${entry.timeTo})${entry.notes ? ` | ${entry.notes}` : ''}`,
 					start: day.date,
 					allDay: true,
 					backgroundColor: employeeColor,
@@ -164,7 +165,8 @@ function Schedule() {
 						employeeName: entry.employeeName,
 						employeeId: entry.employeeId,
 						timeFrom: entry.timeFrom,
-						timeTo: entry.timeTo
+						timeTo: entry.timeTo,
+						notes: entry.notes
 					}
 				}
 			})
@@ -189,21 +191,97 @@ function Schedule() {
 
 	const handleDateClick = async (info) => {
 		// Determine clicked date from event or date click
-		const clickedDate = info.date ? info.dateStr : (info.event ? info.event.startStr : info.dateStr)
+		let clickedDate
+		if (info.date) {
+			// Clicked on empty date
+			clickedDate = info.dateStr
+		} else if (info.event) {
+			// Clicked on existing event
+			if (info.event.startStr) {
+				clickedDate = info.event.startStr
+			} else if (info.event.start) {
+				// Handle both Date object and string
+				const startDate = info.event.start instanceof Date 
+					? info.event.start 
+					: new Date(info.event.start)
+				clickedDate = startDate.toISOString().split('T')[0]
+			} else {
+				clickedDate = info.dateStr
+			}
+		} else {
+			clickedDate = info.dateStr
+		}
+		
 		setSelectedDate(clickedDate)
 		
-		// Find entries for this date
-		const dayEntries = scheduleEntries.find(day => {
-			const dayDate = new Date(day.date)
-			return dayDate.toISOString().split('T')[0] === clickedDate
+		// Helper function to normalize date to YYYY-MM-DD format
+		// Use local timezone since dates are stored as calendar dates (midnight local time)
+		const normalizeDate = (dateValue) => {
+			if (!dateValue) return null
+			
+			// If it's already a string in YYYY-MM-DD format
+			if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+				return dateValue
+			}
+			
+			// If it's a Date object or ISO string
+			let date
+			if (dateValue instanceof Date) {
+				date = dateValue
+			} else if (typeof dateValue === 'string') {
+				// Handle ISO string or date string
+				// If it's just a date string (YYYY-MM-DD), parse it as local date
+				if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+					const [year, month, day] = dateValue.split('-').map(Number)
+					date = new Date(year, month - 1, day)
+				} else {
+					date = new Date(dateValue)
+				}
+			} else {
+				return null
+			}
+			
+			// Check if date is valid
+			if (isNaN(date.getTime())) {
+				return null
+			}
+			
+			// Use local timezone since dates are stored as calendar dates
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		
+		// Normalize clickedDate to YYYY-MM-DD format for comparison
+		let clickedDateNormalized = clickedDate
+		if (clickedDate.includes('T')) {
+			clickedDateNormalized = clickedDate.split('T')[0]
+		} else if (!/^\d{4}-\d{2}-\d{2}$/.test(clickedDate)) {
+			// If it's not in YYYY-MM-DD format, normalize it
+			clickedDateNormalized = normalizeDate(clickedDate)
+		}
+		
+		// Find entries for this date - normalize both dates for comparison
+		// Make sure scheduleEntries is an array
+		const entriesArray = Array.isArray(scheduleEntries) ? scheduleEntries : []
+		
+		const dayEntries = entriesArray.find(day => {
+			if (!day || !day.date) return false
+			
+			const dayDateNormalized = normalizeDate(day.date)
+			if (!dayDateNormalized || !clickedDateNormalized) return false
+			
+			return dayDateNormalized === clickedDateNormalized
 		})
 		
-		const entries = dayEntries ? dayEntries.entries : []
+		const entries = dayEntries && Array.isArray(dayEntries.entries) ? dayEntries.entries : []
 		setSelectedEntries(entries)
 		setSelectedEmployeeId('')
 		setSelectedEmployeeName('')
 		setTimeFrom('08:00')
 		setTimeTo('16:00')
+		setNotes('')
 		setIsModalOpen(true)
 	}
 
@@ -291,7 +369,8 @@ function Schedule() {
 					timeFrom,
 					timeTo,
 					employeeId: selectedEmployeeId,
-					employeeName: selectedEmployeeName
+					employeeName: selectedEmployeeName,
+					notes: notes || null
 				}
 			})
 			
@@ -300,15 +379,44 @@ function Schedule() {
 			setSelectedEmployeeName('')
 			setTimeFrom('08:00')
 			setTimeTo('16:00')
+			setNotes('')
 			
 			// Refetch entries to update the calendar and modal
 			const { data: updatedEntries } = await refetchEntries()
 			
 			// Update selected entries in modal after refetch
-			if (updatedEntries) {
+			if (updatedEntries && selectedDate) {
+				// Normalize selectedDate to YYYY-MM-DD format
+				const selectedDateNormalized = selectedDate.includes('T') 
+					? selectedDate.split('T')[0] 
+					: selectedDate
+				
+				// Helper function to normalize date to YYYY-MM-DD format
+				const normalizeDate = (dateValue) => {
+					if (!dateValue) return null
+					
+					// If it's already a string in YYYY-MM-DD format
+					if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+						return dateValue
+					}
+					
+					// If it's a Date object or ISO string
+					const date = dateValue instanceof Date 
+						? dateValue 
+						: new Date(dateValue)
+					
+					// Use UTC to avoid timezone issues
+					const year = date.getUTCFullYear()
+					const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+					const day = String(date.getUTCDate()).padStart(2, '0')
+					return `${year}-${month}-${day}`
+				}
+				
 				const dayEntries = updatedEntries.find(day => {
-					const dayDate = new Date(day.date)
-					return dayDate.toISOString().split('T')[0] === selectedDate
+					if (!day || !day.date) return false
+					
+					const dayDateNormalized = normalizeDate(day.date)
+					return dayDateNormalized === selectedDateNormalized
 				})
 				setSelectedEntries(dayEntries ? dayEntries.entries : [])
 			}
@@ -337,9 +445,55 @@ function Schedule() {
 			if (selectedDate) {
 				const { data: updatedEntries } = await refetchEntries()
 				if (updatedEntries) {
+					// Normalize selectedDate to YYYY-MM-DD format
+					const selectedDateNormalized = selectedDate.includes('T') 
+						? selectedDate.split('T')[0] 
+						: selectedDate
+					
+					// Helper function to normalize date to YYYY-MM-DD format
+					// Use local timezone since dates are stored as calendar dates (midnight local time)
+					const normalizeDate = (dateValue) => {
+						if (!dateValue) return null
+						
+						// If it's already a string in YYYY-MM-DD format
+						if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+							return dateValue
+						}
+						
+						// If it's a Date object or ISO string
+						let date
+						if (dateValue instanceof Date) {
+							date = dateValue
+						} else if (typeof dateValue === 'string') {
+							// Handle ISO string or date string
+							// If it's just a date string (YYYY-MM-DD), parse it as local date
+							if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+								const [year, month, day] = dateValue.split('-').map(Number)
+								date = new Date(year, month - 1, day)
+							} else {
+								date = new Date(dateValue)
+							}
+						} else {
+							return null
+						}
+						
+						// Check if date is valid
+						if (isNaN(date.getTime())) {
+							return null
+						}
+						
+						// Use local timezone since dates are stored as calendar dates
+						const year = date.getFullYear()
+						const month = String(date.getMonth() + 1).padStart(2, '0')
+						const day = String(date.getDate()).padStart(2, '0')
+						return `${year}-${month}-${day}`
+					}
+					
 					const dayEntries = updatedEntries.find(day => {
-						const dayDate = new Date(day.date)
-						return dayDate.toISOString().split('T')[0] === selectedDate
+						if (!day || !day.date) return false
+						
+						const dayDateNormalized = normalizeDate(day.date)
+						return dayDateNormalized === selectedDateNormalized
 					})
 					setSelectedEntries(dayEntries ? dayEntries.entries : [])
 				} else {
@@ -518,6 +672,7 @@ function Schedule() {
 					setIsModalOpen(false)
 					setSelectedDate(null)
 					setSelectedEntries([])
+					setNotes('')
 				}}
 				style={{
 					overlay: {
@@ -542,6 +697,11 @@ function Schedule() {
 					}
 				}}
 				contentLabel={t('schedule.addEntry') || 'Dodaj wpis do grafiku'}>
+				{selectedDate && (
+					<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
+						{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
+					</h2>
+				)}
 				{selectedEntries.length > 0 ? (
 					<div style={{ marginBottom: '30px' }}>
 						<h3 style={{
@@ -582,6 +742,16 @@ function Schedule() {
 											}}>
 												{entry.timeFrom} - {entry.timeTo}
 											</div>
+											{entry.notes && (
+												<div style={{
+													fontSize: '14px',
+													color: '#7f8c8d',
+													marginTop: '5px',
+													fontStyle: 'italic'
+												}}>
+													{t('schedule.notes') || 'Uwagi'}: {entry.notes}
+												</div>
+											)}
 										</div>
 										{canEdit ? (
 											<button
@@ -729,6 +899,31 @@ function Schedule() {
 						</div>
 					</div>
 
+					<div style={{ marginBottom: '20px' }}>
+						<label style={{
+							display: 'block',
+							marginBottom: '8px',
+							fontWeight: '600',
+							color: '#2c3e50'
+						}}>
+							{t('schedule.notes') || 'Uwagi'}
+						</label>
+						<textarea
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							placeholder={t('schedule.notesPlaceholder') || 'Dodaj uwagi...'}
+							rows="3"
+							style={{
+								width: '100%',
+								padding: '12px',
+								border: '1px solid #bdc3c7',
+								borderRadius: '6px',
+								fontSize: '16px',
+								resize: 'vertical'
+							}}
+						/>
+					</div>
+
 					<div style={{
 						display: 'flex',
 						justifyContent: 'flex-end',
@@ -737,11 +932,12 @@ function Schedule() {
 					}}>
 						<button
 							type="button"
-							onClick={() => {
-								setIsModalOpen(false)
-								setSelectedDate(null)
-								setSelectedEntries([])
-							}}
+						onClick={() => {
+							setIsModalOpen(false)
+							setSelectedDate(null)
+							setSelectedEntries([])
+							setNotes('')
+						}}
 							style={{
 								padding: '12px 24px',
 								backgroundColor: '#95a5a6',

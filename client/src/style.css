@@ -997,7 +997,7 @@ hr {
 }
 
 .ReactModal__Content {
-	display: flex;
+	/* display: flex; */
 	justify-content: center;
 	flex-direction: column;
 	max-width: 500px;
