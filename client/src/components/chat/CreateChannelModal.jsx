@@ -96,6 +96,13 @@ function CreateChannelModal({ isOpen, onClose, onSuccess }) {
 						<select
 							value={channelType}
 							onChange={(e) => setChannelType(e.target.value)}
+							disabled
+							style={{
+								appearance: 'none',
+								WebkitAppearance: 'none',
+								MozAppearance: 'none',
+								backgroundImage: 'none'
+							}}
 						>
 							<option value="general">{t('chat.channelTypeGeneral')}</option>
 							<option value="private">{t('chat.channelTypePrivate')}</option>
@@ -126,11 +133,6 @@ function CreateChannelModal({ isOpen, onClose, onSuccess }) {
 											</label>
 										))}
 								</div>
-							)}
-							{channelType === 'general' && (
-								<p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-									{t('chat.generalChannelMembersHint')}
-								</p>
 							)}
 						</div>
 					)}

@@ -166,7 +166,10 @@ function BoardList() {
 										e.target.style.color = '#3498db'
 									}}
 									title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}>
-									ℹ️
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+										<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+									</svg>
 								</button>
 								{!board.isTeamBoard && board.type === 'custom' && (isAdmin || (board.createdBy && board.createdBy._id === userId)) && (
 									<>

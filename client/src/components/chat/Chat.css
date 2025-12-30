@@ -117,7 +117,7 @@
 .channel-description {
 	margin: 0;
 	color: #7f8c8d;
-	font-size: 14px;
+	font-size: 16px;
 }
 
 .message-list {
@@ -217,7 +217,7 @@
 
 .message-author {
 	font-weight: 600;
-	font-size: 14px;
+	font-size: 16px;
 	color: #2c3e50;
 }
 
@@ -227,7 +227,7 @@
 }
 
 .message-text {
-	font-size: 14px;
+	font-size: 16px;
 	line-height: 1.5;
 	color: #2c3e50;
 	word-wrap: break-word;
@@ -456,7 +456,7 @@
 	margin-bottom: 8px;
 	font-weight: 600;
 	color: #2c3e50;
-	font-size: 14px;
+	font-size: 16px;
 }
 
 .form-group input,
@@ -466,7 +466,7 @@
 	padding: 10px;
 	border: 1px solid #e0e0e0;
 	border-radius: 6px;
-	font-size: 14px;
+	font-size: 16px;
 	font-family: inherit;
 }
 
@@ -505,7 +505,7 @@
 }
 
 .member-checkbox span {
-	font-size: 14px;
+	font-size: 16px;
 	color: #2c3e50;
 }
 
@@ -522,7 +522,7 @@
 	border: none;
 	border-radius: 6px;
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 16px;
 	font-weight: 600;
 	transition: background-color 0.2s;
 }
