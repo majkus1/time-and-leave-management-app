@@ -96,3 +96,52 @@ export const useScheduleUsers = (scheduleId, enabled = true) => {
 	})
 }
 
+// Create schedule
+export const useCreateSchedule = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (data) => {
+			const response = await axios.post(`${API_URL}/api/schedules`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['schedules'] })
+		}
+	})
+}
+
+// Update schedule
+export const useUpdateSchedule = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ scheduleId, data }) => {
+			const response = await axios.put(`${API_URL}/api/schedules/${scheduleId}`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedules'] })
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+		}
+	})
+}
+
+// Delete schedule
+export const useDeleteSchedule = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (scheduleId) => {
+			const response = await axios.delete(`${API_URL}/api/schedules/${scheduleId}`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['schedules'] })
+		}
+	})
+}
+

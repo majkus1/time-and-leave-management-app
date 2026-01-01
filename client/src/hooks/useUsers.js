@@ -79,6 +79,10 @@ export const useUpdateUserRoles = () => {
 			// Invaliduj tablice zadań i grafiki - mogą się zmienić po zmianie działu użytkownika
 			queryClient.invalidateQueries({ queryKey: ['boards'] })
 			queryClient.invalidateQueries({ queryKey: ['schedules'] })
+			// Invaliduj listy podwładnych dla wszystkich przełożonych - mogą się zmienić po zmianie działu
+			queryClient.invalidateQueries({ queryKey: ['supervisorSubordinates'] })
+			// Invaliduj konfiguracje przełożonych - mogą się zmienić po zmianie działu
+			queryClient.invalidateQueries({ queryKey: ['supervisorConfig'] })
 		},
 	})
 }

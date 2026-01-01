@@ -84,23 +84,20 @@ exports.getUserLeaveRequests = async (req, res) => {
 	// Admin lub HR – widzi wszystko
 	if (
 		requestingUser.roles.includes('Admin') ||
-		requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)')
+		requestingUser.roles.includes('HR')
 	) {
 		// widzi każdego
 	} else if (
-		// Przełożony działu lub ewidencja widzi tylko w swoim dziale
-		requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') ||
-			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)')
+		// Przełożony widzi w zależności od konfiguracji
+		requestingUser.roles.includes('Przełożony (Supervisor)')
 	) {
 		const userToView = await User.findById(userId)
 		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
 		
-		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
-		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
-		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
+		const { canSupervisorViewTimesheets } = require('../services/roleService')
+		const canView = await canSupervisorViewTimesheets(requestingUser, userToView)
 		
-		if (!hasCommonDepartment) return res.status(403).send('Brak uprawnień')
+		if (!canView) return res.status(403).send('Brak uprawnień')
 		// OK
 	} else if (
 		// Pracownik widzi tylko swoje
@@ -198,20 +195,13 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		
 		const isAdmin = requestingUser.roles.includes('Admin')
-		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
-		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-		const hasCommonDepartment = requestingDepts.some(dept => userDepts.includes(dept))
+		const isHR = requestingUser.roles.includes('HR')
 		
-		const isSupervisorOfDepartment =
-			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			hasCommonDepartment
+		// Sprawdź uprawnienia przełożonego
+		const { canSupervisorApproveLeaves } = require('../services/roleService')
+		const canApprove = await canSupervisorApproveLeaves(requestingUser, user)
 
-		const isHR = requestingUser.roles.includes(
-			'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
-		)
-
-		if (!isAdmin && !isHR && !isSupervisorOfDepartment) {
+		if (!isAdmin && !isHR && !canApprove) {
 			return res.status(403).send('Access denied')
 		}
 
@@ -306,28 +296,26 @@ exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 		// Sprawdź uprawnienia - użytkownik może widzieć swoje wnioski lub admin/HR/kierownik może widzieć wnioski innych
 		const isOwnRequest = requestingUser._id.toString() === userId
 		const isAdmin = requestingUser.roles.includes('Admin')
-		const isHR = requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)')
+		const isHR = requestingUser.roles.includes('HR')
 		
-		// Sprawdź czy przełożony działu ma dostęp do użytkownika z tego samego działu
+		// Sprawdź czy przełożony ma dostęp do użytkownika
 		const userToView = await User.findById(userId)
 		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
 		
 		// Sprawdź czy użytkownicy są w tym samym zespole
 		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
 		
-		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
-		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
-		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
-		
-		const isSupervisorOfDepartment =
-			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)') &&
-			hasCommonDepartment
+		// Sprawdź uprawnienia przełożonego używając nowych helperów
+		let canSupervisorView = false
+		if (requestingUser.roles.includes('Przełożony (Supervisor)')) {
+			const { canSupervisorViewTimesheets } = require('../services/roleService')
+			canSupervisorView = await canSupervisorViewTimesheets(requestingUser, userToView)
+		}
 
-		// Każdy użytkownik w zespole może widzieć zaakceptowane wnioski innych użytkowników z tego samego zespołu
+		// HIERARCHIA RÓL: Admin > HR > Przełożony
 		// Super admin widzi wszystkich, admin/HR widzi wszystkich ze swojego zespołu
-		if (!isOwnRequest && !isSuperAdmin && !isSameTeam && !isHR && !isSupervisorOfDepartment) {
+		// Przełożony widzi zgodnie z konfiguracją (sprawdzane w canSupervisorViewTimesheets)
+		if (!isOwnRequest && !isSuperAdmin && !isSameTeam && !isAdmin && !isHR && !canSupervisorView) {
 			return res.status(403).send('Brak uprawnień')
 		}
 
@@ -387,12 +375,11 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 				.populate('updatedBy', 'firstName lastName')
 				.sort({ startDate: 1 })
 		} else {
-			// Każda rola w zespole może widzieć zaakceptowane wnioski ze swojego zespołu
-			// Najpierw pobierz wszystkich użytkowników z tego samego zespołu
+			// Dla wszystkich użytkowników z zespołu - pokaż wszystkich użytkowników z zespołu
+			// (dla /all-leave-plans wszyscy powinni widzieć wszystkich z zespołu)
 			const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
 			const teamUserIds = teamUsers.map(user => user._id)
 
-			// Pobierz zaakceptowane wnioski tylko dla użytkowników z tego samego zespołu
 			acceptedLeaveRequests = await LeaveRequest.find({ 
 				status: 'status.accepted',
 				userId: { $in: teamUserIds }

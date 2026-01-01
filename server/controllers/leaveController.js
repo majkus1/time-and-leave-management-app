@@ -35,7 +35,24 @@ exports.submitLeaveRequest = async (req, res) => {
 		}
 		// Usuń duplikaty i samego użytkownika
 		const uniqueSupervisors = Array.from(new Map(allSupervisors.map(sup => [sup._id.toString(), sup])).values())
-		const supervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
+		const potentialSupervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
+		
+		// Sprawdź uprawnienia każdego przełożonego - czy może zatwierdzać urlopy dla tego pracownika
+		// HIERARCHIA RÓL: Admin > HR > Przełożony
+		const { canSupervisorApproveLeaves } = require('../services/roleService')
+		const supervisors = []
+		for (const supervisor of potentialSupervisors) {
+			// Pobierz pełny obiekt użytkownika dla helpera
+			const supervisorObj = await User.findById(supervisor._id)
+			if (!supervisorObj) continue
+			
+			// Admin i HR zawsze otrzymują powiadomienia (sprawdzane w canSupervisorApproveLeaves)
+			// Przełożony tylko jeśli ma uprawnienia zgodnie z konfiguracją
+			const canApprove = await canSupervisorApproveLeaves(supervisorObj, user)
+			if (canApprove) {
+				supervisors.push(supervisor)
+			}
+		}
 
 		const typeText = t(type)
 		const content = `
@@ -84,7 +101,7 @@ exports.submitLeaveRequest = async (req, res) => {
 		
 		const hrUsers = await User.find({
 			teamId,
-			roles: { $in: ['Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'] },
+			roles: { $in: ['HR'] },
 		})
 
 		

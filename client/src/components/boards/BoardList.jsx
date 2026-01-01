@@ -21,6 +21,15 @@ function BoardList() {
 	const [editingBoard, setEditingBoard] = useState(null)
 	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, boardId: null })
 	const isAdmin = role && role.includes('Admin')
+	
+	// Helper function to check if user is the creator of the board
+	const isBoardCreator = (board) => {
+		if (!board.createdBy) return false
+		// Handle both cases: createdBy as object or string
+		const createdById = board.createdBy._id ? board.createdBy._id.toString() : board.createdBy.toString()
+		return createdById === userId
+	}
+	
 	// Hook dla użytkowników tablicy w modalu
 	const { data: boardUsers = [], isLoading: loadingBoardUsers } = useBoardUsers(
 		usersInfoModal.boardId,
@@ -171,7 +180,7 @@ function BoardList() {
 										<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
 									</svg>
 								</button>
-								{!board.isTeamBoard && board.type === 'custom' && (isAdmin || (board.createdBy && board.createdBy._id === userId)) && (
+								{!board.isTeamBoard && board.type === 'custom' && (isAdmin || isBoardCreator(board)) && (
 									<>
 										<button
 											onClick={(e) => {

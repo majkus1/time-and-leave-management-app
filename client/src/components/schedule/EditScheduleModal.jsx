@@ -3,32 +3,30 @@ import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useUsers } from '../../hooks/useUsers'
-import { useUpdateBoard } from '../../hooks/useBoards'
+import { useUpdateSchedule } from '../../hooks/useSchedule'
 import { useAlert } from '../../context/AlertContext'
 
 Modal.setAppElement('#root')
 
-function EditBoardModal({ board, onClose, onSuccess }) {
+function EditScheduleModal({ schedule, onClose, onSuccess }) {
 	const { t } = useTranslation()
 	const { teamId } = useAuth()
 	const { showAlert } = useAlert()
 	const { data: users = [] } = useUsers()
-	const updateBoardMutation = useUpdateBoard()
+	const updateScheduleMutation = useUpdateSchedule()
 	
 	const [name, setName] = useState('')
-	const [description, setDescription] = useState('')
 	const [selectedMembers, setSelectedMembers] = useState([])
 
 	// Filter users to only show users from the same team
 	const teamUsers = users.filter(user => user.teamId === teamId)
 
 	useEffect(() => {
-		if (board) {
-			setName(board.name || '')
-			setDescription(board.description || '')
-			setSelectedMembers(board.members ? board.members.map(m => m._id || m) : [])
+		if (schedule) {
+			setName(schedule.name || '')
+			setSelectedMembers(schedule.members ? schedule.members.map(m => m._id || m) : [])
 		}
-	}, [board])
+	}, [schedule])
 
 	const handleMemberToggle = (userId) => {
 		setSelectedMembers(prev => 
@@ -42,27 +40,26 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 		e.preventDefault()
 
 		if (!name.trim()) {
-			await showAlert(t('boards.nameRequired') || 'Nazwa tablicy jest wymagana')
+			await showAlert(t('schedule.nameRequired') || 'Nazwa grafiku jest wymagana')
 			return
 		}
 
 		try {
-			await updateBoardMutation.mutateAsync({
-				boardId: board._id,
+			await updateScheduleMutation.mutateAsync({
+				scheduleId: schedule._id,
 				data: {
 					name: name.trim(),
-					description: description.trim(),
 					memberIds: selectedMembers
 				}
 			})
-			await showAlert(t('boards.updateSuccess') || 'Tablica została zaktualizowana pomyślnie')
+			await showAlert(t('schedule.updateSuccess') || 'Grafik został zaktualizowany pomyślnie')
 			onSuccess()
 		} catch (error) {
-			await showAlert(error.response?.data?.message || t('boards.updateError') || 'Błąd podczas aktualizacji tablicy')
+			await showAlert(error.response?.data?.message || t('schedule.updateError') || 'Błąd podczas aktualizacji grafiku')
 		}
 	}
 
-	if (!board) return null
+	if (!schedule) return null
 
 	return (
 		<Modal
@@ -87,7 +84,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 					backgroundColor: 'white',
 				},
 			}}
-			contentLabel={t('boards.editBoard') || 'Edytuj tablicę'}>
+			contentLabel={t('schedule.editSchedule') || 'Edytuj grafik'}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
 				<h2 style={{ 
 					margin: 0,
@@ -95,7 +92,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 					fontSize: '24px',
 					fontWeight: '600'
 				}}>
-					{t('boards.editBoard') || 'Edytuj tablicę'}
+					{t('schedule.editSchedule') || 'Edytuj grafik'}
 				</h2>
 				<button
 					onClick={onClose}
@@ -127,13 +124,13 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 						fontWeight: '600',
 						color: '#2c3e50'
 					}}>
-						{t('boards.boardName') || 'Nazwa tablicy'} *
+						{t('schedule.scheduleName') || 'Nazwa grafiku'} *
 					</label>
 					<input
 						type="text"
 						value={name}
 						onChange={(e) => setName(e.target.value)}
-						placeholder={t('boards.boardNamePlaceholder') || 'Wprowadź nazwę tablicy'}
+						placeholder={t('schedule.scheduleNamePlaceholder') || 'Wprowadź nazwę grafiku'}
 						style={{
 							width: '100%',
 							padding: '12px',
@@ -152,32 +149,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 						fontWeight: '600',
 						color: '#2c3e50'
 					}}>
-						{t('boards.description') || 'Opis'}
-					</label>
-					<textarea
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						placeholder={t('boards.descriptionPlaceholder') || 'Wprowadź opis tablicy (opcjonalnie)'}
-						style={{
-							width: '100%',
-							padding: '12px',
-							border: '1px solid #bdc3c7',
-							borderRadius: '6px',
-							fontSize: '16px',
-							minHeight: '100px',
-							resize: 'vertical'
-						}}
-					/>
-				</div>
-
-				<div style={{ marginBottom: '20px' }}>
-					<label style={{ 
-						display: 'block',
-						marginBottom: '8px',
-						fontWeight: '600',
-						color: '#2c3e50'
-					}}>
-						{t('boards.selectMembers') || 'Wybierz członków'}
+						{t('schedule.selectMembers') || 'Wybierz członków'}
 					</label>
 					<div style={{
 						maxHeight: '200px',
@@ -205,7 +177,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 									onChange={() => handleMemberToggle(user._id)}
 									style={{ marginRight: '10px', transform: 'scale(1.2)' }}
 								/>
-								<span>{user.username}</span>
+								<span>{user.firstName} {user.lastName}{user.position ? ` - ${user.position}` : ''}</span>
 							</label>
 						))}
 					</div>
@@ -225,23 +197,23 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 							fontSize: '16px',
 							fontWeight: '500'
 						}}>
-						{t('boards.cancel') || 'Anuluj'}
+						{t('schedule.cancel') || 'Anuluj'}
 					</button>
 					<button
 						type="submit"
-						disabled={updateBoardMutation.isPending}
+						disabled={updateScheduleMutation.isPending}
 						style={{
 							padding: '10px 20px',
 							border: 'none',
 							borderRadius: '6px',
 							backgroundColor: '#3498db',
 							color: 'white',
-							cursor: updateBoardMutation.isPending ? 'not-allowed' : 'pointer',
+							cursor: updateScheduleMutation.isPending ? 'not-allowed' : 'pointer',
 							fontSize: '16px',
 							fontWeight: '500',
-							opacity: updateBoardMutation.isPending ? 0.6 : 1
+							opacity: updateScheduleMutation.isPending ? 0.6 : 1
 						}}>
-						{updateBoardMutation.isPending ? (t('boards.updating') || 'Aktualizowanie...') : (t('boards.save') || 'Zapisz')}
+						{updateScheduleMutation.isPending ? (t('schedule.updating') || 'Aktualizowanie...') : (t('schedule.save') || 'Zapisz')}
 					</button>
 				</div>
 			</form>
@@ -249,13 +221,5 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 	)
 }
 
-export default EditBoardModal
-
-
-
-
-
-
-
-
+export default EditScheduleModal
 

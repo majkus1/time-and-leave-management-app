@@ -27,6 +27,7 @@ import BoardList from './components/boards/BoardList'
 import Board from './components/boards/Board'
 import ScheduleList from './components/schedule/ScheduleList'
 import Schedule from './components/schedule/Schedule'
+import { useSupervisorConfig } from './hooks/useSupervisor'
 // import ProductPromotion from './components/ProductPromotion'
 // import ENProductPromotion from './components/ENProductPromotion.jsx'
 // import ENBlogOne from './components/ENBlogOne.jsx'
@@ -38,7 +39,7 @@ import Schedule from './components/schedule/Schedule'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
-import { isAdmin, isHR, isDepartmentSupervisor, isDepartmentViewer, isWorker } from './utils/roleHelpers'
+import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
 import '../src/style.css'
@@ -64,7 +65,23 @@ axios.defaults.withCredentials = true
 
 function AppContent() {
 	const location = useLocation()
-	const { loggedIn, role, logout, isCheckingAuth } = useAuth()
+	const { loggedIn, role, logout, isCheckingAuth, userId } = useAuth()
+	
+	// HIERARCHIA RÓL: Admin > HR > Przełożony
+	// Sprawdź konfigurację przełożonego jeśli jest przełożonym (ale nie Admin ani HR)
+	const isSupervisorRole = isSupervisor(role)
+	const isAdminRole = isAdmin(role)
+	const isHRRole = isHR(role)
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	
+	// Sprawdź uprawnienia zgodnie z hierarchią ról
+	// Admin i HR mają zawsze pełny dostęp, ignorujemy SupervisorConfig
+	const canApproveLeaves = isAdminRole || isHRRole 
+		? true // Admin i HR mają zawsze dostęp
+		: (isSupervisorRole && (supervisorConfig?.permissions?.canApproveLeaves !== false)) // Przełożony - sprawdź konfigurację
+	const canViewTimesheets = isAdminRole || isHRRole 
+		? true // Admin i HR mają zawsze dostęp
+		: (isSupervisorRole && (supervisorConfig?.permissions?.canViewTimesheets !== false)) // Przełożony - sprawdź konfigurację
 
 	useEffect(() => {
 		const interceptor = axios.interceptors.response.use(
@@ -147,54 +164,54 @@ function AppContent() {
 					<Route path="/chat" element={<Chat />} />
 					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />
-						<Route
-							path="/calendars-list"
-							element={
-								isAdmin(role) || isHR(role) || isDepartmentViewer(role) ? (
-									<AdminUserList />
-								) : (
-									<Navigate to="/" />
-								)
-							}
-						/>
-						<Route
-							path="/leave-list"
-							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) ? (
-									<VacationListUser />
-								) : (
-									<Navigate to="/" />
-								)
-							}
-						/>
-						<Route
-							path="/leave-requests/:userId"
-							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) ? (
-									<AdminLeaveRequests />
-								) : (
-									<Navigate to="/" />
-								)
-							}
-						/>
+					<Route
+						path="/calendars-list"
+						element={
+							isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets) ? (
+								<AdminUserList />
+							) : (
+								<Navigate to="/" />
+							)
+						}
+					/>
+					<Route
+						path="/leave-list"
+						element={
+							isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves) ? (
+								<VacationListUser />
+							) : (
+								<Navigate to="/" />
+							)
+						}
+					/>
+					<Route
+						path="/leave-requests/:userId"
+						element={
+							isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves) ? (
+								<AdminLeaveRequests />
+							) : (
+								<Navigate to="/" />
+							)
+						}
+					/>
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/logs" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
-						<Route
-							path="/work-calendars/:userId"
-							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role) ? (
-									<UserCalendar />
-								) : (
-									<Navigate to="/" />
-								)
-							}
-						/>
+					<Route
+						path="/work-calendars/:userId"
+						element={
+							isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets) ? (
+								<UserCalendar />
+							) : (
+								<Navigate to="/" />
+							)
+						}
+					/>
 						<Route path="/leave-planner" element={<LeavePlanner />} />
 						<Route
 							path="/leave-planning-list"
 							element={
-								isAdmin(role) || isHR(role) || isDepartmentSupervisor(role) || isDepartmentViewer(role) ? (
+								isAdmin(role) || isHR(role) || isSupervisor(role) ? (
 									<EmployeeListPlanner />
 								) : (
 									<Navigate to="/" />

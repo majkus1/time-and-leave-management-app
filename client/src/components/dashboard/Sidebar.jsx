@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { isAdmin, isHR, isDepartmentSupervisor, isDepartmentViewer, isWorker } from '../../utils/roleHelpers'
+import { isAdmin, isHR, isSupervisor, isWorker } from '../../utils/roleHelpers'
 import { useUnreadCount } from '../../hooks/useChat'
+import { useSupervisorConfig } from '../../hooks/useSupervisor'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -14,8 +15,27 @@ function Sidebar() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
-	const { role, logout, username, loggedIn } = useAuth()
+	const { role, logout, username, loggedIn, userId } = useAuth()
 	const { data: unreadCount = 0 } = useUnreadCount({ enabled: !!loggedIn })
+	
+	// HIERARCHIA RÓL: Admin > HR > Przełożony
+	// Sprawdź konfigurację przełożonego jeśli jest przełożonym (ale nie Admin ani HR)
+	const isSupervisorRole = isSupervisor(role)
+	const isAdminRole = isAdmin(role)
+	const isHRRole = isHR(role)
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	
+	// Sprawdź uprawnienia zgodnie z hierarchią ról
+	// Admin i HR mają zawsze pełny dostęp, ignorujemy SupervisorConfig
+	const canApproveLeaves = isAdminRole || isHRRole 
+		? true // Admin i HR mają zawsze dostęp
+		: (isSupervisorRole && (supervisorConfig?.permissions?.canApproveLeaves !== false)) // Przełożony - sprawdź konfigurację
+	const canViewTimesheets = isAdminRole || isHRRole 
+		? true // Admin i HR mają zawsze dostęp
+		: (isSupervisorRole && (supervisorConfig?.permissions?.canViewTimesheets !== false)) // Przełożony - sprawdź konfigurację
+	const canManageSchedule = isAdminRole || isHRRole 
+		? true // Admin i HR mają zawsze dostęp
+		: (isSupervisorRole && (supervisorConfig?.permissions?.canManageSchedule !== false)) // Przełożony - sprawdź konfigurację
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -334,10 +354,10 @@ function Sidebar() {
 							</NavLink>
 
 					{/* Admin Links - calendars-list i leave-list w jednym div */}
-					{((isAdmin(role) || isHR(role) || isDepartmentViewer(role) || isDepartmentSupervisor(role))) && (
+					{((isAdmin(role) || isHR(role) || (isSupervisor(role) && (canApproveLeaves || canViewTimesheets)))) && (
 						<div className="admin-section">
-							{/* calendars-list - dla Admin, HR, DepartmentViewer */}
-							{(isAdmin(role) || isHR(role) || isDepartmentViewer(role)) && (
+							{/* calendars-list - dla Admin, HR, Supervisor z uprawnieniami do ewidencji */}
+							{(isAdmin(role) || isHR(role) || (isSupervisor(role) && canViewTimesheets)) && (
 								<NavLink
 									to="/calendars-list"
 									className={({ isActive }) => `nav-link ${isListOrCalendarActive || isActive ? 'active' : ''}`}>
@@ -348,8 +368,8 @@ function Sidebar() {
 								</NavLink>
 							)}
 
-							{/* leave-list - dla Admin, HR, DepartmentSupervisor */}
-							{(isAdmin(role) || isHR(role) || isDepartmentSupervisor(role)) && (
+							{/* leave-list - dla Admin, HR, Supervisor z uprawnieniami do zatwierdzania urlopów */}
+							{(isAdmin(role) || isHR(role) || (isSupervisor(role) && canApproveLeaves)) && (
 								<NavLink
 									to="/leave-list"
 									className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}>

@@ -16,33 +16,22 @@ const { appUrl } = require('../config')
 // Funkcja walidująca role - sprawdza wzajemnie wykluczające się kombinacje ról
 // Przyjmuje opcjonalną funkcję tłumaczeń t() dla komunikatów błędów
 const validateMutuallyExclusiveRoles = (roles, t = null) => {
-	const approveLeavesRole = 'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)'
-	const viewTimesheetsRole = 'Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)'
-	const hrRole = 'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
+	const supervisorRole = 'Przełożony (Supervisor)'
+	const hrRole = 'HR'
 	
-	const hasApproveLeaves = roles.includes(approveLeavesRole)
-	const hasViewTimesheets = roles.includes(viewTimesheetsRole)
+	const hasSupervisor = roles.includes(supervisorRole)
 	const hasHR = roles.includes(hrRole)
 	
-	// Nie można mieć HR z żadną z pozostałych dwóch ról
-	if (hasHR && (hasApproveLeaves || hasViewTimesheets)) {
-		const message = t ? t('newuser.errorRolesConflict') : 'Nie można mieć jednocześnie roli "Może widzieć wszystkie wnioski i ewidencje (HR)" razem z rolą "Może zatwierdzać urlopy swojego działu" lub "Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu".'
-		return {
-			valid: false,
-			message,
-			code: 'ROLES_CONFLICT_HR'
-		}
-	}
-	
-	// Nie można mieć wszystkich 3 jednocześnie (dodatkowa kontrola)
-	if (hasApproveLeaves && hasViewTimesheets && hasHR) {
-		const message = t ? t('newuser.errorAllRolesConflict') : 'Nie można mieć jednocześnie wszystkich trzech ról: "Może zatwierdzać urlopy swojego działu", "Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu" oraz "Może widzieć wszystkie wnioski i ewidencje (HR)".'
-		return {
-			valid: false,
-			message,
-			code: 'ROLES_CONFLICT_ALL'
-		}
-	}
+	// Nie można mieć HR z rolą Przełożony (opcjonalnie - można to zmienić jeśli potrzebne)
+	// Na razie pozwalamy na obie role jednocześnie, ale można to zmienić
+	// if (hasHR && hasSupervisor) {
+	// 	const message = t ? t('newuser.errorRolesConflict') : 'Nie można mieć jednocześnie roli HR i Przełożony.'
+	// 	return {
+	// 		valid: false,
+	// 		message,
+	// 		code: 'ROLES_CONFLICT_HR_SUPERVISOR'
+	// 	}
+	// }
 	
 	return { valid: true }
 }
@@ -442,41 +431,8 @@ exports.getAllVisibleUsers = async (req, res) => {
         // Zwykły użytkownik widzi tylko użytkowników ze swojego zespołu
         const teamFilter = { teamId: currentUser.teamId };
         
-        // Sprawdź czy to przełożony działu - powinien widzieć tylko użytkowników ze swojego działu
-        const isDepartmentSupervisor = currentUser.roles && currentUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)');
-        
-        // Sprawdź czy to przeglądający ewidencję działu - powinien widzieć tylko użytkowników ze swojego działu
-		const isDepartmentViewer = currentUser.roles && currentUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)');
-        
-        // Jeśli to przełożony działu lub przeglądający ewidencję działu, filtruj po działach
-        if (isDepartmentSupervisor || isDepartmentViewer) {
-            const requestingDepts = Array.isArray(currentUser.department) ? currentUser.department : (currentUser.department ? [currentUser.department] : []);
-            
-            if (requestingDepts.length > 0) {
-                // Pobierz wszystkich użytkowników ze swojego zespołu
-                const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId').lean();
-                
-                // Filtruj użytkowników, którzy mają wspólny dział
-                const filteredUsers = allTeamUsers.filter(user => {
-                    const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
-                    
-                    // Jeśli użytkownik nie ma działu, nie pokazuj go (lub zmień na return true jeśli chcesz pokazać)
-                    if (userDepts.length === 0) {
-                        return false; // Nie pokazuj użytkowników bez działu
-                    }
-                    
-                    // Sprawdź czy użytkownik ma przynajmniej jeden dział wspólny
-                    return userDepts.some(dept => requestingDepts.includes(dept));
-                });
-                
-                return res.json(filteredUsers);
-            } else {
-                // Jeśli użytkownik nie ma przypisanego działu, nie pokazuj nikogo
-                return res.json([]);
-            }
-        }
-        
-        // Jeśli to admin, dodaj informację o haśle
+        // HIERARCHIA RÓL: Admin > HR > Przełożony > Pracownik
+        // Sprawdź najpierw Admin
         const isAdmin = currentUser.roles && currentUser.roles.includes('Admin');
         if (isAdmin) {
             const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean();
@@ -485,6 +441,64 @@ exports.getAllVisibleUsers = async (req, res) => {
                 hasPassword: !!user.password
             }));
             return res.json(usersWithPasswordInfo);
+        }
+        
+        // Potem sprawdź HR
+        const isHR = currentUser.roles && currentUser.roles.includes('HR');
+        if (isHR) {
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean();
+            const usersWithPasswordInfo = users.map(user => ({
+                ...user,
+                hasPassword: !!user.password
+            }));
+            return res.json(usersWithPasswordInfo);
+        }
+        
+        // Na końcu sprawdź Przełożony - tylko jeśli nie ma Admin ani HR
+        const isSupervisor = currentUser.roles && currentUser.roles.includes('Przełożony (Supervisor)');
+        if (isSupervisor) {
+            const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
+            const config = await SupervisorConfig.findOne({ supervisorId: currentUser._id });
+            
+            // Pobierz wszystkich użytkowników ze swojego zespołu
+            const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId').lean();
+            
+            // Jeśli nie ma konfiguracji, domyślnie pokazuj użytkowników z działu
+            if (!config) {
+                // Brak konfiguracji - pokaż użytkowników z działu
+                const supervisorDepts = Array.isArray(currentUser.department) ? currentUser.department : (currentUser.department ? [currentUser.department] : []);
+                if (supervisorDepts.length > 0) {
+                    const filteredUsers = allTeamUsers.filter(user => {
+                        const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
+                        return userDepts.some(dept => supervisorDepts.includes(dept));
+                    });
+                    return res.json(filteredUsers);
+                } else {
+                    return res.json([]);
+                }
+            }
+            
+            // Jeśli nie ma uprawnień do widzenia ewidencji, nie pokazuj nikogo
+            if (!config.permissions.canViewTimesheets) {
+                return res.json([]);
+            }
+            
+            const { canSupervisorViewTimesheets } = require('../services/roleService');
+            
+            // Filtruj użytkowników na podstawie konfiguracji przełożonego
+            const filteredUsers = [];
+            for (const user of allTeamUsers) {
+                // Konwertuj na pełny obiekt User dla helpera
+                const userObj = await User.findById(user._id);
+                if (userObj) {
+                    const canView = await canSupervisorViewTimesheets(currentUser, userObj);
+                    if (canView) {
+                        filteredUsers.push(user);
+                    }
+                }
+            }
+            
+            return res.json(filteredUsers);
         }
         
         // Zwykły użytkownik (nie admin) - bez informacji o haśle
@@ -571,9 +585,7 @@ exports.getUserById = async (req, res) => {
 		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
 		
 		const isAdmin = requestingUser.roles.includes('Admin')
-		const isHR = requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)')
-
-		
+		const isHR = requestingUser.roles.includes('HR')
 		const isSelf = requestingUser._id.toString() === userId
 
 		
@@ -590,14 +602,15 @@ exports.getUserById = async (req, res) => {
 		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
 		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
 		
-		const isSupervisorOfDepartment =
-			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			requestingUser.roles.includes('Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)') &&
-			hasCommonDepartment
+		// HIERARCHIA RÓL: Admin > HR > Przełożony
+		// Sprawdź uprawnienia przełożonego (helper już uwzględnia Admin/HR)
+		const { canSupervisorViewTimesheets } = require('../services/roleService')
+		const isSupervisor = requestingUser.roles.includes('Przełożony (Supervisor)')
+		const canViewAsSupervisor = isSupervisor && userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false
 
 		// Każdy użytkownik w zespole może widzieć innych użytkowników z tego samego zespołu
 		// Super admin widzi wszystkich, admin/HR widzi wszystkich ze swojego zespołu
-		if (!(isSuperAdmin || isSameTeam || isHR || isSelf || isSupervisorOfDepartment)) {
+		if (!(isSuperAdmin || isSameTeam || isAdmin || isHR || isSelf || canViewAsSupervisor)) {
 			return res.status(403).send('Access denied')
 		}
 
@@ -639,13 +652,137 @@ exports.updateUserRoles = async (req, res) => {
 				return res.status(404).send('Użytkownik nie znaleziony');
 			}
 
-			const oldDepartment = user.department;
-			user.roles = roles;
-			// Dla wielu działów - upewnij się, że department to tablica
-			if (department !== undefined) {
-				user.department = Array.isArray(department) ? department : (department ? [department] : [])
+		const oldDepartment = user.department;
+		user.roles = roles;
+		// Dla wielu działów - upewnij się, że department to tablica
+		if (department !== undefined) {
+			user.department = Array.isArray(department) ? department : (department ? [department] : [])
+		}
+		await user.save();
+
+		// Jeśli użytkownik jest przełożonym i zmieniono jego dział, zaktualizuj listę podwładnych
+		if (user.roles.includes('Przełożony (Supervisor)') && department !== undefined) {
+			const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
+			const newDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
+			const oldDepartments = Array.isArray(oldDepartment) ? oldDepartment : (oldDepartment ? [oldDepartment] : []);
+			
+			// Sprawdź czy działy się zmieniły
+			const departmentsChanged = JSON.stringify(newDepartments.sort()) !== JSON.stringify(oldDepartments.sort());
+			
+			if (departmentsChanged) {
+				try {
+					// Znajdź działy, które zostały dodane (nowe)
+					const addedDepartments = newDepartments.filter(dept => !oldDepartments.includes(dept));
+					// Znajdź działy, które zostały usunięte
+					const removedDepartments = oldDepartments.filter(dept => !newDepartments.includes(dept));
+					
+					// Pobierz lub utwórz konfigurację przełożonego
+					let config = await SupervisorConfig.findOne({ supervisorId: user._id });
+					if (!config) {
+						// Jeśli nie ma konfiguracji, utwórz nową z użytkownikami z wszystkich działów
+						const allUsersInDepartments = await User.find({
+							teamId: user.teamId,
+							_id: { $ne: user._id }
+						}).select('_id department').lean();
+
+						const validSubordinates = allUsersInDepartments.filter(emp => {
+							const empDepts = Array.isArray(emp.department) ? emp.department : (emp.department ? [emp.department] : []);
+							return empDepts.some(dept => newDepartments.includes(dept));
+						}).map(emp => emp._id);
+
+						config = new SupervisorConfig({
+							supervisorId: user._id,
+							teamId: user.teamId,
+							permissions: {
+								canApproveLeaves: true,
+								canApproveLeavesDepartment: true,
+								canApproveLeavesSelectedEmployees: true,
+								canViewTimesheets: true,
+								canViewTimesheetsDepartment: true,
+								canViewTimesheetsSelectedEmployees: true,
+								canManageSchedule: true,
+								canManageScheduleDepartment: true,
+								canManageScheduleCustom: true
+							},
+							selectedEmployees: validSubordinates
+						});
+					} else {
+						// Pobierz aktualną listę podwładnych
+						const currentSubordinates = await User.find({
+							_id: { $in: config.selectedEmployees },
+							teamId: user.teamId
+						}).select('_id department').lean();
+
+						// Znajdź użytkowników z dodanych działów
+						const usersToAdd = [];
+						if (addedDepartments.length > 0) {
+							const usersInAddedDepartments = await User.find({
+								teamId: user.teamId,
+								_id: { $ne: user._id }
+							}).select('_id department').lean();
+
+							const newUsers = usersInAddedDepartments.filter(emp => {
+								const empDepts = Array.isArray(emp.department) ? emp.department : (emp.department ? [emp.department] : []);
+								return empDepts.some(dept => addedDepartments.includes(dept));
+							}).map(emp => emp._id);
+
+							usersToAdd.push(...newUsers);
+						}
+
+						// Filtruj aktualnych podwładnych:
+						// 1. Zachowaj użytkowników z działów, które nadal są przypisane do przełożonego
+						// 2. Usuń użytkowników z działów, które zostały usunięte (jeśli nie są w innych działach przełożonego)
+						// 3. Zachowaj użytkowników spoza działu (którzy nie są w żadnym dziale przełożonego)
+						const subordinatesToKeep = currentSubordinates.filter(emp => {
+							const empDepts = Array.isArray(emp.department) ? emp.department : (emp.department ? [emp.department] : []);
+							
+							// Jeśli użytkownik nie ma działu lub ma dział spoza działów przełożonego → zachowaj (dodany ręcznie)
+							if (empDepts.length === 0 || !empDepts.some(dept => newDepartments.includes(dept) || oldDepartments.includes(dept))) {
+								return true;
+							}
+							
+							// Jeśli użytkownik jest w dziale, który został usunięty, ale nie jest w żadnym z nowych działów → usuń
+							if (removedDepartments.length > 0 && empDepts.some(dept => removedDepartments.includes(dept))) {
+								// Sprawdź czy użytkownik jest w którymkolwiek z nowych działów
+								if (!empDepts.some(dept => newDepartments.includes(dept))) {
+									return false; // Usuń - był tylko w usuniętym dziale
+								}
+							}
+							
+							// Zachowaj użytkowników z działów, które nadal są przypisane
+							return empDepts.some(dept => newDepartments.includes(dept));
+						}).map(emp => emp._id);
+
+						// Połącz zachowanych podwładnych z nowymi użytkownikami z dodanych działów
+						const allSubordinateIds = [...subordinatesToKeep, ...usersToAdd];
+						// Usuń duplikaty
+						const uniqueSubordinates = Array.from(new Set(allSubordinateIds.map(id => id.toString())));
+						
+						config.selectedEmployees = uniqueSubordinates;
+					}
+					
+					await config.save();
+					
+					// Zaktualizuj relacje supervisors w User
+					// Usuń stare relacje
+					await User.updateMany(
+						{ supervisors: user._id },
+						{ $pull: { supervisors: user._id } }
+					);
+					
+					// Dodaj nowe relacje
+					if (config.selectedEmployees.length > 0) {
+						await User.updateMany(
+							{ _id: { $in: config.selectedEmployees }, teamId: user.teamId },
+							{ $addToSet: { supervisors: user._id } }
+						);
+					}
+				} catch (error) {
+					console.error('Error updating supervisor subordinates after department change:', error);
+					// Nie przerywaj procesu jeśli aktualizacja podwładnych nie powiedzie się
+				}
 			}
-			await user.save();
+		}
 
 		// Handle department boards - create for new departments, deactivate for removed departments
 		if (department !== undefined && user.teamId) {

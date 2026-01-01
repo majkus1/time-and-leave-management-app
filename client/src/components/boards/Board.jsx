@@ -257,19 +257,6 @@ function Board() {
 			<div style={{ padding: '15px', maxWidth: '100%', overflowX: 'auto' }} className='board-list'>
 				<div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
 					<div>
-						<button
-							onClick={() => navigate('/boards')}
-							style={{
-								padding: '8px 16px',
-								backgroundColor: '#95a5a6',
-								color: 'white',
-								border: 'none',
-								borderRadius: '6px',
-								cursor: 'pointer',
-								marginBottom: '10px'
-							}}>
-							← {t('boards.backToList') || 'Wróć do listy'}
-						</button>
 						<h2 style={{ 
 							color: '#2c3e50', 
 							margin: '10px 0',

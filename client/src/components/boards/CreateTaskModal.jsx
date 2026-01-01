@@ -95,14 +95,36 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 				},
 			}}
 			contentLabel={t('boards.addTask') || 'Dodaj zadanie'}>
-			<h2 style={{ 
-				marginBottom: '20px', 
-				color: '#2c3e50',
-				fontSize: '24px',
-				fontWeight: '600'
-			}}>
-				{t('boards.addTask') || 'Dodaj zadanie'}
-			</h2>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+				<h2 style={{ 
+					margin: 0,
+					color: '#2c3e50',
+					fontSize: '24px',
+					fontWeight: '600'
+				}}>
+					{t('boards.addTask') || 'Dodaj zadanie'}
+				</h2>
+				<button
+					onClick={onClose}
+					style={{
+						background: 'transparent',
+						border: 'none',
+						fontSize: '28px',
+						cursor: 'pointer',
+						color: '#7f8c8d',
+						lineHeight: '1',
+						padding: '0',
+						width: '30px',
+						height: '30px',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center'
+					}}
+					onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+					onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+					×
+				</button>
+			</div>
 
 			<form onSubmit={handleSubmit}>
 				<div style={{ marginBottom: '20px' }}>

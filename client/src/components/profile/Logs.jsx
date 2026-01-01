@@ -9,6 +9,8 @@ import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, use
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs } from '../../hooks/useLogs'
 import UsersInfoModal from '../shared/UsersInfoModal'
+import SupervisorConfigModal from './SupervisorConfigModal'
+import SubordinatesModal from './SubordinatesModal'
 
 function Logs() {
 	const [expandedLogs, setExpandedLogs] = useState([])
@@ -29,6 +31,10 @@ function Logs() {
 	const [resendingLink, setResendingLink] = useState(false)
 	const [sendingApology, setSendingApology] = useState(false)
 	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, departmentName: null })
+	const [roleInfoModal, setRoleInfoModal] = useState({ isOpen: false, roleName: null })
+	const [supervisorConfigModal, setSupervisorConfigModal] = useState({ isOpen: false, userId: null })
+	const [subordinatesModal, setSubordinatesModal] = useState({ isOpen: false, userId: null })
+	const [expandedRoleDescriptions, setExpandedRoleDescriptions] = useState({}) // Stan dla rozwiniętych opisów ról
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
@@ -36,10 +42,29 @@ function Logs() {
 	const availableRoles = [
 		'Admin',
 		'Pracownik (Worker)',
-		'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)',
-		'Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)',
-		'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)',
+		'Przełożony (Supervisor)',
+		'HR',
 	]
+
+	// Definicje ról z opisami
+	const roleDefinitions = {
+		'Admin': {
+			pl: 'Pełny dostęp do wszystkich funkcji systemu. Może zarządzać użytkownikami, rolami, działami i wszystkimi zasobami.',
+			en: 'Full access to all system functions. Can manage users, roles, departments and all resources.'
+		},
+		'Pracownik (Worker)': {
+			pl: 'Podstawowa rola pracownika. Może przeglądać własne dane, składać wnioski urlopowe, ewidencjonować własny czas pracy oraz korzystać z funkcji aplikacji takich jak tablice zadań, czat i inne.',
+			en: 'Basic employee role. Can view own data, submit leave requests, record own work time and use application features such as task boards, chat and others.'
+		},
+		'Przełożony (Supervisor)': {
+			pl: 'Rola przełożonego z możliwością konfiguracji uprawnień. Może zatwierdzać urlopy, przeglądać ewidencję czasu pracy i zarządzać grafikiem dla swojego działu oraz wybranych pracowników.',
+			en: 'Supervisor role with configurable permissions. Can approve leaves, view timesheets and manage schedules for their department and selected employees.'
+		},
+		'HR': {
+			pl: 'Rola HR. Może przeglądać wszystkie wnioski urlopowe i ewidencje czasu pracy wszystkich pracowników w zespole. Może również ustalać i sprawdzać grafiki pracy.',
+			en: 'HR role. Can view all leave requests and timesheets of all employees in the team. Can also manage and review work schedules.'
+		}
+	}
 
 	// TanStack Query hooks
 	const { data: users = [], isLoading: loadingUsers } = useUsers()
@@ -504,12 +529,134 @@ function Logs() {
 					)}
 				</div>
 
+				{/* Sekcja ról z opisami */}
+				<div style={{ 
+					backgroundColor: 'white',
+					borderRadius: '12px',
+					boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+					padding: '15px',
+					marginBottom: '30px'
+				}}>
+					<h3 style={{ 
+						color: '#2c3e50',
+						marginBottom: '20px',
+						fontSize: '20px',
+						fontWeight: '600',
+						paddingBottom: '10px',
+						borderBottom: '2px solid #3498db'
+					}}>
+						{t('logs.rolesTitle') || 'Role w systemie'}
+					</h3>
+					<div style={{ 
+						display: 'grid', 
+						gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+						gap: '15px'
+					}}>
+						{availableRoles.map(role => (
+							<div key={role} style={{ 
+								padding: '15px',
+								backgroundColor: '#f8f9fa',
+								borderRadius: '8px',
+								border: '1px solid #dee2e6',
+								display: 'flex',
+								alignItems: 'flex-start',
+								justifyContent: 'space-between',
+								gap: '10px'
+							}}>
+								<div style={{ flex: 1 }}>
+									<div style={{ 
+										fontWeight: '600', 
+										color: '#2c3e50',
+										marginBottom: '8px',
+										fontSize: '16px'
+									}}>
+										{role}
+									</div>
+									{(() => {
+										const description = roleDefinitions[role]?.[i18n.resolvedLanguage] || roleDefinitions[role]?.['pl'] || ''
+										const isExpanded = expandedRoleDescriptions[role]
+										const maxLength = 80 // Maksymalna długość przed zwinięciem
+										const shouldTruncate = description.length > maxLength
+										const displayText = isExpanded || !shouldTruncate 
+											? description 
+											: description.substring(0, maxLength) + '...'
+										
+										return (
+											<div>
+												<div style={{ 
+													fontSize: '13px', 
+													color: '#7f8c8d',
+													lineHeight: '1.5',
+													marginBottom: shouldTruncate ? '5px' : '0'
+												}}>
+													{displayText}
+												</div>
+												{shouldTruncate && (
+													<button
+														type="button"
+														onClick={() => setExpandedRoleDescriptions(prev => ({
+															...prev,
+															[role]: !prev[role]
+														}))}
+														style={{
+															background: 'transparent',
+															border: 'none',
+															color: '#3498db',
+															cursor: 'pointer',
+															padding: '0',
+															fontSize: '13px',
+															textDecoration: 'underline',
+															marginTop: '5px'
+														}}
+													>
+														{isExpanded ? t('common.showLess') || 'Pokaż mniej' : t('common.showMore') || 'Pokaż więcej'}
+													</button>
+												)}
+											</div>
+										)
+									})()}
+								</div>
+								<button
+									type="button"
+									onClick={() => setRoleInfoModal({ isOpen: true, roleName: role })}
+									style={{
+										background: 'transparent',
+										border: 'none',
+										color: '#3498db',
+										cursor: 'pointer',
+										padding: '4px 8px',
+										borderRadius: '4px',
+										fontSize: '18px',
+										lineHeight: '1',
+										transition: 'all 0.2s',
+										flexShrink: 0
+									}}
+									onMouseEnter={(e) => {
+										e.target.style.backgroundColor = '#e3f2fd'
+										e.target.style.color = '#2980b9'
+									}}
+									onMouseLeave={(e) => {
+										e.target.style.backgroundColor = 'transparent'
+										e.target.style.color = '#3498db'
+									}}
+									title={t('logs.roleInfo') || 'Informacje o roli'}
+								>
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+										<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+									</svg>
+								</button>
+							</div>
+						))}
+					</div>
+				</div>
+
 				{/* Sekcja działów */}
 				<div style={{ 
 					backgroundColor: 'white',
 					borderRadius: '12px',
 					boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-					padding: '25px',
+					padding: '15px',
 					marginBottom: '30px'
 				}}>
 					<h3 style={{ 
@@ -1000,28 +1147,90 @@ function Logs() {
 															gap: '10px'
 														}}>
 															{availableRoles.map(role => (
-																<label key={role} style={{ 
-																	display: 'flex', 
-																	alignItems: 'center',
-																	padding: '12px',
-																	backgroundColor: 'white',
-																	borderRadius: '6px',
-																	border: '1px solid #dee2e6',
-																	cursor: 'pointer',
-																	transition: 'all 0.2s',
-																	boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+																<div key={role} style={{ 
+																	display: 'flex',
+																	flexDirection: 'column',
+																	gap: '8px'
 																}}>
-																	<input
-																		type="checkbox"
-																		checked={editedRoles.includes(role)}
-																		onChange={() => handleRoleChange(role)}
-																		style={{ 
-																			marginRight: '10px',
-																			transform: 'scale(1.2)'
-																		}}
-																	/>
-																	<span style={{ fontSize: '14px' }}>{role}</span>
-																</label>
+																	<label style={{ 
+																		display: 'flex', 
+																		alignItems: 'center',
+																		padding: '12px',
+																		backgroundColor: 'white',
+																		borderRadius: '6px',
+																		border: '1px solid #dee2e6',
+																		cursor: 'pointer',
+																		transition: 'all 0.2s',
+																		boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+																	}}>
+																		<input
+																			type="checkbox"
+																			checked={editedRoles.includes(role)}
+																			onChange={() => handleRoleChange(role)}
+																			style={{ 
+																				marginRight: '10px',
+																				transform: 'scale(1.2)'
+																			}}
+																		/>
+																		<span style={{ fontSize: '14px', flex: 1 }}>{role}</span>
+																	</label>
+																	{role === 'Przełożony (Supervisor)' && editedRoles.includes(role) && editingUser?._id && (
+																		<div style={{ 
+																			display: 'flex', 
+																			gap: '8px',
+																			marginLeft: '32px'
+																		}}>
+																			<button
+																				type="button"
+																				onClick={() => setSupervisorConfigModal({ isOpen: true, userId: editingUser._id })}
+																				style={{
+																					padding: '6px 12px',
+																					border: '1px solid #3498db',
+																					borderRadius: '6px',
+																					backgroundColor: 'white',
+																					color: '#3498db',
+																					cursor: 'pointer',
+																					fontSize: '12px',
+																					fontWeight: '500',
+																					transition: 'all 0.2s'
+																				}}
+																				onMouseEnter={(e) => {
+																					e.target.style.backgroundColor = '#e3f2fd'
+																					e.target.style.color = '#2980b9'
+																				}}
+																				onMouseLeave={(e) => {
+																					e.target.style.backgroundColor = 'white'
+																					e.target.style.color = '#3498db'
+																				}}>
+																				{t('logs.configure') || 'Konfiguruj'}
+																			</button>
+																			<button
+																				type="button"
+																				onClick={() => setSubordinatesModal({ isOpen: true, userId: editingUser._id })}
+																				style={{
+																					padding: '6px 12px',
+																					border: '1px solid #27ae60',
+																					borderRadius: '6px',
+																					backgroundColor: 'white',
+																					color: '#27ae60',
+																					cursor: 'pointer',
+																					fontSize: '12px',
+																					fontWeight: '500',
+																					transition: 'all 0.2s'
+																				}}
+																				onMouseEnter={(e) => {
+																					e.target.style.backgroundColor = '#e8f5e9'
+																					e.target.style.color = '#229954'
+																				}}
+																				onMouseLeave={(e) => {
+																					e.target.style.backgroundColor = 'white'
+																					e.target.style.color = '#27ae60'
+																				}}>
+																				{t('logs.manageSubordinates') || 'Podwładni'}
+																			</button>
+																		</div>
+																	)}
+																</div>
 															))}
 														</div>
 													</div>
@@ -1985,6 +2194,31 @@ function Logs() {
 				isLoading={loadingDepartmentUsers}
 				title={usersInfoModal.departmentName ? `${t('usersInfo.departmentUsers') || 'Użytkownicy działu'}: ${usersInfoModal.departmentName}` : (t('usersInfo.title') || 'Lista użytkowników')}
 			/>
+
+			{/* Modal konfiguracji przełożonego */}
+			<SupervisorConfigModal
+				isOpen={supervisorConfigModal.isOpen}
+				onClose={() => setSupervisorConfigModal({ isOpen: false, userId: null })}
+				supervisorId={supervisorConfigModal.userId}
+			/>
+
+			{/* Modal zarządzania podwładnymi */}
+			<SubordinatesModal
+				isOpen={subordinatesModal.isOpen}
+				onClose={() => setSubordinatesModal({ isOpen: false, userId: null })}
+				supervisorId={subordinatesModal.userId}
+			/>
+
+			{/* Modal z informacjami o roli */}
+			{roleInfoModal.isOpen && roleInfoModal.roleName && (
+				<UsersInfoModal
+					isOpen={roleInfoModal.isOpen}
+					onClose={() => setRoleInfoModal({ isOpen: false, roleName: null })}
+					users={users.filter(user => user.roles && user.roles.includes(roleInfoModal.roleName))}
+					isLoading={loadingUsers}
+					title={`${roleInfoModal.roleName} - ${t('logs.usersWithRole') || 'Użytkownicy z tą rolą'}`}
+				/>
+			)}
 
 		</>
 	)

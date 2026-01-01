@@ -87,24 +87,6 @@ function ChannelList({ channels, selectedChannel, currentUserId, currentUserRole
 									}}
 									title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}
 									type="button"
-									style={{
-										background: 'transparent',
-										border: 'none',
-										color: '#3498db',
-										cursor: 'pointer',
-										fontSize: '16px',
-										padding: '4px 8px',
-										borderRadius: '4px',
-										transition: 'all 0.2s'
-									}}
-									onMouseEnter={(e) => {
-										e.target.style.backgroundColor = '#ebf5fb'
-										e.target.style.color = '#2980b9'
-									}}
-									onMouseLeave={(e) => {
-										e.target.style.backgroundColor = 'transparent'
-										e.target.style.color = '#3498db'
-									}}
 								>
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 										<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>

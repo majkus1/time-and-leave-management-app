@@ -100,7 +100,7 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 	try {
 		const hrUsers = await User.find({
 			teamId, 
-			roles: { $in: ['Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'] },
+			roles: { $in: ['HR'] },
 		})
 
 		// Jeśli nie znaleziono HR, wyślij do Adminów jako fallback

@@ -16,13 +16,16 @@ const userSchema = new mongoose.Schema({
         enum: [
             'Admin',                             
             'Pracownik (Worker)',                         
-            'Może zatwierdzać urlopy swojego działu (Approve Leaves Department)',   
-            'Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)',
-            'Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)'
+            'Przełożony (Supervisor)',
+            'HR'
         ],
         required: true
     },
     department: { type: [String], default: [] }, // Tablica działów - użytkownik może być w wielu działach
+    supervisors: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
+    }], // Kto jest przełożonym tego użytkownika
     position: { type: String, required: false },
     leaveDays: { type: Number, default: 0 },
     vacationDays: { type: Number, default: 0 },

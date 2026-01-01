@@ -11,7 +11,11 @@ import interactionPlugin from '@fullcalendar/interaction'
 import Modal from 'react-modal'
 import { useSchedule, useScheduleEntries, useUpsertScheduleEntry, useDeleteScheduleEntry } from '../../hooks/useSchedule'
 import { useUsers } from '../../hooks/useUsers'
-import { isAdmin, isDepartmentViewer } from '../../utils/roleHelpers'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
+import { useQuery } from '@tanstack/react-query'
+import axios from 'axios'
+import { API_URL } from '../../config.js'
+import { useSupervisorConfig } from '../../hooks/useSupervisor'
 
 Modal.setAppElement('#root')
 
@@ -22,30 +26,53 @@ function Schedule() {
 	const { userId, role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
 	const { data: schedule, isLoading: loadingSchedule } = useSchedule(scheduleId)
-	const { data: allUsers = [] } = useUsers()
+	
+	// Dla grafiku zawsze pobieramy wszystkich użytkowników z zespołu, niezależnie od listy podwładnych
+	// Używamy endpointu alluserplans, który zwraca wszystkich użytkowników z zespołu
+	const { data: allTeamUsers = [] } = useQuery({
+		queryKey: ['users', 'all-team-for-schedule'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/users/alluserplans`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		enabled: !!schedule,
+		staleTime: 5 * 60 * 1000,
+		cacheTime: 10 * 60 * 1000,
+	})
 	
 	// Filter users based on schedule type
+	// Dla grafiku zawsze pokazujemy wszystkich użytkowników z działu/zespołu, niezależnie od listy podwładnych
 	const users = React.useMemo(() => {
-		if (!schedule || !allUsers.length) return []
+		if (!schedule || !allTeamUsers.length) return []
 		
 		const scheduleTeamId = schedule.teamId?.toString()
 		
 		if (schedule.type === 'team') {
 			// For team schedule - show only users from the same team
-			return allUsers.filter(user => {
-				const userTeamId = user.teamId?.toString()
+			return allTeamUsers.filter(user => {
+				const userTeamId = user.teamId?.toString() || user.teamId?.toString()
 				return userTeamId === scheduleTeamId
 			})
 		} else if (schedule.type === 'department') {
-			// For department schedule - show only users from that department and same team
-			return allUsers.filter(user => {
+			// For department schedule - show ALL users from that department and same team
+			// Niezależnie od listy podwładnych przełożonego
+			return allTeamUsers.filter(user => {
 				const userTeamId = user.teamId?.toString()
 				const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
 				return userTeamId === scheduleTeamId && userDepartments.includes(schedule.departmentName)
 			})
+		} else if (schedule.type === 'custom') {
+			// For custom schedule - show only members of the schedule
+			const memberIds = schedule.members ? schedule.members.map(m => m._id || m) : []
+			return allTeamUsers.filter(user => {
+				const userTeamId = user.teamId?.toString()
+				return userTeamId === scheduleTeamId && memberIds.includes(user._id)
+			})
 		}
 		return []
-	}, [schedule, allUsers])
+	}, [schedule, allTeamUsers])
 	
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
@@ -87,15 +114,45 @@ function Schedule() {
 		currentYear
 	)
 
-	// Check if user can edit
+	// Check if user can edit - uwzględnij konfigurację przełożonego i twórcę niestandardowego grafiku
+	const isSupervisorRole = isSupervisor(role)
+	const isAdminRole = isAdmin(role)
+	const isHRRole = isHR(role)
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	
+	// Sprawdź czy użytkownik jest twórcą niestandardowego grafiku
+	const isCreator = React.useMemo(() => {
+		if (!schedule || schedule.type !== 'custom') return false
+		if (!schedule.createdBy) return false
+		const createdById = typeof schedule.createdBy === 'object' ? schedule.createdBy._id : schedule.createdBy
+		return createdById && createdById.toString() === userId.toString()
+	}, [schedule, userId])
+	
 	const canEdit = React.useMemo(() => {
-		if (!role || (Array.isArray(role) && role.length === 0)) return false
+		if (!role || (Array.isArray(role) && role.length === 0)) {
+			// Jeśli nie ma roli, sprawdź czy jest twórcą niestandardowego grafiku
+			return isCreator
+		}
 		const roles = Array.isArray(role) ? role : [role]
-		const adminCheck = isAdmin(roles)
-		const deptViewerCheck = isDepartmentViewer(roles)
-		const result = adminCheck || deptViewerCheck
-		return result
-	}, [role])
+		
+		// HIERARCHIA RÓL: Admin > HR > Przełożony > Twórca niestandardowego grafiku
+		// Admin i HR mają zawsze pełny dostęp
+		if (isAdmin(roles) || isHR(roles)) {
+			return true
+		}
+		
+		// Twórca niestandardowego grafiku ma zawsze dostęp do swojego grafiku
+		if (isCreator) {
+			return true
+		}
+		
+		// Przełożony - sprawdź konfigurację
+		if (isSupervisor(roles)) {
+			return supervisorConfig?.permissions?.canManageSchedule !== false
+		}
+		
+		return false
+	}, [role, supervisorConfig, isCreator])
 
 	// Update calendar size when sidebar changes
 	useEffect(() => {
@@ -362,7 +419,7 @@ function Schedule() {
 		}
 
 		try {
-			await upsertEntryMutation.mutateAsync({
+			const response = await upsertEntryMutation.mutateAsync({
 				scheduleId,
 				data: {
 					date: selectedDate,
@@ -374,6 +431,70 @@ function Schedule() {
 				}
 			})
 			
+			// Helper function to normalize date to YYYY-MM-DD format
+			const normalizeDate = (dateValue) => {
+				if (!dateValue) return null
+				
+				// If it's already a string in YYYY-MM-DD format
+				if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+					return dateValue
+				}
+				
+				// If it's a Date object or ISO string
+				let date
+				if (dateValue instanceof Date) {
+					date = dateValue
+				} else if (typeof dateValue === 'string') {
+					// Handle ISO string or date string
+					if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+						const [year, month, day] = dateValue.split('-').map(Number)
+						date = new Date(year, month - 1, day)
+					} else {
+						date = new Date(dateValue)
+					}
+				} else {
+					return null
+				}
+				
+				// Use local timezone since dates are stored as calendar dates
+				const year = date.getFullYear()
+				const month = String(date.getMonth() + 1).padStart(2, '0')
+				const day = String(date.getDate()).padStart(2, '0')
+				return `${year}-${month}-${day}`
+			}
+			
+			// Normalize selectedDate to YYYY-MM-DD format
+			const selectedDateNormalized = selectedDate.includes('T') 
+				? selectedDate.split('T')[0] 
+				: selectedDate
+			
+			// Tworzymy nowy wpis do dodania do lokalnego stanu
+			const newEntry = {
+				_id: `temp-${Date.now()}`, // Tymczasowe ID, zostanie zastąpione przez prawdziwe po refetch
+				employeeId: selectedEmployeeId,
+				employeeName: selectedEmployeeName,
+				timeFrom: timeFrom,
+				timeTo: timeTo,
+				notes: notes || null,
+				createdBy: userId,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			}
+			
+			// Aktualizuj lokalny stan selectedEntries od razu (optimistic update)
+			setSelectedEntries(prevEntries => {
+				// Sprawdź czy wpis już istnieje (na wypadek duplikatu)
+				const entryExists = prevEntries.some(entry => 
+					entry.employeeId === selectedEmployeeId &&
+					entry.timeFrom === timeFrom &&
+					entry.timeTo === timeTo
+				)
+				if (entryExists) {
+					return prevEntries
+				}
+				return [...prevEntries, newEntry]
+			})
+			
 			// Reset form
 			setSelectedEmployeeId('')
 			setSelectedEmployeeName('')
@@ -381,45 +502,21 @@ function Schedule() {
 			setTimeTo('16:00')
 			setNotes('')
 			
-			// Refetch entries to update the calendar and modal
-			const { data: updatedEntries } = await refetchEntries()
-			
-			// Update selected entries in modal after refetch
-			if (updatedEntries && selectedDate) {
-				// Normalize selectedDate to YYYY-MM-DD format
-				const selectedDateNormalized = selectedDate.includes('T') 
-					? selectedDate.split('T')[0] 
-					: selectedDate
-				
-				// Helper function to normalize date to YYYY-MM-DD format
-				const normalizeDate = (dateValue) => {
-					if (!dateValue) return null
-					
-					// If it's already a string in YYYY-MM-DD format
-					if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-						return dateValue
+			// Refetch entries w tle, aby zaktualizować kalendarz i uzyskać prawdziwe ID wpisu
+			refetchEntries().then(({ data: updatedEntries }) => {
+				if (updatedEntries && selectedDate) {
+					const dayEntries = updatedEntries.find(day => {
+						if (!day || !day.date) return false
+						const dayDateNormalized = normalizeDate(day.date)
+						return dayDateNormalized === selectedDateNormalized
+					})
+					if (dayEntries) {
+						setSelectedEntries(dayEntries.entries || [])
 					}
-					
-					// If it's a Date object or ISO string
-					const date = dateValue instanceof Date 
-						? dateValue 
-						: new Date(dateValue)
-					
-					// Use UTC to avoid timezone issues
-					const year = date.getUTCFullYear()
-					const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-					const day = String(date.getUTCDate()).padStart(2, '0')
-					return `${year}-${month}-${day}`
 				}
-				
-				const dayEntries = updatedEntries.find(day => {
-					if (!day || !day.date) return false
-					
-					const dayDateNormalized = normalizeDate(day.date)
-					return dayDateNormalized === selectedDateNormalized
-				})
-				setSelectedEntries(dayEntries ? dayEntries.entries : [])
-			}
+			}).catch(err => {
+				console.error('Error refetching entries:', err)
+			})
 			
 			await showAlert(t('schedule.entryAdded') || 'Wpis został dodany pomyślnie')
 		} catch (error) {

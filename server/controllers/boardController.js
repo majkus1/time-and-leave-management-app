@@ -135,6 +135,20 @@ exports.getUserBoards = async (req, res) => {
 			return res.json([])
 		}
 
+		// Check if user is Admin
+		const isAdmin = user.roles && user.roles.includes('Admin')
+
+		// If Admin, return all boards from the team
+		if (isAdmin) {
+			const allBoards = await Board.find({
+				teamId,
+				isActive: true
+			}).populate('members', 'username firstName lastName')
+				.populate('createdBy', '_id username firstName lastName')
+				.sort({ createdAt: -1 })
+			return res.json(allBoards)
+		}
+
 		// Get user's departments to filter department boards
 		const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
 		
@@ -157,7 +171,9 @@ exports.getUserBoards = async (req, res) => {
 			teamId,
 			isActive: true,
 			$or: orConditions
-		}).populate('members', 'username firstName lastName').sort({ createdAt: -1 })
+		}).populate('members', 'username firstName lastName')
+			.populate('createdBy', '_id username firstName lastName')
+			.sort({ createdAt: -1 })
 
 		// Filter department boards - only show boards for departments that exist, have users, and user belongs to
 		const filteredBoards = await Promise.all(
@@ -203,7 +219,9 @@ exports.getBoard = async (req, res) => {
 		const { boardId } = req.params
 		const userId = req.user.userId
 
-		const board = await Board.findById(boardId).populate('members', 'username firstName lastName')
+		const board = await Board.findById(boardId)
+			.populate('members', 'username firstName lastName')
+			.populate('createdBy', '_id username firstName lastName')
 		if (!board) {
 			return res.status(404).json({ message: 'Board not found' })
 		}
@@ -318,7 +336,9 @@ exports.createBoard = async (req, res) => {
 		})
 
 		await newBoard.save()
-		const populatedBoard = await Board.findById(newBoard._id).populate('members', 'username firstName lastName')
+		const populatedBoard = await Board.findById(newBoard._id)
+			.populate('members', 'username firstName lastName')
+			.populate('createdBy', '_id username firstName lastName')
 
 		res.status(201).json(populatedBoard)
 	} catch (error) {
@@ -378,7 +398,9 @@ exports.updateBoard = async (req, res) => {
 		}
 
 		await board.save()
-		const populatedBoard = await Board.findById(board._id).populate('members', 'username firstName lastName')
+		const populatedBoard = await Board.findById(board._id)
+			.populate('members', 'username firstName lastName')
+			.populate('createdBy', '_id username firstName lastName')
 
 		res.json(populatedBoard)
 	} catch (error) {

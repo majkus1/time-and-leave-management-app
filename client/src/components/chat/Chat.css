@@ -21,7 +21,6 @@
 	border-bottom: 1px solid #34495e;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 }
 
 .chat-header h3 {
@@ -37,7 +36,7 @@
 }
 
 .connection-status.connected {
-	color: #2ecc71;
+	color: #2ecc71 !important;
 }
 
 .connection-status.disconnected {
@@ -46,8 +45,30 @@
 
 .channel-list {
 	flex: 1;
-	overflow-y: auto;
+	overflow-y: scroll; /* Zawsze pokazuj scrollbar */
 	padding: 10px 0;
+	/* Firefox */
+	scrollbar-width: thin;
+	scrollbar-color: #3498db #34495e;
+}
+
+/* Chrome, Safari, Edge */
+.channel-list::-webkit-scrollbar {
+	width: 8px;
+}
+
+.channel-list::-webkit-scrollbar-track {
+	background: #34495e;
+	border-radius: 4px;
+}
+
+.channel-list::-webkit-scrollbar-thumb {
+	background: #3498db;
+	border-radius: 4px;
+}
+
+.channel-list::-webkit-scrollbar-thumb:hover {
+	background: #2980b9;
 }
 
 .channel-item {
@@ -65,6 +86,71 @@
 
 .channel-item.active {
 	background-color: #3498db;
+}
+
+/* Zmień kolory ikon w aktywnym kanale na białe */
+/* Style dla ikony info - minimalne efekty */
+.btn-info-channel {
+	background: transparent !important;
+	border: none !important;
+	color: #3498db !important;
+	cursor: pointer;
+	font-size: 16px;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: none !important;
+	outline: none !important;
+}
+
+.btn-info-channel:hover {
+	background-color: #ebf5fb !important;
+	color: #2980b9 !important;
+}
+
+/* Usuń wszystkie efekty po kliknięciu */
+.btn-info-channel:active,
+.btn-info-channel:focus {
+	background-color: transparent !important;
+	color: #3498db !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+/* Style dla ikony info w aktywnym kanale - bez efektów, zawsze biała */
+.channel-item.active .btn-info-channel {
+	color: white !important;
+	background: transparent !important;
+}
+
+.channel-item.active .btn-info-channel:hover {
+	background-color: transparent !important;
+	color: white !important;
+}
+
+.channel-item.active .btn-info-channel:active,
+.channel-item.active .btn-info-channel:focus {
+	background-color: transparent !important;
+	color: white !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.channel-item.active .btn-add-members {
+	background-color: #27ae60 !important;
+	color: white !important;
+}
+
+.channel-item.active .btn-add-members:hover {
+	background-color: #229954 !important;
+}
+
+.channel-item.active .btn-delete-channel {
+	background: #ef4444 !important;
+	color: white !important;
+}
+
+.channel-item.active .btn-delete-channel:hover {
+	background: #dc2626 !important;
 }
 
 .channel-name {
@@ -312,11 +398,15 @@
 	color: white;
 	border: none;
 	border-radius: 6px;
-	padding: 8px 12px;
+	padding: 10px 16px;
 	cursor: pointer;
-	font-size: 16px;
+	font-size: 14px;
+	font-weight: 500;
 	transition: background-color 0.2s;
 	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .btn-create-channel:hover,

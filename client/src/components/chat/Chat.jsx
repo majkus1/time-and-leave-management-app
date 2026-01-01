@@ -223,6 +223,7 @@ function Chat() {
 			<div className="chat-container">
 				<div className="chat-sidebar">
 					<div className="chat-header">
+						<img src="/img/chat-white.png" alt="chat icon" style={{ marginRight: '10px', width: '24px', height: '24px' }} />
 						<h3>{t('chat.title')}</h3>
 						{!isConnected && (
 							<span className="connection-status disconnected" title={t('chat.disconnected')}>
@@ -241,14 +242,16 @@ function Chat() {
 							onClick={() => setShowCreateChannelModal(true)}
 							title={t('chat.createChannel')}
 						>
-							+
+							<img src="/img/chat-create.png" alt="Create channel" style={{ width: '20px', height: '20px', marginRight: '8px' }} />
+							
 						</button>
 						<button
 							className="btn-private-chat"
 							onClick={() => setShowPrivateChatModal(true)}
 							title={t('chat.createPrivateChat')}
 						>
-							💬
+							<img src="/img/chatting.png" alt="Private chat" style={{ width: '20px', height: '20px', marginRight: '8px' }} />
+							
 						</button>
 					</div>
 					<ChannelList

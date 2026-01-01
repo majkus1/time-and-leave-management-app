@@ -373,11 +373,18 @@ function UserCalendar() {
 			// Prepare detailed data for all days in month
 			const detailedData = []
 			
+			// Add user name at the top
+			detailedData.push([
+				`${user.firstName} ${user.lastName}${user.position ? ` (${user.position})` : ''}`
+			])
+			detailedData.push([]) // Empty row for spacing
+			
 			// Add header row
 			detailedData.push([
 				t('workcalendar.excel.date'),
 				t('workcalendar.excel.hoursWorked'),
 				t('workcalendar.excel.overtime'),
+				t('workcalendar.excel.worktime'),
 				t('workcalendar.excel.absenceType'),
 				t('workcalendar.excel.leaveType'),
 				t('workcalendar.excel.notes')
@@ -394,9 +401,10 @@ function UserCalendar() {
 					formatDate(currentDate),
 					workday?.hoursWorked || '',
 					workday?.additionalWorked || '',
+					workday?.realTimeDayWorked || '',
 					workday?.absenceType ? t(workday.absenceType) : '',
 					leaveRequests.length > 0 ? leaveRequests.map(r => t(r.type)).join(', ') : '',
-					workday?.realTimeDayWorked || ''
+					workday?.notes || ''
 				]
 
 				detailedData.push(row)
@@ -431,9 +439,11 @@ function UserCalendar() {
 			
 			// Set column widths for detailed sheet
 			wsDetails['!cols'] = [
+				{ wch: 30 }, // User name (first row)
 				{ wch: 12 }, // Date
 				{ wch: 15 }, // Hours worked
 				{ wch: 12 }, // Overtime
+				{ wch: 15 }, // Working hours (worktime)
 				{ wch: 25 }, // Absence type
 				{ wch: 25 }, // Leave type
 				{ wch: 20 }  // Notes
@@ -635,8 +645,8 @@ function UserCalendar() {
 								events={[
 									...workdays.map(day => ({
 										title: day.hoursWorked
-								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${day.additionalWorked ? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}` : ''}`
-								: day.absenceType,
+								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${day.additionalWorked ? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}` : ''}${day.notes ? ` | ${day.notes}` : ''}`
+								: `${day.absenceType}${day.notes ? ` | ${day.notes}` : ''}`,
 										start: day.date,
 										backgroundColor: day.hoursWorked ? 'blue' : 'green',
 										textColor: 'white',
@@ -644,6 +654,7 @@ function UserCalendar() {
 										classNames: day.hoursWorked ? 'event-workday' : 'event-absence',
 										extendedProps: {
 											isWorkday: !!day.hoursWorked,
+											notes: day.notes,
 										},
 									})),
 									...workdays

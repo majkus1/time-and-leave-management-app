@@ -71,9 +71,29 @@ exports.getLeavePlansByAdmin = async (req, res) => {
 
 exports.getAllLeavePlans = async (req, res) => {
 	try {
-		const leavePlans = await LeavePlan.find()
-			.populate('userId', 'username firstName lastName')
-			.select('date userId')
+		const User = require('../models/user')(firmDb)
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) return res.status(404).send('User not found')
+
+		// Sprawdź czy to super admin
+		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
+
+		let leavePlans
+		
+		if (isSuperAdmin) {
+			// Super admin widzi wszystkie plany ze wszystkich zespołów
+			leavePlans = await LeavePlan.find()
+				.populate('userId', 'username firstName lastName')
+				.select('date userId')
+		} else {
+			// Dla wszystkich innych użytkowników - pokaż plany tylko z ich zespołu
+			const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
+			const teamUserIds = teamUsers.map(user => user._id)
+
+			leavePlans = await LeavePlan.find({ userId: { $in: teamUserIds } })
+				.populate('userId', 'username firstName lastName')
+				.select('date userId')
+		}
 
 		const formattedPlans = leavePlans
 			.filter(plan => plan.userId !== null)

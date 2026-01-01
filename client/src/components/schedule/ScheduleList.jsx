@@ -1,15 +1,25 @@
 import React, { useState } from 'react'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
+import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
-import { useSchedules, useScheduleUsers } from '../../hooks/useSchedule'
+import { useSchedules, useScheduleUsers, useDeleteSchedule } from '../../hooks/useSchedule'
 import { Link } from 'react-router-dom'
 import UsersInfoModal from '../shared/UsersInfoModal'
+import CreateScheduleModal from './CreateScheduleModal'
+import EditScheduleModal from './EditScheduleModal'
 
 function ScheduleList() {
 	const { t } = useTranslation()
-	const { data: schedules = [], isLoading } = useSchedules()
+	const { role, userId } = useAuth()
+	const { showAlert, showConfirm } = useAlert()
+	const { data: schedules = [], isLoading, refetch } = useSchedules()
+	const deleteScheduleMutation = useDeleteSchedule()
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+	const [editingSchedule, setEditingSchedule] = useState(null)
 	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, scheduleId: null })
+	const isAdmin = role && role.includes('Admin')
 	
 	// Hook for schedule users in modal
 	const { data: scheduleUsers = [], isLoading: loadingScheduleUsers } = useScheduleUsers(
@@ -17,24 +27,56 @@ function ScheduleList() {
 		usersInfoModal.isOpen
 	)
 
+	const handleDeleteSchedule = async (schedule) => {
+		const confirmed = await showConfirm(
+			t('schedule.deleteConfirm') || 'Czy na pewno chcesz usunąć ten grafik?'
+		)
+		if (!confirmed) return
+
+		try {
+			await deleteScheduleMutation.mutateAsync(schedule._id)
+			await showAlert(t('schedule.deleteSuccess') || 'Grafik został usunięty pomyślnie')
+			refetch()
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.deleteError') || 'Błąd podczas usuwania grafiku')
+		}
+	}
+
 	if (isLoading) return <Loader />
 
 	return (
 		<>
 			<Sidebar />
 			<div style={{ padding: '15px' }} className='schedule-container'>
-				<h2 style={{
-					display: 'flex',
-					alignItems: 'center',
-					marginBottom: '20px',
-					color: '#2c3e50',
-					fontSize: '28px',
-					fontWeight: '600'
-				}}>
-					<img src="/img/project.png" alt="Schedule icon" />
-					{t('schedule.title') || 'Grafiki'}
-				</h2>
-				<hr />
+				<div style={{ marginBottom: '30px' }}>
+					<h2 style={{
+						display: 'flex',
+						alignItems: 'center',
+						marginBottom: '20px',
+						color: '#2c3e50',
+						fontSize: '28px',
+						fontWeight: '600'
+					}}>
+						<img src="/img/project.png" alt="Schedule icon" />
+						{t('schedule.title') || 'Grafiki'}
+					</h2>
+					<hr />
+					<button
+						onClick={() => setIsCreateModalOpen(true)}
+						style={{
+							padding: '12px 24px',
+							backgroundColor: '#3498db',
+							color: 'white',
+							border: 'none',
+							borderRadius: '8px',
+							fontSize: '16px',
+							fontWeight: '500',
+							cursor: 'pointer',
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+						}}>
+						{t('schedule.createSchedule') || 'Utwórz nowy grafik'}
+					</button>
+				</div>
 				<div style={{
 					display: 'grid',
 					gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -85,14 +127,15 @@ function ScheduleList() {
 											{schedule.description}
 										</p>
 									)}
-									<div style={{
-										fontSize: '12px',
-										color: '#95a5a6',
-										marginTop: '10px'
-									}}>
-										{schedule.type === 'team' && `📋 ${t('schedule.boardType.team') || 'Grafik zespołu'}`}
-										{schedule.type === 'department' && `🏢 ${t('schedule.boardType.department') || 'Grafik działu'}`}
-									</div>
+								<div style={{ 
+									fontSize: '12px', 
+									color: '#95a5a6',
+									marginTop: '10px'
+								}}>
+									{schedule.type === 'team' && `📋 ${t('schedule.boardType.team') || 'Grafik zespołu'}`}
+									{schedule.type === 'department' && `🏢 ${t('schedule.boardType.department') || 'Grafik działu'}`}
+									{schedule.type === 'custom' && `⭐ ${t('schedule.boardType.custom') || 'Grafik niestandardowy'}`}
+								</div>
 								</Link>
 								<div style={{
 									position: 'absolute',
@@ -102,36 +145,75 @@ function ScheduleList() {
 									gap: '8px',
 									alignItems: 'center'
 								}}>
-									<button
-										onClick={(e) => {
-											e.preventDefault()
-											e.stopPropagation()
-											setUsersInfoModal({ isOpen: true, scheduleId: schedule._id })
-										}}
-										style={{
-											background: 'transparent',
-											border: 'none',
-											color: '#3498db',
-											cursor: 'pointer',
-											fontSize: '16px',
-											padding: '4px 8px',
-											borderRadius: '4px',
-											transition: 'all 0.2s'
-										}}
-										onMouseEnter={(e) => {
-											e.target.style.backgroundColor = '#ebf5fb'
-											e.target.style.color = '#2980b9'
-										}}
-										onMouseLeave={(e) => {
-											e.target.style.backgroundColor = 'transparent'
-											e.target.style.color = '#3498db'
-										}}
-										title={t('boards.usersInfo') || 'Zobacz użytkowników'}>
-										<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-											<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-											<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-										</svg>
-									</button>
+								<button
+									onClick={(e) => {
+										e.preventDefault()
+										e.stopPropagation()
+										setUsersInfoModal({ isOpen: true, scheduleId: schedule._id })
+									}}
+									style={{
+										background: 'transparent',
+										border: 'none',
+										color: '#3498db',
+										cursor: 'pointer',
+										fontSize: '16px',
+										padding: '4px 8px',
+										borderRadius: '4px',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => {
+										e.target.style.backgroundColor = '#ebf5fb'
+										e.target.style.color = '#2980b9'
+									}}
+									onMouseLeave={(e) => {
+										e.target.style.backgroundColor = 'transparent'
+										e.target.style.color = '#3498db'
+									}}
+									title={t('schedule.usersInfo') || 'Zobacz użytkowników'}>
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+										<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+									</svg>
+								</button>
+								{schedule.type === 'custom' && (isAdmin || (schedule.createdBy && (schedule.createdBy._id === userId || schedule.createdBy.toString() === userId))) && (
+									<>
+										<button
+											onClick={(e) => {
+												e.preventDefault()
+												e.stopPropagation()
+												setEditingSchedule(schedule)
+											}}
+											style={{
+												background: '#3498db',
+												border: 'none',
+												color: 'white',
+												cursor: 'pointer',
+												fontSize: '16px',
+												padding: '4px 8px',
+												borderRadius: '4px'
+											}}
+											title={t('schedule.edit') || 'Edytuj grafik'}>
+											✏️
+										</button>
+										<button
+											onClick={(e) => {
+												e.preventDefault()
+												e.stopPropagation()
+												handleDeleteSchedule(schedule)
+											}}
+											style={{
+												background: 'transparent',
+												border: 'none',
+												color: '#dc3545',
+												cursor: 'pointer',
+												fontSize: '20px',
+												padding: '4px 8px'
+											}}
+											title={t('schedule.delete') || 'Usuń grafik'}>
+											×
+										</button>
+									</>
+								)}
 								</div>
 							</div>
 						))
@@ -154,6 +236,27 @@ function ScheduleList() {
 					isLoading={loadingScheduleUsers}
 					title={t('schedule.usersInfo') || 'Użytkownicy grafiku'}
 				/>
+
+				{isCreateModalOpen && (
+					<CreateScheduleModal
+						onClose={() => setIsCreateModalOpen(false)}
+						onSuccess={() => {
+							setIsCreateModalOpen(false)
+							refetch()
+						}}
+					/>
+				)}
+
+				{editingSchedule && (
+					<EditScheduleModal
+						schedule={editingSchedule}
+						onClose={() => setEditingSchedule(null)}
+						onSuccess={() => {
+							setEditingSchedule(null)
+							refetch()
+						}}
+					/>
+				)}
 			</div>
 		</>
 	)

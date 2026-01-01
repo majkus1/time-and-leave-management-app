@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -6,13 +6,14 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
-import { useUsers } from '../../hooks/useUsers'
 import { useAllLeavePlans } from '../../hooks/useLeavePlans'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useQuery } from '@tanstack/react-query'
+import axios from 'axios'
+import { API_URL } from '../../config.js'
 
 function AdminAllLeaveCalendar() {
 	const colorsRef = useRef({})
-	const usedColors = useRef(new Set())
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
@@ -63,60 +64,64 @@ function AdminAllLeaveCalendar() {
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
 
 	// TanStack Query hooks
-	const { data: users = [], isLoading: loadingUsers, error: usersError } = useUsers()
+	// Dla /all-leave-plans zawsze pobieramy wszystkich użytkowników z zespołu, niezależnie od roli
+	const { data: users = [], isLoading: loadingUsers, error: usersError } = useQuery({
+		queryKey: ['users', 'all-team'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/users/alluserplans`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		staleTime: 5 * 60 * 1000,
+		cacheTime: 10 * 60 * 1000,
+	})
+	
 	const { data: allLeavePlans = [], isLoading: loadingPlans, error: plansError } = useAllLeavePlans()
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 
 	const loading = loadingUsers || loadingPlans || loadingRequests
 	const error = usersError || plansError || requestsError
 
-	// Filtrowanie danych na podstawie uprawnień
+	// Dla /all-leave-plans zawsze pokazujemy wszystkie plany i wnioski z zespołu
+	// Backend już filtruje na podstawie teamId, więc nie trzeba dodatkowo filtrować
 	const leavePlans = useMemo(() => {
-		if (isSuperAdmin) {
-			return allLeavePlans
-		} else {
-			return allLeavePlans.filter(plan => {
-				const hasUser = users.some(user => user._id === plan.userId)
-				return hasUser
-			})
-		}
-	}, [allLeavePlans, users, isSuperAdmin])
+		return allLeavePlans.filter(plan => {
+			// Filtruj tylko aby upewnić się, że plan ma użytkownika
+			return plan.userId && users.some(user => user._id === plan.userId)
+		})
+	}, [allLeavePlans, users])
 
 	const acceptedLeaveRequests = useMemo(() => {
-		if (isSuperAdmin) {
-			return allAcceptedRequests.filter(request => {
-				if (!request.userId || !request.userId._id) {
-					return false
-				}
-				return true
-			})
-		} else {
-			return allAcceptedRequests.filter(request => {
-				if (!request.userId || !request.userId._id) {
-					return false
-				}
-				const hasUser = users.some(user => user._id === request.userId._id)
-				return hasUser
-			})
-		}
-	}, [allAcceptedRequests, users, isSuperAdmin])
+		return allAcceptedRequests.filter(request => {
+			// Filtruj tylko aby upewnić się, że request ma użytkownika
+			if (!request.userId || !request.userId._id) {
+				return false
+			}
+			return users.some(user => user._id === request.userId._id)
+		})
+	}, [allAcceptedRequests, users])
 
-	const generateUniqueColor = () => {
-		let color
-		do {
-			const randomHue = Math.random() * 360
-			color = `hsl(${randomHue}, 70%, 80%)`
-		} while (usedColors.current.has(color))
-		usedColors.current.add(color)
-		return color
-	}
-	
-	const getColorForUser = username => {
-		if (!colorsRef.current[username]) {
-			colorsRef.current[username] = generateUniqueColor()
+	// Generate stable color based on user name (deterministic) - same as in Schedule
+	const getColorForUser = useCallback((userIdentifier) => {
+		if (!userIdentifier) return '#3498db'
+		
+		// Use username or full name as identifier for consistency
+		const key = userIdentifier
+		
+		if (!colorsRef.current[key]) {
+			// Generate stable color from string hash - same algorithm as in Schedule.jsx
+			let hash = 0
+			for (let i = 0; i < key.length; i++) {
+				hash = key.charCodeAt(i) + ((hash << 5) - hash)
+			}
+			const hue = Math.abs(hash) % 360
+			const saturation = 70
+			const lightness = 50
+			colorsRef.current[key] = `hsl(${hue}, ${saturation}%, ${lightness}%)`
 		}
-		return colorsRef.current[username]
-	}
+		return colorsRef.current[key]
+	}, [])
 
 	const handleMonthSelect = event => {
 		const newMonth = parseInt(event.target.value, 10)
@@ -246,30 +251,34 @@ function AdminAllLeaveCalendar() {
 						showNonCurrentDates={false}
 						events={[
 							// Plany urlopów
-							...leavePlans.map(plan => ({
-								title: `${plan.firstName} ${plan.lastName} (Plan)`,
-								start: plan.date,
-								allDay: true,
-								backgroundColor: getColorForUser(plan.username),
-								borderColor: getColorForUser(plan.username),
-								extendedProps: { type: 'plan', userId: plan.userId }
-							})),
+							...leavePlans.map(plan => {
+								const employeeName = `${plan.firstName} ${plan.lastName}`
+								return {
+									title: `${employeeName} (Plan)`,
+									start: plan.date,
+									allDay: true,
+									backgroundColor: getColorForUser(employeeName),
+									borderColor: getColorForUser(employeeName),
+									extendedProps: { type: 'plan', userId: plan.userId }
+								}
+							}),
 							// Zaakceptowane wnioski urlopowe
 							...acceptedLeaveRequests
-								.filter(request => request.userId && request.userId.username) // Dodatkowe zabezpieczenie
+								.filter(request => request.userId && request.userId.firstName && request.userId.lastName) // Sprawdź czy mamy pełną nazwę
 								.map(request => {
 									// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
 									const endDate = new Date(request.endDate)
 									endDate.setDate(endDate.getDate() + 1)
 									const endDateStr = endDate.toISOString().split('T')[0]
+									const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
 									
 									return {
-										title: `${request.userId.firstName} ${request.userId.lastName} (${t(request.type)})`,
+										title: `${employeeName} (${t(request.type)})`,
 										start: request.startDate,
 										end: endDateStr,
 										allDay: true,
-										backgroundColor: getColorForUser(request.userId.username),
-										borderColor: getColorForUser(request.userId.username),
+										backgroundColor: getColorForUser(employeeName),
+										borderColor: getColorForUser(employeeName),
 										extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
 									}
 								})

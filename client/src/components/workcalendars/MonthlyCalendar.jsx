@@ -673,11 +673,36 @@ function MonthlyCalendar() {
 					},
 				}}
 				contentLabel={t('workcalendar.modalContentLabel')}>
-				{selectedDate && (
-					<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
-						{t('workcalendar.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
-					</h2>
-				)}
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+					{selectedDate && (
+						<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ margin: 0 }}>
+							{t('workcalendar.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
+						</h2>
+					)}
+					<button
+						onClick={() => {
+							setModalIsOpen(false)
+							resetFormFields()
+						}}
+						style={{
+							background: 'transparent',
+							border: 'none',
+							fontSize: '28px',
+							cursor: 'pointer',
+							color: '#7f8c8d',
+							lineHeight: '1',
+							padding: '0',
+							width: '30px',
+							height: '30px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center'
+						}}
+						onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+						onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+						×
+					</button>
+				</div>
 
 				{selectedDate && (() => {
 					const clickedDateObj = new Date(selectedDate)

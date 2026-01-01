@@ -79,25 +79,16 @@ exports.getUserWorkdays = async (req, res) => {
 
 		
 		const isAdmin = requestingUser.roles.includes('Admin');
-		const isHR = requestingUser.roles.includes('Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)');
-
-		
+		const isHR = requestingUser.roles.includes('HR');
 		const isSelf = requestingUser._id.toString() === userId;
-
 		
 		const userToView = await User.findById(userId);
 		
-		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
-		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userToViewDepts = Array.isArray(userToView?.department) ? userToView.department : (userToView?.department ? [userToView.department] : [])
-		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
-		
-		const isSupervisorOfDepartment =
-			requestingUser.roles.includes('Może zatwierdzać urlopy swojego działu (Approve Leaves Department)') &&
-			userToView &&
-			hasCommonDepartment;
+		// Sprawdź uprawnienia przełożonego
+		const { canSupervisorViewTimesheets } = require('../services/roleService')
+		const canView = userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false;
 
-		if (!(isAdmin || isHR || isSelf || isSupervisorOfDepartment)) {
+		if (!(isAdmin || isHR || isSelf || canView)) {
 			return res.status(403).send('Access denied');
 		}
 

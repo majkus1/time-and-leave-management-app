@@ -62,7 +62,7 @@ const scheduleSchema = new mongoose.Schema({
 	},
 	type: {
 		type: String,
-		enum: ['team', 'department'],
+		enum: ['team', 'department', 'custom'],
 		required: true
 	},
 	departmentName: {
@@ -70,6 +70,14 @@ const scheduleSchema = new mongoose.Schema({
 		required: function() {
 			return this.type === 'department';
 		}
+	},
+	members: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User'
+	}],
+	createdBy: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User'
 	},
 	days: [scheduleDaySchema],
 	isActive: {
@@ -85,6 +93,7 @@ const scheduleSchema = new mongoose.Schema({
 scheduleSchema.index({ teamId: 1, type: 1 });
 scheduleSchema.index({ teamId: 1, departmentName: 1 });
 scheduleSchema.index({ teamId: 1, name: 1 });
+scheduleSchema.index({ members: 1 });
 
 module.exports = conn => (conn.models.Schedule || conn.model('Schedule', scheduleSchema));
 
