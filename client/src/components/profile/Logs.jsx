@@ -1177,56 +1177,72 @@ function Logs() {
 																	{role === 'Przełożony (Supervisor)' && editedRoles.includes(role) && editingUser?._id && (
 																		<div style={{ 
 																			display: 'flex', 
-																			gap: '8px',
-																			marginLeft: '32px'
+																			gap: '10px',
+																			marginLeft: '32px',
+																			marginTop: '8px',
+																			padding: '12px',
+																			backgroundColor: '#f8f9fa',
+																			borderRadius: '8px',
+																			border: '1px solid #e9ecef',
+																			borderLeft: '4px solid #3498db'
 																		}}>
 																			<button
 																				type="button"
 																				onClick={() => setSupervisorConfigModal({ isOpen: true, userId: editingUser._id })}
 																				style={{
-																					padding: '6px 12px',
+																					padding: '8px 16px',
 																					border: '1px solid #3498db',
 																					borderRadius: '6px',
-																					backgroundColor: 'white',
-																					color: '#3498db',
+																					backgroundColor: '#3498db',
+																					color: 'white',
 																					cursor: 'pointer',
-																					fontSize: '12px',
-																					fontWeight: '500',
-																					transition: 'all 0.2s'
+																					fontSize: '13px',
+																					fontWeight: '600',
+																					transition: 'all 0.2s',
+																					boxShadow: '0 2px 4px rgba(52, 152, 219, 0.2)'
 																				}}
 																				onMouseEnter={(e) => {
-																					e.target.style.backgroundColor = '#e3f2fd'
-																					e.target.style.color = '#2980b9'
+																					e.target.style.backgroundColor = '#2980b9'
+																					e.target.style.borderColor = '#2980b9'
+																					e.target.style.boxShadow = '0 3px 6px rgba(52, 152, 219, 0.3)'
+																					e.target.style.transform = 'translateY(-1px)'
 																				}}
 																				onMouseLeave={(e) => {
-																					e.target.style.backgroundColor = 'white'
-																					e.target.style.color = '#3498db'
+																					e.target.style.backgroundColor = '#3498db'
+																					e.target.style.borderColor = '#3498db'
+																					e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
+																					e.target.style.transform = 'translateY(0)'
 																				}}>
-																				{t('logs.configure') || 'Konfiguruj'}
+																				⚙️ {t('logs.configure') || 'Konfiguruj'}
 																			</button>
 																			<button
 																				type="button"
 																				onClick={() => setSubordinatesModal({ isOpen: true, userId: editingUser._id })}
 																				style={{
-																					padding: '6px 12px',
+																					padding: '8px 16px',
 																					border: '1px solid #27ae60',
 																					borderRadius: '6px',
-																					backgroundColor: 'white',
-																					color: '#27ae60',
+																					backgroundColor: '#27ae60',
+																					color: 'white',
 																					cursor: 'pointer',
-																					fontSize: '12px',
-																					fontWeight: '500',
-																					transition: 'all 0.2s'
+																					fontSize: '13px',
+																					fontWeight: '600',
+																					transition: 'all 0.2s',
+																					boxShadow: '0 2px 4px rgba(39, 174, 96, 0.2)'
 																				}}
 																				onMouseEnter={(e) => {
-																					e.target.style.backgroundColor = '#e8f5e9'
-																					e.target.style.color = '#229954'
+																					e.target.style.backgroundColor = '#229954'
+																					e.target.style.borderColor = '#229954'
+																					e.target.style.boxShadow = '0 3px 6px rgba(39, 174, 96, 0.3)'
+																					e.target.style.transform = 'translateY(-1px)'
 																				}}
 																				onMouseLeave={(e) => {
-																					e.target.style.backgroundColor = 'white'
-																					e.target.style.color = '#27ae60'
+																					e.target.style.backgroundColor = '#27ae60'
+																					e.target.style.borderColor = '#27ae60'
+																					e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
+																					e.target.style.transform = 'translateY(0)'
 																				}}>
-																				{t('logs.manageSubordinates') || 'Podwładni'}
+																				👥 {t('logs.manageSubordinates') || 'Pracownicy'}
 																			</button>
 																		</div>
 																	)}
@@ -1793,30 +1809,107 @@ function Logs() {
 												gap: '10px'
 											}}>
 												{availableRoles.map(role => (
-													<label key={role} style={{ 
-														display: 'flex', 
-														alignItems: 'flex-start',
-														padding: '15px',
-														backgroundColor: 'white',
-														borderRadius: '8px',
-														border: '1px solid #dee2e6',
-														cursor: 'pointer',
-														transition: 'all 0.2s',
-														boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+													<div key={role} style={{ 
+														display: 'flex',
+														flexDirection: 'column',
+														gap: '8px'
 													}}>
-														<input
-															type="checkbox"
-															checked={editedRoles.includes(role)}
-															onChange={() => handleRoleChange(role)}
-															style={{ 
-																marginRight: '12px',
-																transform: 'scale(1.3)',
-																marginTop: '2px',
-																flexShrink: 0
-															}}
-														/>
-														<span style={{ fontSize: '14px', lineHeight: '1.4' }}>{role}</span>
-													</label>
+														<label style={{ 
+															display: 'flex', 
+															alignItems: 'flex-start',
+															padding: '15px',
+															backgroundColor: 'white',
+															borderRadius: '8px',
+															border: '1px solid #dee2e6',
+															cursor: 'pointer',
+															transition: 'all 0.2s',
+															boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+														}}>
+															<input
+																type="checkbox"
+																checked={editedRoles.includes(role)}
+																onChange={() => handleRoleChange(role)}
+																style={{ 
+																	marginRight: '12px',
+																	transform: 'scale(1.3)',
+																	marginTop: '2px',
+																	flexShrink: 0
+																}}
+															/>
+															<span style={{ fontSize: '14px', lineHeight: '1.4', flex: 1 }}>{role}</span>
+														</label>
+														{role === 'Przełożony (Supervisor)' && editedRoles.includes(role) && editingUser?._id && (
+															<div style={{ 
+																display: 'flex', 
+																gap: '10px',
+																marginLeft: '0',
+																marginTop: '8px',
+																padding: '12px',
+																backgroundColor: '#f8f9fa',
+																borderRadius: '8px',
+																border: '1px solid #e9ecef',
+																borderLeft: '4px solid #3498db',
+																flexDirection: 'column'
+															}}>
+																<button
+																	type="button"
+																	onClick={() => setSupervisorConfigModal({ isOpen: true, userId: editingUser._id })}
+																	style={{
+																		padding: '10px 16px',
+																		border: '1px solid #3498db',
+																		borderRadius: '6px',
+																		backgroundColor: '#3498db',
+																		color: 'white',
+																		cursor: 'pointer',
+																		fontSize: '14px',
+																		fontWeight: '600',
+																		transition: 'all 0.2s',
+																		boxShadow: '0 2px 4px rgba(52, 152, 219, 0.2)',
+																		width: '100%'
+																	}}
+																	onMouseEnter={(e) => {
+																		e.target.style.backgroundColor = '#2980b9'
+																		e.target.style.borderColor = '#2980b9'
+																		e.target.style.boxShadow = '0 3px 6px rgba(52, 152, 219, 0.3)'
+																	}}
+																	onMouseLeave={(e) => {
+																		e.target.style.backgroundColor = '#3498db'
+																		e.target.style.borderColor = '#3498db'
+																		e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
+																	}}>
+																	⚙️ {t('logs.configure') || 'Konfiguruj'}
+																</button>
+																<button
+																	type="button"
+																	onClick={() => setSubordinatesModal({ isOpen: true, userId: editingUser._id })}
+																	style={{
+																		padding: '10px 16px',
+																		border: '1px solid #27ae60',
+																		borderRadius: '6px',
+																		backgroundColor: '#27ae60',
+																		color: 'white',
+																		cursor: 'pointer',
+																		fontSize: '14px',
+																		fontWeight: '600',
+																		transition: 'all 0.2s',
+																		boxShadow: '0 2px 4px rgba(39, 174, 96, 0.2)',
+																		width: '100%'
+																	}}
+																	onMouseEnter={(e) => {
+																		e.target.style.backgroundColor = '#229954'
+																		e.target.style.borderColor = '#229954'
+																		e.target.style.boxShadow = '0 3px 6px rgba(39, 174, 96, 0.3)'
+																	}}
+																	onMouseLeave={(e) => {
+																		e.target.style.backgroundColor = '#27ae60'
+																		e.target.style.borderColor = '#27ae60'
+																		e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
+																	}}>
+																	👥 {t('logs.manageSubordinates') || 'Pracownicy'}
+																</button>
+															</div>
+														)}
+													</div>
 												))}
 											</div>
 										</div>

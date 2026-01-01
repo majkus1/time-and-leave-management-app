@@ -385,13 +385,13 @@ i18n
 						h3: 'All employees vacation plans',
 						emplo: 'Employee list:',
 					},
-					evidencework: {
-						h3: 'All work time records',
-					},
-					vacationlisteq: {
-						h3: 'Employees vacations/absences',
-						request: 'Submissions',
-					},
+				evidencework: {
+					h3: 'Work time records',
+				},
+				vacationlisteq: {
+					h3: 'Employees vacations/absences',
+					request: 'Requests',
+				},
 					list: {
 						error: 'Failed to fetch the user list.',
 					},
@@ -972,13 +972,13 @@ i18n
 						h3: 'Plany urlopowe wszystkich pracowników',
 						emplo: 'Lista pracowników:',
 					},
-					evidencework: {
-						h3: 'Wszystkie ewidencje czasu pracy',
-					},
-					vacationlisteq: {
-						h3: 'Urlopy/nieobecności pracowników',
-						request: 'Zgłoszenia',
-					},
+				evidencework: {
+					h3: 'Ewidencje czasu pracy',
+				},
+				vacationlisteq: {
+					h3: 'Urlopy/nieobecności pracowników',
+					request: 'Wnioski',
+				},
 					list: {
 						error: 'Nie udało się pobrać listy użytkowników.',
 					},
