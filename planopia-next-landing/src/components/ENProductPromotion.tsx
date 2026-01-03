@@ -77,7 +77,7 @@ function ENProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Planopia is a free time tracking and leave management web app for teams up to 4 users. Paid plans include unlimited users, advanced customization, and integrations.",
+						"description": "Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 4 users. Paid plans include unlimited users, advanced customization, and integrations.",
 						"offers": {
 							"@type": "Offer",
 							"price": "0",
@@ -227,10 +227,10 @@ function ENProductPromotion() {
 						{/* Text */}
 						<div>
 							<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-								Simple time and leave management
+								Comprehensive company management app
 							</h2>
 							<p className="mt-4 text-lg text-gray-600">
-								Forget Excel sheets and endless emails. Planopia automates time tracking, absence requests, and approvals — faster, clearer, and error-free.
+								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Forget Excel sheets and endless emails. Planopia automates processes — faster, clearer, and error-free.
 							</p>
 
 							{/* Feature grid */}
@@ -256,10 +256,34 @@ function ENProductPromotion() {
 									<img src="img/pdf.png" className="icon-landing-about" alt='icon in section' />
 									<div>
 										<p className="font-semibold text-gray-900">Documents</p>
-										<p className="text-sm text-gray-600">Generate PDFs: work calendars and leave requests always at hand.</p>
+										<p className="text-sm text-gray-600">Generate PDF and Excel: work calendars and leave requests always at hand.</p>
 									</div>
 								</div>
 								{/* 4 */}
+								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+									<img src="img/project.png" className="icon-landing-about" alt='icon in section' />
+									<div>
+										<p className="font-semibold text-gray-900">Work schedules</p>
+										<p className="text-sm text-gray-600">Planning and managing work schedules for the entire team.</p>
+									</div>
+								</div>
+								{/* 5 */}
+								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+									<img src="img/chat.png" className="icon-landing-about" alt='icon in section' />
+									<div>
+										<p className="font-semibold text-gray-900">Chats</p>
+										<p className="text-sm text-gray-600">Internal communication — team chats and department channels.</p>
+									</div>
+								</div>
+								{/* 6 */}
+								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+									<img src="img/task-list.png" className="icon-landing-about" alt='icon in section' />
+									<div>
+										<p className="font-semibold text-gray-900">Task boards</p>
+										<p className="text-sm text-gray-600">Project and task management in clear Kanban boards.</p>
+									</div>
+								</div>
+								{/* 7 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="img/verified.png" className="icon-landing-about" alt='icon in section' />
 									<div>
@@ -267,7 +291,7 @@ function ENProductPromotion() {
 										<p className="text-sm text-gray-600">Secure login and encrypted connections protect your company.</p>
 									</div>
 								</div>
-								{/* 5 */}
+								{/* 8 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="img/booking.png" className="icon-landing-about" alt='icon in section' />
 									<div>
@@ -275,7 +299,7 @@ function ENProductPromotion() {
 										<p className="text-sm text-gray-600">Add to your screen and use it like an app.</p>
 									</div>
 								</div>
-								{/* 6 */}
+								{/* 9 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="img/technical-support.png" className="icon-landing-about" alt='icon in section' />
 									<div>
@@ -301,12 +325,12 @@ function ENProductPromotion() {
 						{/* Product mockup */}
 						<div className="relative flex justify-center items-center mockup-rotator">
 							<img
-								src="img/desktop-en.webp"
+								src="img/desktop-ennew.webp"
 								alt="Planopia – desktop view"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 desktop-mockup"
 							/>
 							<img
-								src="img/mobile-en.webp"
+								src="img/mobile-ennew.webp"
 								alt="Planopia – mobile view"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
 							/>
@@ -389,7 +413,7 @@ function ENProductPromotion() {
 						<div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
 							<h3 className="text-2xl font-semibold mb-4">Monthly plan</h3>
 							<p className="text-4xl font-bold text-green-600 mb-2">
-								$4.50 <span className="text-lg font-normal text-gray-700">/user/month</span>
+								$4.80 <span className="text-lg font-normal text-gray-700">/user/month</span>
 							</p>
 							<p className="text-gray-600 mb-8">Pay monthly, cancel anytime.</p>
 							<button
@@ -404,7 +428,7 @@ function ENProductPromotion() {
 						<div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
 							<h3 className="text-2xl font-semibold mb-4">Yearly plan</h3>
 							<p className="text-4xl font-bold text-blue-600 mb-2">
-								$45 <span className="text-lg font-normal text-gray-700">/user/year</span>
+								$48 <span className="text-lg font-normal text-gray-700">/user/year</span>
 							</p>
 							<p className="text-gray-600 mb-8">Save with annual payment — pay as for 10 months.</p>
 							<button
@@ -487,6 +511,13 @@ function ENProductPromotion() {
 								</div>
 							</div>
 						</div>
+					</div>
+
+					{/* Price negotiation note */}
+					<div className="mt-10 mx-auto">
+						<p className="text-gray-600">
+							<span className="font-semibold">Note:</span> If some features from the app are not needed in your company, the price can be negotiated. Contact us to discuss your individual needs.
+						</p>
 					</div>
 				</div>
 			</section>

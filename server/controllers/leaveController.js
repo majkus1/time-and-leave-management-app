@@ -1,9 +1,109 @@
 const { firmDb } = require('../db/db')
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const User = require('../models/user')(firmDb)
+const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
+const LeavePlan = require('../models/LeavePlan')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { appUrl } = require('../config')
+
+// Funkcja pomocnicza do zbierania unikalnych odbiorców emaili (bez duplikatów)
+async function getUniqueEmailRecipients(user, teamId, t) {
+	const { canSupervisorApproveLeaves } = require('../services/roleService')
+	
+	// 1. Zbierz przełożonych z działów
+	const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
+	const allSupervisors = []
+	for (const dept of userDepartments) {
+		const deptSupervisors = await findSupervisorsForDepartment(dept, teamId)
+		allSupervisors.push(...deptSupervisors)
+	}
+	
+	// 2. Zbierz przełożonych z SupervisorConfig (selectedEmployees) - nawet jeśli nie są w tym samym dziale
+	const supervisorConfigs = await SupervisorConfig.find({
+		teamId,
+		selectedEmployees: user._id,
+		'permissions.canApproveLeaves': true,
+		'permissions.canApproveLeavesSelectedEmployees': true
+	}).select('supervisorId')
+	
+	const supervisorIdsFromConfig = supervisorConfigs.map(config => config.supervisorId)
+	const supervisorsFromConfig = await User.find({
+		_id: { $in: supervisorIdsFromConfig },
+		teamId,
+		roles: { $in: ['Przełożony (Supervisor)'] }
+	})
+	
+	// Połącz przełożonych z działów i z konfiguracji
+	const allPotentialSupervisors = [...allSupervisors, ...supervisorsFromConfig]
+	const uniqueSupervisors = Array.from(new Map(allPotentialSupervisors.map(sup => [sup._id.toString(), sup])).values())
+	const potentialSupervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
+	
+	// 3. Sprawdź uprawnienia każdego przełożonego
+	const supervisors = []
+	for (const supervisor of potentialSupervisors) {
+		const supervisorObj = await User.findById(supervisor._id)
+		if (!supervisorObj) continue
+		const canApprove = await canSupervisorApproveLeaves(supervisorObj, user)
+		if (canApprove) {
+			supervisors.push(supervisorObj)
+		}
+	}
+
+	// 4. Zbierz HR
+	const hrUsers = await User.find({
+		teamId,
+		roles: { $in: ['HR'] },
+	}).select('username firstName lastName')
+
+	// 5. Zbierz Adminów (jeśli nie ma przełożonych ani HR)
+	let adminUsers = []
+	if (supervisors.length === 0 && hrUsers.length === 0) {
+		adminUsers = await User.find({
+			teamId,
+			roles: { $in: ['Admin'] },
+		}).select('username firstName lastName')
+	}
+
+	// 6. Połącz wszystkie listy i usuń duplikaty na podstawie username
+	const allRecipients = [...supervisors, ...hrUsers, ...adminUsers]
+	const uniqueRecipientsMap = new Map()
+	
+	for (const recipient of allRecipients) {
+		// Użyj username jako klucza do deduplikacji
+		if (recipient.username && recipient.username !== user.username) {
+			// Jeśli użytkownik już nie jest w mapie, dodaj go
+			// Jeśli jest, preferuj pełny obiekt (z firstName, lastName) zamiast tylko username
+			if (!uniqueRecipientsMap.has(recipient.username)) {
+				uniqueRecipientsMap.set(recipient.username, recipient)
+			} else {
+				// Jeśli już jest, ale obecny ma więcej danych, zamień
+				const existing = uniqueRecipientsMap.get(recipient.username)
+				if (recipient.firstName && recipient.lastName && (!existing.firstName || !existing.lastName)) {
+					uniqueRecipientsMap.set(recipient.username, recipient)
+				}
+			}
+		}
+	}
+
+	// Zwróć unikalną listę odbiorców
+	return Array.from(uniqueRecipientsMap.values())
+}
+
+// Funkcja pomocnicza do generowania wszystkich dat w zakresie
+function generateDateRange(startDate, endDate) {
+	const dates = []
+	const start = new Date(startDate)
+	const end = new Date(endDate)
+	const current = new Date(start)
+	
+	while (current <= end) {
+		dates.push(new Date(current).toISOString().split('T')[0])
+		current.setDate(current.getDate() + 1)
+	}
+	
+	return dates
+}
 
 exports.submitLeaveRequest = async (req, res) => {
 	const { type, startDate, endDate, daysRequested, replacement, additionalInfo } = req.body
@@ -12,6 +112,11 @@ exports.submitLeaveRequest = async (req, res) => {
 	const t = req.t
 
 	try {
+		const isL4 = type === 'leaveform.option6'
+		
+		// Dla L4 ustaw status na "sent", dla innych pozostaw "pending"
+		const status = isL4 ? 'status.sent' : 'status.pending'
+		
 		const leaveRequest = new LeaveRequest({
 			userId,
 			type,
@@ -20,43 +125,88 @@ exports.submitLeaveRequest = async (req, res) => {
 			daysRequested,
 			replacement,
 			additionalInfo,
+			status,
 		})
 		await leaveRequest.save()
 
 		const user = await User.findById(userId).select('firstName lastName roles department username')
 		if (!user) return res.status(404).send('Użytkownik nie znaleziony.')
 
-		// Dla wielu działów - znajdź przełożonych dla wszystkich działów użytkownika
-		const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-		const allSupervisors = []
-		for (const dept of userDepartments) {
-			const deptSupervisors = await findSupervisorsForDepartment(dept, teamId)
-			allSupervisors.push(...deptSupervisors)
-		}
-		// Usuń duplikaty i samego użytkownika
-		const uniqueSupervisors = Array.from(new Map(allSupervisors.map(sup => [sup._id.toString(), sup])).values())
-		const potentialSupervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
-		
-		// Sprawdź uprawnienia każdego przełożonego - czy może zatwierdzać urlopy dla tego pracownika
-		// HIERARCHIA RÓL: Admin > HR > Przełożony
-		const { canSupervisorApproveLeaves } = require('../services/roleService')
-		const supervisors = []
-		for (const supervisor of potentialSupervisors) {
-			// Pobierz pełny obiekt użytkownika dla helpera
-			const supervisorObj = await User.findById(supervisor._id)
-			if (!supervisorObj) continue
+		// Dla L4: zbierz przełożonych + HR/Admin
+		// Dla innych: użyj standardowej logiki
+		let recipients = []
+		if (isL4) {
+			// Zbierz przełożonych (standardowa logika)
+			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
 			
-			// Admin i HR zawsze otrzymują powiadomienia (sprawdzane w canSupervisorApproveLeaves)
-			// Przełożony tylko jeśli ma uprawnienia zgodnie z konfiguracją
-			const canApprove = await canSupervisorApproveLeaves(supervisorObj, user)
-			if (canApprove) {
-				supervisors.push(supervisor)
+			// Zbierz HR
+			const hrUsers = await User.find({
+				teamId,
+				roles: { $in: ['HR'] },
+			}).select('username firstName lastName')
+			
+			// Jeśli nie ma HR, zbierz Adminów
+			let adminUsers = []
+			if (hrUsers.length === 0) {
+				adminUsers = await User.find({
+					teamId,
+					roles: { $in: ['Admin'] },
+				}).select('username firstName lastName')
 			}
+			
+			// Połącz wszystkie listy i usuń duplikaty
+			const allRecipients = [...supervisors, ...hrUsers, ...adminUsers]
+			const uniqueRecipientsMap = new Map()
+			
+			for (const recipient of allRecipients) {
+				if (recipient.username && recipient.username !== user.username) {
+					if (!uniqueRecipientsMap.has(recipient.username)) {
+						uniqueRecipientsMap.set(recipient.username, recipient)
+					} else {
+						const existing = uniqueRecipientsMap.get(recipient.username)
+						if (recipient.firstName && recipient.lastName && (!existing.firstName || !existing.lastName)) {
+							uniqueRecipientsMap.set(recipient.username, recipient)
+						}
+					}
+				}
+			}
+			
+			recipients = Array.from(uniqueRecipientsMap.values())
+		} else {
+			// Standardowa logika dla innych typów wniosków
+			recipients = await getUniqueEmailRecipients(user, teamId, t)
+		}
+
+		// Dla L4: automatycznie dodaj do LeavePlan
+		if (isL4) {
+			const dates = generateDateRange(startDate, endDate)
+			const leavePlanPromises = dates.map(date => {
+				// Sprawdź czy już istnieje plan na ten dzień
+				return LeavePlan.findOne({ userId, date }).then(existing => {
+					if (!existing) {
+						const leavePlan = new LeavePlan({
+							userId,
+							date,
+							firstName: user.firstName,
+							lastName: user.lastName
+						})
+						return leavePlan.save()
+					}
+					return Promise.resolve()
+				})
+			})
+			await Promise.all(leavePlanPromises)
+		}
+
+		if (recipients.length === 0) {
+			// Jeśli nie ma odbiorców, zakończ (nie wysyłaj emaili)
+			res.status(201).json({ message: 'Wniosek został wysłany.', leaveRequest })
+			return
 		}
 
 		const typeText = t(type)
 		const content = `
-			<p style="margin: 0 0 16px 0;">${t('email.leaveform.newRequestSupervisor')}</p>
+			<p style="margin: 0 0 16px 0;">${isL4 ? t('email.leaveform.newL4Request') : t('email.leaveform.newRequestSupervisor')}</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
@@ -78,12 +228,13 @@ exports.submitLeaveRequest = async (req, res) => {
 					</tr>
 				</table>
 			</div>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>
+			${isL4 ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 		`
 		
-		const emailPromises = supervisors.map(supervisor =>
+		// Wyślij email do wszystkich unikalnych odbiorców
+		const emailPromises = recipients.map(recipient =>
 			sendEmail(
-				supervisor.username,
+				recipient.username,
 				`${appUrl}/leave-requests/${userId}`,
 				t('email.leaveform.title'),
 				getEmailTemplate(
@@ -97,86 +248,6 @@ exports.submitLeaveRequest = async (req, res) => {
 		)
 
 		await Promise.all(emailPromises)
-
-		
-		const hrUsers = await User.find({
-			teamId,
-			roles: { $in: ['HR'] },
-		})
-
-		
-		const hrContent = `
-			<p style="margin: 0 0 16px 0;">${t('email.leaveform.newRequestHR')}</p>
-			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
-				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
-				<table style="width: 100%; border-collapse: collapse;">
-					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
-						<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.type')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${typeText}</td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.dates')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${daysRequested}</td>
-					</tr>
-				</table>
-			</div>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToView')}</p>
-		`
-		
-		const hrEmailPromises = hrUsers.map(hr =>
-			sendEmail(
-				hr.username,
-				`${appUrl}/leave-requests/${userId}`,
-				t('email.leaveform.title'),
-				getEmailTemplate(
-					t('email.leaveform.title'),
-					hrContent,
-					t('email.leaveform.goToRequest'),
-					`${appUrl}/leave-requests/${userId}`,
-					t
-				)
-			)
-		)
-
-		await Promise.all(hrEmailPromises)
-
-		// Jeśli nie znaleziono przełożonych ani HR, wyślij do Adminów
-		if (supervisors.length === 0 && hrUsers.length === 0) {
-			const adminUsers = await User.find({
-				teamId,
-				roles: { $in: ['Admin'] },
-			}).select('username')
-
-			// Usuń samego użytkownika jeśli jest adminem
-			const adminsToNotify = adminUsers.filter(admin => admin.username !== user.username)
-
-			if (adminsToNotify.length > 0) {
-				const adminEmailPromises = adminsToNotify.map(admin =>
-					sendEmail(
-						admin.username,
-						`${appUrl}/leave-requests/${userId}`,
-						t('email.leaveform.title'),
-						getEmailTemplate(
-							t('email.leaveform.title'),
-							content,
-							t('email.leaveform.goToRequest'),
-							`${appUrl}/leave-requests/${userId}`,
-							t
-						)
-					)
-				)
-
-				await Promise.all(adminEmailPromises)
-			}
-		}
 
 		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
 	} catch (error) {

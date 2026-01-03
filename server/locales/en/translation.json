@@ -1,12 +1,13 @@
 {
 	"email": {
 		"leaveform": {
-			"option1": "Paid Vacation",
-			"option2": "Special Leave",
-			"option3": "On-Demand Leave",
-			"option4": "Unpaid Leave",
-			"option5": "Other Absence",
-			"title": "New leave request",
+		"option1": "Paid Vacation",
+		"option2": "Special Leave",
+		"option3": "On-Demand Leave",
+		"option4": "Unpaid Leave",
+		"option5": "Other Absence",
+		"option6": "Sick Leave (L4)",
+		"title": "New leave request",
 			"employee": "Employee",
 			"type": "Type",
 			"dates": "Dates",
@@ -16,7 +17,13 @@
 			"newRequestHR": "You have received a new leave request for review.",
 			"requestDetails": "Request details:",
 			"clickButtonToReview": "Click the button below to go to the request and approve or reject it.",
-			"clickButtonToView": "Click the button below to go to the request and review it."
+			"clickButtonToView": "Click the button below to go to the request and review it.",
+			"requestCancelledTitle": "Leave Request Cancelled",
+			"requestCancelledSupervisor": "A leave request has been cancelled.",
+			"requestCancelledHR": "A leave request has been cancelled.",
+			"requestUpdatedSupervisor": "A leave request has been updated and requires your review.",
+			"newL4Request": "You have received a new sick leave (L4) notification.",
+			"l4Info": "This is a sick leave (L4) notification. The request has been automatically added to the leave calendar and does not require approval."
 		},
 		"welcome": {
 			"subject": "Welcome to planopia.pl",
@@ -77,7 +84,8 @@
 		"option2": "Special Leave",
 		"option3": "On-Demand Leave",
 		"option4": "Unpaid Leave",
-		"option5": "Other Absence"
+		"option5": "Other Absence",
+		"option6": "Sick Leave (L4)"
 	},
 	"resetpass": {
 		"subject": "Reset your password on planopia.pl",

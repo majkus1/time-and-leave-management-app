@@ -4,7 +4,7 @@ const leaveRequestSchema = new mongoose.Schema({
 	userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 	type: {
 		type: String,
-		enum: ['leaveform.option1', 'leaveform.option2', 'leaveform.option3', 'leaveform.option4', 'leaveform.option5'],
+		enum: ['leaveform.option1', 'leaveform.option2', 'leaveform.option3', 'leaveform.option4', 'leaveform.option5', 'leaveform.option6'],
 		required: true,
 	},
 	startDate: { type: Date, required: true },
@@ -19,7 +19,7 @@ const leaveRequestSchema = new mongoose.Schema({
 	// },
 	status: {
 		type: String,
-		enum: ['status.pending', 'status.accepted', 'status.rejected'],
+		enum: ['status.pending', 'status.accepted', 'status.rejected', 'status.sent'],
 		default: 'status.pending'
 	  },	  
 	createdAt: { type: Date, default: Date.now },

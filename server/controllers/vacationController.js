@@ -5,24 +5,26 @@ exports.updateVacationDays = async (req, res) => {
 	const { userId } = req.params
 	const { vacationDays } = req.body
 
-	const allowedRoles = [
-		'Admin',
-		'Zarząd',
-		'Kierownik IT',
-		'Kierownik BOK',
-		'Kierownik Bukmacher',
-		'Kierownik Marketing',
-		'Urlopy czas pracy',
-	]
-
-	if (!allowedRoles.some(role => req.user.roles.includes(role))) {
-		return res.status(403).send('Access denied')
-	}
-
 	try {
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
 		const user = await User.findById(userId)
 		if (!user) {
 			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
+		const isAdmin = requestingUser.roles.includes('Admin')
+		const isHR = requestingUser.roles.includes('HR')
+		
+		// Sprawdź uprawnienia przełożonego (w tym niestandardowego przez SupervisorConfig)
+		const { canSupervisorApproveLeaves } = require('../services/roleService')
+		const canApprove = await canSupervisorApproveLeaves(requestingUser, user)
+
+		if (!isAdmin && !isHR && !canApprove) {
+			return res.status(403).send('Access denied')
 		}
 
 		user.vacationDays = vacationDays

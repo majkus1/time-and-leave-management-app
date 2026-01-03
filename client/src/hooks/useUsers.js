@@ -190,3 +190,22 @@ export const useUpdatePosition = () => {
 	})
 }
 
+// Mutation - aktualizacja imienia i nazwiska użytkownika
+export const useUpdateName = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ firstName, lastName }) => {
+			const response = await axios.put(`${API_URL}/api/users/update-name`, { firstName, lastName }, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			// Invaliduj profil użytkownika i całą listę użytkowników
+			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+		},
+	})
+}
+

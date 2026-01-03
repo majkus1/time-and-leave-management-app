@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 
@@ -15,6 +15,24 @@ export const useTeamInfo = (teamId) => {
 		enabled: !!teamId,
 		staleTime: 5 * 60 * 1000, // 5 minut
 		cacheTime: 10 * 60 * 1000,
+	})
+}
+
+// Mutation hook - usuwanie zespołu
+export const useDeleteTeam = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (teamId) => {
+			const response = await axios.delete(`${API_URL}/api/teams/${teamId}`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ['team'] })
+		},
 	})
 }
 

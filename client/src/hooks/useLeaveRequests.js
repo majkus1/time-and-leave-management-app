@@ -128,3 +128,40 @@ export const useUpdateLeaveRequestStatus = () => {
 	})
 }
 
+// Mutation - anulowanie wniosku urlopowego
+export const useCancelLeaveRequest = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (id) => {
+			const response = await axios.delete(
+				`${API_URL}/api/leaveworks/leave-requests/${id}`,
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+		},
+	})
+}
+
+// Mutation - edycja wniosku urlopowego
+export const useUpdateLeaveRequest = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ id, data }) => {
+			const response = await axios.put(
+				`${API_URL}/api/leaveworks/leave-requests/${id}`,
+				data,
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+		},
+	})
+}
+

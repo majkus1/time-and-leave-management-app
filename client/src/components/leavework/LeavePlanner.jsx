@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useOwnVacationDays } from '../../hooks/useVacation'
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
@@ -57,10 +58,11 @@ function LeavePlanner() {
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
+	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
-	const loading = loadingPlans || loadingRequests
+	const loading = loadingPlans || loadingRequests || loadingVacation
 
 	const handleMonthSelect = event => {
 		const newMonth = parseInt(event.target.value, 10)
@@ -149,7 +151,14 @@ function LeavePlanner() {
 					<h3><img src="img/calendar.png" alt="ikonka w sidebar" /> {t('leaveplanner.mainheader')}</h3>
 					<hr />
 					<div style={{ marginBottom: '20px' }}>
-						<h4>{t('leaveplanner.header')}</h4>
+						<p style={{ marginBottom: '20px' }}>
+							{t('leaveform.availableday')}{' '}
+							{availableLeaveDays === 0 ? (
+								<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
+							) : (
+								availableLeaveDays
+							)}
+						</p>
 						<ul style={{ listStyle: 'none', padding: 0 }}>
 							{selectedDates.map(date => (
 								<li

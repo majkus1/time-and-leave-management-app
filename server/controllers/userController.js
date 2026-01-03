@@ -39,7 +39,7 @@ const validateMutuallyExclusiveRoles = (roles, t = null) => {
 
 exports.register = async (req, res) => {
 	try {
-		const { username, firstName, lastName, roles, department } = req.body
+		const { username, firstName, lastName, roles, department, vacationDays } = req.body
 		const teamId = req.user.teamId
 
 		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
@@ -119,7 +119,8 @@ exports.register = async (req, res) => {
 			lastName,
 			teamId,
 			roles,
-			department
+			department,
+			...(vacationDays !== undefined && vacationDays !== null && vacationDays !== '' ? { vacationDays: Number(vacationDays) } : {})
 		})
 
 		await newUser.save()
@@ -360,6 +361,23 @@ exports.updatePosition = async (req, res) => {
 	} catch (error) {
 		console.error('Błąd podczas aktualizacji stanowiska:', error)
 		res.status(500).send('Błąd podczas aktualizacji stanowiska')
+	}
+}
+
+exports.updateName = async (req, res) => {
+	const { firstName, lastName } = req.body
+	try {
+		const user = await User.findById(req.user.userId)
+		if (!user) return res.status(404).send('User not found')
+
+		if (firstName !== undefined) user.firstName = firstName
+		if (lastName !== undefined) user.lastName = lastName
+		await user.save()
+
+		res.status(200).send('Imię i nazwisko zostały zaktualizowane')
+	} catch (error) {
+		console.error('Błąd podczas aktualizacji imienia i nazwiska:', error)
+		res.status(500).send('Błąd podczas aktualizacji imienia i nazwiska')
 	}
 }
 

@@ -555,6 +555,11 @@ function MonthlyCalendar() {
 				/>
 			</div>
 			<div className="col-xl-3 resume-month-work">
+				<h3 className="resumecales h3resume" style={{ marginTop: '20px' }}>
+					{t('workcalendar.allfrommonth')} {new Date(currentYear, currentMonth)
+						.toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })
+						.replace(/^./, str => str.toUpperCase())}:
+				</h3>
 				{/* <h3 className="h3resume" style={{ marginBottom: '0px' }}>
 					{t('workcalendar.confirmmonth')}
 				</h3>
@@ -580,7 +585,6 @@ function MonthlyCalendar() {
     await toggleConfirmationStatus()
   }}
   style={{
-    marginLeft: '10px',
     marginTop: '20px',
     marginBottom: '35px',
     padding: '10px 20px',
@@ -597,7 +601,7 @@ function MonthlyCalendar() {
     ? t('workcalendar.cancelconfirmation') 
     : t('workcalendar.confirmmonthbutton')} 
 </button>
-<br></br>
+
 {isConfirmed ? (
   <span style={{ display: 'flex', alignItems: 'center', padding: '15px' }} className='confirm-border'>
     <img
@@ -620,11 +624,9 @@ function MonthlyCalendar() {
       }}
     />
     {t('workcalendar.notConfirmed')}
-  </span>
+				</span>
 )}
 
-
-				{/* <h3 className="resumecales h3resume">{t('workcalendar.allfrommonth')}</h3> */}
 				<p className='allfrommonth-p'>
 					<img src="/img/calendar mono.png" /> {t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>

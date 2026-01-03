@@ -23,6 +23,7 @@ function CreateUser() {
     const [selectedDepartments, setSelectedDepartments] = useState([]) // Tablica wybranych działów
     const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
     const [departmentMode, setDepartmentMode] = useState('choose')
+    const [vacationDays, setVacationDays] = useState('')
     const { t } = useTranslation()
     const { teamId } = useAuth()
     const { showAlert } = useAlert()
@@ -129,6 +130,7 @@ function CreateUser() {
                 lastName, 
                 roles: selectedRoles, 
                 department: selectedDepartments, // Wyślij tablicę działów
+                vacationDays: vacationDays ? Number(vacationDays) : undefined, // Opcjonalne pole dni urlopu
                 teamId // Przekaż teamId dla invalidacji cache
             }
             const response = await createUserMutation.mutateAsync(newUser)
@@ -143,6 +145,7 @@ function CreateUser() {
                 setSelectedDepartments([])
                 setNewDepartmentName('')
                 setDepartmentMode('choose')
+                setVacationDays('')
             }
         } catch (error) {
             const code = error.response?.data?.code
@@ -308,6 +311,22 @@ function CreateUser() {
                                                 >{role}</div>
                                             ))}
                                         </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="vacationDays" className="block text-sm font-medium text-gray-700 mb-1">
+                                            {t('newuser.vacationDays')} <span className="text-gray-500 text-xs">({t('newuser.optional')})</span>
+                                        </label>
+                                        <br></br>
+                                        <input
+                                            type="number"
+                                            id="vacationDays"
+                                            min="0"
+                                            placeholder={t('newuser.vacationDaysPlaceholder')}
+                                            value={vacationDays}
+                                            onChange={e => setVacationDays(e.target.value)}
+                                            className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
                                     </div>
                                     <button 
                                         type="submit" 

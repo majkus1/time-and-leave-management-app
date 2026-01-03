@@ -72,6 +72,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     
+    // Blog articles - High priority (comprehensive company management app)
+    {
+      url: 'https://planopia.pl/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/comprehensive-company-management-app',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    
     // Blog articles - Medium priority
     {
       url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',

@@ -1830,7 +1830,7 @@ textarea {
 /* MOBILE (domyślnie): pokaż tylko mobile, bez animacji */
 .mockup-rotator { width: 100%; position: relative; }
 .desktop-mockup { display: none; }
-.mobile-mockup  { display: block; opacity: 1; }
+.mobile-mockup  { display: block; opacity: 1; max-height: 600px; }
 
 /* DESKTOP: rotacja co 5s z fade */
 @media (min-width: 1024px) {
@@ -1860,6 +1860,7 @@ textarea {
     z-index: 1;
     animation-name: planopiaShowHide;
     animation-delay: 5s;
+    max-height: 600px !important;
   }
 
   @keyframes planopiaShowHide {
@@ -1923,6 +1924,18 @@ section {
 	display: none;
 }
 
+.mockup-blog-mobile {
+	max-height: 600px;
+}
+
+.figcaption-desktop {
+	display: none;
+}
+
+.figcaption-mobile {
+	display: block;
+}
+
 @media(min-width: 1280px) {
 	.content-blog {
 		margin-top: 30px;
@@ -1931,6 +1944,12 @@ section {
 		display: block;
 	}
 	.mockup-blog-mobile {
+		display: none;
+	}
+	.figcaption-desktop {
+		display: block;
+	}
+	.figcaption-mobile {
 		display: none;
 	}
 }

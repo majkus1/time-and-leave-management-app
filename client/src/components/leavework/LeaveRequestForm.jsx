@@ -3,7 +3,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useCreateLeaveRequest } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 
 function LeaveRequestForm() {
@@ -20,6 +20,17 @@ function LeaveRequestForm() {
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
 	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
 	const createLeaveRequestMutation = useCreateLeaveRequest()
+	const cancelLeaveRequestMutation = useCancelLeaveRequest()
+	const updateLeaveRequestMutation = useUpdateLeaveRequest()
+
+	const [editingRequest, setEditingRequest] = useState(null)
+	const [editType, setEditType] = useState('leaveform.option1')
+	const [editStartDate, setEditStartDate] = useState('')
+	const [editEndDate, setEditEndDate] = useState('')
+	const [editDaysRequested, setEditDaysRequested] = useState(0)
+	const [editReplacement, setEditReplacement] = useState('')
+	const [editAdditionalInfo, setEditAdditionalInfo] = useState('')
+	const [showCancelModal, setShowCancelModal] = useState(null)
 
 	const loading = loadingRequests || loadingVacation
 	const isSubmitting = createLeaveRequestMutation.isLoading
@@ -42,8 +53,56 @@ function LeaveRequestForm() {
 		}
 	}, [startDate, endDate])
 
+	useEffect(() => {
+		if (editStartDate && editEndDate) {
+			const start = new Date(editStartDate)
+			const end = new Date(editEndDate)
+			const timeDiff = Math.abs(end - start)
+			setEditDaysRequested(Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1)
+		}
+	}, [editStartDate, editEndDate])
+
+	// Funkcja sprawdzająca kolizję dat z istniejącymi wnioskami
+	const hasDateConflict = (newStartDate, newEndDate, excludeRequestId = null) => {
+		if (!newStartDate || !newEndDate) return false
+		
+		const newStart = new Date(newStartDate)
+		const newEnd = new Date(newEndDate)
+		
+		return leaveRequests.some(request => {
+			// Pomiń odrzucone wnioski (anulowane są usuwane z bazy)
+			if (request.status === 'status.rejected') {
+				return false
+			}
+			// Pomiń aktualnie edytowany wniosek
+			if (excludeRequestId && request._id === excludeRequestId) {
+				return false
+			}
+			
+			const existingStart = new Date(request.startDate)
+			const existingEnd = new Date(request.endDate)
+			
+			// Sprawdź czy zakresy dat się nakładają
+			// Kolizja występuje gdy: (newStart <= existingEnd && newEnd >= existingStart)
+			return newStart <= existingEnd && newEnd >= existingStart
+		})
+	}
+
 	const submitLeaveRequest = async e => {
 		e.preventDefault()
+		
+		// Walidacja dat
+		if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+			await showAlert(t('leaveform.dateValidationError'))
+			return
+		}
+		
+		// Sprawdź kolizję z istniejącymi wnioskami
+		if (hasDateConflict(startDate, endDate)) {
+			await showAlert(t('leaveform.dateConflictError'))
+			return
+		}
+		
 		try {
 			const data = { type, startDate, endDate, daysRequested, replacement, additionalInfo }
 			await createLeaveRequestMutation.mutateAsync(data)
@@ -60,6 +119,66 @@ function LeaveRequestForm() {
 		}
 	}
 
+	const handleCancelRequest = async (requestId) => {
+		try {
+			await cancelLeaveRequestMutation.mutateAsync(requestId)
+			await showAlert(t('leaveform.cancelSuccess'))
+			setShowCancelModal(null)
+		} catch (error) {
+			console.error('Błąd podczas anulowania wniosku:', error)
+			await showAlert(t('leaveform.cancelError'))
+		}
+	}
+
+	const handleEditRequest = (request) => {
+		setEditingRequest(request)
+		setEditType(request.type)
+		setEditStartDate(new Date(request.startDate).toISOString().split('T')[0])
+		setEditEndDate(new Date(request.endDate).toISOString().split('T')[0])
+		setEditDaysRequested(request.daysRequested)
+		setEditReplacement(request.replacement || '')
+		setEditAdditionalInfo(request.additionalInfo || '')
+	}
+
+	const handleUpdateRequest = async (e) => {
+		e.preventDefault()
+		
+		// Walidacja dat
+		if (editStartDate && editEndDate && new Date(editEndDate) < new Date(editStartDate)) {
+			await showAlert(t('leaveform.dateValidationError'))
+			return
+		}
+		
+		// Sprawdź kolizję z istniejącymi wnioskami (wykluczając aktualnie edytowany)
+		if (editingRequest && hasDateConflict(editStartDate, editEndDate, editingRequest._id)) {
+			await showAlert(t('leaveform.dateConflictError'))
+			return
+		}
+		
+		try {
+			const data = {
+				type: editType,
+				startDate: editStartDate,
+				endDate: editEndDate,
+				daysRequested: editDaysRequested,
+				replacement: editReplacement,
+				additionalInfo: editAdditionalInfo
+			}
+			await updateLeaveRequestMutation.mutateAsync({ id: editingRequest._id, data })
+			await showAlert(t('leaveform.editSuccess'))
+			setEditingRequest(null)
+			setEditType('leaveform.option1')
+			setEditStartDate('')
+			setEditEndDate('')
+			setEditDaysRequested(0)
+			setEditReplacement('')
+			setEditAdditionalInfo('')
+		} catch (error) {
+			console.error('Błąd podczas edycji wniosku:', error)
+			await showAlert(t('leaveform.editError'))
+		}
+	}
+
 	const formatDate = date => {
 		const options = { day: '2-digit', month: 'long', year: 'numeric' }
 		return new Date(date).toLocaleDateString(i18n.resolvedLanguage, options)
@@ -69,6 +188,7 @@ function LeaveRequestForm() {
 		'status.accepted': 'accepted',
 		'status.pending': 'pending',
 		'status.rejected': 'rejected',
+		'status.sent': 'sent',
 	}
 
 	return (
@@ -104,6 +224,7 @@ function LeaveRequestForm() {
 								<option value="leaveform.option3">{t('leaveform.option3')}</option>
 								<option value="leaveform.option4">{t('leaveform.option4')}</option>
 								<option value="leaveform.option5">{t('leaveform.option5')}</option>
+								<option value="leaveform.option6">{t('leaveform.option6')}</option>
 							</select>
 						</div>
 
@@ -113,7 +234,13 @@ function LeaveRequestForm() {
 							<input
 								type="date"
 								value={startDate}
-								onChange={e => setStartDate(e.target.value)}
+								onChange={e => {
+									setStartDate(e.target.value)
+									// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
+									if (endDate && e.target.value && new Date(e.target.value) > new Date(endDate)) {
+										setEndDate('')
+									}
+								}}
 								required
 								className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
@@ -122,7 +249,16 @@ function LeaveRequestForm() {
 							<input
 								type="date"
 								value={endDate}
-								onChange={e => setEndDate(e.target.value)}
+								min={startDate || undefined}
+								onChange={e => {
+									const selectedDate = e.target.value
+									// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
+									if (startDate && selectedDate && new Date(selectedDate) < new Date(startDate)) {
+										showAlert(t('leaveform.dateValidationError'))
+										return
+									}
+									setEndDate(selectedDate)
+								}}
 								required
 								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
@@ -134,8 +270,8 @@ function LeaveRequestForm() {
 							<input
 								type="number"
 								value={daysRequested}
-								onChange={e => setDaysRequested(e.target.value)}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								readOnly
+								className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
 							/>
 						</div>
 
@@ -187,9 +323,10 @@ function LeaveRequestForm() {
 					<ul>
 						{leaveRequests.map((request, index) => {
 							const translatedType = leaveTypeMap[request.type] ? t(leaveTypeMap[request.type]) : request.type
+							const canEdit = request.status === 'status.pending'
 
 							return (
-								<li key={index} style={{ marginTop: '25px' }}>
+								<li key={index} style={{ marginTop: '25px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
 									<p>
 										{t('leaveform.typeLabel')}: {t(request.type)}
 									</p>
@@ -213,6 +350,8 @@ function LeaveRequestForm() {
 													? 'status-accepted'
 													: request.status === 'status.pending'
 													? 'status-pending'
+													: request.status === 'status.sent'
+													? 'status-sent'
 													: 'status-rejected'
 											}`}
 											style={{ marginLeft: '5px' }}>
@@ -225,10 +364,287 @@ function LeaveRequestForm() {
 											</span>
 										)}
 									</p>
+									<div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+										{canEdit && (
+											<button
+												onClick={() => handleEditRequest(request)}
+												className="btn btn-primary"
+												style={{ marginRight: '5px' }}>
+												{t('leaveform.editButton')}
+											</button>
+										)}
+										<button
+											onClick={() => setShowCancelModal(request._id)}
+											disabled={cancelLeaveRequestMutation.isPending}
+											className="btn btn-danger"
+											style={{ marginRight: '5px' }}>
+											{t('leaveform.cancelButton')}
+										</button>
+									</div>
 								</li>
 							)
 						})}
 					</ul>
+
+					{/* Modal anulowania */}
+					{showCancelModal && (
+						<div
+							className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+							style={{
+								zIndex: 100000000,
+								padding: '20px'
+							}}
+							onClick={() => setShowCancelModal(null)}>
+							<div
+								style={{
+									backgroundColor: 'white',
+									borderRadius: '8px',
+									padding: '30px',
+									maxWidth: '500px',
+									width: '100%',
+									boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+									position: 'relative'
+								}}
+								onClick={(e) => e.stopPropagation()}>
+								<h3 style={{
+									margin: '0 0 20px 0',
+									color: '#1f2937',
+									fontSize: '24px',
+									fontWeight: '600'
+								}}>
+									{t('leaveform.cancelModalTitle')}
+								</h3>
+								<p style={{
+									margin: '0 0 30px 0',
+									color: '#4b5563',
+									fontSize: '16px',
+									lineHeight: '1.6'
+								}}>
+									{t('leaveform.cancelModalMessage')}
+								</p>
+								<div style={{
+									display: 'flex',
+									gap: '12px',
+									justifyContent: 'flex-end'
+								}}>
+									<button
+										onClick={() => setShowCancelModal(null)}
+										disabled={cancelLeaveRequestMutation.isPending}
+										style={{
+											padding: '10px 20px',
+											borderRadius: '6px',
+											border: '1px solid #d1d5db',
+											backgroundColor: 'white',
+											color: '#374151',
+											cursor: cancelLeaveRequestMutation.isPending ? 'not-allowed' : 'pointer',
+											fontSize: '14px',
+											fontWeight: '500',
+											transition: 'all 0.2s',
+											opacity: cancelLeaveRequestMutation.isPending ? 0.5 : 1
+										}}
+										onMouseEnter={(e) => !cancelLeaveRequestMutation.isPending && (e.target.style.backgroundColor = '#f9fafb')}
+										onMouseLeave={(e) => !cancelLeaveRequestMutation.isPending && (e.target.style.backgroundColor = 'white')}>
+										{t('leaveform.cancel')}
+									</button>
+									<button
+										onClick={() => handleCancelRequest(showCancelModal)}
+										disabled={cancelLeaveRequestMutation.isPending}
+										style={{
+											padding: '10px 20px',
+											borderRadius: '6px',
+											border: 'none',
+											backgroundColor: '#dc3545',
+											color: 'white',
+											cursor: cancelLeaveRequestMutation.isPending ? 'not-allowed' : 'pointer',
+											fontSize: '14px',
+											fontWeight: '500',
+											transition: 'all 0.2s',
+											opacity: cancelLeaveRequestMutation.isPending ? 0.5 : 1
+										}}
+										onMouseEnter={(e) => !cancelLeaveRequestMutation.isPending && (e.target.style.backgroundColor = '#c82333')}
+										onMouseLeave={(e) => !cancelLeaveRequestMutation.isPending && (e.target.style.backgroundColor = '#dc3545')}>
+										{cancelLeaveRequestMutation.isPending ? (
+											<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+												<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+													<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+													<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+												{t('leaveform.cancelling')}
+											</span>
+										) : (
+											t('leaveform.confirmCancel')
+										)}
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+
+					{/* Modal edycji */}
+					{editingRequest && (
+						<div
+							className="fixed inset-0 flex items-center justify-center"
+							style={{
+								zIndex: 100000000,
+								padding: '20px',
+								overflowY: 'auto',
+								backgroundColor: '#2155373d'
+							}}
+							onClick={() => setEditingRequest(null)}>
+							<div
+								style={{
+									backgroundColor: 'white',
+									borderRadius: '8px',
+									maxWidth: '600px',
+									width: '100%',
+									boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+									position: 'relative',
+									margin: '20px 0',
+									maxHeight: '500px',
+									overflow: 'overlay'
+								}}
+								onClick={(e) => e.stopPropagation()}>
+								{/* Header z zielonym gradientem */}
+								<div style={{
+									padding: '30px 30px 0px 30px',
+									borderRadius: '8px 8px 0 0'
+								}}>
+									<h3 style={{
+										margin: '0',
+										color: '#ffffff',
+										fontSize: '24px',
+										fontWeight: '600'
+									}}>
+										{t('leaveform.editModalTitle')}
+									</h3>
+								</div>
+								{/* Zawartość formularza */}
+								<div style={{
+									padding: '30px'
+								}}>
+								<form onSubmit={handleUpdateRequest} className="space-y-6">
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.type')}</label>
+										<select
+											value={editType}
+											onChange={e => setEditType(e.target.value)}
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+											<option value="leaveform.option1">{t('leaveform.option1')}</option>
+											<option value="leaveform.option2">{t('leaveform.option2')}</option>
+											<option value="leaveform.option3">{t('leaveform.option3')}</option>
+											<option value="leaveform.option4">{t('leaveform.option4')}</option>
+											<option value="leaveform.option5">{t('leaveform.option5')}</option>
+											<option value="leaveform.option6">{t('leaveform.option6')}</option>
+										</select>
+									</div>
+
+									<div style={{ maxWidth: '400px', marginRight: '2px' }}>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+										<input
+											type="date"
+											value={editStartDate}
+											onChange={e => {
+												setEditStartDate(e.target.value)
+												// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
+												if (editEndDate && e.target.value && new Date(e.target.value) > new Date(editEndDate)) {
+													setEditEndDate('')
+												}
+											}}
+											required
+											className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+										<br></br>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
+										<input
+											type="date"
+											value={editEndDate}
+											min={editStartDate || undefined}
+											onChange={e => {
+												const selectedDate = e.target.value
+												// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
+												if (editStartDate && selectedDate && new Date(selectedDate) < new Date(editStartDate)) {
+													showAlert(t('leaveform.dateValidationError'))
+													return
+												}
+												setEditEndDate(selectedDate)
+											}}
+											required
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</div>
+
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.numberdayreq')}</label>
+										<input
+											type="number"
+											value={editDaysRequested}
+											readOnly
+											className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
+										/>
+									</div>
+
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.substitute')}</label>
+										<input
+											type="text"
+											value={editReplacement}
+											onChange={e => setEditReplacement(e.target.value)}
+											placeholder={t('leaveform.optional')}
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</div>
+
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.addinfo')}</label>
+										<textarea
+											value={editAdditionalInfo}
+											onChange={e => setEditAdditionalInfo(e.target.value)}
+											placeholder={t('leaveform.optional')}
+											className="w-full border border-gray-300 rounded-md px-4 py-2 resize-none h-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</div>
+
+									<div className="flex justify-end gap-3">
+										<button
+											type="button"
+											onClick={() => setEditingRequest(null)}
+											disabled={updateLeaveRequestMutation.isPending}
+											style={{
+												padding: '10px 20px',
+												borderRadius: '6px',
+												border: '1px solid #d1d5db',
+												backgroundColor: 'white',
+												color: '#374151',
+												cursor: updateLeaveRequestMutation.isPending ? 'not-allowed' : 'pointer',
+												fontSize: '14px',
+												fontWeight: '500',
+												transition: 'all 0.2s',
+												opacity: updateLeaveRequestMutation.isPending ? 0.5 : 1
+											}}>
+											{t('leaveform.cancelEdit')}
+										</button>
+										<button
+											type="submit"
+											disabled={updateLeaveRequestMutation.isPending}
+											className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+											{updateLeaveRequestMutation.isPending ? (
+												<span className="flex items-center">
+													<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+														<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+														<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+													</svg>
+													{t('leaveform.updating')}
+												</span>
+											) : (
+												t('leaveform.updateButton')
+											)}
+										</button>
+									</div>
+								</form>
+								</div>
+							</div>
+						</div>
+					)}
 				</div>
 			)}
 		</>

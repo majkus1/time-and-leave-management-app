@@ -1020,7 +1020,7 @@ hr {
 }
 
 #pdf-leave-request {
-	margin-top: 10px;
+	margin-top: 40px;
 }
 
 #pdf-content {
@@ -1028,9 +1028,9 @@ hr {
 }
 
 .btn-print-leavereq {
-	display: none;
+	/* display: none; */
 	position: absolute;
-	top: 80px;
+	top: 90px;
 	right: 10px;
 }
 
@@ -1065,6 +1065,9 @@ button, .btn {
 }
 .autocol.status-rejected {
 	color: red !important;
+}
+.autocol.status-sent {
+	color: blue !important;
 }
 
 .padr {

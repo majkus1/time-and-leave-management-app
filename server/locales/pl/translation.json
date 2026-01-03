@@ -1,12 +1,13 @@
 {
 	"email": {
 		"leaveform": {
-			"option1": "Urlop wypoczynkowy",
-			"option2": "Urlop okolicznościowy",
-			"option3": "Urlop na żądanie",
-			"option4": "Urlop bezpłatny",
-			"option5": "Inna nieobecność",
-			"title": "Nowe zgłoszenie urlopu/nieobecności",
+		"option1": "Urlop wypoczynkowy",
+		"option2": "Urlop okolicznościowy",
+		"option3": "Urlop na żądanie",
+		"option4": "Urlop bezpłatny",
+		"option5": "Inna nieobecność",
+		"option6": "Zwolnienie Lekarskie (L4)",
+		"title": "Nowe zgłoszenie urlopu/nieobecności",
 			"employee": "Pracownik",
 			"type": "Rodzaj",
 			"dates": "Daty",
@@ -16,7 +17,13 @@
 			"newRequestHR": "Otrzymałeś nową prośbę urlopową do przeglądu.",
 			"requestDetails": "Szczegóły wniosku:",
 			"clickButtonToReview": "Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.",
-			"clickButtonToView": "Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć."
+			"clickButtonToView": "Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć.",
+			"requestCancelledTitle": "Wniosek urlopowy anulowany",
+			"requestCancelledSupervisor": "Wniosek urlopowy został anulowany.",
+			"requestCancelledHR": "Wniosek urlopowy został anulowany.",
+			"requestUpdatedSupervisor": "Wniosek urlopowy został zaktualizowany i wymaga Twojego przeglądu.",
+			"newL4Request": "Otrzymałeś powiadomienie o zwolnieniu lekarskim (L4).",
+			"l4Info": "To jest powiadomienie o zwolnieniu lekarskim (L4). Wniosek został automatycznie dodany do kalendarza urlopowego i nie wymaga zatwierdzenia."
 		},
 		"welcome": {
 			"subject": "Witaj w planopia.pl",
@@ -77,7 +84,8 @@
 		"option2": "Urlop okolicznościowy",
 		"option3": "Urlop na żądanie",
 		"option4": "Urlop bezpłatny",
-		"option5": "Inna nieobecność"
+		"option5": "Inna nieobecność",
+		"option6": "Zwolnienie Lekarskie (L4)"
 	},
 	"resetpass": {
 		"subject": "Zresetuj swoje hasło w planopia.pl",

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     default: "Planopia – Free Time Tracking & Leave Management App",
     template: "%s | Planopia"
   },
-  description: "Planopia is a free time tracking and leave management app for teams up to 4 users. Manage work hours, overtime, and vacation requests online. Paid plans available for unlimited users, advanced features, and integrations.",
+  description: "Planopia is a comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 4 users. Paid plans available for unlimited users, advanced features, and integrations.",
   keywords: [
     "free time tracking app",
     "free leave management software", 
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en',
     siteName: 'Planopia',
     title: 'Planopia – Free Time Tracking & Leave Management App',
-    description: 'Try Planopia for free – time tracking and vacation planning app for up to 4 users. Upgrade to paid plans for unlimited users, flexibility, and integrations.',
+    description: 'Try Planopia for free – comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards. Free for up to 4 users. Upgrade to paid plans for unlimited users, flexibility, and integrations.',
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia – Free Time Tracking & Leave Management App',
-    description: 'Free plan for teams up to 4 users. Track work hours, manage leaves, generate reports. Paid plans available for unlimited users and more features.',
+    description: 'Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards. Free for teams up to 4 users. Paid plans available for unlimited users and more features.',
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

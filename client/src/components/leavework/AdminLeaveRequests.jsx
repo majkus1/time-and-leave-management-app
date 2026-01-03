@@ -51,9 +51,10 @@ function AdminLeaveRequests() {
 				status: newStatus,
 				userId,
 			})
+			await showAlert(t('adminleavereq.updateSuccess'))
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
-			await showAlert(t('adminleavereq.updateError') || 'Nie udało się zaktualizować statusu wniosku')
+			await showAlert(t('adminleavereq.updateError'))
 		}
 	}
 
@@ -70,6 +71,7 @@ function AdminLeaveRequests() {
 		'status.accepted': 'status-accepted',
 		'status.pending': 'status-pending',
 		'status.rejected': 'status-rejected',
+		'status.sent': 'status-sent',
 	}
 
 	return (
@@ -166,29 +168,34 @@ function AdminLeaveRequests() {
 								)}
 							</p>
 
-							<button
-								onClick={() => {
-									updateLeaveRequestStatus(request._id, 'status.accepted')
-									if (request.type === 'leaveform.option1') {
-										setShowVacationUpdateMessage(true)
-									}
-								}}
-								style={{ marginRight: '5px' }}
-								className="btn btn-success">
-								{t('adminleavereq.btn1')}
-							</button>
+							{/* Ukryj przyciski akceptacji/odrzucenia dla L4 (status.sent) */}
+							{request.status !== 'status.sent' && (
+								<>
+									<button
+										onClick={() => {
+											updateLeaveRequestStatus(request._id, 'status.accepted')
+											if (request.type === 'leaveform.option1') {
+												setShowVacationUpdateMessage(true)
+											}
+										}}
+										style={{ marginRight: '5px' }}
+										className="btn btn-success">
+										{t('adminleavereq.btn1')}
+									</button>
 
-							<button
-								onClick={() => {
-									updateLeaveRequestStatus(request._id, 'status.rejected')
-									if (request.type === 'leaveform.option1') {
-										setShowVacationUpdateMessage(true)
-									}
-								}}
-								style={{ marginRight: '5px' }}
-								className="btn btn-danger">
-								{t('adminleavereq.btn2')}
-							</button>
+									<button
+										onClick={() => {
+											updateLeaveRequestStatus(request._id, 'status.rejected')
+											if (request.type === 'leaveform.option1') {
+												setShowVacationUpdateMessage(true)
+											}
+										}}
+										style={{ marginRight: '5px' }}
+										className="btn btn-danger">
+										{t('adminleavereq.btn2')}
+									</button>
+								</>
+							)}
 
 							<button
 								onClick={() => goToPDFPreview(request)}

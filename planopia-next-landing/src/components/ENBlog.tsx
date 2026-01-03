@@ -242,6 +242,26 @@ function ENBlog() {
 								Read more
 							</Link>
 						</div>
+
+						{/* Article card 7 - Comprehensive Company Management App */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img
+								src="/img/worktimeblog.webp"
+								alt="Comprehensive Company Management App"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Comprehensive Company Management App – Everything in One Place
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Planopia is not just a time tracking and leave management app. It's a comprehensive tool combining time tracking, leave management, work schedules, team chats, task boards, and flexible role configuration. Everything in one place.
+							</p>
+							<Link
+								href="/en/blog/comprehensive-company-management-app"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
 					</div>
 				</div>
 			</section>

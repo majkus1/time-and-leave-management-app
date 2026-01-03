@@ -225,6 +225,22 @@ function Blog() {
 								Czytaj więcej
 							</Link>
 						</div>
+
+						{/* Karta wpisu 7 - Kompleksowa aplikacja */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img src="/img/worktimeblog.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Planopia to nie tylko aplikacja do ewidencji czasu pracy i urlopów. To kompleksowe narzędzie łączące ewidencję czasu, urlopy, grafiki pracy, czaty, tablice zadań i elastyczną konfigurację ról. Wszystko w jednym miejscu.
+							</p>
+							<Link
+								href="/blog/kompleksowa-aplikacja-do-zarzadzania-firma"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
 					</div>
 				</div>
 			</section>

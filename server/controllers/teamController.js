@@ -5,6 +5,17 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createLog } = require('../services/logService');
 const { createGeneralChannel } = require('./chatController');
+const Workday = require('../models/Workday')(firmDb);
+const LeaveRequest = require('../models/LeaveRequest')(firmDb);
+const LeavePlan = require('../models/LeavePlan')(firmDb);
+const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb);
+const Log = require('../models/log')(firmDb);
+const Message = require('../models/Message')(firmDb);
+const Channel = require('../models/Channel')(firmDb);
+const Board = require('../models/Board')(firmDb);
+const Schedule = require('../models/Schedule')(firmDb);
+const Department = require('../models/Department')(firmDb);
+const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
 
 // Helper function to update maxUsers for special teams
 const updateSpecialTeamLimit = async (team) => {
@@ -26,7 +37,8 @@ exports.registerTeam = async (req, res) => {
 			adminEmail,
 			adminPassword,
 			adminFirstName,
-			adminLastName
+			adminLastName,
+			position
 		} = req.body;
 
 		
@@ -84,7 +96,8 @@ exports.registerTeam = async (req, res) => {
 			lastName: adminLastName,
 			teamId: newTeam._id,
 			roles: ['Admin'],
-			isTeamAdmin: true
+			isTeamAdmin: true,
+			...(position ? { position } : {})
 		});
 
 		await teamAdmin.save();
@@ -272,6 +285,89 @@ exports.checkUserLimit = async (req, res) => {
 		res.status(500).json({
 			success: false,
 			message: 'Błąd serwera podczas sprawdzania limitu użytkowników'
+		});
+	}
+};
+
+exports.deleteTeam = async (req, res) => {
+	try {
+		const { teamId } = req.params;
+		const currentUser = await User.findById(req.user.userId);
+
+		// Sprawdź czy użytkownik jest adminem
+		if (!currentUser || !currentUser.roles.includes('Admin')) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak uprawnień do usunięcia zespołu'
+			});
+		}
+
+		// Sprawdź czy zespół istnieje
+		const team = await Team.findById(teamId);
+		if (!team) {
+			return res.status(404).json({
+				success: false,
+				message: 'Zespół nie został znaleziony'
+			});
+		}
+
+		// Sprawdź czy użytkownik należy do tego zespołu (lub jest super adminem)
+		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
+		if (!isSuperAdmin && currentUser.teamId.toString() !== teamId) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak uprawnień do usunięcia tego zespołu'
+			});
+		}
+
+		// Pobierz wszystkich użytkowników zespołu
+		const teamUsers = await User.find({ teamId });
+		const userIds = teamUsers.map(user => user._id);
+
+		// Usuń wszystkie powiązane dane użytkowników
+		await Promise.all([
+			Workday.deleteMany({ userId: { $in: userIds } }),
+			LeaveRequest.deleteMany({ userId: { $in: userIds } }),
+			LeavePlan.deleteMany({ userId: { $in: userIds } }),
+			CalendarConfirmation.deleteMany({ userId: { $in: userIds } }),
+			Log.deleteMany({ user: { $in: userIds } }),
+			Message.deleteMany({ userId: { $in: userIds } })
+		]);
+
+		// Usuń wszystkie kanały zespołu (to usunie też wszystkie wiadomości w tych kanałach)
+		const teamChannels = await Channel.find({ teamId });
+		const channelIds = teamChannels.map(channel => channel._id);
+		await Message.deleteMany({ channelId: { $in: channelIds } });
+		await Channel.deleteMany({ teamId });
+
+		// Usuń wszystkie tablice zespołu
+		await Board.deleteMany({ teamId });
+
+		// Usuń wszystkie grafiki zespołu
+		await Schedule.deleteMany({ teamId });
+
+		// Usuń wszystkie działy zespołu
+		await Department.deleteMany({ teamId });
+
+		// Usuń wszystkie konfiguracje przełożonych zespołu
+		await SupervisorConfig.deleteMany({ teamId });
+
+		// Usuń wszystkich użytkowników zespołu
+		await User.deleteMany({ teamId });
+
+		// Usuń zespół
+		await Team.findByIdAndDelete(teamId);
+
+		res.json({
+			success: true,
+			message: 'Zespół i wszystkie powiązane dane zostały usunięte pomyślnie'
+		});
+
+	} catch (error) {
+		console.error('Delete team error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Błąd serwera podczas usuwania zespołu'
 		});
 	}
 };

@@ -8,6 +8,7 @@ import { useAlert } from '../../context/AlertContext'
 import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail } from '../../hooks/useUsers'
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs } from '../../hooks/useLogs'
+import { useDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
@@ -35,6 +36,8 @@ function Logs() {
 	const [supervisorConfigModal, setSupervisorConfigModal] = useState({ isOpen: false, userId: null })
 	const [subordinatesModal, setSubordinatesModal] = useState({ isOpen: false, userId: null })
 	const [expandedRoleDescriptions, setExpandedRoleDescriptions] = useState({}) // Stan dla rozwiniętych opisów ról
+	const [deleteTeamModal, setDeleteTeamModal] = useState(false)
+	const deleteTeamMutation = useDeleteTeam()
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
@@ -73,6 +76,9 @@ function Logs() {
 	const { data: departments = [], refetch: refetchDepartments } = useDepartments(editingUserTeamId)
 	// Pobierz działy dla sekcji na górze (zawsze dla własnego zespołu)
 	const { data: globalDepartments = [], refetch: refetchGlobalDepartments } = useDepartments(teamId)
+	
+	// Pobierz nazwę zespołu - dla super admina z pierwszego użytkownika (jeśli widzi wszystkich), dla zwykłego admina z pierwszego użytkownika
+	const teamName = users.length > 0 && users[0].teamName ? users[0].teamName : null
 	const updateUserRolesMutation = useUpdateUserRoles()
 	const deleteUserMutation = useDeleteUser()
 	const createDepartmentMutation = useCreateDepartment()
@@ -513,12 +519,13 @@ function Logs() {
 						color: '#2c3e50', 
 						marginBottom: '20px',
 						fontSize: '28px',
-						fontWeight: '600'
+						fontWeight: '600',
+						textAlign: 'left'
 					}}>
-						<img src="img/contact-list.png" alt="ikonka w sidebar" />{t('logs.title')}
+						<img src="img/contact-list.png" alt="ikonka w sidebar" />{t('logs.title')}{teamName ? `: ${teamName}` : ''}
 					</h2>
 					<hr />
-					{isSuperAdmin && (
+					{isSuperAdmin && !teamName && (
 						<p style={{ 
 							color: '#7f8c8d', 
 							fontSize: '16px',
@@ -962,29 +969,24 @@ function Logs() {
 												}}>
 													{user.username}
 												</div>
-												<div style={{ 
-													fontSize: '14px', 
-													color: '#7f8c8d'
-												}}>
-													{user.roles?.join(', ') || t('logs.noRole')}
-												</div>
-												{user.department && (
+												{(user.firstName || user.lastName) && (
 													<div style={{ 
 														fontSize: '12px', 
-														color: '#95a5a6', 
-														marginTop: '3px'
+														color: '#95a5a6',
+														marginBottom: '3px',
+														fontStyle: 'italic'
 													}}>
-														Dział: {Array.isArray(user.department) ? user.department.join(', ') : user.department}
+														{`${user.firstName || ''} ${user.lastName || ''}`.trim()}
 													</div>
 												)}
-												{isSuperAdmin && user.teamName && (
+												{user.position && (
 													<div style={{ 
-														fontSize: '12px', 
-														color: '#3498db', 
-														marginTop: '3px',
-														fontWeight: '500'
+														fontSize: '11px', 
+														color: '#95a5a6',
+														marginBottom: '3px',
+														fontStyle: 'italic'
 													}}>
-														Zespół: {user.teamName}
+														{user.position}
 													</div>
 												)}
 												{(isSuperAdmin || isAdmin) && !user.hasPassword && (
@@ -1213,7 +1215,7 @@ function Logs() {
 																					e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
 																					e.target.style.transform = 'translateY(0)'
 																				}}>
-																				⚙️ {t('logs.configure') || 'Konfiguruj'}
+																				{t('logs.configure') || 'Konfiguruj'}
 																			</button>
 																			<button
 																				type="button"
@@ -1242,7 +1244,7 @@ function Logs() {
 																					e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
 																					e.target.style.transform = 'translateY(0)'
 																				}}>
-																				👥 {t('logs.manageSubordinates') || 'Pracownicy'}
+																				{t('logs.manageSubordinates') || 'Pracownicy'}
 																			</button>
 																		</div>
 																	)}
@@ -1443,6 +1445,21 @@ function Logs() {
 														)}
 													</div>
 
+													{/* Przypomnienie o zapisaniu zmian */}
+													<div style={{ 
+														marginTop: '20px', 
+														marginBottom: '15px',
+														padding: '12px 16px',
+														backgroundColor: '#fff3cd',
+														border: '1px solid #ffc107',
+														borderRadius: '6px',
+														fontSize: '14px',
+														color: '#856404',
+														fontWeight: '500'
+													}}>
+														<strong>💡 {t('logs.saveReminder')}</strong>
+													</div>
+
 													{/* Przyciski akcji */}
 													<div style={{ 
 														display: 'flex', 
@@ -1598,35 +1615,28 @@ function Logs() {
 											}}>
 												{user.username}
 											</div>
-											<div style={{ 
-												fontSize: '14px', 
-												color: '#7f8c8d',
-												marginBottom: '3px',
-												wordBreak: 'break-word',
-												overflowWrap: 'break-word'
-											}}>
-												{user.roles?.join(', ') || 'Brak ról'}
-											</div>
-											{user.department && (
+											{(user.firstName || user.lastName) && (
 												<div style={{ 
 													fontSize: '12px', 
 													color: '#95a5a6',
+													marginBottom: '3px',
+													fontStyle: 'italic',
 													wordBreak: 'break-word',
 													overflowWrap: 'break-word'
 												}}>
-													Dział: {Array.isArray(user.department) ? user.department.join(', ') : user.department}
+													{`${user.firstName || ''} ${user.lastName || ''}`.trim()}
 												</div>
 											)}
-											{isSuperAdmin && user.teamName && (
+											{user.position && (
 												<div style={{ 
-													fontSize: '12px', 
-													color: '#3498db',
-													fontWeight: '500',
-													marginTop: '3px',
+													fontSize: '11px', 
+													color: '#95a5a6',
+													marginBottom: '3px',
+													fontStyle: 'italic',
 													wordBreak: 'break-word',
 													overflowWrap: 'break-word'
 												}}>
-													Zespół: {user.teamName}
+													{user.position}
 												</div>
 											)}
 											{(isSuperAdmin || isAdmin) && !user.hasPassword && (
@@ -1877,7 +1887,7 @@ function Logs() {
 																		e.target.style.borderColor = '#3498db'
 																		e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
 																	}}>
-																	⚙️ {t('logs.configure') || 'Konfiguruj'}
+																	{t('logs.configure') || 'Konfiguruj'}
 																</button>
 																<button
 																	type="button"
@@ -1905,7 +1915,7 @@ function Logs() {
 																		e.target.style.borderColor = '#27ae60'
 																		e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
 																	}}>
-																	👥 {t('logs.manageSubordinates') || 'Pracownicy'}
+																	{t('logs.manageSubordinates') || 'Pracownicy'}
 																</button>
 															</div>
 														)}
@@ -2109,6 +2119,21 @@ function Logs() {
 											)}
 										</div>
 
+										{/* Przypomnienie o zapisaniu zmian */}
+										<div style={{ 
+											marginTop: '20px', 
+											marginBottom: '15px',
+											padding: '12px 16px',
+											backgroundColor: '#fff3cd',
+											border: '1px solid #ffc107',
+											borderRadius: '6px',
+											fontSize: '14px',
+											color: '#856404',
+											fontWeight: '500'
+										}}>
+											<strong>💡 {t('logs.saveReminder')}</strong>
+										</div>
+
 										{/* Przyciski akcji */}
 										<div style={{ 
 											display: 'flex', 
@@ -2180,6 +2205,74 @@ function Logs() {
 							</div>
 						))}
 					</div>
+				</div>
+			)}
+
+			{/* Sekcja usuwania zespołu - na dole strony */}
+			{isAdmin && (
+				<div style={{ 
+					marginTop: '50px', 
+					paddingTop: '30px', 
+					marginBottom: '20px',
+					borderTop: '1px solid #e5e7eb'
+				}}>
+					<h4 style={{ 
+						color: '#dc3545', 
+						marginBottom: '15px',
+						fontSize: '18px',
+						fontWeight: '600',
+					}}>
+						{t('logs.deleteTeamTitle')}
+					</h4>
+					<hr className="mb-4" />
+					<p style={{ 
+						color: '#6b7280', 
+						marginBottom: '20px',
+						fontSize: '14px',
+						lineHeight: '1.6'
+					}}>
+						{t('logs.deleteTeamDescription')}
+					</p>
+					<button
+						type="button"
+						onClick={() => setDeleteTeamModal(true)}
+						disabled={deleteTeamMutation.isPending}
+						style={{
+							padding: '12px 24px',
+							borderRadius: '6px',
+							border: '1px solid #dc3545',
+							backgroundColor: 'white',
+							color: '#dc3545',
+							cursor: deleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
+							fontSize: '14px',
+							fontWeight: '500',
+							transition: 'all 0.2s',
+							opacity: deleteTeamMutation.isPending ? 0.5 : 1
+						}}
+						onMouseEnter={(e) => {
+							if (!deleteTeamMutation.isPending) {
+								e.target.style.backgroundColor = '#dc3545'
+								e.target.style.color = 'white'
+							}
+						}}
+						onMouseLeave={(e) => {
+							if (!deleteTeamMutation.isPending) {
+								e.target.style.backgroundColor = 'white'
+								e.target.style.color = '#dc3545'
+							}
+						}}>
+						{deleteTeamMutation.isPending ? (
+							<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+								<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								{t('logs.deletingTeam')}
+							</span>
+						) : (
+							t('logs.deleteTeamButton')
+						)}
+					</button>
 				</div>
 			)}
 			</div>
@@ -2311,6 +2404,119 @@ function Logs() {
 					isLoading={loadingUsers}
 					title={`${roleInfoModal.roleName} - ${t('logs.usersWithRole') || 'Użytkownicy z tą rolą'}`}
 				/>
+			)}
+
+			{/* Modal potwierdzenia usunięcia zespołu */}
+			{deleteTeamModal && (
+				<div 
+					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+					style={{
+						zIndex: 100000000,
+						padding: '20px'
+					}} 
+					onClick={() => setDeleteTeamModal(false)}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '500px',
+						width: '100%',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+						<h3 style={{
+							margin: '0 0 20px 0',
+							color: '#1f2937',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('logs.deleteTeamConfirmTitle')}
+						</h3>
+						<p style={{
+							margin: '0 0 30px 0',
+							color: '#4b5563',
+							fontSize: '16px',
+							lineHeight: '1.6'
+						}}>
+							{t('logs.deleteTeamConfirmMessage')}
+						</p>
+						<p style={{
+							margin: '0 0 30px 0',
+							color: '#4b5563',
+							fontSize: '16px',
+							lineHeight: '1.6'
+						}}>
+							{t('logs.deleteTeamWarning')}
+						</p>
+						<div style={{
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={() => setDeleteTeamModal(false)}
+								disabled={deleteTeamMutation.isPending}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: deleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: deleteTeamMutation.isPending ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !deleteTeamMutation.isPending && (e.target.style.backgroundColor = '#f9fafb')}
+								onMouseLeave={(e) => !deleteTeamMutation.isPending && (e.target.style.backgroundColor = 'white')}>
+								{t('logs.cancel')}
+							</button>
+							<button
+								onClick={async () => {
+									try {
+										await deleteTeamMutation.mutateAsync(teamId)
+										await showAlert(t('logs.deleteTeamSuccess'))
+										setDeleteTeamModal(false)
+										// Wyloguj użytkownika i przekieruj do logowania
+										setTimeout(() => {
+											window.location.href = '/login'
+										}, 2000)
+									} catch (error) {
+										await showAlert(t('logs.deleteTeamError'))
+										console.error('Error deleting team:', error)
+									}
+								}}
+								disabled={deleteTeamMutation.isPending}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: 'none',
+									backgroundColor: '#dc3545',
+									color: 'white',
+									cursor: deleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: deleteTeamMutation.isPending ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !deleteTeamMutation.isPending && (e.target.style.backgroundColor = '#c82333')}
+								onMouseLeave={(e) => !deleteTeamMutation.isPending && (e.target.style.backgroundColor = '#dc3545')}>
+								{deleteTeamMutation.isPending ? (
+									<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										{t('logs.deletingTeam')}
+									</span>
+								) : (
+									t('logs.deleteTeamConfirmButton')
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 
 		</>

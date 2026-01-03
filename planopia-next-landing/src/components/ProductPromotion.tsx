@@ -77,7 +77,7 @@ function ProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Darmowa aplikacja online do ewidencji czasu pracy i urlopów dla zespołów do 4 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
+						"description": "Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 4 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
 						"offers": {
 							"@type": "Offer",
 							"price": "0",
@@ -232,10 +232,10 @@ function ProductPromotion() {
       {/* Tekst */}
       <div>
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-          Proste zarządzanie czasem pracy i urlopami
+          Kompleksowa aplikacja do zarządzania firmą
         </h2>
         <p className="mt-4 text-lg text-gray-600">
-          Zapomnij o Excelach i mailach. Planopia automatyzuje ewidencję, zgłaszanie nieobecności i akceptacje — szybciej, czytelniej, bez błędów.
+          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
         </p>
 
         {/* Feature grid */}
@@ -261,11 +261,35 @@ function ProductPromotion() {
 		  <img src="img/pdf.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
 			<p className="font-semibold text-gray-900">Dokumenty</p>
-<p className="text-sm text-gray-600">Generowanie PDF: kalendarze pracy i wnioski urlopowe zawsze pod ręką.</p>
+<p className="text-sm text-gray-600">Generowanie PDF i Excel: kalendarze pracy i wnioski urlopowe zawsze pod ręką.</p>
             </div>
 
           </div>
           {/* 4 */}
+          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+		  <img src="img/project.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
+            <div>
+			<p className="font-semibold text-gray-900">Grafik pracy</p>
+<p className="text-sm text-gray-600">Planowanie i zarządzanie grafikami pracy dla całego zespołu.</p>
+            </div>
+          </div>
+          {/* 5 */}
+          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+		  <img src="img/chat.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
+            <div>
+			<p className="font-semibold text-gray-900">Czaty</p>
+<p className="text-sm text-gray-600">Komunikacja wewnętrzna — czaty zespołowe i kanały działów.</p>
+            </div>
+          </div>
+          {/* 6 */}
+          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
+		  <img src="img/task-list.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
+            <div>
+			<p className="font-semibold text-gray-900">Tablice zadań</p>
+<p className="text-sm text-gray-600">Zarządzanie projektami i zadaniami w przejrzystych tablicach Kanban.</p>
+            </div>
+          </div>
+          {/* 7 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 		  <img src="img/verified.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
@@ -274,7 +298,7 @@ function ProductPromotion() {
             </div>
 
           </div>
-          {/* 5 */}
+          {/* 8 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 		  <img src="img/booking.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
@@ -283,13 +307,12 @@ function ProductPromotion() {
             </div>
 
           </div>
-          {/* 6 */}
+          {/* 9 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 		  <img src="img/technical-support.png" className='icon-landing-about' alt='ikonki w sekcji o nas' />
             <div>
 			<p className="font-semibold text-gray-900">Indywidualne wsparcie</p>
 <p className="text-sm text-gray-600">Czat i pomoc dla Twojego zespołu — w razie pytań lub problemów.</p>
-
             </div>
           </div>
         </div>
@@ -309,12 +332,12 @@ function ProductPromotion() {
 {/* Obraz / screen produktu */}
 <div className="relative flex justify-center items-center mockup-rotator">
   <img
-    src="img/desktop.webp"
+    src="img/desktopnew.webp"
     alt="Planopia – widok desktop"
     className="rounded-xl shadow-xl ring-1 ring-black/5 desktop-mockup"
   />
   <img
-    src="img/mobile.webp"
+    src="img/mobilenew.webp"
     alt="Planopia – widok mobile"
     className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
   />
@@ -396,7 +419,7 @@ function ProductPromotion() {
       <div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
         <h3 className="text-2xl font-semibold mb-4">Pakiet miesięczny</h3>
         <p className="text-4xl font-bold text-green-600 mb-2">
-          16&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./mies.</span>
+          17&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./mies.</span>
         </p>
         <p className="text-gray-600 mb-8">Płatność co miesiąc, możesz zrezygnować w każdej chwili.</p>
         <button
@@ -411,7 +434,7 @@ function ProductPromotion() {
       <div className="bg-white shadow p-8 rounded-2xl border border-gray-200">
         <h3 className="text-2xl font-semibold mb-4">Pakiet roczny</h3>
         <p className="text-4xl font-bold text-blue-600 mb-2">
-          160&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./rok</span>
+          170&nbsp;zł <span className="text-lg font-normal text-gray-700">netto /os./rok</span>
         </p>
         <p className="text-gray-600 mb-8">Oszczędność przy płatności rocznej — płacisz jak za 10 miesięcy.</p>
         <button
@@ -493,6 +516,13 @@ function ProductPromotion() {
             <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak aplikacji mobilnej.</p>
           </div>
         </div>
+      </div>
+
+      {/* Informacja o negocjacji ceny */}
+      <div className="mt-10 mx-auto">
+        <p className="text-gray-600">
+          <span className="font-semibold">Uwaga:</span> Jeśli niektóre funkcje z aplikacji nie są potrzebne w Twojej firmie, cena może być negocjowana. Skontaktuj się z nami, aby omówić indywidualne potrzeby.
+        </p>
       </div>
     </div>
   </div>
