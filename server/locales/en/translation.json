@@ -35,7 +35,7 @@
 			"teamAdded": "You have been added to the {{teamName}} team in the Planopia application. We're excited to have you join our work time and leave management system.",
 			"setPassword": "To set your password and get started, click the button below:",
 			"linkExpires": "The link is active for 24 hours. If you don't set your password within this time, please contact your team administrator.",
-			"buttonText": "Set password"
+			"buttonText": "Set password and position"
 		},
 		"leaveRequest": {
 			"subject": "Leave Request Updated: {{type}} - {{status}}",
@@ -108,6 +108,9 @@
 	"newuser": {
 		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
 		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
+	},
+	"supervisor": {
+		"notASupervisor": "User does not have Supervisor role. First assign the supervisor role to the user, then you can set employees."
 	},
 	"logs": {
 		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",

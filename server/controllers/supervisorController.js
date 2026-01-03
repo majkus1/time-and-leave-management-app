@@ -59,6 +59,22 @@ exports.updateSupervisorConfig = async (req, res) => {
 		const { supervisorId } = req.params
 		const { permissions, selectedEmployees } = req.body
 		const requestingUser = await User.findById(req.user.userId)
+		
+		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
+		let t = req.t
+		if (!t) {
+			const i18next = require('i18next')
+			const Backend = require('i18next-fs-backend')
+			const i18nInstance = i18next.createInstance()
+			await i18nInstance.use(Backend).init({
+				lng: 'pl', // Default to Polish
+				fallbackLng: 'pl',
+				backend: {
+					loadPath: __dirname + '/../locales/{{lng}}/translation.json',
+				},
+			})
+			t = i18nInstance.t.bind(i18nInstance)
+		}
 
 		// Sprawdź uprawnienia - tylko admin może aktualizować konfigurację
 		if (!requestingUser.roles.includes('Admin')) {
@@ -71,7 +87,7 @@ exports.updateSupervisorConfig = async (req, res) => {
 		}
 
 		if (!supervisor.roles.includes('Przełożony (Supervisor)')) {
-			return res.status(400).json({ message: 'User is not a supervisor' })
+			return res.status(400).json({ message: t('supervisor.notASupervisor') || 'User is not a supervisor' })
 		}
 
 		let config = await SupervisorConfig.findOne({ supervisorId })
@@ -204,6 +220,22 @@ exports.updateSupervisorSubordinates = async (req, res) => {
 		const { supervisorId } = req.params
 		const { subordinateIds } = req.body
 		const requestingUser = await User.findById(req.user.userId)
+		
+		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
+		let t = req.t
+		if (!t) {
+			const i18next = require('i18next')
+			const Backend = require('i18next-fs-backend')
+			const i18nInstance = i18next.createInstance()
+			await i18nInstance.use(Backend).init({
+				lng: 'pl', // Default to Polish
+				fallbackLng: 'pl',
+				backend: {
+					loadPath: __dirname + '/../locales/{{lng}}/translation.json',
+				},
+			})
+			t = i18nInstance.t.bind(i18nInstance)
+		}
 
 		// Sprawdź uprawnienia - tylko admin może aktualizować podwładnych
 		if (!requestingUser.roles.includes('Admin')) {
@@ -216,7 +248,7 @@ exports.updateSupervisorSubordinates = async (req, res) => {
 		}
 
 		if (!supervisor.roles.includes('Przełożony (Supervisor)')) {
-			return res.status(400).json({ message: 'User is not a supervisor' })
+			return res.status(400).json({ message: t('supervisor.notASupervisor') || 'User is not a supervisor' })
 		}
 
 		// Pobierz lub utwórz konfigurację

@@ -35,7 +35,7 @@
 			"teamAdded": "Zostałeś dodany do zespołu {{teamName}} w aplikacji Planopia. Cieszymy się, że dołączasz do naszego systemu zarządzania czasem pracy i urlopami.",
 			"setPassword": "Aby ustawić swoje hasło i rozpocząć pracę, kliknij przycisk poniżej:",
 			"linkExpires": "Link jest aktywny przez 24 godziny. Jeśli nie ustawisz hasła w tym czasie, skontaktuj się z administratorem zespołu.",
-			"buttonText": "Ustaw hasło"
+			"buttonText": "Ustaw hasło i stanowisko"
 		},
 		"leaveRequest": {
 			"subject": "Zaktualizowano zgłoszenie: {{type}} - {{status}}",
@@ -108,6 +108,9 @@
 	"newuser": {
 		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
 		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
+	},
+	"supervisor": {
+		"notASupervisor": "Użytkownik nie ma roli Przełożony. Najpierw nadaj użytkownikowi rolę przełożony, a następnie możesz ustawić pracowników."
 	},
 	"logs": {
 		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",

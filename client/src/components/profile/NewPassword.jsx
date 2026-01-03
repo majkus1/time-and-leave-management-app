@@ -42,7 +42,7 @@ function NewPassword() {
 				newPassword: password,
 				token,
 			})
-			await showAlert(t('newpass.messtwo'))
+			await showAlert(t('newpass.messtwoReset'))
 			navigate('/')
 		} catch (error) {
 			await showAlert(t('newpass.messthree'))
@@ -92,7 +92,7 @@ function NewPassword() {
 										onChange={e => setPassword(e.target.value)}
 										required
 										placeholder={t('newpass.newpassone')}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
 									/>
 									<button
 										type="button"
@@ -121,7 +121,7 @@ function NewPassword() {
 										onChange={e => setConfirmPassword(e.target.value)}
 										required
 										placeholder={t('newpass.newpassrepeat')}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
 									/>
 									<button
 										type="button"

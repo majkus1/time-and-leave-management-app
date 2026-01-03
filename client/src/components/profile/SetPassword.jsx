@@ -78,13 +78,13 @@ function SetPassword() {
 			<div className="login-box">
 				<div className="login-logo">
 					<div>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '150px' }}/>
 					</div>
 				</div>
 				<div className="card">
-					<div className="set-pass">
-						<h2 style={{ marginTop: '20px', marginBottom: '20px' }}>{t('newpass.h2n')}</h2>
-						<form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
+					<div className="set-pass" style={{ padding: '30px' }}>
+						<h2 style={{ marginTop: '10px', marginBottom: '15px', fontSize: '22px' }}>{t('newpass.h2n')}</h2>
+						<form onSubmit={handleSubmit} className="w-full max-w-md" style={{ gap: '12px', display: 'flex', flexDirection: 'column' }}>
 							<div className="relative">
 								<input
 									type={showPassword ? 'text' : 'password'}
@@ -93,7 +93,8 @@ function SetPassword() {
 									onChange={e => setPassword(e.target.value)}
 									required
 									placeholder={t('newpass.newpassone')}
-									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									
 								/>
 								<button
 									type="button"
@@ -122,7 +123,8 @@ function SetPassword() {
 									onChange={e => setConfirmPassword(e.target.value)}
 									required
 									placeholder={t('newpass.newpassrepeat')}
-									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									
 								/>
 								<button
 									type="button"
@@ -144,7 +146,7 @@ function SetPassword() {
 							</div>
 
 							
-							<small className="text-gray-500 block">{t('newpass.requirements')}</small>
+							<small className="text-gray-500 block" style={{ fontSize: '12px', marginBottom: '8px', lineHeight: '1.4' }}>{t('newpass.requirements')}</small>
 
 							
 							<input
@@ -154,9 +156,10 @@ function SetPassword() {
 								onChange={e => setPosition(e.target.value)}
 								required
 								placeholder={t('newpass.position')}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1 mt-3"
+								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								style={{ marginBottom: '4px', marginTop: '4px' }}
 							/>
-							<small className="text-gray-500 block mb-4" style={{ fontSize: '14px', marginTop: '4px' }}>
+							<small className="text-gray-500 block" style={{ fontSize: '12px', marginBottom: '12px', lineHeight: '1.4' }}>
 								{t('newpass.positionInfo') || 'Stanowisko można później edytować w panelu użytkownika.'}
 							</small>
 
@@ -164,7 +167,7 @@ function SetPassword() {
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition mb-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+								className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 								{isLoading ? (
 									<span className="flex items-center justify-center">
 										<svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -185,9 +188,9 @@ function SetPassword() {
 				to="/login"
 				style={{ 
 					display: 'inline-block',
-					margin: '20px auto',
-					padding: '10px 20px',
-					fontSize: '14px',
+					margin: '12px auto',
+					padding: '8px 16px',
+					fontSize: '13px',
 					textDecoration: 'none',
 					color: '#6b7280',
 					backgroundColor: '#f3f4f6',
