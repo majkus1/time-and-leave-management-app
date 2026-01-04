@@ -14,6 +14,8 @@ import { useUser } from '../../hooks/useUsers'
 import { useUserWorkdays } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -22,6 +24,7 @@ function UserCalendar() {
 	const [totalLeaveHours, setTotalLeaveHours] = useState(0)
 	const [totalWorkDays, setTotalWorkDays] = useState(0)
 	const [totalOtherAbsences, setTotalOtherAbsences] = useState(0)
+	const [totalHolidays, setTotalHolidays] = useState(0)
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [additionalHours, setAdditionalHours] = useState(0)
@@ -112,14 +115,74 @@ function UserCalendar() {
 		userId
 	)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(userId)
+	const { data: settings } = useSettings()
 
 	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = (startDate, endDate) => {
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		const includeHolidays = settings?.includeHolidays === true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}
+
+	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
+	const holidaysForMonth = React.useMemo(() => {
+		if (!settings) return []
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+		// Formatuj daty jako YYYY-MM-DD w lokalnej strefie czasowej (nie UTC)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(monthStart),
+			formatDateLocal(monthEnd),
+			settings
+		)
+	}, [settings, currentMonth, currentYear])
+
 	useEffect(() => {
 		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
-	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear])
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings])
 
 	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
+		if (!settings) return // Czekaj na załadowanie ustawień
 		let hours = 0
 		let leaveDays = 0
 		let overtime = 0
@@ -175,38 +238,79 @@ function UserCalendar() {
 				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
 				
 				if (isVacation) {
-					// Policz dni urlopu w danym miesiącu
+					// Policz dni urlopu w danym miesiącu - używając generateDateRangeForCalendar aby pominąć weekendy i święta
 					const monthStart = new Date(year, month, 1)
 					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
 					const overlapStart = startDate > monthStart ? startDate : monthStart
 					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
 					
 					if (overlapStart <= overlapEnd) {
-						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
-						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
-						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
-						const diffTime = end - start
-						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-						leaveDays += daysInMonth
+						// Użyj generateDateRangeForCalendar aby pominąć weekendy i święta
+						const formatDateLocal = (date) => {
+							const year = date.getFullYear()
+							const month = String(date.getMonth() + 1).padStart(2, '0')
+							const day = String(date.getDate()).padStart(2, '0')
+							return `${year}-${month}-${day}`
+						}
+						const dateRange = generateDateRangeForCalendar(
+							formatDateLocal(overlapStart),
+							formatDateLocal(overlapEnd)
+						)
+						// Policz tylko dni w danym miesiącu
+						const daysInMonth = dateRange.filter(dateStr => {
+							const date = new Date(dateStr)
+							return date.getMonth() === month && date.getFullYear() === year
+						})
+						leaveDays += daysInMonth.length
 					}
 				} else {
-					// Inna nieobecność - policz dni w danym miesiącu
+					// Inna nieobecność - policz dni w danym miesiącu - używając generateDateRangeForCalendar aby pominąć weekendy i święta
 					const monthStart = new Date(year, month, 1)
 					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
 					const overlapStart = startDate > monthStart ? startDate : monthStart
 					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
 					
 					if (overlapStart <= overlapEnd) {
-						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
-						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
-						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
-						const diffTime = end - start
-						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-						otherAbsences += daysInMonth
+						// Użyj generateDateRangeForCalendar aby pominąć weekendy i święta
+						const formatDateLocal = (date) => {
+							const year = date.getFullYear()
+							const month = String(date.getMonth() + 1).padStart(2, '0')
+							const day = String(date.getDate()).padStart(2, '0')
+							return `${year}-${month}-${day}`
+						}
+						const dateRange = generateDateRangeForCalendar(
+							formatDateLocal(overlapStart),
+							formatDateLocal(overlapEnd)
+						)
+						// Policz tylko dni w danym miesiącu
+						const daysInMonth = dateRange.filter(dateStr => {
+							const date = new Date(dateStr)
+							return date.getMonth() === month && date.getFullYear() === year
+						})
+						otherAbsences += daysInMonth.length
 					}
 				}
 			}
 		})
+		}
+
+		// Policz dni świąteczne w danym miesiącu
+		let holidaysCount = 0
+		if (settings && (settings.includePolishHolidays || settings.includeCustomHolidays)) {
+			const monthStart = new Date(year, month, 1)
+			const monthEnd = new Date(year, month + 1, 0)
+			const formatDateLocal = (date) => {
+				const year = date.getFullYear()
+				const month = String(date.getMonth() + 1).padStart(2, '0')
+				const day = String(date.getDate()).padStart(2, '0')
+				return `${year}-${month}-${day}`
+			}
+			const holidaysInMonth = getHolidaysInRange(
+				formatDateLocal(monthStart),
+				formatDateLocal(monthEnd),
+				settings
+			)
+			holidaysCount = holidaysInMonth.length
 		}
 
 		setTotalHours(hours)
@@ -215,6 +319,7 @@ function UserCalendar() {
 		setTotalLeaveDays(leaveDays)
 		setTotalLeaveHours(leaveDays * 8)
 		setTotalOtherAbsences(otherAbsences)
+		setTotalHolidays(holidaysCount)
 	}
 
 	const handleMonthChange = info => {
@@ -258,6 +363,40 @@ function UserCalendar() {
 	const goToSelectedDate = (month, year) => {
 		const calendarApi = calendarRef.current.getApi()
 		calendarApi.gotoDate(new Date(year, month, 1))
+	}
+
+	const renderEventContent = eventInfo => {
+		// Określ klasę CSS na podstawie extendedProps (najbardziej niezawodne)
+		let eventClass = 'event-workday'
+		const props = eventInfo.event.extendedProps || {}
+		
+		// Sprawdź czy to wniosek urlopowy (nieobecność)
+		if (props.type === 'leaveRequest' || props.isAbsence) {
+			eventClass = 'event-absence'
+		} else if (props.isNotes) {
+			eventClass = 'event-notes'
+		} else if (props.isWorkday) {
+			eventClass = 'event-workday'
+		} else if (eventInfo.event.classNames) {
+			// Fallback do classNames jeśli extendedProps nie są dostępne
+			const classNamesStr = Array.isArray(eventInfo.event.classNames) 
+				? eventInfo.event.classNames.join(' ') 
+				: String(eventInfo.event.classNames)
+			
+			if (classNamesStr.includes('event-notes')) {
+				eventClass = 'event-notes'
+			} else if (classNamesStr.includes('event-absence')) {
+				eventClass = 'event-absence'
+			} else if (classNamesStr.includes('event-workday')) {
+				eventClass = 'event-workday'
+			}
+		}
+		
+		return (
+			<div className={`event-content ${eventClass}`}>
+				<span>{eventInfo.event.title}</span>
+			</div>
+		)
 	}
 
 	const generatePDF = () => {
@@ -328,11 +467,14 @@ function UserCalendar() {
 				return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
 			})
 
-			// Create a map of workdays by date for quick lookup
+			// Create a map of workdays by date for quick lookup (może być wiele wpisów na dzień)
 			const workdaysMap = new Map()
 			filteredWorkdays.forEach(day => {
 				const dateKey = new Date(day.date).toDateString()
-				workdaysMap.set(dateKey, day)
+				if (!workdaysMap.has(dateKey)) {
+					workdaysMap.set(dateKey, [])
+				}
+				workdaysMap.get(dateKey).push(day)
 			})
 
 			// Filter accepted leave requests for current month
@@ -394,17 +536,56 @@ function UserCalendar() {
 			for (let day = 1; day <= daysInMonth; day++) {
 				const currentDate = new Date(currentYear, currentMonth, day)
 				const dateKey = currentDate.toDateString()
-				const workday = workdaysMap.get(dateKey)
+				const workdaysForDate = workdaysMap.get(dateKey) || []
 				const leaveRequests = leaveRequestsMap.get(dateKey) || []
 
+				// Agreguj dane z wszystkich wpisów dla tego dnia
+				let hoursWorked = ''
+				let additionalWorked = ''
+				let realTimeDayWorked = ''
+				let absenceType = ''
+				const allNotes = []
+
+				workdaysForDate.forEach(workday => {
+					// Godziny pracy - weź pierwszy wpis z godzinami
+					if (workday.hoursWorked && !hoursWorked) {
+						hoursWorked = workday.hoursWorked
+					}
+					// Nadgodziny - weź pierwszy wpis z nadgodzinami
+					if (workday.additionalWorked && !additionalWorked) {
+						additionalWorked = workday.additionalWorked
+					}
+					// Czas pracy - weź pierwszy wpis z czasem pracy
+					if (workday.realTimeDayWorked && !realTimeDayWorked) {
+						realTimeDayWorked = workday.realTimeDayWorked
+					}
+					// Typ nieobecności - weź pierwszy wpis z nieobecnością
+					if (workday.absenceType && !absenceType) {
+						absenceType = t(workday.absenceType)
+					}
+					// Uwagi - zbierz wszystkie uwagi z wszystkich wpisów
+					if (workday.notes && workday.notes.trim() !== '') {
+						allNotes.push(workday.notes.trim())
+					}
+				})
+
+				// Sprawdź czy dzień jest świętem i dodaj nazwę święta po dacie
+				let dateWithHoliday = formatDate(currentDate)
+				if (settings) {
+					const holidayInfo = isHolidayDate(currentDate, settings)
+					if (holidayInfo && holidayInfo.name) {
+						dateWithHoliday = `${formatDate(currentDate)} (${holidayInfo.name})`
+					}
+				}
+
 				const row = [
-					formatDate(currentDate),
-					workday?.hoursWorked || '',
-					workday?.additionalWorked || '',
-					workday?.realTimeDayWorked || '',
-					workday?.absenceType ? t(workday.absenceType) : '',
+					dateWithHoliday,
+					hoursWorked,
+					additionalWorked,
+					realTimeDayWorked,
+					absenceType,
 					leaveRequests.length > 0 ? leaveRequests.map(r => t(r.type)).join(', ') : '',
-					workday?.notes || ''
+					allNotes.length > 0 ? allNotes.join(' | ') : ''
 				]
 
 				detailedData.push(row)
@@ -643,20 +824,66 @@ function UserCalendar() {
 								firstDay={1}
 								showNonCurrentDates={false}
 								events={[
-									...workdays.map(day => ({
-										title: day.hoursWorked
-								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${day.additionalWorked ? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}` : ''}${day.notes ? ` | ${day.notes}` : ''}`
-								: `${day.absenceType}${day.notes ? ` | ${day.notes}` : ''}`,
-										start: day.date,
-										backgroundColor: day.hoursWorked ? 'blue' : 'green',
-										textColor: 'white',
-										id: day._id,
-										classNames: day.hoursWorked ? 'event-workday' : 'event-absence',
-										extendedProps: {
-											isWorkday: !!day.hoursWorked,
-											notes: day.notes,
-										},
-									})),
+									...workdays.map(day => {
+										// Określ tytuł w zależności od typu wpisu
+										let title = ''
+										const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+										const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+										const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
+										
+										if (hasHoursWorked) {
+											// Wpis z godzinami pracy
+											title = `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')}`
+											if (day.additionalWorked) {
+												title += ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
+											}
+											if (day.notes) {
+												title += ` | ${day.notes}`
+											}
+										} else if (hasAbsenceType) {
+											// Wpis z typem nieobecności
+											title = day.absenceType
+											if (day.notes) {
+												title += ` | ${day.notes}`
+											}
+										} else if (day.notes) {
+											// Tylko uwagi (bez hoursWorked i bez absenceType)
+											title = day.notes
+										}
+										
+										// Określ kolor tła - uwagi zawsze mają swój kolor
+										let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
+										let classNames = 'event-absence' // Domyślnie event-absence
+										
+										if (hasHoursWorked) {
+											// Godziny pracy - niebieski (priorytet najwyższy)
+											backgroundColor = 'blue'
+											classNames = 'event-workday'
+										} else if (hasAbsenceType) {
+											// Nieobecność - zielony
+											backgroundColor = 'green'
+											classNames = 'event-absence'
+										} else if (hasOnlyNotes) {
+											// Tylko uwagi - ciemno czerwony (tylko gdy nie ma hoursWorked i absenceType)
+											backgroundColor = '#8B0000'
+											classNames = 'event-notes'
+										}
+										
+										return {
+											title,
+											start: day.date,
+											backgroundColor,
+											textColor: 'white',
+											id: day._id,
+											classNames,
+											extendedProps: {
+												isWorkday: !!hasHoursWorked,
+												isAbsence: hasAbsenceType,
+												isNotes: hasOnlyNotes,
+												notes: day.notes,
+											},
+										}
+									}),
 									...workdays
 										.filter(day => day.realTimeDayWorked)
 										.map(day => ({
@@ -670,25 +897,38 @@ function UserCalendar() {
 									// Zaakceptowane wnioski urlopowe
 									...acceptedLeaveRequests
 										.filter(request => request.startDate && request.endDate)
-										.map(request => {
-											// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
-											const endDate = new Date(request.endDate)
-											endDate.setDate(endDate.getDate() + 1)
-											const endDateStr = endDate.toISOString().split('T')[0]
-											
-											return {
+										.flatMap(request => {
+											const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+											return dates.map(date => ({
 												title: `${t(request.type)}`,
-												start: request.startDate,
-												end: endDateStr,
+												start: date,
 												allDay: true,
-												backgroundColor: '#10b981',
-												borderColor: '#059669',
 												textColor: 'white',
-												extendedProps: { type: 'leaveRequest', requestId: request._id }
-											}
+												classNames: 'event-absence',
+												extendedProps: { 
+													type: 'leaveRequest', 
+													requestId: request._id,
+													isAbsence: true
+												}
+											}))
 										}),
+									// Dni świąteczne
+									...holidaysForMonth.map(holiday => ({
+										title: holiday.name,
+										start: holiday.date,
+										allDay: true,
+										backgroundColor: 'green',
+										borderColor: 'darkgreen',
+										textColor: 'white',
+										classNames: 'event-absence',
+										extendedProps: {
+											type: 'holiday',
+											holidayName: holiday.name
+										}
+									})),
 								]}
 								ref={calendarRef}
+								eventContent={renderEventContent}
 								displayEventTime={false}
 								datesSet={handleMonthChange}
 								height="auto"
@@ -709,6 +949,11 @@ function UserCalendar() {
 				<p>
 					{t('workcalendar.allfrommonth4')} {totalLeaveDays} ({totalLeaveHours} {t('workcalendar.allfrommonthhours')})
 				</p>
+				{totalHolidays > 0 && (
+					<p>
+						{t('workcalendar.allfrommonth6') || 'Dni świąteczne:'} {totalHolidays}
+					</p>
+				)}
 				<p>
 					{t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>

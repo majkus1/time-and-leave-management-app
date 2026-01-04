@@ -1,0 +1,1085 @@
+import React, { useState } from 'react'
+import Sidebar from '../dashboard/Sidebar'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
+import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
+import { useSettings, useUpdateSettings } from '../../hooks/useSettings'
+import Modal from 'react-modal'
+import { getPolishHolidaysForYear } from '../../utils/holidays'
+import { calculateHours } from '../../utils/timeHelpers'
+
+if (typeof window !== 'undefined') {
+	Modal.setAppElement('#root')
+}
+
+function Settings() {
+	const { t, i18n } = useTranslation()
+	const { role } = useAuth()
+	const { showAlert } = useAlert()
+	const { data: settings, isLoading: loadingSettings } = useSettings()
+	const updateSettingsMutation = useUpdateSettings()
+	const [workOnWeekends, setWorkOnWeekends] = useState(true)
+	const [includePolishHolidays, setIncludePolishHolidays] = useState(false)
+	const [includeCustomHolidays, setIncludeCustomHolidays] = useState(false)
+	const [customHolidays, setCustomHolidays] = useState([])
+	const [newHolidayDate, setNewHolidayDate] = useState('')
+	const [newHolidayName, setNewHolidayName] = useState('')
+	
+	// State for work hours
+	const [workHoursTimeFrom, setWorkHoursTimeFrom] = useState('')
+	const [workHoursTimeTo, setWorkHoursTimeTo] = useState('')
+	const [workHoursHours, setWorkHoursHours] = useState(0)
+
+	const isAdmin = role && role.includes('Admin')
+	const isHR = role && role.includes('HR')
+	const canEditSettings = isAdmin || isHR
+	const [isInfoExpanded, setIsInfoExpanded] = useState(false)
+	const [isHolidayInfoExpanded, setIsHolidayInfoExpanded] = useState(false)
+	const [isPolishHolidaysModalOpen, setIsPolishHolidaysModalOpen] = useState(false)
+
+	// Helper function to calculate hours from time range
+	const calculateHours = (timeFrom, timeTo) => {
+		if (!timeFrom || !timeTo) return 0
+		const parseTime = (timeStr) => {
+			const [hours, minutes] = timeStr.split(':').map(Number)
+			return hours + minutes / 60
+		}
+		const from = parseTime(timeFrom)
+		const to = parseTime(timeTo)
+		let hours = to - from
+		if (hours < 0) hours += 24
+		return Math.round(hours * 100) / 100
+	}
+
+	// Ustaw wartość początkową gdy settings się załadują
+	React.useEffect(() => {
+		if (settings) {
+			setWorkOnWeekends(settings.workOnWeekends !== undefined ? settings.workOnWeekends : true)
+			setIncludePolishHolidays(settings.includePolishHolidays === true)
+			setIncludeCustomHolidays(settings.includeCustomHolidays === true)
+			setCustomHolidays(Array.isArray(settings.customHolidays) ? settings.customHolidays : [])
+			
+			// Initialize work hours
+			if (settings.workHours) {
+				setWorkHoursTimeFrom(settings.workHours.timeFrom || '')
+				setWorkHoursTimeTo(settings.workHours.timeTo || '')
+				setWorkHoursHours(settings.workHours.hours || 0)
+			} else {
+				setWorkHoursTimeFrom('')
+				setWorkHoursTimeTo('')
+				setWorkHoursHours(0)
+			}
+		}
+	}, [settings])
+
+	const handleClearWorkHours = () => {
+		setWorkHoursTimeFrom('')
+		setWorkHoursTimeTo('')
+		setWorkHoursHours(0)
+	}
+
+	const handleSave = async () => {
+		try {
+			const workHoursData = workHoursTimeFrom && workHoursTimeTo ? {
+				timeFrom: workHoursTimeFrom,
+				timeTo: workHoursTimeTo,
+				hours: calculateHours(workHoursTimeFrom, workHoursTimeTo)
+			} : null
+			
+			await updateSettingsMutation.mutateAsync({ 
+				workOnWeekends,
+				includePolishHolidays,
+				includeCustomHolidays,
+				customHolidays,
+				workHours: workHoursData
+			})
+			await showAlert(t('settings.saveSuccess'))
+		} catch (error) {
+			console.error('Error updating settings:', error)
+			const errorMessage = error.response?.data?.message || t('settings.saveError')
+			await showAlert(errorMessage)
+		}
+	}
+
+	const handleAddCustomHoliday = async () => {
+		if (!newHolidayDate || !newHolidayName.trim()) {
+			await showAlert(t('settings.holidayDateNameRequired') || 'Data i nazwa święta są wymagane')
+			return
+		}
+		
+		// Sprawdź czy data już istnieje
+		if (customHolidays.some(h => h.date === newHolidayDate)) {
+			await showAlert(t('settings.holidayDateExists') || 'Święto dla tej daty już istnieje')
+			return
+		}
+		
+		const newHoliday = { date: newHolidayDate, name: newHolidayName.trim() }
+		const updatedHolidays = [...customHolidays, newHoliday]
+		setCustomHolidays(updatedHolidays)
+		
+		// Zapisz od razu do bazy danych
+		try {
+			await updateSettingsMutation.mutateAsync({ 
+				workOnWeekends,
+				includePolishHolidays,
+				includeCustomHolidays,
+				customHolidays: updatedHolidays
+			})
+			setNewHolidayDate('')
+			setNewHolidayName('')
+			await showAlert(t('settings.holidayAddSuccess') || 'Święto zostało dodane pomyślnie')
+		} catch (error) {
+			console.error('Error adding custom holiday:', error)
+			// Cofnij zmianę w stanie jeśli zapis się nie powiódł
+			setCustomHolidays(customHolidays)
+			await showAlert(error.response?.data?.message || t('settings.holidayAddError') || 'Błąd podczas dodawania święta')
+		}
+	}
+
+	const handleRemoveCustomHoliday = async (date) => {
+		const updatedHolidays = customHolidays.filter(h => h.date !== date)
+		setCustomHolidays(updatedHolidays)
+		
+		// Zapisz od razu do bazy danych
+		try {
+			await updateSettingsMutation.mutateAsync({ 
+				workOnWeekends,
+				includePolishHolidays,
+				includeCustomHolidays,
+				customHolidays: updatedHolidays
+			})
+			await showAlert(t('settings.holidayDeleteSuccess') || 'Święto zostało usunięte pomyślnie')
+		} catch (error) {
+			console.error('Error removing custom holiday:', error)
+			// Cofnij zmianę w stanie jeśli zapis się nie powiódł
+			setCustomHolidays(customHolidays)
+			await showAlert(error.response?.data?.message || t('settings.holidayDeleteError') || 'Błąd podczas usuwania święta')
+		}
+	}
+
+	if (loadingSettings) return <Loader />
+
+	return (
+		<>
+			<Sidebar />
+			<div className="logs-container" style={{ 
+				maxWidth: '1200px', 
+				margin: '0 auto'
+			}}>
+				{/* Nagłówek */}
+				<div className="logs-header" style={{ marginBottom: '30px', textAlign: 'center' }}>
+					<h2 style={{ 
+						color: '#2c3e50', 
+						marginBottom: '20px',
+						fontSize: '28px',
+						fontWeight: '600',
+						textAlign: 'center'
+					}}>
+						<img src="/img/settings.png" alt="" /> {t('settings.title')}
+					</h2>
+				</div>
+
+				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}
+				{canEditSettings && (
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '25px',
+						marginBottom: '30px'
+					}}>
+						<h3 style={{ 
+							color: '#2c3e50',
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600',
+							paddingBottom: '10px',
+							borderBottom: '2px solid #3498db'
+						}}>
+							{t('settings.workWeekendsTitle')}
+						</h3>
+
+						{/* Informacje o ustawieniu */}
+						<div style={{
+							backgroundColor: '#e3f2fd',
+							border: '1px solid #90caf9',
+							borderRadius: '8px',
+							padding: '15px',
+							marginBottom: '20px',
+							color: '#1565c0'
+						}}>
+							<button
+								type="button"
+								onClick={() => setIsInfoExpanded(!isInfoExpanded)}
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									width: '100%',
+									backgroundColor: 'transparent',
+									border: 'none',
+									cursor: 'pointer',
+									padding: 0,
+									margin: 0,
+									textAlign: 'left',
+									color: '#1565c0'
+								}}
+							>
+								<h4 style={{ 
+									margin: 0,
+									fontSize: '16px',
+									fontWeight: '600'
+								}}>
+									{t('settings.howItWorks')}
+								</h4>
+								<svg
+									width="20"
+									height="20"
+									viewBox="0 0 20 20"
+									fill="none"
+									xmlns="http://www.w3.org/2000/svg"
+									style={{
+										transform: isInfoExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+										transition: 'transform 0.3s ease',
+										marginLeft: '10px',
+										flexShrink: 0
+									}}
+								>
+									<path
+										d="M5 7.5L10 12.5L15 7.5"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								</svg>
+							</button>
+							{isInfoExpanded && (
+								<ul style={{ 
+									margin: '15px 0 0 0',
+									paddingLeft: '20px',
+									lineHeight: '1.8'
+								}}>
+									<li>{t('settings.info1')}</li>
+									<ul style={{ marginTop: '8px', marginBottom: '8px' }}>
+										<li>{t('settings.info2')}</li>
+										<li>{t('settings.info3')}</li>
+										<li>{t('settings.info4')}</li>
+									</ul>
+									<li>{t('settings.info5')}</li>
+									<ul style={{ marginTop: '8px' }}>
+										<li>{t('settings.info6')}</li>
+										<li>{t('settings.info7')}</li>
+									</ul>
+								</ul>
+							)}
+						</div>
+
+						{/* Przełącznik */}
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							padding: '20px',
+							backgroundColor: '#f8f9fa',
+							borderRadius: '8px',
+							border: '1px solid #dee2e6',
+							marginBottom: '20px'
+						}}>
+							<div style={{ flex: 1 }}>
+								<label style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									fontSize: '16px',
+									fontWeight: '500',
+									color: '#2c3e50'
+								}}>
+									<input
+										type="checkbox"
+										checked={workOnWeekends}
+										onChange={(e) => setWorkOnWeekends(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#3498db'
+										}}
+									/>
+									<span>{t('settings.workOnWeekendsLabel')}</span>
+								</label>
+								<div style={{
+									marginTop: '8px',
+									fontSize: '14px',
+									color: '#7f8c8d',
+									marginLeft: '36px'
+								}}>
+									{workOnWeekends 
+										? t('settings.workOnWeekendsEnabled')
+										: t('settings.workOnWeekendsDisabled')
+									}
+								</div>
+							</div>
+						</div>
+
+						{/* Sekcja konfiguracji dni świątecznych */}
+						<h3 style={{ 
+							color: '#2c3e50',
+							marginTop: '40px',
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600',
+							paddingBottom: '10px',
+							borderBottom: '2px solid #3498db'
+						}}>
+							{t('settings.holidaysTitle') || 'Konfiguracja dni świątecznych'}
+						</h3>
+
+						{/* Informacje o ustawieniu świąt */}
+						<div style={{
+							backgroundColor: '#e3f2fd',
+							border: '1px solid #90caf9',
+							borderRadius: '8px',
+							padding: '15px',
+							marginBottom: '20px',
+							color: '#1565c0'
+						}}>
+							<button
+								type="button"
+								onClick={() => setIsHolidayInfoExpanded(!isHolidayInfoExpanded)}
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									width: '100%',
+									backgroundColor: 'transparent',
+									border: 'none',
+									cursor: 'pointer',
+									padding: 0,
+									margin: 0,
+									textAlign: 'left',
+									color: '#1565c0'
+								}}
+							>
+								<h4 style={{ 
+									margin: 0,
+									fontSize: '16px',
+									fontWeight: '600'
+								}}>
+									{t('settings.howItWorks')}
+								</h4>
+								<svg
+									width="20"
+									height="20"
+									viewBox="0 0 20 20"
+									fill="none"
+									xmlns="http://www.w3.org/2000/svg"
+									style={{
+										transform: isHolidayInfoExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+										transition: 'transform 0.3s ease',
+										marginLeft: '10px',
+										flexShrink: 0
+									}}
+								>
+									<path
+										d="M5 7.5L10 12.5L15 7.5"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								</svg>
+							</button>
+							{isHolidayInfoExpanded && (
+								<ul style={{ 
+									margin: '15px 0 0 0',
+									paddingLeft: '20px',
+									lineHeight: '1.8'
+								}}>
+									<li>{t('settings.holidayInfo1') || 'Jeśli włączone dni świąteczne:'}</li>
+									<ul style={{ marginTop: '8px', marginBottom: '8px' }}>
+										<li>{t('settings.holidayInfo2') || 'Dni świąteczne (ustawowo wolne w Polsce) nie są wliczane w liczbę dni wniosku urlopowego'}</li>
+										<li>{t('settings.holidayInfo3') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni świąteczne'}</li>
+										<li>{t('settings.holidayInfo4') || 'Dni świąteczne są zaznaczane w kalendarzach (Monthly Calendar, User Calendar, Leave Planner, All Leave Plans)'}</li>
+										<li>{t('settings.holidayInfo5') || 'Możesz dodać niestandardowe dni świąteczne (np. dla innych krajów)'}</li>
+									</ul>
+								</ul>
+							)}
+						</div>
+
+						{/* Przełącznik polskich dni świątecznych */}
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							padding: '20px',
+							backgroundColor: '#f8f9fa',
+							borderRadius: '8px',
+							border: '1px solid #dee2e6',
+							marginBottom: '20px'
+						}}>
+							<div style={{ flex: 1 }}>
+								<label style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									fontSize: '16px',
+									fontWeight: '500',
+									color: '#2c3e50'
+								}}>
+									<input
+										type="checkbox"
+										checked={includePolishHolidays}
+										onChange={(e) => setIncludePolishHolidays(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#3498db'
+										}}
+									/>
+									<span>{t('settings.includePolishHolidaysLabel') || 'Uwzględnij polskie dni świąteczne (ustawowo wolne w Polsce)'}</span>
+									<button
+										type="button"
+										onClick={(e) => {
+											e.preventDefault()
+											e.stopPropagation()
+											setIsPolishHolidaysModalOpen(true)
+										}}
+										style={{
+											marginLeft: '8px',
+											background: 'transparent',
+											border: 'none',
+											cursor: 'pointer',
+											padding: '4px',
+											display: 'inline-flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											color: '#3498db',
+											transition: 'color 0.2s'
+										}}
+										onMouseEnter={(e) => e.target.style.color = '#2980b9'}
+										onMouseLeave={(e) => e.target.style.color = '#3498db'}
+										title={t('settings.viewPolishHolidays') || 'Zobacz listę polskich dni świątecznych'}
+									>
+										<svg
+											width="18"
+											height="18"
+											viewBox="0 0 24 24"
+											fill="none"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+											<path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+											<circle cx="12" cy="8" r="1" fill="currentColor"/>
+										</svg>
+									</button>
+								</label>
+								<div style={{
+									marginTop: '8px',
+									fontSize: '14px',
+									color: '#7f8c8d',
+									marginLeft: '36px'
+								}}>
+									{includePolishHolidays 
+										? (t('settings.includePolishHolidaysEnabled') || 'Polskie dni świąteczne są wliczane w logikę wniosków urlopowych i zaznaczane w kalendarzach')
+										: (t('settings.includePolishHolidaysDisabled') || 'Polskie dni świąteczne NIE są uwzględniane')
+									}
+								</div>
+							</div>
+						</div>
+
+						{/* Przełącznik niestandardowych dni świątecznych */}
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							padding: '20px',
+							backgroundColor: '#f8f9fa',
+							borderRadius: '8px',
+							border: '1px solid #dee2e6',
+							marginBottom: '20px'
+						}}>
+							<div style={{ flex: 1 }}>
+								<label style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									fontSize: '16px',
+									fontWeight: '500',
+									color: '#2c3e50'
+								}}>
+									<input
+										type="checkbox"
+										checked={includeCustomHolidays}
+										onChange={(e) => setIncludeCustomHolidays(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#3498db'
+										}}
+									/>
+									<span>{t('settings.includeCustomHolidaysLabel') || 'Uwzględnij niestandardowe dni świąteczne'}</span>
+								</label>
+								<div style={{
+									marginTop: '8px',
+									fontSize: '14px',
+									color: '#7f8c8d',
+									marginLeft: '36px'
+								}}>
+									{includeCustomHolidays 
+										? (t('settings.includeCustomHolidaysEnabled') || 'Niestandardowe dni świąteczne są wliczane w logikę wniosków urlopowych i zaznaczane w kalendarzach')
+										: (t('settings.includeCustomHolidaysDisabled') || 'Niestandardowe dni świąteczne NIE są uwzględniane')
+									}
+								</div>
+							</div>
+						</div>
+
+						{/* Niestandardowe dni świąteczne - tylko gdy includeCustomHolidays jest włączone */}
+						{includeCustomHolidays && (
+							<div style={{
+								backgroundColor: '#fff9e6',
+								border: '1px solid #ffd700',
+								borderRadius: '8px',
+								padding: '20px',
+								marginBottom: '20px'
+							}}>
+							<h4 style={{
+								marginBottom: '15px',
+								fontSize: '18px',
+								fontWeight: '600',
+								color: '#2c3e50'
+							}}>
+								{t('settings.customHolidaysTitle') || 'Niestandardowe dni świąteczne'}
+							</h4>
+							<p style={{
+								marginBottom: '15px',
+								fontSize: '14px',
+								color: '#7f8c8d'
+							}}>
+								{t('settings.customHolidaysDescription') || 'Dodaj niestandardowe dni świąteczne (np. dla innych krajów). Te dni będą działać tak samo jak święta polskie.'}
+							</p>
+							
+							{/* Formularz dodawania */}
+							<div style={{
+								display: 'flex',
+								gap: '10px',
+								marginBottom: '20px',
+								flexWrap: 'wrap'
+							}}>
+								<input
+									type="date"
+									value={newHolidayDate}
+									onChange={(e) => setNewHolidayDate(e.target.value)}
+									style={{
+										flex: 1,
+										minWidth: '150px',
+										padding: '10px',
+										border: '1px solid #dee2e6',
+										borderRadius: '6px',
+										fontSize: '14px'
+									}}
+									placeholder={t('settings.holidayDatePlaceholder') || 'Data'}
+								/>
+								<input
+									type="text"
+									value={newHolidayName}
+									onChange={(e) => setNewHolidayName(e.target.value)}
+									style={{
+										flex: 2,
+										minWidth: '200px',
+										padding: '10px',
+										border: '1px solid #dee2e6',
+										borderRadius: '6px',
+										fontSize: '14px'
+									}}
+									placeholder={t('settings.holidayNamePlaceholder') || 'Nazwa święta'}
+								/>
+								<button
+									type="button"
+									onClick={handleAddCustomHoliday}
+									style={{
+										padding: '10px 20px',
+										backgroundColor: '#28a745',
+										color: 'white',
+										border: 'none',
+										borderRadius: '6px',
+										fontSize: '14px',
+										fontWeight: '500',
+										cursor: 'pointer',
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => {
+										e.target.style.backgroundColor = '#218838'
+									}}
+									onMouseLeave={(e) => {
+										e.target.style.backgroundColor = '#28a745'
+									}}
+								>
+									{t('settings.addHoliday') || 'Dodaj'}
+								</button>
+							</div>
+
+							{/* Lista niestandardowych świąt */}
+							{customHolidays.length > 0 && (
+								<div>
+									<h5 style={{
+										marginBottom: '10px',
+										fontSize: '16px',
+										fontWeight: '600',
+										color: '#2c3e50'
+									}}>
+										{t('settings.customHolidaysList') || 'Dodane niestandardowe święta:'}
+									</h5>
+									<div style={{
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '8px'
+									}}>
+										{customHolidays.map((holiday, index) => (
+											<div
+												key={index}
+												style={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													alignItems: 'center',
+													padding: '10px',
+													backgroundColor: 'white',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px'
+												}}
+											>
+												<div>
+													<div style={{ fontWeight: '600', color: '#2c3e50' }}>
+														{new Date(holiday.date).toLocaleDateString('pl-PL', { 
+															year: 'numeric', 
+															month: 'long', 
+															day: 'numeric' 
+														})}
+													</div>
+													<div style={{ fontSize: '14px', color: '#7f8c8d', marginTop: '4px' }}>
+														{holiday.name}
+													</div>
+												</div>
+												<button
+													type="button"
+													onClick={() => handleRemoveCustomHoliday(holiday.date)}
+													style={{
+														padding: '6px 12px',
+														backgroundColor: '#dc3545',
+														color: 'white',
+														border: 'none',
+														borderRadius: '4px',
+														fontSize: '14px',
+														cursor: 'pointer',
+														transition: 'all 0.2s'
+													}}
+													onMouseEnter={(e) => {
+														e.target.style.backgroundColor = '#c82333'
+													}}
+													onMouseLeave={(e) => {
+														e.target.style.backgroundColor = '#dc3545'
+													}}
+												>
+													{t('settings.removeHoliday') || 'Usuń'}
+												</button>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+						)}
+
+						{/* Sekcja konfiguracji godzin pracy */}
+						{canEditSettings && (
+							<>
+								<h3 style={{ 
+									color: '#2c3e50',
+									marginTop: '40px',
+									marginBottom: '20px',
+									fontSize: '20px',
+									fontWeight: '600',
+									paddingBottom: '10px',
+									borderBottom: '2px solid #3498db'
+								}}>
+									{t('settings.workHoursTitle') || 'Konfiguracja godzin pracy'}
+								</h3>
+
+								<div style={{
+									backgroundColor: '#e3f2fd',
+									border: '1px solid #90caf9',
+									borderRadius: '8px',
+									padding: '15px',
+									marginBottom: '20px',
+									color: '#1565c0'
+								}}>
+									<p style={{ margin: 0, lineHeight: '1.6' }}>
+										{t('settings.workHoursDescription') || 'Skonfiguruj standardowe godziny pracy dla Twojego zespołu. Te godziny będą automatycznie wypełniane w formularzu kalendarza w ewidencji czasu pracy, co znacznie przyspieszy wprowadzanie danych.'}
+									</p>
+								</div>
+
+								<div style={{
+									backgroundColor: '#f8f9fa',
+									border: '1px solid #dee2e6',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px'
+								}}>
+									<h4 style={{
+										marginBottom: '15px',
+										fontSize: '18px',
+										fontWeight: '600',
+										color: '#2c3e50'
+									}}>
+										{t('settings.workHoursCommonTitle') || 'Wspólne godziny pracy dla wszystkich dni'}
+									</h4>
+									<div style={{
+										display: 'grid',
+										gridTemplateColumns: '1fr 1fr 1fr',
+										gap: '15px',
+										alignItems: 'end'
+									}}>
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '8px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('settings.workHoursFrom') || 'Od'}
+											</label>
+											<input
+												type="text"
+												value={workHoursTimeFrom}
+												onChange={(e) => {
+													setWorkHoursTimeFrom(e.target.value)
+													if (workHoursTimeTo) {
+														setWorkHoursHours(calculateHours(e.target.value, workHoursTimeTo))
+													}
+												}}
+												placeholder="09:00"
+												style={{
+													width: '100%',
+													padding: '10px',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px',
+													fontSize: '16px',
+													backgroundColor: 'white'
+												}}
+											/>
+										</div>
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '8px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('settings.workHoursTo') || 'Do'}
+											</label>
+											<input
+												type="text"
+												value={workHoursTimeTo}
+												onChange={(e) => {
+													setWorkHoursTimeTo(e.target.value)
+													if (workHoursTimeFrom) {
+														setWorkHoursHours(calculateHours(workHoursTimeFrom, e.target.value))
+													}
+												}}
+												placeholder="17:00"
+												style={{
+													width: '100%',
+													padding: '10px',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px',
+													fontSize: '16px',
+													backgroundColor: 'white'
+												}}
+											/>
+										</div>
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '8px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('settings.workHoursHours') || 'Godziny'}
+											</label>
+											<input
+												type="number"
+												value={workHoursHours}
+												readOnly
+												style={{
+													width: '100%',
+													padding: '10px',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px',
+													fontSize: '16px',
+													backgroundColor: '#e9ecef',
+													cursor: 'not-allowed'
+												}}
+											/>
+										</div>
+									</div>
+									<div style={{ marginTop: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+										<button
+											type="button"
+											onClick={handleClearWorkHours}
+											style={{
+												backgroundColor: '#6c757d',
+												color: 'white',
+												border: 'none',
+												padding: '10px 20px',
+												borderRadius: '6px',
+												fontSize: '16px',
+												fontWeight: '500',
+												cursor: 'pointer',
+												transition: 'all 0.2s'
+											}}
+											onMouseEnter={(e) => {
+												e.target.style.backgroundColor = '#5a6268'
+											}}
+											onMouseLeave={(e) => {
+												e.target.style.backgroundColor = '#6c757d'
+											}}
+										>
+											{t('settings.workHoursClear') || 'Wyczyść'}
+										</button>
+									</div>
+								</div>
+							</>
+						)}
+
+						{/* Przycisk zapisu */}
+						<div style={{ textAlign: 'right' }}>
+							<button
+								onClick={handleSave}
+								disabled={updateSettingsMutation.isPending}
+								style={{
+									backgroundColor: updateSettingsMutation.isPending ? '#95a5a6' : '#3498db',
+									color: 'white',
+									border: 'none',
+									padding: '12px 24px',
+									borderRadius: '6px',
+									fontSize: '16px',
+									fontWeight: '500',
+									cursor: updateSettingsMutation.isPending ? 'not-allowed' : 'pointer',
+									transition: 'all 0.2s',
+									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+								}}
+								onMouseEnter={(e) => {
+									if (!updateSettingsMutation.isPending) {
+										e.target.style.backgroundColor = '#2980b9'
+										e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)'
+									}
+								}}
+								onMouseLeave={(e) => {
+									if (!updateSettingsMutation.isPending) {
+										e.target.style.backgroundColor = '#3498db'
+										e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
+									}
+								}}
+							>
+								{updateSettingsMutation.isPending ? (
+									<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										{t('settings.saving')}
+									</span>
+								) : (
+									t('settings.save')
+								)}
+							</button>
+						</div>
+					</div>
+				)}
+
+				{/* Informacja dla użytkowników bez uprawnień */}
+				{!canEditSettings && (
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '25px',
+						textAlign: 'center'
+					}}>
+						<p style={{ 
+							color: '#7f8c8d',
+							fontSize: '16px'
+						}}>
+							{t('settings.noAccess')}
+						</p>
+					</div>
+				)}
+
+				{/* Modal z listą polskich dni świątecznych */}
+				<Modal
+					isOpen={isPolishHolidaysModalOpen}
+					onRequestClose={() => setIsPolishHolidaysModalOpen(false)}
+					style={{
+						overlay: {
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							backgroundColor: 'rgba(0, 0, 0, 0.5)',
+							backdropFilter: 'blur(2px)',
+							WebkitBackdropFilter: 'blur(2px)',
+						},
+						content: {
+							position: 'relative',
+							inset: 'unset',
+							margin: '0',
+							maxWidth: '600px',
+							width: '90%',
+							maxHeight: '90vh',
+							overflowY: 'auto',
+							borderRadius: '1rem',
+							padding: '2rem',
+							backgroundColor: '#fff',
+							border: 'none',
+							boxShadow: '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)',
+						},
+					}}
+					contentLabel={t('settings.polishHolidaysModalTitle') || 'Polskie dni świąteczne'}
+				>
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+						<h2 style={{ 
+							margin: 0,
+							color: '#2c3e50',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('settings.polishHolidaysModalTitle') || 'Polskie dni świąteczne'}
+						</h2>
+						<button
+							onClick={() => setIsPolishHolidaysModalOpen(false)}
+							style={{
+								background: 'transparent',
+								border: 'none',
+								fontSize: '28px',
+								cursor: 'pointer',
+								color: '#7f8c8d',
+								lineHeight: '1',
+								padding: '0',
+								width: '30px',
+								height: '30px',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center'
+							}}
+							onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+							onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}
+						>
+							×
+						</button>
+					</div>
+					<div style={{
+						backgroundColor: '#f8f9fa',
+						borderRadius: '8px',
+						padding: '20px',
+						marginBottom: '20px'
+					}}>
+						<p style={{
+							marginBottom: '15px',
+							color: '#2c3e50',
+							fontSize: '16px',
+							fontWeight: '500'
+						}}>
+							{t('settings.polishHolidaysDescription') || 'Lista polskich dni świątecznych (ustawowo wolne w Polsce):'}
+						</p>
+						<div style={{
+							display: 'flex',
+							flexDirection: 'column',
+							gap: '10px'
+						}}>
+							{(() => {
+								const currentYear = new Date().getFullYear()
+								const polishHolidays = getPolishHolidaysForYear(currentYear)
+								return polishHolidays.map((holiday, index) => {
+									const dateObj = new Date(holiday.date)
+									const formattedDate = dateObj.toLocaleDateString(i18n.resolvedLanguage, {
+										day: 'numeric',
+										month: 'long',
+										year: 'numeric'
+									})
+									const weekday = dateObj.toLocaleDateString(i18n.resolvedLanguage, {
+										weekday: 'long'
+									})
+									return (
+										<div
+											key={index}
+											style={{
+												padding: '12px',
+												backgroundColor: 'white',
+												borderRadius: '6px',
+												border: '1px solid #dee2e6',
+												display: 'flex',
+												justifyContent: 'space-between',
+												alignItems: 'center'
+											}}
+										>
+											<div>
+												<div style={{
+													fontWeight: '600',
+													color: '#2c3e50',
+													marginBottom: '4px'
+												}}>
+													{formattedDate} ({weekday})
+												</div>
+												<div style={{
+													fontSize: '14px',
+													color: '#7f8c8d'
+												}}>
+													{holiday.name}
+												</div>
+											</div>
+										</div>
+									)
+								})
+							})()}
+						</div>
+					</div>
+					<div style={{ textAlign: 'right' }}>
+						<button
+							onClick={() => setIsPolishHolidaysModalOpen(false)}
+							style={{
+								backgroundColor: '#3498db',
+								color: 'white',
+								border: 'none',
+								padding: '10px 20px',
+								borderRadius: '6px',
+								fontSize: '16px',
+								fontWeight: '500',
+								cursor: 'pointer',
+								transition: 'all 0.2s'
+							}}
+							onMouseEnter={(e) => {
+								e.target.style.backgroundColor = '#2980b9'
+							}}
+							onMouseLeave={(e) => {
+								e.target.style.backgroundColor = '#3498db'
+							}}
+						>
+							{t('settings.close') || 'Zamknij'}
+						</button>
+					</div>
+				</Modal>
+			</div>
+		</>
+	)
+}
+
+export default Settings
+

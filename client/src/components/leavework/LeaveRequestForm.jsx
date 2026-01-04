@@ -5,6 +5,8 @@ import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useOwnLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
+import { useSettings } from '../../hooks/useSettings'
+import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
 
 function LeaveRequestForm() {
 	const [type, setType] = useState('leaveform.option1')
@@ -19,9 +21,55 @@ function LeaveRequestForm() {
 	// TanStack Query hooks
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
 	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
+	const { data: settings } = useSettings()
 	const createLeaveRequestMutation = useCreateLeaveRequest()
 	const cancelLeaveRequestMutation = useCancelLeaveRequest()
 	const updateLeaveRequestMutation = useUpdateLeaveRequest()
+	
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+	
+	// Funkcja pomocnicza do sprawdzania czy dzień jest świętem
+	const isHolidayDate = React.useCallback((date) => {
+		if (!settings) return false
+		const holidayInfo = checkHolidayDate(date, settings)
+		return holidayInfo !== null
+	}, [settings])
+
+	// Funkcja pomocnicza do liczenia dni (z pominięciem weekendów i świąt)
+	const calculateDays = React.useCallback((start, end) => {
+		if (!start || !end) return 0
+		const startDate = new Date(start)
+		const endDate = new Date(end)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		let days = 0
+		const current = new Date(startDate)
+		
+		while (current <= endDate) {
+			const isWeekendDay = isWeekend(current)
+			const holidayInfo = checkHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					days++
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					days++
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return days
+	}, [settings, isWeekend, isHolidayDate])
 
 	const [editingRequest, setEditingRequest] = useState(null)
 	const [editType, setEditType] = useState('leaveform.option1')
@@ -45,22 +93,18 @@ function LeaveRequestForm() {
 
 
 	useEffect(() => {
-		if (startDate && endDate) {
-			const start = new Date(startDate)
-			const end = new Date(endDate)
-			const timeDiff = Math.abs(end - start)
-			setDaysRequested(Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1)
+		if (startDate && endDate && settings) {
+			const daysDiff = calculateDays(startDate, endDate)
+			setDaysRequested(daysDiff)
 		}
-	}, [startDate, endDate])
+	}, [startDate, endDate, settings, calculateDays])
 
 	useEffect(() => {
-		if (editStartDate && editEndDate) {
-			const start = new Date(editStartDate)
-			const end = new Date(editEndDate)
-			const timeDiff = Math.abs(end - start)
-			setEditDaysRequested(Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1)
+		if (editStartDate && editEndDate && settings) {
+			const daysDiff = calculateDays(editStartDate, editEndDate)
+			setEditDaysRequested(daysDiff)
 		}
-	}, [editStartDate, editEndDate])
+	}, [editStartDate, editEndDate, settings, calculateDays])
 
 	// Funkcja sprawdzająca kolizję dat z istniejącymi wnioskami
 	const hasDateConflict = (newStartDate, newEndDate, excludeRequestId = null) => {
@@ -95,6 +139,55 @@ function LeaveRequestForm() {
 		if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
 			await showAlert(t('leaveform.dateValidationError'))
 			return
+		}
+		
+		// Sprawdź czy wszystkie dni w zakresie to weekendy lub święta (gdy zespół nie pracuje w weekendy/święta)
+		if (startDate && endDate && settings) {
+			const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
+			// Sprawdź czy są jakiekolwiek święta włączone (polskie lub niestandardowe)
+			const hasAnyHolidays = settings.includePolishHolidays === true || settings.includeCustomHolidays === true
+			
+			// UWAGA: Nie blokujemy wniosków zawierających święta - święta są po prostu pomijane w liczbie dni
+			
+			if (!workOnWeekends || hasAnyHolidays) {
+				const startCheck = new Date(startDate)
+				const endCheck = new Date(endDate)
+				const currentCheck = new Date(startCheck)
+				let allInvalid = true
+				
+				while (currentCheck <= endCheck) {
+					const isWeekendDay = isWeekend(currentCheck)
+					const holidayInfo = checkHolidayDate(currentCheck, settings)
+					const isHolidayDay = holidayInfo !== null
+					
+					// Sprawdź czy dzień jest dozwolony
+					if (workOnWeekends) {
+						// Jeśli pracuje w weekendy, sprawdź tylko święta
+						if (!isHolidayDay) {
+							allInvalid = false
+							break
+						}
+					} else {
+						// Jeśli nie pracuje w weekendy, sprawdź weekendy i święta
+						if (!isWeekendDay && !isHolidayDay) {
+							allInvalid = false
+							break
+						}
+					}
+					currentCheck.setDate(currentCheck.getDate() + 1)
+				}
+				
+				if (allInvalid) {
+					if (!workOnWeekends && hasAnyHolidays) {
+						await showAlert(t('leaveform.weekendHolidayOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne.')
+					} else if (!workOnWeekends) {
+						await showAlert(t('leaveform.weekendOnlyError'))
+					} else if (hasAnyHolidays) {
+						await showAlert(t('leaveform.holidayOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni świąteczne.')
+					}
+					return
+				}
+			}
 		}
 		
 		// Sprawdź kolizję z istniejącymi wnioskami
@@ -147,6 +240,55 @@ function LeaveRequestForm() {
 		if (editStartDate && editEndDate && new Date(editEndDate) < new Date(editStartDate)) {
 			await showAlert(t('leaveform.dateValidationError'))
 			return
+		}
+		
+		// Sprawdź czy wszystkie dni w zakresie to weekendy lub święta (gdy zespół nie pracuje w weekendy/święta)
+		if (editStartDate && editEndDate && settings) {
+			const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
+			// Sprawdź czy są jakiekolwiek święta włączone (polskie lub niestandardowe)
+			const hasAnyHolidays = settings.includePolishHolidays === true || settings.includeCustomHolidays === true
+			
+			// UWAGA: Nie blokujemy wniosków zawierających święta - święta są po prostu pomijane w liczbie dni
+			
+			if (!workOnWeekends || hasAnyHolidays) {
+				const startCheck = new Date(editStartDate)
+				const endCheck = new Date(editEndDate)
+				const currentCheck = new Date(startCheck)
+				let allInvalid = true
+				
+				while (currentCheck <= endCheck) {
+					const isWeekendDay = isWeekend(currentCheck)
+					const holidayInfo = checkHolidayDate(currentCheck, settings)
+					const isHolidayDay = holidayInfo !== null
+					
+					// Sprawdź czy dzień jest dozwolony
+					if (workOnWeekends) {
+						// Jeśli pracuje w weekendy, sprawdź tylko święta
+						if (!isHolidayDay) {
+							allInvalid = false
+							break
+						}
+					} else {
+						// Jeśli nie pracuje w weekendy, sprawdź weekendy i święta
+						if (!isWeekendDay && !isHolidayDay) {
+							allInvalid = false
+							break
+						}
+					}
+					currentCheck.setDate(currentCheck.getDate() + 1)
+				}
+				
+				if (allInvalid) {
+					if (!workOnWeekends && hasAnyHolidays) {
+						await showAlert(t('leaveform.weekendHolidayOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne.')
+					} else if (!workOnWeekends) {
+						await showAlert(t('leaveform.weekendOnlyError'))
+					} else if (hasAnyHolidays) {
+						await showAlert(t('leaveform.holidayOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni świąteczne.')
+					}
+					return
+				}
+			}
 		}
 		
 		// Sprawdź kolizję z istniejącymi wnioskami (wykluczając aktualnie edytowany)

@@ -8,6 +8,8 @@ import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
 import { useAllLeavePlans } from '../../hooks/useLeavePlans'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
@@ -79,9 +81,67 @@ function AdminAllLeaveCalendar() {
 	
 	const { data: allLeavePlans = [], isLoading: loadingPlans, error: plansError } = useAllLeavePlans()
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
+	const { data: settings } = useSettings()
 
 	const loading = loadingUsers || loadingPlans || loadingRequests
 	const error = usersError || plansError || requestsError
+
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = (startDate, endDate) => {
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}
+
+	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
+	const holidaysForMonth = React.useMemo(() => {
+		if (!settings) return []
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+		// Formatuj daty jako YYYY-MM-DD w lokalnej strefie czasowej (nie UTC)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(monthStart),
+			formatDateLocal(monthEnd),
+			settings
+		)
+	}, [settings, currentMonth, currentYear])
 
 	// Dla /all-leave-plans zawsze pokazujemy wszystkie plany i wnioski z zespołu
 	// Backend już filtruje na podstawie teamId, więc nie trzeba dodatkowo filtrować
@@ -262,26 +322,35 @@ function AdminAllLeaveCalendar() {
 									extendedProps: { type: 'plan', userId: plan.userId }
 								}
 							}),
-							// Zaakceptowane wnioski urlopowe
+							// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
 							...acceptedLeaveRequests
-								.filter(request => request.userId && request.userId.firstName && request.userId.lastName) // Sprawdź czy mamy pełną nazwę
-								.map(request => {
-									// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
-									const endDate = new Date(request.endDate)
-									endDate.setDate(endDate.getDate() + 1)
-									const endDateStr = endDate.toISOString().split('T')[0]
+								.filter(request => request.userId && request.userId.firstName && request.userId.lastName && request.startDate && request.endDate) // Sprawdź czy mamy pełną nazwę i daty
+								.flatMap(request => {
+									const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 									const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
-									
-									return {
+									return dates.map(date => ({
 										title: `${employeeName} (${t(request.type)})`,
-										start: request.startDate,
-										end: endDateStr,
+										start: date,
 										allDay: true,
 										backgroundColor: getColorForUser(employeeName),
 										borderColor: getColorForUser(employeeName),
 										extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
-									}
-								})
+									}))
+								}),
+							// Dni świąteczne
+							...holidaysForMonth.map(holiday => ({
+								title: holiday.name,
+								start: holiday.date,
+								allDay: true,
+								backgroundColor: 'green',
+								borderColor: 'darkgreen',
+								textColor: 'white',
+								classNames: 'event-absence',
+								extendedProps: {
+									type: 'holiday',
+									holidayName: holiday.name
+								}
+							}))
 						]}
 						ref={calendarRef}
 						datesSet={handleMonthChange}

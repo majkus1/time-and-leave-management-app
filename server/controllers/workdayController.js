@@ -32,6 +32,27 @@ exports.getWorkdays = async (req, res) => {
 	}
 }
 
+exports.updateWorkday = async (req, res) => {
+	try {
+		const { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
+		const workday = await Workday.findOne({ _id: req.params.id, userId: req.user.userId })
+		if (!workday) return res.status(404).send('Workday not found or unauthorized')
+		
+		// Aktualizuj wszystkie pola, jeśli są przekazane
+		if (hoursWorked !== undefined) workday.hoursWorked = hoursWorked ? parseInt(hoursWorked) : null
+		if (additionalWorked !== undefined) workday.additionalWorked = additionalWorked ? parseInt(additionalWorked) : null
+		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
+		if (absenceType !== undefined) workday.absenceType = absenceType || null
+		if (notes !== undefined) workday.notes = notes || null
+		
+		await workday.save()
+		res.send('Workday updated successfully.')
+	} catch (error) {
+		console.error('Error updating workday:', error)
+		res.status(500).send('Failed to update workday.')
+	}
+}
+
 exports.deleteWorkday = async (req, res) => {
 	try {
 		const result = await Workday.deleteOne({ _id: req.params.id, userId: req.user.userId })

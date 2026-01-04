@@ -8,6 +8,8 @@ import Loader from '../Loader'
 import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
+import { useSettings } from '../../hooks/useSettings'
+import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
@@ -59,10 +61,68 @@ function LeavePlanner() {
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
 	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
+	const { data: settings } = useSettings()
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
 	const loading = loadingPlans || loadingRequests || loadingVacation
+
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = (startDate, endDate) => {
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}
+
+	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
+	const holidaysForMonth = React.useMemo(() => {
+		if (!settings) return []
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+		// Formatuj daty jako YYYY-MM-DD w lokalnej strefie czasowej (nie UTC)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(monthStart),
+			formatDateLocal(monthEnd),
+			settings
+		)
+	}, [settings, currentMonth, currentYear])
 
 	const handleMonthSelect = event => {
 		const newMonth = parseInt(event.target.value, 10)
@@ -309,25 +369,31 @@ function LeavePlanner() {
 									backgroundColor: 'blue',
 									extendedProps: { type: 'plan', date: date }
 								})),
-								// Zaakceptowane wnioski urlopowe (tylko do wyświetlania)
+								// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów)
 								...acceptedLeaveRequests
 									.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
-									.map(request => {
-										// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
-										const endDate = new Date(request.endDate)
-										endDate.setDate(endDate.getDate() + 1)
-										const endDateStr = endDate.toISOString().split('T')[0]
-										
-										return {
+									.flatMap(request => {
+										const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+										return dates.map(date => ({
 											title: `${t(request.type)}`,
-											start: request.startDate,
-											end: endDateStr,
+											start: date,
 											allDay: true,
 											backgroundColor: 'green',
 											borderColor: 'darkgreen',
 											extendedProps: { type: 'request', requestId: request._id }
-										}
-									})
+										}))
+									}),
+								// Dni świąteczne
+								...holidaysForMonth.map(holiday => ({
+									title: holiday.name,
+									start: holiday.date,
+									allDay: true,
+									backgroundColor: 'green',
+									borderColor: 'darkgreen',
+									textColor: 'white',
+									classNames: 'event-absence',
+									extendedProps: { type: 'holiday', name: holiday.name }
+								}))
 							]}
 							dateClick={info => toggleDate(info.dateStr)}
 							ref={calendarRef}

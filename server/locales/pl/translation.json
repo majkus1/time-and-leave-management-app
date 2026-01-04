@@ -116,6 +116,26 @@
 		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
 		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
 	},
+	"settings": {
+		"title": "Ustawienia",
+		"workWeekendsTitle": "Konfiguracja pracy w weekendy",
+		"howItWorks": "Jak to działa?",
+		"info1": "Jeśli zespół NIE pracuje w weekendy:",
+		"info2": "Weekendy (sobota i niedziela) nie są wliczane w liczbę dni wniosku urlopowego",
+		"info3": "W przypadku akceptacji wniosku itp Weekendy nie są zaznaczane w kalendarzach urlopowych i ewidencji czasu pracy",
+		"info4": "Przykład: Wniosek od poniedziałku do piątku (5 dni roboczych) + weekend = w kalendarzu zaznaczone tylko 5 dni",
+		"info5": "Jeśli zespół pracuje w weekendy:",
+		"info6": "Wszystkie dni (włącznie z weekendami) są wliczane normalnie",
+		"info7": "Weekendy są zaznaczane w kalendarzach jak zwykłe dni",
+		"workOnWeekendsLabel": "Zespół pracuje w weekendy",
+		"workOnWeekendsEnabled": "Weekendy są wliczane w wnioski urlopowe i zaznaczane w kalendarzach",
+		"workOnWeekendsDisabled": "Weekendy NIE są wliczane w wnioski urlopowe i NIE są zaznaczane w kalendarzach",
+		"save": "Zapisz ustawienia",
+		"saving": "Zapisywanie...",
+		"saveSuccess": "Ustawienia zostały zapisane pomyślnie",
+		"saveError": "Błąd podczas zapisywania ustawień",
+		"noAccess": "Na tę chwilę twoje uprawnienia nie pozwalają na żadne konfiguracje."
+	},
 	"boards": {
 		"status": {
 			"todo": "Do zrobienia",

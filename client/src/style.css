@@ -887,6 +887,13 @@ td {
 	border-radius: 4px;
 }
 
+.event-notes {
+	background-color: #8B0000;
+	color: white;
+	padding: 2px 5px;
+	border-radius: 4px;
+}
+
 .event-content {
 	display: flex;
 	align-items: center;
@@ -1739,7 +1746,7 @@ textarea {
 }
 
 .h3resume {
-	font-size: 16px !important;
+	font-size: 17px !important;
 }
 
 @media (max-width: 768px) {
@@ -2926,4 +2933,32 @@ section {
 #calendars-works-review .resume-month-work {
 	padding-top: 30px;
 }
+}
+
+.event-notes span {
+	color: white !important;
+}
+
+.event-holiday {
+	background-color: #FF6B35 !important;
+	color: white !important;
+}
+
+.event-holiday span {
+	color: white !important;
+}
+
+.fc-h-event {
+	border: none;
+}
+
+.event-content {
+	padding: 4px;
+}
+
+.firstformcalendar {
+	background: rgb(248, 249, 250);
+    padding: 20px;
+    border: 1px solid rgb(222, 226, 230);
+    border-radius: 8px;
 }

@@ -6,9 +6,11 @@ import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useWorkdays, useCreateWorkday, useDeleteWorkday } from '../../hooks/useWorkdays'
+import { useWorkdays, useCreateWorkday, useDeleteWorkday, useUpdateWorkday } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 
 Modal.setAppElement('#root')
 
@@ -24,11 +26,13 @@ function MonthlyCalendar() {
 	const [totalLeaveHours, setTotalLeaveHours] = useState(0)
 	const [totalWorkDays, setTotalWorkDays] = useState(0)
 	const [totalOtherAbsences, setTotalOtherAbsences] = useState(0)
+	const [totalHolidays, setTotalHolidays] = useState(0)
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
 	const [notes, setNotes] = useState('')
 	const [errorMessage, setErrorMessage] = useState('')
+	const [isHolidayDay, setIsHolidayDay] = useState(false)
 	const calendarRef = useRef(null)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -113,15 +117,74 @@ function MonthlyCalendar() {
 		currentYear
 	)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests()
+	const { data: settings } = useSettings()
 	const createWorkdayMutation = useCreateWorkday()
 	const deleteWorkdayMutation = useDeleteWorkday()
+	const updateWorkdayMutation = useUpdateWorkday()
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
 	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
+	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
+	const holidaysForMonth = React.useMemo(() => {
+		if (!settings) return []
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+		// Formatuj daty jako YYYY-MM-DD w lokalnej strefie czasowej (nie UTC)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(monthStart),
+			formatDateLocal(monthEnd),
+			settings
+		)
+	}, [settings, currentMonth, currentYear])
+
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = (startDate, endDate) => {
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}
+
 	useEffect(() => {
 		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
-	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear])
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings])
 
 	const toggleConfirmationStatus = async () => {
 		try {
@@ -139,6 +202,7 @@ function MonthlyCalendar() {
 	}
 
 	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
+		if (!settings) return // Czekaj na załadowanie ustawień
 		let hours = 0
 		let leaveDays = 0
 		let workDaysSet = new Set()
@@ -194,38 +258,79 @@ function MonthlyCalendar() {
 				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
 				
 				if (isVacation) {
-					// Policz dni urlopu w danym miesiącu
+					// Policz dni urlopu w danym miesiącu - używając generateDateRangeForCalendar aby pominąć weekendy i święta
 					const monthStart = new Date(year, month, 1)
 					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
 					const overlapStart = startDate > monthStart ? startDate : monthStart
 					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
 					
 					if (overlapStart <= overlapEnd) {
-						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
-						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
-						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
-						const diffTime = end - start
-						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-						leaveDays += daysInMonth
+						// Użyj generateDateRangeForCalendar aby pominąć weekendy i święta
+						const formatDateLocal = (date) => {
+							const year = date.getFullYear()
+							const month = String(date.getMonth() + 1).padStart(2, '0')
+							const day = String(date.getDate()).padStart(2, '0')
+							return `${year}-${month}-${day}`
+						}
+						const dateRange = generateDateRangeForCalendar(
+							formatDateLocal(overlapStart),
+							formatDateLocal(overlapEnd)
+						)
+						// Policz tylko dni w danym miesiącu
+						const daysInMonth = dateRange.filter(dateStr => {
+							const date = new Date(dateStr)
+							return date.getMonth() === month && date.getFullYear() === year
+						})
+						leaveDays += daysInMonth.length
 					}
 				} else {
-					// Inna nieobecność - policz dni w danym miesiącu
+					// Inna nieobecność - policz dni w danym miesiącu - używając generateDateRangeForCalendar aby pominąć weekendy i święta
 					const monthStart = new Date(year, month, 1)
 					const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999)
 					const overlapStart = startDate > monthStart ? startDate : monthStart
 					const overlapEnd = endDate < monthEnd ? endDate : monthEnd
 					
 					if (overlapStart <= overlapEnd) {
-						// Ustaw godziny na 0:00:00 dla dokładnego liczenia dni
-						const start = new Date(overlapStart.getFullYear(), overlapStart.getMonth(), overlapStart.getDate())
-						const end = new Date(overlapEnd.getFullYear(), overlapEnd.getMonth(), overlapEnd.getDate())
-						const diffTime = end - start
-						const daysInMonth = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
-						otherAbsences += daysInMonth
+						// Użyj generateDateRangeForCalendar aby pominąć weekendy i święta
+						const formatDateLocal = (date) => {
+							const year = date.getFullYear()
+							const month = String(date.getMonth() + 1).padStart(2, '0')
+							const day = String(date.getDate()).padStart(2, '0')
+							return `${year}-${month}-${day}`
+						}
+						const dateRange = generateDateRangeForCalendar(
+							formatDateLocal(overlapStart),
+							formatDateLocal(overlapEnd)
+						)
+						// Policz tylko dni w danym miesiącu
+						const daysInMonth = dateRange.filter(dateStr => {
+							const date = new Date(dateStr)
+							return date.getMonth() === month && date.getFullYear() === year
+						})
+						otherAbsences += daysInMonth.length
 					}
 				}
 			}
 		})
+		}
+
+		// Policz dni świąteczne w danym miesiącu
+		let holidaysCount = 0
+		if (settings && (settings.includePolishHolidays || settings.includeCustomHolidays)) {
+			const monthStart = new Date(year, month, 1)
+			const monthEnd = new Date(year, month + 1, 0)
+			const formatDateLocal = (date) => {
+				const year = date.getFullYear()
+				const month = String(date.getMonth() + 1).padStart(2, '0')
+				const day = String(date.getDate()).padStart(2, '0')
+				return `${year}-${month}-${day}`
+			}
+			const holidaysInMonth = getHolidaysInRange(
+				formatDateLocal(monthStart),
+				formatDateLocal(monthEnd),
+				settings
+			)
+			holidaysCount = holidaysInMonth.length
 		}
 
 		setTotalHours(hours)
@@ -234,6 +339,7 @@ function MonthlyCalendar() {
 		setTotalLeaveDays(leaveDays)
 		setTotalLeaveHours(leaveDays * 8)
 		setTotalOtherAbsences(otherAbsences)
+		setTotalHolidays(holidaysCount)
 	}
 
 	const handleDateClick = async info => {
@@ -247,13 +353,26 @@ function MonthlyCalendar() {
 
 		setSelectedDate(clickedDate)
 		
-		// Find existing workdays for this date (excluding realTime entries)
+		// Sprawdź czy kliknięty dzień jest świętem
 		const clickedDateObj = new Date(clickedDate)
+		const isHoliday = settings ? isHolidayDate(clickedDateObj, settings) !== null : false
+		setIsHolidayDay(isHoliday)
+		
+		// Find existing workdays for this date (excluding realTime entries)
 		const clickedDateStr = clickedDateObj.toDateString()
 		const existingWorkdays = workdays.filter(day => {
 			const dayDate = new Date(day.date)
 			return dayDate.toDateString() === clickedDateStr
 		})
+		
+		// Auto-fill work hours from settings if no existing entries and not a holiday
+		if (existingWorkdays.length === 0 && !isHoliday && settings && settings.workHours && settings.workHours.timeFrom && settings.workHours.timeTo) {
+			const timeRange = `${settings.workHours.timeFrom}-${settings.workHours.timeTo}`
+			setRealTimeDayWorked(timeRange)
+			if (settings.workHours.hours) {
+				setHoursWorked(settings.workHours.hours.toString())
+			}
+		}
 		
 		setModalIsOpen(true)
 	}
@@ -304,6 +423,15 @@ function MonthlyCalendar() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 
+		// Sprawdź czy próbujemy dodać tylko uwagi
+		const isNotesOnly = !hoursWorked && !absenceType && notes
+
+		// Jeśli dzień jest świętem, pozwól tylko na dodanie uwag
+		if (isHolidayDay && (hoursWorked || absenceType)) {
+			setErrorMessage(t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+			return
+		}
+
 		// Sprawdź czy dla tej daty nie ma już wpisu
 		if (selectedDate) {
 			const clickedDateObj = new Date(selectedDate)
@@ -313,13 +441,29 @@ function MonthlyCalendar() {
 				return dayDate.toDateString() === clickedDateStr
 			})
 
+			// Jeśli istnieje wpis, sprawdź czy ma tylko uwagi
 			if (existingWorkdays.length > 0) {
+				// Sprawdź czy istniejący wpis ma tylko uwagi (bez hoursWorked i bez absenceType)
+				const hasOnlyNotes = existingWorkdays.every(day => 
+					!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
+				)
+				
+				// Jeśli istniejący wpis ma tylko uwagi i próbujemy dodać godziny/nieobecność, pozwól na to
+				if (hasOnlyNotes && (hoursWorked || absenceType)) {
+					// Pozwól na aktualizację - logika będzie obsłużona dalej
+				} else if (!hasOnlyNotes && !isNotesOnly) {
+					// Jeśli istniejący wpis ma już godziny/nieobecność i próbujemy dodać coś innego, zablokuj
 				setErrorMessage(t('workcalendar.oneactionforday'))
 				return
+				} else if (!hasOnlyNotes && isNotesOnly) {
+					// Jeśli istniejący wpis ma już godziny/nieobecność i próbujemy dodać tylko uwagi, pozwól na to
+					// (logika będzie obsłużona dalej)
+				}
 			}
 
 			// Sprawdź czy ten dzień jest w zakresie zaakceptowanego wniosku urlopowego/nieobecności
-			if (Array.isArray(acceptedLeaveRequests)) {
+			// Jeśli próbujemy dodać tylko uwagi, pozwól na to nawet gdy jest zaakceptowany wniosek
+			if (Array.isArray(acceptedLeaveRequests) && !isNotesOnly) {
 				const hasAcceptedRequest = acceptedLeaveRequests.some(request => {
 					if (!request.startDate || !request.endDate) return false
 					
@@ -346,9 +490,78 @@ function MonthlyCalendar() {
 			return
 		}
 
-		if (!hoursWorked && !absenceType) {
+		// Jeśli istnieje wpis, pozwól tylko na dodanie uwag
+		const clickedDateObj = new Date(selectedDate)
+		const clickedDateStr = clickedDateObj.toDateString()
+		const existingWorkdays = workdays.filter(day => {
+			const dayDate = new Date(day.date)
+			return dayDate.toDateString() === clickedDateStr
+		})
+
+		// Sprawdź czy jest zaakceptowany wniosek urlopowy dla tej daty
+		const hasAcceptedRequest = Array.isArray(acceptedLeaveRequests) && acceptedLeaveRequests.some(request => {
+			if (!request.startDate || !request.endDate) return false
+			const startDate = new Date(request.startDate)
+			const endDate = new Date(request.endDate)
+			const clickedDateOnly = new Date(clickedDateObj.getFullYear(), clickedDateObj.getMonth(), clickedDateObj.getDate())
+			const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+			const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+			return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
+		})
+
+		if (existingWorkdays.length > 0) {
+			// Sprawdź czy istniejący wpis ma tylko uwagi
+			const hasOnlyNotes = existingWorkdays.every(day => 
+				!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
+			)
+			
+			if (hasOnlyNotes) {
+				// Jeśli istniejący wpis ma tylko uwagi, sprawdź czy jest zaakceptowany wniosek
+				if (hasAcceptedRequest) {
+					// Jeśli jest zaakceptowany wniosek i są tylko uwagi, pozwól tylko na dodanie uwag
+					if (hoursWorked || absenceType) {
+						setErrorMessage(t('workcalendar.notesOnlyForLeave') || 'W tym dniu jest zaakceptowany wniosek urlopowy/nieobecność lub święto. Możesz dodać tylko uwagi.')
+						return
+					}
+					if (!notes) {
+						setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
+						return
+					}
+				} else {
+					// Jeśli nie ma zaakceptowanego wniosku, pozwól na dodanie godzin/nieobecności
+					// Uwagi z istniejącego wpisu zostaną zachowane (połączone z nowymi jeśli są)
+					if (!hoursWorked && !absenceType && !notes) {
 			setErrorMessage(t('workcalendar.formalertone'))
 			return
+					}
+				}
+			} else {
+				// Jeśli istniejący wpis ma już godziny/nieobecność, pozwól tylko na dodanie uwag
+				if (hoursWorked || absenceType) {
+					setErrorMessage(t('workcalendar.oneactionforday'))
+					return
+				}
+				if (!notes) {
+					setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
+					return
+				}
+			}
+		} else if (hasAcceptedRequest) {
+			// Jeśli jest zaakceptowany wniosek, pozwól tylko na dodanie uwag
+			if (hoursWorked || absenceType) {
+				setErrorMessage(t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością')
+				return
+			}
+			if (!notes) {
+				setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
+				return
+			}
+		} else {
+			// Jeśli nie ma istniejącego wpisu i nie ma zaakceptowanego wniosku, pozwól na zapisanie samej uwagi lub hoursWorked/absenceType
+			if (!hoursWorked && !absenceType && !notes) {
+				setErrorMessage(t('workcalendar.formalertone'))
+				return
+			}
 		}
 
 		if (absenceType) {
@@ -361,18 +574,77 @@ function MonthlyCalendar() {
 			setRealTimeDayWorked('')
 		}
 
+		// Sprawdź czy istnieje wpis z tylko uwagami, który należy zaktualizować
+		const hasOnlyNotesInExisting = existingWorkdays.length > 0 && 
+			existingWorkdays.every(day => 
+				!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
+			)
+		
+		// Jeśli istnieje wpis z tylko uwagami i dodajemy godziny/nieobecność (i nie ma zaakceptowanego wniosku), połącz uwagi
+		let finalNotes = notes || null
+		if (hasOnlyNotesInExisting && (hoursWorked || absenceType) && !hasAcceptedRequest) {
+			// Połącz istniejące uwagi z nowymi (jeśli są)
+			const existingNotes = existingWorkdays
+				.map(day => day.notes)
+				.filter(note => note && note.trim() !== '')
+				.join(' | ')
+			
+			if (existingNotes && notes && notes.trim() !== '') {
+				finalNotes = `${existingNotes} | ${notes.trim()}`
+			} else if (existingNotes) {
+				finalNotes = existingNotes
+			}
+		} else if (hasOnlyNotesInExisting && hasAcceptedRequest && notes) {
+			// Jeśli jest zaakceptowany wniosek i są tylko uwagi, połącz uwagi
+			const existingNotes = existingWorkdays
+				.map(day => day.notes)
+				.filter(note => note && note.trim() !== '')
+				.join(' | ')
+			
+			if (existingNotes && notes && notes.trim() !== '') {
+				finalNotes = `${existingNotes} | ${notes.trim()}`
+			} else if (existingNotes) {
+				finalNotes = existingNotes
+			}
+		}
+
 		const data = {
 			date: selectedDate,
-			hoursWorked: hoursWorked ? parseInt(hoursWorked) : null,
-			additionalWorked: hoursWorked ? (additionalWorked ? parseInt(additionalWorked) : null) : null,
-			realTimeDayWorked: hoursWorked ? realTimeDayWorked || null : null,
-			absenceType: absenceType || null,
-			notes: notes || null,
+			hoursWorked: hoursWorked && hoursWorked.trim() !== '' ? parseInt(hoursWorked) : null,
+			additionalWorked: hoursWorked && hoursWorked.trim() !== '' && additionalWorked && additionalWorked.trim() !== '' ? parseInt(additionalWorked) : null,
+			realTimeDayWorked: hoursWorked && hoursWorked.trim() !== '' && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null,
+			absenceType: absenceType && absenceType.trim() !== '' ? absenceType : null,
+			notes: finalNotes,
 		}
 
 		try {
+			// Jeśli istnieje wpis z tylko uwagami i dodajemy godziny/nieobecność (i nie ma zaakceptowanego wniosku), zaktualizuj istniejący wpis
+			if (hasOnlyNotesInExisting && (hoursWorked || absenceType) && !hasAcceptedRequest && existingWorkdays.length > 0) {
+				// Użyj pierwszego istniejącego wpisu do aktualizacji
+				const existingWorkday = existingWorkdays[0]
+				await updateWorkdayMutation.mutateAsync({
+					id: existingWorkday._id,
+					updatedWorkday: data,
+				})
+			} else if (hasOnlyNotesInExisting && hasAcceptedRequest && existingWorkdays.length > 0) {
+				// Jeśli jest zaakceptowany wniosek i są tylko uwagi, zaktualizuj tylko uwagi
+				const existingWorkday = existingWorkdays[0]
+				await updateWorkdayMutation.mutateAsync({
+					id: existingWorkday._id,
+					updatedWorkday: {
+						date: selectedDate,
+						hoursWorked: null,
+						additionalWorked: null,
+						realTimeDayWorked: null,
+						absenceType: null,
+						notes: finalNotes,
+					},
+				})
+			} else {
+				// W przeciwnym razie utwórz nowy wpis
 			await createWorkdayMutation.mutateAsync(data)
-			// Refresh workdays after creation
+			}
+			// Refresh workdays after creation/update
 			await refetchWorkdays()
 			setModalIsOpen(false)
 			setHoursWorked('')
@@ -382,7 +654,8 @@ function MonthlyCalendar() {
 			setNotes('')
 			setErrorMessage('')
 		} catch (error) {
-			console.error('Failed to add workday:', error)
+			console.error('Failed to add/update workday:', error)
+			setErrorMessage(error.response?.data?.message || t('workcalendar.saveError') || 'Błąd podczas zapisywania')
 		}
 	}
 
@@ -402,8 +675,34 @@ function MonthlyCalendar() {
 	}
 
 	const renderEventContent = eventInfo => {
+		// Określ klasę CSS na podstawie extendedProps (najbardziej niezawodne)
+		let eventClass = 'event-workday'
+		const props = eventInfo.event.extendedProps || {}
+		
+		// Sprawdź czy to wniosek urlopowy (nieobecność)
+		if (props.type === 'leaveRequest' || props.isAbsence) {
+			eventClass = 'event-absence'
+		} else if (props.isNotes) {
+			eventClass = 'event-notes'
+		} else if (props.isWorkday) {
+			eventClass = 'event-workday'
+		} else if (eventInfo.event.classNames) {
+			// Fallback do classNames jeśli extendedProps nie są dostępne
+			const classNamesStr = Array.isArray(eventInfo.event.classNames) 
+				? eventInfo.event.classNames.join(' ') 
+				: String(eventInfo.event.classNames)
+			
+			if (classNamesStr.includes('event-notes')) {
+				eventClass = 'event-notes'
+			} else if (classNamesStr.includes('event-absence')) {
+				eventClass = 'event-absence'
+			} else if (classNamesStr.includes('event-workday')) {
+				eventClass = 'event-workday'
+			}
+		}
+		
 		return (
-			<div className={`event-content ${eventInfo.event.extendedProps?.isWorkday ? 'event-workday' : 'event-absence'}`}>
+			<div className={`event-content ${eventClass}`}>
 				<span>{eventInfo.event.title}</span>
 			</div>
 		)
@@ -416,6 +715,7 @@ function MonthlyCalendar() {
 		setAbsenceType('')
 		setNotes('')
 		setErrorMessage('')
+		setIsHolidayDay(false)
 	}
 
 	if (loading) return <Loader />
@@ -495,24 +795,66 @@ function MonthlyCalendar() {
 					firstDay={1}
 					showNonCurrentDates={false}
 					events={[
-						...workdays.map(day => ({
-							title: day.hoursWorked
-								? `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')} ${
-										day.additionalWorked
-											? ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
-											: ''
-								  }${day.notes ? ` | ${day.notes}` : ''}`
-								: `${day.absenceType}${day.notes ? ` | ${day.notes}` : ''}`,
+						...workdays.map(day => {
+							// Określ tytuł w zależności od typu wpisu
+							let title = ''
+							const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+							const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+							const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
+							
+							if (hasHoursWorked) {
+								// Wpis z godzinami pracy
+								title = `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')}`
+								if (day.additionalWorked) {
+									title += ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
+								}
+								if (day.notes) {
+									title += ` | ${day.notes}`
+								}
+							} else if (hasAbsenceType) {
+								// Wpis z typem nieobecności
+								title = day.absenceType
+								if (day.notes) {
+									title += ` | ${day.notes}`
+								}
+							} else if (day.notes) {
+								// Tylko uwagi (bez hoursWorked i bez absenceType)
+								title = day.notes
+							}
+							
+							// Określ kolor tła - uwagi zawsze mają swój kolor
+							let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
+							let classNames = 'event-absence' // Domyślnie event-absence
+							
+							if (hasHoursWorked) {
+								// Godziny pracy - niebieski (priorytet najwyższy)
+								backgroundColor = 'blue'
+								classNames = 'event-workday'
+							} else if (hasAbsenceType) {
+								// Nieobecność - zielony
+								backgroundColor = 'green'
+								classNames = 'event-absence'
+							} else if (hasOnlyNotes) {
+								// Tylko uwagi - ciemno czerwony (tylko gdy nie ma hoursWorked i absenceType)
+								backgroundColor = '#8B0000'
+								classNames = 'event-notes'
+							}
+							
+							return {
+								title,
 							start: day.date,
-							backgroundColor: day.hoursWorked ? 'blue' : 'green',
+								backgroundColor,
 							textColor: 'white',
 							id: day._id,
-							classNames: day.hoursWorked ? 'event-workday' : 'event-absence',
+								classNames,
 							extendedProps: {
-								isWorkday: !!day.hoursWorked,
+									isWorkday: !!hasHoursWorked,
+									isAbsence: hasAbsenceType,
+									isNotes: hasOnlyNotes,
 								notes: day.notes,
 							},
-						})),
+							}
+						}),
 						...workdays
 							.filter(day => day.realTimeDayWorked)
 							.map(day => ({
@@ -523,26 +865,38 @@ function MonthlyCalendar() {
 								id: `${day._id}-realTime`,
 								classNames: 'event-real-time',
 							})),
-						// Zaakceptowane wnioski urlopowe
+						// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
 						...acceptedLeaveRequests
 							.filter(request => request.startDate && request.endDate)
-							.map(request => {
-								// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
-								const endDate = new Date(request.endDate)
-								endDate.setDate(endDate.getDate() + 1)
-								const endDateStr = endDate.toISOString().split('T')[0]
-								
-								return {
+							.flatMap(request => {
+								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+								return dates.map(date => ({
 									title: `${t(request.type)}`,
-									start: request.startDate,
-									end: endDateStr,
+									start: date,
 									allDay: true,
-									backgroundColor: '#10b981',
-									borderColor: '#059669',
 									textColor: 'white',
-									extendedProps: { type: 'leaveRequest', requestId: request._id }
-								}
+									classNames: 'event-absence',
+									extendedProps: { 
+										type: 'leaveRequest', 
+										requestId: request._id,
+										isAbsence: true
+									}
+								}))
 							}),
+						// Dni świąteczne
+						...holidaysForMonth.map(holiday => ({
+							title: holiday.name,
+							start: holiday.date,
+							allDay: true,
+							backgroundColor: 'green',
+							borderColor: 'darkgreen',
+							textColor: 'white',
+							classNames: 'event-absence',
+							extendedProps: {
+								type: 'holiday',
+								holidayName: holiday.name
+							}
+						})),
 					]}
 					ref={calendarRef}
 					dateClick={handleDateClick}
@@ -624,7 +978,7 @@ function MonthlyCalendar() {
       }}
     />
     {t('workcalendar.notConfirmed')}
-				</span>
+  </span>
 )}
 
 				<p className='allfrommonth-p'>
@@ -640,6 +994,11 @@ function MonthlyCalendar() {
 				<p className='allfrommonth-p'>
 				<img src="/img/weekend mono.png" /> {t('workcalendar.allfrommonth4')} {totalLeaveDays} ({totalLeaveHours} {t('workcalendar.allfrommonthhours')})
 				</p>
+				{totalHolidays > 0 && (
+					<p className='allfrommonth-p'>
+						<img src="/img/party.png" /> {t('workcalendar.allfrommonth6') || 'Dni świąteczne:'} {totalHolidays}
+					</p>
+				)}
 				<p className='allfrommonth-p'>
 				<img src="/img/dismiss.png" /> {t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>
@@ -729,6 +1088,188 @@ function MonthlyCalendar() {
 						return clickedDateOnly >= startDateOnly && clickedDateOnly <= endDateOnly
 					})
 
+					// Sprawdź czy istniejący wpis ma tylko uwagi
+					const hasOnlyNotesInExisting = existingWorkdays.length > 0 && 
+						existingWorkdays.every(day => 
+							!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
+						)
+
+					// Jeśli dzień jest świętem i istnieją wpisy, pokaż je z możliwością usunięcia
+					if (isHolidayDay && existingWorkdays.length > 0) {
+						return (
+							<div style={{ marginBottom: '30px' }}>
+								<h3 style={{
+									marginBottom: '15px',
+									color: '#2c3e50',
+									fontSize: '18px',
+									fontWeight: '600'
+								}}>
+									{t('workcalendar.existingEntries') || 'Istniejące wpisy'}
+								</h3>
+								<div style={{
+									marginBottom: '15px',
+									padding: '10px',
+									backgroundColor: '#d4edda',
+									border: '1px solid #28a745',
+									borderRadius: '6px',
+									color: '#155724',
+									fontSize: '14px'
+								}}>
+									{t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.'}
+								</div>
+								<div style={{
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '10px'
+								}}>
+									{existingWorkdays.map((workday) => (
+										<div key={workday._id} style={{
+											padding: '15px',
+											backgroundColor: '#f8f9fa',
+											borderRadius: '8px',
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
+											minHeight: '60px'
+										}}>
+											<div style={{ flex: 1 }}>
+												{workday.notes && (
+													<div style={{
+														fontSize: '14px',
+														color: '#7f8c8d',
+														fontStyle: 'italic'
+													}}>
+														{t('workcalendar.notes') || 'Uwagi'}: {workday.notes}
+													</div>
+												)}
+											</div>
+											<button
+												type="button"
+												onClick={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+													handleDelete(workday._id)
+												}}
+												style={{
+													background: '#e74c3c',
+													color: 'white',
+													border: 'none',
+													borderRadius: '6px',
+													padding: '8px 16px',
+													cursor: 'pointer',
+													fontSize: '16px',
+													fontWeight: '500',
+													flexShrink: 0,
+													marginLeft: '10px'
+												}}
+											>
+												{t('workcalendar.delete') || 'Usuń'}
+											</button>
+										</div>
+									))}
+								</div>
+								<div style={{
+									marginTop: '30px',
+									padding: '20px',
+									backgroundColor: '#f8f9fa',
+									borderRadius: '8px',
+									border: '1px solid #dee2e6'
+								}}>
+									<h3 style={{
+										marginBottom: '15px',
+										color: '#2c3e50',
+										fontSize: '18px',
+										fontWeight: '600'
+									}}>
+										{t('workcalendar.addNotes') || 'Dodaj uwagi'}
+									</h3>
+									<form onSubmit={handleSubmit} className="space-y-4">
+										<div>
+											<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+											<textarea
+												placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+												value={notes}
+												onChange={e => setNotes(e.target.value)}
+												className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												rows="3"
+											/>
+										</div>
+										{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+										<div className="flex justify-end gap-3 pt-4">
+											<button
+												type="submit"
+												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+												{t('workcalendar.save')}
+											</button>
+											<button
+												type="button"
+												onClick={() => {
+													setModalIsOpen(false)
+													resetFormFields()
+												}}
+												className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+												{t('workcalendar.cancel')}
+											</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						)
+					}
+
+					// Jeśli dzień jest świętem i nie ma wpisów, pokaż tylko formularz uwag
+					if (isHolidayDay) {
+						return (
+							<div style={{
+								padding: '20px',
+								backgroundColor: '#f8f9fa',
+								borderRadius: '8px',
+								border: '1px solid #dee2e6'
+							}}>
+								<div style={{
+									marginBottom: '15px',
+									padding: '10px',
+									backgroundColor: '#d4edda',
+									border: '1px solid #28a745',
+									borderRadius: '6px',
+									color: '#155724',
+									fontSize: '14px'
+								}}>
+									{t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.'}
+								</div>
+								<form onSubmit={handleSubmit} className="space-y-4">
+									<div>
+										<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+										<textarea
+											placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+											value={notes}
+											onChange={e => setNotes(e.target.value)}
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											rows="3"
+										/>
+									</div>
+									{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+									<div className="flex justify-end gap-3 pt-4">
+										<button
+											type="submit"
+											className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+											{t('workcalendar.save')}
+										</button>
+										<button
+											type="button"
+											onClick={() => {
+												setModalIsOpen(false)
+												resetFormFields()
+											}}
+											className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+											{t('workcalendar.cancel')}
+										</button>
+									</div>
+								</form>
+							</div>
+						)
+					}
+
 					return existingWorkdays.length > 0 ? (
 						<div style={{ marginBottom: '30px' }}>
 							<h3 style={{
@@ -748,6 +1289,8 @@ function MonthlyCalendar() {
 									const displayText = workday.hoursWorked
 										? `${workday.hoursWorked} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${workday.additionalWorked} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
 										: workday.absenceType
+										? workday.absenceType
+										: workday.notes
 									
 									return (
 										<div key={workday._id} style={{
@@ -804,42 +1347,267 @@ function MonthlyCalendar() {
 									)
 								})}
 							</div>
+							{/* Jeśli istniejący wpis ma tylko uwagi, pokaż standardowy formularz z informacją na górze */}
+							{/* Jeśli jest zaakceptowany wniosek i są tylko uwagi, pokaż tylko formularz uwag (podobnie jak dla świąt) */}
+							{hasOnlyNotesInExisting && hasAcceptedRequest ? (
 							<div style={{
-								marginTop: '20px',
-								padding: '15px',
+									marginTop: '30px',
+									padding: '20px',
+									backgroundColor: '#f8f9fa',
+									borderRadius: '8px',
+									border: '1px solid #dee2e6'
+								}}>
+									<div style={{
+										marginBottom: '15px',
+										padding: '10px',
 								backgroundColor: '#fff3cd',
 								border: '1px solid #ffc107',
-								borderRadius: '8px',
-								color: '#856404'
+										borderRadius: '6px',
+										color: '#856404',
+										fontSize: '14px'
 							}}>
-								{t('workcalendar.oneactionforday')}
+										{t('workcalendar.notesOnlyForLeave') || 'W tym dniu jest zaakceptowany wniosek urlopowy/nieobecność lub święto. Możesz dodać tylko uwagi.'}
 							</div>
-							{hasAcceptedRequest && (
+									<form onSubmit={handleSubmit} className="space-y-4">
+										<div>
+											<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+											<textarea
+												placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+												value={notes}
+												onChange={e => setNotes(e.target.value)}
+												className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												rows="3"
+											/>
+										</div>
+										{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+										<div className="flex justify-end gap-3 pt-4">
+											<button
+												type="submit"
+												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+												{t('workcalendar.save')}
+											</button>
+											<button
+												type="button"
+												onClick={() => {
+													setModalIsOpen(false)
+													resetFormFields()
+												}}
+												className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+												{t('workcalendar.cancel')}
+											</button>
+										</div>
+									</form>
+								</div>
+							) : (
 								<div style={{
-									marginTop: '20px',
-									padding: '15px',
-									backgroundColor: '#f8d7da',
-									border: '1px solid #f5c6cb',
+									marginTop: '30px',
+									padding: '20px',
+									backgroundColor: '#f8f9fa',
 									borderRadius: '8px',
-									color: '#721c24'
+									border: '1px solid #dee2e6'
 								}}>
-									{t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością'}
+									{hasOnlyNotesInExisting && !hasAcceptedRequest && (
+										<div style={{
+											marginBottom: '15px',
+											padding: '10px',
+											backgroundColor: '#d1ecf1',
+											border: '1px solid #0dcaf0',
+											borderRadius: '6px',
+											color: '#055160',
+											fontSize: '14px'
+										}}>
+											{t('workcalendar.canAddHoursOrAbsence') || 'W tym dniu są tylko uwagi. Możesz dodać godziny pracy lub nieobecność.'}
+										</div>
+									)}
+									{!hasOnlyNotesInExisting && (
+										<h3 style={{
+											marginBottom: '15px',
+											color: '#2c3e50',
+											fontSize: '18px',
+											fontWeight: '600'
+										}}>
+											{t('workcalendar.addNotes') || 'Dodaj uwagi'}
+										</h3>
+									)}
+									{!hasOnlyNotesInExisting && hasAcceptedRequest && (
+										<div style={{
+											marginBottom: '15px',
+											padding: '10px',
+											backgroundColor: '#fff3cd',
+											border: '1px solid #ffc107',
+											borderRadius: '6px',
+											color: '#856404',
+											fontSize: '14px'
+										}}>
+											{t('workcalendar.notesAllowedForLeave') || 'Możesz dodać uwagi nawet gdy jest zaakceptowany wniosek urlopowy/nieobecność.'}
+										</div>
+									)}
+									{hasOnlyNotesInExisting && !hasAcceptedRequest ? (
+										<form onSubmit={handleSubmit} className="space-y-4">
+											<div>
+												<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
+												<input
+													type="number"
+													min="1"
+													max="24"
+													placeholder={t('workcalendar.placeholder1')}
+													value={hoursWorked}
+													onChange={e => setHoursWorked(e.target.value)}
+													disabled={isHolidayDay}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+												/>
+											</div>
+
+											<div>
+												<input
+													type="number"
+													min="0"
+													placeholder={t('workcalendar.placeholder2')}
+													value={additionalWorked}
+													onChange={e => setAdditionalWorked(e.target.value)}
+													disabled={isHolidayDay}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+												/>
+											</div>
+
+											<div>
+												<input
+													type="text"
+													placeholder={t('workcalendar.placeholder3')}
+													value={realTimeDayWorked}
+													onChange={e => setRealTimeDayWorked(e.target.value)}
+													disabled={isHolidayDay}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+												/>
+											</div>
+
+											<div>
+												<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+												<input
+													type="text"
+													placeholder={t('workcalendar.placeholder4')}
+													value={absenceType}
+													onChange={e => setAbsenceType(e.target.value)}
+													disabled={isHolidayDay}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+												/>
+											</div>
+
+											<div>
+												<label className="text-lg font-semibold mt-4 mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+												<textarea
+													placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+													value={notes}
+													onChange={e => setNotes(e.target.value)}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													rows="3"
+												/>
+											</div>
+
+											{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+
+											<div className="flex justify-end gap-3 pt-4">
+												<button
+													type="submit"
+													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+													{t('workcalendar.save')}
+												</button>
+												<button
+													type="button"
+													onClick={() => {
+														setModalIsOpen(false)
+														resetFormFields()
+													}}
+													className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+													{t('workcalendar.cancel')}
+												</button>
+											</div>
+										</form>
+									) : (
+										<form onSubmit={handleSubmit} className="space-y-4">
+											<div>
+												<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+												<textarea
+													placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+													value={notes}
+													onChange={e => setNotes(e.target.value)}
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													rows="3"
+												/>
+											</div>
+											{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+											<div className="flex justify-end gap-3 pt-4">
+												<button
+													type="submit"
+													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+													{t('workcalendar.save')}
+												</button>
+												<button
+													type="button"
+													onClick={() => {
+														setModalIsOpen(false)
+														resetFormFields()
+													}}
+													className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+													{t('workcalendar.cancel')}
+												</button>
+											</div>
+										</form>
+									)}
 								</div>
 							)}
 						</div>
 					) : hasAcceptedRequest ? (
 						<div style={{
-							padding: '15px',
-							backgroundColor: '#f8d7da',
-							border: '1px solid #f5c6cb',
+							padding: '20px',
+							backgroundColor: '#f8f9fa',
 							borderRadius: '8px',
-							color: '#721c24'
+							border: '1px solid #dee2e6'
 						}}>
-							{t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością'}
+							<div style={{
+								marginBottom: '15px',
+								padding: '10px',
+								backgroundColor: '#fff3cd',
+								border: '1px solid #ffc107',
+								borderRadius: '6px',
+								color: '#856404',
+								fontSize: '14px'
+							}}>
+								{t('workcalendar.notesOnlyForLeave') || 'W tym dniu jest zaakceptowany wniosek urlopowy/nieobecność. Możesz dodać tylko uwagi.'}
+							</div>
+							<form onSubmit={handleSubmit} className="space-y-4">
+								<div>
+									<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+									<textarea
+										placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
+										value={notes}
+										onChange={e => setNotes(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										rows="3"
+									/>
+								</div>
+								{errorMessage && <div className="text-red-600 text-sm mt-2">{errorMessage}</div>}
+								<div className="flex justify-end gap-3 pt-4">
+									<button
+										type="submit"
+										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+										{t('workcalendar.save')}
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setModalIsOpen(false)
+											resetFormFields()
+										}}
+										className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+										{t('workcalendar.cancel')}
+									</button>
+								</div>
+							</form>
 						</div>
 					) : (
 						<>
-							<form onSubmit={handleSubmit} className="space-y-4">
+							<form onSubmit={handleSubmit} className="space-y-4 firstformcalendar">
 								<div>
 									<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 									<input
@@ -849,7 +1617,8 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder1')}
 										value={hoursWorked}
 										onChange={e => setHoursWorked(e.target.value)}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										disabled={isHolidayDay}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 
@@ -860,7 +1629,8 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder2')}
 										value={additionalWorked}
 										onChange={e => setAdditionalWorked(e.target.value)}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										disabled={isHolidayDay}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 
@@ -870,7 +1640,8 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder3')}
 										value={realTimeDayWorked}
 										onChange={e => setRealTimeDayWorked(e.target.value)}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										disabled={isHolidayDay}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 
@@ -881,7 +1652,8 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder4')}
 										value={absenceType}
 										onChange={e => setAbsenceType(e.target.value)}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										disabled={isHolidayDay}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 

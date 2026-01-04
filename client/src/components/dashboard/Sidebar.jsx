@@ -381,6 +381,15 @@ function Sidebar() {
 							)}
 						</div>
 					)}
+<div className="admin-section">
+<NavLink
+								to="/settings"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+								<div className="nav-icon">
+									<img src="/img/settings.png" alt="Settings" />
+								</div>
+								<span className="nav-text">{t('sidebar.btnSettings')}</span>
+							</NavLink></div>
 
 					{/* Admin Links */}
 					{isAdmin(role) && (

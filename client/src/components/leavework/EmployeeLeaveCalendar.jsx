@@ -8,6 +8,8 @@ import Loader from '../Loader'
 import { useUser } from '../../hooks/useUsers'
 import { useUserLeavePlans } from '../../hooks/useLeavePlans'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 
 function EmployeeLeaveCalendar() {
 	const { userId } = useParams()
@@ -18,8 +20,66 @@ function EmployeeLeaveCalendar() {
 	const { data: user, isLoading: loadingUser } = useUser(userId)
 	const { data: leavePlans = [], isLoading: loadingPlans } = useUserLeavePlans(userId)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useUserAcceptedLeaveRequests(userId)
+	const { data: settings } = useSettings()
 
 	const loading = loadingUser || loadingPlans || loadingRequests
+
+	// Pobierz święta dla całego roku (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
+	const holidaysForYear = React.useMemo(() => {
+		if (!settings) return []
+		const yearStart = new Date(currentYear, 0, 1)
+		const yearEnd = new Date(currentYear, 11, 31)
+		// Formatuj daty jako YYYY-MM-DD w lokalnej strefie czasowej (nie UTC)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(yearStart),
+			formatDateLocal(yearEnd),
+			settings
+		)
+	}, [settings, currentYear])
+
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = (startDate, endDate) => {
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}
 	
 	// Odśwież kalendarze gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
@@ -79,25 +139,39 @@ function EmployeeLeaveCalendar() {
 						backgroundColor: 'blue',
 						extendedProps: { type: 'plan', date: date }
 					})),
-					// Zaakceptowane wnioski urlopowe
+					// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
 					...acceptedLeaveRequests
 						.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
-						.map(request => {
-							// FullCalendar traktuje end jako exclusive, więc dodajemy 1 dzień aby pokazać ostatni dzień
-							const endDate = new Date(request.endDate)
-							endDate.setDate(endDate.getDate() + 1)
-							const endDateStr = endDate.toISOString().split('T')[0]
-							
-							return {
+						.flatMap(request => {
+							const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+							return dates.map(date => ({
 								title: `${t(request.type)}`,
-								start: request.startDate,
-								end: endDateStr,
+								start: date,
 								allDay: true,
 								backgroundColor: 'green',
 								borderColor: 'darkgreen',
 								extendedProps: { type: 'request', requestId: request._id }
-							}
+							}))
+						}),
+					// Dni świąteczne
+					...holidaysForYear
+						.filter(holiday => {
+							const holidayDate = new Date(holiday.date)
+							return holidayDate.getFullYear() === currentYear
 						})
+						.map(holiday => ({
+							title: holiday.name,
+							start: holiday.date,
+							allDay: true,
+							backgroundColor: 'green',
+							borderColor: 'darkgreen',
+							textColor: 'white',
+							classNames: 'event-absence',
+							extendedProps: {
+								type: 'holiday',
+								holidayName: holiday.name
+							}
+						}))
 				]}
 			/>
 		</div>

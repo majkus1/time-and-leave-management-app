@@ -116,6 +116,26 @@
 		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
 		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
 	},
+	"settings": {
+		"title": "Settings",
+		"workWeekendsTitle": "Weekend work configuration",
+		"howItWorks": "How does it work?",
+		"info1": "If the team does NOT work on weekends:",
+		"info2": "Weekends (Saturday and Sunday) are not counted in the number of days in leave requests",
+		"info3": "When a request is accepted, etc. Weekends are not marked in leave calendars and work time records",
+		"info4": "Example: Request from Monday to Friday (5 working days) + weekend = only 5 days marked in calendar",
+		"info5": "If the team works on weekends:",
+		"info6": "All days (including weekends) are counted normally",
+		"info7": "Weekends are marked in calendars like regular days",
+		"workOnWeekendsLabel": "Team works on weekends",
+		"workOnWeekendsEnabled": "Weekends are counted in leave requests and marked in calendars",
+		"workOnWeekendsDisabled": "Weekends are NOT counted in leave requests and are NOT marked in calendars",
+		"save": "Save settings",
+		"saving": "Saving...",
+		"saveSuccess": "Settings have been saved successfully",
+		"saveError": "Error saving settings",
+		"noAccess": "At the moment, your permissions do not allow for any configurations."
+	},
 	"boards": {
 		"status": {
 			"todo": "To Do",

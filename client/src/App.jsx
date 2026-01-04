@@ -11,6 +11,7 @@ import SetPassword from './components/profile/SetPassword'
 import ResetPassword from './components/profile/ResetPassword'
 import ProtectedRoute from './components/route/ProtectedRoute'
 import Logs from './components/profile/Logs'
+import Settings from './components/profile/Settings'
 import AdminUserList from './components/listusers/AdminUserList'
 import UserCalendar from './components/workcalendars/UserCalendar'
 import LeaveRequestForm from './components/leavework/LeaveRequestForm'
@@ -197,6 +198,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/logs" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
+						<Route path="/settings" element={<Settings />} />
 					<Route
 						path="/work-calendars/:userId"
 						element={

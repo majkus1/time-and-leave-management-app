@@ -51,6 +51,23 @@ export const useCreateWorkday = () => {
 	})
 }
 
+// Mutation - aktualizacja workday
+export const useUpdateWorkday = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ id, updatedWorkday }) => {
+			const response = await axios.put(`${API_URL}/api/workdays/${id}`, updatedWorkday, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+		},
+	})
+}
+
 // Mutation - usuwanie workday
 export const useDeleteWorkday = () => {
 	const queryClient = useQueryClient()

@@ -3,18 +3,47 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { sendEmailToHR, sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const User = require('../models/user')(firmDb)
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
+const LeavePlan = require('../models/LeavePlan')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
+const { isHoliday } = require('../utils/holidays')
 
-// Funkcja pomocnicza do generowania wszystkich dat w zakresie
-function generateDateRange(startDate, endDate) {
+// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+function isWeekend(date) {
+	const day = new Date(date).getDay()
+	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+}
+
+// Funkcja pomocnicza do generowania wszystkich dat w zakresie (z pominięciem weekendów i świąt)
+async function generateDateRange(startDate, endDate, teamId) {
 	const dates = []
 	const start = new Date(startDate)
 	const end = new Date(endDate)
 	const current = new Date(start)
 	
+	// Pobierz ustawienia dla zespołu
+	const settings = await Settings.getSettings(teamId)
+	const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
+	
 	while (current <= end) {
-		dates.push(new Date(current).toISOString().split('T')[0])
+		const currentDateStr = new Date(current).toISOString().split('T')[0]
+		const isWeekendDay = isWeekend(current)
+		// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+		const holidayInfo = isHoliday(current, settings)
+		const isHolidayDay = holidayInfo !== null
+		
+		// Jeśli pracuje w weekendy, pomijamy tylko święta
+		if (workOnWeekends) {
+			if (!isHolidayDay) {
+				dates.push(currentDateStr)
+			}
+		} else {
+			// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+			if (!isWeekendDay && !isHolidayDay) {
+				dates.push(currentDateStr)
+			}
+		}
 		current.setDate(current.getDate() + 1)
 	}
 	
@@ -652,12 +681,12 @@ exports.updateLeaveRequest = async (req, res) => {
 			
 			// Usuń stare daty z LeavePlan (jeśli były L4)
 			if (wasL4 && (oldStartDate.toString() !== startDate || oldEndDate.toString() !== endDate)) {
-				const oldDates = generateDateRange(oldStartDate, oldEndDate)
+				const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 				await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 			}
 			
 			// Dodaj nowe daty do LeavePlan
-			const newDates = generateDateRange(startDate, endDate)
+			const newDates = await generateDateRange(startDate, endDate, teamId)
 			const leavePlanPromises = newDates.map(date => {
 				const userId = userIdForPlan // Lokalna zmienna w scope map
 				return LeavePlan.findOne({ userId, date }).then(existing => {
@@ -678,7 +707,7 @@ exports.updateLeaveRequest = async (req, res) => {
 			// Jeśli zmieniono z L4 na inny typ, usuń z LeavePlan
 			const LeavePlan = require('../models/LeavePlan')(firmDb)
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
-			const oldDates = generateDateRange(oldStartDate, oldEndDate)
+			const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 			await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 		}
 
