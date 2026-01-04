@@ -219,43 +219,55 @@ function LeavePlanner() {
 								availableLeaveDays
 							)}
 						</p>
-						<ul style={{ listStyle: 'none', padding: 0 }}>
-							{selectedDates.map(date => (
-								<li
-									key={date}
-									style={{
-										display: 'flex',
-										justifyContent: 'space-between',
-										alignItems: 'center',
-										padding: '5px 10px',
-										border: '1px solid #ddd',
-										marginBottom: '5px',
-										backgroundColor: '#f0f0f0',
-										maxWidth: '300px',
-									}}>
-									{/* {date} */}
-									{(() => {
-										const d = new Date(date)
-										return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1)
-											.toString()
-											.padStart(2, '0')}-${d.getFullYear()}`
-									})()}
+					</div>
 
-									<button
+					{/* Sekcja zaznaczonych dat */}
+					<div style={{ marginBottom: '20px' }}>
+						<p style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '10px' }}>
+							{t('leaveplanner.header')}
+						</p>
+						{selectedDates.length > 0 ? (
+							<ul style={{ listStyle: 'none', padding: 0 }}>
+								{selectedDates.map(date => (
+									<li
+										key={date}
 										style={{
-											background: 'red',
-											color: 'white',
-											border: 'none',
-											borderRadius: '5px',
-											cursor: 'pointer',
+											display: 'flex',
+											justifyContent: 'space-between',
+											alignItems: 'center',
 											padding: '5px 10px',
-										}}
-										onClick={() => removeDate(date)}>
-										X
-									</button>
-								</li>
-							))}
-						</ul>
+											border: '1px solid #ddd',
+											marginBottom: '5px',
+											backgroundColor: '#f0f0f0',
+											maxWidth: '300px',
+										}}>
+										{(() => {
+											const d = new Date(date)
+											return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1)
+												.toString()
+												.padStart(2, '0')}-${d.getFullYear()}`
+										})()}
+
+										<button
+											style={{
+												background: 'red',
+												color: 'white',
+												border: 'none',
+												borderRadius: '5px',
+												cursor: 'pointer',
+												padding: '5px 10px',
+											}}
+											onClick={() => removeDate(date)}>
+											X
+										</button>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p style={{ color: '#666', fontStyle: 'italic', fontSize: '14px' }}>
+								{t('leaveplanner.noSelectedDates')}
+							</p>
+						)}
 					</div>
 
 					{/* Sekcja zaakceptowanych wniosków */}

@@ -406,7 +406,7 @@ function ProductPromotion() {
   <div className="max-w-7xl mx-auto text-center">
     <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Cennik</h2>
 
-	<p className="mt-3 text-gray-600 max-w-3xl">Darmowy plan obejmuje maksymalnie 4 aktywnych użytkowników.<br></br>
+	<p className="mt-3 text-gray-600 max-w-3xl">Darmowy plan obejmuje maksymalnie 6 aktywnych użytkowników.<br></br>
   Po przekroczeniu tego limitu cała organizacja przechodzi na plan płatny 
   i opłata naliczana jest za wszystkich aktywnych użytkowników.</p>
 

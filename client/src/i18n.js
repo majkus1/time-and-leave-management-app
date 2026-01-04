@@ -419,6 +419,7 @@ i18n
 						mainheader: 'Plan your leave',
 						acceptedRequests: 'Accepted leave requests:',
 						days: 'days',
+						noSelectedDates: 'You can select dates in the calendar for which you plan to take leave. They will be visible to you and the entire team.',
 					},
 					planslist: {
 						h3: 'All employees vacation plans',
@@ -1118,6 +1119,7 @@ i18n
 						mainheader: 'Moje plany urlopowe',
 						acceptedRequests: 'Zaakceptowane wnioski urlopowe:',
 						days: 'dni',
+						noSelectedDates: 'Możesz zaznaczać daty w kalendarzu, dla których planujesz wziąć urlop. Będą one widoczne dla Ciebie i całego zespołu.',
 					},
 					planslist: {
 						h3: 'Plany urlopowe wszystkich pracowników',

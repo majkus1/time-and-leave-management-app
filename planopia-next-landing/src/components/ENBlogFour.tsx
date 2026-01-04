@@ -33,7 +33,7 @@ function ENBlogFour() {
 							}
 						},
 						"description": "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 6 people. Full functionality without any costs.",
-						"image": "https://planopia.pl/img/desktop.webp"
+						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
 			/>

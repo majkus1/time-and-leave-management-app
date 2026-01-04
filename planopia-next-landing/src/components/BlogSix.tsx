@@ -33,7 +33,7 @@ function BlogSix() {
 							}
 						},
 						"description": "Kompletny przewodnik po zarządzaniu urlopami w firmie. Dowiedz się jak efektywnie planować, ewidencjonować i zatwierdzać wnioski urlopowe. Planopia - darmowa aplikacja do zarządzania urlopami.",
-						"image": "https://planopia.pl/img/desktop.webp"
+						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
 			/>

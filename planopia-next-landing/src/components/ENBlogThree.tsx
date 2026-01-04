@@ -18,7 +18,7 @@ function ENBlogThree() {
 						"@type": "BlogPosting",
 						"headline": "Employee Leave Planning – Best Tools and Practices",
 						"description": "Learn how to improve leave planning and absence management in your company. Planopia offers an online leave calendar, approval workflow, and reports. Free plan for up to 6 users.",
-						"image": "https://planopia.pl/img/desktop.webp",
+						"image": "https://planopia.pl/img/desktopnew.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -187,12 +187,12 @@ function ENBlogThree() {
 						</div>
 
 						<img
-							src="/img/desktop-en.webp"
+							src="/img/desktop-ennew.webp"
 							alt="Leave planning software – Planopia"
 							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 						/>
 						<img
-							src="/img/mobile-en.webp"
+							src="/img/mobile-ennew.webp"
 							alt="Leave planning app – Planopia"
 							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 						/>

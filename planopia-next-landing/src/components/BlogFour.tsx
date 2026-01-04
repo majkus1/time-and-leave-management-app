@@ -33,7 +33,7 @@ function BlogFour() {
 							}
 						},
 						"description": "Odkryj Planopię - darmową aplikację do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 6 osób. Pełna funkcjonalność bez opłat.",
-						"image": "https://planopia.pl/img/desktop.webp"
+						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
 			/>
