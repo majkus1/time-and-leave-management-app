@@ -71,9 +71,9 @@ exports.registerTeam = async (req, res) => {
 		const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
 		// Determine maxUsers based on team name
-		// Special teams get 11 users, others get default 4
+		// Special teams get 11 users, others get default 6
 		const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
-		const maxUsers = specialTeamNames.includes(teamName) ? 11 : 4
+		const maxUsers = specialTeamNames.includes(teamName) ? 11 : 6
 
 	
 		const newTeam = new Team({

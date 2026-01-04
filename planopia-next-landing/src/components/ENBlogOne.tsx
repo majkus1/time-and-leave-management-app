@@ -17,7 +17,7 @@ function ENBlogOne() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Online Time Tracking – modern solutions for businesses",
-						"description": "Planopia is a modern online time tracking app for businesses. Track working hours, overtime, and leaves in a simple way. Free version available for up to 4 users.",
+						"description": "Planopia is a modern online time tracking app for businesses. Track working hours, overtime, and leaves in a simple way. Free version available for up to 6 users.",
 						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
@@ -162,7 +162,7 @@ function ENBlogOne() {
 							<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 								<p className="text-gray-800 mb-3">
 								👉 <strong>Free time tracking app</strong>  
-								<br />for teams up to 4 users
+								<br />for teams up to 6 users
 								</p>
 								<Link
 									href="https://app.planopia.pl/team-registration"
@@ -238,7 +238,7 @@ function ENBlogOne() {
 				<li>Full control over working hours and overtime tracking.</li>
 				<li>Fast leave requests and approvals.</li>
 				<li>Reports and work calendars always available online or in PDF.</li>
-				<li>A <strong>free plan for up to 4 users</strong>.</li>
+				<li>A <strong>free plan for up to 6 users</strong>.</li>
 				<li>Scalability and customization options for larger organizations.</li>
 			</ul>
 
@@ -246,7 +246,7 @@ function ENBlogOne() {
 			<p className="mb-4 text-gray-700">
 				Time tracking doesn't have to be complicated. With solutions like 
 				<strong> Planopia</strong>, your company saves time, avoids errors, 
-				and stays compliant. Whether you run a <strong>small team up to 4 users</strong> 
+				and stays compliant. Whether you run a <strong>small team up to 6 users</strong> 
 				or manage a large organization – Planopia keeps everything under control.
 			</p>
 

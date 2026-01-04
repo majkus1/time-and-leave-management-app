@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     default: "Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów",
     template: "%s | Planopia"
   },
-  description: "Planopia to kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 4 osób. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.",
+  description: "Planopia to kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 6 osób. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.",
   keywords: [
     "darmowa ewidencja czasu pracy",
     "aplikacja do urlopów", 
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl',
     siteName: 'Planopia',
     title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Wypróbuj Planopię za darmo – kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Do 4 użytkowników bez opłat. Plany płatne dla większych firm z dodatkowymi funkcjami.',
+    description: 'Wypróbuj Planopię za darmo – kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Do 6 użytkowników bez opłat. Plany płatne dla większych firm z dodatkowymi funkcjami.',
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Darmowa dla zespołów do 4 osób. Dla większych firm dostępne są płatne plany z większymi możliwościami.',
+    description: 'Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Darmowa dla zespołów do 6 osób. Dla większych firm dostępne są płatne plany z większymi możliwościami.',
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

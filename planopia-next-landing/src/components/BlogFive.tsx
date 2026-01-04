@@ -284,7 +284,7 @@ function BlogFive() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Darmowa dla małych firm</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• Do 4 użytkowników bez opłat</li>
+										<li>• Do 6 użytkowników bez opłat</li>
 										<li>• Pełna funkcjonalność</li>
 										<li>• Bez ukrytych kosztów</li>
 										<li>• Wsparcie techniczne</li>

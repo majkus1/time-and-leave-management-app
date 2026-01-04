@@ -32,7 +32,7 @@ function ENBlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 4 people. Full functionality without any costs.",
+						"description": "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 6 people. Full functionality without any costs.",
 						"image": "https://planopia.pl/img/desktop.webp"
 					})
 				}}
@@ -149,7 +149,7 @@ function ENBlogFour() {
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
 								Discover Planopia - a complete, free time tracking app for work hours and leave management. 
-								Full functionality for teams up to 4 people without any costs.
+								Full functionality for teams up to 6 people without any costs.
 							</p>
 							<div className="text-center">
 								<Link
@@ -195,7 +195,7 @@ function ENBlogFour() {
 						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
-								✅ Free time tracking app for teams up to 4 people
+								✅ Free time tracking app for teams up to 6 people
 							</p>
 							<p className="text-blue-700 mt-2">
 								No hidden fees, no trial periods, no need to provide credit card information.
@@ -334,7 +334,7 @@ function ENBlogFour() {
 									Is Planopia really free?
 								</h3>
 								<p className="text-gray-700">
-									Yes! Planopia offers full functionality for teams up to 4 people without any fees. 
+									Yes! Planopia offers full functionality for teams up to 6 people without any fees. 
 									No hidden costs, trial periods, or need to provide credit card information.
 								</p>
 							</div>
@@ -344,7 +344,7 @@ function ENBlogFour() {
 								</h3>
 								<p className="text-gray-700">
 									No time limits! The free time tracking app Planopia 
-									is available forever for teams up to 4 people.
+									is available forever for teams up to 6 people.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">

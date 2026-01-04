@@ -196,7 +196,7 @@ function ENBlog() {
 							Free Time Tracking App for Work Hours and Leave Management
 							</h3>
 							<p className="text-gray-600 flex-1">
-							Discover Planopia - a complete, free time tracking app for work hours and leave management. Full functionality for teams up to 4 people without any costs.
+							Discover Planopia - a complete, free time tracking app for work hours and leave management. Full functionality for teams up to 6 people without any costs.
 							</p>
 							<Link
 								href="/en/blog/free-time-tracking-app"

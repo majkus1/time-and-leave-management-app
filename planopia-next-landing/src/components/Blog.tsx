@@ -187,7 +187,7 @@ function Blog() {
 							</h3>
 							<p className="text-gray-600 flex-1">
 							Odkryj Planopię - kompletną, darmową aplikację do ewidencji czasu pracy i zarządzania urlopami. 
-								Pełna funkcjonalność dla zespołów do 4 osób bez żadnych opłat.
+								Pełna funkcjonalność dla zespołów do 6 osób bez żadnych opłat.
 							</p>
 							<Link
 								href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy"

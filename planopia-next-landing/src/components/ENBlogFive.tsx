@@ -284,7 +284,7 @@ function ENBlogFive() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Free for Small Companies</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• Up to 4 users free</li>
+										<li>• Up to 6 users free</li>
 										<li>• Full functionality</li>
 										<li>• No hidden costs</li>
 										<li>• Technical support</li>

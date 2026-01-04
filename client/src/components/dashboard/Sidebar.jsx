@@ -381,8 +381,8 @@ function Sidebar() {
 							)}
 						</div>
 					)}
-<div className="admin-section">
-<NavLink
+                        <div className="admin-section">
+                            <NavLink
 								to="/settings"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 								<div className="nav-icon">

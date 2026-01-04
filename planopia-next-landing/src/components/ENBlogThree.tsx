@@ -17,7 +17,7 @@ function ENBlogThree() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Employee Leave Planning – Best Tools and Practices",
-						"description": "Learn how to improve leave planning and absence management in your company. Planopia offers an online leave calendar, approval workflow, and reports. Free plan for up to 4 users.",
+						"description": "Learn how to improve leave planning and absence management in your company. Planopia offers an online leave calendar, approval workflow, and reports. Free plan for up to 6 users.",
 						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
@@ -162,7 +162,7 @@ function ENBlogThree() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 									👉 <strong>Free leave planning app</strong>  
-									<br />for teams up to 4 users
+									<br />for teams up to 6 users
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -232,7 +232,7 @@ function ENBlogThree() {
 				<h2 className="text-2xl font-semibold mb-3">Planopia – leave planning made simple</h2>
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> combines <strong>time tracking</strong> with powerful <strong>leave management</strong>. 
-					The free plan works perfectly for teams of up to 4 users. Paid plans add scalability, 
+					The free plan works perfectly for teams of up to 6 users. Paid plans add scalability, 
 					custom branding, and integrations with your existing systems.
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
@@ -247,7 +247,7 @@ function ENBlogThree() {
 					<strong>Online leave planning</strong> brings order, clarity, and less stress to day-to-day operations. 
 					With Planopia you'll avoid scheduling conflicts, speed up approvals, 
 					and keep full control over team availability. Try the free plan for 
-					<strong> teams up to 4 users</strong> and see how easy <strong>leave management</strong> can be.
+					<strong> teams up to 6 users</strong> and see how easy <strong>leave management</strong> can be.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">

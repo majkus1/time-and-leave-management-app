@@ -40,7 +40,7 @@ export default function BlogSevenContent() {
 				"name": "Czy Planopia jest darmowa?",
 				"acceptedAnswer": {
 					"@type": "Answer",
-					"text": "Tak, Planopia oferuje darmową wersję dla zespołów do 4 użytkowników. Wszystkie funkcje są dostępne bez opłat. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników."
+					"text": "Tak, Planopia oferuje darmową wersję dla zespołów do 6 użytkowników. Wszystkie funkcje są dostępne bez opłat. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników."
 				}
 			},
 			{
@@ -116,7 +116,7 @@ export default function BlogSevenContent() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										👉 <strong>Darmowa aplikacja</strong>  
-										<br />dla zespołów do 4 użytkowników
+										<br />dla zespołów do 6 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -232,7 +232,7 @@ export default function BlogSevenContent() {
 						<strong>Planopia</strong> sprawdza się zarówno w małych zespołach, jak i w większych firmach:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
-						<li><strong>Małe zespoły</strong> – darmowa wersja dla do 4 użytkowników, wszystkie funkcje dostępne</li>
+						<li><strong>Małe zespoły</strong> – darmowa wersja dla do 6 użytkowników, wszystkie funkcje dostępne</li>
 						<li><strong>Średnie firmy</strong> – nielimitowana liczba użytkowników, elastyczna konfiguracja</li>
 						<li><strong>Duże organizacje</strong> – możliwość personalizacji, integracji i dedykowanego środowiska</li>
 						<li><strong>HR i menedżerowie</strong> – kompleksowe narzędzie do zarządzania zespołem</li>
@@ -261,7 +261,7 @@ export default function BlogSevenContent() {
 						swojej firmy. Wszystko w jednym miejscu, dla całego zespołu.
 					</p>
 					<p className="mb-4 text-gray-700">
-						Wypróbuj <strong>Planopię</strong> za darmo dla zespołów do 4 użytkowników i zobacz, 
+						Wypróbuj <strong>Planopię</strong> za darmo dla zespołów do 6 użytkowników i zobacz, 
 						jak kompleksowe narzędzie może usprawnić zarządzanie Twoją firmą.
 					</p>
 
@@ -276,7 +276,7 @@ export default function BlogSevenContent() {
 							<div>
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">Czy Planopia jest darmowa?</h3>
 								<p className="text-gray-700">
-									Tak, Planopia oferuje darmową wersję dla zespołów do 4 użytkowników. Wszystkie funkcje są dostępne bez opłat. 
+									Tak, Planopia oferuje darmową wersję dla zespołów do 6 użytkowników. Wszystkie funkcje są dostępne bez opłat. 
 									Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.
 								</p>
 							</div>

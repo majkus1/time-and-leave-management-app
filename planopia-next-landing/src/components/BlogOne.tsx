@@ -17,7 +17,7 @@ function BlogOne() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm",
-						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Pozwala prowadzić rejestrację godzin pracy, nadgodzin i urlopów w prosty sposób. Dostępna darmowa wersja do 4 użytkowników.",
+						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Pozwala prowadzić rejestrację godzin pracy, nadgodzin i urlopów w prosty sposób. Dostępna darmowa wersja do 6 użytkowników.",
 						"image": "https://planopia.pl/img/desktop.webp",
 						"author": {
 							"@type": "Person",
@@ -163,7 +163,7 @@ function BlogOne() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										👉 <strong>Darmowa aplikacja do ewidencji czasu pracy</strong>  
-										<br />dla zespołów do 4 użytkowników
+										<br />dla zespołów do 6 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -239,7 +239,7 @@ function BlogOne() {
 					<li>Pełną kontrolę nad ewidencją godzin pracy i nadgodzin.</li>
 					<li>Szybkie zgłaszanie i akceptowanie urlopów.</li>
 					<li>Raporty i kalendarze pracy dostępne online i w formie PDF.</li>
-					<li>Wersję darmową dla zespołów do 4 użytkowników.</li>
+					<li>Wersję darmową dla zespołów do 6 użytkowników.</li>
 					<li>Możliwość rozbudowy i personalizacji dla większych firm.</li>
 				</ul>
 
@@ -247,7 +247,7 @@ function BlogOne() {
 				<p className="mb-4 text-gray-700">
 					Ewidencja czasu pracy nie musi być skomplikowana. Dzięki aplikacjom takim jak 
 					<strong> Planopia</strong>, Twoja firma oszczędza czas, unika błędów i działa zgodnie z przepisami.  
-					Niezależnie, czy masz <strong>mały zespół do 4 osób</strong>, czy dużą organizację – 
+					Niezależnie, czy masz <strong>mały zespół do 6 osób</strong>, czy dużą organizację – 
 					z Planopią wszystko masz pod kontrolą.
 				</p>
 

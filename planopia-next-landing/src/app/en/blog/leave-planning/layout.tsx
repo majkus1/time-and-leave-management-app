@@ -22,7 +22,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "Employee Leave Planning – Best Tools and Practices | Planopia",
-  description: "Discover how to plan employee leave effectively with an online leave calendar. Planopia makes leave management simple – free plan for up to 4 users.",
+  description: "Discover how to plan employee leave effectively with an online leave calendar. Planopia makes leave management simple – free plan for up to 6 users.",
   keywords: [
     "leave planning",
     "employee leave management",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
-    description: 'Planopia simplifies leave management with an online leave calendar, automatic notifications, and reports. Try the free plan for teams up to 4 users.',
+    description: 'Planopia simplifies leave management with an online leave calendar, automatic notifications, and reports. Try the free plan for teams up to 6 users.',
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

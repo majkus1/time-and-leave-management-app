@@ -28,6 +28,7 @@ export default defineConfig({
 				sourcemap: true,
 				skipWaiting: true,
 				clientsClaim: true,
+				maximumFileSizeToCacheInBytes: 3145728, // 3 MB (2.1 MB file + buffer)
 			},
 			includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
 			manifest: {

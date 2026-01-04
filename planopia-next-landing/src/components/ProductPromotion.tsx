@@ -77,13 +77,13 @@ function ProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 4 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
+						"description": "Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 6 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
 						"offers": {
 							"@type": "Offer",
 							"price": "0",
 							"priceCurrency": "PLN",
 							"category": "Free",
-							"description": "Darmowy plan dla zespołów do 4 użytkowników"
+							"description": "Darmowy plan dla zespołów do 6 użytkowników"
 						}
 					})
 				}}
@@ -206,7 +206,7 @@ function ProductPromotion() {
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-							Ewidencja czasu pracy i urlopów – darmowa aplikacja do 4 użytkowników
+							Ewidencja czasu pracy i urlopów – darmowa aplikacja do 6 użytkowników
 							</h1>{' '}
 							<h2 className="font-semibold text-gray-800" id="underheader">
 							Planopia pomaga zespołom i firmom uporządkować czas pracy i urlopy.
@@ -365,7 +365,7 @@ function ProductPromotion() {
           <p className="font-semibold text-gray-900">Małe zespoły</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. <span className="font-semibold text-green-700">Do 4 użytkowników za darmo.</span>
+          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. <span className="font-semibold text-green-700">Do 6 użytkowników za darmo.</span>
         </p>
       </div>
 

@@ -57,7 +57,7 @@ function ENBlogSeven() {
 								"name": "Is Planopia free?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Yes, Planopia offers a free version for teams up to 4 users. All features are available at no cost. For larger companies, paid plans are available with unlimited users."
+									"text": "Yes, Planopia offers a free version for teams up to 6 users. All features are available at no cost. For larger companies, paid plans are available with unlimited users."
 								}
 							},
 							{
@@ -224,7 +224,7 @@ function ENBlogSeven() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										👉 <strong>Free app</strong>  
-										<br />for teams up to 4 users
+										<br />for teams up to 6 users
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -340,7 +340,7 @@ function ENBlogSeven() {
 					<strong>Planopia</strong> works well for both small teams and larger companies:
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
-					<li><strong>Small teams</strong> – free version for up to 4 users, all features available</li>
+					<li><strong>Small teams</strong> – free version for up to 6 users, all features available</li>
 					<li><strong>Medium companies</strong> – unlimited number of users, flexible configuration</li>
 					<li><strong>Large organizations</strong> – possibility of personalization, integrations, and dedicated environment</li>
 					<li><strong>HR and managers</strong> – comprehensive tool for team management</li>
@@ -369,7 +369,7 @@ function ENBlogSeven() {
 					of your company. Everything in one place, for your entire team.
 				</p>
 				<p className="mb-4 text-gray-700">
-					Try <strong>Planopia</strong> for free for teams up to 4 users and see 
+					Try <strong>Planopia</strong> for free for teams up to 6 users and see 
 					how a comprehensive tool can streamline your company management.
 				</p>
 
@@ -384,7 +384,7 @@ function ENBlogSeven() {
 							<div>
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">Is Planopia free?</h3>
 								<p className="text-gray-700">
-									Yes, Planopia offers a free version for teams up to 4 users. All features are available at no cost. 
+									Yes, Planopia offers a free version for teams up to 6 users. All features are available at no cost. 
 									For larger companies, paid plans are available with unlimited users, flexible features, and integrations.
 								</p>
 							</div>

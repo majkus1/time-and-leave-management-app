@@ -169,7 +169,7 @@ i18n
 						failed: 'Login failed',
 						alerttoomanyreq: 'Too many login attempts. Please try again in 15 minutes.',
 						createTeam: 'Create new team',
-						teamDescription: 'Create your team and manage working time and leave for up to 4 users for free!',
+						teamDescription: 'Create your team and manage working time and leave for up to 6 users for free!',
 					},
 					resetpass: {
 						txt1: 'Reset password',
@@ -686,7 +686,7 @@ i18n
 					},
 					"newteam": {
     "h2": "Create a new team",
-    "subtitle": "Create your team and manage working time and leave for up to 4 users for free!",
+    "subtitle": "Create your team and manage working time and leave for up to 6 users for free!",
     "teamName": "Team name",
     "teamNamePlaceholder": "Your team name",
     "adminEmail": "Administrator email",
@@ -868,7 +868,7 @@ i18n
 						failed: 'Logowanie nie powiodło się',
 						alerttoomanyreq: 'Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.',
 						createTeam: 'Utwórz nowy zespół',
-						teamDescription: 'Załóż swój zespół i zarządzaj czasem pracy oraz urlopami do 4 użytkowników za darmo!',
+						teamDescription: 'Załóż swój zespół i zarządzaj czasem pracy oraz urlopami do 6 użytkowników za darmo!',
 					},
 					resetpass: {
 						txt1: 'Resetowanie hasła',
@@ -1384,7 +1384,7 @@ i18n
 					},
 					"newteam": {
     "h2": "Utwórz nowy zespół",
-    "subtitle": "Załóż swój zespół i zarządzaj czasem pracy oraz urlopami do 4 użytkowników za darmo!",
+    "subtitle": "Załóż swój zespół i zarządzaj czasem pracy oraz urlopami do 6 użytkowników za darmo!",
     "teamName": "Nazwa zespołu",
     "teamNamePlaceholder": "Nazwa Twojego zespołu",
     "adminEmail": "Email administratora",
