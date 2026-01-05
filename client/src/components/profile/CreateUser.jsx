@@ -169,11 +169,18 @@ function CreateUser() {
                 <div className="row justify-content-start">
                     <div className="col-md-8">
                         <div>
-                            <div className="card-body">
-                                <h4><img src="img/add-group.png" alt="ikonka w sidebar" /> {t('newuser.h4')}</h4>
-                                
+                            <h4><img src="img/add-group.png" alt="ikonka w sidebar" /> {t('newuser.h4')}</h4>
+                            <hr />
+                            <div className="card-body editformbox" style={{ 
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                padding: '15px',
+                                marginBottom: '30px',
+                                marginTop: '20px'
+                            }}>
                                 {teamInfo && (
-                                    <div className={`mb-4 p-3 rounded-md mt-4 ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} padds`} style={{ padding: '10px' }}>
+                                    <div className={`mb-4 p-3 rounded-md ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} padds`} style={{ padding: '10px' }}>
                                         <h6 className="font-semibold mb-2">{t('newuser.teamInfoTitle')}</h6>
                                         <p className="text-sm mb-1">
                                             <strong>{t('newuser.userLimit')}</strong> {teamInfo.currentCount} / {teamInfo.maxUsers}
@@ -188,8 +195,6 @@ function CreateUser() {
                                         )}
                                     </div>
                                 )}
-                                
-                                <hr />
                                 <form onSubmit={handleSubmit} className="max-w-2xl space-y-6" id="addusers">
                                     
                                     <div>

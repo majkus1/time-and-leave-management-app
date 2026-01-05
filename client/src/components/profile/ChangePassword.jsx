@@ -109,9 +109,16 @@ function ChangePassword() {
 					<div className="row justify-content-start">
 						<div className="col-md-8">
 							<div>
-								<div className="card-body" style={{ padding: '0px' }}>
-									<h4><img src="img/user-avatar.png" alt="ikonka w sidebar" />{t('editprofile.headertxt')}</h4>
-									<hr />
+								<h4><img src="img/user-avatar.png" alt="ikonka w sidebar" />{t('editprofile.headertxt')}</h4>
+								<hr />
+								<div className="card-body editformbox" style={{ 
+									backgroundColor: 'white',
+									borderRadius: '12px',
+									boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+									padding: '15px',
+									marginBottom: '30px',
+									marginTop: '20px'
+								}}>
 
 									<form
 										onSubmit={e => {

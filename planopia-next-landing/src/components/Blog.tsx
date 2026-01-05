@@ -148,6 +148,38 @@ function Blog() {
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Karta wpisu - Dni wolne 2026 */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img src="/img/planvacationblog.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Dni wolne 2026 – kompletny kalendarz świąt w Polsce
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Sprawdź wszystkie dni wolne 2026 w Polsce. Kompletny kalendarz świąt ustawowych z informacją o długich weekendach i poradami, jak efektywnie zaplanować urlopy w 2026 roku. Dowiedz się, które dni są ustawowo wolne od pracy.
+							</p>
+							<Link
+								href="/blog/dni-wolne-2026"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
+						{/* Karta wpisu - Kompleksowa aplikacja */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img src="/img/worktimeblog.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Planopia to nie tylko aplikacja do ewidencji czasu pracy i urlopów. To kompleksowe narzędzie łączące ewidencję czasu, urlopy, grafiki pracy, czaty, tablice zadań i elastyczną konfigurację ról. Wszystko w jednym miejscu.
+							</p>
+							<Link
+								href="/blog/kompleksowa-aplikacja-do-zarzadzania-firma"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
 						{/* Karta wpisu 3 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/planvacationblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
@@ -221,22 +253,6 @@ function Blog() {
 							</p>
 							<Link
 								href="/blog/zarzadzanie-urlopami"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu 7 - Kompleksowa aplikacja */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Planopia to nie tylko aplikacja do ewidencji czasu pracy i urlopów. To kompleksowe narzędzie łączące ewidencję czasu, urlopy, grafiki pracy, czaty, tablice zadań i elastyczną konfigurację ról. Wszystko w jednym miejscu.
-							</p>
-							<Link
-								href="/blog/kompleksowa-aplikacja-do-zarzadzania-firma"
 								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
 								Czytaj więcej
 							</Link>

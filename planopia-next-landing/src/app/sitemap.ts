@@ -30,6 +30,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     
+    // Blog articles - High priority (holidays 2026)
+    {
+      url: 'https://planopia.pl/blog/dni-wolne-2026',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.8,
+    },
+    
     // Blog articles - High priority (new free app articles)
     {
       url: 'https://planopia.pl/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy',

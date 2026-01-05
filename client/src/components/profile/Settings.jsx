@@ -178,6 +178,7 @@ function Settings() {
 					}}>
 						<img src="/img/settings.png" alt="" /> {t('settings.title')}
 					</h2>
+					<hr></hr>
 				</div>
 
 				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}
@@ -186,7 +187,7 @@ function Settings() {
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-						padding: '25px',
+						padding: '15px',
 						marginBottom: '30px'
 					}}>
 						<h3 style={{ 
@@ -861,7 +862,7 @@ function Settings() {
 						)}
 
 						{/* Przycisk zapisu */}
-						<div style={{ textAlign: 'right' }}>
+						<div style={{ textAlign: 'left' }}>
 							<button
 								onClick={handleSave}
 								disabled={updateSettingsMutation.isPending}
@@ -912,7 +913,7 @@ function Settings() {
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-						padding: '25px',
+						padding: '15px',
 						textAlign: 'center'
 					}}>
 						<p style={{ 
@@ -963,6 +964,7 @@ function Settings() {
 						}}>
 							{t('settings.polishHolidaysModalTitle') || 'Polskie dni świąteczne'}
 						</h2>
+					
 						<button
 							onClick={() => setIsPolishHolidaysModalOpen(false)}
 							style={{

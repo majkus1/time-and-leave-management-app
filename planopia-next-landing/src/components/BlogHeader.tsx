@@ -7,9 +7,10 @@ interface BlogHeaderProps {
 	lang?: 'pl' | 'en'
 	enUrl?: string
 	plUrl?: string
+	hideLanguageSwitcher?: boolean
 }
 
-export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensive-company-management-app', plUrl = '/blog/kompleksowa-aplikacja-do-zarzadzania-firma' }: BlogHeaderProps) {
+export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensive-company-management-app', plUrl = '/blog/kompleksowa-aplikacja-do-zarzadzania-firma', hideLanguageSwitcher = false }: BlogHeaderProps) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 
@@ -58,15 +59,17 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 					>
 						{isPolish ? "Załóż darmowy zespół" : "Create a free team"}
 					</Link>
-					<Link 
-						href={isPolish ? enUrl : plUrl} 
-						className="flex items-center languagechoose">
-						<img 
-							src={isPolish ? "/img/united-kingdom.webp" : "/img/poland.webp"} 
-							alt={isPolish ? "English version" : "Wersja polska"} 
-							className="w-6 h-6" 
-						/>
-					</Link>
+					{!hideLanguageSwitcher && (
+						<Link 
+							href={isPolish ? enUrl : plUrl} 
+							className="flex items-center languagechoose">
+							<img 
+								src={isPolish ? "/img/united-kingdom.webp" : "/img/poland.webp"} 
+								alt={isPolish ? "English version" : "Wersja polska"} 
+								className="w-6 h-6" 
+							/>
+						</Link>
+					)}
 				</nav>
 
 				<button
@@ -118,17 +121,19 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 					>
 						{isPolish ? "Załóż darmowy zespół" : "Create a free team"}
 					</Link>
-					<Link
-						href={isPolish ? enUrl : plUrl}
-						className="flex items-center languagechoose"
-						style={{ marginTop: '15px' }}
-						onClick={toggleMenu}>
-						<img 
-							src={isPolish ? "/img/united-kingdom.webp" : "/img/poland.webp"} 
-							alt={isPolish ? "English version" : "Wersja polska"} 
-							className="w-6 h-6" 
-						/>
-					</Link>
+					{!hideLanguageSwitcher && (
+						<Link
+							href={isPolish ? enUrl : plUrl}
+							className="flex items-center languagechoose"
+							style={{ marginTop: '15px' }}
+							onClick={toggleMenu}>
+							<img 
+								src={isPolish ? "/img/united-kingdom.webp" : "/img/poland.webp"} 
+								alt={isPolish ? "English version" : "Wersja polska"} 
+								className="w-6 h-6" 
+							/>
+						</Link>
+					)}
 				</div>
 			)}
 		</header>

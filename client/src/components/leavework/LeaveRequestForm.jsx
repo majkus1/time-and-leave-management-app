@@ -344,16 +344,24 @@ function LeaveRequestForm() {
 				<div id="leave-request-form">
 					<h2 style={{ marginTop: '0px' }}><img src="img/sunbed.png" alt="ikonka w sidebar" />{t('leaveform.header')}</h2>
 					<hr />
-					<p style={{ marginBottom: '20px' }}>
-						{t('leaveform.availableday')}{' '}
-						{availableLeaveDays === 0 ? (
-							<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
-						) : (
-							availableLeaveDays
-						)}
-					</p>
+					<div className="card-body editformbox" style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '15px',
+						marginBottom: '30px',
+						marginTop: '20px'
+					}}>
+						<p style={{ marginBottom: '20px' }}>
+							{t('leaveform.availableday')}{' '}
+							{availableLeaveDays === 0 ? (
+								<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
+							) : (
+								availableLeaveDays
+							)}
+						</p>
 
-					<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6 max-w-xl">
+						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6 max-w-xl">
 						
 						<div>
 							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.type')}</label>
@@ -527,6 +535,7 @@ function LeaveRequestForm() {
 							)
 						})}
 					</ul>
+					</div>
 
 					{/* Modal anulowania */}
 					{showCancelModal && (

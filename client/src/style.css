@@ -2962,3 +2962,7 @@ section {
     border: 1px solid rgb(222, 226, 230);
     border-radius: 8px;
 }
+
+.editformbox {
+	padding: 15px !important;
+}
