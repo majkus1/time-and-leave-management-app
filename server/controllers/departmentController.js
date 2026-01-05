@@ -194,6 +194,18 @@ exports.deleteDepartment = async (req, res) => {
 			await departmentBoard.save();
 		}
 
+		// Deaktywuj grafik dla tego działu
+		const Schedule = require('../models/Schedule')(firmDb);
+		const departmentSchedule = await Schedule.findOne({ 
+			teamId, 
+			departmentName: name, 
+			type: 'department' 
+		});
+		if (departmentSchedule) {
+			departmentSchedule.isActive = false;
+			await departmentSchedule.save();
+		}
+
 		res.status(200).json({ message: 'Dział został usunięty' });
 	} catch (error) {
 		console.error('Error in deleteDepartment:', error);
