@@ -8,7 +8,7 @@ const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
 const { createChannelForDepartment, createGeneralChannel, syncGeneralChannelMembers } = require('./chatController')
-const { createBoardForDepartment } = require('./boardController')
+const { createBoardForDepartment, createTeamBoard } = require('./boardController')
 const { createScheduleForDepartment } = require('./scheduleController')
 
 const { appUrl } = require('../config')
@@ -168,6 +168,14 @@ exports.register = async (req, res) => {
 			await syncGeneralChannelMembers(teamId)
 		} catch (error) {
 			console.error('Error syncing general channel members:', error)
+			// Don't fail the request if sync fails
+		}
+
+		// Sync team board members to include the new user
+		try {
+			await createTeamBoard(teamId)
+		} catch (error) {
+			console.error('Error syncing team board members:', error)
 			// Don't fail the request if sync fails
 		}
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AnimatedBlogImages from './AnimatedBlogImages'
 
 export default function BlogHolidays2026Content() {
 	const blogPostingSchema = {
@@ -6,7 +7,7 @@ export default function BlogHolidays2026Content() {
 		"@type": "BlogPosting",
 		"headline": "Dni wolne 2026 – kalendarz świąt i dni ustawowo wolnych od pracy w Polsce",
 		"description": "Kompletny kalendarz dni wolnych 2026 w Polsce. Sprawdź wszystkie święta ustawowe, długie weekendy i dowiedz się, jak efektywnie zaplanować urlopy w 2026 roku.",
-		"image": ["https://planopia.pl/img/plans-urlop.webp"],
+		"image": ["https://planopia.pl/img/plans-urlopnew.webp"],
 		"author": {
 			"@type": "Person",
 			"name": "Michał Lipka"
@@ -83,22 +84,29 @@ export default function BlogHolidays2026Content() {
 							</div>
 						</div>
 
-						<figure>
-							<img
-								src="/img/plans-urlop.webp"
-								alt="Kalendarz dni wolnych 2026 – planowanie urlopów"
-								className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
-							/>
-							<figcaption className="text-sm text-gray-600 mt-2 text-center figcaption-desktop">Planowanie urlopów w 2026 roku – Planopia</figcaption>
-						</figure>
-						<figure>
-							<img
-								src="/img/plans-urlop-mob.webp"
-								alt="Aplikacja do planowania urlopów – Planopia"
-								className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
-							/>
-							<figcaption className="text-sm text-gray-600 mt-2 text-center figcaption-mobile">Planopia – widok mobilny</figcaption>
-						</figure>
+						<AnimatedBlogImages
+							desktopImages={[
+								{
+									src: '/img/plans-urlopnew.webp',
+									alt: 'Kalendarz dni wolnych 2026 – planowanie urlopów w Planopia'
+								},
+								{
+									src: '/img/wniosek-urlop.webp',
+									alt: 'Wniosek urlopowy online – Planopia'
+								}
+							]}
+							mobileImages={[
+								{
+									src: '/img/plans-urlop-mobnew.webp',
+									alt: 'Aplikacja do planowania urlopów – Planopia widok mobilny'
+								},
+								{
+									src: '/img/wniosek-urlop-mob.webp',
+									alt: 'Wniosek urlopowy online – Planopia widok mobilny'
+								}
+							]}
+							interval={5000}
+						/>
 					</div>
 				</div>
 			</section>

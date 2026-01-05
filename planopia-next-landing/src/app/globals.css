@@ -2494,6 +2494,27 @@ a {
   color: #007bff;
 }
 
+/* Animated blog images fade transition */
+@keyframes blogImageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animated-blog-image {
+  animation: blogImageFadeIn 0.8s ease-in-out;
+}
+
+/* Preferencje dostępności: wyłącz animacje obrazów blogowych */
+@media (prefers-reduced-motion: reduce) {
+  .animated-blog-image {
+    animation: none !important;
+  }
+}
+
 footer img {
   margin: 0 auto;
 }

@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createLog } = require('../services/logService');
 const { createGeneralChannel } = require('./chatController');
+const { createTeamBoard } = require('./boardController');
+const { createTeamSchedule } = require('./scheduleController');
 const Workday = require('../models/Workday')(firmDb);
 const LeaveRequest = require('../models/LeaveRequest')(firmDb);
 const LeavePlan = require('../models/LeavePlan')(firmDb);
@@ -108,6 +110,22 @@ exports.registerTeam = async (req, res) => {
 		} catch (error) {
 			console.error('Error creating general channel for team:', error);
 			// Don't fail the request if channel creation fails
+		}
+
+		// Create team schedule (grafik) for the team
+		try {
+			await createTeamSchedule(newTeam._id);
+		} catch (error) {
+			console.error('Error creating team schedule for team:', error);
+			// Don't fail the request if schedule creation fails
+		}
+
+		// Create team board (tablica zadań) for the team
+		try {
+			await createTeamBoard(newTeam._id);
+		} catch (error) {
+			console.error('Error creating team board for team:', error);
+			// Don't fail the request if board creation fails
 		}
 
 		

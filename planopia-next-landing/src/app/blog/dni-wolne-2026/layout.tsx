@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     description: 'Sprawdź kompletny kalendarz dni wolnych 2026 w Polsce. Wszystkie święta ustawowe, długie weekendy i porady dotyczące efektywnego planowania urlopów w 2026 roku.',
     images: [
       {
-        url: 'https://planopia.pl/img/plans-urlop.webp',
+        url: 'https://planopia.pl/img/plans-urlopnew.webp',
         width: 1200,
         height: 630,
         alt: 'Dni wolne 2026 – kalendarz świąt w Polsce',
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Dni wolne 2026 – kalendarz świąt i dni ustawowo wolnych od pracy | Planopia',
     description: 'Kompletny kalendarz dni wolnych 2026 w Polsce. Wszystkie święta ustawowe i porady dotyczące planowania urlopów.',
-    images: ['https://planopia.pl/img/plans-urlop.webp'],
+    images: ['https://planopia.pl/img/plans-urlopnew.webp'],
   },
   alternates: {
     canonical: 'https://planopia.pl/blog/dni-wolne-2026',
