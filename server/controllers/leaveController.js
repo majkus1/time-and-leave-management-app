@@ -98,6 +98,42 @@ function isWeekend(date) {
 	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
 }
 
+// Funkcja pomocnicza do przycinania dat do dni roboczych (usuwanie weekendów z początku i końca)
+async function trimWeekendsFromDateRange(startDate, endDate, teamId) {
+	const settings = await Settings.getSettings(teamId)
+	const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
+	
+	// Jeśli pracuje w weekendy, nie trzeba przycinać
+	if (workOnWeekends) {
+		return { trimmedStartDate: startDate, trimmedEndDate: endDate }
+	}
+	
+	const start = new Date(startDate)
+	const end = new Date(endDate)
+	
+	// Znajdź pierwszą datę roboczą od początku zakresu
+	let trimmedStart = new Date(start)
+	while (trimmedStart <= end && (isWeekend(trimmedStart) || isHoliday(trimmedStart, settings))) {
+		trimmedStart.setDate(trimmedStart.getDate() + 1)
+	}
+	
+	// Znajdź ostatnią datę roboczą do końca zakresu
+	let trimmedEnd = new Date(end)
+	while (trimmedEnd >= start && (isWeekend(trimmedEnd) || isHoliday(trimmedEnd, settings))) {
+		trimmedEnd.setDate(trimmedEnd.getDate() - 1)
+	}
+	
+	// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć null
+	if (trimmedStart > trimmedEnd) {
+		return { trimmedStartDate: null, trimmedEndDate: null }
+	}
+	
+	const trimmedStartDate = trimmedStart.toISOString().split('T')[0]
+	const trimmedEndDate = trimmedEnd.toISOString().split('T')[0]
+	
+	return { trimmedStartDate, trimmedEndDate }
+}
+
 // Funkcja pomocnicza do generowania wszystkich dat w zakresie (z pominięciem weekendów i świąt)
 async function generateDateRange(startDate, endDate, teamId) {
 	const dates = []
@@ -140,6 +176,21 @@ exports.submitLeaveRequest = async (req, res) => {
 	const t = req.t
 
 	try {
+		// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
+		const { trimmedStartDate, trimmedEndDate } = await trimWeekendsFromDateRange(startDate, endDate, teamId)
+		
+		// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć błąd
+		if (!trimmedStartDate || !trimmedEndDate) {
+			return res.status(400).json({ message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.' })
+		}
+		
+		// Jeśli daty zostały zmienione, przelicz liczbę dni
+		let finalDaysRequested = daysRequested
+		if (trimmedStartDate !== startDate || trimmedEndDate !== endDate) {
+			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
+			finalDaysRequested = dates.length
+		}
+		
 		const isL4 = type === 'leaveform.option6'
 		
 		// Dla L4 ustaw status na "sent", dla innych pozostaw "pending"
@@ -148,17 +199,20 @@ exports.submitLeaveRequest = async (req, res) => {
 		const leaveRequest = new LeaveRequest({
 			userId,
 			type,
-			startDate,
-			endDate,
-			daysRequested,
+			startDate: trimmedStartDate, // Użyj przyciętych dat
+			endDate: trimmedEndDate, // Użyj przyciętych dat
+			daysRequested: finalDaysRequested, // Użyj przeliczonych dni
 			replacement,
 			additionalInfo,
 			status,
 		})
 		await leaveRequest.save()
 
-		const user = await User.findById(userId).select('firstName lastName roles department username')
-		if (!user) return res.status(404).send('Użytkownik nie znaleziony.')
+		const user = await User.findOne({
+			_id: userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName roles department username')
+		if (!user) return res.status(404).send('Użytkownik nie znaleziony lub nieaktywny.')
 
 		// Dla L4: zbierz przełożonych + HR/Admin
 		// Dla innych: użyj standardowej logiki
@@ -167,18 +221,20 @@ exports.submitLeaveRequest = async (req, res) => {
 			// Zbierz przełożonych (standardowa logika)
 			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
 			
-			// Zbierz HR
+			// Zbierz HR (tylko aktywnych)
 			const hrUsers = await User.find({
 				teamId,
 				roles: { $in: ['HR'] },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			}).select('username firstName lastName')
 			
-			// Jeśli nie ma HR, zbierz Adminów
+			// Jeśli nie ma HR, zbierz Adminów (tylko aktywnych)
 			let adminUsers = []
 			if (hrUsers.length === 0) {
 				adminUsers = await User.find({
 					teamId,
 					roles: { $in: ['Admin'] },
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 				}).select('username firstName lastName')
 			}
 			
@@ -207,7 +263,7 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		// Dla L4: automatycznie dodaj do LeavePlan
 		if (isL4) {
-			const dates = await generateDateRange(startDate, endDate, teamId)
+			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
 			const leavePlanPromises = dates.map(date => {
 				// Sprawdź czy już istnieje plan na ten dzień
 				return LeavePlan.findOne({ userId, date }).then(existing => {
@@ -248,11 +304,11 @@ exports.submitLeaveRequest = async (req, res) => {
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.dates')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
+						<td style="padding: 8px 0; color: #1f2937;">${trimmedStartDate} - ${trimmedEndDate}</td>
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${daysRequested}</td>
+						<td style="padding: 8px 0; color: #1f2937;">${finalDaysRequested}</td>
 					</tr>
 				</table>
 			</div>

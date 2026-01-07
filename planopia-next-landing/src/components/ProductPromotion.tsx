@@ -11,6 +11,8 @@ import { pl } from 'date-fns/locale/pl'
 
 function ProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
+	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
+	const [legalDropdownOpenMobile, setLegalDropdownOpenMobile] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 	const [email, setEmail] = useState('')
 	const [message, setMessage] = useState('')
@@ -99,7 +101,7 @@ function ProductPromotion() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden lg:flex space-x-8 navdesktop">
 						<a
 							href="#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -117,10 +119,41 @@ function ProductPromotion() {
 						</a>
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
-							onClick={toggleMenu}>
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
+						{/* Dropdown Regulaminy */}
+						<div 
+							className="relative"
+							onMouseEnter={() => setLegalDropdownOpen(true)}
+							onMouseLeave={() => setLegalDropdownOpen(false)}
+						>
+							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
+								Regulaminy
+								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							{legalDropdownOpen && (
+								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
+									<Link
+										href="/terms"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Regulamin
+									</Link>
+									<Link
+										href="/privacy"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Polityka prywatności
+									</Link>
+									<Link
+										href="/dpa"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Umowa DPA
+									</Link>
+								</div>
+							)}
+						</div>
 						<Link
   href="https://app.planopia.pl/"
   onClick={toggleMenu}
@@ -177,6 +210,43 @@ function ProductPromotion() {
 							onClick={toggleMenu}>
 							Blog
 						</Link>
+						{/* Mobile Dropdown Regulaminy */}
+						<div className="w-full mb-4">
+							<button
+								onClick={() => setLegalDropdownOpenMobile(!legalDropdownOpenMobile)}
+								className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center w-full justify-center">
+								<span>Regulaminy</span>
+								<svg 
+									className={`w-4 h-4 transition-transform ${legalDropdownOpenMobile ? 'transform rotate-180' : ''}`} 
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							{legalDropdownOpenMobile && (
+								<div className="mt-2 space-y-2">
+									<Link
+										href="/terms"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Regulamin
+									</Link>
+									<Link
+										href="/privacy"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Polityka prywatności
+									</Link>
+									<Link
+										href="/dpa"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Umowa DPA
+									</Link>
+								</div>
+							)}
+						</div>
 						<Link
   href="https://app.planopia.pl/"
   onClick={toggleMenu}

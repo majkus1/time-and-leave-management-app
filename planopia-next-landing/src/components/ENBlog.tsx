@@ -5,6 +5,8 @@ import Link from 'next/link'
 
 function ENBlog() {
 	const [menuOpen, setMenuOpen] = useState(false)
+	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
+	const [legalDropdownOpenMobile, setLegalDropdownOpenMobile] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 
 	return (
@@ -36,7 +38,7 @@ function ENBlog() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden lg:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -54,10 +56,41 @@ function ENBlog() {
 						</Link>
 						<Link
 							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
-							onClick={toggleMenu}>
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
+						{/* Dropdown Legal */}
+						<div 
+							className="relative"
+							onMouseEnter={() => setLegalDropdownOpen(true)}
+							onMouseLeave={() => setLegalDropdownOpen(false)}
+						>
+							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
+								Legal
+								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							{legalDropdownOpen && (
+								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
+									<Link
+										href="/en/terms"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Terms of Service
+									</Link>
+									<Link
+										href="/en/privacy"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Privacy Policy
+									</Link>
+									<Link
+										href="/en/dpa"
+										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
+										Data Processing Agreement
+									</Link>
+								</div>
+							)}
+						</div>
 						<Link
 							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
@@ -109,6 +142,43 @@ function ENBlog() {
 							onClick={toggleMenu}>
 							Blog
 						</Link>
+						{/* Mobile Dropdown Legal */}
+						<div className="w-full mb-4">
+							<button
+								onClick={() => setLegalDropdownOpenMobile(!legalDropdownOpenMobile)}
+								className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center w-full justify-center">
+								<span>Legal</span>
+								<svg 
+									className={`w-4 h-4 transition-transform ${legalDropdownOpenMobile ? 'transform rotate-180' : ''}`} 
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+								</svg>
+							</button>
+							{legalDropdownOpenMobile && (
+								<div className="mt-2 space-y-2">
+									<Link
+										href="/en/terms"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Terms of Service
+									</Link>
+									<Link
+										href="/en/privacy"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Privacy Policy
+									</Link>
+									<Link
+										href="/en/dpa"
+										onClick={toggleMenu}
+										className="block text-gray-600 hover:text-blue-600 transition">
+										Data Processing Agreement
+									</Link>
+								</div>
+							)}
+						</div>
 						<Link
 							href="https://app.planopia.pl/"
 							onClick={toggleMenu}

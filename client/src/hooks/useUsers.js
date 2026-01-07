@@ -47,6 +47,7 @@ export const useCreateUser = () => {
 		onSuccess: (data, variables) => {
 			// Invaliduj listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
 			// Invaliduj informacje o zespole jeśli teamId jest dostępne
 			if (variables.teamId) {
 				queryClient.invalidateQueries({ queryKey: ['team', variables.teamId, 'info'] })
@@ -54,6 +55,9 @@ export const useCreateUser = () => {
 				// Fallback: invaliduj wszystkie query team jeśli teamId nie jest dostępne
 				queryClient.invalidateQueries({ queryKey: ['team'] })
 			}
+			// Natychmiast odśwież dane
+			queryClient.refetchQueries({ queryKey: ['users'] })
+			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
 		},
 	})
 }
@@ -76,6 +80,7 @@ export const useUpdateUserRoles = () => {
 			queryClient.invalidateQueries({ queryKey: ['users'] })
 			queryClient.invalidateQueries({ queryKey: ['users', variables.userId] })
 			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
+			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
 			// Invaliduj tablice zadań i grafiki - mogą się zmienić po zmianie działu użytkownika
 			queryClient.invalidateQueries({ queryKey: ['boards'] })
 			queryClient.invalidateQueries({ queryKey: ['schedules'] })
@@ -83,6 +88,93 @@ export const useUpdateUserRoles = () => {
 			queryClient.invalidateQueries({ queryKey: ['supervisorSubordinates'] })
 			// Invaliduj konfiguracje przełożonych - mogą się zmienić po zmianie działu
 			queryClient.invalidateQueries({ queryKey: ['supervisorConfig'] })
+			// Natychmiast odśwież dane
+			queryClient.refetchQueries({ queryKey: ['users'] })
+			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+		},
+	})
+}
+
+// Query - pobieranie usuniętych użytkowników
+export const useDeletedUsers = () => {
+	return useQuery({
+		queryKey: ['users', 'deleted'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/users/deleted/list`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+	})
+}
+
+// Mutation - przywracanie użytkownika
+export const useRestoreUser = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (userId) => {
+			const response = await axios.post(`${API_URL}/api/users/${userId}/restore`, {}, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: async (data) => {
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ['users', 'deleted'] })
+			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+			
+			// Pobierz teamId z odpowiedzi backendu
+			let teamId = data?.teamId
+			
+			// Jeśli nie ma teamId w odpowiedzi, pobierz z użytkownika który został przywrócony
+			if (!teamId && data?.userId) {
+				try {
+					const userResponse = await axios.get(`${API_URL}/api/users/${data.userId}`, {
+						withCredentials: true
+					})
+					teamId = userResponse.data?.teamId
+				} catch (error) {
+					console.error('Error fetching user teamId:', error)
+				}
+			}
+			
+			// Invaliduj informacje o zespole
+			if (teamId) {
+				queryClient.invalidateQueries({ queryKey: ['team', teamId, 'info'] })
+				// Natychmiast odśwież informacje o zespole - ważne dla CreateUser
+				await queryClient.refetchQueries({ queryKey: ['team', teamId, 'info'] })
+			} else {
+				// Fallback: invaliduj wszystkie query team
+				queryClient.invalidateQueries({ queryKey: ['team'] })
+				queryClient.refetchQueries({ queryKey: ['team'] })
+			}
+			
+			// Natychmiast odśwież dane
+			queryClient.refetchQueries({ queryKey: ['users'] })
+			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+		},
+	})
+}
+
+// Mutation - trwałe usuwanie użytkownika
+export const usePermanentlyDeleteUser = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (userId) => {
+			const response = await axios.delete(`${API_URL}/api/users/${userId}/permanent`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ['users', 'deleted'] })
+			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+			// Natychmiast odśwież dane
+			queryClient.refetchQueries({ queryKey: ['users'] })
+			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
 		},
 	})
 }
@@ -92,7 +184,12 @@ export const useDeleteUser = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ userId, teamId }) => {
+		mutationFn: async (userIdOrObject) => {
+			// Obsługa zarówno userId jako string, jak i obiektu { userId, teamId }
+			const userId = typeof userIdOrObject === 'string' 
+				? userIdOrObject 
+				: userIdOrObject?.userId || userIdOrObject;
+			
 			const response = await axios.delete(`${API_URL}/api/users/${userId}`, {
 				withCredentials: true,
 			})
@@ -101,13 +198,27 @@ export const useDeleteUser = () => {
 		onSuccess: (data, variables) => {
 			// Invaliduj listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['users'] })
-			// Invaliduj informacje o zespole jeśli teamId jest dostępne
-			if (variables.teamId) {
-				queryClient.invalidateQueries({ queryKey: ['team', variables.teamId, 'info'] })
+			queryClient.invalidateQueries({ queryKey: ['users', 'deleted'] })
+			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
+			// Invaliduj profil użytkownika
+			queryClient.invalidateQueries({ queryKey: ['user', 'profile'] })
+			
+			// Pobierz teamId z odpowiedzi backendu lub z variables
+			const teamId = data?.teamId || (typeof variables === 'object' && variables?.teamId ? variables.teamId : null)
+			
+			// Invaliduj informacje o zespole
+			if (teamId) {
+				queryClient.invalidateQueries({ queryKey: ['team', teamId, 'info'] })
+				// Natychmiast odśwież informacje o zespole
+				queryClient.refetchQueries({ queryKey: ['team', teamId, 'info'] })
 			} else {
 				// Fallback: invaliduj wszystkie query team jeśli teamId nie jest dostępne
 				queryClient.invalidateQueries({ queryKey: ['team'] })
 			}
+			
+			// Natychmiast odśwież dane
+			queryClient.refetchQueries({ queryKey: ['users'] })
+			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
 		},
 	})
 }

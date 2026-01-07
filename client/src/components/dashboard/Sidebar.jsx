@@ -394,7 +394,6 @@ function Sidebar() {
 					{/* Admin Links */}
 					{isAdmin(role) && (
 						<div className="admin-section">
-							
 							<NavLink
 								to="/create-user"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -411,6 +410,15 @@ function Sidebar() {
 									<img src="/img/contact-list.png" alt="Logs" />
 								</div>
 								<span className="nav-text">{t('sidebar.btn9')}</span>
+							</NavLink>
+
+							<NavLink
+								to="/documents"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+								<div className="nav-icon">
+								<img src="/img/docs.png" alt="docs icon" />
+								</div>
+								<span className="nav-text">{t('sidebar.btnDocuments')}</span>
 							</NavLink>
 
 							<NavLink

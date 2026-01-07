@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail } from '../../hooks/useUsers'
+import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail, useDeletedUsers, useRestoreUser, usePermanentlyDeleteUser } from '../../hooks/useUsers'
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
@@ -38,6 +38,11 @@ function Logs() {
 	const [expandedRoleDescriptions, setExpandedRoleDescriptions] = useState({}) // Stan dla rozwiniętych opisów ról
 	const [deleteTeamModal, setDeleteTeamModal] = useState(false)
 	const deleteTeamMutation = useDeleteTeam()
+	const [activeTab, setActiveTab] = useState('active') // 'active' or 'deleted'
+	const [deletedUsersModal, setDeletedUsersModal] = useState(false)
+	const { data: deletedUsers = [], isLoading: loadingDeletedUsers } = useDeletedUsers()
+	const restoreUserMutation = useRestoreUser()
+	const permanentlyDeleteUserMutation = usePermanentlyDeleteUser()
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
@@ -902,8 +907,75 @@ function Logs() {
 				</div>
 			) : (
 				<div className="logs-content">
+					{/* Zakładki dla aktywnych i usuniętych użytkowników */}
+					{isAdmin && (
+						<div style={{
+							display: 'flex',
+							gap: '10px',
+							marginBottom: '20px',
+							borderBottom: '2px solid #dee2e6',
+							paddingBottom: '10px'
+						}}>
+							<button
+								type="button"
+								onClick={() => setActiveTab('active')}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px 6px 0 0',
+									border: 'none',
+									backgroundColor: activeTab === 'active' ? '#3498db' : 'transparent',
+									color: activeTab === 'active' ? 'white' : '#495057',
+									fontSize: '16px',
+									fontWeight: '600',
+									cursor: 'pointer',
+									transition: 'all 0.2s',
+									borderBottom: activeTab === 'active' ? '3px solid #2980b9' : 'none'
+								}}
+							>
+								{t('logs.activeUsers') || 'Aktywni użytkownicy'}
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setActiveTab('deleted')
+									setDeletedUsersModal(true)
+								}}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px 6px 0 0',
+									border: 'none',
+									backgroundColor: activeTab === 'deleted' ? '#dc3545' : 'transparent',
+									color: activeTab === 'deleted' ? 'white' : '#495057',
+									fontSize: '16px',
+									fontWeight: '600',
+									cursor: 'pointer',
+									transition: 'all 0.2s',
+									borderBottom: activeTab === 'deleted' ? '3px solid #c82333' : 'none',
+									position: 'relative'
+								}}
+							>
+								{t('logs.deletedUsers') || 'Ostatnio usunięci'}
+								{deletedUsers.length > 0 && (
+									<span style={{
+										marginLeft: '8px',
+										backgroundColor: activeTab === 'deleted' ? 'rgba(255,255,255,0.3)' : '#dc3545',
+										color: activeTab === 'deleted' ? 'white' : 'white',
+										padding: '2px 8px',
+										borderRadius: '12px',
+										fontSize: '12px',
+										fontWeight: '600'
+									}}>
+										{deletedUsers.length}
+									</span>
+								)}
+							</button>
+						</div>
+					)}
+
 					{/* Desktop view - tabela */}
-					<div className="users-table-container logs-desktop-view" style={{ 
+					{activeTab === 'active' && (
+						<React.Fragment>
+						<div className="users-table-container logs-desktop-view" style={{ 
 						backgroundColor: 'white', 
 						borderRadius: '12px', 
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -1562,10 +1634,10 @@ function Logs() {
 						))}
 					</tbody>
 				</table>
-					</div>
+				</div>
 
-					{/* Mobile view - karty */}
-					<div className="users-cards-container logs-mobile-view" style={{ 
+				{/* Mobile view - karty */}
+				<div className="users-cards-container logs-mobile-view" style={{ 
 						display: 'block' // Pokazujemy na mobile
 					}}>
 						{users.map((user, index) => (
@@ -2205,6 +2277,8 @@ function Logs() {
 							</div>
 						))}
 					</div>
+					</React.Fragment>
+				)}
 				</div>
 			)}
 
@@ -2275,7 +2349,6 @@ function Logs() {
 					</button>
 				</div>
 			)}
-			</div>
 
 			{/* Modal potwierdzenia usunięcia */}
 			{deleteModal.show && deleteModal.user && (
@@ -2372,6 +2445,261 @@ function Logs() {
 				</div>
 			)}
 
+			{/* Modal z usuniętymi użytkownikami */}
+			{deletedUsersModal && (
+				<div 
+					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+					style={{
+						zIndex: 100000000,
+						padding: '20px'
+					}} 
+					onClick={() => setDeletedUsersModal(false)}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '800px',
+						width: '100%',
+						maxHeight: '90vh',
+						overflow: 'auto',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+						<h3 style={{
+							margin: '0 0 20px 0',
+							color: '#1f2937',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('logs.deletedUsers') || 'Ostatnio usunięci użytkownicy'}
+						</h3>
+						
+						<div style={{
+							backgroundColor: '#fff3cd',
+							padding: '15px',
+							borderRadius: '6px',
+							marginBottom: '20px',
+							border: '1px solid #ffc107',
+							color: '#856404',
+							fontSize: '14px',
+							lineHeight: '1.6'
+						}}>
+							<strong>{t('logs.retentionPeriodTitle') || 'Okres karencji:'}</strong> {t('logs.retentionPeriodDescription') || 'Usunięci użytkownicy są przechowywani przez 30 dni. Po tym czasie zostaną trwale usunięci automatycznie. W każdej chwili możesz przywrócić użytkownika lub trwale usunąć go przed upływem karencji.'}
+						</div>
+
+						{loadingDeletedUsers ? (
+							<div style={{ textAlign: 'center', padding: '40px' }}>
+								<Loader />
+							</div>
+						) : deletedUsers.length === 0 ? (
+							<div style={{
+								textAlign: 'center',
+								padding: '40px',
+								color: '#6c757d'
+							}}>
+								{t('logs.noDeletedUsers') || 'Brak usuniętych użytkowników'}
+							</div>
+						) : (
+							<div style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '15px'
+							}}>
+								{deletedUsers.map((user) => {
+									const deletedDate = new Date(user.deletedAt)
+									const retentionDate = new Date(deletedDate)
+									retentionDate.setDate(retentionDate.getDate() + 30)
+									const daysLeft = Math.ceil((retentionDate - new Date()) / (1000 * 60 * 60 * 24))
+
+									return (
+										<div key={user._id} style={{
+											backgroundColor: '#f8f9fa',
+											borderRadius: '8px',
+											padding: '20px',
+											border: '1px solid #dee2e6'
+										}}>
+											<div style={{
+												display: 'flex',
+												justifyContent: 'space-between',
+												alignItems: 'flex-start',
+												marginBottom: '15px'
+											}}>
+												<div style={{ flex: 1 }}>
+													<div style={{
+														fontWeight: '600',
+														color: '#2c3e50',
+														fontSize: '18px',
+														marginBottom: '5px'
+													}}>
+														{user.username}
+													</div>
+													{(user.firstName || user.lastName) && (
+														<div style={{
+															fontSize: '14px',
+															color: '#6c757d',
+															marginBottom: '5px'
+														}}>
+															{`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+														</div>
+													)}
+													{user.position && (
+														<div style={{
+															fontSize: '14px',
+															color: '#6c757d',
+															marginBottom: '5px'
+														}}>
+															{user.position}
+														</div>
+													)}
+													{user.roles && user.roles.length > 0 && (
+														<div style={{
+															marginTop: '10px',
+															display: 'flex',
+															flexWrap: 'wrap',
+															gap: '5px'
+														}}>
+															{user.roles.map((role, idx) => (
+																<span key={idx} style={{
+																	backgroundColor: '#3498db',
+																	color: 'white',
+																	padding: '4px 8px',
+																	borderRadius: '4px',
+																	fontSize: '12px'
+																}}>
+																	{role}
+																</span>
+															))}
+														</div>
+													)}
+												</div>
+											</div>
+											
+											<div style={{
+												fontSize: '13px',
+												color: '#6c757d',
+												marginBottom: '15px',
+												padding: '10px',
+												backgroundColor: '#e9ecef',
+												borderRadius: '6px'
+											}}>
+												<div><strong>{t('logs.deletedAt') || 'Usunięty:'}</strong> {deletedDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+												<div><strong>{t('logs.daysLeft') || 'Pozostało dni:'}</strong> <span style={{ color: daysLeft <= 7 ? '#dc3545' : '#28a745', fontWeight: '600' }}>{daysLeft}</span></div>
+												<div><strong>{t('logs.permanentDeletionDate') || 'Data trwałego usunięcia:'}</strong> {retentionDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+											</div>
+
+											<div style={{
+												display: 'flex',
+												gap: '10px'
+											}}>
+												<button
+													onClick={async () => {
+														const confirmed = await showConfirm(t('logs.restoreUserConfirm', { username: user.username }) || `Czy na pewno chcesz przywrócić użytkownika ${user.username}?`)
+														if (!confirmed) return
+														
+														try {
+															await restoreUserMutation.mutateAsync(user._id)
+															await showAlert(t('logs.restoreUserSuccess') || 'Użytkownik został przywrócony pomyślnie')
+															if (deletedUsers.length === 1) {
+																setDeletedUsersModal(false)
+																setActiveTab('active')
+															}
+														} catch (error) {
+															const errorMessage = error.response?.data?.message || t('logs.restoreUserError') || 'Błąd podczas przywracania użytkownika'
+															await showAlert(errorMessage)
+														}
+													}}
+													disabled={restoreUserMutation.isPending}
+													style={{
+														padding: '10px 20px',
+														borderRadius: '6px',
+														border: 'none',
+														backgroundColor: '#28a745',
+														color: 'white',
+														cursor: restoreUserMutation.isPending ? 'not-allowed' : 'pointer',
+														fontSize: '14px',
+														fontWeight: '500',
+														transition: 'all 0.2s',
+														opacity: restoreUserMutation.isPending ? 0.5 : 1
+													}}
+													onMouseEnter={(e) => !restoreUserMutation.isPending && (e.target.style.backgroundColor = '#218838')}
+													onMouseLeave={(e) => !restoreUserMutation.isPending && (e.target.style.backgroundColor = '#28a745')}
+												>
+													{t('logs.restoreUser') || 'Przywróć'}
+												</button>
+												<button
+													onClick={async () => {
+														const confirmed = await showConfirm(t('logs.permanentDeleteConfirm', { username: user.username }) || `Czy na pewno chcesz trwale usunąć użytkownika ${user.username}? Ta operacja jest nieodwracalna.`)
+														if (!confirmed) return
+														
+														try {
+															await permanentlyDeleteUserMutation.mutateAsync(user._id)
+															await showAlert(t('logs.permanentDeleteSuccess') || 'Użytkownik został trwale usunięty')
+															if (deletedUsers.length === 1) {
+																setDeletedUsersModal(false)
+																setActiveTab('active')
+															}
+														} catch (error) {
+															const errorMessage = error.response?.data?.message || t('logs.permanentDeleteError') || 'Błąd podczas trwałego usuwania użytkownika'
+															await showAlert(errorMessage)
+														}
+													}}
+													disabled={permanentlyDeleteUserMutation.isPending}
+													style={{
+														padding: '10px 20px',
+														borderRadius: '6px',
+														border: 'none',
+														backgroundColor: '#dc3545',
+														color: 'white',
+														cursor: permanentlyDeleteUserMutation.isPending ? 'not-allowed' : 'pointer',
+														fontSize: '14px',
+														fontWeight: '500',
+														transition: 'all 0.2s',
+														opacity: permanentlyDeleteUserMutation.isPending ? 0.5 : 1
+													}}
+													onMouseEnter={(e) => !permanentlyDeleteUserMutation.isPending && (e.target.style.backgroundColor = '#c82333')}
+													onMouseLeave={(e) => !permanentlyDeleteUserMutation.isPending && (e.target.style.backgroundColor = '#dc3545')}
+												>
+													{t('logs.permanentDelete') || 'Trwale usuń'}
+												</button>
+											</div>
+										</div>
+									)
+								})}
+							</div>
+						)}
+
+						<div style={{
+							marginTop: '20px',
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={() => {
+									setDeletedUsersModal(false)
+									setActiveTab('active')
+								}}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s'
+								}}
+								onMouseEnter={(e) => e.target.style.backgroundColor = '#f9fafb'}
+								onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+							>
+								{t('logs.close') || 'Zamknij'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Modal z użytkownikami działu */}
 			<UsersInfoModal
 				isOpen={usersInfoModal.isOpen}
@@ -2424,30 +2752,44 @@ function Logs() {
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 						position: 'relative'
 					}} onClick={(e) => e.stopPropagation()}>
-						<h3 style={{
-							margin: '0 0 20px 0',
-							color: '#1f2937',
-							fontSize: '24px',
-							fontWeight: '600'
-						}}>
-							{t('logs.deleteTeamConfirmTitle')}
-						</h3>
-						<p style={{
-							margin: '0 0 30px 0',
-							color: '#4b5563',
-							fontSize: '16px',
-							lineHeight: '1.6'
-						}}>
-							{t('logs.deleteTeamConfirmMessage')}
+					<h3 style={{
+						margin: '0 0 20px 0',
+						color: '#1f2937',
+						fontSize: '24px',
+						fontWeight: '600'
+					}}>
+						{t('logs.deleteTeamConfirmTitle')}
+					</h3>
+					<p style={{
+						margin: '0 0 20px 0',
+						color: '#4b5563',
+						fontSize: '16px',
+						lineHeight: '1.6'
+					}}>
+						{t('logs.deleteTeamConfirmMessage')}
+					</p>
+					<div style={{
+						backgroundColor: '#fff3cd',
+						padding: '15px',
+						borderRadius: '6px',
+						marginBottom: '20px',
+						border: '1px solid #ffc107',
+						color: '#856404',
+						fontSize: '14px',
+						lineHeight: '1.6'
+					}}>
+						<p style={{ margin: 0 }}>
+							<strong>{t('logs.retentionPeriodTitle') || 'Okres karencji:'}</strong> {t('logs.deleteTeamRetentionInfo') || 'Zespół będzie przechowywany przez 30 dni, a następnie dane zostaną trwale usunięte. Email administratora zespołu będzie można użyć do rejestracji nowego zespołu dopiero po upływie karencji (30 dni).'}
 						</p>
-						<p style={{
-							margin: '0 0 30px 0',
-							color: '#4b5563',
-							fontSize: '16px',
-							lineHeight: '1.6'
-						}}>
-							{t('logs.deleteTeamWarning')}
-						</p>
+					</div>
+					<p style={{
+						margin: '0 0 30px 0',
+						color: '#4b5563',
+						fontSize: '16px',
+						lineHeight: '1.6'
+					}}>
+						{t('logs.deleteTeamWarning')}
+					</p>
 						<div style={{
 							display: 'flex',
 							gap: '12px',
@@ -2518,7 +2860,7 @@ function Logs() {
 					</div>
 				</div>
 			)}
-
+			</div> {/* logs-container */}
 		</>
 	)
 }

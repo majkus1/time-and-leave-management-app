@@ -31,8 +31,16 @@ exports.getBoardTasks = async (req, res) => {
 			boardId, 
 			isActive: true 
 		})
-		.populate('createdBy', 'username firstName lastName')
-		.populate('assignedTo', 'username firstName lastName')
+		.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
+		.populate({
+			path: 'assignedTo',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 		.sort({ order: 1, createdAt: -1 })
 
 		res.json(tasks)
@@ -49,8 +57,16 @@ exports.getTask = async (req, res) => {
 		const userId = req.user.userId
 
 		const task = await Task.findById(taskId)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 		
 		if (!task) {
 			return res.status(404).json({ message: 'Task not found' })
@@ -121,8 +137,16 @@ exports.createTask = async (req, res) => {
 
 		await newTask.save()
 		const populatedTask = await Task.findById(newTask._id)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		// Send email notification to board members
 		try {
@@ -202,8 +226,16 @@ exports.updateTask = async (req, res) => {
 
 		await task.save()
 		const populatedTask = await Task.findById(task._id)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		res.json(populatedTask)
 	} catch (error) {
@@ -246,8 +278,16 @@ exports.updateTaskStatus = async (req, res) => {
 
 		await task.save()
 		const populatedTask = await Task.findById(task._id)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		// Send email notification if status changed
 		if (oldStatus !== status) {
@@ -378,8 +418,16 @@ exports.uploadTaskAttachment = async (req, res) => {
 
 		await task.save()
 		const populatedTask = await Task.findById(task._id)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		res.json(populatedTask)
 	} catch (error) {
@@ -433,8 +481,16 @@ exports.deleteTaskAttachment = async (req, res) => {
 		await task.save()
 
 		const populatedTask = await Task.findById(task._id)
-			.populate('createdBy', 'username firstName lastName')
-			.populate('assignedTo', 'username firstName lastName')
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		res.json(populatedTask)
 	} catch (error) {

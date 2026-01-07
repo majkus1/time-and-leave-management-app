@@ -49,8 +49,11 @@ exports.createGeneralChannel = async (teamId) => {
 			isActive: true
 		})
 		
-		// Get all users in the team
-		const allUsers = await User.find({ teamId }).select('_id')
+		// Get all active users in the team
+		const allUsers = await User.find({ 
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('_id')
 		const memberIds = allUsers.map(user => user._id)
 		
 		if (!existingChannel) {
@@ -113,8 +116,11 @@ exports.syncGeneralChannelMembers = async (teamId) => {
 			return await exports.createGeneralChannel(teamId)
 		}
 		
-		// Get all users in the team
-		const allUsers = await User.find({ teamId }).select('_id')
+		// Get all active users in the team
+		const allUsers = await User.find({ 
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('_id')
 		const memberIds = allUsers.map(user => user._id)
 		
 		// Update members list
@@ -275,7 +281,11 @@ exports.getChannelMessages = async (req, res) => {
 
 		// Get messages
 		const messages = await Message.find({ channelId })
-			.populate('userId', 'firstName lastName username')
+			.populate({
+				path: 'userId',
+				select: 'firstName lastName username',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.sort({ createdAt: -1 })
 			.limit(parseInt(limit))
 			.skip(skip)
@@ -359,7 +369,11 @@ exports.sendMessage = async (req, res) => {
 		})
 
 		await message.save()
-		await message.populate('userId', 'firstName lastName username')
+		await message.populate({
+			path: 'userId',
+			select: 'firstName lastName username',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 
 		// Emit socket event for real-time update
 		if (req.app && req.app.io) {
@@ -685,7 +699,10 @@ exports.deleteChannel = async (req, res) => {
 exports.getTeamMembers = async (req, res) => {
 	try {
 		const { teamId } = req.user
-		const users = await User.find({ teamId })
+		const users = await User.find({ 
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 			.select('firstName lastName username')
 			.sort({ firstName: 1, lastName: 1 })
 
@@ -708,21 +725,27 @@ exports.getChannelUsers = async (req, res) => {
 		}
 
 		// Check if user has access to this channel
-		// For team channels, all team members have access
+		// For team channels, all active team members have access
 		if (channel.isTeamChannel && channel.type === 'general') {
-			const users = await User.find({ teamId: channel.teamId })
+			const users = await User.find({ 
+				teamId: channel.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
 		}
 
-		// For department channels, get users from that department
+		// For department channels, get active users from that department
 		if (channel.type === 'department' && channel.departmentName) {
 			const users = await User.find({
 				teamId: channel.teamId,
 				$or: [
 					{ department: channel.departmentName },
 					{ department: { $in: [channel.departmentName] } }
+				],
+				$and: [
+					{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				]
 			}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
@@ -733,9 +756,12 @@ exports.getChannelUsers = async (req, res) => {
 			return res.status(403).json({ message: 'Cannot view members of private channels' })
 		}
 
-		// For custom general channels, get members
+		// For custom general channels, get active members
 		if (channel.members && channel.members.length > 0) {
-			const users = await User.find({ _id: { $in: channel.members } })
+			const users = await User.find({ 
+				_id: { $in: channel.members },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
 			return res.json(users)

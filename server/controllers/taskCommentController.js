@@ -34,7 +34,11 @@ exports.getTaskComments = async (req, res) => {
 			taskId, 
 			isActive: true 
 		})
-		.populate('createdBy', 'username firstName lastName')
+		.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 		.sort({ createdAt: 1 })
 
 		res.json(comments)
@@ -82,7 +86,11 @@ exports.createComment = async (req, res) => {
 
 		await newComment.save()
 		const populatedComment = await TaskComment.findById(newComment._id)
-			.populate('createdBy', 'username firstName lastName')
+			.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 
 		res.status(201).json(populatedComment)
 	} catch (error) {
@@ -116,7 +124,11 @@ exports.updateComment = async (req, res) => {
 		await comment.save()
 
 		const populatedComment = await TaskComment.findById(comment._id)
-			.populate('createdBy', 'username firstName lastName')
+			.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 
 		res.json(populatedComment)
 	} catch (error) {
@@ -195,7 +207,11 @@ exports.uploadCommentAttachment = async (req, res) => {
 
 		await comment.save()
 		const populatedComment = await TaskComment.findById(comment._id)
-			.populate('createdBy', 'username firstName lastName')
+			.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 
 		res.json(populatedComment)
 	} catch (error) {
@@ -240,7 +256,11 @@ exports.deleteCommentAttachment = async (req, res) => {
 		await comment.save()
 
 		const populatedComment = await TaskComment.findById(comment._id)
-			.populate('createdBy', 'username firstName lastName')
+			.populate({
+			path: 'createdBy',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 
 		res.json(populatedComment)
 	} catch (error) {
@@ -248,6 +268,9 @@ exports.deleteCommentAttachment = async (req, res) => {
 		res.status(500).json({ message: 'Error deleting attachment' })
 	}
 }
+
+
+
 
 
 

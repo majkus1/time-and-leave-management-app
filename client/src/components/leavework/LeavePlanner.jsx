@@ -163,6 +163,26 @@ function LeavePlanner() {
 		const formattedDate = new Date(date).toISOString().split('T')[0]
 		const isSelected = selectedDates.includes(formattedDate)
 
+		// Sprawdź czy dzień jest weekendem i zespół nie pracuje w weekendy
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		const dateObj = new Date(date)
+		const isWeekendDate = isWeekend(dateObj)
+		
+		// Sprawdź czy dzień jest świętem (używam innej nazwy zmiennej aby uniknąć konfliktu z importowaną funkcją)
+		const isHolidayDateValue = settings ? isHolidayDate(dateObj, settings) !== null : false
+		
+		// Jeśli zespół nie pracuje w weekendy i to weekend, zablokuj zaznaczanie
+		if (!workOnWeekends && isWeekendDate) {
+			// Można pokazać alert, ale na razie tylko blokujemy
+			return
+		}
+		
+		// Jeśli to święto, zablokuj zaznaczanie
+		if (isHolidayDateValue) {
+			// Można pokazać alert, ale na razie tylko blokujemy
+			return
+		}
+
 		try {
 			await toggleLeavePlanMutation.mutateAsync({
 				date: formattedDate,

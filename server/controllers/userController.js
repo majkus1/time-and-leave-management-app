@@ -78,8 +78,11 @@ exports.register = async (req, res) => {
 		// Update maxUsers for special teams if needed
 		await updateSpecialTeamLimit(team)
 
-		// Policz rzeczywistą liczbę użytkowników w zespole
-		const actualUserCount = await User.countDocuments({ teamId })
+		// Policz rzeczywistą liczbę aktywnych użytkowników w zespole (bez soft-deleted)
+		const actualUserCount = await User.countDocuments({ 
+			teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		
 		if (actualUserCount >= team.maxUsers) {
 			// Zaktualizuj currentUserCount aby było zgodne z rzeczywistością
@@ -93,7 +96,11 @@ exports.register = async (req, res) => {
 		}
 
 		
-		const existingUser = await User.findOne({ username, teamId })
+		const existingUser = await User.findOne({ 
+			username, 
+			teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (existingUser) {
 			return res.status(400).json({ 
 				success: false, 
@@ -180,9 +187,64 @@ exports.register = async (req, res) => {
 		}
 
 		// Policz rzeczywistą liczbę użytkowników i zaktualizuj currentUserCount
-		const updatedUserCount = await User.countDocuments({ teamId })
+		const updatedUserCount = await User.countDocuments({ 
+			teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		team.currentUserCount = updatedUserCount
 		await team.save()
+
+		// Automatyczna akceptacja DPA dla teamAdmin przy dodaniu pierwszego pracownika (poza adminem)
+		// Jeśli to jest pierwszy użytkownik (poza adminem), automatycznie zaakceptuj DPA dla teamAdmin
+		if (updatedUserCount === 2) { // Admin + pierwszy nowy użytkownik
+			try {
+				const LegalDocument = require('../models/LegalDocument')(firmDb);
+				const LegalAcceptance = require('../models/LegalAcceptance')(firmDb);
+
+				// Znajdź teamAdmin (użytkownik z rolą Admin w tym zespole)
+				const teamAdmin = await User.findOne({ 
+					teamId, 
+					roles: { $in: ['Admin'] },
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+				});
+
+				if (teamAdmin) {
+					// Sprawdź czy teamAdmin już zaakceptował DPA dla aktualnej wersji
+					const currentDPA = await LegalDocument.findOne({ type: 'DPA', isCurrent: true });
+
+					if (currentDPA) {
+						const existingAcceptance = await LegalAcceptance.findOne({
+							userId: teamAdmin._id,
+							teamId: teamId,
+							documentType: 'DPA',
+							documentVersion: currentDPA.version
+						});
+
+						// Jeśli nie ma akceptacji dla aktualnej wersji DPA, utwórz ją
+						if (!existingAcceptance) {
+							const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+							const userAgent = req.headers['user-agent'] || '';
+
+							await LegalAcceptance.create({
+								userId: teamAdmin._id,
+								teamId: teamId,
+								documentType: 'DPA',
+								documentVersion: currentDPA.version,
+								documentId: currentDPA._id,
+								acceptedAt: new Date(),
+								ipAddress,
+								userAgent
+							});
+
+							console.log(`Automatic DPA acceptance created for teamAdmin ${teamAdmin.username} when first employee was added`);
+						}
+					}
+				}
+			} catch (error) {
+				console.error('Error automatically accepting DPA for teamAdmin:', error);
+				// Nie przerywamy procesu tworzenia użytkownika w przypadku błędu akceptacji DPA
+			}
+		}
 
 		
 		const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
@@ -315,7 +377,10 @@ exports.resetPasswordRequest = async (req, res) => {
 	const t = req.t
 
 	try {
-		const user = await User.findOne({ username: email })
+		const user = await User.findOne({ 
+			username: email,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (!user) {
 			return res.status(404).send('No user with that email exists.')
 		}
@@ -416,7 +481,9 @@ exports.getAllUsers = async (req, res) => {
 			return res.status(403).send('Access denied')
 		}
 
-		const users = await User.find().select('username firstName lastName role')
+		const users = await User.find({
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('username firstName lastName role')
 		res.json(users)
 	} catch (error) {
 		console.error('Error retrieving users:', error)
@@ -435,8 +502,10 @@ exports.getAllVisibleUsers = async (req, res) => {
         const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
 
         if (isSuperAdmin) {
-            // Super admin widzi wszystkich użytkowników ze wszystkich zespołów
-            const users = await User.find({}).select('username firstName lastName roles position department teamId password').lean();
+            // Super admin widzi wszystkich aktywnych użytkowników ze wszystkich zespołów (bez soft-deleted)
+            const users = await User.find({
+                $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+            }).select('username firstName lastName roles position department teamId password').lean();
             
             // Pobierz informacje o zespołach dla każdego użytkownika
             const usersWithTeams = await Promise.all(
@@ -454,8 +523,11 @@ exports.getAllVisibleUsers = async (req, res) => {
             return res.json(usersWithTeams);
         }
 
-        // Zwykły użytkownik widzi tylko użytkowników ze swojego zespołu
-        const teamFilter = { teamId: currentUser.teamId };
+        // Zwykły użytkownik widzi tylko aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
+        const teamFilter = { 
+            teamId: currentUser.teamId,
+            $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+        };
         
         // HIERARCHIA RÓL: Admin > HR > Przełożony > Pracownik
         // Sprawdź najpierw Admin
@@ -486,7 +558,7 @@ exports.getAllVisibleUsers = async (req, res) => {
             const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
             const config = await SupervisorConfig.findOne({ supervisorId: currentUser._id });
             
-            // Pobierz wszystkich użytkowników ze swojego zespołu
+            // Pobierz wszystkich aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
             const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId').lean();
             
             // Jeśli nie ma konfiguracji, domyślnie pokazuj użytkowników z działu
@@ -527,7 +599,7 @@ exports.getAllVisibleUsers = async (req, res) => {
             return res.json(filteredUsers);
         }
         
-        // Zwykły użytkownik (nie admin) - bez informacji o haśle
+        // Zwykły użytkownik (nie admin) - bez informacji o haśle (tylko aktywni)
         const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId');
         return res.json(users);
 
@@ -590,7 +662,10 @@ exports.getAllUserPlans = async (req, res) => {
 		if (!currentUser) return res.status(404).send('Użytkownik nie znaleziony');
 
 		
-		const users = await User.find({ teamId: currentUser.teamId }).select('username firstName lastName roles position department teamId')
+		const users = await User.find({ 
+			teamId: currentUser.teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('username firstName lastName roles position department teamId')
 		res.json(users)
 	} catch (error) {
 		console.error('Error fetching users:', error)
@@ -615,7 +690,10 @@ exports.getUserById = async (req, res) => {
 		const isSelf = requestingUser._id.toString() === userId
 
 		
-		const userToView = await User.findById(userId)
+		const userToView = await User.findOne({
+			_id: userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (!userToView) {
 			return res.status(404).send('User not found')
 		}
@@ -640,7 +718,10 @@ exports.getUserById = async (req, res) => {
 			return res.status(403).send('Access denied')
 		}
 
-		const user = await User.findById(userId).select('firstName lastName username roles position department')
+		const user = await User.findOne({
+			_id: userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName username roles position department')
 		if (!user) {
 			return res.status(404).send('User not found')
 		}
@@ -887,12 +968,13 @@ exports.deleteUser = async (req, res) => {
 
 		// Jeśli usuwasz założyciela zespołu - przekaż administrację innemu adminowi
 		if (user.isTeamAdmin) {
-			// Znajdź innego administratora w zespole
+			// Znajdź innego administratora w zespole (tylko aktywnych)
 			const otherAdmins = await User.find({ 
 				teamId: user.teamId, 
 				roles: { $in: ['Admin'] },
 				isTeamAdmin: false,
-				_id: { $ne: userId }
+				_id: { $ne: userId },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			})
 			
 			if (otherAdmins.length === 0) {
@@ -924,22 +1006,11 @@ exports.deleteUser = async (req, res) => {
 			return res.status(403).json({ message: 'Nie można usunąć użytkownika z innego zespołu' })
 		}
 
-		// Jeśli usuwasz siebie - zawsze dozwolone (jeśli nie jest założycielem)
+		// Self-deletion jest zablokowane - użytkownik nie może usunąć własnego konta
 		if (isSelfDeletion) {
-			// Sprawdź czy nie jest ostatnim adminem w zespole (nie licząc założyciela)
-			if (user.roles && user.roles.includes('Admin')) {
-				const teamAdmins = await User.find({ 
-					teamId: user.teamId, 
-					roles: { $in: ['Admin'] },
-					isTeamAdmin: false 
-				})
-				
-				if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
-					return res.status(400).json({ 
-						message: 'Nie można usunąć konta - jesteś ostatnim administratorem w zespole. Najpierw dodaj innego administratora.' 
-					})
-				}
-			}
+			return res.status(403).json({ 
+				message: 'Nie można usunąć własnego konta. Skontaktuj się z administratorem zespołu.' 
+			})
 		} else {
 			// Jeśli usuwasz innego użytkownika - tylko Admin może
 			const allowedRoles = ['Admin']
@@ -947,12 +1018,13 @@ exports.deleteUser = async (req, res) => {
 				return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może usuwać innych użytkowników' })
 			}
 
-			// Sprawdź czy nie usuwasz ostatniego admina w zespole (nie licząc założyciela)
+			// Sprawdź czy nie usuwasz ostatniego admina w zespole (nie licząc założyciela) - tylko aktywnych
 			if (user.roles && user.roles.includes('Admin')) {
 				const teamAdmins = await User.find({ 
 					teamId: user.teamId, 
 					roles: { $in: ['Admin'] },
-					isTeamAdmin: false 
+					isTeamAdmin: false,
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 				})
 				
 				if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
@@ -963,24 +1035,33 @@ exports.deleteUser = async (req, res) => {
 			}
 		}
 
-		// Usuń użytkownika
-		await User.deleteOne({ _id: userId })
+		// Soft delete użytkownika (tylko admin może usuwać użytkowników)
+		// Self-deletion jest zablokowane (użytkownik nie może usunąć własnego konta)
+		const deletedAt = new Date();
+		await User.findByIdAndUpdate(userId, {
+			isActive: false,
+			deletedAt
+		});
 
-		// Zmniejsz licznik użytkowników w zespole
-		const team = await Team.findById(user.teamId)
-		if (team && team.currentUserCount > 0) {
-			team.currentUserCount -= 1
-			await team.save()
+		// Zmniejsz licznik aktywnych użytkowników w zespole
+		const team = await Team.findById(user.teamId);
+		if (team) {
+			const activeUserCount = await User.countDocuments({ 
+				teamId: user.teamId, 
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			});
+			team.currentUserCount = activeUserCount;
+			await team.save();
 		}
 
-		// Log tylko jeśli admin usuwa innego użytkownika (nie samego siebie)
-		if (!isSelfDeletion) {
-			await createLog(req.user.userId, 'DELETE_USER', `Usunięto użytkownika ${user.username}`, req.user.userId)
-		}
+		// Log usunięcia użytkownika
+		await createLog(req.user.userId, 'DELETE_USER', `Użytkownik ${user.username} został oznaczony jako usunięty`, req.user.userId);
 
 		res.status(200).json({ 
-			message: 'Użytkownik został usunięty pomyślnie',
-			selfDeleted: isSelfDeletion 
+			message: 'Użytkownik został oznaczony jako usunięty. Dane zostaną trwale usunięte po 30 dniach zgodnie z Regulaminem.',
+			selfDeleted: false,
+			teamId: user.teamId.toString(),
+			currentUserCount: team?.currentUserCount || 0
 		})
 	} catch (error) {
 		console.error('Błąd podczas usuwania użytkownika:', error)
@@ -1009,16 +1090,17 @@ exports.getMe = async (req, res) => {
 
 
 exports.logout = (req, res) => {
+	const isProduction = process.env.NODE_ENV === 'production'
 	res.clearCookie('token', {
 		httpOnly: true,
-		secure: true,
-		sameSite: 'None',
+		secure: isProduction,
+		sameSite: isProduction ? 'None' : 'Lax',
 	})
 
 	res.clearCookie('refreshToken', {
 		httpOnly: true,
-		secure: true,
-		sameSite: 'None',
+		secure: isProduction,
+		sameSite: isProduction ? 'None' : 'Lax',
 	})
 
 	res.status(200).json({ message: 'Wylogowano pomyślnie' })
@@ -1090,17 +1172,18 @@ exports.login = async (req, res) => {
 			{ expiresIn: '7d' }
 		)
 
+		const isProduction = process.env.NODE_ENV === 'production'
 		res.cookie('token', accessToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 15 * 60 * 1000,
 		})
 
 		res.cookie('refreshToken', refreshToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		})
 
@@ -1151,17 +1234,18 @@ exports.refreshToken = (req, res) => {
 			{ expiresIn: '7d' }
 		)
 
+		const isProduction = process.env.NODE_ENV === 'production'
 		res.cookie('token', newAccessToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 15 * 60 * 1000,
 		})
 
 		res.cookie('refreshToken', newRefreshToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		})
 
@@ -1348,5 +1432,181 @@ exports.sendApologyEmail = async (req, res) => {
 			success: false,
 			message: 'Błąd serwera podczas wysyłania emaila'
 		})
+	}
+}
+
+// Pobierz soft-deleted użytkowników zespołu (tylko dla Admin)
+exports.getDeletedUsers = async (req, res) => {
+	try {
+		const allowedRoles = ['Admin']
+		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+			return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może przeglądać usuniętych użytkowników' })
+		}
+
+		const currentUser = await User.findById(req.user.userId)
+		if (!currentUser) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
+		// Pobierz soft-deleted użytkowników zespołu
+		const deletedUsers = await User.find({
+			teamId: currentUser.teamId,
+			isActive: false,
+			deletedAt: { $ne: null }
+		}).select('username firstName lastName roles position department deletedAt').sort({ deletedAt: -1 }).lean()
+
+		res.json(deletedUsers)
+	} catch (error) {
+		console.error('Error fetching deleted users:', error)
+		res.status(500).json({ message: 'Błąd podczas pobierania usuniętych użytkowników' })
+	}
+}
+
+// Przywróć użytkownika (restore)
+exports.restoreUser = async (req, res) => {
+	try {
+		const { userId } = req.params
+		const allowedRoles = ['Admin']
+		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+			return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może przywracać użytkowników' })
+		}
+
+		const user = await User.findById(userId)
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Sprawdź czy użytkownik jest w tym samym zespole
+		const currentUser = await User.findById(req.user.userId)
+		if (user.teamId.toString() !== currentUser.teamId.toString()) {
+			return res.status(403).json({ message: 'Nie można przywrócić użytkownika z innego zespołu' })
+		}
+
+		// Sprawdź czy użytkownik jest soft-deleted
+		if (user.isActive !== false) {
+			return res.status(400).json({ message: 'Użytkownik nie jest usunięty' })
+		}
+
+		// Pobierz zespół i sprawdź limit przed przywróceniem
+		const team = await Team.findById(user.teamId)
+		if (!team) {
+			return res.status(404).json({ message: 'Zespół nie został znaleziony' })
+		}
+
+		// Update maxUsers for special teams if needed
+		await updateSpecialTeamLimit(team)
+
+		// Policz rzeczywistą liczbę aktywnych użytkowników (bez soft-deleted)
+		const actualUserCount = await User.countDocuments({ 
+			teamId: user.teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
+
+		// Sprawdź czy przywrócenie nie przekroczy limitu
+		if (actualUserCount >= team.maxUsers) {
+			// Zaktualizuj currentUserCount aby było zgodne z rzeczywistością
+			team.currentUserCount = actualUserCount
+			await team.save()
+			
+			return res.status(400).json({ 
+				success: false,
+				message: `Nie można przywrócić użytkownika - osiągnięto limit użytkowników (${team.maxUsers}/${team.maxUsers}). Najpierw usuń innego użytkownika lub zwiększ limit.` 
+			})
+		}
+
+		// Przywróć użytkownika
+		await User.findByIdAndUpdate(userId, {
+			isActive: true,
+			deletedAt: null
+		})
+
+		// Zaktualizuj licznik aktywnych użytkowników w zespole
+		const updatedUserCount = await User.countDocuments({ 
+			teamId: user.teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
+		team.currentUserCount = updatedUserCount
+		await team.save()
+
+		await createLog(req.user.userId, 'RESTORE_USER', `Przywrócono użytkownika ${user.username}`, req.user.userId)
+
+		res.json({ 
+			success: true,
+			message: 'Użytkownik został przywrócony pomyślnie',
+			teamId: user.teamId.toString(),
+			userId: user._id.toString(),
+			currentUserCount: team?.currentUserCount || 0
+		})
+	} catch (error) {
+		console.error('Error restoring user:', error)
+		res.status(500).json({ message: 'Błąd podczas przywracania użytkownika' })
+	}
+}
+
+// Hard delete użytkownika (permanent deletion)
+exports.permanentlyDeleteUser = async (req, res) => {
+	try {
+		const { userId } = req.params
+		const allowedRoles = ['Admin']
+		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+			return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może trwale usuwać użytkowników' })
+		}
+
+		const user = await User.findById(userId)
+		if (!user) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Sprawdź czy użytkownik jest w tym samym zespole
+		const currentUser = await User.findById(req.user.userId)
+		if (user.teamId.toString() !== currentUser.teamId.toString()) {
+			return res.status(403).json({ message: 'Nie można trwale usunąć użytkownika z innego zespołu' })
+		}
+
+		// Sprawdź czy użytkownik jest soft-deleted
+		if (user.isActive !== false) {
+			return res.status(400).json({ message: 'Nie można trwale usunąć aktywnego użytkownika. Najpierw usuń go normalnie.' })
+		}
+
+		// Hard delete - usuń wszystkie powiązane dane historyczne
+		const Workday = require('../models/Workday')(firmDb)
+		const LeaveRequest = require('../models/LeaveRequest')(firmDb)
+		const LeavePlan = require('../models/LeavePlan')(firmDb)
+		const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
+		const Log = require('../models/log')(firmDb)
+		const Message = require('../models/Message')(firmDb)
+
+		await Promise.all([
+			Workday.deleteMany({ userId }),
+			LeaveRequest.deleteMany({ userId }),
+			LeavePlan.deleteMany({ userId }),
+			CalendarConfirmation.deleteMany({ userId }),
+			Log.deleteMany({ user: userId }),
+			Message.deleteMany({ userId })
+		])
+
+		// Usuń użytkownika z członków tablic i harmonogramów
+		const Board = require('../models/Board')(firmDb)
+		const Schedule = require('../models/Schedule')(firmDb)
+		const Channel = require('../models/Channel')(firmDb)
+
+		await Promise.all([
+			Board.updateMany({ teamId: user.teamId }, { $pull: { members: userId } }),
+			Schedule.updateMany({ teamId: user.teamId }, { $pull: { members: userId } }),
+			Channel.updateMany({ teamId: user.teamId }, { $pull: { members: userId } })
+		])
+
+		// Trwale usuń użytkownika z bazy danych
+		await User.findByIdAndDelete(userId)
+
+		await createLog(req.user.userId, 'PERMANENTLY_DELETE_USER', `Trwale usunięto użytkownika ${user.username}`, req.user.userId)
+
+		res.json({ 
+			success: true,
+			message: 'Użytkownik został trwale usunięty' 
+		})
+	} catch (error) {
+		console.error('Error permanently deleting user:', error)
+		res.status(500).json({ message: 'Błąd podczas trwałego usuwania użytkownika' })
 	}
 }

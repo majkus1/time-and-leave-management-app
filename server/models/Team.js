@@ -4,7 +4,6 @@ const teamSchema = new mongoose.Schema({
 	name: {
 		type: String,
 		required: true,
-		unique: true,
 		trim: true,
 		minlength: 2,
 		maxlength: 100
@@ -12,7 +11,6 @@ const teamSchema = new mongoose.Schema({
 	adminEmail: {
 		type: String,
 		required: true,
-		unique: true,
 		lowercase: true
 	},
 	adminPassword: {
@@ -39,7 +37,12 @@ const teamSchema = new mongoose.Schema({
 	},
 	isActive: {
 		type: Boolean,
-		default: true
+		default: true,
+		index: true
+	},
+	deletedAt: {
+		type: Date,
+		default: null
 	},
 	createdAt: {
 		type: Date,
@@ -55,7 +58,23 @@ const teamSchema = new mongoose.Schema({
 	timestamps: true
 });
 
-// name i adminEmail już mają indeksy przez unique: true, więc nie trzeba ich duplikować
-teamSchema.index({ isActive: 1 });
+// Partial unique indexes - wymuszają unikalność tylko dla aktywnych zespołów
+// Soft-deleted zespoły (isActive: false) nie blokują rejestracji z tym samym name/adminEmail
+// Używa $ne: false aby obejmować zarówno isActive: true jak i brak pola isActive
+teamSchema.index(
+    { name: 1 },
+    { 
+        unique: true,
+        partialFilterExpression: { isActive: { $ne: false } }
+    }
+);
+
+teamSchema.index(
+    { adminEmail: 1 },
+    { 
+        unique: true,
+        partialFilterExpression: { isActive: { $ne: false } }
+    }
+);
 
 module.exports = conn => (conn.models.Team || conn.model('Team', teamSchema));

@@ -101,6 +101,7 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		const hrUsers = await User.find({
 			teamId, 
 			roles: { $in: ['HR'] },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 
 		// Jeśli nie znaleziono HR, wyślij do Adminów jako fallback
@@ -109,6 +110,7 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			const adminUsers = await User.find({
 				teamId,
 				roles: { $in: ['Admin'] },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			}).select('username')
 
 			// Usuń użytkownika który złożył wniosek jeśli jest adminem (nie powinien dostawać powiadomienia o swojej własnej zmianie statusu)
@@ -181,12 +183,15 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 		let memberIds = []
 		
 		if (board.type === 'department' && board.departmentName) {
-			// For department boards, get all users in that department
+			// For department boards, get all active users in that department
 			const departmentUsers = await User.find({
 				teamId: board.teamId,
 				$or: [
 					{ department: board.departmentName },
 					{ department: { $in: [board.departmentName] } }
+				],
+				$and: [
+					{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				]
 			}).select('_id username')
 			memberIds = departmentUsers.map(u => u._id.toString())
@@ -202,8 +207,11 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 			return
 		}
 		
-		// Get member users
-		const members = await User.find({ _id: { $in: memberIds } }).select('username firstName lastName')
+		// Get member users (only active)
+		const members = await User.find({ 
+			_id: { $in: memberIds },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('username firstName lastName')
 		
 		if (members.length === 0) {
 			return

@@ -50,6 +50,42 @@ async function generateDateRange(startDate, endDate, teamId) {
 	return dates
 }
 
+// Funkcja pomocnicza do przycinania dat do dni roboczych (usuwanie weekendów z początku i końca)
+async function trimWeekendsFromDateRange(startDate, endDate, teamId) {
+	const settings = await Settings.getSettings(teamId)
+	const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
+	
+	// Jeśli pracuje w weekendy, nie trzeba przycinać
+	if (workOnWeekends) {
+		return { trimmedStartDate: startDate, trimmedEndDate: endDate }
+	}
+	
+	const start = new Date(startDate)
+	const end = new Date(endDate)
+	
+	// Znajdź pierwszą datę roboczą od początku zakresu
+	let trimmedStart = new Date(start)
+	while (trimmedStart <= end && (isWeekend(trimmedStart) || isHoliday(trimmedStart, settings))) {
+		trimmedStart.setDate(trimmedStart.getDate() + 1)
+	}
+	
+	// Znajdź ostatnią datę roboczą do końca zakresu
+	let trimmedEnd = new Date(end)
+	while (trimmedEnd >= start && (isWeekend(trimmedEnd) || isHoliday(trimmedEnd, settings))) {
+		trimmedEnd.setDate(trimmedEnd.getDate() - 1)
+	}
+	
+	// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć null
+	if (trimmedStart > trimmedEnd) {
+		return { trimmedStartDate: null, trimmedEndDate: null }
+	}
+	
+	const trimmedStartDate = trimmedStart.toISOString().split('T')[0]
+	const trimmedEndDate = trimmedEnd.toISOString().split('T')[0]
+	
+	return { trimmedStartDate, trimmedEndDate }
+}
+
 exports.markLeaveRequestAsProcessed = async (req, res) => {
 	try {
 		const leaveRequest = await LeaveRequest.findById(req.params.id)
@@ -109,10 +145,11 @@ exports.markLeaveRequestAsProcessed = async (req, res) => {
 
 exports.getOwnLeaveRequests = async (req, res) => {
 	try {
-		const leaveRequests = await LeaveRequest.find({ userId: req.user.userId }).populate(
-			'updatedBy',
-			'firstName lastName'
-		)
+		const leaveRequests = await LeaveRequest.find({ userId: req.user.userId }).populate({
+			path: 'updatedBy',
+			select: 'firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
 		res.status(200).json(leaveRequests)
 	} catch (error) {
 		console.error('Błąd podczas pobierania zgłoszeń:', error)
@@ -154,9 +191,19 @@ exports.getUserLeaveRequests = async (req, res) => {
 
 	try {
 		const leaveRequests = await LeaveRequest.find({ userId })
-			.populate('userId', 'username firstName lastName position')
-			.populate('updatedBy', 'firstName lastName')
-		res.status(200).json(leaveRequests)
+			.populate({
+				path: 'userId',
+				select: 'username firstName lastName position',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'updatedBy',
+				select: 'firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
+		const filteredRequests = leaveRequests.filter(req => req.userId !== null)
+		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching leave requests:', error)
 		res.status(500).send('Failed to fetch leave requests.')
@@ -235,9 +282,23 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			return res.status(404).send('Leave request not found.')
 		}
 
-		const requestingUser = await User.findById(req.user.userId)
-		const user = await User.findById(leaveRequest.userId).select('firstName lastName username department')
-		const updatedByUser = await User.findById(req.user.userId).select('firstName lastName department roles')
+		const requestingUser = await User.findOne({
+			_id: req.user.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
+		if (!requestingUser) return res.status(404).send('User not found')
+
+		const user = await User.findOne({
+			_id: leaveRequest.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName username department')
+		if (!user) return res.status(404).send('Employee not found or inactive')
+
+		const updatedByUser = await User.findOne({
+			_id: req.user.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName department roles')
+		if (!updatedByUser) return res.status(404).send('Updated by user not found or inactive')
 
 		
 		const isAdmin = requestingUser.roles.includes('Admin')
@@ -299,16 +360,19 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			t
 		)
 
-		try {
-			await sendEmail(
-				user.username,
-				null,
-				`${t('email.leaveRequest.titlemail')} ${t(leaveRequest.type)} ${t(status)}`,
-				mailContent
-			)
-		} catch (emailError) {
-			console.error('Error sending email to user:', emailError)
-			// Nie przerywaj procesu jeśli email nie zadziała
+		// Wyślij email tylko jeśli użytkownik jest aktywny
+		if (user.isActive !== false) {
+			try {
+				await sendEmail(
+					user.username,
+					null,
+					`${t('email.leaveRequest.titlemail')} ${t(leaveRequest.type)} ${t(status)}`,
+					mailContent
+				)
+			} catch (emailError) {
+				console.error('Error sending email to user:', emailError)
+				// Nie przerywaj procesu jeśli email nie zadziała
+			}
 		}
 
 		try {
@@ -320,7 +384,11 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		// Pobierz zaktualizowany leaveRequest z populate
 		const updatedLeaveRequest = await LeaveRequest.findById(id)
-			.populate('updatedBy', 'firstName lastName')
+			.populate({
+				path: 'updatedBy',
+				select: 'firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.lean()
 
 		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
@@ -370,11 +438,21 @@ exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 			status: { $in: ['status.accepted', 'status.sent'] },
 			userId: userId
 		})
-			.populate('userId', 'firstName lastName username department')
-			.populate('updatedBy', 'firstName lastName')
+			.populate({
+				path: 'userId',
+				select: 'firstName lastName username department',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'updatedBy',
+				select: 'firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.sort({ startDate: 1 })
+		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
+		const filteredRequests = acceptedLeaveRequests.filter(req => req.userId !== null)
 
-		res.status(200).json(acceptedLeaveRequests)
+		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching accepted leave requests for user:', error)
 		res.status(500).send('Failed to fetch accepted leave requests for user.')
@@ -391,11 +469,21 @@ exports.getUserAcceptedLeaveRequests = async (req, res) => {
 			status: { $in: ['status.accepted', 'status.sent'] },
 			userId: requestingUser._id
 		})
-			.populate('userId', 'firstName lastName username department')
-			.populate('updatedBy', 'firstName lastName')
+			.populate({
+				path: 'userId',
+				select: 'firstName lastName username department',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'updatedBy',
+				select: 'firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.sort({ startDate: 1 })
+		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
+		const filteredRequests = acceptedLeaveRequests.filter(req => req.userId !== null)
 
-		res.status(200).json(acceptedLeaveRequests)
+		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching user accepted leave requests:', error)
 		res.status(500).send('Failed to fetch user accepted leave requests.')
@@ -417,25 +505,45 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 			acceptedLeaveRequests = await LeaveRequest.find({ 
 				status: { $in: ['status.accepted', 'status.sent'] }
 			})
-				.populate('userId', 'firstName lastName username department')
-				.populate('updatedBy', 'firstName lastName')
+				.populate({
+					path: 'userId',
+					select: 'firstName lastName username department',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
+				.populate({
+					path: 'updatedBy',
+					select: 'firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.sort({ startDate: 1 })
 		} else {
-			// Dla wszystkich użytkowników z zespołu - pokaż wszystkich użytkowników z zespołu
+			// Dla wszystkich użytkowników z zespołu - pokaż wszystkich aktywnych użytkowników z zespołu
 			// (dla /all-leave-plans wszyscy powinni widzieć wszystkich z zespołu)
-			const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
+			const teamUsers = await User.find({ 
+				teamId: requestingUser.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('_id')
 			const teamUserIds = teamUsers.map(user => user._id)
 
 			acceptedLeaveRequests = await LeaveRequest.find({ 
 				status: { $in: ['status.accepted', 'status.sent'] },
 				userId: { $in: teamUserIds }
 			})
-				.populate('userId', 'firstName lastName username department')
-				.populate('updatedBy', 'firstName lastName')
+				.populate({
+					path: 'userId',
+					select: 'firstName lastName username department',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
+				.populate({
+					path: 'updatedBy',
+					select: 'firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.sort({ startDate: 1 })
 		}
-
-		res.status(200).json(acceptedLeaveRequests)
+		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
+		const filteredRequests = acceptedLeaveRequests.filter(req => req.userId !== null)
+		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching accepted leave requests:', error)
 		res.status(500).send('Failed to fetch accepted leave requests.')
@@ -466,7 +574,8 @@ async function getUniqueEmailRecipients(user, teamId, t) {
 	const supervisorsFromConfig = await User.find({
 		_id: { $in: supervisorIdsFromConfig },
 		teamId,
-		roles: { $in: ['Przełożony (Supervisor)'] }
+		roles: { $in: ['Przełożony (Supervisor)'] },
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 	})
 	
 	// Połącz przełożonych z działów i z konfiguracji
@@ -477,7 +586,10 @@ async function getUniqueEmailRecipients(user, teamId, t) {
 	// 3. Sprawdź uprawnienia każdego przełożonego
 	const supervisors = []
 	for (const supervisor of potentialSupervisors) {
-		const supervisorObj = await User.findById(supervisor._id)
+		const supervisorObj = await User.findOne({
+			_id: supervisor._id,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (!supervisorObj) continue
 		const canApprove = await canSupervisorApproveLeaves(supervisorObj, user)
 		if (canApprove) {
@@ -485,18 +597,20 @@ async function getUniqueEmailRecipients(user, teamId, t) {
 		}
 	}
 
-	// 4. Zbierz HR
+	// 4. Zbierz HR (tylko aktywnych)
 	const hrUsers = await User.find({
 		teamId,
 		roles: { $in: ['HR'] },
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 	}).select('username firstName lastName')
 
-	// 5. Zbierz Adminów (jeśli nie ma przełożonych ani HR)
+	// 5. Zbierz Adminów (jeśli nie ma przełożonych ani HR) - tylko aktywnych
 	let adminUsers = []
 	if (supervisors.length === 0 && hrUsers.length === 0) {
 		adminUsers = await User.find({
 			teamId,
 			roles: { $in: ['Admin'] },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		}).select('username firstName lastName')
 	}
 
@@ -506,7 +620,10 @@ async function getUniqueEmailRecipients(user, teamId, t) {
 	
 	for (const recipient of allRecipients) {
 		// Użyj username jako klucza do deduplikacji
-		if (recipient.username && recipient.username !== user.username) {
+		// Upewnij się, że odbiorca jest aktywny i nie jest to ten sam użytkownik
+		if (recipient.username && 
+			recipient.username !== user.username && 
+			recipient.isActive !== false) {
 			// Jeśli użytkownik już nie jest w mapie, dodaj go
 			// Jeśli jest, preferuj pełny obiekt (z firstName, lastName) zamiast tylko username
 			if (!uniqueRecipientsMap.has(recipient.username)) {
@@ -521,8 +638,11 @@ async function getUniqueEmailRecipients(user, teamId, t) {
 		}
 	}
 
-	// Zwróć unikalną listę odbiorców
-	return Array.from(uniqueRecipientsMap.values())
+	// Zwróć unikalną listę odbiorców - dodatkowo przefiltruj na wypadek gdyby ktoś miał isActive: false
+	const finalRecipients = Array.from(uniqueRecipientsMap.values()).filter(recipient => 
+		recipient.isActive !== false && recipient.username !== user.username
+	)
+	return finalRecipients
 }
 
 // Anulowanie wniosku urlopowego
@@ -536,7 +656,10 @@ exports.cancelLeaveRequest = async (req, res) => {
 			return res.status(404).send('Leave request not found.')
 		}
 
-		const requestingUser = await User.findById(req.user.userId)
+		const requestingUser = await User.findOne({
+			_id: req.user.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (!requestingUser) {
 			return res.status(404).send('User not found.')
 		}
@@ -549,9 +672,12 @@ exports.cancelLeaveRequest = async (req, res) => {
 			return res.status(403).send('Access denied. Only the request owner or admin can cancel the request.')
 		}
 
-		const user = await User.findById(leaveRequest.userId).select('firstName lastName username department roles')
+		const user = await User.findOne({
+			_id: leaveRequest.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName username department roles')
 		if (!user) {
-			return res.status(404).send('User not found.')
+			return res.status(404).send('User not found or inactive.')
 		}
 
 		const teamId = user.teamId || requestingUser.teamId
@@ -631,7 +757,10 @@ exports.updateLeaveRequest = async (req, res) => {
 			return res.status(404).send('Leave request not found.')
 		}
 
-		const requestingUser = await User.findById(req.user.userId)
+		const requestingUser = await User.findOne({
+			_id: req.user.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 		if (!requestingUser) {
 			return res.status(404).send('User not found.')
 		}
@@ -647,12 +776,30 @@ exports.updateLeaveRequest = async (req, res) => {
 			return res.status(400).send('Only pending requests can be edited.')
 		}
 
-		const user = await User.findById(leaveRequest.userId).select('firstName lastName username department roles')
+		const user = await User.findOne({
+			_id: leaveRequest.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName username department roles')
 		if (!user) {
-			return res.status(404).send('User not found.')
+			return res.status(404).send('User not found or inactive.')
 		}
 
 		const teamId = user.teamId || requestingUser.teamId
+
+		// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
+		const { trimmedStartDate, trimmedEndDate } = await trimWeekendsFromDateRange(startDate, endDate, teamId)
+		
+		// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć błąd
+		if (!trimmedStartDate || !trimmedEndDate) {
+			return res.status(400).json({ message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.' })
+		}
+		
+		// Jeśli daty zostały zmienione, przelicz liczbę dni
+		let finalDaysRequested = daysRequested
+		if (trimmedStartDate !== startDate || trimmedEndDate !== endDate) {
+			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
+			finalDaysRequested = dates.length
+		}
 
 		const isL4 = type === 'leaveform.option6'
 		const wasL4 = leaveRequest.type === 'leaveform.option6'
@@ -661,9 +808,9 @@ exports.updateLeaveRequest = async (req, res) => {
 
 		// Aktualizuj wniosek
 		leaveRequest.type = type
-		leaveRequest.startDate = startDate
-		leaveRequest.endDate = endDate
-		leaveRequest.daysRequested = daysRequested
+		leaveRequest.startDate = trimmedStartDate // Użyj przyciętych dat
+		leaveRequest.endDate = trimmedEndDate // Użyj przyciętych dat
+		leaveRequest.daysRequested = finalDaysRequested // Użyj przeliczonych dni
 		leaveRequest.replacement = replacement
 		leaveRequest.additionalInfo = additionalInfo
 		
@@ -680,13 +827,13 @@ exports.updateLeaveRequest = async (req, res) => {
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
 			
 			// Usuń stare daty z LeavePlan (jeśli były L4)
-			if (wasL4 && (oldStartDate.toString() !== startDate || oldEndDate.toString() !== endDate)) {
+			if (wasL4 && (oldStartDate.toString() !== trimmedStartDate || oldEndDate.toString() !== trimmedEndDate)) {
 				const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 				await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 			}
 			
 			// Dodaj nowe daty do LeavePlan
-			const newDates = await generateDateRange(startDate, endDate, teamId)
+			const newDates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
 			const leavePlanPromises = newDates.map(date => {
 				const userId = userIdForPlan // Lokalna zmienna w scope map
 				return LeavePlan.findOne({ userId, date }).then(existing => {
@@ -717,18 +864,20 @@ exports.updateLeaveRequest = async (req, res) => {
 			// Zbierz przełożonych (standardowa logika)
 			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
 			
-			// Zbierz HR
+			// Zbierz HR (tylko aktywnych)
 			const hrUsers = await User.find({
 				teamId,
 				roles: { $in: ['HR'] },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			}).select('username firstName lastName')
 			
-			// Jeśli nie ma HR, zbierz Adminów
+			// Jeśli nie ma HR, zbierz Adminów (tylko aktywnych)
 			let adminUsers = []
 			if (hrUsers.length === 0) {
 				adminUsers = await User.find({
 					teamId,
 					roles: { $in: ['Admin'] },
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 				}).select('username firstName lastName')
 			}
 			

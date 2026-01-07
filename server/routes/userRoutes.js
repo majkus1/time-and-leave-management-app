@@ -24,5 +24,8 @@ router.patch('/:userId/roles', authenticateToken, userController.updateUserRoles
 router.delete('/:userId', authenticateToken, userController.deleteUser)
 router.post('/:userId/resend-password-link', authenticateToken, userController.resendPasswordLink)
 router.post('/:userId/send-apology-email', authenticateToken, userController.sendApologyEmail)
+router.get('/deleted/list', authenticateToken, userController.getDeletedUsers)
+router.post('/:userId/restore', authenticateToken, userController.restoreUser)
+router.delete('/:userId/permanent', authenticateToken, userController.permanentlyDeleteUser)
 
 module.exports = router

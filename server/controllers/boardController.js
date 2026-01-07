@@ -143,9 +143,21 @@ exports.getUserBoards = async (req, res) => {
 			const allBoards = await Board.find({
 				teamId,
 				isActive: true
-			}).populate('members', 'username firstName lastName')
-				.populate('createdBy', '_id username firstName lastName')
+			}).populate({
+				path: 'members',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+				.populate({
+					path: 'createdBy',
+					select: '_id username firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.sort({ createdAt: -1 })
+			// Filter out null members (soft-deleted users)
+			allBoards.forEach(board => {
+				board.members = board.members.filter(m => m !== null && m !== undefined)
+			})
 			return res.json(allBoards)
 		}
 
@@ -171,13 +183,24 @@ exports.getUserBoards = async (req, res) => {
 			teamId,
 			isActive: true,
 			$or: orConditions
-		}).populate('members', 'username firstName lastName')
-			.populate('createdBy', '_id username firstName lastName')
+		}).populate({
+			path: 'members',
+			select: 'username firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
+			.populate({
+				path: 'createdBy',
+				select: '_id username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.sort({ createdAt: -1 })
 
 		// Filter department boards - only show boards for departments that exist, have users, and user belongs to
 		const filteredBoards = await Promise.all(
 			boards.map(async (board) => {
+				// Filter out null members (soft-deleted users)
+				board.members = board.members.filter(m => m !== null && m !== undefined)
+				
 				if (board.type === 'department' && board.departmentName) {
 					// Check if user belongs to this department
 					if (!userDepartments.includes(board.departmentName)) {
@@ -197,6 +220,9 @@ exports.getUserBoards = async (req, res) => {
 						$or: [
 							{ department: board.departmentName },
 							{ department: { $in: [board.departmentName] } }
+						],
+						$and: [
+							{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 						]
 					})
 					
@@ -220,14 +246,25 @@ exports.getBoard = async (req, res) => {
 		const userId = req.user.userId
 
 		const board = await Board.findById(boardId)
-			.populate('members', 'username firstName lastName')
-			.populate('createdBy', '_id username firstName lastName')
+			.populate({
+				path: 'members',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'createdBy',
+				select: '_id username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 		if (!board) {
 			return res.status(404).json({ message: 'Board not found' })
 		}
 
+		// Filter out null members (soft-deleted users)
+		board.members = board.members.filter(m => m !== null && m !== undefined)
+
 		// Check if user has access
-		const isMember = board.members.some(m => m._id.toString() === userId)
+		const isMember = board.members.some(m => m._id && m._id.toString() === userId)
 		const isTeamBoard = board.isTeamBoard
 		const isDepartmentBoard = board.type === 'department'
 
@@ -262,28 +299,37 @@ exports.getBoardUsers = async (req, res) => {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
-		// For team boards, get all team users
+		// For team boards, get all active team users
 		if (isTeamBoard) {
-			const users = await User.find({ teamId: board.teamId })
+			const users = await User.find({ 
+				teamId: board.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
 		}
 
-		// For department boards, get users from that department
+		// For department boards, get active users from that department
 		if (isDepartmentBoard && board.departmentName) {
 			const users = await User.find({
 				teamId: board.teamId,
 				$or: [
 					{ department: board.departmentName },
 					{ department: { $in: [board.departmentName] } }
+				],
+				$and: [
+					{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				]
 			}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
 		}
 
-		// For custom boards, get members
-		const users = await User.find({ _id: { $in: board.members } })
+		// For custom boards, get active members only
+		const users = await User.find({ 
+			_id: { $in: board.members },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		})
 			.select('firstName lastName username position')
 			.sort({ firstName: 1, lastName: 1 })
 
@@ -315,10 +361,11 @@ exports.createBoard = async (req, res) => {
 			members.push(userId)
 		}
 
-		// Verify all members are from the same team
+		// Verify all members are from the same team (only active users)
 		const membersUsers = await User.find({ 
 			_id: { $in: members },
-			teamId: user.teamId 
+			teamId: user.teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 		
 		if (membersUsers.length !== members.length) {
@@ -337,8 +384,16 @@ exports.createBoard = async (req, res) => {
 
 		await newBoard.save()
 		const populatedBoard = await Board.findById(newBoard._id)
-			.populate('members', 'username firstName lastName')
-			.populate('createdBy', '_id username firstName lastName')
+			.populate({
+				path: 'members',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'createdBy',
+				select: '_id username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		res.status(201).json(populatedBoard)
 	} catch (error) {
@@ -399,8 +454,16 @@ exports.updateBoard = async (req, res) => {
 
 		await board.save()
 		const populatedBoard = await Board.findById(board._id)
-			.populate('members', 'username firstName lastName')
-			.populate('createdBy', '_id username firstName lastName')
+			.populate({
+				path: 'members',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'createdBy',
+				select: '_id username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		res.json(populatedBoard)
 	} catch (error) {

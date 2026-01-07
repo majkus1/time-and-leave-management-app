@@ -20,6 +20,7 @@ exports.findSupervisorsForDepartment = async (department, teamId) => {
 		...departmentFilter,
 		teamId,
 		roles: { $in: ['Przełożony (Supervisor)'] },
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 	})
 }
 

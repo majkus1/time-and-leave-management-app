@@ -16,7 +16,11 @@ exports.getSupervisorConfig = async (req, res) => {
 		}
 
 		let config = await SupervisorConfig.findOne({ supervisorId })
-			.populate('selectedEmployees', 'firstName lastName username position department')
+			.populate({
+				path: 'selectedEmployees',
+				select: 'firstName lastName username position department',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 
 		// Jeśli nie ma konfiguracji, utwórz domyślną
 		if (!config) {

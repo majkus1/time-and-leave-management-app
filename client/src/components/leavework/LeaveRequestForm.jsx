@@ -31,6 +31,63 @@ function LeaveRequestForm() {
 		const day = new Date(date).getDay()
 		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
 	}
+
+	// Funkcja do sprawdzania czy data powinna być zablokowana (tylko dla pojedynczych dat, nie dla zakresów)
+	const isDateDisabled = (dateString) => {
+		if (!dateString || !settings) return false
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		if (workOnWeekends) return false // Jeśli pracuje w weekendy, nie blokuj
+		return isWeekend(dateString) // Jeśli nie pracuje w weekendy, blokuj weekendy
+	}
+
+	// Funkcja do obsługi wyboru daty "od" z weryfikacją weekendów
+	const handleStartDateChange = (e) => {
+		const selectedDate = e.target.value
+		if (!selectedDate) {
+			setStartDate('')
+			return
+		}
+
+		const workOnWeekends = settings?.workOnWeekends !== false
+		
+		// Jeśli zespół nie pracuje w weekendy i wybrano weekend jako datę "od", zablokuj
+		if (!workOnWeekends && isWeekend(selectedDate)) {
+			showAlert(t('leaveform.weekendStartDateError') || 'Nie można wybrać weekendu jako daty początkowej gdy zespół nie pracuje w weekendy.')
+			return
+		}
+
+		setStartDate(selectedDate)
+		// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
+		if (endDate && selectedDate && new Date(selectedDate) > new Date(endDate)) {
+			setEndDate('')
+		}
+	}
+
+	// Funkcja do obsługi wyboru daty "do" - pozwala na weekendy jeśli jest wybrany zakres
+	const handleEndDateChange = (e, isRangeSelection = true) => {
+		const selectedDate = e.target.value
+		if (!selectedDate) {
+			setEndDate('')
+			return
+		}
+
+		// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
+		if (startDate && selectedDate && new Date(selectedDate) < new Date(startDate)) {
+			showAlert(t('leaveform.dateValidationError'))
+			return
+		}
+
+		const workOnWeekends = settings?.workOnWeekends !== false
+		
+		// Jeśli zespół nie pracuje w weekendy i NIE ma wybranej daty "od" (pojedyncza data "do"), zablokuj weekendy
+		// Ale jeśli jest wybrany zakres (od-do), pozwól na weekendy - będą pomijane w obliczeniach
+		if (!workOnWeekends && !startDate && isWeekend(selectedDate)) {
+			showAlert(t('leaveform.weekendEndDateError') || 'Nie można wybrać weekendu jako daty końcowej gdy zespół nie pracuje w weekendy. Wybierz najpierw datę początkową, aby utworzyć zakres.')
+			return
+		}
+
+		setEndDate(selectedDate)
+	}
 	
 	// Funkcja pomocnicza do sprawdzania czy dzień jest świętem
 	const isHolidayDate = React.useCallback((date) => {
@@ -81,7 +138,8 @@ function LeaveRequestForm() {
 	const [showCancelModal, setShowCancelModal] = useState(null)
 
 	const loading = loadingRequests || loadingVacation
-	const isSubmitting = createLeaveRequestMutation.isLoading
+	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
+	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
 
 	const leaveTypeMap = {
 		'Urlop wypoczynkowy': 'leaveform.option1',
@@ -384,13 +442,7 @@ function LeaveRequestForm() {
 							<input
 								type="date"
 								value={startDate}
-								onChange={e => {
-									setStartDate(e.target.value)
-									// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
-									if (endDate && e.target.value && new Date(e.target.value) > new Date(endDate)) {
-										setEndDate('')
-									}
-								}}
+								onChange={handleStartDateChange}
 								required
 								className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
@@ -400,15 +452,7 @@ function LeaveRequestForm() {
 								type="date"
 								value={endDate}
 								min={startDate || undefined}
-								onChange={e => {
-									const selectedDate = e.target.value
-									// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
-									if (startDate && selectedDate && new Date(selectedDate) < new Date(startDate)) {
-										showAlert(t('leaveform.dateValidationError'))
-										return
-									}
-									setEndDate(selectedDate)
-								}}
+								onChange={(e) => handleEndDateChange(e, true)}
 								required
 								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
@@ -695,9 +739,23 @@ function LeaveRequestForm() {
 											type="date"
 											value={editStartDate}
 											onChange={e => {
-												setEditStartDate(e.target.value)
+												const selectedDate = e.target.value
+												if (!selectedDate) {
+													setEditStartDate('')
+													return
+												}
+
+												const workOnWeekends = settings?.workOnWeekends !== false
+												
+												// Jeśli zespół nie pracuje w weekendy i wybrano weekend jako datę "od", zablokuj
+												if (!workOnWeekends && isWeekend(selectedDate)) {
+													showAlert(t('leaveform.weekendStartDateError') || 'Nie można wybrać weekendu jako daty początkowej gdy zespół nie pracuje w weekendy.')
+													return
+												}
+
+												setEditStartDate(selectedDate)
 												// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
-												if (editEndDate && e.target.value && new Date(e.target.value) > new Date(editEndDate)) {
+												if (editEndDate && selectedDate && new Date(selectedDate) > new Date(editEndDate)) {
 													setEditEndDate('')
 												}
 											}}
@@ -712,11 +770,26 @@ function LeaveRequestForm() {
 											min={editStartDate || undefined}
 											onChange={e => {
 												const selectedDate = e.target.value
+												if (!selectedDate) {
+													setEditEndDate('')
+													return
+												}
+
 												// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
 												if (editStartDate && selectedDate && new Date(selectedDate) < new Date(editStartDate)) {
 													showAlert(t('leaveform.dateValidationError'))
 													return
 												}
+
+												const workOnWeekends = settings?.workOnWeekends !== false
+												
+												// Jeśli zespół nie pracuje w weekendy i NIE ma wybranej daty "od" (pojedyncza data "do"), zablokuj weekendy
+												// Ale jeśli jest wybrany zakres (od-do), pozwól na weekendy - będą pomijane w obliczeniach
+												if (!workOnWeekends && !editStartDate && isWeekend(selectedDate)) {
+													showAlert(t('leaveform.weekendEndDateError') || 'Nie można wybrać weekendu jako daty końcowej gdy zespół nie pracuje w weekendy. Wybierz najpierw datę początkową, aby utworzyć zakres.')
+													return
+												}
+
 												setEditEndDate(selectedDate)
 											}}
 											required
@@ -759,26 +832,26 @@ function LeaveRequestForm() {
 										<button
 											type="button"
 											onClick={() => setEditingRequest(null)}
-											disabled={updateLeaveRequestMutation.isPending}
+											disabled={isUpdating}
 											style={{
 												padding: '10px 20px',
 												borderRadius: '6px',
 												border: '1px solid #d1d5db',
 												backgroundColor: 'white',
 												color: '#374151',
-												cursor: updateLeaveRequestMutation.isPending ? 'not-allowed' : 'pointer',
+												cursor: isUpdating ? 'not-allowed' : 'pointer',
 												fontSize: '14px',
 												fontWeight: '500',
 												transition: 'all 0.2s',
-												opacity: updateLeaveRequestMutation.isPending ? 0.5 : 1
+												opacity: isUpdating ? 0.5 : 1
 											}}>
 											{t('leaveform.cancelEdit')}
 										</button>
 										<button
 											type="submit"
-											disabled={updateLeaveRequestMutation.isPending}
+											disabled={isUpdating}
 											className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
-											{updateLeaveRequestMutation.isPending ? (
+											{isUpdating ? (
 												<span className="flex items-center">
 													<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 														<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

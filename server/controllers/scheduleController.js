@@ -505,7 +505,10 @@ exports.getScheduleUsers = async (req, res) => {
 				return res.status(403).json({ message: 'Access denied' })
 			}
 			// For team schedules, get all team users
-			const users = await User.find({ teamId: schedule.teamId })
+			const users = await User.find({ 
+				teamId: schedule.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
@@ -519,7 +522,10 @@ exports.getScheduleUsers = async (req, res) => {
 			}
 			// For department schedules, get users from that department
 			// Get all team users first, then filter by department (handles both array and string department fields)
-			const allTeamUsers = await User.find({ teamId: schedule.teamId })
+			const allTeamUsers = await User.find({ 
+				teamId: schedule.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
 				.select('firstName lastName username position department')
 				.lean()
 			
@@ -545,8 +551,9 @@ exports.getScheduleUsers = async (req, res) => {
 			return res.json(filteredUsers)
 		} else if (schedule.type === 'custom') {
 			// For custom schedules, get users from members array
-			const memberUsers = await User.find({ 
-				_id: { $in: schedule.members || [] }
+			const memberUsers = await User.find({
+				_id: { $in: schedule.members || [] },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
@@ -581,9 +588,10 @@ exports.createSchedule = async (req, res) => {
 			members.push(userId)
 		}
 
-		// Verify all members are from the same team
+		// Verify all members are from the same team (only active users)
 		const membersUsers = await User.find({ 
 			_id: { $in: members },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
 			teamId: user.teamId 
 		})
 		

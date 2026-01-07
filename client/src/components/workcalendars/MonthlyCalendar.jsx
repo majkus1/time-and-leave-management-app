@@ -33,6 +33,7 @@ function MonthlyCalendar() {
 	const [notes, setNotes] = useState('')
 	const [errorMessage, setErrorMessage] = useState('')
 	const [isHolidayDay, setIsHolidayDay] = useState(false)
+	const [isWeekendDay, setIsWeekendDay] = useState(false)
 	const calendarRef = useRef(null)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -358,6 +359,12 @@ function MonthlyCalendar() {
 		const isHoliday = settings ? isHolidayDate(clickedDateObj, settings) !== null : false
 		setIsHolidayDay(isHoliday)
 		
+		// Sprawdź czy kliknięty dzień jest weekendem i zespół nie pracuje w weekendy
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		const isWeekendDate = isWeekend(clickedDateObj)
+		const isWeekendDayLocal = !workOnWeekends && isWeekendDate // Weekend dzień tylko gdy zespół nie pracuje w weekendy
+		setIsWeekendDay(isWeekendDayLocal)
+		
 		// Find existing workdays for this date (excluding realTime entries)
 		const clickedDateStr = clickedDateObj.toDateString()
 		const existingWorkdays = workdays.filter(day => {
@@ -365,13 +372,20 @@ function MonthlyCalendar() {
 			return dayDate.toDateString() === clickedDateStr
 		})
 		
-		// Auto-fill work hours from settings if no existing entries and not a holiday
-		if (existingWorkdays.length === 0 && !isHoliday && settings && settings.workHours && settings.workHours.timeFrom && settings.workHours.timeTo) {
+		// Auto-fill work hours from settings if no existing entries and not a holiday and not a weekend (when workOnWeekends = false)
+		// Używamy lokalnej zmiennej isWeekendDayLocal zamiast state, bo state jest asynchroniczny
+		if (existingWorkdays.length === 0 && !isHoliday && !isWeekendDayLocal && settings && settings.workHours && settings.workHours.timeFrom && settings.workHours.timeTo) {
 			const timeRange = `${settings.workHours.timeFrom}-${settings.workHours.timeTo}`
 			setRealTimeDayWorked(timeRange)
 			if (settings.workHours.hours) {
 				setHoursWorked(settings.workHours.hours.toString())
 			}
+		} else if (isWeekendDayLocal || isHoliday) {
+			// Jeśli to weekend lub święto, wyczyść pola godzin pracy i nieobecności
+			setHoursWorked('')
+			setAdditionalWorked('')
+			setRealTimeDayWorked('')
+			setAbsenceType('')
 		}
 		
 		setModalIsOpen(true)
@@ -423,12 +437,23 @@ function MonthlyCalendar() {
 	const handleSubmit = async e => {
 		e.preventDefault()
 
+		// Normalizuj wartości - usuń białe znaki i sprawdź czy są puste
+		const hoursWorkedValue = hoursWorked && hoursWorked.trim() !== '' ? hoursWorked.trim() : ''
+		const absenceTypeValue = absenceType && absenceType.trim() !== '' ? absenceType.trim() : ''
+		const notesValue = notes && notes.trim() !== '' ? notes.trim() : ''
+
 		// Sprawdź czy próbujemy dodać tylko uwagi
-		const isNotesOnly = !hoursWorked && !absenceType && notes
+		const isNotesOnly = !hoursWorkedValue && !absenceTypeValue && notesValue
 
 		// Jeśli dzień jest świętem, pozwól tylko na dodanie uwag
-		if (isHolidayDay && (hoursWorked || absenceType)) {
+		if (isHolidayDay && (hoursWorkedValue || absenceTypeValue)) {
 			setErrorMessage(t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+			return
+		}
+
+		// Jeśli dzień jest weekendem i zespół nie pracuje w weekendy, pozwól tylko na dodanie uwag
+		if (isWeekendDay && (hoursWorkedValue || absenceTypeValue)) {
+			setErrorMessage(t('workcalendar.weekendOnlyNotes') || 'W weekendzie (gdy zespół nie pracuje w weekendy) można dodać tylko uwagi.')
 			return
 		}
 
@@ -448,8 +473,16 @@ function MonthlyCalendar() {
 					!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
 				)
 				
-				// Jeśli istniejący wpis ma tylko uwagi i próbujemy dodać godziny/nieobecność, pozwól na to
-				if (hasOnlyNotes && (hoursWorked || absenceType)) {
+				// Jeśli istniejący wpis ma tylko uwagi i próbujemy dodać godziny/nieobecność, sprawdź czy to nie weekend/święto
+				if (hasOnlyNotes && (hoursWorkedValue || absenceTypeValue)) {
+					// Jeśli to weekend lub święto, zablokuj dodawanie godzin/nieobecności
+					if (isWeekendDay || isHolidayDay) {
+						setErrorMessage(isHolidayDay 
+							? (t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+							: (t('workcalendar.weekendOnlyNotes') || 'W weekendzie (gdy zespół nie pracuje w weekendy) można dodać tylko uwagi.')
+						)
+						return
+					}
 					// Pozwól na aktualizację - logika będzie obsłużona dalej
 				} else if (!hasOnlyNotes && !isNotesOnly) {
 					// Jeśli istniejący wpis ma już godziny/nieobecność i próbujemy dodać coś innego, zablokuj
@@ -485,7 +518,7 @@ function MonthlyCalendar() {
 			}
 		}
 
-		if (hoursWorked && absenceType) {
+		if (hoursWorkedValue && absenceTypeValue) {
 			setErrorMessage(t('workcalendar.formalerttwo'))
 			return
 		}
@@ -516,136 +549,123 @@ function MonthlyCalendar() {
 			)
 			
 			if (hasOnlyNotes) {
-				// Jeśli istniejący wpis ma tylko uwagi, sprawdź czy jest zaakceptowany wniosek
-				if (hasAcceptedRequest) {
+				// Jeśli istniejący wpis ma tylko uwagi, sprawdź czy jest zaakceptowany wniosek, weekend lub święto
+				if (hasAcceptedRequest || isWeekendDay || isHolidayDay) {
 					// Jeśli jest zaakceptowany wniosek i są tylko uwagi, pozwól tylko na dodanie uwag
-					if (hoursWorked || absenceType) {
+					if (hoursWorkedValue || absenceTypeValue) {
 						setErrorMessage(t('workcalendar.notesOnlyForLeave') || 'W tym dniu jest zaakceptowany wniosek urlopowy/nieobecność lub święto. Możesz dodać tylko uwagi.')
 						return
 					}
-					if (!notes) {
+					if (!notesValue) {
 						setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
 						return
 					}
 				} else {
 					// Jeśli nie ma zaakceptowanego wniosku, pozwól na dodanie godzin/nieobecności
 					// Uwagi z istniejącego wpisu zostaną zachowane (połączone z nowymi jeśli są)
-					if (!hoursWorked && !absenceType && !notes) {
+					if (!hoursWorkedValue && !absenceTypeValue && !notesValue) {
 			setErrorMessage(t('workcalendar.formalertone'))
 			return
 					}
 				}
 			} else {
 				// Jeśli istniejący wpis ma już godziny/nieobecność, pozwól tylko na dodanie uwag
-				if (hoursWorked || absenceType) {
+				if (hoursWorkedValue || absenceTypeValue) {
 					setErrorMessage(t('workcalendar.oneactionforday'))
 					return
 				}
-				if (!notes) {
+				if (!notesValue) {
 					setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
 					return
 				}
 			}
 		} else if (hasAcceptedRequest) {
 			// Jeśli jest zaakceptowany wniosek, pozwól tylko na dodanie uwag
-			if (hoursWorked || absenceType) {
+			if (hoursWorkedValue || absenceTypeValue) {
 				setErrorMessage(t('workcalendar.cannotAddToAcceptedLeave') || 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością')
 				return
 			}
-			if (!notes) {
+			if (!notesValue) {
+				setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
+				return
+			}
+		} else if (isWeekendDay || isHolidayDay) {
+			// Jeśli to weekend (gdy zespół nie pracuje w weekendy) lub święto, pozwól tylko na dodanie uwag
+			if (hoursWorkedValue || absenceTypeValue) {
+				setErrorMessage(isHolidayDay 
+					? (t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+					: (t('workcalendar.weekendOnlyNotes') || 'W weekendzie (gdy zespół nie pracuje w weekendy) można dodać tylko uwagi.')
+				)
+				return
+			}
+			if (!notesValue) {
 				setErrorMessage(t('workcalendar.notesRequired') || 'Uwagi są wymagane')
 				return
 			}
 		} else {
 			// Jeśli nie ma istniejącego wpisu i nie ma zaakceptowanego wniosku, pozwól na zapisanie samej uwagi lub hoursWorked/absenceType
-			if (!hoursWorked && !absenceType && !notes) {
+			if (!hoursWorkedValue && !absenceTypeValue && !notesValue) {
 				setErrorMessage(t('workcalendar.formalertone'))
 				return
 			}
 		}
 
-		if (absenceType) {
+		if (absenceTypeValue) {
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
 		}
 
-		if (hoursWorked && !additionalWorked && !realTimeDayWorked) {
+		if (hoursWorkedValue && !additionalWorked && !realTimeDayWorked) {
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
 		}
 
-		// Sprawdź czy istnieje wpis z tylko uwagami, który należy zaktualizować
+		// Sprawdź czy istnieje wpis z tylko uwagami
 		const hasOnlyNotesInExisting = existingWorkdays.length > 0 && 
 			existingWorkdays.every(day => 
 				!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
 			)
 		
-		// Jeśli istnieje wpis z tylko uwagami i dodajemy godziny/nieobecność (i nie ma zaakceptowanego wniosku), połącz uwagi
-		let finalNotes = notes || null
-		if (hasOnlyNotesInExisting && (hoursWorked || absenceType) && !hasAcceptedRequest) {
-			// Połącz istniejące uwagi z nowymi (jeśli są)
-			const existingNotes = existingWorkdays
-				.map(day => day.notes)
-				.filter(note => note && note.trim() !== '')
-				.join(' | ')
-			
-			if (existingNotes && notes && notes.trim() !== '') {
-				finalNotes = `${existingNotes} | ${notes.trim()}`
-			} else if (existingNotes) {
-				finalNotes = existingNotes
-			}
-		} else if (hasOnlyNotesInExisting && hasAcceptedRequest && notes) {
-			// Jeśli jest zaakceptowany wniosek i są tylko uwagi, połącz uwagi
-			const existingNotes = existingWorkdays
-				.map(day => day.notes)
-				.filter(note => note && note.trim() !== '')
-				.join(' | ')
-			
-			if (existingNotes && notes && notes.trim() !== '') {
-				finalNotes = `${existingNotes} | ${notes.trim()}`
-			} else if (existingNotes) {
-				finalNotes = existingNotes
-			}
-		}
+		// Każda uwaga jest osobnym wpisem - nie łączymy ich po "|"
+		let finalNotes = notesValue || null
 
+		// Jeśli to weekend lub święto, upewnij się że tylko uwagi są zapisane (reszta null)
 		const data = {
 			date: selectedDate,
-			hoursWorked: hoursWorked && hoursWorked.trim() !== '' ? parseInt(hoursWorked) : null,
-			additionalWorked: hoursWorked && hoursWorked.trim() !== '' && additionalWorked && additionalWorked.trim() !== '' ? parseInt(additionalWorked) : null,
-			realTimeDayWorked: hoursWorked && hoursWorked.trim() !== '' && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null,
-			absenceType: absenceType && absenceType.trim() !== '' ? absenceType : null,
+			hoursWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue ? parseInt(hoursWorkedValue) : null),
+			additionalWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && additionalWorked && additionalWorked.trim() !== '' ? parseInt(additionalWorked) : null),
+			realTimeDayWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null),
+			absenceType: (isWeekendDay || isHolidayDay) ? null : (absenceTypeValue ? absenceTypeValue : null),
 			notes: finalNotes,
 		}
 
 		try {
-			// Jeśli istnieje wpis z tylko uwagami i dodajemy godziny/nieobecność (i nie ma zaakceptowanego wniosku), zaktualizuj istniejący wpis
-			if (hasOnlyNotesInExisting && (hoursWorked || absenceType) && !hasAcceptedRequest && existingWorkdays.length > 0) {
-				// Użyj pierwszego istniejącego wpisu do aktualizacji
+			// Jeśli istnieje wpis z tylko uwagami i dodajemy godziny/nieobecność (i nie ma zaakceptowanego wniosku, weekendu ani święta), zaktualizuj istniejący wpis
+			if (hasOnlyNotesInExisting && (hoursWorkedValue || absenceTypeValue) && !hasAcceptedRequest && !isWeekendDay && !isHolidayDay && existingWorkdays.length > 0) {
+				// Użyj pierwszego istniejącego wpisu do aktualizacji (dodajemy godziny/nieobecność do istniejącego wpisu z uwagami)
 				const existingWorkday = existingWorkdays[0]
 				await updateWorkdayMutation.mutateAsync({
 					id: existingWorkday._id,
 					updatedWorkday: data,
 				})
-			} else if (hasOnlyNotesInExisting && hasAcceptedRequest && existingWorkdays.length > 0) {
-				// Jeśli jest zaakceptowany wniosek i są tylko uwagi, zaktualizuj tylko uwagi
-				const existingWorkday = existingWorkdays[0]
-				await updateWorkdayMutation.mutateAsync({
-					id: existingWorkday._id,
-					updatedWorkday: {
+			} else {
+				// W przeciwnym razie zawsze utwórz nowy wpis (każda uwaga jest osobnym wpisem)
+				// Jeśli to weekend lub święto, upewnij się że zapisujemy tylko uwagi
+				if (isWeekendDay || isHolidayDay) {
+					await createWorkdayMutation.mutateAsync({
 						date: selectedDate,
 						hoursWorked: null,
 						additionalWorked: null,
 						realTimeDayWorked: null,
 						absenceType: null,
 						notes: finalNotes,
-					},
-				})
-			} else {
-				// W przeciwnym razie utwórz nowy wpis
-			await createWorkdayMutation.mutateAsync(data)
+					})
+				} else {
+					await createWorkdayMutation.mutateAsync(data)
+				}
 			}
-			// Refresh workdays after creation/update
-			await refetchWorkdays()
+			
+			// Zamknij modal natychmiast po zakończeniu zapisu (gdy loading się kończy)
 			setModalIsOpen(false)
 			setHoursWorked('')
 			setAdditionalWorked('')
@@ -653,6 +673,9 @@ function MonthlyCalendar() {
 			setAbsenceType('')
 			setNotes('')
 			setErrorMessage('')
+			
+			// Refresh workdays w tle (bez await, żeby nie blokować zamknięcia modala)
+			refetchWorkdays()
 		} catch (error) {
 			console.error('Failed to add/update workday:', error)
 			setErrorMessage(error.response?.data?.message || t('workcalendar.saveError') || 'Błąd podczas zapisywania')
@@ -716,6 +739,7 @@ function MonthlyCalendar() {
 		setNotes('')
 		setErrorMessage('')
 		setIsHolidayDay(false)
+		setIsWeekendDay(false)
 	}
 
 	if (loading) return <Loader />
@@ -1094,8 +1118,8 @@ function MonthlyCalendar() {
 							!day.hoursWorked && !day.additionalWorked && !day.realTimeDayWorked && !day.absenceType && day.notes
 						)
 
-					// Jeśli dzień jest świętem i istnieją wpisy, pokaż je z możliwością usunięcia
-					if (isHolidayDay && existingWorkdays.length > 0) {
+					// Jeśli dzień jest świętem lub weekendem (gdy zespół nie pracuje w weekendy) i istnieją wpisy, pokaż je z możliwością usunięcia
+					if ((isHolidayDay || isWeekendDay) && existingWorkdays.length > 0) {
 						return (
 							<div style={{ marginBottom: '30px' }}>
 								<h3 style={{
@@ -1115,7 +1139,10 @@ function MonthlyCalendar() {
 									color: '#155724',
 									fontSize: '14px'
 								}}>
-									{t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.'}
+									{isHolidayDay 
+										? (t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+										: (t('workcalendar.weekendOnlyNotes') || 'W weekendzie (gdy zespół nie pracuje w weekendy) można dodać tylko uwagi.')
+									}
 								</div>
 								<div style={{
 									display: 'flex',
@@ -1198,8 +1225,19 @@ function MonthlyCalendar() {
 										<div className="flex justify-end gap-3 pt-4">
 											<button
 												type="submit"
-												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-												{t('workcalendar.save')}
+												disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+												{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+													<span className="flex items-center">
+														<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+															<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+															<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+														</svg>
+														{t('workcalendar.saving') || 'Zapisywanie...'}
+													</span>
+												) : (
+													t('workcalendar.save')
+												)}
 											</button>
 											<button
 												type="button"
@@ -1217,8 +1255,8 @@ function MonthlyCalendar() {
 						)
 					}
 
-					// Jeśli dzień jest świętem i nie ma wpisów, pokaż tylko formularz uwag
-					if (isHolidayDay) {
+					// Jeśli dzień jest świętem lub weekendem (gdy zespół nie pracuje w weekendy) i nie ma wpisów, pokaż tylko formularz uwag
+					if (isHolidayDay || isWeekendDay) {
 						return (
 							<div style={{
 								padding: '20px',
@@ -1235,7 +1273,10 @@ function MonthlyCalendar() {
 									color: '#155724',
 									fontSize: '14px'
 								}}>
-									{t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.'}
+									{isHolidayDay 
+										? (t('workcalendar.holidayOnlyNotes') || 'W dniu świątecznym można dodać tylko uwagi.')
+										: (t('workcalendar.weekendOnlyNotes') || 'W weekendzie (gdy zespół nie pracuje w weekendy) można dodać tylko uwagi.')
+									}
 								</div>
 								<form onSubmit={handleSubmit} className="space-y-4">
 									<div>
@@ -1252,8 +1293,19 @@ function MonthlyCalendar() {
 									<div className="flex justify-end gap-3 pt-4">
 										<button
 											type="submit"
-											className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-											{t('workcalendar.save')}
+											disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+											className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+											{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+												<span className="flex items-center">
+													<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+														<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+														<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+													</svg>
+													{t('workcalendar.saving') || 'Zapisywanie...'}
+												</span>
+											) : (
+												t('workcalendar.save')
+											)}
 										</button>
 										<button
 											type="button"
@@ -1383,8 +1435,19 @@ function MonthlyCalendar() {
 										<div className="flex justify-end gap-3 pt-4">
 											<button
 												type="submit"
-												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-												{t('workcalendar.save')}
+												disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+												{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+													<span className="flex items-center">
+														<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+															<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+															<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+														</svg>
+														{t('workcalendar.saving') || 'Zapisywanie...'}
+													</span>
+												) : (
+													t('workcalendar.save')
+												)}
 											</button>
 											<button
 												type="button"
@@ -1445,7 +1508,7 @@ function MonthlyCalendar() {
 									{hasOnlyNotesInExisting && !hasAcceptedRequest ? (
 										<form onSubmit={handleSubmit} className="space-y-4">
 											<div>
-												<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
+												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 												<input
 													type="number"
 													min="1"
@@ -1453,7 +1516,7 @@ function MonthlyCalendar() {
 													placeholder={t('workcalendar.placeholder1')}
 													value={hoursWorked}
 													onChange={e => setHoursWorked(e.target.value)}
-													disabled={isHolidayDay}
+													disabled={isHolidayDay || isWeekendDay}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 												/>
 											</div>
@@ -1465,7 +1528,7 @@ function MonthlyCalendar() {
 													placeholder={t('workcalendar.placeholder2')}
 													value={additionalWorked}
 													onChange={e => setAdditionalWorked(e.target.value)}
-													disabled={isHolidayDay}
+													disabled={isHolidayDay || isWeekendDay}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 												/>
 											</div>
@@ -1476,25 +1539,25 @@ function MonthlyCalendar() {
 													placeholder={t('workcalendar.placeholder3')}
 													value={realTimeDayWorked}
 													onChange={e => setRealTimeDayWorked(e.target.value)}
-													disabled={isHolidayDay}
+													disabled={isHolidayDay || isWeekendDay}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 												/>
 											</div>
 
 											<div>
-												<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
 												<input
 													type="text"
 													placeholder={t('workcalendar.placeholder4')}
 													value={absenceType}
 													onChange={e => setAbsenceType(e.target.value)}
-													disabled={isHolidayDay}
+													disabled={isHolidayDay || isWeekendDay}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 												/>
 											</div>
 
 											<div>
-												<label className="text-lg font-semibold mt-4 mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+												<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
 												<textarea
 													placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
 													value={notes}
@@ -1509,8 +1572,19 @@ function MonthlyCalendar() {
 											<div className="flex justify-end gap-3 pt-4">
 												<button
 													type="submit"
-													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-													{t('workcalendar.save')}
+													disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+													{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+														<span className="flex items-center">
+															<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+																<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+																<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+															</svg>
+															{t('workcalendar.saving') || 'Zapisywanie...'}
+														</span>
+													) : (
+														t('workcalendar.save')
+													)}
 												</button>
 												<button
 													type="button"
@@ -1539,8 +1613,19 @@ function MonthlyCalendar() {
 											<div className="flex justify-end gap-3 pt-4">
 												<button
 													type="submit"
-													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-													{t('workcalendar.save')}
+													disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+													{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+														<span className="flex items-center">
+															<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+																<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+																<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+															</svg>
+															{t('workcalendar.saving') || 'Zapisywanie...'}
+														</span>
+													) : (
+														t('workcalendar.save')
+													)}
 												</button>
 												<button
 													type="button"
@@ -1590,8 +1675,19 @@ function MonthlyCalendar() {
 								<div className="flex justify-end gap-3 pt-4">
 									<button
 										type="submit"
-										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-										{t('workcalendar.save')}
+										disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+										{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+											<span className="flex items-center">
+												<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+													<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+													<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+												{t('workcalendar.saving') || 'Zapisywanie...'}
+											</span>
+										) : (
+											t('workcalendar.save')
+										)}
 									</button>
 									<button
 										type="button"
@@ -1609,7 +1705,7 @@ function MonthlyCalendar() {
 						<>
 							<form onSubmit={handleSubmit} className="space-y-4 firstformcalendar">
 								<div>
-									<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
+									<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 									<input
 										type="number"
 										min="1"
@@ -1617,7 +1713,7 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder1')}
 										value={hoursWorked}
 										onChange={e => setHoursWorked(e.target.value)}
-										disabled={isHolidayDay}
+										disabled={isHolidayDay || isWeekendDay}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
@@ -1629,7 +1725,7 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder2')}
 										value={additionalWorked}
 										onChange={e => setAdditionalWorked(e.target.value)}
-										disabled={isHolidayDay}
+										disabled={isHolidayDay || isWeekendDay}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
@@ -1640,25 +1736,25 @@ function MonthlyCalendar() {
 										placeholder={t('workcalendar.placeholder3')}
 										value={realTimeDayWorked}
 										onChange={e => setRealTimeDayWorked(e.target.value)}
-										disabled={isHolidayDay}
+										disabled={isHolidayDay || isWeekendDay}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 
 								<div>
-									<h2 className="text-lg font-semibold mt-4 mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+									<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
 									<input
 										type="text"
 										placeholder={t('workcalendar.placeholder4')}
 										value={absenceType}
 										onChange={e => setAbsenceType(e.target.value)}
-										disabled={isHolidayDay}
+										disabled={isHolidayDay || isWeekendDay}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
 								</div>
 
 								<div>
-									<label className="text-lg font-semibold mt-4 mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
+									<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
 									<textarea
 										placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
 										value={notes}
@@ -1673,8 +1769,19 @@ function MonthlyCalendar() {
 								<div className="flex justify-end gap-3 pt-4">
 									<button
 										type="submit"
-										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
-										{t('workcalendar.save')}
+										disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+										{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
+											<span className="flex items-center">
+												<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+													<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+													<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+												{t('workcalendar.saving') || 'Zapisywanie...'}
+											</span>
+										) : (
+											t('workcalendar.save')
+										)}
 									</button>
 									<button
 										type="button"

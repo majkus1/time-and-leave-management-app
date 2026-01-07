@@ -40,6 +40,7 @@ import { useSupervisorConfig } from './hooks/useSupervisor'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
+import Legal from './components/legal/Legal'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
@@ -197,6 +198,7 @@ function AppContent() {
 					/>
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
+						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
 						<Route path="/logs" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
 						<Route path="/settings" element={<Settings />} />
 					<Route

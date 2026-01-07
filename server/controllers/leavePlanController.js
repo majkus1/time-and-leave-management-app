@@ -83,7 +83,11 @@ exports.getAllLeavePlans = async (req, res) => {
 		if (isSuperAdmin) {
 			// Super admin widzi wszystkie plany ze wszystkich zespołów
 			leavePlans = await LeavePlan.find()
-				.populate('userId', 'username firstName lastName')
+				.populate({
+					path: 'userId',
+					select: 'username firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.select('date userId')
 		} else {
 			// Dla wszystkich innych użytkowników - pokaż plany tylko z ich zespołu
@@ -91,7 +95,11 @@ exports.getAllLeavePlans = async (req, res) => {
 			const teamUserIds = teamUsers.map(user => user._id)
 
 			leavePlans = await LeavePlan.find({ userId: { $in: teamUserIds } })
-				.populate('userId', 'username firstName lastName')
+				.populate({
+					path: 'userId',
+					select: 'username firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.select('date userId')
 		}
 

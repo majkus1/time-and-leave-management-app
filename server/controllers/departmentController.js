@@ -27,9 +27,10 @@ exports.getDepartments = async (req, res) => {
 		
 		if (departments.length === 0) {
 			// Dla wielu działów - pobierz wszystkie unikalne działy z tablicy department użytkowników
-			const users = await User.find({ 
+			const users = await User.find({
 				teamId, 
-				department: { $ne: null, $ne: [], $exists: true } 
+				department: { $ne: null, $ne: [], $exists: true },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			}).select('department');
 			
 			// Zbierz wszystkie unikalne działy z tablic
@@ -171,8 +172,11 @@ exports.deleteDepartment = async (req, res) => {
 			await department.save();
 		}
 
-		// Usuń dział z wszystkich użytkowników w zespole
-		const users = await User.find({ teamId });
+		// Usuń dział z wszystkich aktywnych użytkowników w zespole
+		const users = await User.find({ 
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		});
 		for (const user of users) {
 			if (Array.isArray(user.department)) {
 				user.department = user.department.filter(dept => dept !== name);
@@ -231,12 +235,15 @@ exports.getDepartmentUsers = async (req, res) => {
 			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
 		}
 
-		// Znajdź wszystkich użytkowników w zespole, którzy mają ten dział
+		// Znajdź wszystkich aktywnych użytkowników w zespole, którzy mają ten dział
 		const users = await User.find({
 			teamId,
 			$or: [
 				{ department: name },
 				{ department: { $in: [name] } }
+			],
+			$and: [
+				{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 			]
 		}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 });
 

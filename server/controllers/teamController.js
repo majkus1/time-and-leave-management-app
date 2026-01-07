@@ -52,7 +52,8 @@ exports.registerTeam = async (req, res) => {
 		}
 
 		
-		const existingTeam = await Team.findOne({ name: teamName });
+		// Check for existing active team (ignore soft-deleted)
+		const existingTeam = await Team.findOne({ name: teamName, isActive: true });
 		if (existingTeam) {
 			return res.status(400).json({
 				success: false,
@@ -60,8 +61,35 @@ exports.registerTeam = async (req, res) => {
 			});
 		}
 
+		// Check for soft-deleted team with same adminEmail
+		const softDeletedTeam = await Team.findOne({ 
+			adminEmail: adminEmail.toLowerCase(), 
+			isActive: false 
+		});
+		if (softDeletedTeam) {
+			const daysSinceDeletion = softDeletedTeam.deletedAt 
+				? Math.ceil((Date.now() - new Date(softDeletedTeam.deletedAt).getTime()) / (1000 * 60 * 60 * 24))
+				: 0;
+			const remainingDays = Math.max(0, 30 - daysSinceDeletion);
+			
+			return res.status(400).json({
+				success: false,
+				message: 'Zespół z tym adresem email został usunięty',
+				code: 'TEAM_SOFT_DELETED',
+				retentionInfo: {
+					remainingDays,
+					totalDays: 30,
+					canRestore: true
+				}
+			});
+		}
+
 		
-		const existingUser = await User.findOne({ username: adminEmail });
+		// Check for existing active user (ignore soft-deleted)
+		const existingUser = await User.findOne({ 
+			username: adminEmail,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		});
 		if (existingUser) {
 			return res.status(400).json({
 				success: false,
@@ -103,6 +131,50 @@ exports.registerTeam = async (req, res) => {
 		});
 
 		await teamAdmin.save();
+
+		// Record legal document acceptances (TERMS and PRIVACY) if provided
+		// Note: DPA is automatically accepted when first employee is added
+		const acceptedDocuments = req.body.acceptedDocuments || [];
+		if (Array.isArray(acceptedDocuments) && acceptedDocuments.length > 0) {
+			try {
+				const LegalDocument = require('../models/LegalDocument')(firmDb);
+				const LegalAcceptance = require('../models/LegalAcceptance')(firmDb);
+
+				// Get current versions of accepted documents
+				const currentDocs = await LegalDocument.find({
+					type: { $in: acceptedDocuments },
+					isCurrent: true
+				});
+
+				if (currentDocs.length > 0) {
+					const ipAddress = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+					const userAgent = req.headers['user-agent'] || '';
+
+					for (const doc of currentDocs) {
+						try {
+							const acceptance = new LegalAcceptance({
+								userId: teamAdmin._id,
+								teamId: newTeam._id,
+								documentType: doc.type,
+								documentVersion: doc.version,
+								documentId: doc._id,
+								ipAddress,
+								userAgent
+							});
+							await acceptance.save();
+						} catch (error) {
+							// Ignore duplicate key errors (document already accepted)
+							if (error.code !== 11000) {
+								console.error(`Error recording legal acceptance for ${doc.type}:`, error);
+							}
+						}
+					}
+				}
+			} catch (error) {
+				console.error('Error recording legal document acceptances:', error);
+				// Don't fail registration if acceptance recording fails
+			}
+		}
 
 		// Create general channel for the team
 		try {
@@ -154,17 +226,18 @@ exports.registerTeam = async (req, res) => {
 		);
 
 		
+		const isProduction = process.env.NODE_ENV === 'production'
 		res.cookie('token', accessToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 15 * 60 * 1000,
 		});
 
 		res.cookie('refreshToken', refreshToken, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
@@ -213,13 +286,27 @@ exports.getTeamInfo = async (req, res) => {
 		// Update maxUsers for special teams if needed
 		await updateSpecialTeamLimit(team)
 
+		// Policz rzeczywistą liczbę aktywnych użytkowników (bez soft-deleted)
+		const actualUserCount = await User.countDocuments({ 
+			teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		});
+
+		// Zaktualizuj currentUserCount jeśli jest nieaktualne
+		if (team.currentUserCount !== actualUserCount) {
+			team.currentUserCount = actualUserCount;
+			await team.save();
+		}
+
 		res.json({
 			success: true,
 			team: {
 				id: team._id,
 				name: team.name,
 				maxUsers: team.maxUsers,
-				currentUserCount: team.currentUserCount,
+				currentUserCount: actualUserCount,
+				remainingSlots: team.maxUsers - actualUserCount,
+				canAddUser: actualUserCount < team.maxUsers,
 				isActive: team.isActive,
 				subscriptionType: team.subscriptionType
 			}
@@ -279,8 +366,11 @@ exports.checkUserLimit = async (req, res) => {
 		// Update maxUsers for special teams if needed
 		await updateSpecialTeamLimit(team)
 
-		// Policz rzeczywistą liczbę użytkowników w zespole
-		const actualUserCount = await User.countDocuments({ teamId });
+		// Policz rzeczywistą liczbę aktywnych użytkowników w zespole (bez soft-deleted)
+		const actualUserCount = await User.countDocuments({ 
+			teamId, 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		});
 		
 		// Zaktualizuj currentUserCount jeśli jest nieaktualne
 		if (team.currentUserCount !== actualUserCount) {
@@ -338,47 +428,33 @@ exports.deleteTeam = async (req, res) => {
 			});
 		}
 
-		// Pobierz wszystkich użytkowników zespołu
-		const teamUsers = await User.find({ teamId });
-		const userIds = teamUsers.map(user => user._id);
+		// Soft delete wszystkich użytkowników zespołu
+		const deletedAt = new Date();
+		await User.updateMany(
+			{ teamId, $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
+			{ isActive: false, deletedAt }
+		);
 
-		// Usuń wszystkie powiązane dane użytkowników
+		// Soft delete zasobów zespołu (boards, schedules, departments, channels, supervisor configs)
+		// Note: Workday, LeaveRequest, LeavePlan, CalendarConfirmation, Log, Message są historyczne
+		// i pozostaną w bazie - zostaną usunięte przez cleanup job po 30 dniach
 		await Promise.all([
-			Workday.deleteMany({ userId: { $in: userIds } }),
-			LeaveRequest.deleteMany({ userId: { $in: userIds } }),
-			LeavePlan.deleteMany({ userId: { $in: userIds } }),
-			CalendarConfirmation.deleteMany({ userId: { $in: userIds } }),
-			Log.deleteMany({ user: { $in: userIds } }),
-			Message.deleteMany({ userId: { $in: userIds } })
+			Board.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+			Schedule.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+			Department.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+			Channel.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+			SupervisorConfig.updateMany({ teamId }, { isActive: false, deletedAt })
 		]);
 
-		// Usuń wszystkie kanały zespołu (to usunie też wszystkie wiadomości w tych kanałach)
-		const teamChannels = await Channel.find({ teamId });
-		const channelIds = teamChannels.map(channel => channel._id);
-		await Message.deleteMany({ channelId: { $in: channelIds } });
-		await Channel.deleteMany({ teamId });
-
-		// Usuń wszystkie tablice zespołu
-		await Board.deleteMany({ teamId });
-
-		// Usuń wszystkie grafiki zespołu
-		await Schedule.deleteMany({ teamId });
-
-		// Usuń wszystkie działy zespołu
-		await Department.deleteMany({ teamId });
-
-		// Usuń wszystkie konfiguracje przełożonych zespołu
-		await SupervisorConfig.deleteMany({ teamId });
-
-		// Usuń wszystkich użytkowników zespołu
-		await User.deleteMany({ teamId });
-
-		// Usuń zespół
-		await Team.findByIdAndDelete(teamId);
+		// Soft delete zespołu
+		await Team.findByIdAndUpdate(teamId, {
+			isActive: false,
+			deletedAt
+		});
 
 		res.json({
 			success: true,
-			message: 'Zespół i wszystkie powiązane dane zostały usunięte pomyślnie'
+			message: 'Zespół i wszyscy użytkownicy zostali oznaczeni jako usunięci. Dane zostaną trwale usunięte po 30 dniach zgodnie z Regulaminem.'
 		});
 
 	} catch (error) {

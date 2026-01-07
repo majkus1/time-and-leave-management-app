@@ -8,7 +8,11 @@ exports.getLogs = async (req, res) => {
 			return res.status(403).send('Access denied')
 		}
 
-		const logs = await Log.find().populate('user', 'username').sort({ timestamp: -1 })
+		const logs = await Log.find().populate({
+			path: 'user',
+			select: 'username',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		}).sort({ timestamp: -1 })
 		res.json(logs)
 	} catch (error) {
 		console.error('Error retrieving logs:', error)
@@ -35,8 +39,16 @@ exports.getLogsByUser = async (req, res) => {
 		}
 
 		const logs = await Log.find({ user: req.params.userId })
-			.populate('user', 'username')
-			.populate('createdBy', 'username')
+			.populate({
+				path: 'user',
+				select: 'username',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'createdBy',
+				select: 'username',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
 			.sort({ timestamp: -1 })
 
 		res.json(logs)

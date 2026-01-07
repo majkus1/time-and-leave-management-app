@@ -16,6 +16,7 @@ const publicRoutes = require('./routes/publicRoutes')
 const teamRoutes = require('./routes/teamRoutes')
 const supervisorRoutes = require('./routes/supervisorRoutes')
 const settingsRoutes = require('./routes/settingsRoutes')
+const legalRoutes = require('./routes/legalRoutes')
 const i18next = require('i18next')
 const Backend = require('i18next-fs-backend')
 const i18nextMiddleware = require('i18next-http-middleware')
@@ -246,6 +247,7 @@ app.use(i18nextMiddleware.handle(i18next))
 
 app.use('/api/public', publicRoutes)
 app.use('/api/teams', teamRoutes) // nowe trasy dla zespołów
+app.use('/api/legal', legalRoutes) // dokumenty prawne - częściowo publiczne
 
 
 const csrfProtection = csurf({ cookie: true })

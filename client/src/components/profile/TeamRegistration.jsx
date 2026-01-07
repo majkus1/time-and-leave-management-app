@@ -18,6 +18,8 @@ const TeamRegistration = () => {
 	})
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
+	const [showRetentionModal, setShowRetentionModal] = useState(false)
+	const [retentionInfo, setRetentionInfo] = useState(null)
 	const [showPassword, setShowPassword] = useState(false)
 	const navigate = useNavigate()
 	const { setLoggedIn, setRole, setUsername, setTeamId, refreshUserData, loggedIn, isCheckingAuth } = useAuth()
@@ -42,7 +44,13 @@ const TeamRegistration = () => {
 		setError('')
 
 		try {
-			const response = await axios.post(`${API_URL}/api/teams/register`, formData, {
+			// Accept TERMS and PRIVACY during registration
+			// DPA will be automatically accepted when first employee is added
+			const acceptedDocuments = ['TERMS', 'PRIVACY'];
+			const response = await axios.post(`${API_URL}/api/teams/register`, {
+				...formData,
+				acceptedDocuments
+			}, {
 				withCredentials: true
 			})
 
@@ -57,6 +65,15 @@ const TeamRegistration = () => {
 		} catch (error) {
 			console.error('Team registration error:', error)
 			
+			// Sprawdź czy to błąd związany z soft-deleted zespołem (karencja)
+			if (error.response?.data?.code === 'TEAM_SOFT_DELETED') {
+				setRetentionInfo(error.response.data.retentionInfo)
+				setShowRetentionModal(true)
+				setError('')
+				setLoading(false)
+				return
+			}
+			
 			let errorMessage = t('newteam.errorGeneric')
 			
 			if (error.response?.data?.message) {
@@ -68,6 +85,9 @@ const TeamRegistration = () => {
 					errorMessage = t('newteam.errorEmailExists')
 				} else if (serverMessage.includes('Wszystkie pola są wymagane') || serverMessage.includes('All fields are required')) {
 					errorMessage = t('newteam.errorValidation')
+				} else if (serverMessage.includes('został usunięty')) {
+					// Fallback - jeśli kod nie jest ustawiony, ale jest komunikat o usunięciu
+					errorMessage = serverMessage
 				} else {
 					errorMessage = serverMessage
 				}
@@ -259,6 +279,30 @@ const TeamRegistration = () => {
         </div>
       </div>
 
+      <div className="pt-4 border-t border-gray-200">
+        <div className="text-sm text-gray-700">
+          Zakładając konto, akceptujesz{' '}
+          <a
+            href="https://planopia.pl/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            Regulamin Planopia
+          </a>{' '}
+          oraz{' '}
+          <a
+            href="https://planopia.pl/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            zasady przetwarzania danych
+          </a>
+          .
+        </div>
+      </div>
+
       <div>
         <button
           type="submit"
@@ -323,8 +367,84 @@ const TeamRegistration = () => {
     </div>
   </div>
 </div>
-</div>
 
+			{/* Modal z informacją o karencji */}
+			{showRetentionModal && retentionInfo && (
+				<div 
+					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+					style={{
+						zIndex: 100000000,
+						padding: '20px'
+					}} 
+					onClick={() => setShowRetentionModal(false)}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '500px',
+						width: '100%',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+						<h3 style={{
+							margin: '0 0 20px 0',
+							color: '#1f2937',
+							fontSize: '24px',
+							fontWeight: '600'
+						}}>
+							{t('newteam.retentionModalTitle') || 'Zespół został wcześniej usunięty'}
+						</h3>
+						
+						<div style={{
+							backgroundColor: '#fff3cd',
+							padding: '15px',
+							borderRadius: '6px',
+							marginBottom: '20px',
+							border: '1px solid #ffc107',
+							color: '#856404',
+							fontSize: '14px',
+							lineHeight: '1.6'
+						}}>
+							<p style={{ margin: '0 0 10px 0' }}>
+								<strong>{t('newteam.retentionModalInfo') || 'Okres karencji:'}</strong>
+							</p>
+							<p style={{ margin: 0 }}>
+								{retentionInfo.remainingDays > 0 
+									? t('newteam.retentionModalRemaining', { days: retentionInfo.remainingDays, total: retentionInfo.totalDays }) 
+										|| `Zespół z tym adresem email został usunięty. Dane są przechowywane przez okres karencji (${retentionInfo.remainingDays} z ${retentionInfo.totalDays} dni pozostało). Po upływie karencji dane zostaną trwale usunięte i będzie możliwa rejestracja nowego zespołu.`
+									: t('newteam.retentionModalExpired') 
+										|| 'Okres karencji minął. Dane powinny zostać wkrótce trwale usunięte. Spróbuj ponownie za kilka dni.'
+								}
+							</p>
+						</div>
+
+						<div style={{
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={() => setShowRetentionModal(false)}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s'
+								}}
+								onMouseEnter={(e) => e.target.style.backgroundColor = '#f9fafb'}
+								onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}>
+								{t('newteam.retentionModalClose') || 'Rozumiem'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</div>
 	)
 }
 
