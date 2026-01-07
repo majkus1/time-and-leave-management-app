@@ -230,18 +230,22 @@ function Schedule() {
 		})
 	}, [scheduleEntries, getColorForEmployee])
 
-	if (loadingSchedule) return <Loader />
-
 	if (!schedule) {
 		return (
 			<>
 				<Sidebar />
-				<div style={{ padding: '15px' }}>
-					<p>{t('schedule.notFound') || 'Grafik nie został znaleziony'}</p>
-					<button onClick={() => navigate('/schedule')}>
-						{t('schedule.backToList') || 'Wróć do listy grafików'}
-					</button>
-				</div>
+				{loadingSchedule ? (
+					<div className="content-with-loader">
+						<Loader />
+					</div>
+				) : (
+					<div style={{ padding: '15px' }}>
+						<p>{t('schedule.notFound') || 'Grafik nie został znaleziony'}</p>
+						<button onClick={() => navigate('/schedule')}>
+							{t('schedule.backToList') || 'Wróć do listy grafików'}
+						</button>
+					</div>
+				)}
 			</>
 		)
 	}
@@ -616,6 +620,11 @@ function Schedule() {
 	return (
 		<>
 			<Sidebar />
+			{loadingSchedule ? (
+				<div className="content-with-loader">
+					<Loader />
+				</div>
+			) : (
 			<div style={{ padding: '15px', maxWidth: '100%', overflowX: 'auto' }} className='schedule-container'>
 				<h2 style={{
 					display: 'flex',
@@ -761,45 +770,44 @@ function Schedule() {
 						{t('schedule.readOnlyMessage') || 'Masz uprawnienia tylko do przeglądania grafiku. Nie możesz dodawać ani edytować wpisów.'}
 					</div>
 				)}
-			</div>
-
-			<Modal
-				isOpen={isModalOpen}
-				onRequestClose={() => {
-					setIsModalOpen(false)
-					setSelectedDate(null)
-					setSelectedEntries([])
-					setNotes('')
-				}}
-				style={{
-					overlay: {
-						display: 'flex',
-						justifyContent: 'center',
-						alignItems: 'center',
-						backgroundColor: 'rgba(0, 0, 0, 0.5)',
-						backdropFilter: 'blur(2px)'
-					},
-					content: {
-						position: 'relative',
-						inset: 'unset',
-						margin: '0',
-						maxWidth: '600px',
-						width: '90%',
-						maxHeight: '80vh',
-						overflowY: 'auto',
-						borderRadius: '12px',
-						padding: '30px',
-						backgroundColor: 'white',
-						boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-					}
-				}}
-				contentLabel={t('schedule.addEntry') || 'Dodaj wpis do grafiku'}>
-				{selectedDate && (
-					<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
-						{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
-					</h2>
-				)}
-				{selectedEntries.length > 0 ? (
+				<Modal
+					isOpen={isModalOpen}
+					onRequestClose={() => {
+						setIsModalOpen(false)
+						setSelectedDate(null)
+						setSelectedEntries([])
+						setNotes('')
+					}}
+					style={{
+						overlay: {
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							backgroundColor: 'rgba(0, 0, 0, 0.5)',
+							backdropFilter: 'blur(2px)'
+						},
+						content: {
+							position: 'relative',
+							inset: 'unset',
+							margin: '0',
+							maxWidth: '600px',
+							width: '90%',
+							maxHeight: '80vh',
+							overflowY: 'auto',
+							borderRadius: '12px',
+							padding: '30px',
+							backgroundColor: 'white',
+							boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+						}
+					}}
+					contentLabel={t('schedule.addEntry') || 'Dodaj wpis do grafiku'}>
+				<>
+					{selectedDate && (
+						<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
+							{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
+						</h2>
+					)}
+					{selectedEntries.length > 0 ? (
 					<div style={{ marginBottom: '30px' }}>
 						<h3 style={{
 							marginBottom: '15px',
@@ -1077,7 +1085,10 @@ function Schedule() {
 						{t('schedule.readOnlyMessage') || 'Masz uprawnienia tylko do przeglądania grafiku. Nie możesz dodawać ani edytować wpisów.'}
 					</div>
 				)}
+				</>
 			</Modal>
+			</div>
+			)}
 		</>
 	)
 }

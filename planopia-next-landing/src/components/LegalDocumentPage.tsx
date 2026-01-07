@@ -11,9 +11,9 @@ interface LegalDocumentPageProps {
 
 // Server Component - reads markdown files at build time
 export default function LegalDocumentPage({ documentType, title, lang = 'pl' }: LegalDocumentPageProps) {
-	// Read markdown file from legal-documents folder
+	// Read markdown file from legal-documents folder (inside Next.js project)
 	const fileName = lang === 'en' ? `${documentType}_EN.md` : `${documentType}.md`;
-	const filePath = path.join(process.cwd(), '..', 'legal-documents', fileName);
+	const filePath = path.join(process.cwd(), 'legal-documents', fileName);
 	let content: string | null = null;
 	let error: string | null = null;
 

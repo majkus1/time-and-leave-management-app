@@ -281,23 +281,23 @@ const TeamRegistration = () => {
 
       <div className="pt-4 border-t border-gray-200">
         <div className="text-sm text-gray-700">
-          Zakładając konto, akceptujesz{' '}
+          {t('newteam.acceptTermsPrefix')}{' '}
           <a
-            href="https://planopia.pl/terms"
+            href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/terms`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:text-blue-800 underline"
           >
-            Regulamin Planopia
+            {t('newteam.termsLink')}
           </a>{' '}
-          oraz{' '}
+          {t('newteam.acceptTermsConjunction')}{' '}
           <a
-            href="https://planopia.pl/privacy"
+            href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/privacy`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:text-blue-800 underline"
           >
-            zasady przetwarzania danych
+            {t('newteam.privacyLink')}
           </a>
           .
         </div>

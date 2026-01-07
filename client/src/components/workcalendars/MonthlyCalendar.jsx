@@ -665,7 +665,7 @@ function MonthlyCalendar() {
 				}
 			}
 			
-			// Zamknij modal natychmiast po zakończeniu zapisu (gdy loading się kończy)
+			// Zamknij modal natychmiast po zakończeniu zapisu (optimistic update już zaktualizował UI)
 			setModalIsOpen(false)
 			setHoursWorked('')
 			setAdditionalWorked('')
@@ -674,8 +674,7 @@ function MonthlyCalendar() {
 			setNotes('')
 			setErrorMessage('')
 			
-			// Refresh workdays w tle (bez await, żeby nie blokować zamknięcia modala)
-			refetchWorkdays()
+			// Optimistic update już zaktualizował UI, invalidateQueries w onSuccess zadba o synchronizację z serwerem
 		} catch (error) {
 			console.error('Failed to add/update workday:', error)
 			setErrorMessage(error.response?.data?.message || t('workcalendar.saveError') || 'Błąd podczas zapisywania')
@@ -690,8 +689,7 @@ function MonthlyCalendar() {
 
 		try {
 			await deleteWorkdayMutation.mutateAsync(id)
-			// Refresh workdays after deletion
-			await refetchWorkdays()
+			// Optimistic update już zaktualizował UI, invalidateQueries w onSuccess zadba o synchronizację z serwerem
 		} catch (error) {
 			console.error('Failed to delete workday:', error)
 		}

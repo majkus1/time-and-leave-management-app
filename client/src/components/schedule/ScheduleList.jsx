@@ -42,11 +42,14 @@ function ScheduleList() {
 		}
 	}
 
-	if (isLoading) return <Loader />
-
 	return (
 		<>
 			<Sidebar />
+			{isLoading ? (
+				<div className="content-with-loader">
+					<Loader />
+				</div>
+			) : (
 			<div style={{ padding: '15px' }} className='schedule-container'>
 				<div style={{ marginBottom: '30px' }}>
 					<h2 style={{
@@ -258,6 +261,7 @@ function ScheduleList() {
 					/>
 				)}
 			</div>
+			)}
 		</>
 	)
 }

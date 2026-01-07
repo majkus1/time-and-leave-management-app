@@ -69,7 +69,41 @@ export const useToggleLeavePlan = () => {
 				return response.data
 			}
 		},
+		onMutate: async ({ date, isSelected }) => {
+			// Anuluj wszystkie outgoing queries
+			await queryClient.cancelQueries({ queryKey: ['leavePlans'] })
+
+			// Zapisz snapshot poprzedniej wartości
+			const previousLeavePlans = queryClient.getQueryData(['leavePlans'])
+
+			// Optimistic update - dodaj lub usuń datę z cache
+			queryClient.setQueryData(['leavePlans'], (old) => {
+				if (!old) return old
+				
+				if (isSelected) {
+					// Usuń datę (jest zaznaczona, więc chcemy ją odznaczyć)
+					return old.filter((d) => d !== date)
+				} else {
+					// Dodaj datę (nie jest zaznaczona, więc chcemy ją zaznaczyć)
+					// Sprawdź czy już nie istnieje (dla bezpieczeństwa)
+					if (!old.includes(date)) {
+						return [...old, date]
+					}
+					return old
+				}
+			})
+
+			// Zwróć context z poprzednimi danymi dla rollback
+			return { previousLeavePlans, date, isSelected }
+		},
+		onError: (err, variables, context) => {
+			// Rollback w przypadku błędu (np. jeśli próbowano zaznaczyć święto/weekend)
+			if (context?.previousLeavePlans !== undefined) {
+				queryClient.setQueryData(['leavePlans'], context.previousLeavePlans)
+			}
+		},
 		onSuccess: () => {
+			// Invalidate query, żeby pobrać prawdziwe dane z serwera
 			queryClient.invalidateQueries({ queryKey: ['leavePlans'] })
 		},
 	})
@@ -86,6 +120,28 @@ export const useDeleteLeavePlan = () => {
 				withCredentials: true,
 			})
 			return response.data
+		},
+		onMutate: async (date) => {
+			// Anuluj wszystkie outgoing queries
+			await queryClient.cancelQueries({ queryKey: ['leavePlans'] })
+
+			// Zapisz snapshot poprzedniej wartości
+			const previousLeavePlans = queryClient.getQueryData(['leavePlans'])
+
+			// Optimistic update - usuń datę z cache
+			queryClient.setQueryData(['leavePlans'], (old) => {
+				if (!old) return old
+				return old.filter((d) => d !== date)
+			})
+
+			// Zwróć context z poprzednimi danymi dla rollback
+			return { previousLeavePlans }
+		},
+		onError: (err, date, context) => {
+			// Rollback w przypadku błędu
+			if (context?.previousLeavePlans !== undefined) {
+				queryClient.setQueryData(['leavePlans'], context.previousLeavePlans)
+			}
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leavePlans'] })

@@ -44,8 +44,34 @@ export const useCreateWorkday = () => {
 			})
 			return response.data
 		},
+		onMutate: async (newWorkday) => {
+			// Anuluj wszystkie outgoing queries, żeby nie nadpisały optimistic update
+			await queryClient.cancelQueries({ queryKey: ['workdays'] })
+
+			// Zapisz snapshot poprzedniej wartości
+			const previousWorkdays = queryClient.getQueryData(['workdays'])
+
+			// Optimistic update - dodaj nowy workday do cache
+			queryClient.setQueryData(['workdays'], (old) => {
+				const newWorkdayWithId = {
+					...newWorkday,
+					_id: `temp-${Date.now()}`,
+					__temp: true, // Flaga że to temporary
+				}
+				return old ? [...old, newWorkdayWithId] : [newWorkdayWithId]
+			})
+
+			// Zwróć context z poprzednimi danymi dla rollback
+			return { previousWorkdays }
+		},
+		onError: (err, newWorkday, context) => {
+			// Rollback w przypadku błędu
+			if (context?.previousWorkdays) {
+				queryClient.setQueryData(['workdays'], context.previousWorkdays)
+			}
+		},
 		onSuccess: () => {
-			// Invalidate wszystkie workdays queries
+			// Invalidate wszystkie workdays queries, żeby pobrać prawdziwe dane z serwera
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 		},
 	})
@@ -61,6 +87,30 @@ export const useUpdateWorkday = () => {
 				withCredentials: true,
 			})
 			return response.data
+		},
+		onMutate: async ({ id, updatedWorkday }) => {
+			// Anuluj wszystkie outgoing queries
+			await queryClient.cancelQueries({ queryKey: ['workdays'] })
+
+			// Zapisz snapshot poprzedniej wartości
+			const previousWorkdays = queryClient.getQueryData(['workdays'])
+
+			// Optimistic update - zaktualizuj workday w cache
+			queryClient.setQueryData(['workdays'], (old) => {
+				if (!old) return old
+				return old.map((workday) =>
+					workday._id === id ? { ...workday, ...updatedWorkday, __temp: true } : workday
+				)
+			})
+
+			// Zwróć context z poprzednimi danymi dla rollback
+			return { previousWorkdays }
+		},
+		onError: (err, variables, context) => {
+			// Rollback w przypadku błędu
+			if (context?.previousWorkdays) {
+				queryClient.setQueryData(['workdays'], context.previousWorkdays)
+			}
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
@@ -78,6 +128,28 @@ export const useDeleteWorkday = () => {
 				withCredentials: true,
 			})
 			return response.data
+		},
+		onMutate: async (id) => {
+			// Anuluj wszystkie outgoing queries
+			await queryClient.cancelQueries({ queryKey: ['workdays'] })
+
+			// Zapisz snapshot poprzedniej wartości
+			const previousWorkdays = queryClient.getQueryData(['workdays'])
+
+			// Optimistic update - usuń workday z cache
+			queryClient.setQueryData(['workdays'], (old) => {
+				if (!old) return old
+				return old.filter((workday) => workday._id !== id)
+			})
+
+			// Zwróć context z poprzednimi danymi dla rollback
+			return { previousWorkdays }
+		},
+		onError: (err, id, context) => {
+			// Rollback w przypadku błędu
+			if (context?.previousWorkdays) {
+				queryClient.setQueryData(['workdays'], context.previousWorkdays)
+			}
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
