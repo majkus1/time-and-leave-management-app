@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import MobileMenu from './MobileMenu'
+import HamburgerButton from './HamburgerButton'
 
 function ENBlogFive() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -87,57 +89,34 @@ function ENBlogFive() {
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
 						</Link>
 					</nav>
-					<button
-						className="lg:hidden text-gray-700 text-3xl focus:outline-none"
-						onClick={toggleMenu}
-						style={{ fontSize: '36px' }}>
-						{menuOpen ? '✕' : '☰'}
-					</button>
+					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
-				{menuOpen && (
-					<div
-						className="navmobile lg:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-3 flex flex-col items-start">
-						<Link
-							href="/en#aboutapp"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							About App
-						</Link>
-						<Link
-							href="/en#prices"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Pricing
-						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Contact
-						</Link>
-						<Link
-							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4"
-							onClick={toggleMenu}>
-							Blog
-						</Link>
-						<Link
-							href="https://app.planopia.pl"
-							onClick={toggleMenu}
-							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Login
-						</Link>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
-						>
-							Create free team
-						</Link>
-						<Link href="/blog/elektroniczna-ewidencja-czasu-pracy" className="flex items-center languagechoose" style={{ marginTop: '15px' }}>
-							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
-						</Link>
-					</div>
-				)}
 			</header>
+
+			{/* Professional Mobile Menu */}
+			<MobileMenu
+				isOpen={menuOpen}
+				onClose={toggleMenu}
+				lang="en"
+				menuItems={[
+					{ href: '/en#aboutapp', label: 'About the App' },
+					{ href: '/en#prices', label: 'Pricing' },
+					{ href: '/en#contact', label: 'Contact' },
+					{ href: '/en/blog', label: 'Blog' },
+				]}
+				legalItems={[
+					{ href: '/en/terms', label: 'Terms of Service' },
+					{ href: '/en/privacy', label: 'Privacy Policy' },
+					{ href: '/en/dpa', label: 'Data Processing Agreement' },
+				]}
+				loginHref="https://app.planopia.pl/"
+				registerHref="https://app.planopia.pl/team-registration"
+				languageSwitcher={{
+					href: '/blog/elektroniczna-ewidencja-czasu-pracy',
+					flagSrc: '/img/poland.webp',
+					alt: 'Polish version'
+				}}
+			/>
 
 			{/* HERO */}
 			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">

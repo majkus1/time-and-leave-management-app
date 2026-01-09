@@ -111,6 +111,17 @@ function MonthlyCalendar() {
 		return t('workcalendar.overtime5plus')
 	}
 
+	// Funkcja do formatowania godzin - usuwa niepotrzebne zera dziesiętne (np. 8.5 zamiast 8.50, 8 zamiast 8.0)
+	const formatHours = (hours) => {
+		if (hours === null || hours === undefined) return ''
+		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
+		if (isNaN(numHours)) return ''
+		// Jeśli liczba jest całkowita, wyświetl bez miejsc dziesiętnych
+		if (numHours % 1 === 0) return numHours.toString()
+		// W przeciwnym razie wyświetl z jedną cyfrą po przecinku, ale usuń końcowe zera
+		return numHours.toFixed(1).replace(/\.0$/, '')
+	}
+
 	// TanStack Query hooks
 	const { data: workdays = [], isLoading: loadingWorkdays, refetch: refetchWorkdays } = useWorkdays()
 	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
@@ -439,8 +450,29 @@ function MonthlyCalendar() {
 
 		// Normalizuj wartości - usuń białe znaki i sprawdź czy są puste
 		const hoursWorkedValue = hoursWorked && hoursWorked.trim() !== '' ? hoursWorked.trim() : ''
+		const additionalWorkedValue = additionalWorked && additionalWorked.trim() !== '' ? additionalWorked.trim() : ''
 		const absenceTypeValue = absenceType && absenceType.trim() !== '' ? absenceType.trim() : ''
 		const notesValue = notes && notes.trim() !== '' ? notes.trim() : ''
+
+		// Walidacja godzin - sprawdź czy wartości są prawidłowe (wielokrotności 0.5, zakres 0-24)
+		const validateHours = (value, maxHours = 24) => {
+			if (!value || value.trim() === '') return true // Pusty jest OK
+			const numValue = parseFloat(value)
+			if (isNaN(numValue) || numValue < 0 || numValue > maxHours) return false
+			// Sprawdź czy wartość jest wielokrotnością 0.5 (z tolerancją dla błędów zmiennoprzecinkowych)
+			const remainder = (numValue * 2) % 1
+			return Math.abs(remainder) < 0.01 || Math.abs(remainder - 1) < 0.01
+		}
+
+		if (hoursWorkedValue && !validateHours(hoursWorkedValue, 24)) {
+			setErrorMessage(t('workcalendar.invalidHours') || 'Godziny muszą być liczbą od 0 do 24, możesz wpisać pół godziny (np. 8.5).')
+			return
+		}
+
+		if (additionalWorkedValue && !validateHours(additionalWorkedValue, 100)) {
+			setErrorMessage(t('workcalendar.invalidOvertime') || 'Nadgodziny muszą być liczbą większą lub równą 0, możesz wpisać pół godziny (np. 1.5).')
+			return
+		}
 
 		// Sprawdź czy próbujemy dodać tylko uwagi
 		const isNotesOnly = !hoursWorkedValue && !absenceTypeValue && notesValue
@@ -630,10 +662,17 @@ function MonthlyCalendar() {
 		let finalNotes = notesValue || null
 
 		// Jeśli to weekend lub święto, upewnij się że tylko uwagi są zapisane (reszta null)
+		// Parsuj wartości godzin jako float aby obsługiwać pół godziny (np. 8.5)
+		const parseHoursValue = (value) => {
+			if (!value || value.trim() === '') return null
+			const parsed = parseFloat(value)
+			return isNaN(parsed) ? null : parsed
+		}
+
 		const data = {
 			date: selectedDate,
-			hoursWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue ? parseInt(hoursWorkedValue) : null),
-			additionalWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && additionalWorked && additionalWorked.trim() !== '' ? parseInt(additionalWorked) : null),
+			hoursWorked: (isWeekendDay || isHolidayDay) ? null : parseHoursValue(hoursWorkedValue),
+			additionalWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && additionalWorked && additionalWorked.trim() !== '' ? parseHoursValue(additionalWorked) : null),
 			realTimeDayWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null),
 			absenceType: (isWeekendDay || isHolidayDay) ? null : (absenceTypeValue ? absenceTypeValue : null),
 			notes: finalNotes,
@@ -826,9 +865,9 @@ function MonthlyCalendar() {
 							
 							if (hasHoursWorked) {
 								// Wpis z godzinami pracy
-								title = `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')}`
+								title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
 								if (day.additionalWorked) {
-									title += ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
+									title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
 								}
 								if (day.notes) {
 									title += ` | ${day.notes}`
@@ -1007,10 +1046,10 @@ function MonthlyCalendar() {
 					<img src="/img/calendar mono.png" /> {t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {totalHours} {t('workcalendar.allfrommonthhours')}
+				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {additionalHours} {getOvertimeWord(additionalHours)}
+				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(Math.round(additionalHours))}
 				</p>
 
 				<p className='allfrommonth-p'>
@@ -1337,7 +1376,7 @@ function MonthlyCalendar() {
 							}}>
 								{existingWorkdays.map((workday) => {
 									const displayText = workday.hoursWorked
-										? `${workday.hoursWorked} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${workday.additionalWorked} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
+										? `${formatHours(workday.hoursWorked)} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${formatHours(workday.additionalWorked)} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
 										: workday.absenceType
 										? workday.absenceType
 										: workday.notes
@@ -1509,9 +1548,10 @@ function MonthlyCalendar() {
 												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 												<input
 													type="number"
-													min="1"
+													min="0"
 													max="24"
-													placeholder={t('workcalendar.placeholder1')}
+													step="0.5"
+													placeholder={t('workcalendar.placeholder1') || 'np. 8 lub 8.5'}
 													value={hoursWorked}
 													onChange={e => setHoursWorked(e.target.value)}
 													disabled={isHolidayDay || isWeekendDay}
@@ -1523,7 +1563,8 @@ function MonthlyCalendar() {
 												<input
 													type="number"
 													min="0"
-													placeholder={t('workcalendar.placeholder2')}
+													step="0.5"
+													placeholder={t('workcalendar.placeholder2') || 'np. 1 lub 1.5'}
 													value={additionalWorked}
 													onChange={e => setAdditionalWorked(e.target.value)}
 													disabled={isHolidayDay || isWeekendDay}
@@ -1706,9 +1747,10 @@ function MonthlyCalendar() {
 									<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 									<input
 										type="number"
-										min="1"
+										min="0"
 										max="24"
-										placeholder={t('workcalendar.placeholder1')}
+										step="0.5"
+										placeholder={t('workcalendar.placeholder1') || 'np. 8 lub 8.5'}
 										value={hoursWorked}
 										onChange={e => setHoursWorked(e.target.value)}
 										disabled={isHolidayDay || isWeekendDay}
@@ -1720,7 +1762,8 @@ function MonthlyCalendar() {
 									<input
 										type="number"
 										min="0"
-										placeholder={t('workcalendar.placeholder2')}
+										step="0.5"
+										placeholder={t('workcalendar.placeholder2') || 'np. 1 lub 1.5'}
 										value={additionalWorked}
 										onChange={e => setAdditionalWorked(e.target.value)}
 										disabled={isHolidayDay || isWeekendDay}

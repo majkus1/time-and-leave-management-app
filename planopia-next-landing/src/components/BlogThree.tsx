@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import MobileMenu from './MobileMenu'
+import HamburgerButton from './HamburgerButton'
 
 function BlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -84,61 +86,34 @@ function BlogThree() {
 						</Link>
 					</nav>
 
-					<button
-						className="lg:hidden text-gray-700 text-3xl focus:outline-none"
-						onClick={toggleMenu}
-						style={{ fontSize: '36px' }}>
-						{menuOpen ? '✕' : '☰'}
-					</button>
+					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
-				{menuOpen && (
-					<div
-						className="navmobile lg:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-3 flex flex-col items-start">
-						<Link
-							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							O Aplikacji
-						</Link>
-						<Link
-							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Cennik
-						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Kontakt
-						</Link>
-						<Link
-							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4"
-							onClick={toggleMenu}>
-							Blog
-						</Link>
-						<Link
-							href="https://app.planopia.pl/"
-							onClick={toggleMenu}
-							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Logowanie
-						</Link>
-
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
-						>
-							Załóż darmowy zespół
-						</Link>
-						<Link
-							href="/en/blog/leave-planning"
-							className="flex items-center languagechoose"
-							style={{ marginTop: '15px' }}>
-							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
-						</Link>
-					</div>
-				)}
 			</header>
+
+			{/* Professional Mobile Menu */}
+			<MobileMenu
+				isOpen={menuOpen}
+				onClose={toggleMenu}
+				lang="pl"
+				menuItems={[
+					{ href: '/#oaplikacji', label: 'O Aplikacji' },
+					{ href: '/#cennik', label: 'Cennik' },
+					{ href: '/#kontakt', label: 'Kontakt' },
+					{ href: '/blog', label: 'Blog' },
+				]}
+				legalItems={[
+					{ href: '/terms', label: 'Regulamin' },
+					{ href: '/privacy', label: 'Polityka prywatności' },
+					{ href: '/dpa', label: 'Umowa DPA' },
+				]}
+				loginHref="https://app.planopia.pl/"
+				registerHref="https://app.planopia.pl/team-registration"
+				languageSwitcher={{
+					href: '/en/blog/leave-planning',
+					flagSrc: '/img/united-kingdom.webp',
+					alt: 'English version'
+				}}
+			/>
 
 			{/* HERO */}
 			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero" style={{ marginTop: '70px' }}>

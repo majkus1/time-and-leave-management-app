@@ -5,11 +5,18 @@ const User = require('../models/user')(firmDb)
 exports.addWorkday = async (req, res) => {
 	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 	try {
+		// Funkcja pomocnicza do parsowania godzin z obsługą liczb dziesiętnych (np. 8.5)
+		const parseHoursValue = (value) => {
+			if (value === null || value === undefined || value === '') return null
+			const parsed = parseFloat(value)
+			return isNaN(parsed) ? null : parsed
+		}
+
 		const workday = new Workday({
 			userId: req.user.userId,
 			date,
-			hoursWorked,
-			additionalWorked,
+			hoursWorked: parseHoursValue(hoursWorked),
+			additionalWorked: parseHoursValue(additionalWorked),
 			realTimeDayWorked,
 			absenceType,
 			notes,
@@ -38,9 +45,16 @@ exports.updateWorkday = async (req, res) => {
 		const workday = await Workday.findOne({ _id: req.params.id, userId: req.user.userId })
 		if (!workday) return res.status(404).send('Workday not found or unauthorized')
 		
+		// Funkcja pomocnicza do parsowania godzin z obsługą liczb dziesiętnych (np. 8.5)
+		const parseHoursValue = (value) => {
+			if (value === null || value === undefined || value === '') return null
+			const parsed = parseFloat(value)
+			return isNaN(parsed) ? null : parsed
+		}
+		
 		// Aktualizuj wszystkie pola, jeśli są przekazane
-		if (hoursWorked !== undefined) workday.hoursWorked = hoursWorked ? parseInt(hoursWorked) : null
-		if (additionalWorked !== undefined) workday.additionalWorked = additionalWorked ? parseInt(additionalWorked) : null
+		if (hoursWorked !== undefined) workday.hoursWorked = parseHoursValue(hoursWorked)
+		if (additionalWorked !== undefined) workday.additionalWorked = parseHoursValue(additionalWorked)
 		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
 		if (absenceType !== undefined) workday.absenceType = absenceType || null
 		if (notes !== undefined) workday.notes = notes || null

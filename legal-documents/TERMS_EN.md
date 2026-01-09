@@ -39,7 +39,7 @@
 
 4.2. Paid plans are charged according to the selected subscription plan.
 
-4.3. The Service Provider issues VAT invoices in accordance with applicable law.
+4.3. The Service Provider issues invoices in accordance with applicable law. Currently, the Service Provider is exempt from VAT obligations under Article 113(1) of the VAT Act (exemption for small taxpayers at the beginning of business activity).
 
 4.4. In case of non-payment for a paid plan, access may be suspended.
 

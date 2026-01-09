@@ -8,11 +8,12 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { registerLocale } from 'react-datepicker'
 import { enGB } from 'date-fns/locale/en-GB'
+import MobileMenu from './MobileMenu'
+import HamburgerButton from './HamburgerButton'
 
 function ENProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
-	const [legalDropdownOpenMobile, setLegalDropdownOpenMobile] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 	const [email, setEmail] = useState('')
 	const [message, setMessage] = useState('')
@@ -171,99 +172,36 @@ function ENProductPromotion() {
 						</Link>
 					</nav>
 
-					<button
-						className="lg:hidden text-gray-700 text-3xl focus:outline-none"
-						onClick={toggleMenu}
-						style={{ fontSize: '36px' }}>
-						{menuOpen ? '✕' : '☰'}
-					</button>
+					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
-
-				{menuOpen && (
-					<div className="navmobile lg:hidden bg-white border-t border-gray-200 px-4 py-4 space-y-3 flex flex-col items-start">
-						<a
-							href="#aboutapp"
-							onClick={toggleMenu}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							About the App
-						</a>
-						<a
-							href="#prices"
-							onClick={toggleMenu}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Pricing
-						</a>
-						<a
-							href="#contact"
-							onClick={toggleMenu}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4">
-							Contact
-						</a>
-						<Link
-							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition mb-4"
-							onClick={toggleMenu}>
-							Blog
-						</Link>
-						{/* Mobile Dropdown Legal */}
-						<div className="w-full mb-4">
-							<button
-								onClick={() => setLegalDropdownOpenMobile(!legalDropdownOpenMobile)}
-								className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center w-full justify-center">
-								<span>Legal</span>
-								<svg 
-									className={`w-4 h-4 transition-transform ${legalDropdownOpenMobile ? 'transform rotate-180' : ''}`} 
-									fill="none" 
-									stroke="currentColor" 
-									viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
-							{legalDropdownOpenMobile && (
-								<div className="mt-2 space-y-2">
-									<Link
-										href="/en/terms"
-										onClick={toggleMenu}
-										className="block text-gray-600 hover:text-blue-600 transition">
-										Terms of Service
-									</Link>
-									<Link
-										href="/en/privacy"
-										onClick={toggleMenu}
-										className="block text-gray-600 hover:text-blue-600 transition">
-										Privacy Policy
-									</Link>
-									<Link
-										href="/en/dpa"
-										onClick={toggleMenu}
-										className="block text-gray-600 hover:text-blue-600 transition">
-										Data Processing Agreement
-									</Link>
-								</div>
-							)}
-						</div>
-						<Link
-							href="https://app.planopia.pl/"
-							onClick={toggleMenu}
-							className="w-full text-center bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded mb-4 hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Login
-						</Link>
-
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="ctamenu w-full text-center bg-green-600 text-white font-semibold py-2 px-4 rounded mb-4 shadow hover:bg-green-700 transition"
-						>
-							Create a free team
-						</Link>
-						<Link href="/" className="flex items-center languagechoose mt-4">
-							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
-						</Link>
-					</div>
-				)}
 			</header>
 
+			{/* Professional Mobile Menu */}
+			<MobileMenu
+				isOpen={menuOpen}
+				onClose={toggleMenu}
+				lang="en"
+				menuItems={[
+					{ href: '#aboutapp', label: 'About the App' },
+					{ href: '#prices', label: 'Pricing' },
+					{ href: '#contact', label: 'Contact' },
+					{ href: '/en/blog', label: 'Blog' },
+				]}
+				legalItems={[
+					{ href: '/en/terms', label: 'Terms of Service' },
+					{ href: '/en/privacy', label: 'Privacy Policy' },
+					{ href: '/en/dpa', label: 'Data Processing Agreement' },
+				]}
+				loginHref="https://app.planopia.pl/"
+				registerHref="https://app.planopia.pl/team-registration"
+				languageSwitcher={{
+					href: '/',
+					flagSrc: '/img/poland.webp',
+					alt: 'Polish version'
+				}}
+			/>
+
+			<main>
 			{/* HERO */}
 			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
@@ -286,6 +224,10 @@ function ENProductPromotion() {
 							src="/img/headerimage.webp"
 							alt="businessman managing calendar in the app"
 							className="rounded-xl w-full h-auto aspect-[3/2]"
+							loading="eager"
+							fetchPriority="high"
+							width={800}
+							height={533}
 						/>
 					</div>
 				</div>
@@ -307,7 +249,7 @@ function ENProductPromotion() {
 							<div className="mt-8 grid sm:grid-cols-2 gap-4">
 								{/* 1 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/schedule time works.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/schedule time works.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Work time tracking</p>
 										<p className="text-sm text-gray-600">Calendar, overtime, and work summaries.</p>
@@ -315,7 +257,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 2 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/sunbed.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/sunbed.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Leaves and absences</p>
 										<p className="text-sm text-gray-600">Requests, approvals, notifications.</p>
@@ -323,7 +265,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 3 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/pdf.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/pdf.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Documents</p>
 										<p className="text-sm text-gray-600">Generate PDF and Excel: work calendars and leave requests always at hand.</p>
@@ -331,7 +273,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 4 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/project.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/project.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Work schedules</p>
 										<p className="text-sm text-gray-600">Planning and managing work schedules for the entire team.</p>
@@ -339,7 +281,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 5 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/chat.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/chat.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Chats</p>
 										<p className="text-sm text-gray-600">Internal communication — team chats and department channels.</p>
@@ -347,7 +289,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 6 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/task-list.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/task-list.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Task boards</p>
 										<p className="text-sm text-gray-600">Project and task management in clear Kanban boards.</p>
@@ -355,7 +297,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 7 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/verified.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/verified.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Security</p>
 										<p className="text-sm text-gray-600">Secure login and encrypted connections protect your company.</p>
@@ -363,7 +305,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 8 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/booking.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/booking.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">PWA & mobile</p>
 										<p className="text-sm text-gray-600">Add to your screen and use it like an app.</p>
@@ -371,7 +313,7 @@ function ENProductPromotion() {
 								</div>
 								{/* 9 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="img/technical-support.png" className="icon-landing-about" alt='icon in section' />
+									<img src="/img/technical-support.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Dedicated support</p>
 										<p className="text-sm text-gray-600">Chat and help for your team — whenever you need it.</p>
@@ -395,14 +337,16 @@ function ENProductPromotion() {
 						{/* Product mockup */}
 						<div className="relative flex justify-center items-center mockup-rotator">
 							<img
-								src="img/desktop-ennew.webp"
+								src="/img/desktop-ennew.webp"
 								alt="Planopia – desktop view"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 desktop-mockup"
+								loading="eager"
 							/>
 							<img
-								src="img/mobile-ennew.webp"
+								src="/img/mobile-ennew.webp"
 								alt="Planopia – mobile view"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
+								loading="eager"
 							/>
 						</div>
 					</div>
@@ -520,7 +464,7 @@ function ENProductPromotion() {
 						<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 text-left">
 							{/* More users */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/add-user.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/add-user.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Unlimited users</p>
 									<p className="text-sm text-gray-600">Grow without limits — add as many people as you need.</p>
@@ -529,7 +473,7 @@ function ENProductPromotion() {
 
 							{/* Custom branding */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/creativity.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/creativity.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Custom branding</p>
 									<p className="text-sm text-gray-600">Your logo, colors, and company style in the app.</p>
@@ -538,7 +482,7 @@ function ENProductPromotion() {
 
 							{/* Custom features */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/settings.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/settings.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Custom features</p>
 									<p className="text-sm text-gray-600">Add-ons and modifications tailored to your processes.</p>
@@ -547,7 +491,7 @@ function ENProductPromotion() {
 
 							{/* Integrations */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/add.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/add.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Custom integrations</p>
 									<p className="text-sm text-gray-600">RCP, imports, automations — connect Planopia with your systems.</p>
@@ -556,7 +500,7 @@ function ENProductPromotion() {
 
 							{/* Support */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/technical-support.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/technical-support.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Dedicated 24/7 support</p>
 									<p className="text-sm text-gray-600">Chat and quick help whenever you need it.</p>
@@ -565,7 +509,7 @@ function ENProductPromotion() {
 
 							{/* Dedicated environment */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/database.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/database.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">Dedicated environment</p>
 									<p className="text-sm text-gray-600">Unique subdomain and isolated database for your company. <span className="font-semibold">+ $7 for dedicated server — optional.</span></p>
@@ -574,7 +518,7 @@ function ENProductPromotion() {
 
 							{/* PWA / Mobile */}
 							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="img/booking.png" className="icon-landing-about" alt='icon in secion about app' />
+								<img src="/img/booking.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
 								<div>
 									<p className="font-semibold text-gray-900">PWA & mobile</p>
 									<p className="text-sm text-gray-600">Add to your home screen and use it like a mobile app.</p>
@@ -717,6 +661,8 @@ function ENProductPromotion() {
 					</div>
 				</div>
 			</section>
+
+			</main>
 
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">

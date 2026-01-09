@@ -65,6 +65,17 @@ function UserCalendar() {
 		// Wszystkie inne (0, 5-21, 25-31...) używa "nadgodzin"
 		return t('workcalendar.overtime5plus')
 	}
+
+	// Funkcja do formatowania godzin - usuwa niepotrzebne zera dziesiętne (np. 8.5 zamiast 8.50, 8 zamiast 8.0)
+	const formatHours = (hours) => {
+		if (hours === null || hours === undefined) return ''
+		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
+		if (isNaN(numHours)) return ''
+		// Jeśli liczba jest całkowita, wyświetl bez miejsc dziesiętnych
+		if (numHours % 1 === 0) return numHours.toString()
+		// W przeciwnym razie wyświetl z jedną cyfrą po przecinku, ale usuń końcowe zera
+		return numHours.toFixed(1).replace(/\.0$/, '')
+	}
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
@@ -596,8 +607,8 @@ function UserCalendar() {
 				[t('workcalendar.excel.summary'), ''],
 				['', ''],
 				[t('workcalendar.allfrommonth1'), totalWorkDays],
-				[t('workcalendar.allfrommonth2'), `${totalHours} ${t('workcalendar.allfrommonthhours')}`],
-				[t('workcalendar.allfrommonth3'), `${additionalHours} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth2'), `${formatHours(totalHours)} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth3'), `${formatHours(additionalHours)} ${t('workcalendar.allfrommonthhours')}`],
 				[t('workcalendar.allfrommonth4'), totalLeaveDays],
 				[t('workcalendar.allfrommonth5'), totalOtherAbsences],
 				['', ''],
@@ -833,9 +844,9 @@ function UserCalendar() {
 										
 										if (hasHoursWorked) {
 											// Wpis z godzinami pracy
-											title = `${day.hoursWorked} ${t('workcalendar.allfrommonthhours')}`
+											title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
 											if (day.additionalWorked) {
-												title += ` ${t('workcalendar.include')} ${day.additionalWorked} ${getOvertimeWord(day.additionalWorked)}`
+												title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
 											}
 											if (day.notes) {
 												title += ` | ${day.notes}`
@@ -940,10 +951,10 @@ function UserCalendar() {
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth2')} {totalHours} {t('workcalendar.allfrommonthhours')}
+					{t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth3')} {additionalHours} {getOvertimeWord(additionalHours)}
+					{t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(Math.round(additionalHours))}
 				</p>
 
 				<p>
