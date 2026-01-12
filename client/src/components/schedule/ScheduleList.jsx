@@ -29,7 +29,7 @@ function ScheduleList() {
 
 	const handleDeleteSchedule = async (schedule) => {
 		const confirmed = await showConfirm(
-			t('schedule.deleteConfirm') || 'Czy na pewno chcesz usunąć ten grafik?'
+			t('schedule.deleteScheduleConfirm') || 'Czy na pewno chcesz usunąć ten grafik?'
 		)
 		if (!confirmed) return
 
