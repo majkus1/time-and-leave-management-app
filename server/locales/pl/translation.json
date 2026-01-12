@@ -23,7 +23,9 @@
 			"requestCancelledHR": "Wniosek urlopowy został anulowany.",
 			"requestUpdatedSupervisor": "Wniosek urlopowy został zaktualizowany i wymaga Twojego przeglądu.",
 			"newL4Request": "Otrzymałeś powiadomienie o zwolnieniu lekarskim (L4).",
-			"l4Info": "To jest powiadomienie o zwolnieniu lekarskim (L4). Wniosek został automatycznie dodany do kalendarza urlopowego i nie wymaga zatwierdzenia."
+			"newAutoApprovedRequest": "Otrzymałeś powiadomienie o nowym zgłoszeniu urlopu/nieobecności, które zostało automatycznie dodane do kalendarza.",
+			"l4Info": "To jest powiadomienie o zwolnieniu lekarskim (L4). Wniosek został automatycznie dodany do kalendarza urlopowego i nie wymaga zatwierdzenia.",
+			"autoApprovedInfo": "To powiadomienie o zgłoszeniu urlopu/nieobecności. Wniosek został automatycznie dodany do kalendarza urlopowego i nie wymaga zatwierdzenia."
 		},
 		"welcome": {
 			"subject": "Witaj w planopia.pl",

@@ -5,13 +5,16 @@ import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useUser } from '../../hooks/useUsers'
-import { useVacationDays, useUpdateVacationDays } from '../../hooks/useVacation'
+import { useUpdateVacationDays } from '../../hooks/useVacation'
 import { useUserLeaveRequests, useUpdateLeaveRequestStatus } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 function AdminLeaveRequests() {
 	const { userId } = useParams()
-	const [vacationDays, setVacationDays] = useState(null)
+	const [leaveTypeDays, setLeaveTypeDays] = useState({})
 	const [showVacationUpdateMessage, setShowVacationUpdateMessage] = useState(false)
+	const [updatingRequestId, setUpdatingRequestId] = useState(null)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
@@ -19,32 +22,61 @@ function AdminLeaveRequests() {
 	// TanStack Query hooks
 	const { data: user, isLoading: loadingUser } = useUser(userId)
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useUserLeaveRequests(userId)
-	const { data: vacationDaysData, isLoading: loadingVacationDays } = useVacationDays(userId)
+	const { data: settings, isLoading: loadingSettings } = useSettings()
 	const updateVacationDaysMutation = useUpdateVacationDays()
 	const updateLeaveRequestStatusMutation = useUpdateLeaveRequestStatus()
 
-	const loading = loadingUser || loadingRequests || loadingVacationDays
+	const loading = loadingUser || loadingRequests || loadingSettings
 
-	// Sync vacationDays z query data
+	// Pobierz typy urlopów, które mają allowDaysLimit: true
+	const leaveTypesWithLimit = React.useMemo(() => {
+		if (!settings || !settings.leaveRequestTypes) return []
+		return settings.leaveRequestTypes.filter(type => type.isEnabled && type.allowDaysLimit)
+	}, [settings])
+
+	// Sync leaveTypeDays z user data
 	React.useEffect(() => {
-		if (vacationDaysData !== undefined) {
-			setVacationDays(vacationDaysData)
+		if (user && user.leaveTypeDays) {
+			setLeaveTypeDays(user.leaveTypeDays || {})
 		}
-	}, [vacationDaysData])
+	}, [user])
 
-	const updateVacationDays = async () => {
+	const updateLeaveTypeDays = async () => {
 		try {
+			// Filtruj tylko wartości, które są liczbami (w tym 0)
+			const leaveTypeDaysToSend = {}
+			Object.keys(leaveTypeDays).forEach(typeId => {
+				const value = leaveTypeDays[typeId]
+				if (value !== null && value !== undefined && value !== '') {
+					const numValue = Number(value)
+					if (!isNaN(numValue) && numValue >= 0) {
+						leaveTypeDaysToSend[typeId] = numValue
+					}
+				}
+			})
+			
 			await updateVacationDaysMutation.mutateAsync({
 				userId,
-				vacationDays,
+				leaveTypeDays: leaveTypeDaysToSend,
 			})
+			
 			await showAlert(t('adminleavereq.alert'))
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji liczby dni urlopu:', error)
+			const errorMessage = error.response?.data?.message || t('adminleavereq.updateError') || 'Błąd podczas aktualizacji liczby dni urlopu'
+			await showAlert(errorMessage)
 		}
 	}
 
+	const handleLeaveTypeDaysChange = (typeId, value) => {
+		setLeaveTypeDays(prev => ({
+			...prev,
+			[typeId]: value === '' ? null : Number(value)
+		}))
+	}
+
 	const updateLeaveRequestStatus = async (id, newStatus) => {
+		setUpdatingRequestId(id)
 		try {
 			await updateLeaveRequestStatusMutation.mutateAsync({
 				id,
@@ -55,6 +87,8 @@ function AdminLeaveRequests() {
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
 			await showAlert(t('adminleavereq.updateError'))
+		} finally {
+			setUpdatingRequestId(null)
 		}
 	}
 
@@ -91,34 +125,38 @@ function AdminLeaveRequests() {
 					</h3>
 				)}
 				<div>
-					<label style={{ marginRight: '5px' }}>{t('adminleavereq.label1')}</label>
-					{loadingVacationDays ? (
-						<p>Ładowanie...</p>
-					) : (
+					{leaveTypesWithLimit.length > 0 && (
 						<>
-							<input
-								type="number"
-								value={vacationDays !== null ? vacationDays : ''}
-								onChange={e => {
-									const value = e.target.value
-									if (value === '') {
-										setVacationDays(null)
-									} else {
-										setVacationDays(Number(value))
-									}
-								}}
-								style={{ width: '60px', paddingLeft: '2px' }}
-								className='w-full border border-gray-300 rounded-md py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-							/>
-							<button onClick={updateVacationDays} style={{ marginLeft: '5px' }} className="btn btn-success">
-								{t('adminleavereq.btnupdatenumber')}
-							</button>
+							<div style={{ marginBottom: '15px' }}>
+								<label style={{ marginRight: '5px', fontWeight: '600', fontSize: '16px', display: 'block', marginBottom: '10px' }}>
+									{t('adminleavereq.label1') || 'Dni urlopu'}
+								</label>
+								{leaveTypesWithLimit.map(leaveType => {
+									const typeName = i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name
+									const currentValue = leaveTypeDays[leaveType.id] || ''
+									return (
+										<div key={leaveType.id} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+											<label style={{ minWidth: '200px', fontSize: '14px' }}>{typeName}:</label>
+											<input
+												type="number"
+												min="0"
+												value={currentValue}
+												onChange={e => handleLeaveTypeDaysChange(leaveType.id, e.target.value)}
+												style={{ width: '80px', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+												className='focus:outline-none focus:ring-2 focus:ring-blue-500'
+											/>
+										</div>
+									)
+								})}
+								<button onClick={updateLeaveTypeDays} style={{ marginTop: '10px' }} className="btn btn-success">
+									{t('adminleavereq.btnupdatenumber') || 'Zaktualizuj'}
+								</button>
+							</div>
 						</>
 					)}
-					<br></br>
 					<div style={{ 
 						marginTop: '8px', 
-						marginBottom: '8px',
+						marginBottom: '38px',
 						padding: '10px 12px',
 						backgroundColor: '#fff3cd',
 						border: '1px solid #ffc107',
@@ -141,7 +179,7 @@ function AdminLeaveRequests() {
 					{leaveRequests.map(request => (
 						<li key={request._id} style={{ marginBottom: '30px' }}>
 							<p>
-								{t('adminleavereq.type')} {t(request.type)}
+								{t('adminleavereq.type')} {getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 							</p>
 							<p>
 								{t('adminleavereq.date')} {formatDate(request.startDate)} - {formatDate(request.endDate)}
@@ -174,25 +212,79 @@ function AdminLeaveRequests() {
 									<button
 										onClick={() => {
 											updateLeaveRequestStatus(request._id, 'status.accepted')
-											if (request.type === 'leaveform.option1') {
-												setShowVacationUpdateMessage(true)
+											// Sprawdź czy typ ma allowDaysLimit - wtedy pokaż przypomnienie
+											if (settings && settings.leaveRequestTypes) {
+												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
+												if (leaveType && leaveType.allowDaysLimit) {
+													setShowVacationUpdateMessage(true)
+												}
 											}
 										}}
-										style={{ marginRight: '5px' }}
+										disabled={updatingRequestId === request._id}
+										style={{ 
+											marginRight: '5px',
+											opacity: updatingRequestId === request._id ? 0.6 : 1,
+											cursor: updatingRequestId === request._id ? 'not-allowed' : 'pointer',
+											position: 'relative'
+										}}
 										className="btn btn-success">
-										{t('adminleavereq.btn1')}
+										{updatingRequestId === request._id ? (
+											<>
+												<span style={{ 
+													display: 'inline-block',
+													width: '14px',
+													height: '14px',
+													border: '2px solid rgba(255,255,255,0.3)',
+													borderTopColor: '#fff',
+													borderRadius: '50%',
+													animation: 'spin 0.8s linear infinite',
+													marginRight: '6px',
+													verticalAlign: 'middle'
+												}}></span>
+												{t('adminleavereq.btn1')}
+											</>
+										) : (
+											t('adminleavereq.btn1')
+										)}
 									</button>
 
 									<button
 										onClick={() => {
 											updateLeaveRequestStatus(request._id, 'status.rejected')
-											if (request.type === 'leaveform.option1') {
-												setShowVacationUpdateMessage(true)
+											// Sprawdź czy typ ma allowDaysLimit - wtedy pokaż przypomnienie
+											if (settings && settings.leaveRequestTypes) {
+												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
+												if (leaveType && leaveType.allowDaysLimit) {
+													setShowVacationUpdateMessage(true)
+												}
 											}
 										}}
-										style={{ marginRight: '5px' }}
+										disabled={updatingRequestId === request._id}
+										style={{ 
+											marginRight: '5px',
+											opacity: updatingRequestId === request._id ? 0.6 : 1,
+											cursor: updatingRequestId === request._id ? 'not-allowed' : 'pointer',
+											position: 'relative'
+										}}
 										className="btn btn-danger">
-										{t('adminleavereq.btn2')}
+										{updatingRequestId === request._id ? (
+											<>
+												<span style={{ 
+													display: 'inline-block',
+													width: '14px',
+													height: '14px',
+													border: '2px solid rgba(255,255,255,0.3)',
+													borderTopColor: '#fff',
+													borderRadius: '50%',
+													animation: 'spin 0.8s linear infinite',
+													marginRight: '6px',
+													verticalAlign: 'middle'
+												}}></span>
+												{t('adminleavereq.btn2')}
+											</>
+										) : (
+											t('adminleavereq.btn2')
+										)}
 									</button>
 								</>
 							)}

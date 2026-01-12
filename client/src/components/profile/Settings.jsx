@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useSettings, useUpdateSettings } from '../../hooks/useSettings'
+import { useLeaveRequestTypes, useUpdateLeaveRequestTypes, useAddCustomLeaveRequestType, useDeleteCustomLeaveRequestType } from '../../hooks/useLeaveRequestTypes'
 import Modal from 'react-modal'
 import { getPolishHolidaysForYear } from '../../utils/holidays'
 import { calculateHours } from '../../utils/timeHelpers'
@@ -16,7 +17,7 @@ if (typeof window !== 'undefined') {
 function Settings() {
 	const { t, i18n } = useTranslation()
 	const { role } = useAuth()
-	const { showAlert } = useAlert()
+	const { showAlert, showConfirm } = useAlert()
 	const { data: settings, isLoading: loadingSettings } = useSettings()
 	const updateSettingsMutation = useUpdateSettings()
 	const [workOnWeekends, setWorkOnWeekends] = useState(true)
@@ -37,6 +38,19 @@ function Settings() {
 	const [isInfoExpanded, setIsInfoExpanded] = useState(false)
 	const [isHolidayInfoExpanded, setIsHolidayInfoExpanded] = useState(false)
 	const [isPolishHolidaysModalOpen, setIsPolishHolidaysModalOpen] = useState(false)
+	
+	// Leave Request Types
+	const { data: leaveRequestTypes = [], isLoading: loadingLeaveTypes } = useLeaveRequestTypes()
+	const updateLeaveRequestTypesMutation = useUpdateLeaveRequestTypes()
+	const addCustomLeaveRequestTypeMutation = useAddCustomLeaveRequestType()
+	const deleteCustomLeaveRequestTypeMutation = useDeleteCustomLeaveRequestType()
+	const [showAddCustomTypeForm, setShowAddCustomTypeForm] = useState(false)
+	const [newCustomType, setNewCustomType] = useState({
+		name: '',
+		nameEn: '',
+		requireApproval: true,
+		allowDaysLimit: false
+	})
 
 	// Helper function to calculate hours from time range
 	const calculateHours = (timeFrom, timeTo) => {
@@ -158,7 +172,82 @@ function Settings() {
 		}
 	}
 
-	if (loadingSettings) return <Loader />
+	// Funkcje do zarządzania typami wniosków urlopowych
+	const handleToggleTypeEnabled = async (typeId) => {
+		try {
+			const updatedTypes = leaveRequestTypes.map(type => 
+				type.id === typeId ? { ...type, isEnabled: !type.isEnabled } : type
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error toggling type enabled:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
+	const handleToggleTypeAllowDaysLimit = async (typeId) => {
+		try {
+			const updatedTypes = leaveRequestTypes.map(type => 
+				type.id === typeId ? { ...type, allowDaysLimit: !type.allowDaysLimit } : type
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error toggling allowDaysLimit:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
+	const handleToggleTypeRequireApproval = async (typeId) => {
+		try {
+			const updatedTypes = leaveRequestTypes.map(type => 
+				type.id === typeId ? { ...type, requireApproval: !type.requireApproval } : type
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error toggling requireApproval:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
+	const handleAddCustomType = async () => {
+		if (!newCustomType.name.trim()) {
+			await showAlert(t('settings.leaveTypesNameRequired') || 'Nazwa typu jest wymagana')
+			return
+		}
+
+		try {
+			await addCustomLeaveRequestTypeMutation.mutateAsync({
+				name: newCustomType.name.trim(),
+				nameEn: newCustomType.nameEn.trim() || undefined,
+				requireApproval: newCustomType.requireApproval,
+				allowDaysLimit: newCustomType.allowDaysLimit
+			})
+			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false })
+			setShowAddCustomTypeForm(false)
+			await showAlert(t('settings.leaveTypesAddSuccess') || 'Niestandardowy typ został dodany')
+		} catch (error) {
+			console.error('Error adding custom type:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesAddError') || 'Błąd podczas dodawania typu')
+		}
+	}
+
+	const handleDeleteCustomType = async (typeId) => {
+		const confirmed = await showConfirm(t('settings.leaveTypesDeleteConfirm') || 'Czy na pewno chcesz usunąć ten typ wniosku?')
+		if (!confirmed) return
+
+		try {
+			await deleteCustomLeaveRequestTypeMutation.mutateAsync(typeId)
+			await showAlert(t('settings.leaveTypesDeleteSuccess') || 'Typ został usunięty')
+		} catch (error) {
+			console.error('Error deleting custom type:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesDeleteError') || 'Błąd podczas usuwania typu')
+		}
+	}
+
+	if (loadingSettings || loadingLeaveTypes) return <Loader />
 
 	return (
 		<>
@@ -861,6 +950,488 @@ function Settings() {
 							</>
 						)}
 
+						{/* Sekcja zarządzania typami wniosków urlopowych */}
+				{canEditSettings && (
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '15px',
+						marginBottom: '30px'
+					}}>
+						<h3 style={{ 
+							color: '#2c3e50',
+							marginTop: '0',
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600',
+							paddingBottom: '10px',
+							borderBottom: '2px solid #3498db'
+						}}>
+							{t('settings.leaveRequestTypesTitle') || 'Typy wniosków urlopowych'}
+						</h3>
+
+						<div style={{
+							backgroundColor: '#e3f2fd',
+							border: '1px solid #90caf9',
+							borderRadius: '8px',
+							padding: '15px',
+							marginBottom: '20px',
+							color: '#1565c0'
+						}}>
+							<p style={{ margin: 0, lineHeight: '1.6' }}>
+								{t('settings.leaveRequestTypesDescription') || 'Skonfiguruj dostępne typy wniosków urlopowych dla Twojego zespołu. Możesz włączać/wyłączać typy systemowe oraz dodawać własne niestandardowe typy.'}
+							</p>
+						</div>
+
+						{/* Lista typów systemowych */}
+						<div style={{ marginBottom: '30px' }}>
+							<h4 style={{
+								marginBottom: '15px',
+								fontSize: '18px',
+								fontWeight: '600',
+								color: '#2c3e50'
+							}}>
+								{t('settings.systemTypes') || 'Typy systemowe'}
+							</h4>
+							<div style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '15px'
+							}}>
+								{leaveRequestTypes.filter(type => type.isSystem).map(type => {
+									const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
+									return (
+										<div key={type.id} style={{
+											backgroundColor: '#f8f9fa',
+											border: '1px solid #dee2e6',
+											borderRadius: '8px',
+											padding: '15px'
+										}}>
+											<div style={{
+												display: 'flex',
+												justifyContent: 'space-between',
+												alignItems: 'center',
+												marginBottom: '12px'
+											}}>
+												<div style={{ flex: 1 }}>
+													<div style={{
+														fontWeight: '600',
+														fontSize: '16px',
+														color: '#2c3e50',
+														marginBottom: '4px'
+													}}>
+														{displayName}
+													</div>
+													{type.nameEn && i18n.resolvedLanguage === 'pl' && (
+														<div style={{ fontSize: '14px', color: '#6c757d' }}>
+															{type.nameEn}
+														</div>
+													)}
+												</div>
+												<label style={{
+													display: 'flex',
+													alignItems: 'center',
+													cursor: 'pointer',
+													marginLeft: '15px'
+												}}>
+													<input
+														type="checkbox"
+														checked={type.isEnabled}
+														onChange={() => handleToggleTypeEnabled(type.id)}
+														style={{
+															width: '18px',
+															height: '18px',
+															cursor: 'pointer',
+															marginRight: '8px'
+														}}
+													/>
+													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+														{t('settings.enabled') || 'Włączony'}
+													</span>
+												</label>
+											</div>
+											{type.isEnabled && (
+												<div style={{
+													display: 'grid',
+													gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+													gap: '15px',
+													marginTop: '12px',
+													paddingTop: '12px',
+													borderTop: '1px solid #dee2e6'
+												}}>
+													<label style={{
+														display: 'flex',
+														alignItems: 'center',
+														cursor: 'pointer'
+													}}>
+														<input
+															type="checkbox"
+															checked={type.requireApproval}
+															onChange={() => handleToggleTypeRequireApproval(type.id)}
+															style={{
+																width: '18px',
+																height: '18px',
+																cursor: 'pointer',
+																marginRight: '8px'
+															}}
+														/>
+														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+															{t('settings.requireApproval') || 'Wymaga zatwierdzenia'}
+														</span>
+													</label>
+													<label style={{
+														display: 'flex',
+														alignItems: 'center',
+														cursor: 'pointer'
+													}}>
+														<input
+															type="checkbox"
+															checked={type.allowDaysLimit}
+															onChange={() => handleToggleTypeAllowDaysLimit(type.id)}
+															style={{
+																width: '18px',
+																height: '18px',
+																cursor: 'pointer',
+																marginRight: '8px'
+															}}
+														/>
+														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+														</span>
+													</label>
+												</div>
+											)}
+										</div>
+									)
+								})}
+							</div>
+						</div>
+
+						{/* Lista typów niestandardowych */}
+						<div style={{ marginBottom: '30px' }}>
+							<div style={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								marginBottom: '15px'
+							}}>
+								<h4 style={{
+									margin: 0,
+									fontSize: '18px',
+									fontWeight: '600',
+									color: '#2c3e50'
+								}}>
+									{t('settings.customTypes') || 'Typy niestandardowe'}
+								</h4>
+								{!showAddCustomTypeForm && (
+									<button
+										type="button"
+										onClick={() => setShowAddCustomTypeForm(true)}
+										style={{
+											backgroundColor: '#28a745',
+											color: 'white',
+											border: 'none',
+											padding: '8px 16px',
+											borderRadius: '6px',
+											fontSize: '14px',
+											fontWeight: '500',
+											cursor: 'pointer',
+											transition: 'all 0.2s'
+										}}
+										onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+										onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+									>
+										+ {t('settings.addCustomType') || 'Dodaj typ'}
+									</button>
+								)}
+							</div>
+
+							{showAddCustomTypeForm && (
+								<div style={{
+									backgroundColor: '#fff3cd',
+									border: '2px solid #ffc107',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px'
+								}}>
+									<h5 style={{
+										marginTop: 0,
+										marginBottom: '15px',
+										fontSize: '16px',
+										fontWeight: '600',
+										color: '#856404'
+									}}>
+										{t('settings.newCustomType') || 'Nowy typ niestandardowy'}
+									</h5>
+									<div style={{
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '15px'
+									}}>
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '8px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('settings.typeName') || 'Nazwa (PL)'} *
+											</label>
+											<input
+												type="text"
+												value={newCustomType.name}
+												onChange={(e) => setNewCustomType({ ...newCustomType, name: e.target.value })}
+												placeholder={t('settings.typeNamePlaceholder') || 'np. Urlop okolicznościowy'}
+												style={{
+													width: '100%',
+													padding: '10px',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px',
+													fontSize: '14px'
+												}}
+											/>
+										</div>
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '8px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('settings.typeNameEn') || 'Nazwa (EN) (opcjonalnie)'}
+											</label>
+											<input
+												type="text"
+												value={newCustomType.nameEn}
+												onChange={(e) => setNewCustomType({ ...newCustomType, nameEn: e.target.value })}
+												placeholder={t('settings.typeNameEnPlaceholder') || 'e.g. Special Leave'}
+												style={{
+													width: '100%',
+													padding: '10px',
+													border: '1px solid #dee2e6',
+													borderRadius: '6px',
+													fontSize: '14px'
+												}}
+											/>
+										</div>
+										<div style={{
+											display: 'grid',
+											gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+											gap: '15px'
+										}}>
+											<label style={{
+												display: 'flex',
+												alignItems: 'center',
+												cursor: 'pointer'
+											}}>
+												<input
+													type="checkbox"
+													checked={newCustomType.requireApproval}
+													onChange={(e) => setNewCustomType({ ...newCustomType, requireApproval: e.target.checked })}
+													style={{
+														width: '18px',
+														height: '18px',
+														cursor: 'pointer',
+														marginRight: '8px'
+													}}
+												/>
+												<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+													{t('settings.requireApproval') || 'Wymaga zatwierdzenia'}
+												</span>
+											</label>
+											<label style={{
+												display: 'flex',
+												alignItems: 'center',
+												cursor: 'pointer'
+											}}>
+												<input
+													type="checkbox"
+													checked={newCustomType.allowDaysLimit}
+													onChange={(e) => setNewCustomType({ ...newCustomType, allowDaysLimit: e.target.checked })}
+													style={{
+														width: '18px',
+														height: '18px',
+														cursor: 'pointer',
+														marginRight: '8px'
+													}}
+												/>
+												<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+													{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+												</span>
+											</label>
+										</div>
+										<div style={{
+											display: 'flex',
+											gap: '10px',
+											justifyContent: 'flex-end'
+										}}>
+											<button
+												type="button"
+												onClick={() => {
+													setShowAddCustomTypeForm(false)
+													setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false })
+												}}
+												style={{
+													backgroundColor: '#6c757d',
+													color: 'white',
+													border: 'none',
+													padding: '8px 16px',
+													borderRadius: '6px',
+													fontSize: '14px',
+													fontWeight: '500',
+													cursor: 'pointer'
+												}}
+											>
+												{t('settings.cancel') || 'Anuluj'}
+											</button>
+											<button
+												type="button"
+												onClick={handleAddCustomType}
+												disabled={addCustomLeaveRequestTypeMutation.isPending}
+												style={{
+													backgroundColor: addCustomLeaveRequestTypeMutation.isPending ? '#95a5a6' : '#28a745',
+													color: 'white',
+													border: 'none',
+													padding: '8px 16px',
+													borderRadius: '6px',
+													fontSize: '14px',
+													fontWeight: '500',
+													cursor: addCustomLeaveRequestTypeMutation.isPending ? 'not-allowed' : 'pointer'
+												}}
+											>
+												{t('settings.add') || 'Dodaj'}
+											</button>
+										</div>
+									</div>
+								</div>
+							)}
+
+							{leaveRequestTypes.filter(type => !type.isSystem).length > 0 ? (
+								<div style={{
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '15px'
+								}}>
+									{leaveRequestTypes.filter(type => !type.isSystem).map(type => {
+										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
+										return (
+											<div key={type.id} style={{
+												backgroundColor: '#f8f9fa',
+												border: '1px solid #dee2e6',
+												borderRadius: '8px',
+												padding: '15px',
+												position: 'relative'
+											}}>
+												<div style={{
+													display: 'flex',
+													justifyContent: 'space-between',
+													alignItems: 'flex-start',
+													marginBottom: '12px'
+												}}>
+													<div style={{ flex: 1 }}>
+														<div style={{
+															fontWeight: '600',
+															fontSize: '16px',
+															color: '#2c3e50',
+															marginBottom: '4px'
+														}}>
+															{displayName}
+														</div>
+														{type.nameEn && i18n.resolvedLanguage === 'pl' && (
+															<div style={{ fontSize: '14px', color: '#6c757d' }}>
+																{type.nameEn}
+															</div>
+														)}
+													</div>
+													<button
+														type="button"
+														onClick={() => handleDeleteCustomType(type.id)}
+														disabled={deleteCustomLeaveRequestTypeMutation.isPending}
+														style={{
+															backgroundColor: 'transparent',
+															border: 'none',
+															color: '#dc3545',
+															cursor: deleteCustomLeaveRequestTypeMutation.isPending ? 'not-allowed' : 'pointer',
+															fontSize: '20px',
+															padding: '4px 8px',
+															marginLeft: '15px'
+														}}
+														title={t('settings.delete') || 'Usuń'}
+													>
+														×
+													</button>
+												</div>
+												<div style={{
+													display: 'grid',
+													gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+													gap: '15px',
+													marginTop: '12px',
+													paddingTop: '12px',
+													borderTop: '1px solid #dee2e6'
+												}}>
+													<label style={{
+														display: 'flex',
+														alignItems: 'center',
+														cursor: 'pointer'
+													}}>
+														<input
+															type="checkbox"
+															checked={type.requireApproval}
+															onChange={() => handleToggleTypeRequireApproval(type.id)}
+															style={{
+																width: '18px',
+																height: '18px',
+																cursor: 'pointer',
+																marginRight: '8px'
+															}}
+														/>
+														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+															{t('settings.requireApproval') || 'Wymaga zatwierdzenia'}
+														</span>
+													</label>
+													<label style={{
+														display: 'flex',
+														alignItems: 'center',
+														cursor: 'pointer'
+													}}>
+														<input
+															type="checkbox"
+															checked={type.allowDaysLimit}
+															onChange={() => handleToggleTypeAllowDaysLimit(type.id)}
+															style={{
+																width: '18px',
+																height: '18px',
+																cursor: 'pointer',
+																marginRight: '8px'
+															}}
+														/>
+														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+														</span>
+													</label>
+												</div>
+											</div>
+										)
+									})}
+								</div>
+							) : (
+								!showAddCustomTypeForm && (
+									<p style={{
+										color: '#6c757d',
+										fontStyle: 'italic',
+										margin: 0
+									}}>
+										{t('settings.noCustomTypes') || 'Brak niestandardowych typów. Kliknij "Dodaj typ" aby dodać nowy.'}
+									</p>
+								)
+							)}
+						</div>
+					</div>
+				)}
+
 						{/* Przycisk zapisu */}
 						<div style={{ textAlign: 'left' }}>
 							<button
@@ -906,6 +1477,8 @@ function Settings() {
 						</div>
 					</div>
 				)}
+
+				
 
 				{/* Informacja dla użytkowników bez uprawnień */}
 				{!canEditSettings && (

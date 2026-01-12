@@ -16,6 +16,7 @@ const publicRoutes = require('./routes/publicRoutes')
 const teamRoutes = require('./routes/teamRoutes')
 const supervisorRoutes = require('./routes/supervisorRoutes')
 const settingsRoutes = require('./routes/settingsRoutes')
+const leaveRequestTypeRoutes = require('./routes/leaveRequestTypeRoutes')
 const legalRoutes = require('./routes/legalRoutes')
 const i18next = require('i18next')
 const Backend = require('i18next-fs-backend')
@@ -240,7 +241,23 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
 app.use(xss())
+// mongoSanitize usuwa kropki z kluczy (np. 'leaveform.option1' -> 'leaveform_option1')
+// Dla leaveTypeDays musimy zachować oryginalne klucze z kropkami
+app.use((req, res, next) => {
+	if (req.body && req.body.leaveTypeDays) {
+		// Przechowaj oryginalne leaveTypeDays przed sanitizacją
+		req._originalLeaveTypeDays = JSON.parse(JSON.stringify(req.body.leaveTypeDays))
+	}
+	next()
+})
 app.use(mongoSanitize())
+app.use((req, res, next) => {
+	if (req.body && req._originalLeaveTypeDays) {
+		// Przywróć oryginalne leaveTypeDays po sanitizacji
+		req.body.leaveTypeDays = req._originalLeaveTypeDays
+	}
+	next()
+})
 app.use(helmet())
 app.use(i18nextMiddleware.handle(i18next))
 
@@ -273,6 +290,7 @@ app.use('/api/boards', require('./routes/boardRoutes'))
 app.use('/api/schedules', require('./routes/scheduleRoutes'))
 app.use('/api/supervisors', supervisorRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/leave-request-types', leaveRequestTypeRoutes)
 app.use('/uploads', express.static('uploads'))
 
 // Socket.io setup

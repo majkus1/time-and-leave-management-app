@@ -23,7 +23,9 @@
 			"requestCancelledHR": "A leave request has been cancelled.",
 			"requestUpdatedSupervisor": "A leave request has been updated and requires your review.",
 			"newL4Request": "You have received a new sick leave (L4) notification.",
-			"l4Info": "This is a sick leave (L4) notification. The request has been automatically added to the leave calendar and does not require approval."
+			"newAutoApprovedRequest": "You have received a notification about a new leave/absence request that has been automatically added to the calendar.",
+			"l4Info": "This is a sick leave (L4) notification. The request has been automatically added to the leave calendar and does not require approval.",
+			"autoApprovedInfo": "This is a leave/absence request notification. The request has been automatically added to the leave calendar and does not require approval."
 		},
 		"welcome": {
 			"subject": "Welcome to planopia.pl",

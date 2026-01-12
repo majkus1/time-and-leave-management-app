@@ -2966,3 +2966,13 @@ section {
 .editformbox {
 	padding: 15px !important;
 }
+
+.notbottomargin {
+	margin-bottom: 12px !important;
+}
+
+@media (min-width: 1500px) {
+	.onlymyevent {
+		margin-left: 25px !important;
+	}
+}

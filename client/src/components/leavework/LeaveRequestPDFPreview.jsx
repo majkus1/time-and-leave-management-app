@@ -4,11 +4,14 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
+import { useSettings } from '../../hooks/useSettings'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 function LeaveRequestPDFPreview() {
 	const location = useLocation()
 	const leaveRequest = location.state?.leaveRequest
 	const { t, i18n } = useTranslation()
+	const { data: settings } = useSettings()
 
 	const generatePDF = async () => {
 		const element = document.getElementById('pdf-content')
@@ -112,7 +115,7 @@ function LeaveRequestPDFPreview() {
 								</p>
 								<p style={{ margin: '8px 0', fontSize: '14px' }}>
 									<strong style={{ color: '#374151', minWidth: '120px', display: 'inline-block' }}>{t('leavepdf.type')}</strong> 
-									<span style={{ color: '#1f2937' }}>{t(leaveRequest.type)}</span>
+									<span style={{ color: '#1f2937' }}>{getLeaveRequestTypeName(settings, leaveRequest.type, t, i18n.resolvedLanguage)}</span>
 								</p>
 								<p style={{ margin: '8px 0', fontSize: '14px' }}>
 									<strong style={{ color: '#374151', minWidth: '120px', display: 'inline-block' }}>{t('leavepdf.data1')}</strong> 

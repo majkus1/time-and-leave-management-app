@@ -8,6 +8,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { isHoliday } = require('../utils/holidays')
+const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
 // Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 function isWeekend(date) {
@@ -291,7 +292,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		const user = await User.findOne({
 			_id: leaveRequest.userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username department')
+		}).select('firstName lastName username department teamId')
 		if (!user) return res.status(404).send('Employee not found or inactive')
 
 		const updatedByUser = await User.findOne({
@@ -319,7 +320,11 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
 		const statusText = t(leaveRequest.status)
-		const typeText = t(leaveRequest.type)
+		
+		// Pobierz Settings dla zespołu i nazwę typu
+		const settings = await Settings.getSettings(user.teamId)
+		const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
+		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 		
 		// Utworz updatedByInfo dla sendEmailToHR
 		const updatedByInfo = `<p><b>${t('email.leaveRequest.updatedBy')}:</b> ${escapeHtml(updatedByUser.firstName)} ${escapeHtml(updatedByUser.lastName)}</p>`
@@ -366,7 +371,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 				await sendEmail(
 					user.username,
 					null,
-					`${t('email.leaveRequest.titlemail')} ${t(leaveRequest.type)} ${t(status)}`,
+					`${t('email.leaveRequest.titlemail')} ${typeText} ${t(status)}`,
 					mailContent
 				)
 			} catch (emailError) {
@@ -376,7 +381,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		}
 
 		try {
-			await sendEmailToHR(leaveRequest, user, updatedByUser, t, updatedByInfo, req.user.teamId)
+			await sendEmailToHR(leaveRequest, user, updatedByUser, t, updatedByInfo, user.teamId)
 		} catch (hrEmailError) {
 			console.error('Error sending email to HR:', hrEmailError)
 			// Nie przerywaj procesu jeśli email do HR nie zadziała
@@ -394,7 +399,8 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
 	} catch (error) {
 		console.error('Error updating leave request status:', error)
-		res.status(500).send('Failed to update leave request status.')
+		console.error('Error stack:', error.stack)
+		res.status(500).json({ message: 'Failed to update leave request status.', error: error.message })
 	}
 }
 
@@ -685,7 +691,11 @@ exports.cancelLeaveRequest = async (req, res) => {
 		// Pobierz dane przed usunięciem dla emaili
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
-		const typeText = t(leaveRequest.type)
+		
+		// Pobierz Settings dla zespołu i nazwę typu
+		const settings = await Settings.getSettings(teamId)
+		const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
+		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 
 		// Usuń wniosek
 		await LeaveRequest.findByIdAndDelete(id)
@@ -786,6 +796,20 @@ exports.updateLeaveRequest = async (req, res) => {
 
 		const teamId = user.teamId || requestingUser.teamId
 
+		// Pobierz ustawienia zespołu
+		const settings = await Settings.getSettings(teamId)
+		
+		// Walidacja typu wniosku
+		if (!isLeaveRequestTypeValid(settings, type)) {
+			return res.status(400).json({ 
+				message: t('leaveform.invalidType') || 'Nieprawidłowy typ wniosku urlopowego lub typ nie jest włączony dla zespołu.' 
+			})
+		}
+		
+		// Sprawdź czy typ wymaga zatwierdzenia
+		const typeRequiresApproval = requiresApproval(settings, type)
+		const oldTypeRequiresApproval = requiresApproval(settings, leaveRequest.type)
+
 		// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
 		const { trimmedStartDate, trimmedEndDate } = await trimWeekendsFromDateRange(startDate, endDate, teamId)
 		
@@ -801,8 +825,6 @@ exports.updateLeaveRequest = async (req, res) => {
 			finalDaysRequested = dates.length
 		}
 
-		const isL4 = type === 'leaveform.option6'
-		const wasL4 = leaveRequest.type === 'leaveform.option6'
 		const oldStartDate = leaveRequest.startDate
 		const oldEndDate = leaveRequest.endDate
 
@@ -814,20 +836,20 @@ exports.updateLeaveRequest = async (req, res) => {
 		leaveRequest.replacement = replacement
 		leaveRequest.additionalInfo = additionalInfo
 		
-		// Jeśli to L4, ustaw status na sent
-		if (isL4) {
+		// Ustaw status: jeśli nie wymaga zatwierdzenia -> "sent", w przeciwnym razie -> "pending"
+		if (!typeRequiresApproval) {
 			leaveRequest.status = 'status.sent'
 		}
 		
 		await leaveRequest.save()
 
-		// Dla L4: zaktualizuj LeavePlan
-		if (isL4) {
+		// Dla typów bez wymagania zatwierdzenia: zaktualizuj LeavePlan (jak L4)
+		if (!typeRequiresApproval) {
 			const LeavePlan = require('../models/LeavePlan')(firmDb)
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
 			
-			// Usuń stare daty z LeavePlan (jeśli były L4)
-			if (wasL4 && (oldStartDate.toString() !== trimmedStartDate || oldEndDate.toString() !== trimmedEndDate)) {
+			// Usuń stare daty z LeavePlan (jeśli stary typ też nie wymagał zatwierdzenia)
+			if (!oldTypeRequiresApproval && (oldStartDate.toString() !== trimmedStartDate || oldEndDate.toString() !== trimmedEndDate)) {
 				const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 				await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 			}
@@ -850,17 +872,19 @@ exports.updateLeaveRequest = async (req, res) => {
 				})
 			})
 			await Promise.all(leavePlanPromises)
-		} else if (wasL4) {
-			// Jeśli zmieniono z L4 na inny typ, usuń z LeavePlan
+		} else if (!oldTypeRequiresApproval) {
+			// Jeśli zmieniono z typu bez wymagania zatwierdzenia na typ z wymaganiem, usuń z LeavePlan
 			const LeavePlan = require('../models/LeavePlan')(firmDb)
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
 			const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 			await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 		}
 
-		// Dla L4: zbierz przełożonych + HR/Admin, dla innych: standardowa logika
+		// Zbierz odbiorców emaili:
+		// - Jeśli nie wymaga zatwierdzenia: przełożeni + HR/Admin (tylko powiadomienie)
+		// - Jeśli wymaga zatwierdzenia: przełożeni (do zatwierdzenia)
 		let recipients = []
-		if (isL4) {
+		if (!typeRequiresApproval) {
 			// Zbierz przełożonych (standardowa logika)
 			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
 			
@@ -907,7 +931,7 @@ exports.updateLeaveRequest = async (req, res) => {
 		if (recipients.length > 0) {
 			const typeText = t(type)
 			const content = `
-				<p style="margin: 0 0 16px 0;">${isL4 ? t('email.leaveform.newL4Request') : t('email.leaveform.requestUpdatedSupervisor')}</p>
+				<p style="margin: 0 0 16px 0;">${!typeRequiresApproval ? t('email.leaveform.newL4Request') : t('email.leaveform.requestUpdatedSupervisor')}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
@@ -929,7 +953,7 @@ exports.updateLeaveRequest = async (req, res) => {
 						</tr>
 					</table>
 				</div>
-				${isL4 ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
+				${!typeRequiresApproval ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 			`
 
 			// Wyślij email do wszystkich unikalnych odbiorców

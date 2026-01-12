@@ -11,6 +11,7 @@ import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../ho
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 Modal.setAppElement('#root')
 
@@ -278,7 +279,7 @@ function MonthlyCalendar() {
 				(requestStartYear === year && requestEndYear === year && requestStartMonth <= month && requestEndMonth >= month)
 			) {
 				// Sprawdź typ urlopu - użyj przetłumaczonego tekstu
-				const translatedType = t(request.type).toLowerCase()
+				const translatedType = getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage).toLowerCase()
 				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
 				
 				if (isVacation) {
@@ -944,7 +945,7 @@ function MonthlyCalendar() {
 							.flatMap(request => {
 								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 								return dates.map(date => ({
-									title: `${t(request.type)}`,
+									title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
 									start: date,
 									allDay: true,
 									textColor: 'white',

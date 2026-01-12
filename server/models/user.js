@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
     }], // Kto jest przełożonym tego użytkownika
     position: { type: String, required: false },
     leaveDays: { type: Number, default: 0 },
-    vacationDays: { type: Number, default: 0 },
+    vacationDays: { type: Number, default: 0 }, // DEPRECATED - zostawiamy dla kompatybilności wstecznej, ale nowe dane w leaveTypeDays
+    leaveTypeDays: { type: mongoose.Schema.Types.Mixed, default: {} }, // Object: { 'leaveform.option1': 26, 'custom-xxx': 10, ... }
     isTeamAdmin: { type: Boolean, default: false },
     isActive: {
         type: Boolean,

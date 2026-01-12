@@ -1,7 +1,9 @@
 const nodemailer = require('nodemailer')
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
+const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
 // Funkcja escapująca HTML dla bezpieczeństwa (ochrona przed XSS)
 const escapeHtml = (text) => {
@@ -124,7 +126,11 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
 		const statusText = t(leaveRequest.status)
-		const typeText = t(leaveRequest.type)
+		
+		// Pobierz Settings dla zespołu i nazwę typu
+		const settings = await Settings.getSettings(teamId)
+		const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
+		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 		
 		const content = `
 			<p style="margin: 0 0 16px 0;">${t('email.leaveRequest.requestUpdatedHR')} <strong>${statusText}</strong>.</p>

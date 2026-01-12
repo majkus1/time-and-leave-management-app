@@ -8,6 +8,7 @@ const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailSe
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
+const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
 // Funkcja pomocnicza do zbierania unikalnych odbiorców emaili (bez duplikatów)
 async function getUniqueEmailRecipients(user, teamId, t) {
@@ -176,6 +177,19 @@ exports.submitLeaveRequest = async (req, res) => {
 	const t = req.t
 
 	try {
+		// Pobierz ustawienia zespołu
+		const settings = await Settings.getSettings(teamId)
+		
+		// Walidacja typu wniosku
+		if (!isLeaveRequestTypeValid(settings, type)) {
+			return res.status(400).json({ 
+				message: t('leaveform.invalidType') || 'Nieprawidłowy typ wniosku urlopowego lub typ nie jest włączony dla zespołu.' 
+			})
+		}
+		
+		// Sprawdź czy typ wymaga zatwierdzenia
+		const typeRequiresApproval = requiresApproval(settings, type)
+		
 		// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
 		const { trimmedStartDate, trimmedEndDate } = await trimWeekendsFromDateRange(startDate, endDate, teamId)
 		
@@ -191,10 +205,8 @@ exports.submitLeaveRequest = async (req, res) => {
 			finalDaysRequested = dates.length
 		}
 		
-		const isL4 = type === 'leaveform.option6'
-		
-		// Dla L4 ustaw status na "sent", dla innych pozostaw "pending"
-		const status = isL4 ? 'status.sent' : 'status.pending'
+		// Ustaw status: jeśli nie wymaga zatwierdzenia -> "sent", w przeciwnym razie -> "pending"
+		const status = typeRequiresApproval ? 'status.pending' : 'status.sent'
 		
 		const leaveRequest = new LeaveRequest({
 			userId,
@@ -214,10 +226,11 @@ exports.submitLeaveRequest = async (req, res) => {
 		}).select('firstName lastName roles department username')
 		if (!user) return res.status(404).send('Użytkownik nie znaleziony lub nieaktywny.')
 
-		// Dla L4: zbierz przełożonych + HR/Admin
-		// Dla innych: użyj standardowej logiki
+		// Zbierz odbiorców emaili:
+		// - Jeśli nie wymaga zatwierdzenia (jak L4): przełożeni + HR/Admin (tylko powiadomienie)
+		// - Jeśli wymaga zatwierdzenia: przełożeni (do zatwierdzenia)
 		let recipients = []
-		if (isL4) {
+		if (!typeRequiresApproval) {
 			// Zbierz przełożonych (standardowa logika)
 			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
 			
@@ -261,8 +274,8 @@ exports.submitLeaveRequest = async (req, res) => {
 			recipients = await getUniqueEmailRecipients(user, teamId, t)
 		}
 
-		// Dla L4: automatycznie dodaj do LeavePlan
-		if (isL4) {
+		// Dla typów bez wymagania zatwierdzenia: automatycznie dodaj do LeavePlan (jak L4)
+		if (!typeRequiresApproval) {
 			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
 			const leavePlanPromises = dates.map(date => {
 				// Sprawdź czy już istnieje plan na ten dzień
@@ -288,9 +301,11 @@ exports.submitLeaveRequest = async (req, res) => {
 			return
 		}
 
-		const typeText = t(type)
+		// Określ język na podstawie tłumaczeń
+		const language = t('email.leaveRequest.footerNotification')?.includes('automatycznie') ? 'pl' : 'en'
+		const typeText = getLeaveRequestTypeName(settings, type, t, language)
 		const content = `
-			<p style="margin: 0 0 16px 0;">${isL4 ? t('email.leaveform.newL4Request') : t('email.leaveform.newRequestSupervisor')}</p>
+			<p style="margin: 0 0 16px 0;">${!typeRequiresApproval ? t('email.leaveform.newAutoApprovedRequest') : t('email.leaveform.newRequestSupervisor')}</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
@@ -312,7 +327,7 @@ exports.submitLeaveRequest = async (req, res) => {
 					</tr>
 				</table>
 			</div>
-			${isL4 ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
+			${!typeRequiresApproval ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.autoApprovedInfo')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 		`
 		
 		// Wyślij email do wszystkich unikalnych odbiorców

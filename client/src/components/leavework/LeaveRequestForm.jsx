@@ -7,9 +7,10 @@ import { useOwnLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useU
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
-function LeaveRequestForm() {
-	const [type, setType] = useState('leaveform.option1')
+	function LeaveRequestForm() {
+	const [type, setType] = useState('')
 	const [startDate, setStartDate] = useState('')
 	const [endDate, setEndDate] = useState('')
 	const [daysRequested, setDaysRequested] = useState(0)
@@ -20,8 +21,37 @@ function LeaveRequestForm() {
 
 	// TanStack Query hooks
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
-	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
+	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const { data: settings } = useSettings()
+	
+	const availableLeaveDays = vacationData?.vacationDays || 0
+	const leaveTypeDays = vacationData?.leaveTypeDays || {}
+	
+	// Pobierz włączone typy wniosków
+	const enabledLeaveTypes = React.useMemo(() => {
+		if (!settings || !settings.leaveRequestTypes || !Array.isArray(settings.leaveRequestTypes)) {
+			return []
+		}
+		return settings.leaveRequestTypes.filter(lt => lt.isEnabled)
+	}, [settings])
+	
+	// Pobierz typy z allowDaysLimit: true, które mają ustawione dni urlopu
+	const leaveTypesWithDays = React.useMemo(() => {
+		if (!enabledLeaveTypes || !settings) return []
+		return enabledLeaveTypes
+			.filter(type => type.allowDaysLimit && leaveTypeDays[type.id] !== undefined && leaveTypeDays[type.id] !== null)
+			.map(type => ({
+				...type,
+				days: leaveTypeDays[type.id] || 0
+			}))
+	}, [enabledLeaveTypes, leaveTypeDays, settings])
+	
+	// Ustaw domyślny typ po załadowaniu settings
+	React.useEffect(() => {
+		if (enabledLeaveTypes.length > 0 && !type) {
+			setType(enabledLeaveTypes[0].id)
+		}
+	}, [enabledLeaveTypes, type])
 	const createLeaveRequestMutation = useCreateLeaveRequest()
 	const cancelLeaveRequestMutation = useCancelLeaveRequest()
 	const updateLeaveRequestMutation = useUpdateLeaveRequest()
@@ -129,7 +159,7 @@ function LeaveRequestForm() {
 	}, [settings, isWeekend, isHolidayDate])
 
 	const [editingRequest, setEditingRequest] = useState(null)
-	const [editType, setEditType] = useState('leaveform.option1')
+	const [editType, setEditType] = useState('')
 	const [editStartDate, setEditStartDate] = useState('')
 	const [editEndDate, setEditEndDate] = useState('')
 	const [editDaysRequested, setEditDaysRequested] = useState(0)
@@ -140,15 +170,6 @@ function LeaveRequestForm() {
 	const loading = loadingRequests || loadingVacation
 	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
 	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
-
-	const leaveTypeMap = {
-		'Urlop wypoczynkowy': 'leaveform.option1',
-		'Urlop okolicznościowy': 'leaveform.option2',
-		'Urlop na żądanie': 'leaveform.option3',
-		'Urlop bezpłatny': 'leaveform.option4',
-		'Inna nieobecność': 'leaveform.option5',
-	}
-
 
 	useEffect(() => {
 		if (startDate && endDate && settings) {
@@ -258,7 +279,7 @@ function LeaveRequestForm() {
 			const data = { type, startDate, endDate, daysRequested, replacement, additionalInfo }
 			await createLeaveRequestMutation.mutateAsync(data)
 			await showAlert(t('leaveform.alertsucces'))
-			setType('leaveform.option1')
+			setType(enabledLeaveTypes.length > 0 ? enabledLeaveTypes[0].id : '')
 			setStartDate('')
 			setEndDate('')
 			setDaysRequested(0)
@@ -367,7 +388,7 @@ function LeaveRequestForm() {
 			await updateLeaveRequestMutation.mutateAsync({ id: editingRequest._id, data })
 			await showAlert(t('leaveform.editSuccess'))
 			setEditingRequest(null)
-			setEditType('leaveform.option1')
+			setEditType('')
 			setEditStartDate('')
 			setEditEndDate('')
 			setEditDaysRequested(0)
@@ -410,14 +431,47 @@ function LeaveRequestForm() {
 						marginBottom: '30px',
 						marginTop: '20px'
 					}}>
-						<p style={{ marginBottom: '20px' }}>
-							{t('leaveform.availableday')}{' '}
-							{availableLeaveDays === 0 ? (
-								<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
-							) : (
-								availableLeaveDays
-							)}
-						</p>
+						{leaveTypesWithDays.length > 0 ? (
+							<div style={{ marginBottom: '20px' }}>
+								<p style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
+									{t('leaveform.availableday') || 'Dostępne dni urlopu'}:
+								</p>
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '400px' }}>
+									{leaveTypesWithDays.map(type => {
+										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
+										return (
+											<div key={type.id} style={{ 
+												display: 'flex', 
+												justifyContent: 'space-between',
+												alignItems: 'center',
+												padding: '8px 12px',
+												backgroundColor: '#e8f4f8',
+												borderRadius: '6px',
+												border: '1px solid #3498db'
+											}}>
+												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
+												<span style={{ 
+													fontSize: '14px', 
+													fontWeight: '600',
+													color: type.days > 0 ? '#28a745' : '#dc3545'
+												}}>
+													{type.days > 0 ? type.days : t('leaveform.nodata') || 'Brak danych'}
+												</span>
+											</div>
+										)
+									})}
+								</div>
+							</div>
+						) : (
+							<p style={{ marginBottom: '20px' }}>
+								{t('leaveform.availableday')}{' '}
+								{availableLeaveDays === 0 ? (
+									<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
+								) : (
+									availableLeaveDays
+								)}
+							</p>
+						)}
 
 						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6 max-w-xl">
 						
@@ -426,13 +480,17 @@ function LeaveRequestForm() {
 							<select
 								value={type}
 								onChange={e => setType(e.target.value)}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-								<option value="leaveform.option1">{t('leaveform.option1')}</option>
-								<option value="leaveform.option2">{t('leaveform.option2')}</option>
-								<option value="leaveform.option3">{t('leaveform.option3')}</option>
-								<option value="leaveform.option4">{t('leaveform.option4')}</option>
-								<option value="leaveform.option5">{t('leaveform.option5')}</option>
-								<option value="leaveform.option6">{t('leaveform.option6')}</option>
+								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								required>
+								{enabledLeaveTypes.length === 0 ? (
+									<option value="">{t('leaveform.loadingTypes') || 'Ładowanie typów...'}</option>
+								) : (
+									enabledLeaveTypes.map(leaveType => (
+										<option key={leaveType.id} value={leaveType.id}>
+											{i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name}
+										</option>
+									))
+								)}
 							</select>
 						</div>
 
@@ -516,13 +574,13 @@ function LeaveRequestForm() {
 					<h3>{t('leaveform.listsofreq')}</h3>
 					<ul>
 						{leaveRequests.map((request, index) => {
-							const translatedType = leaveTypeMap[request.type] ? t(leaveTypeMap[request.type]) : request.type
+							const translatedType = getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)
 							const canEdit = request.status === 'status.pending'
 
 							return (
 								<li key={index} style={{ marginTop: '25px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
 									<p>
-										{t('leaveform.typeLabel')}: {t(request.type)}
+										{t('leaveform.typeLabel')}: {translatedType}
 									</p>
 									<p>
 										{t('leaveform.date')}: {formatDate(request.startDate)} - {formatDate(request.endDate)}
@@ -723,13 +781,13 @@ function LeaveRequestForm() {
 										<select
 											value={editType}
 											onChange={e => setEditType(e.target.value)}
-											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-											<option value="leaveform.option1">{t('leaveform.option1')}</option>
-											<option value="leaveform.option2">{t('leaveform.option2')}</option>
-											<option value="leaveform.option3">{t('leaveform.option3')}</option>
-											<option value="leaveform.option4">{t('leaveform.option4')}</option>
-											<option value="leaveform.option5">{t('leaveform.option5')}</option>
-											<option value="leaveform.option6">{t('leaveform.option6')}</option>
+											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											required>
+											{enabledLeaveTypes.map(leaveType => (
+												<option key={leaveType.id} value={leaveType.id}>
+													{i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name}
+												</option>
+											))}
 										</select>
 									</div>
 

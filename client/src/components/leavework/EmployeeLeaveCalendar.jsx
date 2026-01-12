@@ -10,6 +10,7 @@ import { useUserLeavePlans } from '../../hooks/useLeavePlans'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 function EmployeeLeaveCalendar() {
 	const { userId } = useParams()
@@ -145,7 +146,7 @@ function EmployeeLeaveCalendar() {
 						.flatMap(request => {
 							const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 							return dates.map(date => ({
-								title: `${t(request.type)}`,
+								title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
 								start: date,
 								allDay: true,
 								backgroundColor: 'green',
@@ -212,7 +213,7 @@ function EmployeeLeaveCalendar() {
 										boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
 									}}>
 									<div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#059669' }}>
-										{t(request.type)}
+										{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 									</div>
 									<div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
 										{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}

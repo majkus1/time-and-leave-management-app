@@ -19,7 +19,7 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
 	try {
-		const { workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays, workHours } = req.body
+		const { workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays, workHours, leaveRequestTypes } = req.body
 		
 		// Sprawdź uprawnienia - tylko Admin i HR
 		const requestingUser = await require('../models/user')(firmDb).findById(req.user.userId)
@@ -103,6 +103,50 @@ exports.updateSettings = async (req, res) => {
 					settings.workHours.hours = calculateHours(workHours.timeFrom, workHours.timeTo)
 				}
 			}
+		}
+
+		// Obsługa leaveRequestTypes - tylko Admin i HR mogą modyfikować
+		if (leaveRequestTypes !== undefined && Array.isArray(leaveRequestTypes)) {
+			// Walidacja typów
+			const validTypes = leaveRequestTypes.filter(type => {
+				return type && 
+					typeof type.id === 'string' && type.id.trim() !== '' &&
+					typeof type.name === 'string' && type.name.trim() !== '' &&
+					typeof type.isSystem === 'boolean' &&
+					typeof type.isEnabled === 'boolean' &&
+					typeof type.requireApproval === 'boolean' &&
+					typeof type.allowDaysLimit === 'boolean'
+			}).map(type => ({
+				id: type.id.trim(),
+				name: type.name.trim(),
+				nameEn: type.nameEn ? type.nameEn.trim() : undefined,
+				isSystem: type.isSystem,
+				isEnabled: type.isEnabled,
+				requireApproval: type.requireApproval,
+				allowDaysLimit: type.allowDaysLimit
+			}))
+			
+			// Nie można usuwać typów systemowych, tylko je włączać/wyłączać
+			// Zachowaj istniejące typy systemowe, które nie są w nowej liście (mogły być wyłączone)
+			const systemTypeIds = new Set(['leaveform.option1', 'leaveform.option2', 'leaveform.option3', 'leaveform.option4', 'leaveform.option5', 'leaveform.option6'])
+			const existingSystemTypes = (settings.leaveRequestTypes || []).filter(t => t.isSystem && systemTypeIds.has(t.id))
+			const newSystemTypes = validTypes.filter(t => t.isSystem && systemTypeIds.has(t.id))
+			const customTypes = validTypes.filter(t => !t.isSystem)
+			
+			// Połącz typy systemowe z nowych z istniejącymi (aby zachować te, które nie zostały przesłane)
+			const finalSystemTypes = existingSystemTypes.map(existing => {
+				const updated = newSystemTypes.find(n => n.id === existing.id)
+				return updated || existing
+			})
+			
+			// Dodaj nowe typy systemowe, które nie były w istniejących
+			newSystemTypes.forEach(newType => {
+				if (!finalSystemTypes.find(t => t.id === newType.id)) {
+					finalSystemTypes.push(newType)
+				}
+			})
+			
+			settings.leaveRequestTypes = [...finalSystemTypes, ...customTypes]
 		}
 
 		await settings.save()

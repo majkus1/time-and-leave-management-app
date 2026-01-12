@@ -76,6 +76,7 @@ function Schedule() {
 	
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
+	const [showOnlyMyEvents, setShowOnlyMyEvents] = useState(false)
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const [selectedDate, setSelectedDate] = useState(null)
 	const [selectedEntries, setSelectedEntries] = useState([])
@@ -206,8 +207,28 @@ function Schedule() {
 	// Convert schedule entries to FullCalendar events
 	const calendarEvents = React.useMemo(() => {
 		if (!scheduleEntries || scheduleEntries.length === 0) return []
-		return scheduleEntries.flatMap(day => {
-			return day.entries.map((entry, index) => {
+		
+		// Helper function to convert time string (HH:mm) to minutes for sorting
+		const timeToMinutes = (timeStr) => {
+			if (!timeStr) return 0
+			const [hours, minutes] = timeStr.split(':').map(Number)
+			return (hours || 0) * 60 + (minutes || 0)
+		}
+		
+		const currentUserIdStr = userId?.toString()
+		
+		// Create all events first
+		const allEvents = scheduleEntries.flatMap(day => {
+			// Filter entries by userId if showOnlyMyEvents is enabled
+			let entriesToProcess = day.entries
+			if (showOnlyMyEvents) {
+				entriesToProcess = day.entries.filter(entry => {
+					const entryEmployeeId = entry.employeeId?.toString()
+					return entryEmployeeId === currentUserIdStr
+				})
+			}
+			
+			return entriesToProcess.map((entry) => {
 				const employeeColor = getColorForEmployee(entry.employeeName)
 				return {
 					title: `${entry.employeeName} (${entry.timeFrom} - ${entry.timeTo})${entry.notes ? ` | ${entry.notes}` : ''}`,
@@ -228,7 +249,38 @@ function Schedule() {
 				}
 			})
 		})
-	}, [scheduleEntries, getColorForEmployee])
+		
+		// Sort all events: first by date, then by timeFrom within the same date
+		return allEvents.sort((a, b) => {
+			// First compare dates
+			const dateCompare = a.start.localeCompare(b.start)
+			if (dateCompare !== 0) {
+				return dateCompare
+			}
+			// If same date, sort by timeFrom
+			const timeA = timeToMinutes(a.extendedProps.timeFrom)
+			const timeB = timeToMinutes(b.extendedProps.timeFrom)
+			return timeA - timeB
+		})
+	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId])
+
+	// Sort selected entries by timeFrom for display in modal
+	const sortedSelectedEntries = React.useMemo(() => {
+		if (!selectedEntries || selectedEntries.length === 0) return []
+		
+		// Helper function to convert time string (HH:mm) to minutes for sorting
+		const timeToMinutes = (timeStr) => {
+			if (!timeStr) return 0
+			const [hours, minutes] = timeStr.split(':').map(Number)
+			return (hours || 0) * 60 + (minutes || 0)
+		}
+		
+		return [...selectedEntries].sort((a, b) => {
+			const timeA = timeToMinutes(a.timeFrom)
+			const timeB = timeToMinutes(b.timeFrom)
+			return timeA - timeB
+		})
+	}, [selectedEntries])
 
 	if (!schedule) {
 		return (
@@ -643,8 +695,9 @@ function Schedule() {
 					display: 'flex',
 					gap: '5px',
 					marginBottom: '20px',
-					alignItems: 'center'
-				}} className='calendar-controls'>
+					alignItems: 'center',
+					flexWrap: 'wrap'
+				}} className='calendar-controls notbottomargin'>
 					<select
 						value={currentMonth}
 						onChange={handleMonthSelect}
@@ -680,6 +733,7 @@ function Schedule() {
 								)
 							})}
 						</select>
+					
 					<button
 						type="button"
 						onClick={handlePrevMonth}
@@ -730,6 +784,32 @@ function Schedule() {
 					>
 						&gt;
 					</button>
+
+					<label style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						cursor: 'pointer',
+						marginLeft: '0px',
+						padding: '8px 12px',
+						borderRadius: '6px',
+						userSelect: 'none',
+						marginBottom: '0px'
+					}} className='onlymyevent'>
+						<input
+							type="checkbox"
+							checked={showOnlyMyEvents}
+							onChange={(e) => setShowOnlyMyEvents(e.target.checked)}
+							style={{
+								width: '18px',
+								height: '18px',
+								cursor: 'pointer'
+							}}
+						/>
+						<span style={{ fontSize: '16px', color: '#2c3e50' }}>
+							{t('schedule.showOnlyMyEvents') || 'Pokaż tylko moje wpisy'}
+						</span>
+					</label>
 				</div>
 
 				{loadingEntries ? (
@@ -807,7 +887,7 @@ function Schedule() {
 							{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
 						</h2>
 					)}
-					{selectedEntries.length > 0 ? (
+					{sortedSelectedEntries.length > 0 ? (
 					<div style={{ marginBottom: '30px' }}>
 						<h3 style={{
 							marginBottom: '15px',
@@ -822,7 +902,7 @@ function Schedule() {
 							flexDirection: 'column',
 							gap: '10px'
 						}}>
-						{selectedEntries.map((entry) => {
+						{sortedSelectedEntries.map((entry) => {
 							return (
 									<div key={entry._id || Math.random()} style={{
 										padding: '15px',

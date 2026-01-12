@@ -10,6 +10,7 @@ import { useAllLeavePlans } from '../../hooks/useLeavePlans'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
@@ -329,7 +330,7 @@ function AdminAllLeaveCalendar() {
 									const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 									const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
 									return dates.map(date => ({
-										title: `${employeeName} (${t(request.type)})`,
+										title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})`,
 										start: date,
 										allDay: true,
 										backgroundColor: getColorForUser(employeeName),

@@ -721,7 +721,7 @@ exports.getUserById = async (req, res) => {
 		const user = await User.findOne({
 			_id: userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username roles position department')
+		}).select('firstName lastName username roles position department leaveTypeDays')
 		if (!user) {
 			return res.status(404).send('User not found')
 		}

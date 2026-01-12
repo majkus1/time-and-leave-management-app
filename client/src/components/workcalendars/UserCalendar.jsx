@@ -16,6 +16,7 @@ import { useCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -923,7 +924,7 @@ function UserCalendar() {
 										.flatMap(request => {
 											const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 											return dates.map(date => ({
-												title: `${t(request.type)}`,
+												title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
 												start: date,
 												allDay: true,
 												textColor: 'white',

@@ -10,7 +10,7 @@ export const useOwnVacationDays = () => {
 			const response = await axios.get(`${API_URL}/api/vacations/vacation-days`, {
 				withCredentials: true,
 			})
-			return response.data.vacationDays
+			return response.data // Zwraca { vacationDays, leaveTypeDays }
 		},
 		staleTime: 2 * 60 * 1000, // 2 minuty
 		cacheTime: 5 * 60 * 1000,
@@ -38,11 +38,25 @@ export const useUpdateVacationDays = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ userId, vacationDays }) => {
+		mutationFn: async ({ userId, vacationDays, leaveTypeDays }) => {
+			// Jeśli leaveTypeDays jest pusty obiekt, nie wysyłaj go
+			const requestBody = {}
+			if (vacationDays !== undefined && vacationDays !== null) {
+				requestBody.vacationDays = vacationDays
+			}
+			if (leaveTypeDays !== undefined && leaveTypeDays !== null && Object.keys(leaveTypeDays).length > 0) {
+				requestBody.leaveTypeDays = leaveTypeDays
+			}
+			
 			const response = await axios.patch(
 				`${API_URL}/api/vacations/${userId}/vacation-days`,
-				{ vacationDays },
-				{ withCredentials: true }
+				requestBody,
+				{ 
+					withCredentials: true,
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
 			)
 			return response.data
 		},

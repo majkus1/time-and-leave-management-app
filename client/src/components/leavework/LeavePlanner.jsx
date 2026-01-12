@@ -10,6 +10,7 @@ import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
@@ -60,7 +61,8 @@ function LeavePlanner() {
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
-	const { data: availableLeaveDays = 0, isLoading: loadingVacation } = useOwnVacationDays()
+	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
+	const availableLeaveDays = vacationData?.vacationDays || 0
 	const { data: settings } = useSettings()
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
@@ -104,6 +106,25 @@ function LeavePlanner() {
 		
 		return dates
 	}
+
+	// Filtruj selectedDates, aby wykluczyć daty pokryte przez wnioski urlopowe (akceptowane lub sent)
+	const filteredSelectedDates = React.useMemo(() => {
+		if (!acceptedLeaveRequests || acceptedLeaveRequests.length === 0) {
+			return selectedDates
+		}
+
+		// Utwórz Set z dat pokrytych przez wnioski urlopowe
+		const requestDatesSet = new Set()
+		acceptedLeaveRequests.forEach(request => {
+			if (request.startDate && request.endDate) {
+				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+				dates.forEach(date => requestDatesSet.add(date))
+			}
+		})
+
+		// Filtruj selectedDates, wykluczając daty pokryte przez wnioski
+		return selectedDates.filter(date => !requestDatesSet.has(date))
+	}, [selectedDates, acceptedLeaveRequests, settings])
 
 	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
 	const holidaysForMonth = React.useMemo(() => {
@@ -307,7 +328,7 @@ function LeavePlanner() {
 											maxWidth: '400px',
 										}}>
 										<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-											{t(request.type)}
+											{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 										</div>
 										<div style={{ fontSize: '14px', color: '#666' }}>
 											{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
@@ -393,8 +414,8 @@ function LeavePlanner() {
 							showNonCurrentDates={false}
 							eventClick={handleEventClick}
 							events={[
-								// Plany urlopów (klikalne)
-								...selectedDates.map(date => ({
+								// Plany urlopów (klikalne) - wykluczamy daty pokryte przez wnioski urlopowe
+								...filteredSelectedDates.map(date => ({
 									title: t('leaveplanner.vactiontitle'),
 									start: date,
 									allDay: true,
@@ -407,7 +428,7 @@ function LeavePlanner() {
 									.flatMap(request => {
 										const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 										return dates.map(date => ({
-											title: `${t(request.type)}`,
+											title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
 											start: date,
 											allDay: true,
 											backgroundColor: 'green',
