@@ -353,7 +353,7 @@ function ENBlogFour() {
 							Ready for a free time tracking app?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							Join thousands of companies already using Planopia!
+							Start managing leave today and streamline planning in your company!
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"

@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 interface MobileMenuProps {
 	isOpen: boolean
 	onClose: () => void
+	onCloseRequest?: (closeHandler: () => void) => void // Callback to expose handleClose to parent
 	lang?: 'pl' | 'en'
 	menuItems?: Array<{
 		href: string
@@ -28,6 +29,7 @@ interface MobileMenuProps {
 export default function MobileMenu({
 	isOpen,
 	onClose,
+	onCloseRequest,
 	lang = 'pl',
 	menuItems = [],
 	legalItems = [],
@@ -36,33 +38,63 @@ export default function MobileMenu({
 	languageSwitcher
 }: MobileMenuProps) {
 	const [legalDropdownOpen, setLegalDropdownOpen] = React.useState(false)
+	const [isClosing, setIsClosing] = React.useState(false)
 	const isPL = lang === 'pl'
 
-	// Lock body scroll when menu is open
+	// Reset closing state when menu opens
 	useEffect(() => {
 		if (isOpen) {
-			document.body.style.overflow = 'hidden'
-		} else {
-			document.body.style.overflow = ''
-		}
-		return () => {
-			document.body.style.overflow = ''
+			setIsClosing(false)
 		}
 	}, [isOpen])
 
-	// Close menu when clicking outside
+	// Lock body scroll when menu is open and add class for styling
 	useEffect(() => {
-		if (!isOpen) return
+		if (isOpen && !isClosing) {
+			document.body.style.overflow = 'hidden'
+			document.body.classList.add('mobile-menu-open')
+		} else {
+			document.body.style.overflow = ''
+			document.body.classList.remove('mobile-menu-open')
+		}
+		return () => {
+			document.body.style.overflow = ''
+			document.body.classList.remove('mobile-menu-open')
+		}
+	}, [isOpen, isClosing])
+
+	// Handle close with animation
+	const handleClose = useCallback(() => {
+		if (isClosing) return // Prevent multiple clicks
+		setIsClosing(true)
+		
+		// Wait for animation to complete before actually closing
+		setTimeout(() => {
+			onClose()
+			setIsClosing(false)
+		}, 400) // Match animation duration (0.4s = 400ms)
+	}, [isClosing, onClose])
+
+	// Expose handleClose to parent component via callback (only when menu opens)
+	useEffect(() => {
+		if (onCloseRequest && isOpen && !isClosing) {
+			onCloseRequest(handleClose)
+		}
+	}, [isOpen]) // Only depend on isOpen to avoid infinite loop
+
+	// Close menu when pressing Escape
+	useEffect(() => {
+		if (!isOpen || isClosing) return
 		
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
-				onClose()
+				handleClose()
 			}
 		}
 
 		document.addEventListener('keydown', handleEscape)
 		return () => document.removeEventListener('keydown', handleEscape)
-	}, [isOpen, onClose])
+	}, [isOpen, isClosing, handleClose])
 
 	// Default menu items if not provided
 	const defaultMenuItems = menuItems.length > 0 
@@ -83,34 +115,20 @@ export default function MobileMenu({
 				{ href: isPL ? '/dpa' : '/en/dpa', label: isPL ? 'Umowa DPA' : 'Data Processing Agreement' },
 			]
 
-	if (!isOpen) return null
+	// Keep menu visible during closing animation even if isOpen becomes false
+	if (!isOpen && !isClosing) return null
 
 	return (
 		<>
 			{/* Backdrop with blur */}
 			<div
-				className="mobile-menu-backdrop"
-				onClick={onClose}
+				className={`mobile-menu-backdrop ${isClosing ? 'closing' : ''}`}
+				onClick={handleClose}
 				aria-hidden="true"
 			/>
 
 			{/* Mobile Menu Panel */}
-			<div className="mobile-menu-panel">
-				{/* Close Button */}
-				<button
-					onClick={onClose}
-					className="mobile-menu-close-button"
-					aria-label={isPL ? 'Zamknij menu' : 'Close menu'}
-				>
-					<svg 
-						className="mobile-menu-close-icon"
-						fill="none" 
-						stroke="currentColor" 
-						viewBox="0 0 24 24"
-					>
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-					</svg>
-				</button>
+			<div className={`mobile-menu-panel ${isClosing ? 'closing' : ''}`}>
 				<div className="mobile-menu-content">
 					{/* Menu Items */}
 					<nav className="mobile-menu-nav">
@@ -119,7 +137,7 @@ export default function MobileMenu({
 								key={index}
 								href={item.href}
 								onClick={() => {
-									onClose()
+									handleClose()
 									if (item.onClick) item.onClick()
 								}}
 								className="mobile-menu-item"
@@ -157,7 +175,7 @@ export default function MobileMenu({
 											<Link
 												key={index}
 												href={item.href}
-												onClick={onClose}
+												onClick={handleClose}
 												className="mobile-menu-legal-item"
 											>
 												{item.label}
@@ -173,7 +191,7 @@ export default function MobileMenu({
 					<div className="mobile-menu-actions">
 						<Link
 							href={loginHref}
-							onClick={onClose}
+							onClick={handleClose}
 							className="mobile-menu-button mobile-menu-button-login"
 							style={{
 								animationDelay: `${(defaultMenuItems.length + (defaultLegalItems.length > 0 ? 1 : 0)) * 0.05}s`
@@ -184,7 +202,7 @@ export default function MobileMenu({
 
 						<Link
 							href={registerHref}
-							onClick={onClose}
+							onClick={handleClose}
 							className="mobile-menu-button mobile-menu-button-register"
 							style={{
 								animationDelay: `${(defaultMenuItems.length + (defaultLegalItems.length > 0 ? 1 : 0) + 1) * 0.05}s`
@@ -204,7 +222,7 @@ export default function MobileMenu({
 						>
 							<Link
 								href={languageSwitcher.href}
-								onClick={onClose}
+								onClick={handleClose}
 								className="mobile-menu-language-link"
 							>
 								<img 

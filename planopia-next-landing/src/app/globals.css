@@ -33,6 +33,14 @@ html {
 box-shadow: 0px 29px 24px -34px rgba(0, 0, 0, 1) !important;
 }
 
+/* Remove box-shadow from header when mobile menu is open */
+body.mobile-menu-open .headerpromotionmenu,
+body.mobile-menu-open #planopiaheader {
+	-webkit-box-shadow: none !important;
+	-moz-box-shadow: none !important;
+	box-shadow: none !important;
+}
+
 /* Domyślnie ukryj tekst dla szerokości poniżej 1200px */
 .aboutapp .context {
 	max-height: 0;
@@ -1910,6 +1918,8 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 
 header {
 	position: fixed;
+	z-index: 10000; /* Higher than menu to keep header visible with logo and hamburger button */
+	background: white; /* Ensure header has solid background */
 }
 
 header .menucontent {
@@ -2534,26 +2544,37 @@ button {
 
 /* ===== PROFESSIONAL MOBILE MENU STYLES ===== */
 
-/* Backdrop with blur effect */
+/* Backdrop with blur effect - positioned below header */
 .mobile-menu-backdrop {
 	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
-	backdrop-filter: blur(4px);
-	-webkit-backdrop-filter: blur(4px);
+	top: 70px; /* Start below header */
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(255, 255, 255, 0);
 	z-index: 9998;
-	animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	opacity: 0;
+	backdrop-filter: blur(0px);
+	-webkit-backdrop-filter: blur(0px);
+	animation: blurFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+	will-change: opacity, background, backdrop-filter;
 }
 
-/* Mobile Menu Panel - Slide in from right */
+/* Closing animation for backdrop */
+.mobile-menu-backdrop.closing {
+	animation: blurFadeOut 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Mobile Menu Panel - Slide in from right, positioned below header */
 .mobile-menu-panel {
 	position: fixed;
-	top: 0;
+	top: 70px; /* Start below header (header height) */
 	right: 0;
 	bottom: 0;
 	width: 85%;
-	max-width: 400px;
-	background: #ffffff;
+	max-width: 300px;
+	/* Gradient matching the landing page hero section: from-blue-50 to-white */
+	background: linear-gradient(to bottom, #fff 0%, #dce9f9 100%);
 	box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
 	z-index: 9999;
 	transform: translateX(100%);
@@ -2562,38 +2583,12 @@ button {
 	-webkit-overflow-scrolling: touch;
 }
 
-/* Close Button */
-.mobile-menu-close-button {
-	position: absolute;
-	top: 1rem;
-	right: 1rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	padding: 0;
-	background: transparent;
-	border: none;
-	border-radius: 50%;
-	cursor: pointer;
-	z-index: 10000;
-	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-	color: #374151;
+/* Closing animation */
+.mobile-menu-panel.closing {
+	animation: slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.mobile-menu-close-button:hover {
-	background-color: #f3f4f6;
-	color: #111827;
-	transform: scale(1.1);
-}
-
-.mobile-menu-close-icon {
-	width: 32px;
-	height: 32px;
-	stroke-width: 2;
-	color: inherit;
-}
+/* Close button removed - hamburger button in header serves as close button */
 
 /* Slide in animation */
 @keyframes slideInRight {
@@ -2607,6 +2602,18 @@ button {
 	}
 }
 
+/* Slide out animation */
+@keyframes slideOutRight {
+	from {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+
 /* Fade in animation */
 @keyframes fadeIn {
 	from {
@@ -2614,6 +2621,48 @@ button {
 	}
 	to {
 		opacity: 1;
+	}
+}
+
+/* Fade out animation */
+@keyframes fadeOut {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+/* Smooth blur fade in animation for backdrop */
+@keyframes blurFadeIn {
+	from {
+		opacity: 0;
+		background: rgba(255, 255, 255, 0);
+		backdrop-filter: blur(0px);
+		-webkit-backdrop-filter: blur(0px);
+	}
+	to {
+		opacity: 1;
+		background: rgba(255, 255, 255, 0.5);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+	}
+}
+
+/* Smooth blur fade out animation for backdrop */
+@keyframes blurFadeOut {
+	from {
+		opacity: 1;
+		background: rgba(255, 255, 255, 0.5);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+	}
+	to {
+		opacity: 0;
+		background: rgba(255, 255, 255, 0);
+		backdrop-filter: blur(0px);
+		-webkit-backdrop-filter: blur(0px);
 	}
 }
 
@@ -2635,7 +2684,7 @@ button {
 	flex-direction: column;
 	height: 100%;
 	padding: 2rem 1.5rem;
-	padding-top: 4rem;
+	padding-top: 1rem; /* Reduced since no close button in menu */
 }
 
 /* Navigation Items */
@@ -2813,7 +2862,7 @@ button {
 	transform: scale(1.1);
 }
 
-/* Hamburger Button Enhancement */
+/* Hamburger Button Enhancement - Always visible in header */
 .mobile-menu-hamburger {
 	display: flex;
 	flex-direction: column;
@@ -2824,7 +2873,8 @@ button {
 	border: none;
 	cursor: pointer;
 	padding: 0;
-	z-index: 10000;
+	position: relative; /* Relative to header */
+	z-index: 10001; /* Higher than header to ensure clickability */
 	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2850,6 +2900,7 @@ button {
 
 .mobile-menu-hamburger.active span:nth-child(1) {
 	transform: rotate(45deg) translate(7px, 7px);
+	background-color: #374151; /* Ensure X is visible */
 }
 
 .mobile-menu-hamburger.active span:nth-child(2) {
@@ -2859,6 +2910,7 @@ button {
 
 .mobile-menu-hamburger.active span:nth-child(3) {
 	transform: rotate(-45deg) translate(7px, -7px);
+	background-color: #374151; /* Ensure X is visible */
 }
 
 /* Accessibility: Reduced motion */

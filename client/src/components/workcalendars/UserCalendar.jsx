@@ -40,17 +40,29 @@ function UserCalendar() {
 			return count === 1 ? t('workcalendar.overtime1') : t('workcalendar.overtime5plus')
 		}
 		
+		// Konwertuj na liczbę jeśli jest stringiem
+		const numCount = typeof count === 'number' ? count : parseFloat(count)
+		if (isNaN(numCount)) return t('workcalendar.overtime5plus')
+		
 		// Polska odmiana:
-		// 1 → "nadgodzina"
+		// 1 → "nadgodzina" (tylko dla dokładnie 1.0)
 		// 2-4, 22-24, 32-34... → "nadgodziny" (z wyjątkiem 12-14)
 		// 0, 5-21, 25-31... → "nadgodzin"
+		// Liczby niecałkowite (0.5, 1.5, 2.5...) → zawsze "nadgodziny" (liczba mnoga)
 		
-		if (count === 1) {
+		// Jeśli liczba jest niecałkowita, zawsze użyj dopełniacza liczby mnogiej "nadgodzin"
+		// (np. "0.5 nadgodzin", "1.5 nadgodzin", "2.5 nadgodzin")
+		if (numCount % 1 !== 0) {
+			return t('workcalendar.overtime5plus')
+		}
+		
+		// Dla liczb całkowitych
+		if (numCount === 1) {
 			return t('workcalendar.overtime1')
 		}
 		
-		const lastDigit = count % 10
-		const lastTwoDigits = count % 100
+		const lastDigit = numCount % 10
+		const lastTwoDigits = numCount % 100
 		
 		// Wyjątek: 12-14 zawsze używa "nadgodzin"
 		if (lastTwoDigits >= 12 && lastTwoDigits <= 14) {
@@ -954,7 +966,7 @@ function UserCalendar() {
 					{t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(Math.round(additionalHours))}
+					{t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
@@ -14,8 +14,38 @@ interface BlogHeaderProps {
 
 export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensive-company-management-app', plUrl = '/blog/kompleksowa-aplikacja-do-zarzadzania-firma', hideLanguageSwitcher = false }: BlogHeaderProps) {
 	const [menuOpen, setMenuOpen] = useState(false)
+	const [buttonState, setButtonState] = useState(false) // Separate state for button (changes immediately)
 	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
-	const toggleMenu = () => setMenuOpen(prev => !prev)
+	const menuCloseHandlerRef = useRef<(() => void) | null>(null)
+	
+	const toggleMenu = () => {
+		setMenuOpen(prev => !prev)
+		setButtonState(prev => !prev) // Keep button in sync
+	}
+	
+	// Close menu and sync button state
+	const closeMenu = () => {
+		setMenuOpen(false)
+		setButtonState(false) // Always sync button state when closing menu
+	}
+	
+	const handleMenuClick = () => {
+		if (menuOpen && menuCloseHandlerRef.current) {
+			// Immediately change button state (X -> hamburger) before animation
+			setButtonState(false)
+			// Use animated close handler for menu animation
+			menuCloseHandlerRef.current()
+		} else {
+			// Open menu normally
+			setMenuOpen(true)
+			setButtonState(true) // Keep button in sync
+		}
+	}
+	
+	// Stable callback that doesn't change on every render
+	const handleCloseRequest = useCallback((closeHandler: () => void) => {
+		menuCloseHandlerRef.current = closeHandler
+	}, [])
 
 	const isPolish = lang === 'pl'
 
@@ -108,14 +138,15 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 						)}
 					</nav>
 
-					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
+					<HamburgerButton isOpen={buttonState} onClick={handleMenuClick} />
 				</div>
 			</header>
 
 			{/* Professional Mobile Menu */}
 			<MobileMenu
 				isOpen={menuOpen}
-				onClose={toggleMenu}
+				onClose={closeMenu}
+				onCloseRequest={handleCloseRequest}
 				lang={lang}
 				menuItems={[
 					{ href: isPolish ? "/#oaplikacji" : "/en#aboutapp", label: isPolish ? "O Aplikacji" : "About the App" },

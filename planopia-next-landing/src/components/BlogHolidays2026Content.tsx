@@ -325,9 +325,21 @@ export default function BlogHolidays2026Content() {
 						skorzystać z nowoczesnego rozwiązania, które automatyzuje proces i eliminuje ryzyko błędów.
 					</p>
 
-					<p className="mt-8 font-medium text-blue-600">
-						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">załóż darmowy zespół i zacznij planować urlopy online</Link>.
-					</p>
+					{/* CTA */}
+					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl mt-8">
+						<h2 className="text-3xl font-bold text-gray-900 mb-4 justify-center">
+							Gotowy na darmową aplikację do planowania urlopów?
+						</h2>
+						<p className="text-xl text-gray-700 mb-6">
+							Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!
+						</p>
+						<Link
+							href="https://app.planopia.pl/team-registration"
+							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
+						>
+							Załóż darmowy zespół już dziś
+						</Link>
+					</div>
 				</article>
 			</main>
 

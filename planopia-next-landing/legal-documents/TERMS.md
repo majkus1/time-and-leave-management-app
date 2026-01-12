@@ -39,7 +39,7 @@
 
 4.2. Za plany płatne opłaty są pobierane zgodnie z wybranym planem subskrypcyjnym.
 
-4.3. Usługodawca wystawia faktury VAT zgodnie z obowiązującymi przepisami prawa.
+4.3. Usługodawca wystawia faktury zgodnie z obowiązującymi przepisami prawa. W chwili obecnej Usługodawca jest zwolniony z obowiązku podatku VAT (art. 113 ust. 1 ustawy o podatku od towarów i usług - zwolnienie dla małych podatników na początku działalności).
 
 4.4. W przypadku braku zapłaty za plan płatny, dostęp może zostać zawieszony.
 

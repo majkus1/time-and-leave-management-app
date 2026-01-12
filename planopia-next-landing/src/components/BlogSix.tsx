@@ -389,7 +389,7 @@ function BlogSix() {
 							Gotowy na efektywne zarządzanie urlopami?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							Dołącz do tysięcy firm, które już korzystają z Planopii!
+							Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
