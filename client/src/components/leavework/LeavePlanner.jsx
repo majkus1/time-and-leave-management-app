@@ -63,7 +63,27 @@ function LeavePlanner() {
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const availableLeaveDays = vacationData?.vacationDays || 0
+	const leaveTypeDays = vacationData?.leaveTypeDays || {}
 	const { data: settings } = useSettings()
+
+	// Pobierz włączone typy wniosków
+	const enabledLeaveTypes = React.useMemo(() => {
+		if (!settings || !settings.leaveRequestTypes || !Array.isArray(settings.leaveRequestTypes)) {
+			return []
+		}
+		return settings.leaveRequestTypes.filter(lt => lt.isEnabled)
+	}, [settings])
+
+	// Pobierz typy z allowDaysLimit: true, które mają ustawione dni urlopu
+	const leaveTypesWithDays = React.useMemo(() => {
+		if (!enabledLeaveTypes || !settings) return []
+		return enabledLeaveTypes
+			.filter(type => type.allowDaysLimit && leaveTypeDays[type.id] !== undefined && leaveTypeDays[type.id] !== null)
+			.map(type => ({
+				...type,
+				days: leaveTypeDays[type.id] || 0
+			}))
+	}, [enabledLeaveTypes, leaveTypeDays, settings])
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
@@ -252,14 +272,47 @@ function LeavePlanner() {
 					<h3><img src="img/calendar.png" alt="ikonka w sidebar" /> {t('leaveplanner.mainheader')}</h3>
 					<hr />
 					<div style={{ marginBottom: '20px' }}>
-						<p style={{ marginBottom: '20px' }}>
-							{t('leaveform.availableday')}{' '}
-							{availableLeaveDays === 0 ? (
-								<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
-							) : (
-								availableLeaveDays
-							)}
-						</p>
+						{leaveTypesWithDays.length > 0 ? (
+							<div style={{ marginBottom: '20px' }}>
+								<p style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
+									{t('leaveform.availableday') || 'Dostępne dni urlopu'}:
+								</p>
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '400px' }}>
+									{leaveTypesWithDays.map(type => {
+										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
+										return (
+											<div key={type.id} style={{ 
+												display: 'flex', 
+												justifyContent: 'space-between',
+												alignItems: 'center',
+												padding: '8px 12px',
+												backgroundColor: '#e8f4f8',
+												borderRadius: '6px',
+												border: '1px solid #3498db'
+											}}>
+												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
+												<span style={{ 
+													fontSize: '14px', 
+													fontWeight: '600',
+													color: type.days > 0 ? '#28a745' : '#dc3545'
+												}}>
+													{type.days > 0 ? type.days : t('leaveform.nodata') || 'Brak danych'}
+												</span>
+											</div>
+										)
+									})}
+								</div>
+							</div>
+						) : (
+							<p style={{ marginBottom: '20px' }}>
+								{t('leaveform.availableday')}{' '}
+								{availableLeaveDays === 0 ? (
+									<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
+								) : (
+									availableLeaveDays
+								)}
+							</p>
+						)}
 					</div>
 
 					{/* Sekcja zaznaczonych dat */}
