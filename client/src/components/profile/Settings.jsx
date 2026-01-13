@@ -954,14 +954,11 @@ function Settings() {
 				{canEditSettings && (
 					<div style={{ 
 						backgroundColor: 'white',
-						borderRadius: '12px',
-						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-						padding: '15px',
 						marginBottom: '30px'
 					}}>
 						<h3 style={{ 
 							color: '#2c3e50',
-							marginTop: '0',
+							marginTop: '40px',
 							marginBottom: '20px',
 							fontSize: '20px',
 							fontWeight: '600',
