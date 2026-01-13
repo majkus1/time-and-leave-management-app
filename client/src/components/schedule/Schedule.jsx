@@ -16,6 +16,10 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
+import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useSettings } from '../../hooks/useSettings'
+import { isHolidayDate } from '../../utils/holidays'
+import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 Modal.setAppElement('#root')
 
@@ -114,6 +118,8 @@ function Schedule() {
 		currentMonth,
 		currentYear
 	)
+	const { data: allAcceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAllAcceptedLeaveRequests()
+	const { data: settings } = useSettings()
 
 	// Check if user can edit - uwzględnij konfigurację przełożonego i twórcę niestandardowego grafiku
 	const isSupervisorRole = isSupervisor(role)
@@ -204,10 +210,47 @@ function Schedule() {
 		}
 	}, [currentMonth, currentYear])
 
+	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
+	const isWeekend = (date) => {
+		const day = new Date(date).getDay()
+		return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+	}
+
+	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
+	const generateDateRangeForCalendar = React.useCallback((startDate, endDate) => {
+		if (!settings) return []
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			// Jeśli pracuje w weekendy, pomijamy tylko święta
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			} else {
+				// Jeśli nie pracuje w weekendy, pomijamy weekendy i święta
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
+			}
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
+	}, [settings])
+
 	// Convert schedule entries to FullCalendar events
 	const calendarEvents = React.useMemo(() => {
-		if (!scheduleEntries || scheduleEntries.length === 0) return []
-		
 		// Helper function to convert time string (HH:mm) to minutes for sorting
 		const timeToMinutes = (timeStr) => {
 			if (!timeStr) return 0
@@ -216,6 +259,54 @@ function Schedule() {
 		}
 		
 		const currentUserIdStr = userId?.toString()
+		
+		// Get user IDs from the schedule users
+		const scheduleUserIds = users.map(u => u._id?.toString() || u.toString()).filter(Boolean)
+		
+		// Filter leave requests for users in this schedule
+		const scheduleLeaveRequests = allAcceptedLeaveRequests.filter(request => {
+			if (!request.userId || !request.startDate || !request.endDate) return false
+			const requestUserId = request.userId._id?.toString() || request.userId?.toString()
+			return scheduleUserIds.includes(requestUserId)
+		})
+		
+		// Filter leave requests by userId if showOnlyMyEvents is enabled
+		const filteredLeaveRequests = showOnlyMyEvents
+			? scheduleLeaveRequests.filter(request => {
+				const requestUserId = request.userId._id?.toString() || request.userId?.toString()
+				return requestUserId === currentUserIdStr
+			})
+			: scheduleLeaveRequests
+		
+		// Add leave request events
+		const leaveRequestEvents = filteredLeaveRequests
+			.filter(request => request.startDate && request.endDate)
+			.flatMap(request => {
+				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+				const userName = request.userId?.firstName && request.userId?.lastName
+					? `${request.userId.firstName} ${request.userId.lastName}`
+					: request.userId?.username || 'Unknown'
+				return dates.map(date => ({
+					title: `${userName}: ${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+					start: date,
+					allDay: true,
+					textColor: 'white',
+					backgroundColor: 'green',
+					borderColor: 'green',
+					classNames: 'event-absence',
+					extendedProps: { 
+						type: 'leaveRequest', 
+						requestId: request._id,
+						isAbsence: true,
+						userId: request.userId._id?.toString() || request.userId?.toString()
+					}
+				}))
+			})
+		
+		// Jeśli nie ma wpisów grafiku, zwróć tylko eventy z wniosków urlopowych
+		if (!scheduleEntries || scheduleEntries.length === 0) {
+			return leaveRequestEvents.sort((a, b) => a.start.localeCompare(b.start))
+		}
 		
 		// Create all events first
 		const allEvents = scheduleEntries.flatMap(day => {
@@ -250,19 +341,22 @@ function Schedule() {
 			})
 		})
 		
-		// Sort all events: first by date, then by timeFrom within the same date
-		return allEvents.sort((a, b) => {
+		// Combine all events
+		const combinedEvents = [...allEvents, ...leaveRequestEvents]
+		
+		// Sort all events: first by date, then by timeFrom within the same date (for schedule entries)
+		return combinedEvents.sort((a, b) => {
 			// First compare dates
 			const dateCompare = a.start.localeCompare(b.start)
 			if (dateCompare !== 0) {
 				return dateCompare
 			}
-			// If same date, sort by timeFrom
-			const timeA = timeToMinutes(a.extendedProps.timeFrom)
-			const timeB = timeToMinutes(b.extendedProps.timeFrom)
+			// If same date, sort by timeFrom (if available, otherwise leave requests go after schedule entries)
+			const timeA = a.extendedProps?.timeFrom ? timeToMinutes(a.extendedProps.timeFrom) : 9999
+			const timeB = b.extendedProps?.timeFrom ? timeToMinutes(b.extendedProps.timeFrom) : 9999
 			return timeA - timeB
 		})
-	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId])
+	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allAcceptedLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage])
 
 	// Sort selected entries by timeFrom for display in modal
 	const sortedSelectedEntries = React.useMemo(() => {
@@ -812,7 +906,7 @@ function Schedule() {
 					</label>
 				</div>
 
-				{loadingEntries ? (
+				{loadingEntries || loadingLeaveRequests ? (
 					<Loader />
 				) : (
 					<div style={{
