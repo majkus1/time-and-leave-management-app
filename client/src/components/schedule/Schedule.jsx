@@ -1025,11 +1025,46 @@ function Schedule() {
 					}}
 					contentLabel={t('schedule.addEntry') || 'Dodaj wpis do grafiku'}>
 				<>
-					{selectedDate && (
-						<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ marginBottom: '20px' }}>
-							{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
-						</h2>
-					)}
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+						{selectedDate && (
+							<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ margin: 0 }}>
+								{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
+							</h2>
+						)}
+						<button
+							onClick={() => {
+								setIsModalOpen(false)
+								setSelectedDate(null)
+								setSelectedEntries([])
+								setNotes('')
+								setSelectedEmployeeId('')
+								setSelectedEmployeeName('')
+								setTimeFrom('08:00')
+								setTimeTo('16:00')
+								setSelectedWorkHoursIndex(null)
+							}}
+							style={{
+								background: 'transparent',
+								border: 'none',
+								fontSize: '28px',
+								cursor: 'pointer',
+								color: '#7f8c8d',
+								lineHeight: '1',
+								padding: '0',
+								width: '30px',
+								height: '30px',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								flexShrink: 0
+							}}
+							onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+							onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}
+							aria-label={t('schedule.closeModal') || 'Zamknij'}
+						>
+							×
+						</button>
+					</div>
 					{sortedSelectedEntries.length > 0 ? (
 					<div style={{ marginBottom: '30px' }}>
 						<h3 style={{

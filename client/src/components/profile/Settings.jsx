@@ -1006,164 +1006,189 @@ function Settings() {
 									}}>
 									<div style={{
 										display: 'grid',
-											gridTemplateColumns: '1fr 1fr 1fr auto',
+										gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
 										gap: '15px',
 										alignItems: 'end'
 									}}>
 										<div>
 											<label style={{
 												display: 'block',
-												marginBottom: '8px',
+												marginBottom: '10px',
 												fontWeight: '600',
 												color: '#2c3e50',
-												fontSize: '14px'
+												fontSize: '16px'
 											}}>
 												{t('settings.workHoursFrom') || 'Od'}
 											</label>
 											<input
 												type="text"
-													value={newWorkHours.timeFrom}
+												inputMode="numeric"
+												value={newWorkHours.timeFrom}
 												onChange={(e) => {
-														const timeFrom = e.target.value
-														setNewWorkHours({
-															...newWorkHours,
-															timeFrom,
-															hours: newWorkHours.timeTo ? calculateHours(timeFrom, newWorkHours.timeTo) : 0
-														})
+													const timeFrom = e.target.value
+													setNewWorkHours({
+														...newWorkHours,
+														timeFrom,
+														hours: newWorkHours.timeTo ? calculateHours(timeFrom, newWorkHours.timeTo) : 0
+													})
 												}}
 												placeholder="09:00"
 												style={{
 													width: '100%',
-													padding: '10px',
-													border: '1px solid #dee2e6',
-													borderRadius: '6px',
-													fontSize: '16px',
-													backgroundColor: 'white'
+													padding: '16px',
+													border: '2px solid #dee2e6',
+													borderRadius: '8px',
+													fontSize: '18px',
+													backgroundColor: 'white',
+													minHeight: '48px',
+													boxSizing: 'border-box',
+													WebkitAppearance: 'none',
+													MozAppearance: 'textfield'
 												}}
 											/>
 										</div>
 										<div>
 											<label style={{
 												display: 'block',
-												marginBottom: '8px',
+												marginBottom: '10px',
 												fontWeight: '600',
 												color: '#2c3e50',
-												fontSize: '14px'
+												fontSize: '16px'
 											}}>
 												{t('settings.workHoursTo') || 'Do'}
 											</label>
 											<input
 												type="text"
-													value={newWorkHours.timeTo}
+												inputMode="numeric"
+												value={newWorkHours.timeTo}
 												onChange={(e) => {
-														const timeTo = e.target.value
-														setNewWorkHours({
-															...newWorkHours,
-															timeTo,
-															hours: newWorkHours.timeFrom ? calculateHours(newWorkHours.timeFrom, timeTo) : 0
-														})
+													const timeTo = e.target.value
+													setNewWorkHours({
+														...newWorkHours,
+														timeTo,
+														hours: newWorkHours.timeFrom ? calculateHours(newWorkHours.timeFrom, timeTo) : 0
+													})
 												}}
 												placeholder="17:00"
 												style={{
 													width: '100%',
-													padding: '10px',
-													border: '1px solid #dee2e6',
-													borderRadius: '6px',
-													fontSize: '16px',
-													backgroundColor: 'white'
+													padding: '16px',
+													border: '2px solid #dee2e6',
+													borderRadius: '8px',
+													fontSize: '18px',
+													backgroundColor: 'white',
+													minHeight: '48px',
+													boxSizing: 'border-box',
+													WebkitAppearance: 'none',
+													MozAppearance: 'textfield'
 												}}
 											/>
 										</div>
 										<div>
 											<label style={{
 												display: 'block',
-												marginBottom: '8px',
+												marginBottom: '10px',
 												fontWeight: '600',
 												color: '#2c3e50',
-												fontSize: '14px'
+												fontSize: '16px'
 											}}>
 												{t('settings.workHoursHours') || 'Godziny'}
 											</label>
 											<input
 												type="number"
-													value={newWorkHours.hours}
+												value={newWorkHours.hours}
 												readOnly
 												style={{
 													width: '100%',
-													padding: '10px',
-													border: '1px solid #dee2e6',
-													borderRadius: '6px',
-													fontSize: '16px',
+													padding: '16px',
+													border: '2px solid #dee2e6',
+													borderRadius: '8px',
+													fontSize: '18px',
 													backgroundColor: '#e9ecef',
-													cursor: 'not-allowed'
+													cursor: 'not-allowed',
+													minHeight: '48px',
+													boxSizing: 'border-box',
+													WebkitAppearance: 'none',
+													MozAppearance: 'textfield'
 												}}
 											/>
 										</div>
-											<div style={{ display: 'flex', gap: '8px' }}>
-												{editingWorkHoursIndex !== null ? (
-													<>
-										<button
-											type="button"
-															onClick={() => handleUpdateWorkHours(editingWorkHoursIndex)}
-															style={{
-																backgroundColor: '#28a745',
-																color: 'white',
-																border: 'none',
-																padding: '10px 16px',
-																borderRadius: '6px',
-																fontSize: '14px',
-																fontWeight: '500',
-																cursor: 'pointer',
-																transition: 'all 0.2s'
-															}}
-															onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
-															onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
-														>
-															{t('settings.save') || 'Zapisz'}
-														</button>
-														<button
-															type="button"
-															onClick={handleCancelEditWorkHours}
-											style={{
-												backgroundColor: '#6c757d',
-																color: 'white',
-																border: 'none',
-																padding: '10px 16px',
-																borderRadius: '6px',
-																fontSize: '14px',
-																fontWeight: '500',
-																cursor: 'pointer',
-																transition: 'all 0.2s'
-															}}
-															onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
-															onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
-														>
-															{t('settings.cancel') || 'Anuluj'}
-														</button>
-													</>
-												) : (
+										<div style={{ 
+											display: 'flex', 
+											gap: '10px',
+											alignItems: 'flex-end',
+											gridColumn: '1 / -1'
+										}}>
+											{editingWorkHoursIndex !== null ? (
+												<>
 													<button
 														type="button"
-														onClick={handleAddWorkHours}
+														onClick={() => handleUpdateWorkHours(editingWorkHoursIndex)}
 														style={{
 															backgroundColor: '#28a745',
-												color: 'white',
-												border: 'none',
-												padding: '10px 20px',
-												borderRadius: '6px',
-												fontSize: '16px',
-												fontWeight: '500',
-												cursor: 'pointer',
-												transition: 'all 0.2s'
-											}}
+															color: 'white',
+															border: 'none',
+															padding: '14px 20px',
+															borderRadius: '8px',
+															fontSize: '16px',
+															fontWeight: '600',
+															cursor: 'pointer',
+															transition: 'all 0.2s',
+															minHeight: '48px',
+															flex: 1
+														}}
 														onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
 														onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
 													>
-														+ {t('settings.add') || 'Dodaj'}
+														{t('settings.save') || 'Zapisz'}
 													</button>
-												)}
-											</div>
+													<button
+														type="button"
+														onClick={handleCancelEditWorkHours}
+														style={{
+															backgroundColor: '#6c757d',
+															color: 'white',
+															border: 'none',
+															padding: '14px 20px',
+															borderRadius: '8px',
+															fontSize: '16px',
+															fontWeight: '600',
+															cursor: 'pointer',
+															transition: 'all 0.2s',
+															minHeight: '48px',
+															flex: 1
+														}}
+														onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+														onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+													>
+														{t('settings.cancel') || 'Anuluj'}
+													</button>
+												</>
+											) : (
+												<button
+													type="button"
+													onClick={handleAddWorkHours}
+													style={{
+														backgroundColor: '#28a745',
+														color: 'white',
+														border: 'none',
+														padding: '14px 24px',
+														borderRadius: '8px',
+														fontSize: '18px',
+														fontWeight: '600',
+														cursor: 'pointer',
+														transition: 'all 0.2s',
+														minHeight: '48px',
+														width: '100%'
+													}}
+													onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+													onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+												>
+													+ {t('settings.add') || 'Dodaj'}
+												</button>
+											)}
 										</div>
+									</div>
 									</div>
 								</div>
 							</>
