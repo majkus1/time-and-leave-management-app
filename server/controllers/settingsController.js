@@ -61,7 +61,7 @@ exports.updateSettings = async (req, res) => {
 			settings.customHolidays = validCustomHolidays
 		}
 
-		// Obsługa workHours (wspólne godziny pracy)
+		// Obsługa workHours (tablica konfiguracji godzin pracy)
 		if (workHours !== undefined) {
 			// Helper function to calculate hours from time range
 			const calculateHours = (timeFrom, timeTo) => {
@@ -78,29 +78,43 @@ exports.updateSettings = async (req, res) => {
 			}
 
 			if (workHours === null) {
-				// Usuń workHours jeśli null
-				settings.workHours = { timeFrom: null, timeTo: null, hours: null }
-			} else if (workHours.timeFrom && workHours.timeTo) {
-				// Walidacja formatu czasu
+				// Usuń wszystkie workHours jeśli null
+				settings.workHours = []
+			} else if (Array.isArray(workHours)) {
+				// Walidacja i przetwarzanie tablicy konfiguracji
 				const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-				if (!timeRegex.test(workHours.timeFrom) || !timeRegex.test(workHours.timeTo)) {
-					return res.status(400).send('Invalid time format for work hours. Use HH:mm.')
-				}
-				const calculatedHours = calculateHours(workHours.timeFrom, workHours.timeTo)
-				settings.workHours = {
-					timeFrom: workHours.timeFrom,
-					timeTo: workHours.timeTo,
-					hours: calculatedHours
-				}
+				const validWorkHours = workHours
+					.filter(wh => wh && wh.timeFrom && wh.timeTo)
+					.map(wh => {
+						// Walidacja formatu czasu
+						if (!timeRegex.test(wh.timeFrom) || !timeRegex.test(wh.timeTo)) {
+							return null
+						}
+						const calculatedHours = calculateHours(wh.timeFrom, wh.timeTo)
+						return {
+							timeFrom: wh.timeFrom,
+							timeTo: wh.timeTo,
+							hours: calculatedHours
+						}
+					})
+					.filter(wh => wh !== null) // Usuń nieprawidłowe wpisy
+				
+				settings.workHours = validWorkHours
 			} else {
-				// Jeśli tylko część pól, zachowaj istniejące i zaktualizuj tylko podane
-				if (!settings.workHours) {
-					settings.workHours = { timeFrom: null, timeTo: null, hours: null }
-				}
-				if (workHours.timeFrom !== undefined) settings.workHours.timeFrom = workHours.timeFrom || null
-				if (workHours.timeTo !== undefined) settings.workHours.timeTo = workHours.timeTo || null
+				// Kompatybilność wsteczna: jeśli przysłano stary format (obiekt), zamień na tablicę
 				if (workHours.timeFrom && workHours.timeTo) {
-					settings.workHours.hours = calculateHours(workHours.timeFrom, workHours.timeTo)
+					const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+					if (!timeRegex.test(workHours.timeFrom) || !timeRegex.test(workHours.timeTo)) {
+						return res.status(400).send('Invalid time format for work hours. Use HH:mm.')
+					}
+					const calculatedHours = calculateHours(workHours.timeFrom, workHours.timeTo)
+					settings.workHours = [{
+						timeFrom: workHours.timeFrom,
+						timeTo: workHours.timeTo,
+						hours: calculatedHours
+					}]
+				} else {
+					settings.workHours = []
 				}
 			}
 		}
@@ -115,15 +129,17 @@ exports.updateSettings = async (req, res) => {
 					typeof type.isSystem === 'boolean' &&
 					typeof type.isEnabled === 'boolean' &&
 					typeof type.requireApproval === 'boolean' &&
-					typeof type.allowDaysLimit === 'boolean'
-			}).map(type => ({
-				id: type.id.trim(),
-				name: type.name.trim(),
-				nameEn: type.nameEn ? type.nameEn.trim() : undefined,
-				isSystem: type.isSystem,
-				isEnabled: type.isEnabled,
-				requireApproval: type.requireApproval,
-				allowDaysLimit: type.allowDaysLimit
+				typeof type.allowDaysLimit === 'boolean' &&
+				(type.minDaysBefore === null || type.minDaysBefore === undefined || (typeof type.minDaysBefore === 'number' && type.minDaysBefore > 0))
+		}).map(type => ({
+			id: type.id.trim(),
+			name: type.name.trim(),
+			nameEn: type.nameEn ? type.nameEn.trim() : undefined,
+			isSystem: type.isSystem,
+			isEnabled: type.isEnabled,
+			requireApproval: type.requireApproval,
+			allowDaysLimit: type.allowDaysLimit,
+			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null
 			}))
 			
 			// Nie można usuwać typów systemowych, tylko je włączać/wyłączać

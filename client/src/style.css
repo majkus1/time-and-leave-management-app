@@ -653,6 +653,10 @@ select {
 		display: none !important;
 	}
 
+	.view-toggle-button {
+		margin-left: 35px !important;
+	}
+
 	.calendar-controls button:nth-child(3), #calendars-works-review > div:nth-child(1) > div:nth-child(2) > button:nth-child(3) {
 		margin-left: 35px;
 	}
@@ -661,6 +665,11 @@ select {
 	#leave-planner .filter-button,
 	#list-employee .filter-button {
 		margin-left: 35px;
+	}
+
+	#all-leaveplans .view-toggle-button,
+	#leave-planner .view-toggle-button {
+		margin-left: 0;
 	}
 
 	/* Style dla klikalnych list użytkowników */

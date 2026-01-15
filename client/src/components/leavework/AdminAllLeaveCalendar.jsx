@@ -514,26 +514,29 @@ function AdminAllLeaveCalendar() {
 						onClick={() => setFilterModalOpen(true)}
 						className='filter-button'
 						style={{ 
-							padding: '8px 16px', 
+							padding: '8px 12px', 
 							border: '1px solid #3498db', 
 							borderRadius: '6px', 
 							backgroundColor: '#3498db', 
-							color: 'white',
 							cursor: 'pointer', 
-							fontSize: '16px', 
-							fontWeight: '500', 
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
 							transition: 'all 0.2s ease',
 						}}
 						onMouseOver={(e) => {
-							e.target.style.backgroundColor = '#2980b9'
-							e.target.style.borderColor = '#2980b9'
+							const button = e.currentTarget
+							button.style.backgroundColor = '#2980b9'
+							button.style.borderColor = '#2980b9'
 						}}
 						onMouseOut={(e) => {
-							e.target.style.backgroundColor = '#3498db'
-							e.target.style.borderColor = '#3498db'
+							const button = e.currentTarget
+							button.style.backgroundColor = '#3498db'
+							button.style.borderColor = '#3498db'
 						}}
+						title={t('planslist.filter') || 'Filtrowanie'}
 					>
-						{t('planslist.filter') || 'Filtrowanie'}
+						<img src="/img/filter.png" alt="Filtrowanie" style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)', pointerEvents: 'none' }} />
 					</button>
 				</div>
 				{calendarView === 'single' ? (

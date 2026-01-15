@@ -35,6 +35,7 @@ function MonthlyCalendar() {
 	const [errorMessage, setErrorMessage] = useState('')
 	const [isHolidayDay, setIsHolidayDay] = useState(false)
 	const [isWeekendDay, setIsWeekendDay] = useState(false)
+	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
 	const calendarRef = useRef(null)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -398,11 +399,24 @@ function MonthlyCalendar() {
 		
 		// Auto-fill work hours from settings if no existing entries and not a holiday and not a weekend (when workOnWeekends = false)
 		// Używamy lokalnej zmiennej isWeekendDayLocal zamiast state, bo state jest asynchroniczny
-		if (existingWorkdays.length === 0 && !isHoliday && !isWeekendDayLocal && settings && settings.workHours && settings.workHours.timeFrom && settings.workHours.timeTo) {
-			const timeRange = `${settings.workHours.timeFrom}-${settings.workHours.timeTo}`
-			setRealTimeDayWorked(timeRange)
-			if (settings.workHours.hours) {
-				setHoursWorked(settings.workHours.hours.toString())
+		if (existingWorkdays.length === 0 && !isHoliday && !isWeekendDayLocal && settings && settings.workHours) {
+			// Obsługa nowego formatu (tablica) i starego (obiekt) dla kompatybilności wstecznej
+			let workHoursToUse = null
+			if (Array.isArray(settings.workHours) && settings.workHours.length > 0) {
+				// Nowy format - użyj pierwszej konfiguracji (lub wybranej jeśli jest więcej)
+				workHoursToUse = settings.workHours[selectedWorkHoursIndex] || settings.workHours[0]
+				setSelectedWorkHoursIndex(0) // Reset do pierwszej przy otwieraniu modala
+			} else if (settings.workHours && !Array.isArray(settings.workHours) && settings.workHours.timeFrom && settings.workHours.timeTo) {
+				// Stary format - kompatybilność wsteczna
+				workHoursToUse = settings.workHours
+			}
+			
+			if (workHoursToUse && workHoursToUse.timeFrom && workHoursToUse.timeTo) {
+				const timeRange = `${workHoursToUse.timeFrom}-${workHoursToUse.timeTo}`
+				setRealTimeDayWorked(timeRange)
+				if (workHoursToUse.hours) {
+					setHoursWorked(workHoursToUse.hours.toString())
+				}
 			}
 		} else if (isWeekendDayLocal || isHoliday) {
 			// Jeśli to weekend lub święto, wyczyść pola godzin pracy i nieobecności
@@ -790,6 +804,7 @@ function MonthlyCalendar() {
 		setErrorMessage('')
 		setIsHolidayDay(false)
 		setIsWeekendDay(false)
+		setSelectedWorkHoursIndex(0)
 	}
 
 	if (loading) return <Loader />
@@ -1586,6 +1601,73 @@ function MonthlyCalendar() {
 											</div>
 
 											<div>
+												{/* Checkboxy dla wielu konfiguracji godzin pracy */}
+												{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
+													<div style={{
+														marginBottom: '15px',
+														padding: '12px',
+														backgroundColor: '#e3f2fd',
+														border: '1px solid #90caf9',
+														borderRadius: '6px'
+													}}>
+														<label style={{
+															display: 'block',
+															marginBottom: '10px',
+															fontWeight: '600',
+															color: '#2c3e50',
+															fontSize: '14px'
+														}}>
+															{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
+														</label>
+														<div style={{
+															display: 'flex',
+															flexDirection: 'column',
+															gap: '8px'
+														}}>
+															{settings.workHours.map((workHours, index) => (
+																<label
+																	key={index}
+																	style={{
+																		display: 'flex',
+																		alignItems: 'center',
+																		cursor: 'pointer',
+																		padding: '8px',
+																		borderRadius: '4px',
+																		backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
+																		border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
+																		transition: 'all 0.2s'
+																	}}
+																>
+																	<input
+																		type="radio"
+																		name="workHours"
+																		checked={selectedWorkHoursIndex === index}
+																		onChange={() => {
+																			setSelectedWorkHoursIndex(index)
+																			const timeRange = `${workHours.timeFrom}-${workHours.timeTo}`
+																			setRealTimeDayWorked(timeRange)
+																			if (workHours.hours) {
+																				setHoursWorked(workHours.hours.toString())
+																			}
+																		}}
+																		disabled={isHolidayDay || isWeekendDay}
+																		style={{
+																			marginRight: '10px',
+																			cursor: isHolidayDay || isWeekendDay ? 'not-allowed' : 'pointer'
+																		}}
+																	/>
+																	<span style={{
+																		fontSize: '14px',
+																		color: '#2c3e50',
+																		flex: 1
+																	}}>
+																		{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
+																	</span>
+																</label>
+															))}
+														</div>
+													</div>
+												)}
 												<input
 													type="text"
 													placeholder={t('workcalendar.placeholder3')}
@@ -1785,6 +1867,73 @@ function MonthlyCalendar() {
 								</div>
 
 								<div>
+									{/* Checkboxy dla wielu konfiguracji godzin pracy */}
+									{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
+										<div style={{
+											marginBottom: '15px',
+											padding: '12px',
+											backgroundColor: '#e3f2fd',
+											border: '1px solid #90caf9',
+											borderRadius: '6px'
+										}}>
+											<label style={{
+												display: 'block',
+												marginBottom: '10px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '14px'
+											}}>
+												{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
+											</label>
+											<div style={{
+												display: 'flex',
+												flexDirection: 'column',
+												gap: '8px'
+											}}>
+												{settings.workHours.map((workHours, index) => (
+													<label
+														key={index}
+														style={{
+															display: 'flex',
+															alignItems: 'center',
+															cursor: 'pointer',
+															padding: '8px',
+															borderRadius: '4px',
+															backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
+															border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
+															transition: 'all 0.2s'
+														}}
+													>
+														<input
+															type="radio"
+															name="workHours"
+															checked={selectedWorkHoursIndex === index}
+															onChange={() => {
+																setSelectedWorkHoursIndex(index)
+																const timeRange = `${workHours.timeFrom}-${workHours.timeTo}`
+																setRealTimeDayWorked(timeRange)
+																if (workHours.hours) {
+																	setHoursWorked(workHours.hours.toString())
+																}
+															}}
+															disabled={isHolidayDay || isWeekendDay}
+															style={{
+																marginRight: '10px',
+																cursor: isHolidayDay || isWeekendDay ? 'not-allowed' : 'pointer'
+															}}
+														/>
+														<span style={{
+															fontSize: '14px',
+															color: '#2c3e50',
+															flex: 1
+														}}>
+															{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
+														</span>
+													</label>
+												))}
+											</div>
+										</div>
+									)}
 									<input
 										type="text"
 										placeholder={t('workcalendar.placeholder3')}

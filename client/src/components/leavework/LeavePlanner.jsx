@@ -11,18 +11,12 @@ import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
-import Modal from 'react-modal'
-
-if (typeof window !== 'undefined') {
-	Modal.setAppElement('#root')
-}
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
-	const [viewModalOpen, setViewModalOpen] = useState(false)
 	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -578,29 +572,36 @@ function LeavePlanner() {
 						)}
 						<button
 							type="button"
-							onClick={() => setViewModalOpen(true)}
-							className='filter-button'
+							onClick={() => setCalendarView(calendarView === 'single' ? 'all-months' : 'single')}
+							className='view-toggle-button'
 							style={{ 
-								padding: '8px 16px', 
+								padding: '8px 12px', 
 								border: '1px solid #3498db', 
 								borderRadius: '6px', 
 								backgroundColor: '#3498db', 
-								color: 'white',
 								cursor: 'pointer', 
-								fontSize: '16px', 
-								fontWeight: '500', 
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
 								transition: 'all 0.2s ease',
 							}}
 							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#2980b9'
-								e.target.style.borderColor = '#2980b9'
+								const button = e.currentTarget
+								button.style.backgroundColor = '#2980b9'
+								button.style.borderColor = '#2980b9'
 							}}
 							onMouseOut={(e) => {
-								e.target.style.backgroundColor = '#3498db'
-								e.target.style.borderColor = '#3498db'
+								const button = e.currentTarget
+								button.style.backgroundColor = '#3498db'
+								button.style.borderColor = '#3498db'
 							}}
+							title={calendarView === 'single' ? (t('planslist.allMonths') || 'Wszystkie miesiące') : (t('planslist.singleMonth') || 'Jeden miesiąc')}
 						>
-							{t('leaveplanner.viewOptions') || 'Opcje widoku'}
+							<img 
+								src={calendarView === 'single' ? "/img/squares.png" : "/img/stop.png"} 
+								alt={calendarView === 'single' ? "Wszystkie miesiące" : "Jeden miesiąc"} 
+								style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)', pointerEvents: 'none' }} 
+							/>
 						</button>
 					</div>
 
@@ -661,115 +662,6 @@ function LeavePlanner() {
 						</div>
 					)}
 
-					{/* Modal opcji widoku */}
-					<Modal
-						isOpen={viewModalOpen}
-						onRequestClose={() => setViewModalOpen(false)}
-						style={{
-							overlay: {
-								display: 'flex',
-								justifyContent: 'center',
-								alignItems: 'center',
-								backgroundColor: 'rgba(0, 0, 0, 0.5)',
-								backdropFilter: 'blur(2px)',
-							},
-							content: {
-								position: 'relative',
-								inset: 'unset',
-								margin: '0',
-								maxWidth: '500px',
-								maxHeight: '80vh',
-								width: '90%',
-								borderRadius: '12px',
-								padding: '30px',
-								backgroundColor: 'white',
-								overflow: 'auto',
-							},
-						}}
-						contentLabel={t('leaveplanner.viewOptions') || 'Opcje widoku'}>
-						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-							<h2 style={{ 
-								margin: 0,
-								color: '#2c3e50',
-								fontSize: '24px',
-								fontWeight: '600'
-							}}>
-								{t('leaveplanner.viewOptions') || 'Opcje widoku'}
-							</h2>
-							<button
-								onClick={() => setViewModalOpen(false)}
-								style={{
-									background: 'transparent',
-									border: 'none',
-									fontSize: '28px',
-									cursor: 'pointer',
-									color: '#7f8c8d',
-									lineHeight: '1',
-									padding: '0',
-									width: '30px',
-									height: '30px',
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center'
-								}}
-								onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
-								onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
-								×
-							</button>
-						</div>
-
-						{/* Widok kalendarza */}
-						<div style={{ marginBottom: '30px' }}>
-							<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
-								{t('planslist.calendarView') || 'Widok kalendarza'}
-							</h3>
-							<div style={{ display: 'flex', gap: '15px' }}>
-								<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-									<input
-										type="radio"
-										name="calendarView"
-										value="single"
-										checked={calendarView === 'single'}
-										onChange={(e) => setCalendarView(e.target.value)}
-										style={{ marginRight: '8px', cursor: 'pointer' }}
-									/>
-									<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
-								</label>
-								<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-									<input
-										type="radio"
-										name="calendarView"
-										value="all-months"
-										checked={calendarView === 'all-months'}
-										onChange={(e) => setCalendarView(e.target.value)}
-										style={{ marginRight: '8px', cursor: 'pointer' }}
-									/>
-									<span>{t('planslist.allMonths') || 'Wszystkie miesiące'}</span>
-								</label>
-							</div>
-						</div>
-
-						{/* Przycisk zamknięcia */}
-						<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
-							<button
-								onClick={() => setViewModalOpen(false)}
-								style={{
-									padding: '10px 20px',
-									backgroundColor: '#3498db',
-									color: 'white',
-									border: 'none',
-									borderRadius: '6px',
-									cursor: 'pointer',
-									fontSize: '14px',
-									fontWeight: '500',
-									transition: 'background-color 0.2s'
-								}}
-								onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-								onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
-								{t('planslist.apply') || t('boards.cancel') || 'Zamknij'}
-							</button>
-						</div>
-					</Modal>
 				</div>
 			)}
 		</>

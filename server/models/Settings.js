@@ -20,6 +20,7 @@ const leaveRequestTypeSchema = new mongoose.Schema({
 	isEnabled: { type: Boolean, default: true }, // Czy typ jest włączony dla zespołu
 	requireApproval: { type: Boolean, default: true }, // Czy wymaga zatwierdzenia (false = automatycznie akceptowany jak L4)
 	allowDaysLimit: { type: Boolean, default: false }, // Czy można ustawiać limit dni dla usera (dla systemowych: można włączyć/wyłączyć, dla custom: zawsze jeśli true)
+	minDaysBefore: { type: Number, default: null }, // Minimalna liczba dni przed urlopem, na ile trzeba złożyć wniosek (null = brak limitu, np. 5 = trzeba złożyć minimum 5 dni przed)
 }, { _id: false })
 
 const settingsSchema = new mongoose.Schema({
@@ -49,34 +50,37 @@ const settingsSchema = new mongoose.Schema({
 		type: [customHolidaySchema],
 		default: []
 	},
-	// Wspólne godziny pracy dla wszystkich dni roboczych
+	// Wspólne godziny pracy dla wszystkich dni roboczych (tablica konfiguracji)
 	workHours: {
-		timeFrom: {
-			type: String, // Format: HH:mm (e.g., "09:00")
-			required: false,
-			validate: {
-				validator: function(v) {
-					return !v || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
-				},
-				message: 'timeFrom must be in HH:mm format'
+		type: [{
+			timeFrom: {
+				type: String, // Format: HH:mm (e.g., "09:00")
+				required: true,
+				validate: {
+					validator: function(v) {
+						return v && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
+					},
+					message: 'timeFrom must be in HH:mm format'
+				}
+			},
+			timeTo: {
+				type: String, // Format: HH:mm (e.g., "17:00")
+				required: true,
+				validate: {
+					validator: function(v) {
+						return v && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
+					},
+					message: 'timeTo must be in HH:mm format'
+				}
+			},
+			hours: {
+				type: Number, // Obliczone godziny (e.g., 8 dla 09:00-17:00)
+				required: true,
+				min: 0,
+				max: 24
 			}
-		},
-		timeTo: {
-			type: String, // Format: HH:mm (e.g., "17:00")
-			required: false,
-			validate: {
-				validator: function(v) {
-					return !v || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
-				},
-				message: 'timeTo must be in HH:mm format'
-			}
-		},
-		hours: {
-			type: Number, // Obliczone godziny (e.g., 8 dla 09:00-17:00)
-			required: false,
-			min: 0,
-			max: 24
-		}
+		}],
+		default: []
 	},
 	// Konfiguracja typów wniosków urlopowych/nieobecności
 	leaveRequestTypes: {
@@ -145,6 +149,28 @@ settingsSchema.statics.getSettings = async function(teamId) {
 				settings.leaveRequestTypes.push(...systemTypesToAdd)
 				await settings.save()
 			}
+		}
+		
+		// Migracja: jeśli workHours jest starym formatem (obiekt), zamień na tablicę
+		if (settings.workHours && !Array.isArray(settings.workHours)) {
+			// Stary format: { timeFrom, timeTo, hours }
+			if (settings.workHours.timeFrom && settings.workHours.timeTo && settings.workHours.hours) {
+				settings.workHours = [{
+					timeFrom: settings.workHours.timeFrom,
+					timeTo: settings.workHours.timeTo,
+					hours: settings.workHours.hours
+				}]
+				await settings.save()
+			} else {
+				// Jeśli stary format jest pusty/null, ustaw jako pustą tablicę
+				settings.workHours = []
+				await settings.save()
+			}
+		}
+		// Upewnij się, że workHours jest tablicą
+		if (!Array.isArray(settings.workHours)) {
+			settings.workHours = []
+			await settings.save()
 		}
 		
 		await settings.save()

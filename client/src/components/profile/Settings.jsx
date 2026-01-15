@@ -27,10 +27,10 @@ function Settings() {
 	const [newHolidayDate, setNewHolidayDate] = useState('')
 	const [newHolidayName, setNewHolidayName] = useState('')
 	
-	// State for work hours
-	const [workHoursTimeFrom, setWorkHoursTimeFrom] = useState('')
-	const [workHoursTimeTo, setWorkHoursTimeTo] = useState('')
-	const [workHoursHours, setWorkHoursHours] = useState(0)
+	// State for work hours (tablica konfiguracji)
+	const [workHoursList, setWorkHoursList] = useState([])
+	const [editingWorkHoursIndex, setEditingWorkHoursIndex] = useState(null)
+	const [newWorkHours, setNewWorkHours] = useState({ timeFrom: '', timeTo: '', hours: 0 })
 
 	const isAdmin = role && role.includes('Admin')
 	const isHR = role && role.includes('HR')
@@ -49,7 +49,8 @@ function Settings() {
 		name: '',
 		nameEn: '',
 		requireApproval: true,
-		allowDaysLimit: false
+		allowDaysLimit: false,
+		minDaysBefore: null
 	})
 
 	// Helper function to calculate hours from time range
@@ -74,32 +75,91 @@ function Settings() {
 			setIncludeCustomHolidays(settings.includeCustomHolidays === true)
 			setCustomHolidays(Array.isArray(settings.customHolidays) ? settings.customHolidays : [])
 			
-			// Initialize work hours
+			// Initialize work hours (obsługa starego formatu dla kompatybilności wstecznej)
 			if (settings.workHours) {
-				setWorkHoursTimeFrom(settings.workHours.timeFrom || '')
-				setWorkHoursTimeTo(settings.workHours.timeTo || '')
-				setWorkHoursHours(settings.workHours.hours || 0)
+				if (Array.isArray(settings.workHours)) {
+					setWorkHoursList(settings.workHours)
+				} else if (settings.workHours.timeFrom && settings.workHours.timeTo) {
+					// Stary format - zamień na tablicę
+					setWorkHoursList([{
+						timeFrom: settings.workHours.timeFrom,
+						timeTo: settings.workHours.timeTo,
+						hours: settings.workHours.hours || 0
+					}])
 			} else {
-				setWorkHoursTimeFrom('')
-				setWorkHoursTimeTo('')
-				setWorkHoursHours(0)
+					setWorkHoursList([])
 			}
+			} else {
+				setWorkHoursList([])
+			}
+			setEditingWorkHoursIndex(null)
+			setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
 		}
 	}, [settings])
 
-	const handleClearWorkHours = () => {
-		setWorkHoursTimeFrom('')
-		setWorkHoursTimeTo('')
-		setWorkHoursHours(0)
+	const handleAddWorkHours = () => {
+		if (!newWorkHours.timeFrom || !newWorkHours.timeTo) {
+			showAlert(t('settings.workHoursTimeRequired') || 'Wypełnij pola "Od" i "Do"')
+			return
+		}
+		const calculatedHours = calculateHours(newWorkHours.timeFrom, newWorkHours.timeTo)
+		const newEntry = {
+			timeFrom: newWorkHours.timeFrom,
+			timeTo: newWorkHours.timeTo,
+			hours: calculatedHours
+		}
+		setWorkHoursList([...workHoursList, newEntry])
+		setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
+		showAlert(t('settings.workHoursSaveReminder') || 'Pamiętaj o zapisaniu zmian przyciskiem "Zapisz ustawienia" na dole strony.')
+	}
+
+	const handleUpdateWorkHours = (index) => {
+		if (!newWorkHours.timeFrom || !newWorkHours.timeTo) {
+			showAlert(t('settings.workHoursTimeRequired') || 'Wypełnij pola "Od" i "Do"')
+			return
+		}
+		const calculatedHours = calculateHours(newWorkHours.timeFrom, newWorkHours.timeTo)
+		const updatedList = [...workHoursList]
+		updatedList[index] = {
+			timeFrom: newWorkHours.timeFrom,
+			timeTo: newWorkHours.timeTo,
+			hours: calculatedHours
+		}
+		setWorkHoursList(updatedList)
+		setEditingWorkHoursIndex(null)
+		setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
+		showAlert(t('settings.workHoursSaveReminder') || 'Pamiętaj o zapisaniu zmian przyciskiem "Zapisz ustawienia" na dole strony.')
+	}
+
+	const handleEditWorkHours = (index) => {
+		const workHours = workHoursList[index]
+		setNewWorkHours({
+			timeFrom: workHours.timeFrom,
+			timeTo: workHours.timeTo,
+			hours: workHours.hours
+		})
+		setEditingWorkHoursIndex(index)
+	}
+
+	const handleCancelEditWorkHours = () => {
+		setEditingWorkHoursIndex(null)
+		setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
+	}
+
+	const handleDeleteWorkHours = (index) => {
+		const updatedList = workHoursList.filter((_, i) => i !== index)
+		setWorkHoursList(updatedList)
+		if (editingWorkHoursIndex === index) {
+			setEditingWorkHoursIndex(null)
+			setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
+		}
+		showAlert(t('settings.workHoursSaveReminder') || 'Pamiętaj o zapisaniu zmian przyciskiem "Zapisz ustawienia" na dole strony.')
 	}
 
 	const handleSave = async () => {
 		try {
-			const workHoursData = workHoursTimeFrom && workHoursTimeTo ? {
-				timeFrom: workHoursTimeFrom,
-				timeTo: workHoursTimeTo,
-				hours: calculateHours(workHoursTimeFrom, workHoursTimeTo)
-			} : null
+			// Zapisz workHours jako tablicę (lub null jeśli pusta)
+			const workHoursData = workHoursList.length > 0 ? workHoursList : null
 			
 			await updateSettingsMutation.mutateAsync({ 
 				workOnWeekends,
@@ -199,6 +259,39 @@ function Settings() {
 		}
 	}
 
+	const handleToggleTypeMinDaysBefore = async (typeId) => {
+		try {
+			const type = leaveRequestTypes.find(t => t.id === typeId)
+			const newMinDaysBefore = type.minDaysBefore === null ? 5 : null // Domyślnie 5 dni jeśli włączamy (minimum z wyprzedzeniem)
+			const updatedTypes = leaveRequestTypes.map(t => 
+				t.id === typeId ? { ...t, minDaysBefore: newMinDaysBefore } : t
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error toggling minDaysBefore:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
+	const handleUpdateTypeMinDaysBefore = async (typeId, value) => {
+		try {
+			const numValue = value === '' || value === null ? null : parseInt(value, 10)
+			if (numValue !== null && (isNaN(numValue) || numValue < 1)) {
+				await showAlert(t('settings.minDaysBeforeInvalid') || 'Liczba dni musi być większa niż 0')
+				return
+			}
+			const updatedTypes = leaveRequestTypes.map(type => 
+				type.id === typeId ? { ...type, minDaysBefore: numValue } : type
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error updating minDaysBefore:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
 	const handleToggleTypeRequireApproval = async (typeId) => {
 		try {
 			const updatedTypes = leaveRequestTypes.map(type => 
@@ -223,9 +316,10 @@ function Settings() {
 				name: newCustomType.name.trim(),
 				nameEn: newCustomType.nameEn.trim() || undefined,
 				requireApproval: newCustomType.requireApproval,
-				allowDaysLimit: newCustomType.allowDaysLimit
+				allowDaysLimit: newCustomType.allowDaysLimit,
+				minDaysBefore: newCustomType.minDaysBefore || null
 			})
-			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false })
+			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null })
 			setShowAddCustomTypeForm(false)
 			await showAlert(t('settings.leaveTypesAddSuccess') || 'Niestandardowy typ został dodany')
 		} catch (error) {
@@ -829,9 +923,90 @@ function Settings() {
 									}}>
 										{t('settings.workHoursCommonTitle') || 'Wspólne godziny pracy dla wszystkich dni'}
 									</h4>
+
+									{/* Lista istniejących konfiguracji */}
+									{workHoursList.length > 0 && (
+										<div style={{ marginBottom: '20px' }}>
+											{workHoursList.map((workHours, index) => (
+												<div
+													key={index}
+													style={{
+														display: 'flex',
+														justifyContent: 'space-between',
+														alignItems: 'center',
+														padding: '12px',
+														backgroundColor: 'white',
+														border: '1px solid #dee2e6',
+														borderRadius: '6px',
+														marginBottom: '10px'
+													}}
+												>
+													<div style={{ flex: 1 }}>
+														<div style={{
+															fontWeight: '600',
+															color: '#2c3e50',
+															marginBottom: '4px'
+														}}>
+															{workHours.timeFrom} - {workHours.timeTo}
+														</div>
+														<div style={{ fontSize: '14px', color: '#6c757d' }}>
+															{workHours.hours} {t('settings.hours') || 'godzin'}
+														</div>
+													</div>
+													<div style={{ display: 'flex', gap: '8px' }}>
+														<button
+															type="button"
+															onClick={() => handleEditWorkHours(index)}
+															style={{
+																backgroundColor: '#3498db',
+																color: 'white',
+																border: 'none',
+																padding: '6px 12px',
+																borderRadius: '4px',
+																fontSize: '14px',
+																cursor: 'pointer',
+																transition: 'all 0.2s'
+															}}
+															onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
+															onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
+														>
+															{t('settings.edit') || 'Edytuj'}
+														</button>
+														<button
+															type="button"
+															onClick={() => handleDeleteWorkHours(index)}
+															style={{
+																backgroundColor: '#dc3545',
+																color: 'white',
+																border: 'none',
+																padding: '6px 12px',
+																borderRadius: '4px',
+																fontSize: '14px',
+																cursor: 'pointer',
+																transition: 'all 0.2s'
+															}}
+															onMouseEnter={(e) => e.target.style.backgroundColor = '#c82333'}
+															onMouseLeave={(e) => e.target.style.backgroundColor = '#dc3545'}
+														>
+															{t('settings.delete') || 'Usuń'}
+														</button>
+													</div>
+												</div>
+											))}
+										</div>
+									)}
+
+									{/* Formularz dodawania/edycji */}
+									<div style={{
+										backgroundColor: editingWorkHoursIndex !== null ? '#fff3cd' : 'white',
+										border: `2px solid ${editingWorkHoursIndex !== null ? '#ffc107' : '#dee2e6'}`,
+										borderRadius: '6px',
+										padding: '15px',
+										marginBottom: '15px'
+									}}>
 									<div style={{
 										display: 'grid',
-										gridTemplateColumns: '1fr 1fr 1fr',
+											gridTemplateColumns: '1fr 1fr 1fr auto',
 										gap: '15px',
 										alignItems: 'end'
 									}}>
@@ -847,12 +1022,14 @@ function Settings() {
 											</label>
 											<input
 												type="text"
-												value={workHoursTimeFrom}
+													value={newWorkHours.timeFrom}
 												onChange={(e) => {
-													setWorkHoursTimeFrom(e.target.value)
-													if (workHoursTimeTo) {
-														setWorkHoursHours(calculateHours(e.target.value, workHoursTimeTo))
-													}
+														const timeFrom = e.target.value
+														setNewWorkHours({
+															...newWorkHours,
+															timeFrom,
+															hours: newWorkHours.timeTo ? calculateHours(timeFrom, newWorkHours.timeTo) : 0
+														})
 												}}
 												placeholder="09:00"
 												style={{
@@ -877,12 +1054,14 @@ function Settings() {
 											</label>
 											<input
 												type="text"
-												value={workHoursTimeTo}
+													value={newWorkHours.timeTo}
 												onChange={(e) => {
-													setWorkHoursTimeTo(e.target.value)
-													if (workHoursTimeFrom) {
-														setWorkHoursHours(calculateHours(workHoursTimeFrom, e.target.value))
-													}
+														const timeTo = e.target.value
+														setNewWorkHours({
+															...newWorkHours,
+															timeTo,
+															hours: newWorkHours.timeFrom ? calculateHours(newWorkHours.timeFrom, timeTo) : 0
+														})
 												}}
 												placeholder="17:00"
 												style={{
@@ -907,7 +1086,7 @@ function Settings() {
 											</label>
 											<input
 												type="number"
-												value={workHoursHours}
+													value={newWorkHours.hours}
 												readOnly
 												style={{
 													width: '100%',
@@ -920,13 +1099,54 @@ function Settings() {
 												}}
 											/>
 										</div>
-									</div>
-									<div style={{ marginTop: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+											<div style={{ display: 'flex', gap: '8px' }}>
+												{editingWorkHoursIndex !== null ? (
+													<>
 										<button
 											type="button"
-											onClick={handleClearWorkHours}
+															onClick={() => handleUpdateWorkHours(editingWorkHoursIndex)}
+															style={{
+																backgroundColor: '#28a745',
+																color: 'white',
+																border: 'none',
+																padding: '10px 16px',
+																borderRadius: '6px',
+																fontSize: '14px',
+																fontWeight: '500',
+																cursor: 'pointer',
+																transition: 'all 0.2s'
+															}}
+															onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+															onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+														>
+															{t('settings.save') || 'Zapisz'}
+														</button>
+														<button
+															type="button"
+															onClick={handleCancelEditWorkHours}
 											style={{
 												backgroundColor: '#6c757d',
+																color: 'white',
+																border: 'none',
+																padding: '10px 16px',
+																borderRadius: '6px',
+																fontSize: '14px',
+																fontWeight: '500',
+																cursor: 'pointer',
+																transition: 'all 0.2s'
+															}}
+															onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+															onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+														>
+															{t('settings.cancel') || 'Anuluj'}
+														</button>
+													</>
+												) : (
+													<button
+														type="button"
+														onClick={handleAddWorkHours}
+														style={{
+															backgroundColor: '#28a745',
 												color: 'white',
 												border: 'none',
 												padding: '10px 20px',
@@ -936,15 +1156,14 @@ function Settings() {
 												cursor: 'pointer',
 												transition: 'all 0.2s'
 											}}
-											onMouseEnter={(e) => {
-												e.target.style.backgroundColor = '#5a6268'
-											}}
-											onMouseLeave={(e) => {
-												e.target.style.backgroundColor = '#6c757d'
-											}}
-										>
-											{t('settings.workHoursClear') || 'Wyczyść'}
-										</button>
+														onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+														onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+													>
+														+ {t('settings.add') || 'Dodaj'}
+													</button>
+												)}
+											</div>
+										</div>
 									</div>
 								</div>
 							</>
@@ -1097,6 +1316,79 @@ function Settings() {
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
 														</span>
 													</label>
+													<div style={{
+														display: 'flex',
+														flexDirection: 'column',
+														gap: '8px',
+														gridColumn: '1 / -1'
+													}}>
+														<label style={{
+															display: 'flex',
+															alignItems: 'center',
+															cursor: 'pointer'
+														}}>
+															<input
+																type="checkbox"
+																checked={type.minDaysBefore !== null && type.minDaysBefore !== undefined}
+																onChange={() => handleToggleTypeMinDaysBefore(type.id)}
+																style={{
+																	width: '18px',
+																	height: '18px',
+																	cursor: 'pointer',
+																	marginRight: '8px'
+																}}
+															/>
+															<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+																{t('settings.minDaysBeforeEnabled') || 'Ograniczenie dni przed urlopem'}
+															</span>
+														</label>
+														{type.minDaysBefore !== null && type.minDaysBefore !== undefined && (
+															<div style={{
+																display: 'flex',
+																alignItems: 'center',
+																gap: '10px',
+																marginLeft: '26px'
+															}}>
+																<label style={{
+																	fontSize: '14px',
+																	color: '#2c3e50',
+																	fontWeight: '500'
+																}}>
+																	{t('settings.minDaysBeforeLabel') || 'Maksymalnie dni przed:'}
+																</label>
+																<input
+																	type="number"
+																	min="1"
+																	value={type.minDaysBefore || ''}
+																	onChange={(e) => {
+																		const value = e.target.value
+																		if (value === '' || value === null) {
+																			handleUpdateTypeMinDaysBefore(type.id, null)
+																		} else {
+																			const numValue = parseInt(value, 10)
+																			if (!isNaN(numValue) && numValue > 0) {
+																				handleUpdateTypeMinDaysBefore(type.id, numValue)
+																			}
+																		}
+																	}}
+																	onBlur={(e) => {
+																		const value = e.target.value
+																		if (value === '' || parseInt(value, 10) < 1) {
+																			handleUpdateTypeMinDaysBefore(type.id, 5) // Domyślnie 5 jeśli puste
+																		}
+																	}}
+																	style={{
+																		width: '80px',
+																		padding: '6px 10px',
+																		border: '1px solid #dee2e6',
+																		borderRadius: '4px',
+																		fontSize: '14px'
+																	}}
+																	placeholder="30"
+																/>
+															</div>
+														)}
+													</div>
 												</div>
 											)}
 										</div>
@@ -1140,9 +1432,9 @@ function Settings() {
 										onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
 									>
 										+ {t('settings.addCustomType') || 'Dodaj typ'}
-									</button>
+										</button>
 								)}
-							</div>
+									</div>
 
 							{showAddCustomTypeForm && (
 								<div style={{
@@ -1189,7 +1481,7 @@ function Settings() {
 													fontSize: '14px'
 												}}
 											/>
-										</div>
+								</div>
 										<div>
 											<label style={{
 												display: 'block',
@@ -1215,50 +1507,128 @@ function Settings() {
 											/>
 										</div>
 										<div style={{
-											display: 'grid',
-											gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+											display: 'flex',
+											flexDirection: 'column',
 											gap: '15px'
 										}}>
-											<label style={{
-												display: 'flex',
-												alignItems: 'center',
-												cursor: 'pointer'
+											<div style={{
+												display: 'grid',
+												gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+												gap: '15px'
 											}}>
-												<input
-													type="checkbox"
-													checked={newCustomType.requireApproval}
-													onChange={(e) => setNewCustomType({ ...newCustomType, requireApproval: e.target.checked })}
-													style={{
-														width: '18px',
-														height: '18px',
-														cursor: 'pointer',
-														marginRight: '8px'
-													}}
-												/>
-												<span style={{ fontSize: '14px', color: '#2c3e50' }}>
-													{t('settings.requireApproval') || 'Wymaga zatwierdzenia'}
-												</span>
-											</label>
-											<label style={{
+												<label style={{
+													display: 'flex',
+													alignItems: 'center',
+													cursor: 'pointer'
+												}}>
+													<input
+														type="checkbox"
+														checked={newCustomType.requireApproval}
+														onChange={(e) => setNewCustomType({ ...newCustomType, requireApproval: e.target.checked })}
+														style={{
+															width: '18px',
+															height: '18px',
+															cursor: 'pointer',
+															marginRight: '8px'
+														}}
+													/>
+													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+														{t('settings.requireApproval') || 'Wymaga zatwierdzenia'}
+													</span>
+												</label>
+												<label style={{
+													display: 'flex',
+													alignItems: 'center',
+													cursor: 'pointer'
+												}}>
+													<input
+														type="checkbox"
+														checked={newCustomType.allowDaysLimit}
+														onChange={(e) => setNewCustomType({ ...newCustomType, allowDaysLimit: e.target.checked })}
+														style={{
+															width: '18px',
+															height: '18px',
+															cursor: 'pointer',
+															marginRight: '8px'
+														}}
+													/>
+													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+														{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+													</span>
+												</label>
+											</div>
+											<div style={{
 												display: 'flex',
-												alignItems: 'center',
-												cursor: 'pointer'
+												flexDirection: 'column',
+												gap: '8px'
 											}}>
-												<input
-													type="checkbox"
-													checked={newCustomType.allowDaysLimit}
-													onChange={(e) => setNewCustomType({ ...newCustomType, allowDaysLimit: e.target.checked })}
-													style={{
-														width: '18px',
-														height: '18px',
-														cursor: 'pointer',
-														marginRight: '8px'
-													}}
-												/>
-												<span style={{ fontSize: '14px', color: '#2c3e50' }}>
-													{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
-												</span>
-											</label>
+												<label style={{
+													display: 'flex',
+													alignItems: 'center',
+													cursor: 'pointer'
+												}}>
+													<input
+														type="checkbox"
+														checked={newCustomType.minDaysBefore !== null && newCustomType.minDaysBefore !== undefined}
+														onChange={(e) => {
+															if (e.target.checked) {
+																setNewCustomType({ ...newCustomType, minDaysBefore: 30 })
+															} else {
+																setNewCustomType({ ...newCustomType, minDaysBefore: null })
+															}
+														}}
+														style={{
+															width: '18px',
+															height: '18px',
+															cursor: 'pointer',
+															marginRight: '8px'
+														}}
+													/>
+													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+														{t('settings.minDaysBeforeEnabled') || 'Ograniczenie dni przed urlopem'}
+													</span>
+												</label>
+												{newCustomType.minDaysBefore !== null && newCustomType.minDaysBefore !== undefined && (
+													<div style={{
+														display: 'flex',
+														alignItems: 'center',
+														gap: '10px',
+														marginLeft: '26px'
+													}}>
+														<label style={{
+															fontSize: '14px',
+															color: '#2c3e50',
+															fontWeight: '500'
+														}}>
+															{t('settings.minDaysBeforeLabel') || 'Maksymalnie dni przed:'}
+														</label>
+														<input
+															type="number"
+															min="1"
+															value={newCustomType.minDaysBefore || ''}
+															onChange={(e) => {
+																const value = e.target.value
+																if (value === '' || value === null) {
+																	setNewCustomType({ ...newCustomType, minDaysBefore: null })
+																} else {
+																	const numValue = parseInt(value, 10)
+																	if (!isNaN(numValue) && numValue > 0) {
+																		setNewCustomType({ ...newCustomType, minDaysBefore: numValue })
+																	}
+																}
+															}}
+															style={{
+																width: '80px',
+																padding: '6px 10px',
+																border: '1px solid #dee2e6',
+																borderRadius: '4px',
+																fontSize: '14px'
+															}}
+															placeholder="30"
+														/>
+													</div>
+												)}
+											</div>
 										</div>
 										<div style={{
 											display: 'flex',
@@ -1269,7 +1639,7 @@ function Settings() {
 												type="button"
 												onClick={() => {
 													setShowAddCustomTypeForm(false)
-													setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false })
+													setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null })
 												}}
 												style={{
 													backgroundColor: '#6c757d',
@@ -1409,6 +1779,79 @@ function Settings() {
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
 														</span>
 													</label>
+													<div style={{
+														display: 'flex',
+														flexDirection: 'column',
+														gap: '8px',
+														gridColumn: '1 / -1'
+													}}>
+														<label style={{
+															display: 'flex',
+															alignItems: 'center',
+															cursor: 'pointer'
+														}}>
+															<input
+																type="checkbox"
+																checked={type.minDaysBefore !== null && type.minDaysBefore !== undefined}
+																onChange={() => handleToggleTypeMinDaysBefore(type.id)}
+																style={{
+																	width: '18px',
+																	height: '18px',
+																	cursor: 'pointer',
+																	marginRight: '8px'
+																}}
+															/>
+															<span style={{ fontSize: '14px', color: '#2c3e50' }}>
+																{t('settings.minDaysBeforeEnabled') || 'Ograniczenie dni przed urlopem'}
+															</span>
+														</label>
+														{type.minDaysBefore !== null && type.minDaysBefore !== undefined && (
+															<div style={{
+																display: 'flex',
+																alignItems: 'center',
+																gap: '10px',
+																marginLeft: '26px'
+															}}>
+																<label style={{
+																	fontSize: '14px',
+																	color: '#2c3e50',
+																	fontWeight: '500'
+																}}>
+																	{t('settings.minDaysBeforeLabel') || 'Maksymalnie dni przed:'}
+																</label>
+																<input
+																	type="number"
+																	min="1"
+																	value={type.minDaysBefore || ''}
+																	onChange={(e) => {
+																		const value = e.target.value
+																		if (value === '' || value === null) {
+																			handleUpdateTypeMinDaysBefore(type.id, null)
+																		} else {
+																			const numValue = parseInt(value, 10)
+																			if (!isNaN(numValue) && numValue > 0) {
+																				handleUpdateTypeMinDaysBefore(type.id, numValue)
+																			}
+																		}
+																	}}
+																	onBlur={(e) => {
+																		const value = e.target.value
+																		if (value === '' || parseInt(value, 10) < 1) {
+																			handleUpdateTypeMinDaysBefore(type.id, 5) // Domyślnie 5 jeśli puste
+																		}
+																	}}
+																	style={{
+																		width: '80px',
+																		padding: '6px 10px',
+																		border: '1px solid #dee2e6',
+																		borderRadius: '4px',
+																		fontSize: '14px'
+																	}}
+																	placeholder="30"
+																/>
+															</div>
+														)}
+													</div>
 												</div>
 											</div>
 										)
@@ -1427,7 +1870,7 @@ function Settings() {
 							)}
 						</div>
 					</div>
-				)}
+						)}
 
 						{/* Przycisk zapisu */}
 						<div style={{ textAlign: 'left' }}>

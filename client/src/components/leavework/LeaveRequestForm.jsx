@@ -70,7 +70,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		return isWeekend(dateString) // Jeśli nie pracuje w weekendy, blokuj weekendy
 	}
 
-	// Funkcja do obsługi wyboru daty "od" z weryfikacją weekendów
+	// Funkcja do obsługi wyboru daty "od" z weryfikacją weekendów i minDaysBefore
 	const handleStartDateChange = (e) => {
 		const selectedDate = e.target.value
 		if (!selectedDate) {
@@ -84,6 +84,33 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		if (!workOnWeekends && isWeekend(selectedDate)) {
 			showAlert(t('leaveform.weekendStartDateError') || 'Nie można wybrać weekendu jako daty początkowej gdy zespół nie pracuje w weekendy.')
 			return
+		}
+
+		// Sprawdź minDaysBefore jeśli typ jest wybrany
+		if (type && settings && settings.leaveRequestTypes) {
+			const selectedType = settings.leaveRequestTypes.find(lt => lt.id === type)
+			if (selectedType && selectedType.minDaysBefore !== null && selectedType.minDaysBefore !== undefined) {
+				const today = new Date()
+				today.setHours(0, 0, 0, 0)
+				const startDateObj = new Date(selectedDate)
+				startDateObj.setHours(0, 0, 0, 0)
+				
+				const daysDifference = Math.ceil((startDateObj - today) / (1000 * 60 * 60 * 24))
+				
+				if (daysDifference < selectedType.minDaysBefore) {
+					const typeName = getLeaveRequestTypeName(settings, type, t, i18n.resolvedLanguage)
+					const daysText = selectedType.minDaysBefore === 1 ? 'dzień' : 'dni'
+					showAlert(
+						t('leaveform.minDaysBeforeError', { 
+							type: typeName, 
+							days: selectedType.minDaysBefore,
+							daysText: daysText
+						}) || 
+						`Wniosek typu "${typeName}" trzeba złożyć minimum ${selectedType.minDaysBefore} ${daysText} przed planowanym urlopem.`
+					)
+					return
+				}
+			}
 		}
 
 		setStartDate(selectedDate)
@@ -220,6 +247,33 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 			return
 		}
 		
+		// Walidacja minDaysBefore - sprawdź czy startDate nie jest za późno
+		if (startDate && type && settings && settings.leaveRequestTypes) {
+			const selectedType = settings.leaveRequestTypes.find(lt => lt.id === type)
+			if (selectedType && selectedType.minDaysBefore !== null && selectedType.minDaysBefore !== undefined) {
+				const today = new Date()
+				today.setHours(0, 0, 0, 0) // Ustaw na początek dnia
+				const startDateObj = new Date(startDate)
+				startDateObj.setHours(0, 0, 0, 0)
+				
+				const daysDifference = Math.ceil((startDateObj - today) / (1000 * 60 * 60 * 24))
+				
+				if (daysDifference < selectedType.minDaysBefore) {
+					const typeName = getLeaveRequestTypeName(settings, type, t, i18n.resolvedLanguage)
+					const daysText = selectedType.minDaysBefore === 1 ? 'dzień' : 'dni'
+					await showAlert(
+						t('leaveform.minDaysBeforeError', { 
+							type: typeName, 
+							days: selectedType.minDaysBefore,
+							daysText: daysText
+						}) || 
+						`Wniosek typu "${typeName}" trzeba złożyć minimum ${selectedType.minDaysBefore} ${daysText} przed planowanym urlopem.`
+					)
+					return
+				}
+			}
+		}
+		
 		// Sprawdź czy wszystkie dni w zakresie to weekendy lub święta (gdy zespół nie pracuje w weekendy/święta)
 		if (startDate && endDate && settings) {
 			const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
@@ -319,6 +373,33 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		if (editStartDate && editEndDate && new Date(editEndDate) < new Date(editStartDate)) {
 			await showAlert(t('leaveform.dateValidationError'))
 			return
+		}
+		
+		// Walidacja minDaysBefore - sprawdź czy editStartDate nie jest za wcześnie
+		if (editStartDate && editType && settings && settings.leaveRequestTypes) {
+			const selectedType = settings.leaveRequestTypes.find(lt => lt.id === editType)
+			if (selectedType && selectedType.minDaysBefore !== null && selectedType.minDaysBefore !== undefined) {
+				const today = new Date()
+				today.setHours(0, 0, 0, 0) // Ustaw na początek dnia
+				const startDateObj = new Date(editStartDate)
+				startDateObj.setHours(0, 0, 0, 0)
+				
+				const daysDifference = Math.ceil((startDateObj - today) / (1000 * 60 * 60 * 24))
+				
+				if (daysDifference < selectedType.minDaysBefore) {
+					const typeName = getLeaveRequestTypeName(settings, editType, t, i18n.resolvedLanguage)
+					const daysText = selectedType.minDaysBefore === 1 ? 'dzień' : 'dni'
+					await showAlert(
+						t('leaveform.minDaysBeforeError', { 
+							type: typeName, 
+							days: selectedType.minDaysBefore,
+							daysText: daysText
+						}) || 
+						`Wniosek typu "${typeName}" trzeba złożyć minimum ${selectedType.minDaysBefore} ${daysText} przed planowanym urlopem.`
+					)
+					return
+				}
+			}
 		}
 		
 		// Sprawdź czy wszystkie dni w zakresie to weekendy lub święta (gdy zespół nie pracuje w weekendy/święta)

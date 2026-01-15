@@ -11,12 +11,25 @@ import "@fontsource/titillium-web/600.css";
 import "@fontsource/teko";               // domyślny styl Teko (400)
 import "@fontsource/teko/700.css";        // np. bold
 
+// Rejestracja Service Worker z automatycznym odświeżaniem
 const updateSW = registerSW({
+  immediate: true, // Sprawdź aktualizacje natychmiast
   onNeedRefresh() {
-    // Automatycznie odśwież bez pytania
-    updateSW()
+    // Automatycznie odśwież stronę po aktualizacji service workera
+    console.log('Nowa wersja dostępna, odświeżanie...')
+    updateSW(true) // true = wymusza natychmiastowe odświeżenie
   },
   onOfflineReady() {
+    console.log('Aplikacja gotowa do pracy offline')
+  },
+  onRegistered(registration) {
+    // Sprawdzaj aktualizacje co godzinę
+    setInterval(() => {
+      registration?.update()
+    }, 60 * 60 * 1000) // 1 godzina
+  },
+  onRegisterError(error) {
+    console.error('Błąd rejestracji Service Worker:', error)
   }
 })
 

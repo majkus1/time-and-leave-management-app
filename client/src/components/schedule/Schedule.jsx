@@ -89,6 +89,7 @@ function Schedule() {
 	const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
 	const [selectedEmployeeName, setSelectedEmployeeName] = useState('')
 	const [notes, setNotes] = useState('')
+	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(null)
 	const calendarRef = useRef(null)
 	const upsertEntryMutation = useUpsertScheduleEntry()
 	const deleteEntryMutation = useDeleteScheduleEntry()
@@ -486,8 +487,33 @@ function Schedule() {
 		setSelectedEntries(entries)
 		setSelectedEmployeeId('')
 		setSelectedEmployeeName('')
-		setTimeFrom('08:00')
-		setTimeTo('16:00')
+		
+		// Auto-fill work hours from settings if available
+		if (settings && settings.workHours) {
+			let workHoursToUse = null
+			if (Array.isArray(settings.workHours) && settings.workHours.length > 0) {
+				// Nowy format - użyj pierwszej konfiguracji
+				workHoursToUse = settings.workHours[0]
+				setSelectedWorkHoursIndex(0)
+			} else if (settings.workHours && !Array.isArray(settings.workHours) && settings.workHours.timeFrom && settings.workHours.timeTo) {
+				// Stary format - kompatybilność wsteczna
+				workHoursToUse = settings.workHours
+				setSelectedWorkHoursIndex(null)
+			}
+			
+			if (workHoursToUse && workHoursToUse.timeFrom && workHoursToUse.timeTo) {
+				setTimeFrom(workHoursToUse.timeFrom)
+				setTimeTo(workHoursToUse.timeTo)
+			} else {
+				setTimeFrom('08:00')
+				setTimeTo('16:00')
+			}
+		} else {
+			setTimeFrom('08:00')
+			setTimeTo('16:00')
+			setSelectedWorkHoursIndex(null)
+		}
+		
 		setNotes('')
 		setIsModalOpen(true)
 	}
@@ -648,8 +674,31 @@ function Schedule() {
 			// Reset form
 			setSelectedEmployeeId('')
 			setSelectedEmployeeName('')
-			setTimeFrom('08:00')
-			setTimeTo('16:00')
+			
+			// Auto-fill work hours from settings if available
+			if (settings && settings.workHours) {
+				let workHoursToUse = null
+				if (Array.isArray(settings.workHours) && settings.workHours.length > 0) {
+					workHoursToUse = settings.workHours[0]
+					setSelectedWorkHoursIndex(0)
+				} else if (settings.workHours && !Array.isArray(settings.workHours) && settings.workHours.timeFrom && settings.workHours.timeTo) {
+					workHoursToUse = settings.workHours
+					setSelectedWorkHoursIndex(null)
+				}
+				
+				if (workHoursToUse && workHoursToUse.timeFrom && workHoursToUse.timeTo) {
+					setTimeFrom(workHoursToUse.timeFrom)
+					setTimeTo(workHoursToUse.timeTo)
+				} else {
+					setTimeFrom('08:00')
+					setTimeTo('16:00')
+				}
+			} else {
+				setTimeFrom('08:00')
+				setTimeTo('16:00')
+				setSelectedWorkHoursIndex(null)
+			}
+			
 			setNotes('')
 			
 			// Refetch entries w tle, aby zaktualizować kalendarz i uzyskać prawdziwe ID wpisu
@@ -1120,6 +1169,70 @@ function Schedule() {
 						</select>
 					</div>
 
+					{/* Checkboxy dla wielu konfiguracji godzin pracy */}
+					{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
+						<div style={{
+							marginBottom: '20px',
+							padding: '12px',
+							backgroundColor: '#e3f2fd',
+							border: '1px solid #90caf9',
+							borderRadius: '6px'
+						}}>
+							<label style={{
+								display: 'block',
+								marginBottom: '10px',
+								fontWeight: '600',
+								color: '#2c3e50',
+								fontSize: '14px'
+							}}>
+								{t('schedule.selectWorkHours') || 'Wybierz godziny pracy:'}
+							</label>
+							<div style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: '8px'
+							}}>
+								{settings.workHours.map((workHours, index) => (
+									<label
+										key={index}
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											padding: '8px',
+											borderRadius: '4px',
+											backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
+											border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
+											transition: 'all 0.2s'
+										}}
+									>
+										<input
+											type="radio"
+											name="scheduleWorkHours"
+											checked={selectedWorkHoursIndex === index}
+											onChange={() => {
+												setSelectedWorkHoursIndex(index)
+												setTimeFrom(workHours.timeFrom)
+												setTimeTo(workHours.timeTo)
+											}}
+											style={{
+												marginRight: '10px',
+												cursor: 'pointer'
+											}}
+										/>
+										<span style={{
+											fontSize: '14px',
+											color: '#2c3e50',
+											flex: 1
+										}}>
+											{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
+										</span>
+									</label>
+								))}
+							</div>
+						</div>
+					)}
+
 					<div style={{
 						display: 'grid',
 						gridTemplateColumns: '1fr 1fr',
@@ -1138,7 +1251,13 @@ function Schedule() {
 							<input
 								type="text"
 								value={timeFrom}
-								onChange={(e) => setTimeFrom(e.target.value)}
+								onChange={(e) => {
+									setTimeFrom(e.target.value)
+									// Jeśli użytkownik ręcznie edytuje, odznacz wybór z checkboxów
+									if (selectedWorkHoursIndex !== null) {
+										setSelectedWorkHoursIndex(null)
+									}
+								}}
 								placeholder="08:00"
 								required
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
@@ -1163,7 +1282,13 @@ function Schedule() {
 							<input
 								type="text"
 								value={timeTo}
-								onChange={(e) => setTimeTo(e.target.value)}
+								onChange={(e) => {
+									setTimeTo(e.target.value)
+									// Jeśli użytkownik ręcznie edytuje, odznacz wybór z checkboxów
+									if (selectedWorkHoursIndex !== null) {
+										setSelectedWorkHoursIndex(null)
+									}
+								}}
 								placeholder="16:00"
 								required
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"

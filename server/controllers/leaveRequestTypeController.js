@@ -61,7 +61,8 @@ exports.updateLeaveRequestTypes = async (req, res) => {
 				typeof type.isSystem === 'boolean' &&
 				typeof type.isEnabled === 'boolean' &&
 				typeof type.requireApproval === 'boolean' &&
-				typeof type.allowDaysLimit === 'boolean'
+				typeof type.allowDaysLimit === 'boolean' &&
+				(type.minDaysBefore === null || type.minDaysBefore === undefined || (typeof type.minDaysBefore === 'number' && type.minDaysBefore > 0))
 		}).map(type => ({
 			id: type.id.trim(),
 			name: type.name.trim(),
@@ -69,7 +70,8 @@ exports.updateLeaveRequestTypes = async (req, res) => {
 			isSystem: type.isSystem,
 			isEnabled: type.isEnabled,
 			requireApproval: type.requireApproval,
-			allowDaysLimit: type.allowDaysLimit
+			allowDaysLimit: type.allowDaysLimit,
+			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null
 		}))
 
 		// Nie można usuwać typów systemowych, tylko je włączać/wyłączać
@@ -109,7 +111,7 @@ exports.updateLeaveRequestTypes = async (req, res) => {
  */
 exports.addCustomLeaveRequestType = async (req, res) => {
 	try {
-		const { name, nameEn, requireApproval, allowDaysLimit } = req.body
+		const { name, nameEn, requireApproval, allowDaysLimit, minDaysBefore } = req.body
 
 		// Sprawdź uprawnienia - tylko Admin i HR
 		const requestingUser = await User.findById(req.user.userId)
@@ -140,6 +142,13 @@ exports.addCustomLeaveRequestType = async (req, res) => {
 			return res.status(400).send('allowDaysLimit is required and must be a boolean')
 		}
 
+		// Walidacja minDaysBefore
+		if (minDaysBefore !== null && minDaysBefore !== undefined) {
+			if (typeof minDaysBefore !== 'number' || minDaysBefore < 1) {
+				return res.status(400).send('minDaysBefore must be null or a positive number')
+			}
+		}
+
 		const settings = await Settings.getSettings(requestingUser.teamId)
 
 		// Generuj unikalne ID dla niestandardowego typu
@@ -156,7 +165,8 @@ exports.addCustomLeaveRequestType = async (req, res) => {
 			isSystem: false,
 			isEnabled: true,
 			requireApproval: requireApproval,
-			allowDaysLimit: allowDaysLimit
+			allowDaysLimit: allowDaysLimit,
+			minDaysBefore: minDaysBefore !== null && minDaysBefore !== undefined && minDaysBefore > 0 ? minDaysBefore : null
 		}
 
 		if (!settings.leaveRequestTypes) {
