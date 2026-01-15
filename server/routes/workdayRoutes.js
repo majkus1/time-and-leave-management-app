@@ -8,10 +8,11 @@ const { authenticateToken } = require('../middleware/authMiddleware')
 // router.get('/workdays/:userId', authenticateToken, workdayController.getUserWorkdays)
 
 // Trasy dla ewidencji czasu pracy
-router.post('/', authenticateToken, workdayController.addWorkday) // POST /api/users/workdays
-router.get('/', authenticateToken, workdayController.getWorkdays) // GET /api/users/workdays (własne)
-router.put('/:id', authenticateToken, workdayController.updateWorkday) // PUT /api/users/workdays/:id
-router.delete('/:id', authenticateToken, workdayController.deleteWorkday) // DELETE /api/users/workdays/:id
-router.get('/user/:userId', authenticateToken, workdayController.getUserWorkdays) // GET /api/users/workdays/user/:userId
+router.post('/', authenticateToken, workdayController.addWorkday) // POST /api/workdays
+router.get('/', authenticateToken, workdayController.getWorkdays) // GET /api/workdays (własne)
+router.put('/:id', authenticateToken, workdayController.updateWorkday) // PUT /api/workdays/:id
+router.delete('/:id', authenticateToken, workdayController.deleteWorkday) // DELETE /api/workdays/:id
+router.get('/user/:userId', authenticateToken, workdayController.getUserWorkdays) // GET /api/workdays/user/:userId
+router.get('/team', authenticateToken, workdayController.getAllTeamWorkdays) // GET /api/workdays/team
 
 module.exports = router

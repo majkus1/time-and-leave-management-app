@@ -11,22 +11,34 @@ import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import Modal from 'react-modal'
+
+if (typeof window !== 'undefined') {
+	Modal.setAppElement('#root')
+}
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
+	const [viewModalOpen, setViewModalOpen] = useState(false)
+	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
 		const updateCalendarSize = () => {
-			if (calendarRef.current) {
+			if (calendarView === 'single' && calendarRef.current) {
 				const calendarApi = calendarRef.current.getApi()
 				// Użyj setTimeout aby dać czas na zakończenie animacji CSS
 				setTimeout(() => {
 					calendarApi.updateSize()
 				}, 350) // 350ms to czas animacji sidebaru (0.3s + mały buffer)
+			} else if (calendarView === 'all-months') {
+				// Dla widoku wszystkich miesięcy - wywołaj resize event, który FullCalendar automatycznie obsłuży
+				setTimeout(() => {
+					window.dispatchEvent(new Event('resize'))
+				}, 350)
 			}
 		}
 
@@ -43,6 +55,9 @@ function LeavePlanner() {
 			})
 		}
 
+		// Obserwuj zmiany widoku kalendarza
+		updateCalendarSize()
+
 		// Obserwuj zmiany rozmiaru okna
 		const handleResize = () => {
 			updateCalendarSize()
@@ -56,7 +71,7 @@ function LeavePlanner() {
 			observer.disconnect()
 			window.removeEventListener('resize', handleResize)
 		}
-	}, [])
+	}, [calendarView])
 
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
@@ -165,6 +180,24 @@ function LeavePlanner() {
 		)
 	}, [settings, currentMonth, currentYear])
 
+	// Pobierz święta dla całego roku (dla widoku wszystkich miesięcy)
+	const holidaysForYear = React.useMemo(() => {
+		if (!settings) return []
+		const yearStart = new Date(currentYear, 0, 1)
+		const yearEnd = new Date(currentYear, 11, 31)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(yearStart),
+			formatDateLocal(yearEnd),
+			settings
+		)
+	}, [settings, currentYear])
+
 	const handleMonthSelect = event => {
 		const newMonth = parseInt(event.target.value, 10)
 		setCurrentMonth(newMonth)
@@ -258,6 +291,76 @@ function LeavePlanner() {
 		} else if (type === 'request') {
 			// Dla zaakceptowanych wniosków - tylko informacja
 		}
+	}
+
+	// Renderowanie widoku wszystkich miesięcy
+	const renderAllMonths = () => {
+		return Array.from({ length: 12 }, (_, month) => (
+			<div key={`${currentYear}-${month}`} className="month-calendar allleaveplans all-leaveplans-all-months" style={{ margin: '10px', border: '1px solid #ddd' }}>
+				<FullCalendar
+					plugins={[dayGridPlugin, interactionPlugin]}
+					initialView="dayGridMonth"
+					initialDate={new Date(currentYear, month)}
+					locale={i18n.resolvedLanguage}
+					height="auto"
+					showNonCurrentDates={false}
+					firstDay={1}
+					key={`calendar-${currentYear}-${month}`}
+					eventClick={handleEventClick}
+					dateClick={info => toggleDate(info.dateStr)}
+					events={[
+						// Plany urlopów (klikalne) - wykluczamy daty pokryte przez wnioski urlopowe
+						...filteredSelectedDates
+							.filter(date => {
+								const dateObj = new Date(date)
+								return dateObj.getFullYear() === currentYear && dateObj.getMonth() === month
+							})
+							.map(date => ({
+								title: t('leaveplanner.vactiontitle'),
+								start: date,
+								allDay: true,
+								backgroundColor: 'blue',
+								extendedProps: { type: 'plan', date: date }
+							})),
+						// Zaakceptowane wnioski urlopowe
+						...acceptedLeaveRequests
+							.filter(request => request.startDate && request.endDate)
+							.flatMap(request => {
+								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+								return dates
+									.filter(date => {
+										const dateObj = new Date(date)
+										return dateObj.getFullYear() === currentYear && dateObj.getMonth() === month
+									})
+									.map(date => ({
+										title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+										start: date,
+										allDay: true,
+										backgroundColor: 'green',
+										borderColor: 'darkgreen',
+										extendedProps: { type: 'request', requestId: request._id }
+									}))
+							}),
+						// Dni świąteczne
+						...holidaysForYear
+							.filter(holiday => {
+								const holidayDate = new Date(holiday.date)
+								return holidayDate.getFullYear() === currentYear && holidayDate.getMonth() === month
+							})
+							.map(holiday => ({
+								title: holiday.name,
+								start: holiday.date,
+								allDay: true,
+								backgroundColor: 'green',
+								borderColor: 'darkgreen',
+								textColor: 'white',
+								classNames: 'event-absence',
+								extendedProps: { type: 'holiday', name: holiday.name }
+							}))
+					]}
+				/>
+			</div>
+		))
 	}
 
 	return (
@@ -395,25 +498,74 @@ function LeavePlanner() {
 						</div>
 					)}
 
-					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px' }}>
-						<select
-							value={currentMonth}
-							onChange={handleMonthSelect}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-							{Array.from({ length: 12 }, (_, i) => (
-								<option key={i} value={i}>
-									{new Date(0, i)
-										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-										.replace(/^./, str => str.toUpperCase())}
-								</option>
-							))}
-						</select>
-						<select
-							value={currentYear}
-							onChange={handleYearSelect}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
+						{calendarView === 'single' && (
+							<>
+								<select
+									value={currentMonth}
+									onChange={handleMonthSelect}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+									className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+									{Array.from({ length: 12 }, (_, i) => (
+										<option key={i} value={i}>
+											{new Date(0, i)
+												.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+												.replace(/^./, str => str.toUpperCase())}
+										</option>
+									))}
+								</select>
+								<select
+									value={currentYear}
+									onChange={handleYearSelect}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+									className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+									{Array.from({ length: 20 }, (_, i) => {
+										const year = new Date().getFullYear() - 10 + i
+										return (
+											<option key={year} value={year}>
+												{year}
+											</option>
+										)
+									})}
+								</select>
+								<button
+									type="button"
+									onClick={handlePrevMonth}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&lt;
+								</button>
+								<button
+									type="button"
+									onClick={handleNextMonth}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&gt;
+								</button>
+							</>
+						)}
+						{calendarView === 'all-months' && (
+							<select
+								value={currentYear}
+								onChange={handleYearSelect}
+								style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+								className="focus:outline-none focus:ring-2 focus:ring-blue-500">
 								{Array.from({ length: 20 }, (_, i) => {
 									const year = new Date().getFullYear() - 10 + i
 									return (
@@ -423,89 +575,201 @@ function LeavePlanner() {
 									)
 								})}
 							</select>
+						)}
 						<button
 							type="button"
-							onClick={handlePrevMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+							onClick={() => setViewModalOpen(true)}
+							className='filter-button'
+							style={{ 
+								padding: '8px 16px', 
+								border: '1px solid #3498db', 
+								borderRadius: '6px', 
+								backgroundColor: '#3498db', 
+								color: 'white',
+								cursor: 'pointer', 
+								fontSize: '16px', 
+								fontWeight: '500', 
+								transition: 'all 0.2s ease',
+							}}
 							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
+								e.target.style.backgroundColor = '#2980b9'
+								e.target.style.borderColor = '#2980b9'
 							}}
 							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
+								e.target.style.backgroundColor = '#3498db'
+								e.target.style.borderColor = '#3498db'
 							}}
 						>
-							&lt;
-						</button>
-						<button
-							type="button"
-							onClick={handleNextMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
-							}}
-							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
-							}}
-						>
-							&gt;
+							{t('leaveplanner.viewOptions') || 'Opcje widoku'}
 						</button>
 					</div>
 
-					<div>
-						<FullCalendar
-							plugins={[dayGridPlugin, interactionPlugin]}
-							initialView="dayGridMonth"
-							initialDate={new Date()}
-							// locale="pl"
-							locale={i18n.resolvedLanguage}
-							height="auto"
-							firstDay={1}
-							showNonCurrentDates={false}
-							eventClick={handleEventClick}
-							events={[
-								// Plany urlopów (klikalne) - wykluczamy daty pokryte przez wnioski urlopowe
-								...filteredSelectedDates.map(date => ({
-									title: t('leaveplanner.vactiontitle'),
-									start: date,
-									allDay: true,
-									backgroundColor: 'blue',
-									extendedProps: { type: 'plan', date: date }
-								})),
-								// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów)
-								...acceptedLeaveRequests
-									.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
-									.flatMap(request => {
-										const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
-										return dates.map(date => ({
-											title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
-											start: date,
-											allDay: true,
-											backgroundColor: 'green',
-											borderColor: 'darkgreen',
-											extendedProps: { type: 'request', requestId: request._id }
-										}))
-									}),
-								// Dni świąteczne
-								...holidaysForMonth.map(holiday => ({
-									title: holiday.name,
-									start: holiday.date,
-									allDay: true,
-									backgroundColor: 'green',
-									borderColor: 'darkgreen',
-									textColor: 'white',
-									classNames: 'event-absence',
-									extendedProps: { type: 'holiday', name: holiday.name }
-								}))
-							]}
-							dateClick={info => toggleDate(info.dateStr)}
-							ref={calendarRef}
-							datesSet={handleMonthChange}
-						/>
-					</div>
+					{calendarView === 'single' ? (
+						<div>
+							<FullCalendar
+								plugins={[dayGridPlugin, interactionPlugin]}
+								initialView="dayGridMonth"
+								initialDate={new Date()}
+								locale={i18n.resolvedLanguage}
+								height="auto"
+								firstDay={1}
+								showNonCurrentDates={false}
+								eventClick={handleEventClick}
+								events={[
+									// Plany urlopów (klikalne) - wykluczamy daty pokryte przez wnioski urlopowe
+									...filteredSelectedDates.map(date => ({
+										title: t('leaveplanner.vactiontitle'),
+										start: date,
+										allDay: true,
+										backgroundColor: 'blue',
+										extendedProps: { type: 'plan', date: date }
+									})),
+									// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów)
+									...acceptedLeaveRequests
+										.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
+										.flatMap(request => {
+											const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+											return dates.map(date => ({
+												title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+												start: date,
+												allDay: true,
+												backgroundColor: 'green',
+												borderColor: 'darkgreen',
+												extendedProps: { type: 'request', requestId: request._id }
+											}))
+										}),
+									// Dni świąteczne
+									...holidaysForMonth.map(holiday => ({
+										title: holiday.name,
+										start: holiday.date,
+										allDay: true,
+										backgroundColor: 'green',
+										borderColor: 'darkgreen',
+										textColor: 'white',
+										classNames: 'event-absence',
+										extendedProps: { type: 'holiday', name: holiday.name }
+									}))
+								]}
+								dateClick={info => toggleDate(info.dateStr)}
+								ref={calendarRef}
+								datesSet={handleMonthChange}
+							/>
+						</div>
+					) : (
+						<div className="all-months-calendar-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+							{renderAllMonths()}
+						</div>
+					)}
+
+					{/* Modal opcji widoku */}
+					<Modal
+						isOpen={viewModalOpen}
+						onRequestClose={() => setViewModalOpen(false)}
+						style={{
+							overlay: {
+								display: 'flex',
+								justifyContent: 'center',
+								alignItems: 'center',
+								backgroundColor: 'rgba(0, 0, 0, 0.5)',
+								backdropFilter: 'blur(2px)',
+							},
+							content: {
+								position: 'relative',
+								inset: 'unset',
+								margin: '0',
+								maxWidth: '500px',
+								maxHeight: '80vh',
+								width: '90%',
+								borderRadius: '12px',
+								padding: '30px',
+								backgroundColor: 'white',
+								overflow: 'auto',
+							},
+						}}
+						contentLabel={t('leaveplanner.viewOptions') || 'Opcje widoku'}>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+							<h2 style={{ 
+								margin: 0,
+								color: '#2c3e50',
+								fontSize: '24px',
+								fontWeight: '600'
+							}}>
+								{t('leaveplanner.viewOptions') || 'Opcje widoku'}
+							</h2>
+							<button
+								onClick={() => setViewModalOpen(false)}
+								style={{
+									background: 'transparent',
+									border: 'none',
+									fontSize: '28px',
+									cursor: 'pointer',
+									color: '#7f8c8d',
+									lineHeight: '1',
+									padding: '0',
+									width: '30px',
+									height: '30px',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center'
+								}}
+								onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+								onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+								×
+							</button>
+						</div>
+
+						{/* Widok kalendarza */}
+						<div style={{ marginBottom: '30px' }}>
+							<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+								{t('planslist.calendarView') || 'Widok kalendarza'}
+							</h3>
+							<div style={{ display: 'flex', gap: '15px' }}>
+								<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+									<input
+										type="radio"
+										name="calendarView"
+										value="single"
+										checked={calendarView === 'single'}
+										onChange={(e) => setCalendarView(e.target.value)}
+										style={{ marginRight: '8px', cursor: 'pointer' }}
+									/>
+									<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
+								</label>
+								<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+									<input
+										type="radio"
+										name="calendarView"
+										value="all-months"
+										checked={calendarView === 'all-months'}
+										onChange={(e) => setCalendarView(e.target.value)}
+										style={{ marginRight: '8px', cursor: 'pointer' }}
+									/>
+									<span>{t('planslist.allMonths') || 'Wszystkie miesiące'}</span>
+								</label>
+							</div>
+						</div>
+
+						{/* Przycisk zamknięcia */}
+						<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
+							<button
+								onClick={() => setViewModalOpen(false)}
+								style={{
+									padding: '10px 20px',
+									backgroundColor: '#3498db',
+									color: 'white',
+									border: 'none',
+									borderRadius: '6px',
+									cursor: 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'background-color 0.2s'
+								}}
+								onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
+								onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
+								{t('planslist.apply') || t('boards.cancel') || 'Zamknij'}
+							</button>
+						</div>
+					</Modal>
 				</div>
 			)}
 		</>

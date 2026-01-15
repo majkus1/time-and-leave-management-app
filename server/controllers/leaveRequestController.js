@@ -503,8 +503,12 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 
 		// Sprawdź czy to super admin
 		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
+		const isAdmin = requestingUser.roles.includes('Admin')
+		const isHR = requestingUser.roles.includes('HR')
+		const isSupervisor = requestingUser.roles.includes('Przełożony (Supervisor)')
 
 		let acceptedLeaveRequests
+		let allowedUserIds = []
 		
 		if (isSuperAdmin) {
 			// Super admin widzi wszystkie zaakceptowane wnioski i L4 (status.sent) ze wszystkich zespołów
@@ -522,18 +526,17 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				})
 				.sort({ startDate: 1 })
-		} else {
-			// Dla wszystkich użytkowników z zespołu - pokaż wszystkich aktywnych użytkowników z zespołu
-			// (dla /all-leave-plans wszyscy powinni widzieć wszystkich z zespołu)
+		} else if (isAdmin || isHR) {
+			// Admin i HR widzą wszystkich z zespołu
 			const teamUsers = await User.find({ 
 				teamId: requestingUser.teamId,
 				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			}).select('_id')
-			const teamUserIds = teamUsers.map(user => user._id)
+			allowedUserIds = teamUsers.map(user => user._id)
 
 			acceptedLeaveRequests = await LeaveRequest.find({ 
 				status: { $in: ['status.accepted', 'status.sent'] },
-				userId: { $in: teamUserIds }
+				userId: { $in: allowedUserIds }
 			})
 				.populate({
 					path: 'userId',
@@ -546,7 +549,48 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				})
 				.sort({ startDate: 1 })
+		} else if (isSupervisor) {
+			// Przełożony widzi tylko swoich podwładnych
+			const { canSupervisorViewTimesheets } = require('../services/roleService')
+			
+			// Pobierz wszystkich użytkowników z zespołu
+			const teamUsers = await User.find({ 
+				teamId: requestingUser.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('_id firstName lastName department')
+
+			// Filtruj użytkowników na podstawie uprawnień przełożonego
+			for (const user of teamUsers) {
+				const canView = await canSupervisorViewTimesheets(requestingUser, user)
+				if (canView) {
+					allowedUserIds.push(user._id)
+				}
+			}
+
+			if (allowedUserIds.length > 0) {
+				acceptedLeaveRequests = await LeaveRequest.find({ 
+					status: { $in: ['status.accepted', 'status.sent'] },
+					userId: { $in: allowedUserIds }
+				})
+					.populate({
+						path: 'userId',
+						select: 'firstName lastName username department',
+						match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+					})
+					.populate({
+						path: 'updatedBy',
+						select: 'firstName lastName',
+						match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+					})
+					.sort({ startDate: 1 })
+			} else {
+				acceptedLeaveRequests = []
+			}
+		} else {
+			// Inne role nie mają dostępu
+			return res.status(403).send('Brak uprawnień do przeglądania wniosków urlopowych')
 		}
+		
 		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
 		const filteredRequests = acceptedLeaveRequests.filter(req => req.userId !== null)
 		res.status(200).json(filteredRequests)

@@ -656,6 +656,65 @@ select {
 	.calendar-controls button:nth-child(3), #calendars-works-review > div:nth-child(1) > div:nth-child(2) > button:nth-child(3) {
 		margin-left: 35px;
 	}
+
+	#all-leaveplans .filter-button,
+	#leave-planner .filter-button,
+	#list-employee .filter-button {
+		margin-left: 35px;
+	}
+
+	/* Style dla klikalnych list użytkowników */
+	.clickable-user-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 10px;
+		border-radius: 6px;
+		transition: all 0.2s ease;
+		cursor: pointer;
+		max-width: 900px;
+	}
+
+	.clickable-user-item:hover {
+		background-color: #e8f4f8;
+		color: #2980b9;
+		transform: translateX(3px);
+	}
+
+	.clickable-user-item .user-icon {
+		font-size: 14px;
+		color: #3498db;
+		opacity: 0.7;
+		transition: all 0.2s ease;
+	}
+
+	.clickable-user-item:hover .user-icon {
+		opacity: 1;
+		color: #2980b9;
+		transform: translateX(2px);
+	}
+
+	.clickable-user-item .user-text {
+		flex: 1;
+	}
+
+	.clickable-user-item .user-hint {
+		font-size: 12px;
+		color: #7f8c8d;
+		display: none;
+		transition: opacity 0.2s ease;
+	}
+
+	.clickable-user-item:hover .user-hint {
+		display: block;
+	}
+
+	/* Ukryj podpowiedź na mobile */
+	@media (max-width: 768px) {
+		.clickable-user-item .user-hint {
+			display: none !important;
+		}
+	}
 	
 	/* Gdy sidebar jest otwarty - normalne marginesy */
 	.logs-container {
@@ -765,6 +824,12 @@ select {
 	body.sidebar-collapsed .logs-container {
 		margin-left: 20px !important;
 		width: calc(100% - 20px);
+	}
+	
+	/* Kontener z kalendarzami wszystkich miesięcy - wykorzystaj pełną szerokość */
+	body.sidebar-collapsed .all-months-calendar-container {
+		width: 100% !important;
+		max-width: 100% !important;
 	}
 	.tickets {
 		margin-top: 25px !important;
@@ -2183,10 +2248,10 @@ section {
 	.sidebar-toggle-btn.desktop-only {
 		display: flex;
 	}
-	#leave-planner .fc-direction-ltr, #all-leaveplans .fc-direction-ltr {
+	/* #leave-planner .fc-direction-ltr, #all-leaveplans .fc-direction-ltr {
 		margin-right: 15px;
 		margin-bottom: 15px;
-	}
+	} */
 }
 
 .sidebar-collapsed-btn {
@@ -2277,6 +2342,13 @@ section {
 	.sidebar-inner-toggle-btn {
 		display: none;
 	}
+	.user-hint {
+		display: none;
+	}
+}
+
+.user-icon {
+	margin-right: 5px;
 }
 
 /* Language Selector */
@@ -2903,7 +2975,7 @@ section {
 	display: none !important;
 }
 
-#calendars-works-review .fc-header-toolbar, .leave-calendar-plans-one-employee .fc-header-toolbar {
+#calendars-works-review .fc-header-toolbar, .leave-calendar-plans-one-employee .fc-header-toolbar, .all-leaveplans-all-months .fc-header-toolbar {
 	display: flex !important;
 }
 

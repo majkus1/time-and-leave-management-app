@@ -157,3 +157,18 @@ export const useDeleteWorkday = () => {
 	})
 }
 
+// Query hook - pobieranie wszystkich workdays z zespołu
+export const useAllTeamWorkdays = () => {
+	return useQuery({
+		queryKey: ['workdays', 'team'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/workdays/team`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		staleTime: 2 * 60 * 1000, // 2 minuty
+		cacheTime: 5 * 60 * 1000, // 5 minut
+	})
+}
+

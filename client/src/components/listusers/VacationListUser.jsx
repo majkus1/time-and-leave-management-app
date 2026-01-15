@@ -30,10 +30,20 @@ function VacationListUser() {
 				{error && <p style={{ color: 'red' }}>{t('list.error')}</p>}
 				<h3 style={{ marginTop: '35px' }}>{t('vacationlisteq.request')}</h3>
 				<p>{t('planslist.emplo')}</p>
-				<ul style={{ listStyle: 'inherit', marginLeft: '20px' }}>
+				<ul style={{ listStyle: 'none', marginLeft: '20px', padding: 0 }}>
 					{users.map(user => (
-						<li key={user._id} onClick={() => handleUserClick(user._id)} style={{ cursor: 'pointer', marginBottom: '5px' }}>
-							{user.firstName} {user.lastName} - {user.position || t('newuser.noPosition')}
+						<li 
+							key={user._id} 
+							onClick={() => handleUserClick(user._id)} 
+							className="clickable-user-item"
+							style={{ marginBottom: '8px' }}
+							title={t('vacationlisteq.clickToView')}
+						>
+							<span className="user-icon">→</span>
+							<span className="user-text">
+								{user.firstName} {user.lastName} - {user.position || t('newuser.noPosition')}
+							</span>
+							<span className="user-hint">{t('vacationlisteq.clickToView')}</span>
 						</li>
 					))}
 				</ul>

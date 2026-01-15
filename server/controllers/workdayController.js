@@ -134,3 +134,69 @@ exports.getUserWorkdays = async (req, res) => {
 		res.status(500).send('Failed to fetch workdays.');
 	}
 }
+
+// Pobierz wszystkie workdays z zespołu (z informacją o użytkowniku)
+exports.getAllTeamWorkdays = async (req, res) => {
+	try {
+		const requestingUser = await User.findById(req.user.userId);
+
+		if (!requestingUser) {
+			return res.status(403).send('Brak uprawnień');
+		}
+
+		const isAdmin = requestingUser.roles.includes('Admin');
+		const isHR = requestingUser.roles.includes('HR');
+		const isSupervisor = requestingUser.roles.includes('Przełożony (Supervisor)');
+		
+		// Sprawdź uprawnienia przełożonego
+		const { canSupervisorViewTimesheets } = require('../services/roleService')
+		const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
+		
+		let allowedUserIds = []
+		
+		if (isAdmin || isHR) {
+			// Admin i HR widzą wszystkich z zespołu
+			const teamUsers = await User.find({ 
+				teamId: requestingUser.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('_id');
+			allowedUserIds = teamUsers.map(u => u._id);
+		} else if (isSupervisor) {
+			// Przełożony widzi tylko swoich podwładnych
+			// Pobierz konfigurację przełożonego
+			const config = await SupervisorConfig.findOne({ supervisorId: requestingUser._id });
+			
+			// Pobierz wszystkich użytkowników z zespołu
+			const teamUsers = await User.find({ 
+				teamId: requestingUser.teamId,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('_id firstName lastName department');
+			
+			// Filtruj użytkowników na podstawie uprawnień przełożonego
+			for (const user of teamUsers) {
+				const canView = await canSupervisorViewTimesheets(requestingUser, user);
+				if (canView) {
+					allowedUserIds.push(user._id);
+				}
+			}
+		} else {
+			// Inne role nie mają dostępu
+			return res.status(403).send('Brak uprawnień do przeglądania ewidencji zespołu');
+		}
+
+		// Jeśli nie ma dozwolonych użytkowników, zwróć pustą tablicę
+		if (allowedUserIds.length === 0) {
+			return res.json([]);
+		}
+
+		// Pobierz workdays dla dozwolonych użytkowników
+		const workdays = await Workday.find({ 
+			userId: { $in: allowedUserIds }
+		}).populate('userId', 'firstName lastName').sort({ date: 1 });
+
+		res.json(workdays);
+	} catch (error) {
+		console.error('Error fetching team workdays:', error);
+		res.status(500).send('Failed to fetch team workdays.');
+	}
+}
