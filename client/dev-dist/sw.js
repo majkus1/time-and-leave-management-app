@@ -67,25 +67,11 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-7314bb95'], (function (workbox) { 'use strict';
+define(['./workbox-48084f2f'], (function (workbox) { 'use strict';
 
   importScripts("/sw-push-handlers.js");
   self.skipWaiting();
   workbox.clientsClaim();
-
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
-  workbox.precacheAndRoute([{
-    "url": "index.html",
-    "revision": "0.493dmlj06go"
-  }], {});
-  workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
-    allowlist: [/^\/$/]
-  }));
   workbox.registerRoute(/^https:\/\/api\./i, new workbox.NetworkFirst({
     "cacheName": "api-cache",
     "networkTimeoutSeconds": 10,
@@ -118,6 +104,13 @@ define(['./workbox-7314bb95'], (function (workbox) { 'use strict';
     }), new workbox.ExpirationPlugin({
       maxEntries: 100,
       maxAgeSeconds: 300
+    })]
+  }), 'GET');
+  workbox.registerRoute(/\.(?:js|jsx|ts|tsx|mjs)$/i, new workbox.NetworkFirst({
+    "cacheName": "js-cache",
+    "networkTimeoutSeconds": 3,
+    plugins: [new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
     })]
   }), 'GET');
 

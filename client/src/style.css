@@ -2218,10 +2218,6 @@ section {
 }
 
 /* ===== PWA Navigation Bar Styles ===== */
-.pwa-navigation-bar {
-	/* Ensure content doesn't get hidden behind the nav bar */
-	/* Add padding-bottom to body when PWA nav is visible */
-}
 
 /* Add bottom padding to main content when PWA nav bar is visible */
 body:has(.pwa-navigation-bar) .content,
@@ -2258,6 +2254,25 @@ body:has(.pwa-navigation-bar) .container {
 @media (max-width: 1023px) {
 	.pwa-navigation-bar {
 		z-index: 1001;
+	}
+}
+
+/* Ukryj pasek nawigacji PWA od 1500px wzwyż */
+@media (min-width: 1500px) {
+	.pwa-navigation-bar {
+		display: none !important;
+	}
+	
+	/* Usuń padding-bottom z treści, gdy pasek jest ukryty */
+	body:has(.pwa-navigation-bar) .content,
+	body:has(.pwa-navigation-bar) .logs-container,
+	body:has(.pwa-navigation-bar) .chat-container,
+	body:has(.pwa-navigation-bar) .board-list,
+	body:has(.pwa-navigation-bar) .schedule-container,
+	body:has(.pwa-navigation-bar) #leave-request-form,
+	body:has(.pwa-navigation-bar) #leave-planner,
+	body:has(.pwa-navigation-bar) .container {
+		padding-bottom: 3px !important;
 	}
 }
 
@@ -2404,6 +2419,9 @@ body:has(.pwa-navigation-bar) .container {
 	}
 	.user-hint {
 		display: none;
+	}
+	#leave-requests-review {
+		padding-left: 15px !important;
 	}
 }
 
@@ -3107,4 +3125,28 @@ body:has(.pwa-navigation-bar) .container {
 	.onlymyevent {
 		margin-left: 25px !important;
 	}
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+	body:has(.pwa-navigation-bar) #list-employee,
+	body:has(.pwa-navigation-bar) #calendars-works-review,
+	body:has(.pwa-navigation-bar) #leave-requests-review,
+	body:has(.pwa-navigation-bar) .tickets,
+	body:has(.pwa-navigation-bar) .content,
+	body:has(.pwa-navigation-bar) .logs-container,
+	body:has(.pwa-navigation-bar) .chat-main,
+	body:has(.pwa-navigation-bar) .board-list,
+	body:has(.pwa-navigation-bar) .schedule-container,
+	body:has(.pwa-navigation-bar) #leave-request-form,
+	body:has(.pwa-navigation-bar) #leave-planner,
+	body:has(.pwa-navigation-bar) #all-leaveplans,
+	body:has(.pwa-navigation-bar) .leave-calendar-plans-one-employee
+	body:has(.pwa-navigation-bar) .container {
+		padding-bottom: 90px !important;
+	}
+}
+
+.login-card-body, .reset-password-container, .set-pass {
+	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
 }

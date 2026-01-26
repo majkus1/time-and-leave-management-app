@@ -18,10 +18,53 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 const isDev = process.env.NODE_ENV === 'development'
 
+// Custom plugin to handle malformed URI errors
+function handleMalformedURI() {
+	return {
+		name: 'handle-malformed-uri',
+		configureServer(server) {
+			// Add middleware early to catch errors before Vite processes them
+			server.middlewares.use((req, res, next) => {
+				if (!req.url) {
+					return next()
+				}
+				
+				// Handle %PUBLIC_URL% placeholder (from old Create React App)
+				if (req.url.includes('%PUBLIC_URL%')) {
+					const fixedUrl = req.url.replace(/%PUBLIC_URL%/g, '')
+					req.url = fixedUrl
+				}
+				
+				try {
+					// Try to decode the URL to check if it's valid
+					// First, remove query string and hash for decoding
+					const urlWithoutQuery = req.url.split('?')[0].split('#')[0]
+					decodeURIComponent(urlWithoutQuery)
+					// If successful, continue
+					next()
+				} catch (error) {
+					// If URI is malformed (e.g., contains invalid encoded characters)
+					if (error instanceof URIError) {
+						console.warn(`[Vite] Skipping malformed URI: ${req.url}`)
+						// Return 404 for malformed URIs instead of crashing
+						res.statusCode = 404
+						res.setHeader('Content-Type', 'text/plain')
+						res.end(`Not Found: ${req.url}`)
+						return
+					}
+					// For other errors, pass them through
+					next(error)
+				}
+			})
+		},
+	}
+}
+
 export default defineConfig({
 	plugins: [
 		react(),
 		tailwindcss(),
+		handleMalformedURI(), // Add before VitePWA to catch errors early
 		VitePWA({
 			registerType: 'autoUpdate',
 			devOptions: {
@@ -36,6 +79,13 @@ export default defineConfig({
 			workbox: isDev ? {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,woff,woff2,ttf,eot}'],
 				maximumFileSizeToCacheInBytes: 5242880,
+				// Don't use navigateFallback in dev mode - let Vite handle routing
+				navigateFallback: null,
+				// Don't skip waiting in dev mode to avoid blocking
+				skipWaiting: false,
+				clientsClaim: false,
+				// Exclude main JS files from precaching in dev mode
+				globIgnores: ['**/node_modules/**/*', '**/src/**/*.js', '**/src/**/*.jsx', '**/src/**/*.ts', '**/src/**/*.tsx'],
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/api\./i,
@@ -86,6 +136,18 @@ export default defineConfig({
 							expiration: {
 								maxEntries: 100,
 								maxAgeSeconds: 5 * 60
+							}
+						}
+					},
+					// In dev mode, always use network for JS files
+					{
+						urlPattern: /\.(?:js|jsx|ts|tsx|mjs)$/i,
+						handler: 'NetworkFirst',
+						options: {
+							cacheName: 'js-cache',
+							networkTimeoutSeconds: 3,
+							cacheableResponse: {
+								statuses: [0, 200]
 							}
 						}
 					}

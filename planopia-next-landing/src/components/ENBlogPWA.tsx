@@ -126,7 +126,7 @@ function ENBlogPWA() {
 							How to Install Planopia as a PWA App? Installation Guide
 						</h1>
 						<p className="text-gray-700 text-lg">
-							Planopia is a <strong>Progressive Web App (PWA)</strong>, which means you can install it directly on your phone's home screen. 
+							Planopia is a <strong>Progressive Web App (PWA)</strong>, which means you can install it directly on your device - both on desktop and mobile. 
 							This gives you quick access to the time tracking and leave management app without having to open a browser every time.
 						</p>
 					</div>
@@ -136,7 +136,7 @@ function ENBlogPWA() {
 			<article className="max-w-4xl mx-auto px-6 py-12">
 				<h2 className="text-2xl font-semibold mb-4">Why Install Planopia as a PWA?</h2>
 				<p className="mb-4 text-gray-700">
-					Installing Planopia as a PWA app on your mobile device brings many benefits:
+					Installing Planopia as a PWA app on your device (desktop or mobile) brings many benefits:
 				</p>
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Quick access</strong> – the app is always at hand on your home screen</li>
@@ -174,12 +174,26 @@ function ENBlogPWA() {
 							<li>Confirm installation in the dialog window</li>
 						</ol>
 					</div>
+
+					<div className="bg-gray-50 rounded-xl p-6">
+						<h3 className="text-xl font-semibold mb-3 text-blue-600">On Desktop (Chrome, Edge, Opera)</h3>
+						<ol className="list-decimal pl-6 space-y-2 text-gray-700">
+							<li>Open Chrome, Edge, or Opera browser and go to Planopia login page: <strong>app.planopia.pl</strong></li>
+							<li>In the browser address bar (at the top), you'll see an <strong>"Install"</strong> icon on the right side</li>
+							<li>Click on this icon or select <strong>"Install Planopia"</strong> from the browser menu</li>
+							<li>Confirm installation in the dialog window</li>
+							<li>After installation, the app will appear as a separate window that you can launch from the Start menu (Windows) or Launchpad (macOS)</li>
+						</ol>
+						<p className="mt-3 text-gray-600 text-sm">
+							<strong>Note:</strong> The PWA app on desktop works like a native desktop app - you can pin it to the taskbar, open it in a separate window, and use all features without a browser!
+						</p>
+					</div>
 				</div>
 
 				<h2 className="text-2xl font-semibold mb-4">Done! How to Use Planopia as PWA?</h2>
 				<p className="mb-4 text-gray-700">
-					After installation, you'll find the Planopia icon on your phone's home screen. 
-					Tap it to open the app – it will work like a native mobile app!
+					After installation, you'll find the Planopia icon on your phone's home screen (or in the Start menu/Launchpad on desktop). 
+					Click it to open the app – it will work like a native app!
 				</p>
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Full-screen interface</strong> – without browser bars</li>

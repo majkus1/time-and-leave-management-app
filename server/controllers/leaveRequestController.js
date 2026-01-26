@@ -1084,6 +1084,18 @@ exports.updateLeaveRequest = async (req, res) => {
 			)
 
 			await Promise.all(emailPromises)
+
+			// Send push notifications to recipients (non-blocking)
+			const recipientUserIds = recipients
+				.filter(r => r._id)
+				.map(r => r._id.toString())
+			
+			if (recipientUserIds.length > 0) {
+				sendLeaveRequestPushNotification(leaveRequest, user, recipientUserIds, 'new', null, t)
+					.catch(error => {
+						console.error('Error sending leave request update push notifications:', error)
+					})
+			}
 		}
 
 		res.status(200).json({ message: 'Leave request updated successfully.', leaveRequest })

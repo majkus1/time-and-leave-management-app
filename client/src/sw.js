@@ -4,6 +4,9 @@
 // Import workbox
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js')
 
+// Automatyczna aktywacja nowego service workera - użytkownicy zawsze otrzymają najnowszą wersję
+self.skipWaiting()
+
 if (workbox) {
 	console.log('[SW] Workbox loaded')
 	
@@ -206,4 +209,46 @@ self.addEventListener('notificationclick', function(event) {
 // Handle notification close
 self.addEventListener('notificationclose', function(event) {
 	console.log('[SW] Notification closed:', event)
+})
+
+// ============================================
+// AUTOMATYCZNE CZYSZCZENIE STARYCH CACHE
+// ============================================
+
+// Czyszczenie starych cache przy instalacji nowego service workera
+self.addEventListener('activate', function(event) {
+	console.log('[SW] Activating new service worker, cleaning old caches...')
+	
+	event.waitUntil(
+		caches.keys().then(function(cacheNames) {
+			return Promise.all(
+				cacheNames.map(function(cacheName) {
+					// Usuń wszystkie cache, które nie są w aktualnym manifest
+					// Workbox automatycznie zarządza cache z prefiksem 'workbox-'
+					// ale możemy też wyczyścić inne stare cache
+					if (cacheName.startsWith('workbox-')) {
+						// Sprawdź czy cache jest nadal używany
+						const manifestUrls = (self.__WB_MANIFEST || []).map(item => {
+							return typeof item === 'string' ? item : item.url
+						})
+						// Workbox sam zarządza tymi cache, więc nie usuwamy ich ręcznie
+						return Promise.resolve()
+					}
+					// Usuń inne stare cache (jeśli są)
+					console.log('[SW] Deleting old cache:', cacheName)
+					return caches.delete(cacheName)
+				})
+			).then(function() {
+				// Natychmiast przejmij kontrolę nad wszystkimi klientami
+				return self.clients.claim()
+			})
+		})
+	)
+})
+
+// Sprawdzaj aktualizacje service workera przy każdym uruchomieniu
+self.addEventListener('install', function(event) {
+	console.log('[SW] Installing new service worker version')
+	// skipWaiting() już wywołane na początku, więc nowy SW aktywuje się natychmiast
+	event.waitUntil(self.skipWaiting())
 })

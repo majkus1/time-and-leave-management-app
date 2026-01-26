@@ -126,7 +126,7 @@ function BlogPWA() {
 							Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji
 						</h1>
 						<p className="text-gray-700 text-lg">
-							Planopia to <strong>Progressive Web App (PWA)</strong>, co oznacza, że możesz zainstalować ją bezpośrednio na ekranie głównym swojego telefonu. 
+							Planopia to <strong>Progressive Web App (PWA)</strong>, co oznacza, że możesz zainstalować ją bezpośrednio na swoim urządzeniu - zarówno na desktopie, jak i na urządzeniu mobilnym. 
 							Dzięki temu będziesz mieć szybki dostęp do aplikacji do ewidencji czasu pracy i zarządzania urlopami, 
 							bez konieczności otwierania przeglądarki za każdym razem.
 						</p>
@@ -137,7 +137,7 @@ function BlogPWA() {
 			<article className="max-w-4xl mx-auto px-6 py-12">
 				<h2 className="text-2xl font-semibold mb-4">Dlaczego warto zainstalować Planopię jako PWA?</h2>
 				<p className="mb-4 text-gray-700">
-					Instalacja Planopii jako aplikacji PWA na urządzeniu mobilnym przynosi wiele korzyści:
+					Instalacja Planopii jako aplikacji PWA na swoim urządzeniu (desktop lub mobilnym) przynosi wiele korzyści:
 				</p>
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Szybki dostęp</strong> – aplikacja jest zawsze pod ręką na ekranie głównym</li>
@@ -175,12 +175,26 @@ function BlogPWA() {
 							<li>Potwierdź instalację w oknie dialogowym</li>
 						</ol>
 					</div>
+
+					<div className="bg-gray-50 rounded-xl p-6">
+						<h3 className="text-xl font-semibold mb-3 text-blue-600">Na komputerze (Desktop - Chrome, Edge, Opera)</h3>
+						<ol className="list-decimal pl-6 space-y-2 text-gray-700">
+							<li>Otwórz przeglądarkę Chrome, Edge lub Opera i przejdź do strony logowania Planopii: <strong>app.planopia.pl</strong></li>
+							<li>W pasku adresu przeglądarki (u góry) zobaczysz ikonę <strong>"Zainstaluj aplikację"</strong> lub <strong>"Install"</strong> po prawej stronie</li>
+							<li>Kliknij na tę ikonę lub wybierz opcję <strong>"Zainstaluj Planopię"</strong> z menu przeglądarki</li>
+							<li>Potwierdź instalację w oknie dialogowym</li>
+							<li>Po instalacji aplikacja pojawi się jako osobne okno, które możesz uruchomić z menu Start (Windows) lub Launchpad (macOS)</li>
+						</ol>
+						<p className="mt-3 text-gray-600 text-sm">
+							<strong>Uwaga:</strong> Aplikacja PWA na desktopie działa jak natywna aplikacja desktopowa - możesz ją przypiąć do paska zadań, otwierać w osobnym oknie i korzystać ze wszystkich funkcji bez przeglądarki!
+						</p>
+					</div>
 				</div>
 
 				<h2 className="text-2xl font-semibold mb-4">Gotowe! Jak korzystać z Planopii jako PWA?</h2>
 				<p className="mb-4 text-gray-700">
-					Po instalacji znajdziesz ikonę Planopii na ekranie głównym swojego telefonu. 
-					Kliknij na nią, aby otworzyć aplikację – będzie działać jak natywna aplikacja mobilna!
+					Po instalacji znajdziesz ikonę Planopii na ekranie głównym swojego telefonu (lub w menu Start/Launchpad na desktopie). 
+					Kliknij na nią, aby otworzyć aplikację – będzie działać jak natywna aplikacja!
 				</p>
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Pełnoekranowy interfejs</strong> – bez pasków przeglądarki</li>

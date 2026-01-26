@@ -22,21 +22,54 @@ const updateSW = registerSW({
   immediate: true, // Sprawdź aktualizacje natychmiast
   onNeedRefresh() {
     // Automatycznie odśwież stronę po aktualizacji service workera
-    console.log('Nowa wersja dostępna, odświeżanie...')
-    updateSW(true) // true = wymusza natychmiastowe odświeżenie
+    console.log('[SW] Nowa wersja dostępna, odświeżanie...')
+    // Odśwież po krótkim opóźnieniu, aby użytkownik zobaczył komunikat
+    setTimeout(() => {
+      updateSW(true) // true = wymusza natychmiastowe odświeżenie
+    }, 1000)
   },
   onOfflineReady() {
-    console.log('Aplikacja gotowa do pracy offline')
+    console.log('[SW] Aplikacja gotowa do pracy offline')
   },
   onRegistered(registration) {
     console.log('[SW] Service Worker registered:', registration)
-    // Sprawdzaj aktualizacje co godzinę
-    setInterval(() => {
-      registration?.update()
-    }, 60 * 60 * 1000) // 1 godzina
+    
+    // Sprawdzaj aktualizacje przy każdym załadowaniu strony
+    if (registration) {
+      registration.update()
+    }
+    
+    // Sprawdzaj aktualizacje co 5 minut (zamiast co godzinę)
+    // To zapewni, że użytkownicy szybko otrzymają nowe wersje
+    const updateInterval = setInterval(() => {
+      if (registration) {
+        console.log('[SW] Sprawdzanie aktualizacji...')
+        registration.update().catch(err => {
+          console.error('[SW] Błąd podczas sprawdzania aktualizacji:', err)
+        })
+      } else {
+        clearInterval(updateInterval)
+      }
+    }, 5 * 60 * 1000) // 5 minut
+    
+    // Sprawdzaj również gdy użytkownik wraca do aplikacji (focus)
+    window.addEventListener('focus', () => {
+      if (registration) {
+        console.log('[SW] Aplikacja w focusie, sprawdzanie aktualizacji...')
+        registration.update()
+      }
+    })
+    
+    // Sprawdzaj gdy użytkownik przełącza się między kartami
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && registration) {
+        console.log('[SW] Karta widoczna, sprawdzanie aktualizacji...')
+        registration.update()
+      }
+    })
   },
   onRegisterError(error) {
-    console.error('Błąd rejestracji Service Worker:', error)
+    console.error('[SW] Błąd rejestracji Service Worker:', error)
   }
 })
 
