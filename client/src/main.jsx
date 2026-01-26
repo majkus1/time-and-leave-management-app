@@ -29,17 +29,11 @@ const updateSW = registerSW({
     console.log('Aplikacja gotowa do pracy offline')
   },
   onRegistered(registration) {
+    console.log('[SW] Service Worker registered:', registration)
     // Sprawdzaj aktualizacje co godzinę
     setInterval(() => {
       registration?.update()
     }, 60 * 60 * 1000) // 1 godzina
-    
-    // Inject push notification handlers into service worker
-    if (registration.active) {
-      import('./sw-custom.js').catch(err => {
-        console.warn('Could not load custom service worker code:', err)
-      })
-    }
   },
   onRegisterError(error) {
     console.error('Błąd rejestracji Service Worker:', error)

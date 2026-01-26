@@ -26,67 +26,12 @@ export default defineConfig({
 				enabled: false, // Wyłącz PWA w trybie deweloperskim
 				type: 'module',
 			},
-			workbox: {
+			strategies: 'injectManifest',
+			srcDir: 'src',
+			filename: 'sw.js',
+			injectManifest: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,woff,woff2,ttf,eot}'],
-				cleanupOutdatedCaches: true,
-				sourcemap: false, // Wyłącz sourcemap w produkcji dla lepszej wydajności
-				skipWaiting: true, // Natychmiast aktywuj nowy service worker
-				clientsClaim: true, // Przejmij kontrolę nad wszystkimi klientami
 				maximumFileSizeToCacheInBytes: 5242880, // 5 MB
-				runtimeCaching: [
-					{
-						urlPattern: /^https:\/\/api\./i, // API calls
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'api-cache',
-							networkTimeoutSeconds: 10,
-							cacheableResponse: {
-								statuses: [0, 200],
-							},
-							expiration: {
-								maxEntries: 50,
-								maxAgeSeconds: 5 * 60, // 5 minut
-							},
-						},
-					},
-					{
-						urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i, // Obrazy
-						handler: 'CacheFirst',
-						options: {
-							cacheName: 'images-cache',
-							expiration: {
-								maxEntries: 100,
-								maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dni
-							},
-						},
-					},
-					{
-						urlPattern: /\.(?:woff|woff2|ttf|eot)$/i, // Fonty
-						handler: 'CacheFirst',
-						options: {
-							cacheName: 'fonts-cache',
-							expiration: {
-								maxEntries: 20,
-								maxAgeSeconds: 365 * 24 * 60 * 60, // 1 rok
-							},
-						},
-					},
-					{
-						urlPattern: /\/api\//i, // Wszystkie API endpoints
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'api-requests-cache',
-							networkTimeoutSeconds: 10,
-							cacheableResponse: {
-								statuses: [0, 200],
-							},
-							expiration: {
-								maxEntries: 100,
-								maxAgeSeconds: 5 * 60, // 5 minut
-							},
-						},
-					},
-				],
 			},
 			includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon-16x16.png', 'favicon-32x32.png'],
 			manifest: {

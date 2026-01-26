@@ -20,7 +20,32 @@ export const usePushNotifications = () => {
 		if (typeof window === 'undefined') return
 
 		const checkSupport = async () => {
-			if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+			// Check for Service Worker support
+			if (!('serviceWorker' in navigator)) {
+				console.log('[Push] Service Worker not supported')
+				setIsSupported(false)
+				return
+			}
+
+			// Check for Push Manager support
+			if (!('PushManager' in window)) {
+				console.log('[Push] PushManager not supported')
+				setIsSupported(false)
+				return
+			}
+
+			// Check for Notification API support
+			if (!('Notification' in window)) {
+				console.log('[Push] Notification API not supported')
+				setIsSupported(false)
+				return
+			}
+
+			console.log('[Push] Push notifications are supported')
+			
+			// Check notification permission
+			if (Notification.permission === 'denied') {
+				console.log('[Push] Notification permission denied')
 				setIsSupported(false)
 				return
 			}
@@ -31,26 +56,38 @@ export const usePushNotifications = () => {
 			try {
 				const response = await axios.get(`${API_URL}/api/push/vapid-public-key`)
 				setVapidPublicKey(response.data.publicKey)
+				console.log('[Push] VAPID public key received')
 			} catch (error) {
-				console.error('Error getting VAPID public key:', error)
+				console.error('[Push] Error getting VAPID public key:', error)
+				setIsSupported(false)
+				return
 			}
 
-			// Check existing subscription
-		try {
-			const registration = await navigator.serviceWorker.ready
-			console.log('[Push] Service Worker ready, checking for existing subscription')
-			const existingSubscription = await registration.pushManager.getSubscription()
-			
-			if (existingSubscription) {
-				console.log('[Push] Found existing subscription:', existingSubscription.endpoint.substring(0, 50))
-				setSubscription(existingSubscription)
-				setIsSubscribed(true)
-			} else {
-				console.log('[Push] No existing subscription found')
+			// Wait for service worker to be ready
+			try {
+				const registration = await navigator.serviceWorker.ready
+				console.log('[Push] Service Worker ready, checking for existing subscription')
+				
+				// Check if push manager is available
+				if (!registration.pushManager) {
+					console.log('[Push] PushManager not available in service worker')
+					setIsSupported(false)
+					return
+				}
+				
+				const existingSubscription = await registration.pushManager.getSubscription()
+				
+				if (existingSubscription) {
+					console.log('[Push] Found existing subscription:', existingSubscription.endpoint.substring(0, 50))
+					setSubscription(existingSubscription)
+					setIsSubscribed(true)
+				} else {
+					console.log('[Push] No existing subscription found')
+				}
+			} catch (error) {
+				console.error('[Push] Error checking existing subscription:', error)
+				// Don't disable support if there's an error, just log it
 			}
-		} catch (error) {
-			console.error('[Push] Error checking existing subscription:', error)
-		}
 
 			// Load preferences
 			if (loggedIn) {
@@ -75,8 +112,25 @@ export const usePushNotifications = () => {
 		}
 
 		try {
+			// Request notification permission first
+			if (Notification.permission === 'default') {
+				console.log('[Push] Requesting notification permission...')
+				const permission = await Notification.requestPermission()
+				console.log('[Push] Notification permission:', permission)
+				if (permission !== 'granted') {
+					return { success: false, error: 'Notification permission denied' }
+				}
+			} else if (Notification.permission === 'denied') {
+				return { success: false, error: 'Notification permission was denied. Please enable it in browser settings.' }
+			}
+
 			const registration = await navigator.serviceWorker.ready
 			console.log('[Push] Subscribing to push notifications...')
+			
+			// Check if push manager is available
+			if (!registration.pushManager) {
+				return { success: false, error: 'PushManager not available in service worker' }
+			}
 			
 			// Convert VAPID key to Uint8Array
 			const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey)
