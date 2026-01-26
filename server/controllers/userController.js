@@ -503,7 +503,6 @@ exports.getAllVisibleUsers = async (req, res) => {
         
         if (isSuperAdmin) {
             // Super admin widzi wszystkich aktywnych użytkowników ze wszystkich zespołów (bez soft-deleted)
-            const Team = require('../models/team')(firmDb);
             const users = await User.find({
                 $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
             }).select('username firstName lastName roles position department teamId password').lean();
@@ -511,6 +510,16 @@ exports.getAllVisibleUsers = async (req, res) => {
             // Pobierz informacje o zespołach dla każdego użytkownika
             const usersWithTeams = await Promise.all(
                 users.map(async (user) => {
+                    // Sprawdź czy użytkownik ma teamId
+                    if (!user.teamId) {
+                        return {
+                            ...user,
+                            teamName: 'Brak zespołu',
+                            teamAdminEmail: null,
+                            hasPassword: !!user.password
+                        };
+                    }
+                    
                     const team = await Team.findById(user.teamId).select('name adminEmail').lean();
                     return {
                         ...user,
