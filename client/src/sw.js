@@ -225,12 +225,8 @@ self.addEventListener('activate', function(event) {
 				cacheNames.map(function(cacheName) {
 					// Usuń wszystkie cache, które nie są w aktualnym manifest
 					// Workbox automatycznie zarządza cache z prefiksem 'workbox-'
-					// ale możemy też wyczyścić inne stare cache
+					// więc nie usuwamy ich ręcznie
 					if (cacheName.startsWith('workbox-')) {
-						// Sprawdź czy cache jest nadal używany
-						const manifestUrls = (self.__WB_MANIFEST || []).map(item => {
-							return typeof item === 'string' ? item : item.url
-						})
 						// Workbox sam zarządza tymi cache, więc nie usuwamy ich ręcznie
 						return Promise.resolve()
 					}
