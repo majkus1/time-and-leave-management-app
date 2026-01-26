@@ -425,6 +425,230 @@ function Settings() {
 					<hr></hr>
 				</div>
 
+				{/* Push Notifications Section - Available for all users - Moved to top */}
+				{pushSupported && (
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '20px',
+						marginBottom: '20px'
+					}}>
+						<h3 style={{ 
+							color: '#2c3e50', 
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600'
+						}}>
+							🔔 {t('settings.pushNotificationsTitle')}
+						</h3>
+						
+						{!pushSubscribed ? (
+							<div style={{ marginBottom: '20px' }}>
+								<p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
+									{t('settings.pushNotificationsDescription')}
+								</p>
+								<div style={{ 
+									backgroundColor: '#e8f5e9',
+									borderLeft: '4px solid #4caf50',
+									padding: '12px 16px',
+									borderRadius: '4px',
+									marginBottom: '15px',
+									fontSize: '14px',
+									color: '#2e7d32'
+								}}>
+									<p style={{ margin: 0, marginBottom: '8px' }}>
+										{t('settings.pushNotificationsPWAInfo')}
+									</p>
+									<a 
+										href="https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa" 
+										target="_blank" 
+										rel="noopener noreferrer"
+										style={{
+											color: '#2e7d32',
+											textDecoration: 'underline',
+											fontWeight: '600'
+										}}
+									>
+										{t('settings.pushNotificationsPWALink')} →
+									</a>
+								</div>
+								<button
+									onClick={handleSubscribePush}
+									disabled={pushLoading}
+									style={{
+										backgroundColor: '#27ae60',
+										color: 'white',
+										border: 'none',
+										padding: '12px 24px',
+										borderRadius: '6px',
+										fontSize: '16px',
+										fontWeight: '500',
+										cursor: pushLoading ? 'not-allowed' : 'pointer',
+										opacity: pushLoading ? 0.6 : 1,
+										transition: 'all 0.2s'
+									}}
+									onMouseEnter={(e) => {
+										if (!pushLoading) {
+											e.target.style.backgroundColor = '#229954'
+										}
+									}}
+									onMouseLeave={(e) => {
+										if (!pushLoading) {
+											e.target.style.backgroundColor = '#27ae60'
+										}
+									}}
+								>
+									{pushLoading ? t('settings.pushNotificationsProcessing') : t('settings.pushNotificationsEnable')}
+								</button>
+							</div>
+						) : (
+							<>
+								<div style={{ marginBottom: '20px' }}>
+									<p style={{ color: '#27ae60', marginBottom: '15px', fontWeight: '500' }}>
+										✓ {t('settings.pushNotificationsEnabled')}
+									</p>
+									<button
+										onClick={handleUnsubscribePush}
+										disabled={pushLoading}
+										style={{
+											backgroundColor: '#e74c3c',
+											color: 'white',
+											border: 'none',
+											padding: '10px 20px',
+											borderRadius: '6px',
+											fontSize: '14px',
+											fontWeight: '500',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											opacity: pushLoading ? 0.6 : 1,
+											transition: 'all 0.2s'
+										}}
+										onMouseEnter={(e) => {
+											if (!pushLoading) {
+												e.target.style.backgroundColor = '#c0392b'
+											}
+										}}
+										onMouseLeave={(e) => {
+											if (!pushLoading) {
+												e.target.style.backgroundColor = '#e74c3c'
+											}
+										}}
+									>
+										{pushLoading ? t('settings.pushNotificationsProcessing') : t('settings.pushNotificationsDisable')}
+									</button>
+								</div>
+
+								<div style={{ 
+									borderTop: '1px solid #ecf0f1',
+									paddingTop: '20px',
+									marginTop: '20px'
+								}}>
+									<h4 style={{ 
+										color: '#2c3e50', 
+										marginBottom: '15px',
+										fontSize: '16px',
+										fontWeight: '600'
+									}}>
+										{t('settings.pushNotificationsPreferences')}
+									</h4>
+									
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.chat || false}
+												onChange={(e) => handleUpdatePushPreferences('chat', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsChat')}</span>
+										</label>
+									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.tasks || false}
+												onChange={(e) => handleUpdatePushPreferences('tasks', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsTasks')}</span>
+										</label>
+									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.taskStatusChanges || false}
+												onChange={(e) => handleUpdatePushPreferences('taskStatusChanges', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsTaskStatus')}</span>
+										</label>
+									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.leaves || false}
+												onChange={(e) => handleUpdatePushPreferences('leaves', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsLeaves')}</span>
+										</label>
+									</div>
+								</div>
+							</>
+						)}
+					</div>
+				)}
+
 				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}
 				{canEditSettings && (
 					<div style={{ 
@@ -1958,27 +2182,36 @@ function Settings() {
 					</div>
 						)}
 
-						{/* Przycisk zapisu */}
-						<div style={{ textAlign: 'left' }}>
+						{/* Przycisk zapisu - na całą szerokość */}
+						<div style={{ 
+							width: '100%',
+							marginTop: '20px',
+							marginBottom: '20px'
+						}}>
 							<button
 								onClick={handleSave}
 								disabled={updateSettingsMutation.isPending}
 								style={{
+									width: '100%',
 									backgroundColor: updateSettingsMutation.isPending ? '#95a5a6' : '#3498db',
 									color: 'white',
 									border: 'none',
-									padding: '12px 24px',
-									borderRadius: '6px',
+									padding: '14px 24px',
+									borderRadius: '8px',
 									fontSize: '16px',
-									fontWeight: '500',
+									fontWeight: '600',
 									cursor: updateSettingsMutation.isPending ? 'not-allowed' : 'pointer',
 									transition: 'all 0.2s',
-									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									gap: '8px'
 								}}
 								onMouseEnter={(e) => {
 									if (!updateSettingsMutation.isPending) {
 										e.target.style.backgroundColor = '#2980b9'
-										e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)'
+										e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)'
 									}
 								}}
 								onMouseLeave={(e) => {
@@ -2178,181 +2411,6 @@ function Settings() {
 					</div>
 				</Modal>
 
-				{/* Push Notifications Section - Available for all users */}
-				{pushSupported && (
-					<div style={{ 
-						backgroundColor: 'white',
-						borderRadius: '12px',
-						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-						padding: '20px',
-						marginBottom: '20px'
-					}}>
-						<h3 style={{ 
-							color: '#2c3e50', 
-							marginBottom: '20px',
-							fontSize: '20px',
-							fontWeight: '600'
-						}}>
-							🔔 {t('settings.pushNotificationsTitle')}
-						</h3>
-						
-						{!pushSubscribed ? (
-							<div style={{ marginBottom: '20px' }}>
-								<p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
-									{t('settings.pushNotificationsDescription')}
-								</p>
-								<button
-									onClick={handleSubscribePush}
-									disabled={pushLoading}
-									style={{
-										backgroundColor: '#27ae60',
-										color: 'white',
-										border: 'none',
-										padding: '12px 24px',
-										borderRadius: '6px',
-										fontSize: '16px',
-										fontWeight: '500',
-										cursor: pushLoading ? 'not-allowed' : 'pointer',
-										opacity: pushLoading ? 0.6 : 1,
-										transition: 'all 0.2s'
-									}}
-									onMouseEnter={(e) => {
-										if (!pushLoading) {
-											e.target.style.backgroundColor = '#229954'
-										}
-									}}
-									onMouseLeave={(e) => {
-										if (!pushLoading) {
-											e.target.style.backgroundColor = '#27ae60'
-										}
-									}}
-								>
-									{pushLoading ? t('settings.pushNotificationsProcessing') : t('settings.pushNotificationsEnable')}
-								</button>
-							</div>
-						) : (
-							<>
-								<div style={{ marginBottom: '20px' }}>
-									<p style={{ color: '#27ae60', marginBottom: '15px', fontWeight: '500' }}>
-										✓ {t('settings.pushNotificationsEnabled')}
-									</p>
-									<button
-										onClick={handleUnsubscribePush}
-										disabled={pushLoading}
-										style={{
-											backgroundColor: '#e74c3c',
-											color: 'white',
-											border: 'none',
-											padding: '10px 20px',
-											borderRadius: '6px',
-											fontSize: '14px',
-											fontWeight: '500',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											opacity: pushLoading ? 0.6 : 1,
-											transition: 'all 0.2s'
-										}}
-										onMouseEnter={(e) => {
-											if (!pushLoading) {
-												e.target.style.backgroundColor = '#c0392b'
-											}
-										}}
-										onMouseLeave={(e) => {
-											if (!pushLoading) {
-												e.target.style.backgroundColor = '#e74c3c'
-											}
-										}}
-									>
-										{pushLoading ? t('settings.pushNotificationsProcessing') : t('settings.pushNotificationsDisable')}
-									</button>
-								</div>
-
-								<div style={{ 
-									borderTop: '1px solid #ecf0f1',
-									paddingTop: '20px',
-									marginTop: '20px'
-								}}>
-									<h4 style={{ 
-										color: '#2c3e50', 
-										marginBottom: '15px',
-										fontSize: '16px',
-										fontWeight: '600'
-									}}>
-										{t('settings.pushNotificationsPreferences')}
-									</h4>
-									
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.chat || false}
-												onChange={(e) => handleUpdatePushPreferences('chat', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsChat')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.tasks || false}
-												onChange={(e) => handleUpdatePushPreferences('tasks', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsTasks')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.taskStatusChanges || false}
-												onChange={(e) => handleUpdatePushPreferences('taskStatusChanges', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsTaskStatus')}</span>
-										</label>
-									</div>
-								</div>
-							</>
-						)}
-					</div>
-				)}
 			</div>
 		</>
 	)

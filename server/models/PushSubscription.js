@@ -48,6 +48,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
 		taskStatusChanges: {
 			type: Boolean,
 			default: true
+		},
+		leaves: {
+			type: Boolean,
+			default: true
 		}
 	},
 	createdAt: {

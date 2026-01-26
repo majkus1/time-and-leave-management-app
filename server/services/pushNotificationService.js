@@ -291,9 +291,145 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	return { sent, failed }
 }
 
+/**
+ * Send leave request notification
+ * @param {Object} leaveRequest - The leave request object
+ * @param {Object} user - The employee who created the request
+ * @param {Array} recipientUserIds - Array of user IDs to notify
+ * @param {String} notificationType - 'new', 'statusChanged', 'cancelled'
+ * @param {Object} updatedByUser - User who updated/cancelled (optional)
+ * @param {Function} t - Translation function
+ */
+const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUserIds, notificationType, updatedByUser = null, t = null) => {
+	console.log(`[Push] Sending leave request ${notificationType} notification to ${recipientUserIds.length} users`)
+	
+	// Filter subscriptions that have leave notifications enabled
+	// For now, we'll use a general 'leaves' preference, but we can add more specific preferences later
+	const subscriptions = await PushSubscription.find({
+		userId: { $in: recipientUserIds },
+		enabled: true,
+		'preferences.leaves': true // New preference for leave notifications
+	})
+
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with leave notifications enabled`)
+
+	if (subscriptions.length === 0) {
+		console.log('[Push] No subscriptions found, skipping push notification')
+		return { sent: 0, failed: 0 }
+	}
+
+	const userName = user?.firstName && user?.lastName
+		? `${user.firstName} ${user.lastName}`
+		: 'Pracownik'
+
+	const startDate = leaveRequest.startDate ? new Date(leaveRequest.startDate).toISOString().split('T')[0] : ''
+	const endDate = leaveRequest.endDate ? new Date(leaveRequest.endDate).toISOString().split('T')[0] : ''
+	
+	// Get leave request type name
+	let typeText = leaveRequest.type || 'Urlop'
+	if (t) {
+		try {
+			// Try to get translated type name
+			const translatedType = t(leaveRequest.type)
+			if (translatedType && translatedType !== leaveRequest.type) {
+				typeText = translatedType
+			}
+		} catch (error) {
+			// Use default
+		}
+	}
+
+	let title, body
+
+	switch (notificationType) {
+		case 'new':
+			title = t ? t('push.leave.newRequestTitle') : 'Nowy wniosek urlopowy'
+			body = t
+				? t('push.leave.newRequestBody', { userName, type: typeText, startDate, endDate, days: leaveRequest.daysRequested })
+				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
+			break
+		case 'statusChanged':
+			const statusText = leaveRequest.status ? (t ? t(leaveRequest.status) : leaveRequest.status) : 'zmieniony'
+			const updatedByName = updatedByUser?.firstName && updatedByUser?.lastName
+				? `${updatedByUser.firstName} ${updatedByUser.lastName}`
+				: 'Ktoś'
+			title = t ? t('push.leave.statusChangedTitle') : 'Status wniosku zmieniony'
+			body = t
+				? t('push.leave.statusChangedBody', { userName, type: typeText, status: statusText, updatedByName })
+				: `Status wniosku ${userName} (${typeText}) został zmieniony na "${statusText}" przez ${updatedByName}`
+			break
+		case 'cancelled':
+			title = t ? t('push.leave.cancelledTitle') : 'Wniosek urlopowy anulowany'
+			body = t
+				? t('push.leave.cancelledBody', { userName, type: typeText, startDate, endDate })
+				: `${userName} anulował wniosek: ${typeText} (${startDate} - ${endDate})`
+			break
+		default:
+			title = 'Powiadomienie o urlopie'
+			body = `${userName}: ${typeText}`
+	}
+
+	const payload = {
+		title,
+		body,
+		icon: '/icon-192x192.png',
+		badge: '/icon-96x96.png',
+		tag: `leave-${leaveRequest._id}`,
+		data: {
+			url: `/leave-requests/${user._id}`,
+			type: 'leave',
+			leaveRequestId: leaveRequest._id?.toString(),
+			userId: user._id?.toString()
+		},
+		requireInteraction: false,
+		silent: false
+	}
+
+	const results = await Promise.allSettled(
+		subscriptions.map(async (subscription) => {
+			try {
+				const subscriptionData = {
+					endpoint: subscription.endpoint,
+					keys: {
+						p256dh: subscription.keys.p256dh,
+						auth: subscription.keys.auth
+					}
+				}
+
+				console.log(`[Push] Sending leave notification to subscription ${subscription._id}`)
+				
+				await webpush.sendNotification(
+					subscriptionData,
+					JSON.stringify(payload)
+				)
+
+				console.log(`[Push] Successfully sent leave notification to subscription ${subscription._id}`)
+				subscription.lastUsed = new Date()
+				await subscription.save()
+
+				return { success: true }
+			} catch (error) {
+				if (error.statusCode === 410) {
+					console.log(`[Push] Subscription ${subscription._id} expired (410), removing`)
+					await PushSubscription.findByIdAndDelete(subscription._id)
+					return { success: false, error: 'Subscription expired' }
+				}
+				console.error(`[Push] Error sending leave push to subscription ${subscription._id}:`, error.message, error.statusCode)
+				return { success: false, error: error.message }
+			}
+		})
+	)
+
+	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
+	const failed = results.length - sent
+	console.log(`[Push] Leave notification result: ${sent} sent, ${failed} failed`)
+	return { sent, failed }
+}
+
 module.exports = {
 	sendPushNotification,
 	sendPushNotificationToUsers,
 	sendChatNotification,
-	sendTaskNotification
+	sendTaskNotification,
+	sendLeaveRequestPushNotification
 }

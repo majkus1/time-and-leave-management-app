@@ -902,6 +902,13 @@ select {
 		top: 20px;
 		right: 20px;
 	}
+	#leave-planner, #list-employee {
+		margin-bottom: 10px !important;
+	}
+	#all-leaveplans {
+		margin-bottom: 10px !important;
+		margin-right: 5px !important;
+	}
 }
 
 .admin-section {
@@ -2208,6 +2215,50 @@ section {
 	background-color: #000000;
 	border-radius: 2px;
 	transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* ===== PWA Navigation Bar Styles ===== */
+.pwa-navigation-bar {
+	/* Ensure content doesn't get hidden behind the nav bar */
+	/* Add padding-bottom to body when PWA nav is visible */
+}
+
+/* Add bottom padding to main content when PWA nav bar is visible */
+body:has(.pwa-navigation-bar) .content,
+body:has(.pwa-navigation-bar) .logs-container,
+body:has(.pwa-navigation-bar) .chat-container,
+body:has(.pwa-navigation-bar) .board-list,
+body:has(.pwa-navigation-bar) .schedule-container,
+body:has(.pwa-navigation-bar) #leave-request-form,
+body:has(.pwa-navigation-bar) #leave-planner,
+body:has(.pwa-navigation-bar) .container {
+	padding-bottom: 80px !important;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+	body:has(.pwa-navigation-bar) .content,
+	body:has(.pwa-navigation-bar) .logs-container,
+	body:has(.pwa-navigation-bar) .chat-container,
+	body:has(.pwa-navigation-bar) .board-list,
+	body:has(.pwa-navigation-bar) .schedule-container,
+	body:has(.pwa-navigation-bar) #leave-request-form,
+	body:has(.pwa-navigation-bar) #leave-planner,
+	body:has(.pwa-navigation-bar) .container {
+		padding-bottom: 90px !important;
+	}
+}
+
+/* Ensure modals are above PWA nav bar */
+.ReactModal__Content {
+	z-index: 2000 !important;
+}
+
+/* Ensure sidebar doesn't overlap PWA nav */
+@media (max-width: 1023px) {
+	.pwa-navigation-bar {
+		z-index: 1001;
+	}
 }
 
 .navbar-toggler.active .hamburger-icon span:nth-child(1) {

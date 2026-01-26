@@ -41,6 +41,7 @@ import HelpTicket from './components/tickets/HelpTicket.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
+import PWANavigationBar from './components/PWANavigationBar'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
@@ -172,6 +173,7 @@ function AppContent() {
 		<div>
 			<ScrollToHashElement />
 			<ScrollToTop />
+			<PWANavigationBar />
 			{isCheckingAuth ? (
 				<div className="content-with-loader">
 					<Loader />

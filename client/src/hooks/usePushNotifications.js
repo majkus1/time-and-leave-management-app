@@ -11,7 +11,8 @@ export const usePushNotifications = () => {
 	const [preferences, setPreferences] = useState({
 		chat: true,
 		tasks: true,
-		taskStatusChanges: true
+		taskStatusChanges: true,
+		leaves: true
 	})
 	const { loggedIn } = useAuth()
 

@@ -5,6 +5,7 @@ const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const LeavePlan = require('../models/LeavePlan')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
+const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
@@ -347,6 +348,20 @@ exports.submitLeaveRequest = async (req, res) => {
 		)
 
 		await Promise.all(emailPromises)
+
+		// Send push notifications to recipients (non-blocking)
+		if (recipients.length > 0) {
+			const recipientUserIds = recipients
+				.filter(r => r._id)
+				.map(r => r._id.toString())
+			
+			if (recipientUserIds.length > 0) {
+				sendLeaveRequestPushNotification(leaveRequest, user, recipientUserIds, 'new', null, t)
+					.catch(error => {
+						console.error('Error sending leave request push notifications:', error)
+					})
+			}
+		}
 
 		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
 	} catch (error) {

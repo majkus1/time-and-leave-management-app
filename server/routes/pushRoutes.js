@@ -36,11 +36,12 @@ router.post('/register', authenticateToken, async (req, res) => {
 				keys,
 				userAgent: userAgent || req.headers['user-agent'] || '',
 				enabled: true,
-				preferences: {
-					chat: true,
-					tasks: true,
-					taskStatusChanges: true
-				}
+			preferences: {
+				chat: true,
+				tasks: true,
+				taskStatusChanges: true,
+				leaves: true
+			}
 			})
 			await subscription.save()
 		}
@@ -90,7 +91,8 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 				$set: {
 					'preferences.chat': preferences.chat !== undefined ? preferences.chat : true,
 					'preferences.tasks': preferences.tasks !== undefined ? preferences.tasks : true,
-					'preferences.taskStatusChanges': preferences.taskStatusChanges !== undefined ? preferences.taskStatusChanges : true
+					'preferences.taskStatusChanges': preferences.taskStatusChanges !== undefined ? preferences.taskStatusChanges : true,
+					'preferences.leaves': preferences.leaves !== undefined ? preferences.leaves : true
 				}
 			}
 		)
@@ -118,7 +120,8 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 				preferences: {
 					chat: true,
 					tasks: true,
-					taskStatusChanges: true
+					taskStatusChanges: true,
+					leaves: true
 				}
 			})
 		}

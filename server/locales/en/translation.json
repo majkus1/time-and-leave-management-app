@@ -145,5 +145,15 @@
 			"review": "Review",
 			"done": "Done"
 		}
+	},
+	"push": {
+		"leave": {
+			"newRequestTitle": "New leave request",
+			"newRequestBody": "{{userName}} submitted a request: {{type}} ({{startDate}} - {{endDate}}, {{days}} days)",
+			"statusChangedTitle": "Leave request status changed",
+			"statusChangedBody": "{{userName}}'s request ({{type}}) status has been changed to \"{{status}}\" by {{updatedByName}}",
+			"cancelledTitle": "Leave request cancelled",
+			"cancelledBody": "{{userName}} cancelled the request: {{type}} ({{startDate}} - {{endDate}})"
+		}
 	}
 }

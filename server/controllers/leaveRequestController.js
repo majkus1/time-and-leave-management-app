@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db')
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { sendEmailToHR, sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
+const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const User = require('../models/user')(firmDb)
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const LeavePlan = require('../models/LeavePlan')(firmDb)
@@ -385,6 +386,58 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		} catch (hrEmailError) {
 			console.error('Error sending email to HR:', hrEmailError)
 			// Nie przerywaj procesu jeśli email do HR nie zadziała
+		}
+
+		// Send push notification to employee (only if user is active)
+		if (user.isActive !== false && user._id) {
+			try {
+				await sendLeaveRequestPushNotification(
+					leaveRequest,
+					user,
+					[user._id.toString()],
+					'statusChanged',
+					updatedByUser,
+					t
+				)
+			} catch (pushError) {
+				console.error('Error sending push notification to employee:', pushError)
+				// Nie przerywaj procesu jeśli push nie zadziała
+			}
+		}
+
+		// Send push notification to HR (non-blocking)
+		try {
+			const hrUsers = await User.find({
+				teamId: user.teamId,
+				roles: { $in: ['HR'] },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('_id')
+
+			let usersToNotify = hrUsers
+			if (hrUsers.length === 0) {
+				const adminUsers = await User.find({
+					teamId: user.teamId,
+					roles: { $in: ['Admin'] },
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+				}).select('_id username')
+				usersToNotify = adminUsers.filter(admin => admin.username !== user.username)
+			}
+
+			if (usersToNotify.length > 0) {
+				const hrUserIds = usersToNotify.map(u => u._id.toString())
+				sendLeaveRequestPushNotification(
+					leaveRequest,
+					user,
+					hrUserIds,
+					'statusChanged',
+					updatedByUser,
+					t
+				).catch(error => {
+					console.error('Error sending push notification to HR:', error)
+				})
+			}
+		} catch (hrPushError) {
+			console.error('Error preparing HR push notifications:', hrPushError)
 		}
 
 		// Pobierz zaktualizowany leaveRequest z populate
@@ -790,6 +843,20 @@ exports.cancelLeaveRequest = async (req, res) => {
 			)
 
 			await Promise.all(emailPromises)
+		}
+
+		// Send push notifications to recipients (non-blocking)
+		if (recipients.length > 0) {
+			const recipientUserIds = recipients
+				.filter(r => r._id)
+				.map(r => r._id.toString())
+			
+			if (recipientUserIds.length > 0) {
+				sendLeaveRequestPushNotification(leaveRequest, user, recipientUserIds, 'cancelled', null, t)
+					.catch(error => {
+						console.error('Error sending leave cancellation push notifications:', error)
+					})
+			}
 		}
 
 		res.status(200).json({ message: 'Leave request cancelled successfully.' })

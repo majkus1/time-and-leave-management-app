@@ -145,5 +145,15 @@
 			"review": "Do sprawdzenia",
 			"done": "Gotowe"
 		}
+	},
+	"push": {
+		"leave": {
+			"newRequestTitle": "Nowy wniosek urlopowy",
+			"newRequestBody": "{{userName}} złożył wniosek: {{type}} ({{startDate}} - {{endDate}}, {{days}} dni)",
+			"statusChangedTitle": "Status wniosku zmieniony",
+			"statusChangedBody": "Status wniosku {{userName}} ({{type}}) został zmieniony na \"{{status}}\" przez {{updatedByName}}",
+			"cancelledTitle": "Wniosek urlopowy anulowany",
+			"cancelledBody": "{{userName}} anulował wniosek: {{type}} ({{startDate}} - {{endDate}})"
+		}
 	}
 }
