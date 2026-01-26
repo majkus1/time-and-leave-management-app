@@ -10,13 +10,13 @@ function filterSubscriptionsByEnvironment(subscriptions) {
 	const isProduction = process.env.NODE_ENV === 'production'
 	
 	if (isProduction) {
-		// In production, only allow subscriptions from app.planopia.pl
+		// In production, filter out localhost and other non-production endpoints
+		// Allow all non-localhost endpoints (including FCM, WNS, and any production endpoints)
 		return subscriptions.filter(sub => {
 			const endpoint = sub.endpoint || ''
-			// Filter out localhost and other non-production endpoints
-			return !endpoint.includes('localhost') && 
-			       !endpoint.includes('127.0.0.1') &&
-			       (endpoint.includes('planopia.pl') || endpoint.includes('fcm.googleapis.com') || endpoint.includes('wns2-'))
+			// Filter out localhost and 127.0.0.1
+			// Allow everything else (FCM, WNS, and any production domain)
+			return !endpoint.includes('localhost') && !endpoint.includes('127.0.0.1')
 		})
 	} else {
 		// In development, only allow localhost subscriptions
@@ -335,19 +335,43 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
  */
 const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUserIds, notificationType, updatedByUser = null, t = null) => {
 	console.log(`[Push] Sending leave request ${notificationType} notification to ${recipientUserIds.length} users`)
+	console.log(`[Push] Recipient user IDs:`, recipientUserIds)
+	
+	// Ensure recipientUserIds are strings
+	const recipientIds = recipientUserIds.map(id => id.toString ? id.toString() : String(id))
+	console.log(`[Push] Recipient IDs (as strings):`, recipientIds)
 	
 	// Filter subscriptions that have leave notifications enabled
 	// For now, we'll use a general 'leaves' preference, but we can add more specific preferences later
 	let subscriptions = await PushSubscription.find({
-		userId: { $in: recipientUserIds },
+		userId: { $in: recipientIds },
 		enabled: true,
 		'preferences.leaves': true // New preference for leave notifications
 	})
 
+	console.log(`[Push] Found ${subscriptions.length} subscriptions before environment filter`)
+	
 	// Filter subscriptions by environment (production vs development)
 	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
 
 	console.log(`[Push] Found ${subscriptions.length} active subscriptions with leave notifications enabled (after environment filter)`)
+	
+	// Log endpoint details for debugging
+	if (subscriptions.length > 0) {
+		subscriptions.forEach((sub, index) => {
+			console.log(`[Push] Subscription ${index + 1}: userId=${sub.userId}, endpoint=${sub.endpoint?.substring(0, 80)}...`)
+		})
+	} else {
+		console.log(`[Push] No subscriptions found after filtering. Checking all subscriptions for these users...`)
+		const allSubs = await PushSubscription.find({
+			userId: { $in: recipientIds },
+			enabled: true
+		})
+		console.log(`[Push] Total active subscriptions for users: ${allSubs.length}`)
+		allSubs.forEach((sub, index) => {
+			console.log(`[Push] Subscription ${index + 1}: userId=${sub.userId}, enabled=${sub.enabled}, leaves=${sub.preferences?.leaves}, endpoint=${sub.endpoint?.substring(0, 80)}...`)
+		})
+	}
 
 	if (subscriptions.length === 0) {
 		console.log('[Push] No subscriptions found, skipping push notification')
