@@ -50,12 +50,27 @@ export const useAcceptedLeaveRequests = () => {
 	})
 }
 
-// Query hook - pobieranie wszystkich zaakceptowanych wniosków (admin)
+// Query hook - pobieranie wszystkich zaakceptowanych wniosków (dla wszystkich użytkowników z zespołu)
 export const useAllAcceptedLeaveRequests = () => {
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted', 'all'],
 		queryFn: async () => {
 			const response = await axios.get(`${API_URL}/api/leaveworks/accepted-leave-requests`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		staleTime: 1 * 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+	})
+}
+
+// Query hook - pobieranie wszystkich wniosków urlopowych (wszystkie statusy) dla zespołu
+export const useAllLeaveRequests = () => {
+	return useQuery({
+		queryKey: ['leaveRequests', 'all'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/leaveworks/all-leave-requests`, {
 				withCredentials: true,
 			})
 			return response.data

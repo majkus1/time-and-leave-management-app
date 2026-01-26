@@ -419,9 +419,8 @@ exports.deleteTeam = async (req, res) => {
 			});
 		}
 
-		// Sprawdź czy użytkownik należy do tego zespołu (lub jest super adminem)
-		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
-		if (!isSuperAdmin && currentUser.teamId.toString() !== teamId) {
+		// Sprawdź czy użytkownik należy do tego zespołu
+		if (currentUser.teamId.toString() !== teamId) {
 			return res.status(403).json({
 				success: false,
 				message: 'Brak uprawnień do usunięcia tego zespołu'

@@ -12,5 +12,6 @@ router.delete('/leave-requests/:id', authenticateToken, leaveRequestController.c
 router.get('/accepted-leave-requests', authenticateToken, leaveRequestController.getAllAcceptedLeaveRequests)
 router.get('/user-accepted-leave-requests', authenticateToken, leaveRequestController.getUserAcceptedLeaveRequests)
 router.get('/accepted-leave-requests/:userId', authenticateToken, leaveRequestController.getAcceptedLeaveRequestsForUser)
+router.get('/all-leave-requests', authenticateToken, leaveRequestController.getAllLeaveRequests)
 
 module.exports = router

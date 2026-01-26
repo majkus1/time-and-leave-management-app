@@ -75,33 +75,17 @@ exports.getAllLeavePlans = async (req, res) => {
 		const requestingUser = await User.findById(req.user.userId)
 		if (!requestingUser) return res.status(404).send('User not found')
 
-		// Sprawdź czy to super admin
-		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
+		// Dla wszystkich użytkowników - pokaż plany tylko z ich zespołu
+		const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
+		const teamUserIds = teamUsers.map(user => user._id)
 
-		let leavePlans
-		
-		if (isSuperAdmin) {
-			// Super admin widzi wszystkie plany ze wszystkich zespołów
-			leavePlans = await LeavePlan.find()
-				.populate({
-					path: 'userId',
-					select: 'username firstName lastName',
-					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-				})
-				.select('date userId')
-		} else {
-			// Dla wszystkich innych użytkowników - pokaż plany tylko z ich zespołu
-			const teamUsers = await User.find({ teamId: requestingUser.teamId }).select('_id')
-			const teamUserIds = teamUsers.map(user => user._id)
-
-			leavePlans = await LeavePlan.find({ userId: { $in: teamUserIds } })
-				.populate({
-					path: 'userId',
-					select: 'username firstName lastName',
-					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-				})
-				.select('date userId')
-		}
+		const leavePlans = await LeavePlan.find({ userId: { $in: teamUserIds } })
+			.populate({
+				path: 'userId',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.select('date userId')
 
 		const formattedPlans = leavePlans
 			.filter(plan => plan.userId !== null)

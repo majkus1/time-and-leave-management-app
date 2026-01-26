@@ -82,7 +82,6 @@ function AdminAllLeaveCalendar() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { role, logout, username, teamId } = useAuth()
-	const isSuperAdmin = username === 'michalipka1@gmail.com'
 
 	// TanStack Query hooks
 	// Dla /all-leave-plans zawsze pobieramy wszystkich użytkowników z zespołu, niezależnie od roli
@@ -102,6 +101,16 @@ function AdminAllLeaveCalendar() {
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
+	
+	// Debug - sprawdź czy dane są pobierane
+	React.useEffect(() => {
+		if (allAcceptedRequests && allAcceptedRequests.length > 0) {
+			console.log('[AdminAllLeaveCalendar] Pobrano wnioski:', allAcceptedRequests.length)
+			console.log('[AdminAllLeaveCalendar] Przykładowy wniosek:', allAcceptedRequests[0])
+		} else {
+			console.log('[AdminAllLeaveCalendar] Brak wniosków lub błąd:', requestsError)
+		}
+	}, [allAcceptedRequests, requestsError])
 
 	const loading = loadingUsers || loadingPlans || loadingRequests
 	const error = usersError || plansError || requestsError
@@ -210,12 +219,40 @@ function AdminAllLeaveCalendar() {
 	}, [allLeavePlans, filteredUsers])
 
 	const acceptedLeaveRequests = useMemo(() => {
-		const filteredUserIds = new Set(filteredUsers.map(u => u._id))
+		if (!allAcceptedRequests || allAcceptedRequests.length === 0) {
+			return []
+		}
+		
+		const filteredUserIds = new Set(filteredUsers.map(u => {
+			if (!u || !u._id) return null
+			return u._id.toString()
+		}).filter(Boolean))
+		
 		return allAcceptedRequests.filter(request => {
-			if (!request.userId || !request.userId._id) {
+			// Sprawdź czy request ma userId (może być obiektem lub stringiem)
+			if (!request || !request.userId) {
 				return false
 			}
-			return filteredUserIds.has(request.userId._id)
+			
+			// Jeśli userId jest obiektem, sprawdź _id
+			if (typeof request.userId === 'object' && request.userId !== null) {
+				// Jeśli obiekt ma _id, użyj go
+				if (request.userId._id) {
+					return filteredUserIds.has(request.userId._id.toString())
+				}
+				// Jeśli obiekt nie ma _id, ale ma toString (ObjectId), użyj go
+				if (request.userId.toString) {
+					return filteredUserIds.has(request.userId.toString())
+				}
+				return false
+			}
+			
+			// Jeśli userId jest stringiem, sprawdź bezpośrednio
+			if (typeof request.userId === 'string') {
+				return filteredUserIds.has(request.userId)
+			}
+			
+			return false
 		})
 	}, [allAcceptedRequests, filteredUsers])
 
@@ -366,10 +403,40 @@ function AdminAllLeaveCalendar() {
 						}).filter(Boolean),
 						// Zaakceptowane wnioski urlopowe
 						...acceptedLeaveRequests
-							.filter(request => request.userId && request.userId.firstName && request.userId.lastName && request.startDate && request.endDate)
+							.filter(request => {
+								// Sprawdź czy mamy wszystkie wymagane dane
+								if (!request.startDate || !request.endDate) return false
+								
+								// Sprawdź userId - może być obiektem lub stringiem
+								if (!request.userId) return false
+								
+								// Jeśli userId jest obiektem, sprawdź czy ma firstName i lastName
+								if (typeof request.userId === 'object' && request.userId._id) {
+									return request.userId.firstName && request.userId.lastName
+								}
+								
+								// Jeśli userId jest stringiem, znajdź użytkownika w filteredUsers
+								if (typeof request.userId === 'string') {
+									const user = filteredUsers.find(u => u._id?.toString() === request.userId)
+									return user && user.firstName && user.lastName
+								}
+								
+								return false
+							})
 							.flatMap(request => {
 								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
-								const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
+								
+								// Pobierz imię i nazwisko - z obiektu userId lub z filteredUsers
+								let employeeName
+								if (typeof request.userId === 'object' && request.userId.firstName && request.userId.lastName) {
+									employeeName = `${request.userId.firstName} ${request.userId.lastName}`
+								} else if (typeof request.userId === 'string') {
+									const user = filteredUsers.find(u => u._id?.toString() === request.userId)
+									employeeName = user ? `${user.firstName} ${user.lastName}` : 'Nieznany użytkownik'
+								} else {
+									employeeName = 'Nieznany użytkownik'
+								}
+								
 								return dates
 									.filter(date => {
 										const dateObj = new Date(date)
@@ -381,7 +448,11 @@ function AdminAllLeaveCalendar() {
 										allDay: true,
 										backgroundColor: getColorForUser(employeeName),
 										borderColor: getColorForUser(employeeName),
-										extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
+										extendedProps: { 
+											type: 'request', 
+											userId: typeof request.userId === 'object' ? request.userId._id : request.userId, 
+											requestId: request._id 
+										}
 									}))
 							}),
 						// Dni świąteczne
@@ -560,17 +631,51 @@ function AdminAllLeaveCalendar() {
 								}),
 								// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
 								...acceptedLeaveRequests
-									.filter(request => request.userId && request.userId.firstName && request.userId.lastName && request.startDate && request.endDate) // Sprawdź czy mamy pełną nazwę i daty
+									.filter(request => {
+										// Sprawdź czy mamy wszystkie wymagane dane
+										if (!request.startDate || !request.endDate) return false
+										
+										// Sprawdź userId - może być obiektem lub stringiem
+										if (!request.userId) return false
+										
+										// Jeśli userId jest obiektem, sprawdź czy ma firstName i lastName
+										if (typeof request.userId === 'object' && request.userId._id) {
+											return request.userId.firstName && request.userId.lastName
+										}
+										
+										// Jeśli userId jest stringiem, znajdź użytkownika w filteredUsers
+										if (typeof request.userId === 'string') {
+											const user = filteredUsers.find(u => u._id?.toString() === request.userId)
+											return user && user.firstName && user.lastName
+										}
+										
+										return false
+									})
 									.flatMap(request => {
 										const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
-										const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
+										
+										// Pobierz imię i nazwisko - z obiektu userId lub z filteredUsers
+										let employeeName
+										if (typeof request.userId === 'object' && request.userId.firstName && request.userId.lastName) {
+											employeeName = `${request.userId.firstName} ${request.userId.lastName}`
+										} else if (typeof request.userId === 'string') {
+											const user = filteredUsers.find(u => u._id?.toString() === request.userId)
+											employeeName = user ? `${user.firstName} ${user.lastName}` : 'Nieznany użytkownik'
+										} else {
+											employeeName = 'Nieznany użytkownik'
+										}
+										
 										return dates.map(date => ({
 											title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})`,
 											start: date,
 											allDay: true,
 											backgroundColor: getColorForUser(employeeName),
 											borderColor: getColorForUser(employeeName),
-											extendedProps: { type: 'request', userId: request.userId._id, requestId: request._id }
+											extendedProps: { 
+												type: 'request', 
+												userId: typeof request.userId === 'object' ? request.userId._id : request.userId, 
+												requestId: request._id 
+											}
 										}))
 									}),
 								// Dni świąteczne

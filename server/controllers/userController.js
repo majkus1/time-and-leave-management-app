@@ -498,11 +498,12 @@ exports.getAllVisibleUsers = async (req, res) => {
         const currentUser = await User.findById(req.user.userId);
         if (!currentUser) return res.status(404).send('Użytkownik nie znaleziony');
 
-        // Sprawdź czy to super admin
+        // Sprawdź czy to super admin (tylko dla /logs)
         const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
-
+        
         if (isSuperAdmin) {
             // Super admin widzi wszystkich aktywnych użytkowników ze wszystkich zespołów (bez soft-deleted)
+            const Team = require('../models/team')(firmDb);
             const users = await User.find({
                 $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
             }).select('username firstName lastName roles position department teamId password').lean();
@@ -515,7 +516,7 @@ exports.getAllVisibleUsers = async (req, res) => {
                         ...user,
                         teamName: team ? team.name : 'Nieznany zespół',
                         teamAdminEmail: team ? team.adminEmail : null,
-                        hasPassword: !!user.password // Dodaj informację czy użytkownik ma hasło
+                        hasPassword: !!user.password
                     };
                 })
             );
@@ -523,7 +524,7 @@ exports.getAllVisibleUsers = async (req, res) => {
             return res.json(usersWithTeams);
         }
 
-        // Zwykły użytkownik widzi tylko aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
+        // Wszyscy użytkownicy widzą tylko aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
         const teamFilter = { 
             teamId: currentUser.teamId,
             $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
@@ -682,9 +683,6 @@ exports.getUserById = async (req, res) => {
 			return res.status(403).send('Brak uprawnień')
 		}
 
-		// Sprawdź czy to super admin
-		const isSuperAdmin = requestingUser.username === 'michalipka1@gmail.com'
-		
 		const isAdmin = requestingUser.roles.includes('Admin')
 		const isHR = requestingUser.roles.includes('HR')
 		const isSelf = requestingUser._id.toString() === userId
@@ -713,8 +711,8 @@ exports.getUserById = async (req, res) => {
 		const canViewAsSupervisor = isSupervisor && userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false
 
 		// Każdy użytkownik w zespole może widzieć innych użytkowników z tego samego zespołu
-		// Super admin widzi wszystkich, admin/HR widzi wszystkich ze swojego zespołu
-		if (!(isSuperAdmin || isSameTeam || isAdmin || isHR || isSelf || canViewAsSupervisor)) {
+		// Admin/HR widzi wszystkich ze swojego zespołu
+		if (!(isSameTeam || isAdmin || isHR || isSelf || canViewAsSupervisor)) {
 			return res.status(403).send('Access denied')
 		}
 

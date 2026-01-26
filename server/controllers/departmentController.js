@@ -69,16 +69,8 @@ exports.createDepartment = async (req, res) => {
 			return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
 		}
 		
-		// Sprawdź czy to super admin
-		const isSuperAdmin = user.username === 'michalipka1@gmail.com';
-		
-		// Pobierz teamId z request body (dla super admina) lub z req.user lub z użytkownika
+		// Pobierz teamId z request body lub z req.user lub z użytkownika
 		let teamId = bodyTeamId || req.user.teamId || user.teamId;
-		
-		// Dla super admina, teamId MUSI być w body
-		if (isSuperAdmin && !bodyTeamId) {
-			return res.status(400).json({ message: 'Dla super admina teamId jest wymagane w body requestu' });
-		}
 
 		if (!name || !teamId) {
 			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
@@ -150,16 +142,8 @@ exports.deleteDepartment = async (req, res) => {
 			return res.status(404).json({ message: 'Użytkownik nie znaleziony' });
 		}
 		
-		// Sprawdź czy to super admin
-		const isSuperAdmin = user.username === 'michalipka1@gmail.com';
-		
-		// Pobierz teamId z query params (dla super admina) lub z req.user lub z użytkownika
+		// Pobierz teamId z query params lub z req.user lub z użytkownika
 		let teamId = bodyTeamId || req.user.teamId || user.teamId;
-		
-		// Dla super admina, teamId MUSI być w query params
-		if (isSuperAdmin && !bodyTeamId) {
-			return res.status(400).json({ message: 'Dla super admina teamId jest wymagane w query params' });
-		}
 
 		if (!name || !teamId) {
 			return res.status(400).json({ message: 'Nazwa działu i teamId są wymagane' });
