@@ -6,8 +6,6 @@ import { useUsers } from '../../hooks/useUsers'
 import { useCreateBoard } from '../../hooks/useBoards'
 import { useAlert } from '../../context/AlertContext'
 
-Modal.setAppElement('#root')
-
 function CreateBoardModal({ onClose, onSuccess }) {
 	const { t } = useTranslation()
 	const { teamId } = useAuth()

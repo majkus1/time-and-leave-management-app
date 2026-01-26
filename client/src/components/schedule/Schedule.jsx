@@ -21,8 +21,6 @@ import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
-Modal.setAppElement('#root')
-
 function Schedule() {
 	const { scheduleId } = useParams()
 	const navigate = useNavigate()

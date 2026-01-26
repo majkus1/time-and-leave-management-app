@@ -17,10 +17,6 @@ import { API_URL } from '../../config.js'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 
-if (typeof window !== 'undefined') {
-	Modal.setAppElement('#root')
-}
-
 function AdminAllLeaveCalendar() {
 	const colorsRef = useRef({})
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())

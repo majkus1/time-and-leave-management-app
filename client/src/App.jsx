@@ -100,17 +100,51 @@ function AppContent() {
 				) {
 					originalRequest._retry = true
 					try {
-						await axios.post(`${API_URL}/api/users/refresh-token`, {}, { withCredentials: true })
+						await axios.post(`${API_URL}/api/users/refresh-token`, {}, { 
+							withCredentials: true,
+							timeout: 10000
+						})
 						return axios(originalRequest)
 					} catch (refreshError) {
+						// Refresh failed - token is invalid, logout user
+						if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+							// Only logout if user is actually logged in (avoid infinite loops)
+							if (loggedIn) {
+								logout()
+							}
+						}
 						return Promise.reject(refreshError)
 					}
 				}
+				
+				// Handle 403 Forbidden - user might have lost permissions
+				if (err.response?.status === 403 && loggedIn) {
+					// Try to refresh token first
+					if (
+						originalRequest.url !== `${API_URL}/api/users/refresh-token` &&
+						!originalRequest._retry &&
+						!originalRequest.skipAuthRefresh
+					) {
+						originalRequest._retry = true
+						try {
+							await axios.post(`${API_URL}/api/users/refresh-token`, {}, { 
+								withCredentials: true,
+								timeout: 10000
+							})
+							return axios(originalRequest)
+						} catch (refreshError) {
+							// If refresh fails, logout
+							logout()
+							return Promise.reject(refreshError)
+						}
+					}
+				}
+				
 				return Promise.reject(err)
 			}
 		)
 		return () => axios.interceptors.response.eject(interceptor)
-	}, [])
+	}, [loggedIn, logout])
 
 	function ScrollToHashElement() {
 		const { hash } = useLocation()
@@ -236,7 +270,12 @@ function AppContent() {
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Router>
+			<Router
+				future={{
+					v7_startTransition: true,
+					v7_relativeSplatPath: true,
+				}}
+			>
 				<AlertProvider>
 					<AuthProvider>
 						<SocketProvider>

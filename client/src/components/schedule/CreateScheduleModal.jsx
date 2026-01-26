@@ -6,8 +6,6 @@ import { useUsers } from '../../hooks/useUsers'
 import { useCreateSchedule } from '../../hooks/useSchedule'
 import { useAlert } from '../../context/AlertContext'
 
-Modal.setAppElement('#root')
-
 function CreateScheduleModal({ onClose, onSuccess }) {
 	const { t } = useTranslation()
 	const { teamId } = useAuth()

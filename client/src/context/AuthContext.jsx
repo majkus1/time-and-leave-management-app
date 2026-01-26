@@ -1,5 +1,5 @@
 // context/AuthContext.js
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 
@@ -53,8 +53,8 @@ export const AuthProvider = ({ children }) => {
 		setIsTeamAdmin(false)
 	}
 
-	// Function to attempt refresh token
-	const attemptRefreshToken = async () => {
+	// Function to attempt refresh token (memoized to avoid stale closures)
+	const attemptRefreshToken = useCallback(async () => {
 		try {
 			const response = await axios.post(`${API_URL}/api/users/refresh-token`, {}, { 
 				withCredentials: true,
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
 			}
 			return { success: false, noRefreshToken: false }
 		}
-	}
+	}, [])
 
 	// Function to check authentication with retry logic
 	// Strategy: First try to refresh token (if exists), then check /me endpoint
@@ -175,7 +175,7 @@ export const AuthProvider = ({ children }) => {
 		}
 	}
 
-	// Check authentication on mount only (not on every pathname change)
+	// Check authentication on mount
 	useEffect(() => {
 		isMountedRef.current = true
 		setIsCheckingAuth(true)
@@ -189,6 +189,130 @@ export const AuthProvider = ({ children }) => {
 			}
 		}
 	}, []) // Empty dependency array - only run on mount
+
+	// Handle app visibility change (PWA/mobile background/foreground)
+	// This ensures token is validated when app returns from background
+	useEffect(() => {
+		if (!loggedIn) return // Don't set up listeners if not logged in
+
+		const handleVisibilityChange = async () => {
+			// Only check if app becomes visible and user is logged in
+			if (document.visibilityState === 'visible' && loggedIn === true && isMountedRef.current) {
+				// Small delay to ensure network is ready
+				await sleep(300)
+				// Silently check auth without showing loader (better UX)
+				try {
+					const response = await axios.get(`${API_URL}/api/users/me`, {
+						withCredentials: true,
+						timeout: 10000,
+						skipAuthRefresh: true
+					})
+					// Token is valid, update state if needed
+					if (isMountedRef.current) {
+						updateAuthState(response.data)
+					}
+				} catch (error) {
+					if (!isMountedRef.current) return
+					
+					// Token might be expired, try to refresh
+					if (error.response?.status === 401) {
+						const refreshResult = await attemptRefreshToken()
+						if (!isMountedRef.current) return
+						
+						if (refreshResult.success) {
+							// Token refreshed, verify with /me
+							try {
+								const response = await axios.get(`${API_URL}/api/users/me`, {
+									withCredentials: true,
+									timeout: 10000,
+									skipAuthRefresh: true
+								})
+								if (isMountedRef.current) {
+									updateAuthState(response.data)
+								}
+							} catch (retryError) {
+								// Still failed after refresh, user needs to login
+								if (isMountedRef.current) {
+									clearAuthState()
+								}
+							}
+						} else {
+							// Refresh failed, user needs to login
+							if (isMountedRef.current) {
+								clearAuthState()
+							}
+						}
+					} else if (error.response?.status === 403) {
+						// Forbidden, clear auth
+						if (isMountedRef.current) {
+							clearAuthState()
+						}
+					}
+					// Network errors are ignored (user might be offline)
+				}
+			}
+		}
+
+		// Handle visibility change (PWA/mobile)
+		document.addEventListener('visibilitychange', handleVisibilityChange)
+		
+		// Handle window focus (browser tabs)
+		const handleFocus = async () => {
+			if (loggedIn === true && isMountedRef.current) {
+				await sleep(300)
+				try {
+					const response = await axios.get(`${API_URL}/api/users/me`, {
+						withCredentials: true,
+						timeout: 10000,
+						skipAuthRefresh: true
+					})
+					if (isMountedRef.current) {
+						updateAuthState(response.data)
+					}
+				} catch (error) {
+					if (!isMountedRef.current) return
+					
+					if (error.response?.status === 401) {
+						const refreshResult = await attemptRefreshToken()
+						if (!isMountedRef.current) return
+						
+						if (refreshResult.success) {
+							try {
+								const response = await axios.get(`${API_URL}/api/users/me`, {
+									withCredentials: true,
+									timeout: 10000,
+									skipAuthRefresh: true
+								})
+								if (isMountedRef.current) {
+									updateAuthState(response.data)
+								}
+							} catch (retryError) {
+								if (isMountedRef.current) {
+									clearAuthState()
+								}
+							}
+						} else {
+							if (isMountedRef.current) {
+								clearAuthState()
+							}
+						}
+					} else if (error.response?.status === 403) {
+						if (isMountedRef.current) {
+							clearAuthState()
+						}
+					}
+				}
+			}
+		}
+
+		window.addEventListener('focus', handleFocus)
+
+		// Cleanup
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange)
+			window.removeEventListener('focus', handleFocus)
+		}
+	}, [loggedIn, attemptRefreshToken]) // Re-run when loggedIn or attemptRefreshToken changes
 
 	const logout = async () => {
 		try {

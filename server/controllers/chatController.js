@@ -4,6 +4,7 @@ const Message = require('../models/Message')(firmDb)
 const User = require('../models/user')(firmDb)
 const Department = require('../models/Department')(firmDb)
 const Team = require('../models/Team')(firmDb)
+const { sendChatNotification } = require('../services/pushNotificationService')
 
 // Helper function to create channels automatically
 exports.createChannelForDepartment = async (teamId, departmentName) => {
@@ -382,6 +383,54 @@ exports.sendMessage = async (req, res) => {
 				channelId,
 				message: message.toObject()
 			})
+		}
+
+		// Send push notifications to channel members (except sender)
+		try {
+			let recipientUserIds = []
+			
+			if (channel.type === 'department') {
+				// Get all users in the department
+				const departmentUsers = await User.find({
+					teamId: channel.teamId,
+					$or: [
+						{ department: channel.departmentName },
+						{ department: { $in: [channel.departmentName] } }
+					],
+					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+				}).select('_id')
+				recipientUserIds = departmentUsers.map(u => u._id.toString())
+			} else if (channel.type === 'private') {
+				// Get channel members
+				recipientUserIds = channel.members.map(m => m.toString())
+			} else if (channel.type === 'general') {
+				if (channel.isTeamChannel) {
+					// Get all team members
+					const teamUsers = await User.find({
+						teamId: channel.teamId,
+						$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+					}).select('_id')
+					recipientUserIds = teamUsers.map(u => u._id.toString())
+				} else {
+					// Custom general channel - get members
+					recipientUserIds = channel.members.map(m => m.toString())
+				}
+			}
+			
+			// Remove sender from recipients
+			recipientUserIds = recipientUserIds.filter(id => id !== req.user.userId.toString())
+			
+			if (recipientUserIds.length > 0) {
+				// Send push notifications (non-blocking)
+				sendChatNotification(channelId, message.toObject(), recipientUserIds)
+					.catch(error => {
+						console.error('Error sending chat push notifications:', error)
+						// Don't fail the request if push fails
+					})
+			}
+		} catch (error) {
+			console.error('Error preparing chat push notifications:', error)
+			// Don't fail the request if push preparation fails
 		}
 
 		res.status(201).json(message)

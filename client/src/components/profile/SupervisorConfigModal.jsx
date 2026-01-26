@@ -5,8 +5,6 @@ import { useSupervisorConfig, useUpdateSupervisorConfig } from '../../hooks/useS
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
 
-Modal.setAppElement('#root')
-
 function SupervisorConfigModal({ isOpen, onClose, supervisorId }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()

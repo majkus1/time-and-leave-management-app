@@ -15,10 +15,6 @@ import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 import { useAuth } from '../../context/AuthContext'
 
-if (typeof window !== 'undefined') {
-	Modal.setAppElement('#root')
-}
-
 function AdminUserList() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()

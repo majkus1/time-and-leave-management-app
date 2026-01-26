@@ -78,15 +78,18 @@ function Chat() {
 			// After messages are loaded and marked as read, invalidate queries to update unread counts
 			// This happens when messages are fetched - they are automatically marked as read on the server
 			if (channelMessages.length > 0 && selectedChannel) {
-				setTimeout(() => {
+				const timer = setTimeout(() => {
 					// Invalidate channels to update unread counts for each channel
 					queryClient.invalidateQueries({ queryKey: ['channels'] })
 					// Invalidate unread count for sidebar
 					queryClient.invalidateQueries({ queryKey: ['unreadCount'] })
 				}, 300) // Small delay to ensure server has marked messages as read
+				
+				return () => clearTimeout(timer)
 			}
 		}
-	}, [channelMessages, selectedChannel, queryClient])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [channelMessages, selectedChannel?._id])
 
 	// Join channel room when channel is selected
 	useEffect(() => {

@@ -158,6 +158,22 @@ function Blog() {
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img src="/img/headerimage.webp" alt="Instalacja Planopii jako PWA na iPhone" className="rounded-md mb-4 h-48" />
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Jak zainstalować Planopię jako aplikację PWA na iPhone? Instrukcja krok po kroku
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Dowiedz się, jak zainstalować Planopię jako aplikację PWA na iPhone. Prosta instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami bezpośrednio na ekranie głównym telefonu. Zobacz, jak szybko i łatwo dodać Planopię do ekranu głównego.
+							</p>
+							<Link
+								href="/blog/jak-zainstalowac-planopie-jako-pwa"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
 						{/* Karta wpisu - Dni wolne 2026 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/planvacationblog.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />

@@ -3,8 +3,6 @@ import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 
-Modal.setAppElement('#root')
-
 function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 	const { t } = useTranslation()
 

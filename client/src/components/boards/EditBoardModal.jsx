@@ -6,8 +6,6 @@ import { useUsers } from '../../hooks/useUsers'
 import { useUpdateBoard } from '../../hooks/useBoards'
 import { useAlert } from '../../context/AlertContext'
 
-Modal.setAppElement('#root')
-
 function EditBoardModal({ board, onClose, onSuccess }) {
 	const { t } = useTranslation()
 	const { teamId } = useAuth()

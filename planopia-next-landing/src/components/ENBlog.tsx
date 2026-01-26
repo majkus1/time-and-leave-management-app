@@ -157,6 +157,26 @@ function ENBlog() {
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Article card - How to Install Planopia as PWA */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img
+								src="/img/headerimage.webp"
+								alt="Installing Planopia as PWA on iPhone"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							How to Install Planopia as a PWA App on iPhone? Step-by-Step Guide
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Learn how to install Planopia as a PWA app on iPhone. Simple installation guide for time tracking and leave management app directly on your phone's home screen. See how quick and easy it is to add Planopia to your home screen.
+							</p>
+							<Link
+								href="/en/blog/how-to-install-planopia-as-pwa"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
+
 						{/* Article card - Comprehensive Company Management App */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img

@@ -5,6 +5,7 @@ const User = require('../models/user')(firmDb)
 const path = require('path')
 const fs = require('fs').promises
 const { sendTaskNotification } = require('../services/emailService')
+const { sendTaskNotification: sendTaskPushNotification } = require('../services/pushNotificationService')
 
 // Get tasks for a board
 exports.getBoardTasks = async (req, res) => {
@@ -148,7 +149,7 @@ exports.createTask = async (req, res) => {
 				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 			})
 
-		// Send email notification to board members
+		// Send email and push notifications to board members
 		try {
 			const createdByUser = await User.findById(userId).select('firstName lastName')
 			if (createdByUser) {
@@ -168,11 +169,42 @@ exports.createTask = async (req, res) => {
 					t = i18nInstance.t.bind(i18nInstance)
 				}
 				
+				// Send email notification
 				await sendTaskNotification(populatedTask, board, createdByUser, t, false)
+				
+				// Get recipient user IDs for push notifications
+				let recipientUserIds = []
+				if (board.type === 'department' && board.departmentName) {
+					const departmentUsers = await User.find({
+						teamId: board.teamId,
+						$or: [
+							{ department: board.departmentName },
+							{ department: { $in: [board.departmentName] } }
+						],
+						$and: [
+							{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+						]
+					}).select('_id')
+					recipientUserIds = departmentUsers.map(u => u._id.toString())
+				} else {
+					recipientUserIds = board.members.map(m => m.toString())
+				}
+				
+				// Remove creator from recipients
+				recipientUserIds = recipientUserIds.filter(id => id !== userId.toString())
+				
+				// Send push notifications (non-blocking)
+				if (recipientUserIds.length > 0) {
+					sendTaskPushNotification(populatedTask, board, createdByUser, recipientUserIds, false, t)
+						.catch(error => {
+							console.error('Error sending task push notifications:', error)
+							// Don't fail the request if push fails
+						})
+				}
 			}
 		} catch (error) {
 			console.error('Error sending task creation notification:', error)
-			// Don't fail the request if email fails
+			// Don't fail the request if notification fails
 		}
 
 		res.status(201).json(populatedTask)
@@ -289,7 +321,7 @@ exports.updateTaskStatus = async (req, res) => {
 				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 			})
 
-		// Send email notification if status changed
+		// Send email and push notifications if status changed
 		if (oldStatus !== status) {
 			try {
 				const updatedByUser = await User.findById(userId).select('firstName lastName')
@@ -310,11 +342,42 @@ exports.updateTaskStatus = async (req, res) => {
 						t = i18nInstance.t.bind(i18nInstance)
 					}
 					
+					// Send email notification
 					await sendTaskNotification(populatedTask, board, updatedByUser, t, true)
+					
+					// Get recipient user IDs for push notifications
+					let recipientUserIds = []
+					if (board.type === 'department' && board.departmentName) {
+						const departmentUsers = await User.find({
+							teamId: board.teamId,
+							$or: [
+								{ department: board.departmentName },
+								{ department: { $in: [board.departmentName] } }
+							],
+							$and: [
+								{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+							]
+						}).select('_id')
+						recipientUserIds = departmentUsers.map(u => u._id.toString())
+					} else {
+						recipientUserIds = board.members.map(m => m.toString())
+					}
+					
+					// Remove updater from recipients
+					recipientUserIds = recipientUserIds.filter(id => id !== userId.toString())
+					
+					// Send push notifications (non-blocking)
+					if (recipientUserIds.length > 0) {
+						sendTaskPushNotification(populatedTask, board, updatedByUser, recipientUserIds, true, t)
+							.catch(error => {
+								console.error('Error sending task status change push notifications:', error)
+								// Don't fail the request if push fails
+							})
+					}
 				}
 			} catch (error) {
 				console.error('Error sending task status change notification:', error)
-				// Don't fail the request if email fails
+				// Don't fail the request if notification fails
 			}
 		}
 

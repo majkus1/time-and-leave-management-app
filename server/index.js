@@ -18,10 +18,11 @@ const supervisorRoutes = require('./routes/supervisorRoutes')
 const settingsRoutes = require('./routes/settingsRoutes')
 const leaveRequestTypeRoutes = require('./routes/leaveRequestTypeRoutes')
 const legalRoutes = require('./routes/legalRoutes')
+const pushRoutes = require('./routes/pushRoutes')
 const i18next = require('i18next')
 const Backend = require('i18next-fs-backend')
 const i18nextMiddleware = require('i18next-http-middleware')
-const csurf = require('csurf')
+const csrf = require('csrf')
 const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
 const helmet = require('helmet')
@@ -266,11 +267,79 @@ app.use('/api/public', publicRoutes)
 app.use('/api/teams', teamRoutes) // nowe trasy dla zespołów
 app.use('/api/legal', legalRoutes) // dokumenty prawne - częściowo publiczne
 
+// CSRF Protection using csrf package (replacement for deprecated csurf)
+const tokens = csrf()
+const CSRF_COOKIE_NAME = '_csrf'
+const CSRF_HEADER_NAME = 'x-csrf-token'
 
-const csrfProtection = csurf({ cookie: true })
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-	res.json({ csrfToken: req.csrfToken() })
+// Middleware to get or create CSRF secret
+const getCsrfSecret = (req, res, next) => {
+	let secret = req.cookies[CSRF_COOKIE_NAME]
+	
+	if (!secret) {
+		secret = tokens.secretSync()
+		const isProduction = process.env.NODE_ENV === 'production'
+		res.cookie(CSRF_COOKIE_NAME, secret, {
+			httpOnly: true,
+			secure: isProduction,
+			sameSite: isProduction ? 'None' : 'Lax',
+			maxAge: 24 * 60 * 60 * 1000, // 24 hours
+		})
+	}
+	
+	req.csrfSecret = secret
+	next()
+}
+
+// Endpoint to get CSRF token
+app.get('/api/csrf-token', getCsrfSecret, (req, res) => {
+	try {
+		const token = tokens.create(req.csrfSecret)
+		res.json({ csrfToken: token })
+	} catch (error) {
+		console.error('Error generating CSRF token:', error)
+		res.status(500).json({ error: 'Failed to generate CSRF token' })
+	}
 })
+
+// CSRF validation middleware
+const csrfProtection = (req, res, next) => {
+	// Skip CSRF for GET, HEAD, OPTIONS
+	if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+		return next()
+	}
+
+	// Get secret from req (set by getCsrfSecret middleware) or cookie as fallback
+	const secret = req.csrfSecret || req.cookies[CSRF_COOKIE_NAME]
+	if (!secret) {
+		return res.status(403).json({ 
+			error: 'CSRF token missing: no secret cookie found',
+			code: 'CSRF_SECRET_MISSING'
+		})
+	}
+
+	// Get token from header (case-insensitive)
+	const token = req.headers[CSRF_HEADER_NAME] || req.headers['X-CSRF-Token'] || req.headers['x-csrf-token']
+	if (!token) {
+		return res.status(403).json({ 
+			error: 'CSRF token missing: no token header found',
+			code: 'CSRF_TOKEN_MISSING'
+		})
+	}
+
+	// Verify token
+	if (!tokens.verify(secret, token)) {
+		return res.status(403).json({ 
+			error: 'Invalid CSRF token',
+			code: 'CSRF_TOKEN_INVALID'
+		})
+	}
+
+	next()
+}
+
+// Apply CSRF protection to all routes after public routes
+app.use(getCsrfSecret)
 app.use(csrfProtection)
 
 
@@ -291,6 +360,7 @@ app.use('/api/schedules', require('./routes/scheduleRoutes'))
 app.use('/api/supervisors', supervisorRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/leave-request-types', leaveRequestTypeRoutes)
+app.use('/api/push', pushRoutes)
 app.use('/uploads', express.static('uploads'))
 
 // Socket.io setup

@@ -13,8 +13,6 @@ import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
-Modal.setAppElement('#root')
-
 function MonthlyCalendar() {
 	const [modalIsOpen, setModalIsOpen] = useState(false)
 	const [selectedDate, setSelectedDate] = useState(null)
@@ -876,6 +874,7 @@ function MonthlyCalendar() {
 					</button>
 				</div>
 
+				<div className="rounded-2xl overflow-hidden shadow-md">
 				<FullCalendar
 					plugins={[dayGridPlugin, interactionPlugin]}
 					initialView="dayGridMonth"
@@ -994,8 +993,8 @@ function MonthlyCalendar() {
 					displayEventTime={false}
 					datesSet={handleMonthChange}
 					height="auto"
-					className="rounded-2xl overflow-hidden shadow-md"
 				/>
+				</div>
 			</div>
 			<div className="col-xl-3 resume-month-work">
 				<h3 className="resumecales h3resume" style={{ marginTop: '20px' }}>

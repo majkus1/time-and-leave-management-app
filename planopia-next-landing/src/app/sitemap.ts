@@ -94,6 +94,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     
+    // Blog articles - High priority (PWA installation guide)
+    {
+      url: 'https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/how-to-install-planopia-as-pwa',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    
     // Blog articles - Medium priority
     {
       url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',

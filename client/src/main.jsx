@@ -3,6 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { HelmetProvider } from 'react-helmet-async'
+import Modal from 'react-modal'
 import './i18n.js'
 import { registerSW } from 'virtual:pwa-register'
 import "@fontsource/titillium-web";      // domyślny styl (400)
@@ -10,6 +11,11 @@ import "@fontsource/titillium-web/700.css"; // np. bold
 import "@fontsource/titillium-web/600.css";
 import "@fontsource/teko";               // domyślny styl Teko (400)
 import "@fontsource/teko/700.css";        // np. bold
+
+// Set app element for react-modal once (prevents multiple registration warnings)
+if (typeof document !== 'undefined') {
+	Modal.setAppElement('#root')
+}
 
 // Rejestracja Service Worker z automatycznym odświeżaniem
 const updateSW = registerSW({
@@ -27,6 +33,13 @@ const updateSW = registerSW({
     setInterval(() => {
       registration?.update()
     }, 60 * 60 * 1000) // 1 godzina
+    
+    // Inject push notification handlers into service worker
+    if (registration.active) {
+      import('./sw-custom.js').catch(err => {
+        console.warn('Could not load custom service worker code:', err)
+      })
+    }
   },
   onRegisterError(error) {
     console.error('Błąd rejestracji Service Worker:', error)

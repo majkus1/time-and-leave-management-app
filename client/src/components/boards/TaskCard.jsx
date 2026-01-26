@@ -16,8 +16,6 @@ const STATUSES = [
 	{ id: 'done', color: '#27ae60' }
 ]
 
-Modal.setAppElement('#root')
-
 function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate }) {
 	const { t } = useTranslation()
 	const { userId, role } = useAuth()

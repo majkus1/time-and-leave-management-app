@@ -6,8 +6,6 @@ import { useAlert } from '../../context/AlertContext'
 import axios from 'axios'
 import { API_URL } from '../../config'
 
-Modal.setAppElement('#root')
-
 const STATUSES = [
 	{ id: 'todo', label: 'Do zrobienia' },
 	{ id: 'in-progress', label: 'W trakcie' },

@@ -6,8 +6,6 @@ import { useUsers } from '../../hooks/useUsers'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
 
-Modal.setAppElement('#root')
-
 function SubordinatesModal({ isOpen, onClose, supervisorId }) {
 	const { t } = useTranslation()
 	const { showAlert } = useAlert()
