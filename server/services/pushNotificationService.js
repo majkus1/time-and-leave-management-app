@@ -3,6 +3,30 @@ const { firmDb } = require('../db/db')
 const PushSubscription = require('../models/PushSubscription')(firmDb)
 const User = require('../models/user')(firmDb)
 
+// Helper function to filter subscriptions by environment
+// In production, only send to app.planopia.pl subscriptions
+// In development, only send to localhost subscriptions
+function filterSubscriptionsByEnvironment(subscriptions) {
+	const isProduction = process.env.NODE_ENV === 'production'
+	
+	if (isProduction) {
+		// In production, only allow subscriptions from app.planopia.pl
+		return subscriptions.filter(sub => {
+			const endpoint = sub.endpoint || ''
+			// Filter out localhost and other non-production endpoints
+			return !endpoint.includes('localhost') && 
+			       !endpoint.includes('127.0.0.1') &&
+			       (endpoint.includes('planopia.pl') || endpoint.includes('fcm.googleapis.com') || endpoint.includes('wns2-'))
+		})
+	} else {
+		// In development, only allow localhost subscriptions
+		return subscriptions.filter(sub => {
+			const endpoint = sub.endpoint || ''
+			return endpoint.includes('localhost') || endpoint.includes('127.0.0.1')
+		})
+	}
+}
+
 // Initialize web-push with VAPID keys
 // These should be set in environment variables
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT) {
@@ -21,10 +45,13 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env
 const sendPushNotification = async (userId, payload) => {
 	try {
 		// Get all active subscriptions for user
-		const subscriptions = await PushSubscription.find({
+		let subscriptions = await PushSubscription.find({
 			userId,
 			enabled: true
 		})
+
+		// Filter subscriptions by environment (production vs development)
+		subscriptions = filterSubscriptionsByEnvironment(subscriptions)
 
 		if (subscriptions.length === 0) {
 			return { sent: 0, failed: 0 }
@@ -100,13 +127,16 @@ const sendChatNotification = async (channelId, message, recipientUserIds) => {
 	console.log(`[Push] Sending chat notification for channel ${channelId} to ${recipientUserIds.length} users`)
 	
 	// Filter subscriptions that have chat notifications enabled
-	const subscriptions = await PushSubscription.find({
+	let subscriptions = await PushSubscription.find({
 		userId: { $in: recipientUserIds },
 		enabled: true,
 		'preferences.chat': true
 	})
 
-	console.log(`[Push] Found ${subscriptions.length} active subscriptions with chat enabled`)
+	// Filter subscriptions by environment (production vs development)
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with chat enabled (after environment filter)`)
 
 	if (subscriptions.length === 0) {
 		console.log('[Push] No subscriptions found, skipping push notification')
@@ -191,9 +221,12 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	}
 	query[preferenceKey] = true
 
-	const subscriptions = await PushSubscription.find(query)
+	let subscriptions = await PushSubscription.find(query)
 
-	console.log(`[Push] Found ${subscriptions.length} active subscriptions with ${preferenceKey} enabled`)
+	// Filter subscriptions by environment (production vs development)
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with ${preferenceKey} enabled (after environment filter)`)
 
 	if (subscriptions.length === 0) {
 		console.log('[Push] No subscriptions found, skipping push notification')
@@ -305,13 +338,16 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	
 	// Filter subscriptions that have leave notifications enabled
 	// For now, we'll use a general 'leaves' preference, but we can add more specific preferences later
-	const subscriptions = await PushSubscription.find({
+	let subscriptions = await PushSubscription.find({
 		userId: { $in: recipientUserIds },
 		enabled: true,
 		'preferences.leaves': true // New preference for leave notifications
 	})
 
-	console.log(`[Push] Found ${subscriptions.length} active subscriptions with leave notifications enabled`)
+	// Filter subscriptions by environment (production vs development)
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with leave notifications enabled (after environment filter)`)
 
 	if (subscriptions.length === 0) {
 		console.log('[Push] No subscriptions found, skipping push notification')

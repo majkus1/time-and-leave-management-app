@@ -9,7 +9,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { isHoliday } = require('../utils/holidays')
-const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
 // Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 function isWeekend(date) {
