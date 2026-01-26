@@ -97,6 +97,8 @@ const sendPushNotificationToUsers = async (userIds, payload) => {
  * Send chat message notification
  */
 const sendChatNotification = async (channelId, message, recipientUserIds) => {
+	console.log(`[Push] Sending chat notification for channel ${channelId} to ${recipientUserIds.length} users`)
+	
 	// Filter subscriptions that have chat notifications enabled
 	const subscriptions = await PushSubscription.find({
 		userId: { $in: recipientUserIds },
@@ -104,7 +106,10 @@ const sendChatNotification = async (channelId, message, recipientUserIds) => {
 		'preferences.chat': true
 	})
 
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with chat enabled`)
+
 	if (subscriptions.length === 0) {
+		console.log('[Push] No subscriptions found, skipping push notification')
 		return { sent: 0, failed: 0 }
 	}
 
@@ -139,34 +144,43 @@ const sendChatNotification = async (channelId, message, recipientUserIds) => {
 					}
 				}
 
+				console.log(`[Push] Sending to subscription ${subscription._id}, endpoint: ${subscription.endpoint.substring(0, 50)}...`)
+				
 				await webpush.sendNotification(
 					subscriptionData,
 					JSON.stringify(payload)
 				)
 
+				console.log(`[Push] Successfully sent to subscription ${subscription._id}`)
 				subscription.lastUsed = new Date()
 				await subscription.save()
 
 				return { success: true }
 			} catch (error) {
 				if (error.statusCode === 410) {
+					console.log(`[Push] Subscription ${subscription._id} expired (410), removing`)
 					await PushSubscription.findByIdAndDelete(subscription._id)
 					return { success: false, error: 'Subscription expired' }
 				}
-				console.error(`Error sending chat push to subscription ${subscription._id}:`, error.message)
+				console.error(`[Push] Error sending chat push to subscription ${subscription._id}:`, error.message, error.statusCode)
 				return { success: false, error: error.message }
 			}
 		})
 	)
 
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-	return { sent, failed: results.length - sent }
+	const failed = results.length - sent
+	console.log(`[Push] Chat notification result: ${sent} sent, ${failed} failed`)
+	return { sent, failed }
 }
 
 /**
  * Send task notification (new task or status change)
  */
 const sendTaskNotification = async (task, board, createdByUser, recipientUserIds, isStatusChange = false, t = null) => {
+	const notificationType = isStatusChange ? 'status change' : 'new task'
+	console.log(`[Push] Sending task ${notificationType} notification for task ${task._id} to ${recipientUserIds.length} users`)
+	
 	// Determine preference key based on notification type
 	const preferenceKey = isStatusChange ? 'preferences.taskStatusChanges' : 'preferences.tasks'
 
@@ -179,7 +193,10 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 
 	const subscriptions = await PushSubscription.find(query)
 
+	console.log(`[Push] Found ${subscriptions.length} active subscriptions with ${preferenceKey} enabled`)
+
 	if (subscriptions.length === 0) {
+		console.log('[Push] No subscriptions found, skipping push notification')
 		return { sent: 0, failed: 0 }
 	}
 
@@ -244,28 +261,34 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 					}
 				}
 
+				console.log(`[Push] Sending task notification to subscription ${subscription._id}, endpoint: ${subscription.endpoint.substring(0, 50)}...`)
+				
 				await webpush.sendNotification(
 					subscriptionData,
 					JSON.stringify(payload)
 				)
 
+				console.log(`[Push] Successfully sent task notification to subscription ${subscription._id}`)
 				subscription.lastUsed = new Date()
 				await subscription.save()
 
 				return { success: true }
 			} catch (error) {
 				if (error.statusCode === 410) {
+					console.log(`[Push] Subscription ${subscription._id} expired (410), removing`)
 					await PushSubscription.findByIdAndDelete(subscription._id)
 					return { success: false, error: 'Subscription expired' }
 				}
-				console.error(`Error sending task push to subscription ${subscription._id}:`, error.message)
+				console.error(`[Push] Error sending task push to subscription ${subscription._id}:`, error.message, error.statusCode)
 				return { success: false, error: error.message }
 			}
 		})
 	)
 
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
-	return { sent, failed: results.length - sent }
+	const failed = results.length - sent
+	console.log(`[Push] Task notification result: ${sent} sent, ${failed} failed`)
+	return { sent, failed }
 }
 
 module.exports = {

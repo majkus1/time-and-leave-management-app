@@ -36,17 +36,21 @@ export const usePushNotifications = () => {
 			}
 
 			// Check existing subscription
-			try {
-				const registration = await navigator.serviceWorker.ready
-				const existingSubscription = await registration.pushManager.getSubscription()
-				
-				if (existingSubscription) {
-					setSubscription(existingSubscription)
-					setIsSubscribed(true)
-				}
-			} catch (error) {
-				console.error('Error checking existing subscription:', error)
+		try {
+			const registration = await navigator.serviceWorker.ready
+			console.log('[Push] Service Worker ready, checking for existing subscription')
+			const existingSubscription = await registration.pushManager.getSubscription()
+			
+			if (existingSubscription) {
+				console.log('[Push] Found existing subscription:', existingSubscription.endpoint.substring(0, 50))
+				setSubscription(existingSubscription)
+				setIsSubscribed(true)
+			} else {
+				console.log('[Push] No existing subscription found')
 			}
+		} catch (error) {
+			console.error('[Push] Error checking existing subscription:', error)
+		}
 
 			// Load preferences
 			if (loggedIn) {
@@ -72,6 +76,7 @@ export const usePushNotifications = () => {
 
 		try {
 			const registration = await navigator.serviceWorker.ready
+			console.log('[Push] Subscribing to push notifications...')
 			
 			// Convert VAPID key to Uint8Array
 			const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey)
@@ -80,6 +85,8 @@ export const usePushNotifications = () => {
 				userVisibleOnly: true,
 				applicationServerKey: applicationServerKey
 			})
+
+			console.log('[Push] Subscription created:', newSubscription.endpoint.substring(0, 50))
 
 			// Send subscription to server
 			const subscriptionData = {
@@ -91,10 +98,12 @@ export const usePushNotifications = () => {
 				userAgent: navigator.userAgent
 			}
 
+			console.log('[Push] Registering subscription on server...')
 			await axios.post(`${API_URL}/api/push/register`, subscriptionData, {
 				withCredentials: true
 			})
 
+			console.log('[Push] Subscription registered successfully')
 			setSubscription(newSubscription)
 			setIsSubscribed(true)
 

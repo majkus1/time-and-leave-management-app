@@ -2006,8 +2006,8 @@ function Settings() {
 
 				
 
-				{/* Informacja dla użytkowników bez uprawnień */}
-				{!canEditSettings && (
+				{/* Informacja dla użytkowników bez uprawnień - tylko jeśli nie ma żadnych dostępnych sekcji */}
+				{!canEditSettings && !pushSupported && (
 					<div style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',

@@ -2864,7 +2864,7 @@ section {
 	}
 	#list-employee, #leave-requests-review {
 		margin-top: 95px !important;
-		padding-left: 15px;
+		/* padding-left: 15px; */
 		padding-right: 15px;
 		padding-bottom: 10px;
 	}
