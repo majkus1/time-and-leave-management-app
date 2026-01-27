@@ -20,8 +20,10 @@ router.post('/timer/start', authenticateToken, workdayController.startTimer)
 router.post('/timer/pause', authenticateToken, workdayController.pauseTimer)
 router.post('/timer/stop', authenticateToken, workdayController.stopTimer)
 router.put('/timer/update', authenticateToken, workdayController.updateActiveTimer)
+router.post('/timer/split', authenticateToken, workdayController.splitSession)
 router.get('/timer/active', authenticateToken, workdayController.getActiveTimer)
 router.get('/timer/sessions', authenticateToken, workdayController.getTodaySessions)
+router.get('/timer/sessions/user/:userId', authenticateToken, workdayController.getUserSessions)
 router.delete('/timer/sessions/:workdayId/:sessionId', authenticateToken, workdayController.deleteSession)
 
 module.exports = router

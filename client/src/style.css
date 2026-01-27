@@ -3167,6 +3167,8 @@ body:has(.pwa-navigation-bar) .container {
 
 .login-card-body, .reset-password-container, .set-pass {
 	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+	border-bottom-left-radius: 15px !important;
+	border-bottom-right-radius: 15px !important;
 }
 
 /* ===== Leave Request Calendar Event Styles ===== */
@@ -3221,4 +3223,17 @@ body:has(.pwa-navigation-bar) .container {
 }
 .newbutton-confirmmonth {
 	margin-bottom: 15px !important;
+}
+
+.card {
+	border: none !important;
+}
+
+.login-logo div {
+	border-top-left-radius: 15px !important;
+	border-top-right-radius: 15px !important;
+}
+
+#calendars-works-review > div.work-session-list-mobile.col-xl-9 > div > div:nth-child(2) > div > div:nth-child(4) > div:nth-child(2) > div > div:nth-child(2) > button {
+	display: none !important;
 }

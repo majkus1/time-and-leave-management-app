@@ -288,7 +288,7 @@ exports.startTimer = async (req, res) => {
 		today.setHours(0, 0, 0, 0)
 
 		// Check if timer can be started on this date
-		const canStart = await canStartTimerOnDate(userId, today)
+		const canStart = await exports.canStartTimerOnDate(userId, today)
 		if (!canStart.canStart) {
 			return res.status(400).json({ message: canStart.reason })
 		}
@@ -515,6 +515,97 @@ exports.updateActiveTimer = async (req, res) => {
 	}
 }
 
+// Split session - save current session and continue with new description
+exports.splitSession = async (req, res) => {
+	try {
+		const { workDescription, taskId, isOvertime } = req.body
+		const userId = req.user.userId
+
+		const today = new Date()
+		today.setHours(0, 0, 0, 0)
+
+		const workday = await Workday.findOne({ userId, date: today })
+
+		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
+			return res.status(400).json({ message: 'Brak aktywnego timera' })
+		}
+
+		const endTime = new Date()
+		const startTime = new Date(workday.activeTimer.startTime)
+
+		// Calculate hours (only if not on break)
+		let hoursWorked = 0
+		if (!workday.activeTimer.isBreak) {
+			hoursWorked = (endTime - startTime) / (1000 * 60 * 60)
+		}
+
+		// Add current session to timeEntries
+		const timeEntry = {
+			startTime,
+			endTime,
+			isBreak: workday.activeTimer.isBreak,
+			isOvertime: workday.activeTimer.isOvertime,
+			workDescription: workday.activeTimer.workDescription,
+			taskId: workday.activeTimer.taskId,
+			qrCodeId: workday.activeTimer.qrCodeId || null
+		}
+
+		if (!workday.timeEntries) {
+			workday.timeEntries = []
+		}
+		workday.timeEntries.push(timeEntry)
+
+		// Update total hours
+		if (!workday.hoursWorked) workday.hoursWorked = 0
+		if (!workday.activeTimer.isBreak) {
+			workday.hoursWorked += hoursWorked
+		}
+
+		// Update overtime if applicable
+		if (workday.activeTimer.isOvertime && !workday.activeTimer.isBreak) {
+			if (!workday.additionalWorked) workday.additionalWorked = 0
+			workday.additionalWorked += hoursWorked
+		}
+
+		// Update time range string
+		if (!workday.activeTimer.isBreak) {
+			const formatTime = (date) => {
+				const hours = date.getHours().toString().padStart(2, '0')
+				const minutes = date.getMinutes().toString().padStart(2, '0')
+				return `${hours}:${minutes}`
+			}
+			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
+			
+			if (workday.realTimeDayWorked) {
+				workday.realTimeDayWorked += `, ${timeRange}`
+			} else {
+				workday.realTimeDayWorked = timeRange
+			}
+		}
+
+		// Start new session with new description (continue from where we left off)
+		workday.activeTimer = {
+			startTime: endTime, // Continue from where we left off
+			isBreak: workday.activeTimer.isBreak, // Keep break status
+			isOvertime: isOvertime !== undefined ? isOvertime : workday.activeTimer.isOvertime,
+			workDescription: workDescription || '',
+			taskId: taskId || null,
+			qrCodeId: workday.activeTimer.qrCodeId || null // Keep QR code ID if it was from QR
+		}
+
+		await workday.save()
+
+		res.json({
+			message: 'Sesja zapisana, kontynuacja z nowym opisem',
+			savedSession: timeEntry,
+			activeTimer: workday.activeTimer
+		})
+	} catch (error) {
+		console.error('Error splitting session:', error)
+		res.status(500).json({ message: 'Błąd podczas zapisywania sesji' })
+	}
+}
+
 // Delete a single session from workday
 exports.deleteSession = async (req, res) => {
 	try {
@@ -722,5 +813,162 @@ exports.getTodaySessions = async (req, res) => {
 	} catch (error) {
 		console.error('Error getting sessions:', error)
 		res.status(500).json({ message: 'Błąd podczas pobierania sesji' })
+	}
+}
+
+// Get sessions for a specific user (with permission check)
+exports.getUserSessions = async (req, res) => {
+	try {
+		const { userId } = req.params
+		const { month, year } = req.query
+		const requestingUser = await User.findById(req.user.userId)
+
+		if (!requestingUser) {
+			return res.status(403).json({ message: 'Brak uprawnień' })
+		}
+
+		const isAdmin = requestingUser.roles.includes('Admin')
+		const isHR = requestingUser.roles.includes('HR')
+		const isSelf = requestingUser._id.toString() === userId
+
+		const userToView = await User.findById(userId)
+
+		// Sprawdź uprawnienia przełożonego
+		const { canSupervisorViewTimesheets } = require('../services/roleService')
+		const canView = userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false
+
+		if (!(isAdmin || isHR || isSelf || canView)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+
+		let startDate, endDate
+
+		if (month !== undefined && year !== undefined) {
+			const monthNum = parseInt(month, 10)
+			const yearNum = parseInt(year, 10)
+			startDate = new Date(yearNum, monthNum, 1)
+			startDate.setHours(0, 0, 0, 0)
+			endDate = new Date(yearNum, monthNum + 1, 0)
+			endDate.setHours(23, 59, 59, 999)
+		} else {
+			const today = new Date()
+			today.setHours(0, 0, 0, 0)
+			startDate = today
+			endDate = new Date(today)
+			endDate.setHours(23, 59, 59, 999)
+		}
+
+		const workdays = await Workday.find({
+			userId,
+			date: {
+				$gte: startDate,
+				$lte: endDate
+			}
+		})
+
+		if (!workdays || workdays.length === 0) {
+			return res.json({
+				grouped: [],
+				totalMinutes: 0,
+				totalHours: '0.00',
+				availableDates: [],
+				dateRange: {
+					start: startDate,
+					end: endDate
+				}
+			})
+		}
+
+		const Task = require('../models/Task')(firmDb)
+		const allSessions = []
+		let totalMinutes = 0
+		const availableDatesSet = new Set()
+
+		const calculateMinutes = (start, end) => {
+			if (!start || !end) return 0
+			return Math.round((new Date(end) - new Date(start)) / (1000 * 60))
+		}
+
+		for (const workday of workdays) {
+			const workdayDate = new Date(workday.date).toISOString().split('T')[0]
+			availableDatesSet.add(workdayDate)
+
+			if (workday.timeEntries && workday.timeEntries.length > 0) {
+				for (const entry of workday.timeEntries) {
+					if (!entry.isBreak && entry.startTime && entry.endTime) {
+						totalMinutes += calculateMinutes(entry.startTime, entry.endTime)
+					}
+
+					let task = null
+					if (entry.taskId) {
+						task = await Task.findById(entry.taskId).select('title')
+					}
+
+					let qrCode = null
+					if (entry.qrCodeId) {
+						const QRCode = require('../models/QRCode')(firmDb)
+						qrCode = await QRCode.findById(entry.qrCodeId).select('name code')
+					}
+
+					allSessions.push({
+						...entry.toObject(),
+						workdayId: workday._id,
+						task: task ? { _id: task._id, title: task.title } : null,
+						qrCode: qrCode ? { _id: qrCode._id, name: qrCode.name, code: qrCode.code } : null,
+						date: workdayDate
+					})
+				}
+			}
+		}
+
+		const groupedSessions = {}
+
+		for (const session of allSessions) {
+			if (session.isBreak) continue
+
+			const groupKey = session.taskId
+				? `task_${session.taskId.toString()}`
+				: `desc_${(session.workDescription || '').trim().toLowerCase()}`
+
+			if (!groupedSessions[groupKey]) {
+				groupedSessions[groupKey] = {
+					workDescription: session.workDescription || '',
+					task: session.task,
+					taskId: session.taskId,
+					sessions: [],
+					totalMinutes: 0,
+					totalHours: 0,
+					percentage: 0
+				}
+			}
+
+			if (session.startTime && session.endTime) {
+				const minutes = calculateMinutes(session.startTime, session.endTime)
+				groupedSessions[groupKey].sessions.push(session)
+				groupedSessions[groupKey].totalMinutes += minutes
+			}
+		}
+
+		const result = Object.values(groupedSessions).map(group => {
+			group.totalHours = (group.totalMinutes / 60).toFixed(2)
+			group.percentage = totalMinutes > 0 ? ((group.totalMinutes / totalMinutes) * 100).toFixed(1) : 0
+			return group
+		})
+
+		result.sort((a, b) => b.totalMinutes - a.totalMinutes)
+
+		res.json({
+			grouped: result,
+			totalMinutes,
+			totalHours: (totalMinutes / 60).toFixed(2),
+			availableDates: Array.from(availableDatesSet).sort().reverse(),
+			dateRange: {
+				start: startDate,
+				end: endDate
+			}
+		})
+	} catch (error) {
+		console.error('Error getting user sessions:', error)
+		res.status(500).json({ message: 'Błąd podczas pobierania sesji użytkownika' })
 	}
 }

@@ -214,7 +214,7 @@ exports.submitLeaveRequest = async (req, res) => {
 			type,
 			startDate: trimmedStartDate, // Użyj przyciętych dat
 			endDate: trimmedEndDate, // Użyj przyciętych dat
-			daysRequested: finalDaysRequested, // Użyj przeliczonych dni
+			daysRequested: finalDaysRequested, // Zawsze przechowujemy dni w bazie
 			replacement,
 			additionalInfo,
 			status,
@@ -323,8 +323,8 @@ exports.submitLeaveRequest = async (req, res) => {
 						<td style="padding: 8px 0; color: #1f2937;">${trimmedStartDate} - ${trimmedEndDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${finalDaysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (finalDaysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : finalDaysRequested}</td>
 					</tr>
 				</table>
 			</div>

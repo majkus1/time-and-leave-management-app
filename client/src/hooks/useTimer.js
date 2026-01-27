@@ -96,6 +96,27 @@ export const useUpdateActiveTimer = () => {
 	})
 }
 
+// Split session - save current session and continue with new description
+export const useSplitSession = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ workDescription, taskId, isOvertime }) => {
+			const response = await axios.post(
+				`${API_URL}/api/workdays/timer/split`,
+				{ workDescription, taskId, isOvertime },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+		},
+	})
+}
+
 // Get sessions for a specific month (or today if no month/year provided)
 export const useTodaySessions = (month, year) => {
 	return useQuery({

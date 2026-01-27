@@ -363,7 +363,9 @@ function MonthlyCalendar() {
 		setAdditionalHours(overtime)
 		setTotalWorkDays(workDaysSet.size)
 		setTotalLeaveDays(leaveDays)
-		setTotalLeaveHours(leaveDays * 8)
+		// Oblicz godziny urlopu na podstawie konfiguracji
+		const leaveHoursPerDay = settings?.leaveHoursPerDay || 8
+		setTotalLeaveHours(leaveDays * leaveHoursPerDay)
 		setTotalOtherAbsences(otherAbsences)
 		setTotalHolidays(holidaysCount)
 	}
@@ -1109,7 +1111,10 @@ function MonthlyCalendar() {
 				</p>
 
 				<p className='allfrommonth-p'>
-				<img src="/img/weekend mono.png" /> {t('workcalendar.allfrommonth4')} {totalLeaveDays} ({totalLeaveHours} {t('workcalendar.allfrommonthhours')})
+				<img src="/img/weekend mono.png" /> {settings?.leaveCalculationMode === 'hours' 
+					? `${t('workcalendar.allfrommonth4hours') || 'Łączna liczba godzin urlopu'}: ${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+					: `${t('workcalendar.allfrommonth4')} ${totalLeaveDays} (${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+				}
 				</p>
 				{totalHolidays > 0 && (
 					<p className='allfrommonth-p'>

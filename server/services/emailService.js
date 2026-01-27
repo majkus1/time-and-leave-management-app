@@ -150,8 +150,8 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.days')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${leaveRequest.daysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveRequest.hours') || 'Godziny') : (t('email.leaveRequest.days') || 'Dni')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.updatedBy')}:</td>

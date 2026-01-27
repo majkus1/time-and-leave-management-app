@@ -86,6 +86,21 @@ const settingsSchema = new mongoose.Schema({
 	leaveRequestTypes: {
 		type: [leaveRequestTypeSchema],
 		default: []
+	},
+	// Konfiguracja obliczania urlopów: 'days' lub 'hours'
+	leaveCalculationMode: {
+		type: String,
+		enum: ['days', 'hours'],
+		default: 'days',
+		required: true
+	},
+	// Liczba godzin na jeden dzień urlopu (używane gdy leaveCalculationMode === 'hours')
+	leaveHoursPerDay: {
+		type: Number,
+		default: 8,
+		min: 0.5,
+		max: 24,
+		required: true
 	}
 }, {
 	timestamps: true

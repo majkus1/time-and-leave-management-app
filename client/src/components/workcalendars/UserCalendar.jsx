@@ -17,6 +17,7 @@ import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import WorkSessionList from './WorkSessionList'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -341,7 +342,9 @@ function UserCalendar() {
 		setAdditionalHours(overtime)
 		setTotalWorkDays(workDaysSet.size)
 		setTotalLeaveDays(leaveDays)
-		setTotalLeaveHours(leaveDays * 8)
+		// Oblicz godziny urlopu na podstawie konfiguracji
+		const leaveHoursPerDay = settings?.leaveHoursPerDay || 8
+		setTotalLeaveHours(leaveDays * leaveHoursPerDay)
 		setTotalOtherAbsences(otherAbsences)
 		setTotalHolidays(holidaysCount)
 	}
@@ -971,7 +974,10 @@ function UserCalendar() {
 				</p>
 
 				<p>
-					{t('workcalendar.allfrommonth4')} {totalLeaveDays} ({totalLeaveHours} {t('workcalendar.allfrommonthhours')})
+					{settings?.leaveCalculationMode === 'hours' 
+						? `${t('workcalendar.allfrommonth4hours') || 'Łączna liczba godzin urlopu'}: ${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+						: `${t('workcalendar.allfrommonth4')} ${totalLeaveDays} (${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+					}
 				</p>
 				{totalHolidays > 0 && (
 					<p>
@@ -984,8 +990,13 @@ function UserCalendar() {
 			</div>
 					</div>
 				</div>
+
+			{/* Work Session List */}
+			<div className="work-session-list-mobile col-xl-9">
+				<WorkSessionList month={currentMonth} year={currentYear} userId={userId} />
 			</div>
-			)}
+			</div>
+					)}
 		</>
 	)
 }

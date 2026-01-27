@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
-import { useActiveTimer, useStartTimer, usePauseTimer, useStopTimer, useUpdateActiveTimer, useTodaySessions } from '../../hooks/useTimer'
+import { useActiveTimer, useStartTimer, usePauseTimer, useStopTimer, useUpdateActiveTimer, useSplitSession, useTodaySessions } from '../../hooks/useTimer'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { useWorkdays } from '../../hooks/useWorkdays'
 import { isHolidayDate } from '../../utils/holidays'
 import axios from 'axios'
 import { API_URL } from '../../config'
+import Modal from 'react-modal'
 
 function TimerPanel() {
 	const { t } = useTranslation()
@@ -19,6 +20,7 @@ function TimerPanel() {
 	const pauseTimer = usePauseTimer()
 	const stopTimer = useStopTimer()
 	const updateTimer = useUpdateActiveTimer()
+	const splitSession = useSplitSession()
 	const { data: acceptedLeaveRequests = [] } = useUserAcceptedLeaveRequests(userId)
 	const { data: settings } = useSettings()
 	const { data: workdays = [] } = useWorkdays()
@@ -32,6 +34,10 @@ function TimerPanel() {
 	const [elapsedTime, setElapsedTime] = useState(0)
 	const [allTasks, setAllTasks] = useState([])
 	const [loadingTasks, setLoadingTasks] = useState(false)
+	const [infoModalIsOpen, setInfoModalIsOpen] = useState(false)
+	const [isSplitting, setIsSplitting] = useState(false)
+	const [newSessionDescription, setNewSessionDescription] = useState('')
+	const [newSessionTaskId, setNewSessionTaskId] = useState('')
 
 	// Get current month and year
 	const currentDate = new Date()
@@ -260,7 +266,7 @@ function TimerPanel() {
 				borderRadius: '12px',
 				boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 				padding: '20px',
-				marginBottom: '20px'
+				marginBottom: '40px'
 			}}>
 				<p>{t('timer.loading') || 'Ładowanie...'}</p>
 			</div>
@@ -269,6 +275,7 @@ function TimerPanel() {
 
 	const isActive = activeTimer?.active && activeTimer.startTime
 	const isBreak = activeTimer?.isBreak
+	const isFromQR = activeTimer?.qrCodeId ? true : false
 
 	return (
 		<div style={{
@@ -276,7 +283,7 @@ function TimerPanel() {
 			borderRadius: '12px',
 			boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 			padding: '20px',
-			marginBottom: '20px'
+			marginBottom: '40px'
 		}}>
 			<h3 style={{
 				color: '#2c3e50',
@@ -290,6 +297,34 @@ function TimerPanel() {
 			}}>
 				<img src="/img/timer.png" alt="timer" style={{ width: '24px', height: '24px' }} />
 				<span>{t('timer.title') || 'Licznik czasu pracy'}</span>
+				<button
+					onClick={() => setInfoModalIsOpen(true)}
+					style={{
+						background: 'transparent',
+						border: 'none',
+						cursor: 'pointer',
+						padding: '4px',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						marginLeft: '8px'
+					}}
+					title={t('timer.infoModal.title') || 'Informacje o liczniku czasu pracy'}>
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="#3b82f6"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						style={{ cursor: 'pointer' }}>
+						<circle cx="12" cy="12" r="10"></circle>
+						<line x1="12" y1="16" x2="12" y2="12"></line>
+						<line x1="12" y1="8" x2="12.01" y2="8"></line>
+					</svg>
+				</button>
 				<span style={{
 					fontSize: '14px',
 					fontWeight: '400',
@@ -425,23 +460,125 @@ function TimerPanel() {
 							</div>
 						</div>
 					) : (
-						<button
-							onClick={() => setIsEditing(true)}
-							style={{
-								width: '100%',
-								backgroundColor: '#3498db',
-								color: 'white',
-								border: 'none',
-								padding: '10px 20px',
-								borderRadius: '6px',
-								fontSize: '14px',
-								fontWeight: '500',
-								cursor: 'pointer',
-								marginBottom: '15px'
-							}}
-						>
-							{t('timer.editDescription') || 'Edytuj opis pracy'}
-						</button>
+						<>
+							<button
+								onClick={() => setIsEditing(true)}
+								style={{
+									width: '100%',
+									backgroundColor: '#3498db',
+									color: 'white',
+									border: 'none',
+									padding: '10px 20px',
+									borderRadius: '6px',
+									fontSize: '14px',
+									fontWeight: '500',
+									cursor: 'pointer',
+									marginBottom: '15px'
+								}}
+							>
+								{t('timer.editDescription') || 'Edytuj opis pracy'}
+							</button>
+							{isSplitting ? (
+								<div style={{ marginBottom: '15px' }}>
+									<label style={{
+										display: 'block',
+										marginBottom: '8px',
+										fontSize: '14px',
+										fontWeight: '500',
+										color: '#2c3e50'
+									}}>
+										{t('timer.newSessionDescription') || 'Nowy opis pracy (opcjonalnie)'}
+									</label>
+									<input
+										type="text"
+										value={newSessionDescription}
+										onChange={(e) => setNewSessionDescription(e.target.value)}
+										placeholder={t('timer.workDescriptionPlaceholder') || 'Opis pracy...'}
+										style={{
+											width: '100%',
+											padding: '10px 15px',
+											border: '1px solid #ddd',
+											borderRadius: '6px',
+											fontSize: '14px',
+											marginBottom: '10px'
+										}}
+									/>
+									<div style={{ display: 'flex', gap: '10px' }}>
+										<button
+											onClick={async () => {
+												try {
+													await splitSession.mutateAsync({
+														workDescription: newSessionDescription.trim() || '',
+														taskId: newSessionTaskId || null,
+														isOvertime: activeTimer.isOvertime
+													})
+													setIsSplitting(false)
+													setNewSessionDescription('')
+													setNewSessionTaskId('')
+													await showAlert(t('timer.sessionSaved') || 'Sesja zapisana, kontynuacja z nowym opisem')
+												} catch (error) {
+													console.error('Error splitting session:', error)
+													await showAlert(error.response?.data?.message || t('timer.splitError') || 'Błąd podczas zapisywania sesji')
+												}
+											}}
+											disabled={splitSession.isPending}
+											style={{
+												flex: 1,
+												backgroundColor: '#9b59b6',
+												color: 'white',
+												border: 'none',
+												padding: '10px 20px',
+												borderRadius: '6px',
+												fontSize: '14px',
+												fontWeight: '500',
+												cursor: splitSession.isPending ? 'not-allowed' : 'pointer',
+												opacity: splitSession.isPending ? 0.6 : 1
+											}}
+										>
+											{splitSession.isPending ? (t('timer.saving') || 'Zapisywanie...') : (t('timer.saveAndContinue') || 'Zapisz sesję i kontynuuj')}
+										</button>
+										<button
+											onClick={() => {
+												setIsSplitting(false)
+												setNewSessionDescription('')
+												setNewSessionTaskId('')
+											}}
+											style={{
+												flex: 1,
+												backgroundColor: '#95a5a6',
+												color: 'white',
+												border: 'none',
+												padding: '10px 20px',
+												borderRadius: '6px',
+												fontSize: '14px',
+												fontWeight: '500',
+												cursor: 'pointer'
+											}}
+										>
+											{t('timer.cancel') || 'Anuluj'}
+										</button>
+									</div>
+								</div>
+							) : (
+								<button
+									onClick={() => setIsSplitting(true)}
+									style={{
+										width: '100%',
+										backgroundColor: '#9b59b6',
+										color: 'white',
+										border: 'none',
+										padding: '10px 20px',
+										borderRadius: '6px',
+										fontSize: '14px',
+										fontWeight: '500',
+										cursor: 'pointer',
+										marginBottom: '15px'
+									}}
+								>
+									{t('timer.saveAndContinue') || 'Zapisz sesję i kontynuuj'}
+								</button>
+							)}
+						</>
 					)}
 
 					{/* Overtime toggle (if timer is active) */}
@@ -512,20 +649,21 @@ function TimerPanel() {
 						</button>
 						<button
 							onClick={handleStop}
-							disabled={stopTimer.isPending}
+							disabled={stopTimer.isPending || isFromQR}
 							style={{
 								flex: 1,
 								minWidth: '120px',
-								backgroundColor: '#e74c3c',
+								backgroundColor: isFromQR ? '#95a5a6' : '#e74c3c',
 								color: 'white',
 								border: 'none',
 								padding: '12px 20px',
 								borderRadius: '6px',
 								fontSize: '14px',
 								fontWeight: '500',
-								cursor: stopTimer.isPending ? 'not-allowed' : 'pointer',
-								opacity: stopTimer.isPending ? 0.6 : 1
+								cursor: (stopTimer.isPending || isFromQR) ? 'not-allowed' : 'pointer',
+								opacity: (stopTimer.isPending || isFromQR) ? 0.6 : 1
 							}}
+							title={isFromQR ? (t('timer.stopQROnly') || 'Timer uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : ''}
 						>
 							{t('timer.stop') || 'Stop'}
 						</button>
@@ -681,6 +819,145 @@ function TimerPanel() {
 					</button>
 				</>
 			)}
+
+			{/* Info Modal */}
+			<Modal
+				isOpen={infoModalIsOpen}
+				onRequestClose={() => setInfoModalIsOpen(false)}
+				style={{
+					overlay: {
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						backgroundColor: 'rgba(0, 0, 0, 0.5)',
+						backdropFilter: 'blur(2px)',
+					},
+					content: {
+						position: 'relative',
+						inset: 'unset',
+						margin: '0',
+						maxWidth: '600px',
+						maxHeight: '80vh',
+						width: '90%',
+						borderRadius: '12px',
+						padding: '30px',
+						backgroundColor: 'white',
+						overflow: 'auto',
+					},
+				}}
+				contentLabel={t('timer.infoModal.title') || 'Informacje o liczniku czasu pracy'}>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+					<h2 style={{ 
+						margin: 0,
+						color: '#2c3e50',
+						fontSize: '24px',
+						fontWeight: '600'
+					}}>
+						{t('timer.infoModal.title') || 'Informacje o liczniku czasu pracy'}
+					</h2>
+					<button
+						onClick={() => setInfoModalIsOpen(false)}
+						style={{
+							background: 'transparent',
+							border: 'none',
+							fontSize: '28px',
+							cursor: 'pointer',
+							color: '#7f8c8d',
+							lineHeight: '1',
+							padding: '0',
+							width: '30px',
+							height: '30px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center'
+						}}
+						onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+						onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+						×
+					</button>
+				</div>
+
+				<div style={{ marginBottom: '25px' }}>
+					<h3 style={{
+						margin: '0 0 10px 0',
+						color: '#1f2937',
+						fontSize: '18px',
+						fontWeight: '600'
+					}}>
+						{t('timer.infoModal.howItWorks') || 'Jak działa timer?'}
+					</h3>
+					<p style={{
+						margin: 0,
+						color: '#4b5563',
+						fontSize: '15px',
+						lineHeight: '1.6'
+					}}>
+						{t('timer.infoModal.howItWorksDesc') || 'Timer pozwala na rejestrację czasu pracy. Kliknij "Start" aby rozpocząć pomiar czasu. Możesz dodać opis pracy lub wybrać zadanie z listy. Timer można zatrzymać, zapauzować lub wznowić w dowolnym momencie.'}
+					</p>
+				</div>
+
+				<div style={{ marginBottom: '25px' }}>
+					<h3 style={{
+						margin: '0 0 10px 0',
+						color: '#1f2937',
+						fontSize: '18px',
+						fontWeight: '600'
+					}}>
+						{t('timer.infoModal.qrCode') || 'Kody QR - Wejście/Wyjście'}
+					</h3>
+					<p style={{
+						margin: 0,
+						color: '#4b5563',
+						fontSize: '15px',
+						lineHeight: '1.6'
+					}}>
+						{t('timer.infoModal.qrCodeDesc') || 'Możesz używać kodów QR do automatycznego rejestrowania wejścia i wyjścia. Zeskanuj kod QR aby rozpocząć timer (wejście), a następnie zeskanuj ten sam kod ponownie aby go zatrzymać (wyjście).'}
+					</p>
+				</div>
+
+				<div style={{ marginBottom: '25px' }}>
+					<h3 style={{
+						margin: '0 0 10px 0',
+						color: '#1f2937',
+						fontSize: '18px',
+						fontWeight: '600'
+					}}>
+						{t('timer.infoModal.configuration') || 'Konfiguracja'}
+					</h3>
+					<p style={{
+						margin: 0,
+						color: '#4b5563',
+						fontSize: '15px',
+						lineHeight: '1.6'
+					}}>
+						{t('timer.infoModal.configurationDesc') || 'Administratorzy i HR mogą skonfigurować kody QR w ustawieniach zespołu (Settings). Tam możesz wygenerować kody QR dla różnych lokalizacji (np. różne wejścia).'}
+					</p>
+				</div>
+
+				<div style={{
+					display: 'flex',
+					justifyContent: 'flex-end',
+					marginTop: '30px'
+				}}>
+					<button
+						onClick={() => setInfoModalIsOpen(false)}
+						style={{
+							padding: '10px 20px',
+							fontSize: '16px',
+							fontWeight: '500',
+							color: 'white',
+							backgroundColor: '#3b82f6',
+							border: 'none',
+							borderRadius: '6px',
+							cursor: 'pointer',
+							transition: 'background-color 0.2s'
+						}}
+						onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+						onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}>
+						{t('timer.infoModal.close') || 'Zamknij'}
+					</button>
+				</div>
+			</Modal>
 		</div>
 	)
 }

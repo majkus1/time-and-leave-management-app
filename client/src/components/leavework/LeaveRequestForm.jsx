@@ -198,6 +198,36 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
 	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
 
+	// Funkcja pomocnicza do formatowania wartości urlopu (dni lub godziny)
+	const formatLeaveValue = React.useCallback((days) => {
+		if (!settings) return { value: days, unit: t('leaveform.days') || 'dni', display: `${days} ${t('leaveform.days') || 'dni'}` }
+		
+		if (settings.leaveCalculationMode === 'hours') {
+			const hours = days * (settings.leaveHoursPerDay || 8)
+			return {
+				value: hours,
+				days: days,
+				unit: t('leaveform.hours') || 'godzin',
+				display: `${hours.toFixed(1)} ${t('leaveform.hours') || 'godzin'}`
+			}
+		} else {
+			return {
+				value: days,
+				days: days,
+				unit: t('leaveform.days') || 'dni',
+				display: `${days} ${t('leaveform.days') || 'dni'}`
+			}
+		}
+	}, [settings, t])
+
+	// Funkcja pomocnicza do pobrania etykiety (dni/godziny)
+	const getLeaveValueLabel = React.useCallback(() => {
+		if (!settings) return t('leaveform.days') || 'Dni'
+		return settings.leaveCalculationMode === 'hours' 
+			? (t('leaveform.hours') || 'Godziny')
+			: (t('leaveform.days') || 'Dni')
+	}, [settings, t])
+
 	useEffect(() => {
 		if (startDate && endDate && settings) {
 			const daysDiff = calculateDays(startDate, endDate)
@@ -599,10 +629,15 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 						
 						<div>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.numberdayreq')}</label>
+							<label className="block text-gray-700 font-medium mb-1">
+								{settings?.leaveCalculationMode === 'hours' 
+									? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
+									: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
+								}
+							</label>
 							<input
-								type="number"
-								value={daysRequested}
+								type="text"
+								value={formatLeaveValue(daysRequested).display}
 								readOnly
 								className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
 							/>
@@ -667,7 +702,10 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 										{t('leaveform.date')}: {formatDate(request.startDate)} - {formatDate(request.endDate)}
 									</p>
 									<p>
-										{t('leaveform.daysRequested')}: {request.daysRequested}
+										{settings?.leaveCalculationMode === 'hours' 
+											? `${t('leaveform.hoursRequested') || 'Liczba godzin'}: ${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)}`
+											: `${t('leaveform.daysRequested') || 'Liczba dni'}: ${request.daysRequested}`
+										}
 									</p>
 									<p>
 										{t('leaveform.substitute')} {request.replacement || t('leaveform.empty')}
@@ -937,10 +975,15 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 									</div>
 
 									<div>
-										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.numberdayreq')}</label>
+										<label className="block text-gray-700 font-medium mb-1">
+											{settings?.leaveCalculationMode === 'hours' 
+												? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
+												: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
+											}
+										</label>
 										<input
-											type="number"
-											value={editDaysRequested}
+											type="text"
+											value={formatLeaveValue(editDaysRequested).display}
 											readOnly
 											className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
 										/>

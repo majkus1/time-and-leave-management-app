@@ -348,8 +348,8 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.days')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${leaveRequest.daysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveRequest.hours') || 'Godziny') : (t('email.leaveRequest.days') || 'Dni')}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.updatedBy')}:</td>
@@ -893,8 +893,8 @@ exports.cancelLeaveRequest = async (req, res) => {
 							<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 						</tr>
 						<tr>
-							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
-							<td style="padding: 8px 0; color: #1f2937;">${leaveRequest.daysRequested}</td>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
 						</tr>
 					</table>
 				</div>
@@ -1114,7 +1114,8 @@ exports.updateLeaveRequest = async (req, res) => {
 		}
 
 		if (recipients.length > 0) {
-			const typeText = t(type)
+			const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
+			const typeText = getLeaveRequestTypeName(settings, type, t, language)
 			const content = `
 				<p style="margin: 0 0 16px 0;">${!typeRequiresApproval ? t('email.leaveform.newL4Request') : t('email.leaveform.requestUpdatedSupervisor')}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
@@ -1133,8 +1134,8 @@ exports.updateLeaveRequest = async (req, res) => {
 							<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 						</tr>
 						<tr>
-							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.days')}:</td>
-							<td style="padding: 8px 0; color: #1f2937;">${daysRequested}</td>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : daysRequested}</td>
 						</tr>
 					</table>
 				</div>

@@ -2,11 +2,37 @@ import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTodaySessions, useDeleteSession } from '../../hooks/useTimer'
 import { useAlert } from '../../context/AlertContext'
+import axios from 'axios'
+import { API_URL } from '../../config'
+import { useQuery } from '@tanstack/react-query'
 
-function WorkSessionList({ month, year }) {
+function WorkSessionList({ month, year, userId }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
-	const { data: sessionsData, isLoading } = useTodaySessions(month, year)
+	
+	// Use different endpoint if userId is provided
+	const { data: sessionsData, isLoading } = userId 
+		? useQuery({
+			queryKey: ['timer', 'sessions', 'user', userId, month, year],
+			queryFn: async () => {
+				const params = {}
+				if (month !== undefined && month !== null) {
+					params.month = month
+				}
+				if (year !== undefined && year !== null) {
+					params.year = year
+				}
+				const response = await axios.get(`${API_URL}/api/workdays/timer/sessions/user/${userId}`, {
+					params,
+					withCredentials: true,
+				})
+				return response.data
+			},
+			enabled: month !== undefined && year !== undefined && userId !== undefined,
+			staleTime: 30 * 1000,
+		})
+		: useTodaySessions(month, year)
+	
 	const deleteSession = useDeleteSession()
 	const [selectedDate, setSelectedDate] = useState(null)
 
@@ -197,7 +223,11 @@ function WorkSessionList({ month, year }) {
 			</h3>
 				<p style={{ color: '#95a5a6', textAlign: 'center', padding: '20px' }}>
 					{month !== undefined && year !== undefined
-						? (t('sessions.noSessionsMonth') || `Brak sesji pracy w ${new Date(year, month).toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })}`)
+						? (() => {
+							const monthStr = new Date(year, month).toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })
+							const capitalizedMonth = monthStr.charAt(0).toUpperCase() + monthStr.slice(1)
+							return `${t('sessions.noSessionsMonth') || 'Brak sesji pracy w'} ${capitalizedMonth}`
+						})()
 						: (t('sessions.noSessions') || 'Brak sesji pracy na dzisiaj')
 					}
 				</p>
@@ -309,9 +339,6 @@ function WorkSessionList({ month, year }) {
 						? group.task.title 
 						: (group.workDescription || t('sessions.noDescription') || 'Brak opisu')
 
-					// Check if any session in this group has QR code
-					const hasQRCode = group.sessions.some(s => s.qrCode)
-
 					return (
 						<div
 							key={index}
@@ -408,18 +435,6 @@ function WorkSessionList({ month, year }) {
 										fontWeight: '500'
 									}}>
 										{t('sessions.overtime') || 'Nadgodziny'}
-									</span>
-								)}
-								{hasQRCode && (
-									<span style={{
-										backgroundColor: '#e3f2fd',
-										color: '#1976d2',
-										padding: '4px 8px',
-										borderRadius: '4px',
-										fontSize: '11px',
-										fontWeight: '500'
-									}}>
-										{t('sessions.fromQR') || 'Z kodu QR'}
 									</span>
 								)}
 							</div>

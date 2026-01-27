@@ -185,7 +185,10 @@ function AdminLeaveRequests() {
 								{t('adminleavereq.date')} {formatDate(request.startDate)} - {formatDate(request.endDate)}
 							</p>
 							<p>
-								{t('adminleavereq.days')} {request.daysRequested}
+								{settings?.leaveCalculationMode === 'hours' 
+									? `${t('adminleavereq.hours') || 'Liczba godzin'}: ${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)}`
+									: `${t('adminleavereq.days')} ${request.daysRequested}`
+								}
 							</p>
 							<p>
 								{t('adminleavereq.subst')} {request.replacement || t('adminleavereq.none')}

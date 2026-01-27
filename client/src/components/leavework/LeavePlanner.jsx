@@ -483,7 +483,10 @@ function LeavePlanner() {
 										<div style={{ fontSize: '14px', color: '#666' }}>
 											{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
 											<span style={{ marginLeft: '10px', color: '#059669' }}>
-												({request.daysRequested} {t('leaveplanner.days')})
+												({settings?.leaveCalculationMode === 'hours' 
+												? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
+												: `${request.daysRequested} ${t('leaveplanner.days')}`
+											})
 											</span>
 										</div>
 									</li>

@@ -24,6 +24,8 @@ function Settings() {
 	const [customHolidays, setCustomHolidays] = useState([])
 	const [newHolidayDate, setNewHolidayDate] = useState('')
 	const [newHolidayName, setNewHolidayName] = useState('')
+	const [leaveCalculationMode, setLeaveCalculationMode] = useState('days')
+	const [leaveHoursPerDay, setLeaveHoursPerDay] = useState(8)
 	
 	// State for work hours (tablica konfiguracji)
 	const [workHoursList, setWorkHoursList] = useState([])
@@ -83,6 +85,8 @@ function Settings() {
 			setIncludePolishHolidays(settings.includePolishHolidays === true)
 			setIncludeCustomHolidays(settings.includeCustomHolidays === true)
 			setCustomHolidays(Array.isArray(settings.customHolidays) ? settings.customHolidays : [])
+			setLeaveCalculationMode(settings.leaveCalculationMode || 'days')
+			setLeaveHoursPerDay(settings.leaveHoursPerDay || 8)
 			
 			// Initialize work hours (obsługa starego formatu dla kompatybilności wstecznej)
 			if (settings.workHours) {
@@ -1483,6 +1487,197 @@ function Settings() {
 									</div>
 								</div>
 							</>
+						)}
+
+						{/* Sekcja konfiguracji obliczania urlopów */}
+						{canEditSettings && (
+							<div style={{ 
+								backgroundColor: 'white',
+								borderRadius: '12px',
+								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+								padding: '15px',
+								marginBottom: '30px'
+							}}>
+								<h3 style={{ 
+									color: '#2c3e50',
+									marginBottom: '20px',
+									fontSize: '20px',
+									fontWeight: '600',
+									paddingBottom: '10px',
+									borderBottom: '2px solid #3498db'
+								}}>
+									{t('settings.leaveCalculationTitle') || 'Konfiguracja obliczania urlopów'}
+								</h3>
+
+								<div style={{
+									backgroundColor: '#e3f2fd',
+									border: '1px solid #90caf9',
+									borderRadius: '8px',
+									padding: '15px',
+									marginBottom: '20px',
+									color: '#1565c0'
+								}}>
+									<p style={{ margin: 0, lineHeight: '1.6' }}>
+										{t('settings.leaveCalculationDescription') || 'Wybierz czy urlopy mają być obliczane w dniach czy w godzinach. Jeśli wybierzesz godziny, ustaw ile godzin ma jeden dzień urlopu.'}
+									</p>
+								</div>
+
+								<div style={{
+									backgroundColor: '#f8f9fa',
+									border: '1px solid #dee2e6',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px'
+								}}>
+									<div style={{ marginBottom: '20px' }}>
+										<label style={{
+											display: 'block',
+											marginBottom: '10px',
+											fontWeight: '600',
+											color: '#2c3e50',
+											fontSize: '16px'
+										}}>
+											{t('settings.leaveCalculationMode') || 'Tryb obliczania urlopów'}
+										</label>
+										<div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+											<label style={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: '8px',
+												cursor: 'pointer',
+												fontSize: '16px',
+												color: '#2c3e50'
+											}}>
+												<input
+													type="radio"
+													name="leaveCalculationMode"
+													value="days"
+													checked={leaveCalculationMode === 'days'}
+													onChange={(e) => setLeaveCalculationMode(e.target.value)}
+													style={{
+														width: '20px',
+														height: '20px',
+														cursor: 'pointer'
+													}}
+												/>
+												<span>{t('settings.leaveCalculationDays') || 'W dniach'}</span>
+											</label>
+											<label style={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: '8px',
+												cursor: 'pointer',
+												fontSize: '16px',
+												color: '#2c3e50'
+											}}>
+												<input
+													type="radio"
+													name="leaveCalculationMode"
+													value="hours"
+													checked={leaveCalculationMode === 'hours'}
+													onChange={(e) => setLeaveCalculationMode(e.target.value)}
+													style={{
+														width: '20px',
+														height: '20px',
+														cursor: 'pointer'
+													}}
+												/>
+												<span>{t('settings.leaveCalculationHours') || 'W godzinach'}</span>
+											</label>
+										</div>
+									</div>
+
+									{leaveCalculationMode === 'hours' && (
+										<div>
+											<label style={{
+												display: 'block',
+												marginBottom: '10px',
+												fontWeight: '600',
+												color: '#2c3e50',
+												fontSize: '16px'
+											}}>
+												{t('settings.leaveHoursPerDay') || 'Liczba godzin na dzień urlopu'}
+											</label>
+											<input
+												type="number"
+												min="0.5"
+												max="24"
+												step="0.5"
+												value={leaveHoursPerDay}
+												onChange={(e) => {
+													const value = parseFloat(e.target.value)
+													if (!isNaN(value) && value >= 0.5 && value <= 24) {
+														setLeaveHoursPerDay(value)
+													}
+												}}
+												placeholder="8"
+												style={{
+													width: '100%',
+													maxWidth: '200px',
+													padding: '12px 15px',
+													border: '2px solid #dee2e6',
+													borderRadius: '8px',
+													fontSize: '16px',
+													backgroundColor: 'white'
+												}}
+											/>
+											<p style={{
+												marginTop: '8px',
+												fontSize: '14px',
+												color: '#6c757d'
+											}}>
+												{t('settings.leaveHoursPerDayDescription') || 'Ustaw ile godzin ma jeden dzień urlopu (np. 8 dla pełnego dnia, 4 dla pół dnia).'}
+											</p>
+										</div>
+									)}
+
+									<button
+										type="button"
+										onClick={async () => {
+											try {
+												await updateSettingsMutation.mutateAsync({
+													workOnWeekends,
+													includePolishHolidays,
+													includeCustomHolidays,
+													customHolidays,
+													workHours: workHoursList,
+													leaveCalculationMode,
+													leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined
+												})
+												await showAlert(t('settings.leaveCalculationUpdateSuccess') || 'Konfiguracja urlopów została zaktualizowana')
+											} catch (error) {
+												console.error('Error updating leave calculation settings:', error)
+												await showAlert(error.response?.data?.message || t('settings.leaveCalculationUpdateError') || 'Błąd podczas aktualizacji konfiguracji urlopów')
+											}
+										}}
+										disabled={updateSettingsMutation.isPending}
+										style={{
+											backgroundColor: '#28a745',
+											color: 'white',
+											border: 'none',
+											padding: '12px 24px',
+											borderRadius: '8px',
+											fontSize: '16px',
+											fontWeight: '600',
+											cursor: updateSettingsMutation.isPending ? 'not-allowed' : 'pointer',
+											opacity: updateSettingsMutation.isPending ? 0.6 : 1,
+											transition: 'all 0.2s'
+										}}
+										onMouseEnter={(e) => {
+											if (!updateSettingsMutation.isPending) {
+												e.target.style.backgroundColor = '#218838'
+											}
+										}}
+										onMouseLeave={(e) => {
+											if (!updateSettingsMutation.isPending) {
+												e.target.style.backgroundColor = '#28a745'
+											}
+										}}
+									>
+										{updateSettingsMutation.isPending ? (t('settings.saving') || 'Zapisywanie...') : (t('settings.save') || 'Zapisz')}
+									</button>
+								</div>
+							</div>
 						)}
 
 						{/* Sekcja zarządzania typami wniosków urlopowych */}
