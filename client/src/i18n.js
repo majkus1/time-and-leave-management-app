@@ -1879,7 +1879,7 @@ i18n
 						sessionCount: 'Sesji',
 						totalTime: 'Łączny czas',
 						sessionDetails: 'Szczegóły sesji',
-						fromQR: 'Z kodu QR',
+						fromQR: 'QR',
 						delete: 'Usuń',
 						cancel: 'Anuluj',
 						deleteConfirm: 'Czy na pewno chcesz usunąć tę sesję?',

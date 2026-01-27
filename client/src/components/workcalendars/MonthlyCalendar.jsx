@@ -418,8 +418,9 @@ function MonthlyCalendar() {
 			const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
 			const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
 			
-			// Only include workdays that have some data
-			return hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries || hasActiveTimer
+			// Only include workdays that have some data (but exclude days with only active timer)
+			// Active timer alone should not be considered as data for calendar display
+			return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
 		})
 		
 		// Auto-fill work hours from settings if no existing entries and not a holiday and not a weekend (when workOnWeekends = false)
@@ -916,6 +917,7 @@ function MonthlyCalendar() {
 						...workdays
 							.filter(day => {
 								// Filter out empty workdays (no data at all)
+								// Also filter out days with only active timer (timer is running but no data saved yet)
 								const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
 								const hasAdditionalWorked = day.additionalWorked && day.additionalWorked > 0
 								const hasRealTimeDayWorked = day.realTimeDayWorked && day.realTimeDayWorked.trim() !== ''
@@ -924,8 +926,9 @@ function MonthlyCalendar() {
 								const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
 								const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
 								
-								// Only show workdays that have some data
-								return hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries || hasActiveTimer
+								// Only show workdays that have some data (but exclude days with only active timer)
+								// Active timer alone should not create an event in the calendar
+								return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
 							})
 							.map(day => {
 							// Określ tytuł w zależności od typu wpisu
@@ -956,6 +959,11 @@ function MonthlyCalendar() {
 								title = day.notes
 							}
 							
+							// Jeśli nie ma tytułu (np. tylko activeTimer bez innych danych), nie tworz eventu
+							if (!title || title.trim() === '') {
+								return null
+							}
+							
 							// Określ kolor tła - uwagi zawsze mają swój kolor
 							let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
 							let classNames = 'event-absence' // Domyślnie event-absence
@@ -979,7 +987,7 @@ function MonthlyCalendar() {
 							start: day.date,
 								backgroundColor,
 							textColor: 'white',
-							id: day._id,
+								id: day._id,
 								classNames,
 							extendedProps: {
 									isWorkday: !!hasHoursWorked,
@@ -988,7 +996,8 @@ function MonthlyCalendar() {
 								notes: day.notes,
 							},
 							}
-						}),
+						})
+						.filter(event => event !== null), // Usuń null eventy (dni z tylko activeTimer)
 						...workdays
 							.filter(day => day.realTimeDayWorked)
 							.map(day => ({
@@ -1291,7 +1300,21 @@ function MonthlyCalendar() {
 									flexDirection: 'column',
 									gap: '10px'
 								}}>
-									{existingWorkdays.map((workday) => (
+									{existingWorkdays
+										.filter(workday => {
+											// Filter out workdays that have only activeTimer (no actual data)
+											const hasHoursWorked = workday.hoursWorked && workday.hoursWorked > 0
+											const hasAdditionalWorked = workday.additionalWorked && workday.additionalWorked > 0
+											const hasRealTimeDayWorked = workday.realTimeDayWorked && workday.realTimeDayWorked.trim() !== ''
+											const hasAbsenceType = workday.absenceType && typeof workday.absenceType === 'string' && workday.absenceType.trim() !== '' && workday.absenceType !== 'null' && workday.absenceType.toLowerCase() !== 'null'
+											const hasNotes = workday.notes && workday.notes.trim() !== ''
+											const hasTimeEntries = workday.timeEntries && workday.timeEntries.length > 0
+											const hasActiveTimer = workday.activeTimer && workday.activeTimer.startTime
+											
+											// Exclude workdays with only activeTimer (no other data)
+											return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
+										})
+										.map((workday) => (
 										<div key={workday._id} style={{
 											padding: '15px',
 											backgroundColor: '#f8f9fa',
@@ -1479,12 +1502,31 @@ function MonthlyCalendar() {
 								flexDirection: 'column',
 								gap: '10px'
 							}}>
-								{existingWorkdays.map((workday) => {
+								{existingWorkdays
+									.filter(workday => {
+										// Filter out workdays that have only activeTimer (no actual data)
+										const hasHoursWorked = workday.hoursWorked && workday.hoursWorked > 0
+										const hasAdditionalWorked = workday.additionalWorked && workday.additionalWorked > 0
+										const hasRealTimeDayWorked = workday.realTimeDayWorked && workday.realTimeDayWorked.trim() !== ''
+										const hasAbsenceType = workday.absenceType && typeof workday.absenceType === 'string' && workday.absenceType.trim() !== '' && workday.absenceType !== 'null' && workday.absenceType.toLowerCase() !== 'null'
+										const hasNotes = workday.notes && workday.notes.trim() !== ''
+										const hasTimeEntries = workday.timeEntries && workday.timeEntries.length > 0
+										const hasActiveTimer = workday.activeTimer && workday.activeTimer.startTime
+										
+										// Exclude workdays with only activeTimer (no other data)
+										return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
+									})
+									.map((workday) => {
 									const displayText = workday.hoursWorked
 										? `${formatHours(workday.hoursWorked)} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${formatHours(workday.additionalWorked)} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
 										: workday.absenceType
 										? workday.absenceType
 										: workday.notes
+									
+									// Additional safety check - don't render if displayText is empty
+									if (!displayText || displayText.trim() === '') {
+										return null
+									}
 									
 									return (
 										<div key={workday._id} style={{
@@ -1539,7 +1581,8 @@ function MonthlyCalendar() {
 											</button>
 										</div>
 									)
-								})}
+								})
+								.filter(item => item !== null)} {/* Remove null entries */}
 							</div>
 							{/* Jeśli istniejący wpis ma tylko uwagi, pokaż standardowy formularz z informacją na górze */}
 							{/* Jeśli jest zaakceptowany wniosek i są tylko uwagi, pokaż tylko formularz uwag (podobnie jak dla świąt) */}

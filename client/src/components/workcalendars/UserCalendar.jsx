@@ -891,6 +891,11 @@ function UserCalendar() {
 											title = day.notes
 										}
 										
+										// Jeśli nie ma tytułu (np. tylko activeTimer bez innych danych), nie tworz eventu
+										if (!title || title.trim() === '') {
+											return null
+										}
+										
 										// Określ kolor tła - uwagi zawsze mają swój kolor
 										let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
 										let classNames = 'event-absence' // Domyślnie event-absence
@@ -923,7 +928,8 @@ function UserCalendar() {
 												notes: day.notes,
 											},
 										}
-									}),
+									})
+									.filter(event => event !== null), // Usuń null eventy (dni z tylko activeTimer)
 									...workdays
 										.filter(day => day.realTimeDayWorked)
 										.map(day => ({

@@ -190,7 +190,9 @@ function CreateBoardModal({ onClose, onSuccess }) {
 									onChange={() => handleMemberToggle(user._id)}
 									style={{ marginRight: '10px', transform: 'scale(1.2)' }}
 								/>
-								<span>{user.username}</span>
+								<span>
+									{user.firstName} {user.lastName}{user.position ? ` - ${user.position}` : ''}
+								</span>
 							</label>
 						))}
 					</div>
