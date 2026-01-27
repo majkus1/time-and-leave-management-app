@@ -1143,10 +1143,10 @@ function MonthlyCalendar() {
 					<img src="/img/calendar mono.png" /> {t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
+				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatHours(roundToHalfHour(totalHours))} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(additionalHours)}
+				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHours(roundToHalfHour(additionalHours))} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p className='allfrommonth-p'>

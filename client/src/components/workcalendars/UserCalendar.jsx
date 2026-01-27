@@ -634,8 +634,8 @@ function UserCalendar() {
 				[t('workcalendar.excel.summary'), ''],
 				['', ''],
 				[t('workcalendar.allfrommonth1'), totalWorkDays],
-				[t('workcalendar.allfrommonth2'), `${formatHours(totalHours)} ${t('workcalendar.allfrommonthhours')}`],
-				[t('workcalendar.allfrommonth3'), `${formatHours(additionalHours)} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth2'), `${formatHours(roundToHalfHour(totalHours))} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth3'), `${formatHours(roundToHalfHour(additionalHours))} ${t('workcalendar.allfrommonthhours')}`],
 				[t('workcalendar.allfrommonth4'), totalLeaveDays],
 				[t('workcalendar.allfrommonth5'), totalOtherAbsences],
 				['', ''],
@@ -980,10 +980,10 @@ function UserCalendar() {
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
+					{t('workcalendar.allfrommonth2')} {formatHours(roundToHalfHour(totalHours))} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(additionalHours)}
+					{t('workcalendar.allfrommonth3')} {formatHours(roundToHalfHour(additionalHours))} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p>
