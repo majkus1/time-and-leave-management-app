@@ -417,10 +417,11 @@ exports.stopTimer = async (req, res) => {
 		// Update time range string
 		if (!workday.activeTimer.isBreak) {
 			const formatTime = (date) => {
-				// Use local time methods - JavaScript Date automatically converts UTC to local time
-				// This ensures consistency with frontend display
-				const hours = date.getHours().toString().padStart(2, '0')
-				const minutes = date.getMinutes().toString().padStart(2, '0')
+				// Convert UTC date to local time string (Europe/Warsaw timezone)
+				// This ensures the time displayed matches the user's local time
+				const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
+				const hours = localDate.getHours().toString().padStart(2, '0')
+				const minutes = localDate.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
 			}
 			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
@@ -572,10 +573,11 @@ exports.splitSession = async (req, res) => {
 		// Update time range string
 		if (!workday.activeTimer.isBreak) {
 			const formatTime = (date) => {
-				// Use local time methods - JavaScript Date automatically converts UTC to local time
-				// This ensures consistency with frontend display
-				const hours = date.getHours().toString().padStart(2, '0')
-				const minutes = date.getMinutes().toString().padStart(2, '0')
+				// Convert UTC date to local time string (Europe/Warsaw timezone)
+				// This ensures the time displayed matches the user's local time
+				const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
+				const hours = localDate.getHours().toString().padStart(2, '0')
+				const minutes = localDate.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
 			}
 			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
@@ -646,10 +648,11 @@ exports.deleteSession = async (req, res) => {
 		// Remove time range from realTimeDayWorked if exists
 		if (session.startTime && session.endTime && !session.isBreak) {
 			const formatTime = (date) => {
-				// Use local time methods - JavaScript Date automatically converts UTC to local time
-				// This ensures consistency with frontend display
-				const hours = date.getHours().toString().padStart(2, '0')
-				const minutes = date.getMinutes().toString().padStart(2, '0')
+				// Convert UTC date to local time string (Europe/Warsaw timezone)
+				// This ensures the time displayed matches the user's local time
+				const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
+				const hours = localDate.getHours().toString().padStart(2, '0')
+				const minutes = localDate.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
 			}
 			const timeRange = `${formatTime(new Date(session.startTime))}-${formatTime(new Date(session.endTime))}`
