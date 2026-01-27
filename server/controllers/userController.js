@@ -1617,3 +1617,95 @@ exports.permanentlyDeleteUser = async (req, res) => {
 		res.status(500).json({ message: 'Błąd podczas trwałego usuwania użytkownika' })
 	}
 }
+
+// Get all tasks assigned to current user from all accessible boards
+exports.getMyTasks = async (req, res) => {
+	try {
+		const userId = req.user.userId
+		const user = await User.findById(userId)
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+
+		const teamId = user.teamId
+		if (!teamId) {
+			return res.json([])
+		}
+
+		const Task = require('../models/Task')(firmDb)
+		const Department = require('../models/Department')(firmDb)
+
+		// Get user's departments
+		const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
+		
+		// Check if user is Admin
+		const isAdmin = user.roles && user.roles.includes('Admin')
+
+		// Build board access conditions
+		let boardQuery = {
+			teamId,
+			isActive: true
+		}
+
+		if (!isAdmin) {
+			// For non-admin users, only show boards they have access to
+			const orConditions = [
+				{ members: userId },
+				{ isTeamBoard: true }
+			]
+
+			// Include department boards where user belongs to that department
+			if (userDepartments.length > 0) {
+				orConditions.push({
+					type: 'department',
+					departmentName: { $in: userDepartments }
+				})
+			}
+
+			boardQuery.$or = orConditions
+		}
+
+		// Get all accessible boards
+		const boards = await Board.find(boardQuery).select('_id').lean()
+
+		const boardIds = boards.map(board => board._id)
+
+		if (boardIds.length === 0) {
+			return res.json([])
+		}
+
+		// Get all tasks from accessible boards (not filtered by assignedTo - all tasks in boards user has access to)
+		// Exclude tasks with status "done" (completed tasks)
+		const tasks = await Task.find({
+			boardId: { $in: boardIds },
+			isActive: true,
+			status: { $ne: 'done' } // Exclude completed tasks
+		})
+			.populate({
+				path: 'createdBy',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'assignedTo',
+				select: 'username firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.populate({
+				path: 'boardId',
+				select: 'name type'
+			})
+			.sort({ order: 1, createdAt: -1 })
+			.lean()
+
+		// Filter out tasks where board or createdBy were filtered out by populate match
+		const filteredTasks = tasks.filter(task => {
+			return task.boardId && task.createdBy
+		})
+
+		res.json(filteredTasks)
+	} catch (error) {
+		console.error('Error getting user tasks:', error)
+		res.status(500).json({ message: 'Error getting tasks' })
+	}
+}

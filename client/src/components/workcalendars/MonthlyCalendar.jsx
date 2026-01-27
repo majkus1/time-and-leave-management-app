@@ -12,6 +12,8 @@ import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import TimerPanel from './TimerPanel'
+import WorkSessionList from './WorkSessionList'
 
 function MonthlyCalendar() {
 	const [modalIsOpen, setModalIsOpen] = useState(false)
@@ -812,6 +814,9 @@ function MonthlyCalendar() {
 			<div className="col-xl-9">
 				<h3><img src="img/clock.png" alt="ikonka w sidebar" />{t('workcalendar.h3')}</h3>
 				<hr />
+				
+				{/* Timer Panel */}
+				<TimerPanel />
 
 				<div className="calendar-controls flex flex-wrap items-center" style={{ gap: '5px' }}>
 					<select
@@ -995,6 +1000,8 @@ function MonthlyCalendar() {
 					height="auto"
 				/>
 				</div>
+				
+				
 			</div>
 			<div className="col-xl-3 resume-month-work">
 				<h3 className="resumecales h3resume" style={{ marginTop: '20px' }}>
@@ -1113,6 +1120,11 @@ function MonthlyCalendar() {
 				<img src="/img/dismiss.png" /> {t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>
 			</div>
+
+			{/* Work Session List */}
+			<div className="work-session-list-mobile col-xl-9">
+					<WorkSessionList month={currentMonth} year={currentYear} />
+				</div>
 
 			<Modal
 				isOpen={modalIsOpen}

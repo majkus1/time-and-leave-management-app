@@ -135,6 +135,22 @@ function AdminUserList() {
 		})
 	}, [allTeamWorkdays, filteredUsers])
 
+	// Helper function to normalize date to YYYY-MM-DD format without timezone issues
+	const normalizeDate = (dateInput) => {
+		if (!dateInput) return null
+		// If it's already a string in YYYY-MM-DD format, return it
+		if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+			return dateInput
+		}
+		// Otherwise, parse it and extract date components
+		const date = new Date(dateInput)
+		if (isNaN(date.getTime())) return null
+		const year = date.getFullYear()
+		const month = String(date.getMonth() + 1).padStart(2, '0')
+		const day = String(date.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
+	}
+
 	// Formatuj wpisy ewidencji - grupowanie po dacie i użytkowniku
 	const formattedWorkdayEvents = useMemo(() => {
 		if (!filteredWorkdays || filteredWorkdays.length === 0) return []
@@ -145,7 +161,8 @@ function AdminUserList() {
 		filteredWorkdays.forEach(workday => {
 			if (!workday.userId || !workday.userId.firstName) return
 			
-			const dateKey = new Date(workday.date).toISOString().split('T')[0]
+			const dateKey = normalizeDate(workday.date)
+			if (!dateKey) return // Skip if date is invalid
 			const userKey = workday.userId._id.toString()
 			const key = `${dateKey}-${userKey}`
 			
@@ -592,7 +609,7 @@ function AdminUserList() {
 							</div>
 
 							{/* Filtrowanie użytkowników */}
-							<div style={{ marginBottom: '30px' }}>
+							<div style={{ marginBottom: '20px' }}>
 								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
 								</h3>
@@ -684,6 +701,34 @@ function AdminUserList() {
 									) : (
 										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noDepartments') || 'Brak działów'}
+										</p>
+									)}
+								</div>
+							</div>
+
+							{/* Filtrowanie po użytkownikach */}
+							<div style={{ marginBottom: '30px' }}>
+								<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+									{t('planslist.filterByUsers') || 'Filtrowanie po użytkownikach'}
+								</h4>
+								<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+									{users.length > 0 ? (
+										users.map(user => (
+											<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
+												<input
+													type="checkbox"
+													checked={selectedUserIds.includes(user._id)}
+													onChange={() => handleToggleUser(user._id)}
+													style={{ marginRight: '8px', cursor: 'pointer' }}
+												/>
+												<span style={{ fontSize: '14px', fontWeight: selectedUserIds.includes(user._id) ? '600' : '400' }}>
+													{user.firstName} {user.lastName} {user.position ? `- ${user.position}` : ''}
+												</span>
+											</label>
+										))
+									) : (
+										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+											{t('planslist.noUsers') || 'Brak użytkowników'}
 										</p>
 									)}
 								</div>

@@ -792,7 +792,7 @@ function AdminAllLeaveCalendar() {
 					</div>
 
 					{/* Filtrowanie użytkowników */}
-					<div style={{ marginBottom: '30px' }}>
+					<div style={{ marginBottom: '20px' }}>
 						<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 							{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
 						</h3>
@@ -885,6 +885,34 @@ function AdminAllLeaveCalendar() {
 							) : (
 								<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
 									{t('planslist.noDepartments') || 'Brak działów'}
+								</p>
+							)}
+						</div>
+					</div>
+
+					{/* Filtrowanie po użytkownikach */}
+					<div style={{ marginBottom: '10px' }}>
+						<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+							{t('planslist.filterByUsers') || 'Filtrowanie po użytkownikach'}
+						</h4>
+						<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+							{users.length > 0 ? (
+								users.map(user => (
+									<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
+										<input
+											type="checkbox"
+											checked={selectedUserIds.includes(user._id)}
+											onChange={() => handleToggleUser(user._id)}
+											style={{ marginRight: '8px', cursor: 'pointer' }}
+										/>
+										<span style={{ fontSize: '14px', fontWeight: selectedUserIds.includes(user._id) ? '600' : '400' }}>
+											{user.firstName} {user.lastName} {user.position ? `- ${user.position}` : ''}
+										</span>
+									</label>
+								))
+							) : (
+								<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+									{t('planslist.noUsers') || 'Brak użytkowników'}
 								</p>
 							)}
 						</div>

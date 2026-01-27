@@ -42,6 +42,7 @@ import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
 import PWANavigationBar from './components/PWANavigationBar'
+import QRScan from './components/qr/QRScan'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
@@ -91,6 +92,13 @@ function AppContent() {
 			res => res,
 			async err => {
 				const originalRequest = err.config
+				
+				// Skip error logging if flag is set (for expected errors like 403 on board access)
+				if (originalRequest.skipErrorLog && (err.response?.status === 403 || err.response?.status === 404)) {
+					// Silently reject without logging
+					return Promise.reject(err)
+				}
+				
 				// Skip refresh if AuthContext is handling it (checkAuth, refreshUserData)
 				// or if this is a refresh-token request itself
 				if (
@@ -119,7 +127,8 @@ function AppContent() {
 				}
 				
 				// Handle 403 Forbidden - user might have lost permissions
-				if (err.response?.status === 403 && loggedIn) {
+				// But skip if skipErrorLog is set (expected 403s)
+				if (err.response?.status === 403 && loggedIn && !originalRequest.skipErrorLog) {
 					// Try to refresh token first
 					if (
 						originalRequest.url !== `${API_URL}/api/users/refresh-token` &&
@@ -193,6 +202,7 @@ function AppContent() {
 					<Route path="/set-password/:token" element={<SetPassword />} />
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/new-password/:token" element={<NewPassword />} />
+					<Route path="/qr-scan/:code" element={<QRScan />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
 					<Route path="/dashboard" element={<Dashboard />} />
 					<Route path="/boards" element={<BoardList />} />

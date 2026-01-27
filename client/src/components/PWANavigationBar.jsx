@@ -107,15 +107,11 @@ function PWANavigationBar() {
 				right: 0,
 				backgroundColor: '#ffffff',
 				borderTop: '1px solid #e0e0e0',
-				boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.1)',
 				zIndex: 1000,
 				display: 'flex',
-				justifyContent: 'center',
-				alignItems: 'center',
-				gap: '20px',
-				padding: '12px 20px',
+				width: '100%',
 				// Safe area for devices with notches
-				paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+				paddingBottom: 'max(0px, env(safe-area-inset-bottom))',
 			}}
 			className="pwa-navigation-bar"
 		>
@@ -128,54 +124,44 @@ function PWANavigationBar() {
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					width: '48px',
-					height: '48px',
-					borderRadius: '50%',
+					width: '50%',
+					height: '56px',
 					border: 'none',
-					backgroundColor: canGoBack ? '#3498db' : '#e0e0e0',
-					color: canGoBack ? '#ffffff' : '#9e9e9e',
+					borderRight: '1px solid #e0e0e0',
+					backgroundColor: canGoBack ? '#ffffff' : '#f5f5f5',
+					color: canGoBack ? '#2c3e50' : '#bdc3c7',
 					cursor: canGoBack ? 'pointer' : 'not-allowed',
-					transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-					boxShadow: canGoBack 
-						? '0 2px 8px rgba(52, 152, 219, 0.3)' 
-						: 'none',
+					transition: 'background-color 0.2s ease',
 					outline: 'none',
 					WebkitTapHighlightColor: 'transparent',
 				}}
 				onMouseEnter={(e) => {
 					if (canGoBack) {
-						e.target.style.backgroundColor = '#2980b9'
-						e.target.style.transform = 'scale(1.05)'
-						e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.4)'
+						e.target.style.backgroundColor = '#f8f9fa'
 					}
 				}}
 				onMouseLeave={(e) => {
 					if (canGoBack) {
-						e.target.style.backgroundColor = '#3498db'
-						e.target.style.transform = 'scale(1)'
-						e.target.style.boxShadow = '0 2px 8px rgba(52, 152, 219, 0.3)'
+						e.target.style.backgroundColor = '#ffffff'
 					}
 				}}
 				onTouchStart={(e) => {
 					if (canGoBack) {
-						e.target.style.transform = 'scale(0.95)'
+						e.target.style.backgroundColor = '#f0f0f0'
 					}
 				}}
 				onTouchEnd={(e) => {
 					if (canGoBack) {
-						e.target.style.transform = 'scale(1)'
+						e.target.style.backgroundColor = '#ffffff'
 					}
 				}}
 			>
 				<svg
-					width="24"
-					height="24"
+					width="20"
+					height="20"
 					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					style={{
-						transition: 'transform 0.2s',
-					}}
 				>
 					<path
 						d="M15 18L9 12L15 6"
@@ -196,54 +182,43 @@ function PWANavigationBar() {
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					width: '48px',
-					height: '48px',
-					borderRadius: '50%',
+					width: '50%',
+					height: '56px',
 					border: 'none',
-					backgroundColor: canGoForward ? '#3498db' : '#e0e0e0',
-					color: canGoForward ? '#ffffff' : '#9e9e9e',
+					backgroundColor: canGoForward ? '#ffffff' : '#f5f5f5',
+					color: canGoForward ? '#2c3e50' : '#bdc3c7',
 					cursor: canGoForward ? 'pointer' : 'not-allowed',
-					transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-					boxShadow: canGoForward 
-						? '0 2px 8px rgba(52, 152, 219, 0.3)' 
-						: 'none',
+					transition: 'background-color 0.2s ease',
 					outline: 'none',
 					WebkitTapHighlightColor: 'transparent',
 				}}
 				onMouseEnter={(e) => {
 					if (canGoForward) {
-						e.target.style.backgroundColor = '#2980b9'
-						e.target.style.transform = 'scale(1.05)'
-						e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.4)'
+						e.target.style.backgroundColor = '#f8f9fa'
 					}
 				}}
 				onMouseLeave={(e) => {
 					if (canGoForward) {
-						e.target.style.backgroundColor = '#3498db'
-						e.target.style.transform = 'scale(1)'
-						e.target.style.boxShadow = '0 2px 8px rgba(52, 152, 219, 0.3)'
+						e.target.style.backgroundColor = '#ffffff'
 					}
 				}}
 				onTouchStart={(e) => {
 					if (canGoForward) {
-						e.target.style.transform = 'scale(0.95)'
+						e.target.style.backgroundColor = '#f0f0f0'
 					}
 				}}
 				onTouchEnd={(e) => {
 					if (canGoForward) {
-						e.target.style.transform = 'scale(1)'
+						e.target.style.backgroundColor = '#ffffff'
 					}
 				}}
 			>
 				<svg
-					width="24"
-					height="24"
+					width="20"
+					height="20"
 					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					style={{
-						transition: 'transform 0.2s',
-					}}
 				>
 					<path
 						d="M9 18L15 12L9 6"

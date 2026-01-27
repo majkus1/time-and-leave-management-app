@@ -417,29 +417,29 @@ function VacationListUser() {
 					<Loader />
 				</div>
 			) : (
-				<div id="list-employee">
-					<h3><img src="img/trip.png" alt="ikonka w sidebar" /> {t('vacationlisteq.h3')}</h3>
-					<hr />
-					{error && <p style={{ color: 'red' }}>{t('list.error')}</p>}
-					<h3 style={{ marginTop: '35px' }}>{t('vacationlisteq.request')}</h3>
-					<p>{t('planslist.emplo')}</p>
-					<ul style={{ listStyle: 'none', marginLeft: '20px', padding: 0 }}>
+			<div id="list-employee">
+				<h3><img src="img/trip.png" alt="ikonka w sidebar" /> {t('vacationlisteq.h3')}</h3>
+				<hr />
+				{error && <p style={{ color: 'red' }}>{t('list.error')}</p>}
+				<h3 style={{ marginTop: '35px' }}>{t('vacationlisteq.request')}</h3>
+				<p>{t('planslist.emplo')}</p>
+				<ul style={{ listStyle: 'none', marginLeft: '20px', padding: 0 }}>
 						{filteredUsers.map(user => (
-							<li 
-								key={user._id} 
-								onClick={() => handleUserClick(user._id)} 
-								className="clickable-user-item"
-								style={{ marginBottom: '8px' }}
-								title={t('vacationlisteq.clickToView')}
-							>
-								<span className="user-icon">→</span>
-								<span className="user-text">
-									{user.firstName} {user.lastName} - {user.position || t('newuser.noPosition')}
-								</span>
-								<span className="user-hint">{t('vacationlisteq.clickToView')}</span>
-							</li>
-						))}
-					</ul>
+						<li 
+							key={user._id} 
+							onClick={() => handleUserClick(user._id)} 
+							className="clickable-user-item"
+							style={{ marginBottom: '8px' }}
+							title={t('vacationlisteq.clickToView')}
+						>
+							<span className="user-icon">→</span>
+							<span className="user-text">
+								{user.firstName} {user.lastName} - {user.position || t('newuser.noPosition')}
+							</span>
+							<span className="user-hint">{t('vacationlisteq.clickToView')}</span>
+						</li>
+					))}
+				</ul>
 
 					{/* Kalendarz z wnioskami urlopowymi */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
@@ -580,75 +580,177 @@ function VacationListUser() {
 								},
 								content: {
 									position: 'relative',
-									width: '90%',
+									inset: 'unset',
+									margin: '0',
 									maxWidth: '600px',
 									maxHeight: '80vh',
-									overflow: 'auto',
+									width: '90%',
 									borderRadius: '12px',
-									padding: '24px',
+									padding: '30px',
 									backgroundColor: 'white',
-									boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+									overflow: 'auto',
 								},
 							}}
-							contentLabel={t('planslist.filter') || 'Filtrowanie'}
-						>
-							<h2 style={{ marginTop: 0, marginBottom: '20px', fontSize: '24px', fontWeight: '600' }}>
-								{t('planslist.filter') || 'Filtrowanie'}
-							</h2>
-							
+							contentLabel={t('planslist.filter') || 'Filtrowanie'}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+								<h2 style={{ 
+									margin: 0,
+									color: '#2c3e50',
+									fontSize: '24px',
+									fontWeight: '600'
+								}}>
+									{t('planslist.filter') || 'Filtrowanie'}
+								</h2>
+								<button
+									onClick={() => setFilterModalOpen(false)}
+									style={{
+										background: 'transparent',
+										border: 'none',
+										fontSize: '28px',
+										cursor: 'pointer',
+										color: '#7f8c8d',
+										lineHeight: '1',
+										padding: '0',
+										width: '30px',
+										height: '30px',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center'
+									}}
+									onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
+									onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+									×
+								</button>
+							</div>
+
+							{/* Filtrowanie użytkowników */}
 							<div style={{ marginBottom: '20px' }}>
-								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', cursor: 'pointer' }}>
+								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+									{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
+								</h3>
+								
+								{/* Opcja: Wszyscy z zespołu */}
+								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#e8f4f8' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#3498db' : '#e9ecef' }}>
 									<input
-										type="checkbox"
+										type="radio"
+										name="userFilter"
 										checked={showAllTeam}
 										onChange={handleShowAllTeam}
-										style={{ marginRight: '8px', width: '18px', height: '18px' }}
+										style={{ marginRight: '10px', cursor: 'pointer' }}
 									/>
-									<span style={{ fontSize: '16px' }}>{t('planslist.showAllTeam') || 'Pokaż wszystkich z zespołu'}</span>
+									<span style={{ fontWeight: showAllTeam ? '600' : '400' }}>
+										{t('planslist.allTeamMembers') || 'Wszyscy z zespołu'}
+									</span>
 								</label>
+
+								{/* Filtrowanie po działach */}
+								<div style={{ marginTop: '20px' }}>
+									<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+										{t('planslist.filterByDepartments') || 'Filtrowanie po działach'}
+									</h4>
+									{departments.length > 0 ? (
+										<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+											{departments.map(dept => {
+												const deptName = typeof dept === 'object' ? dept.name : dept
+												const deptKey = typeof dept === 'object' ? (dept._id || dept.name) : dept
+												
+												return (
+													<div key={deptKey} style={{ marginBottom: '10px' }}>
+														<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+															<input
+																type="checkbox"
+																checked={selectedDepartments.includes(deptName)}
+																onChange={() => handleToggleDepartment(deptName)}
+																style={{ marginRight: '8px', cursor: 'pointer' }}
+															/>
+															<span style={{ fontWeight: selectedDepartments.includes(deptName) ? '600' : '400' }}>
+																{deptName}
+															</span>
+															{selectedDepartments.includes(deptName) && (
+																<button
+																	type="button"
+																	onClick={(e) => {
+																		e.stopPropagation()
+																		setExpandedDepartments(prev => ({
+																			...prev,
+																			[deptName]: !prev[deptName]
+																		}))
+																	}}
+																	style={{
+																		marginLeft: '10px',
+																		padding: '2px 8px',
+																		fontSize: '12px',
+																		border: '1px solid #bdc3c7',
+																		borderRadius: '4px',
+																		backgroundColor: 'white',
+																		cursor: 'pointer'
+																	}}
+																>
+																	{expandedDepartments[deptName] ? '▼' : '▶'} {t('planslist.selectUsers') || 'Wybierz użytkowników'}
+																</button>
+															)}
+														</label>
+														{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
+															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #3498db' }}>
+																{usersFromSelectedDepartments
+																	.filter(user => user.department && user.department.includes(deptName))
+																	.map(user => (
+																		<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', cursor: 'pointer' }}>
+																			<input
+																				type="checkbox"
+																				checked={selectedUserIds.includes(user._id)}
+																				onChange={() => handleToggleUser(user._id)}
+																				style={{ marginRight: '8px', cursor: 'pointer' }}
+																			/>
+																			<span style={{ fontSize: '14px' }}>
+																				{user.firstName} {user.lastName} {user.position ? `- ${user.position}` : ''}
+																			</span>
+																		</label>
+																	))}
+															</div>
+														)}
+													</div>
+												)
+											})}
+										</div>
+									) : (
+										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+											{t('planslist.noDepartments') || 'Brak działów'}
+										</p>
+									)}
+								</div>
 							</div>
 
-							{departments.length > 0 && (
-								<div style={{ marginBottom: '20px' }}>
-									<h3 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: '600' }}>
-										{t('planslist.departments') || 'Działy'}
-									</h3>
-									{departments.map(dept => (
-										<label key={dept} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
-											<input
-												type="checkbox"
-												checked={selectedDepartments.includes(dept)}
-												onChange={() => handleToggleDepartment(dept)}
-												style={{ marginRight: '8px', width: '18px', height: '18px' }}
-											/>
-											<span style={{ fontSize: '16px' }}>{dept}</span>
-										</label>
-									))}
-								</div>
-							)}
-
-							<div style={{ marginBottom: '20px' }}>
-								<h3 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: '600' }}>
-									{t('planslist.employees') || 'Pracownicy'}
-								</h3>
-								<div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-									{users.map(user => (
-										<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
-											<input
-												type="checkbox"
-												checked={selectedUserIds.includes(user._id)}
-												onChange={() => handleToggleUser(user._id)}
-												style={{ marginRight: '8px', width: '18px', height: '18px' }}
-											/>
-											<span style={{ fontSize: '16px' }}>
-												{user.firstName} {user.lastName} {user.position ? `- ${user.position}` : ''}
-											</span>
-										</label>
-									))}
+							{/* Filtrowanie po użytkownikach */}
+							<div style={{ marginBottom: '30px' }}>
+								<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+									{t('planslist.filterByUsers') || 'Filtrowanie po użytkownikach'}
+								</h4>
+								<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+									{users.length > 0 ? (
+										users.map(user => (
+											<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
+												<input
+													type="checkbox"
+													checked={selectedUserIds.includes(user._id)}
+													onChange={() => handleToggleUser(user._id)}
+													style={{ marginRight: '8px', cursor: 'pointer' }}
+												/>
+												<span style={{ fontSize: '14px', fontWeight: selectedUserIds.includes(user._id) ? '600' : '400' }}>
+													{user.firstName} {user.lastName} {user.position ? `- ${user.position}` : ''}
+												</span>
+											</label>
+										))
+									) : (
+										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+											{t('planslist.noUsers') || 'Brak użytkowników'}
+										</p>
+									)}
 								</div>
 							</div>
 
-							<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
+							{/* Przyciski akcji */}
+							<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', gap: '10px' }}>
 								<button
 									onClick={handleResetFilters}
 									style={{
@@ -686,7 +788,7 @@ function VacationListUser() {
 							</div>
 						</Modal>
 					)}
-				</div>
+			</div>
 			)}
 		</>
 	)

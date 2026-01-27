@@ -897,11 +897,11 @@ select {
 	.leave-calendar-plans-one-employee h3 {
 		padding-left: 15px;
 	}
-	.newbutton-confirmmonth {
+	/* .newbutton-confirmmonth {
 		position: absolute;
 		top: 20px;
 		right: 20px;
-	}
+	} */
 	#leave-planner, #list-employee {
 		margin-bottom: 10px !important;
 	}
@@ -1374,7 +1374,7 @@ button, .btn {
 
 @media (min-width: 1200px) {
 	.resume-month-work {
-		margin-top: 106px;
+		margin-top: 480px;
 	}
 	.small-mt {
 		margin-top: 60px !important;
@@ -3083,6 +3083,24 @@ body:has(.pwa-navigation-bar) .container {
 #calendars-works-review .resume-month-work {
 	padding-top: 30px;
 }
+
+/* Move work session list to bottom on mobile */
+.calendar-my-work {
+	display: flex;
+	flex-direction: column;
+}
+
+.calendar-my-work .col-xl-9 {
+	order: 1;
+}
+
+.calendar-my-work .resume-month-work {
+	order: 2;
+}
+
+.calendar-my-work .work-session-list-mobile {
+	order: 3;
+}
 }
 
 .event-notes span {
@@ -3196,4 +3214,11 @@ body:has(.pwa-navigation-bar) .container {
 	background-color: #e2e3e5 !important;
 	border-color: #6c757d !important;
 	color: #383d41 !important;
+}
+
+.work-session-list-mobile {
+	width: 100%;
+}
+.newbutton-confirmmonth {
+	margin-bottom: 15px !important;
 }

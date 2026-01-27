@@ -10,6 +10,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications'
 import Modal from 'react-modal'
 import { getPolishHolidaysForYear } from '../../utils/holidays'
 import { calculateHours } from '../../utils/timeHelpers'
+import QRCodeGenerator from '../qr/QRCodeGenerator'
 
 function Settings() {
 	const { t, i18n } = useTranslation()
@@ -647,6 +648,11 @@ function Settings() {
 							</>
 						)}
 					</div>
+				)}
+
+				{/* QR Code Generator Section - tylko dla Admin i HR */}
+				{canEditSettings && (
+					<QRCodeGenerator />
 				)}
 
 				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}

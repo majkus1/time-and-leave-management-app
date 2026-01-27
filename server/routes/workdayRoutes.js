@@ -15,4 +15,13 @@ router.delete('/:id', authenticateToken, workdayController.deleteWorkday) // DEL
 router.get('/user/:userId', authenticateToken, workdayController.getUserWorkdays) // GET /api/workdays/user/:userId
 router.get('/team', authenticateToken, workdayController.getAllTeamWorkdays) // GET /api/workdays/team
 
+// Timer routes
+router.post('/timer/start', authenticateToken, workdayController.startTimer)
+router.post('/timer/pause', authenticateToken, workdayController.pauseTimer)
+router.post('/timer/stop', authenticateToken, workdayController.stopTimer)
+router.put('/timer/update', authenticateToken, workdayController.updateActiveTimer)
+router.get('/timer/active', authenticateToken, workdayController.getActiveTimer)
+router.get('/timer/sessions', authenticateToken, workdayController.getTodaySessions)
+router.delete('/timer/sessions/:workdayId/:sessionId', authenticateToken, workdayController.deleteSession)
+
 module.exports = router

@@ -73,6 +73,8 @@ export const useCreateWorkday = () => {
 		onSuccess: () => {
 			// Invalidate wszystkie workdays queries, żeby pobrać prawdziwe dane z serwera
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			// Also invalidate timer sessions queries in case workday contains sessions
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 		},
 	})
 }
@@ -114,6 +116,8 @@ export const useUpdateWorkday = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			// Also invalidate timer sessions queries in case workday contains sessions
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 		},
 	})
 }
@@ -153,6 +157,8 @@ export const useDeleteWorkday = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			// Also invalidate timer sessions queries to update the session list immediately
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 		},
 	})
 }

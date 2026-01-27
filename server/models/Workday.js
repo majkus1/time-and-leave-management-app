@@ -25,6 +25,66 @@ const workdaySchema = new mongoose.Schema({
 	notes: {
 		type: String,
 	},
+	timeEntries: [{
+		startTime: {
+			type: Date,
+			required: true
+		},
+		endTime: {
+			type: Date,
+			default: null
+		},
+		isBreak: {
+			type: Boolean,
+			default: false
+		},
+		isOvertime: {
+			type: Boolean,
+			default: false
+		},
+		workDescription: {
+			type: String,
+			default: ''
+		},
+		taskId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Task',
+			default: null
+		},
+		qrCodeId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'QRCode',
+			default: null
+		}
+	}],
+	activeTimer: {
+		startTime: {
+			type: Date,
+			default: null
+		},
+		isBreak: {
+			type: Boolean,
+			default: false
+		},
+		isOvertime: {
+			type: Boolean,
+			default: false
+		},
+		workDescription: {
+			type: String,
+			default: ''
+		},
+		taskId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Task',
+			default: null
+		},
+		qrCodeId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'QRCode',
+			default: null
+		}
+	}
 })
 
 module.exports = conn => conn.models.Workday || conn.model('Workday', workdaySchema)
