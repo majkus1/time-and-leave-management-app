@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
@@ -42,11 +42,16 @@ const TeamRegistration = () => {
 		e.preventDefault()
 		setLoading(true)
 		setError('')
+		console.log('[TeamRegistration] ===== FORM SUBMITTED =====')
+		// Nie loguj hasła ze względów bezpieczeństwa
+		const { adminPassword, ...formDataWithoutPassword } = formData
+		console.log('[TeamRegistration] Form data (password hidden):', formDataWithoutPassword)
 
 		try {
 			// Accept TERMS and PRIVACY during registration
 			// DPA will be automatically accepted when first employee is added
 			const acceptedDocuments = ['TERMS', 'PRIVACY'];
+			console.log('[TeamRegistration] Sending POST request to:', `${API_URL}/api/teams/register`)
 			const response = await axios.post(`${API_URL}/api/teams/register`, {
 				...formData,
 				acceptedDocuments
@@ -54,13 +59,32 @@ const TeamRegistration = () => {
 				withCredentials: true
 			})
 
-			if (response.data.success) {
-				// Odśwież wszystkie dane użytkownika z serwera
-				await refreshUserData()
+			console.log('[TeamRegistration] ===== RESPONSE RECEIVED =====')
+			console.log('[TeamRegistration] Full response:', response)
+			console.log('[TeamRegistration] response.data:', response.data)
+			console.log('[TeamRegistration] response.data.success:', response.data?.success)
 
-				await showAlert(t('newteam.successMessage'))
+			if (response.data && response.data.success) {
+				console.log('[TeamRegistration] ===== SUCCESS BLOCK ENTERED =====')
+				console.log('[TeamRegistration] Team created successfully, starting success flow...')
 				
+				// Odśwież wszystkie dane użytkownika z serwera
+				console.log('[TeamRegistration] Calling refreshUserData()...')
+				await refreshUserData()
+				console.log('[TeamRegistration] User data refreshed')
+
+				// Zapisz flagę w sessionStorage (location.state może być tracone podczas przekierowań)
+				console.log('[TeamRegistration] Setting showTeamSuccessModal flag in sessionStorage...')
+				sessionStorage.setItem('showTeamSuccessModal', 'true')
+				console.log('[TeamRegistration] Flag set in sessionStorage')
+
+				// Przekieruj na dashboard
+				console.log('[TeamRegistration] Navigating to dashboard...')
 				navigate('/dashboard')
+			} else {
+				console.log('[TeamRegistration] ===== SUCCESS IS FALSE OR MISSING =====')
+				console.log('[TeamRegistration] response.data:', response.data)
+				console.log('[TeamRegistration] response.data?.success:', response.data?.success)
 			}
 		} catch (error) {
 			console.error('Team registration error:', error)
@@ -99,6 +123,9 @@ const TeamRegistration = () => {
 		}
 	}
 
+	// Debug: loguj stan komponentu przy każdym renderze
+	console.log('[TeamRegistration] Render - loggedIn:', loggedIn, 'isCheckingAuth:', isCheckingAuth)
+
 	// Jeśli sprawdzamy autoryzację, pokaż loader
 	if (isCheckingAuth) {
 		return (
@@ -106,12 +133,6 @@ const TeamRegistration = () => {
 				<Loader />
 			</div>
 		)
-	}
-
-	// Jeśli użytkownik jest już zalogowany, przekieruj
-	if (loggedIn) {
-		navigate('/dashboard', { replace: true })
-		return null
 	}
 
 	return (
@@ -444,6 +465,7 @@ const TeamRegistration = () => {
 					</div>
 				</div>
 			)}
+
 		</div>
 	)
 }

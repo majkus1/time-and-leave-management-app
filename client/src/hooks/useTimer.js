@@ -153,8 +153,13 @@ export const useDeleteSession = () => {
 			return response.data
 		},
 		onSuccess: () => {
+			// Invalidate all related queries to ensure calendar and session list update immediately
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user'] })
+			// Force refetch to ensure immediate update
+			queryClient.refetchQueries({ queryKey: ['workdays'] })
 		},
 	})
 }

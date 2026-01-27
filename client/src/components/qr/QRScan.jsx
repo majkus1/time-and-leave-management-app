@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import { useVerifyQRCode, useRegisterTimeEntry } from '../../hooks/useQRCode'
+import { useSettings } from '../../hooks/useSettings'
 import Loader from '../Loader'
 import axios from 'axios'
 import { API_URL } from '../../config'
@@ -16,12 +17,20 @@ function QRScan() {
 	const { showAlert } = useAlert()
 	const { data: qrData, isLoading: verifying } = useVerifyQRCode(code)
 	const registerTimeEntry = useRegisterTimeEntry()
+	const { data: settings } = useSettings()
 	const [registering, setRegistering] = useState(false)
 	const [registered, setRegistered] = useState(false)
 	const [entryType, setEntryType] = useState(null)
 
 	useEffect(() => {
 		if (!code) {
+			navigate('/dashboard')
+			return
+		}
+
+		// Check if timer is enabled
+		if (settings && settings.timerEnabled === false) {
+			showAlert(t('qrScan.timerDisabled') || 'Funkcja QR i licznika czasu pracy jest wyłączona')
 			navigate('/dashboard')
 			return
 		}
@@ -36,9 +45,16 @@ function QRScan() {
 		if (loggedIn && qrData && qrData.valid && !registered && !registering) {
 			handleRegister()
 		}
-	}, [code, loggedIn, qrData, registered, registering])
+	}, [code, loggedIn, qrData, registered, registering, settings, showAlert, t, navigate])
 
 	const handleRegister = async () => {
+		// Check if timer is enabled
+		if (settings && settings.timerEnabled === false) {
+			await showAlert(t('qrScan.timerDisabled') || 'Funkcja QR i licznika czasu pracy jest wyłączona')
+			navigate('/dashboard')
+			return
+		}
+
 		if (!loggedIn) {
 			navigate(`/login?redirect=/qr-scan/${code}`)
 			return

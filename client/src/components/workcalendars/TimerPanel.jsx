@@ -27,6 +27,8 @@ function TimerPanel() {
 	
 	const [workDescription, setWorkDescription] = useState('')
 	const [editingDescription, setEditingDescription] = useState('')
+	const [editingTaskId, setEditingTaskId] = useState('')
+	const [editingWorkDescription, setEditingWorkDescription] = useState('')
 	const [selectedTaskId, setSelectedTaskId] = useState('')
 	const [selectedWorkDescription, setSelectedWorkDescription] = useState('')
 	const [isOvertime, setIsOvertime] = useState(false)
@@ -38,6 +40,7 @@ function TimerPanel() {
 	const [isSplitting, setIsSplitting] = useState(false)
 	const [newSessionDescription, setNewSessionDescription] = useState('')
 	const [newSessionTaskId, setNewSessionTaskId] = useState('')
+	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
 
 	// Get current month and year
 	const currentDate = new Date()
@@ -239,6 +242,14 @@ function TimerPanel() {
 			setIsOvertime(false)
 			setIsEditing(false)
 			await showAlert(t('timer.stopped') || 'Timer zatrzymany')
+			
+			// Scroll to work sessions section after stopping timer
+			setTimeout(() => {
+				const sessionsHeader = document.getElementById('work-sessions-header')
+				if (sessionsHeader) {
+					sessionsHeader.scrollIntoView({ behavior: 'smooth', block: 'start' })
+				}
+			}, 100)
 		} catch (error) {
 			console.error('Error stopping timer:', error)
 			await showAlert(error.response?.data?.message || t('timer.stopError') || 'Błąd podczas zatrzymywania timera')
@@ -419,6 +430,67 @@ function TimerPanel() {
 									marginBottom: '10px'
 								}}
 							/>
+							<select
+								value={editingTaskId ? `task_${editingTaskId}` : (editingWorkDescription ? `work_${editingWorkDescription}` : '')}
+								onChange={(e) => {
+									const value = e.target.value
+									
+									// Check if it's a task ID (starts with task_)
+									if (value.startsWith('task_')) {
+										const taskId = value.replace('task_', '')
+										setEditingTaskId(taskId)
+										setEditingWorkDescription('')
+										const task = allTasks.find(t => t._id === taskId)
+										if (task) {
+											setEditingDescription(task.title)
+										}
+									} 
+									// Check if it's a work description (starts with work_)
+									else if (value.startsWith('work_')) {
+										const workDesc = value.replace('work_', '')
+										setEditingWorkDescription(workDesc)
+										setEditingTaskId('')
+										setEditingDescription(workDesc)
+									}
+									// Empty selection
+									else {
+										setEditingTaskId('')
+										setEditingWorkDescription('')
+									}
+								}}
+								style={{
+									width: '100%',
+									padding: '10px 15px',
+									border: '1px solid #ddd',
+									borderRadius: '6px',
+									fontSize: '14px',
+									marginBottom: '10px'
+								}}
+							>
+								<option value="">{t('timer.noTask') || '-- Brak zadania --'}</option>
+								
+								{/* Tasks section */}
+								{allTasks.length > 0 && (
+									<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
+										{allTasks.map(task => (
+											<option key={`task_${task._id}`} value={`task_${task._id}`}>
+												{task.title}
+											</option>
+										))}
+									</optgroup>
+								)}
+								
+								{/* Work descriptions section */}
+								{workDescriptions.length > 0 && (
+									<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
+										{workDescriptions.map((desc, idx) => (
+											<option key={`work_${idx}`} value={`work_${desc}`}>
+												{desc}
+											</option>
+										))}
+									</optgroup>
+								)}
+							</select>
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
 									onClick={handleUpdateDescription}
@@ -442,6 +514,8 @@ function TimerPanel() {
 									onClick={() => {
 										setIsEditing(false)
 										setEditingDescription(activeTimer.workDescription || '')
+										setEditingTaskId('')
+										setEditingWorkDescription('')
 									}}
 									style={{
 										flex: 1,
@@ -462,7 +536,12 @@ function TimerPanel() {
 					) : (
 						<>
 							<button
-								onClick={() => setIsEditing(true)}
+								onClick={() => {
+									setIsEditing(true)
+									setEditingDescription(activeTimer.workDescription || '')
+									setEditingTaskId(activeTimer.taskId || '')
+									setEditingWorkDescription('')
+								}}
 								style={{
 									width: '100%',
 									backgroundColor: '#3498db',
@@ -503,6 +582,67 @@ function TimerPanel() {
 											marginBottom: '10px'
 										}}
 									/>
+									<select
+										value={newSessionTaskId ? `task_${newSessionTaskId}` : (newSessionWorkDescription ? `work_${newSessionWorkDescription}` : '')}
+										onChange={(e) => {
+											const value = e.target.value
+											
+											// Check if it's a task ID (starts with task_)
+											if (value.startsWith('task_')) {
+												const taskId = value.replace('task_', '')
+												setNewSessionTaskId(taskId)
+												setNewSessionWorkDescription('')
+												const task = allTasks.find(t => t._id === taskId)
+												if (task) {
+													setNewSessionDescription(task.title)
+												}
+											} 
+											// Check if it's a work description (starts with work_)
+											else if (value.startsWith('work_')) {
+												const workDesc = value.replace('work_', '')
+												setNewSessionWorkDescription(workDesc)
+												setNewSessionTaskId('')
+												setNewSessionDescription(workDesc)
+											}
+											// Empty selection
+											else {
+												setNewSessionTaskId('')
+												setNewSessionWorkDescription('')
+											}
+										}}
+										style={{
+											width: '100%',
+											padding: '10px 15px',
+											border: '1px solid #ddd',
+											borderRadius: '6px',
+											fontSize: '14px',
+											marginBottom: '10px'
+										}}
+									>
+										<option value="">{t('timer.noTask') || '-- Brak zadania --'}</option>
+										
+										{/* Tasks section */}
+										{allTasks.length > 0 && (
+											<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
+												{allTasks.map(task => (
+													<option key={`task_${task._id}`} value={`task_${task._id}`}>
+														{task.title}
+													</option>
+												))}
+											</optgroup>
+										)}
+										
+										{/* Work descriptions section */}
+										{workDescriptions.length > 0 && (
+											<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
+												{workDescriptions.map((desc, idx) => (
+													<option key={`work_${idx}`} value={`work_${desc}`}>
+														{desc}
+													</option>
+												))}
+											</optgroup>
+										)}
+									</select>
 									<div style={{ display: 'flex', gap: '10px' }}>
 										<button
 											onClick={async () => {
@@ -515,6 +655,7 @@ function TimerPanel() {
 													setIsSplitting(false)
 													setNewSessionDescription('')
 													setNewSessionTaskId('')
+													setNewSessionWorkDescription('')
 													await showAlert(t('timer.sessionSaved') || 'Sesja zapisana, kontynuacja z nowym opisem')
 												} catch (error) {
 													console.error('Error splitting session:', error)
@@ -542,6 +683,7 @@ function TimerPanel() {
 												setIsSplitting(false)
 												setNewSessionDescription('')
 												setNewSessionTaskId('')
+												setNewSessionWorkDescription('')
 											}}
 											style={{
 												flex: 1,
@@ -680,7 +822,7 @@ function TimerPanel() {
 							fontWeight: '500',
 							color: '#2c3e50'
 						}}>
-							{t('timer.workDescription') || 'Nad czym pracujesz?'}
+							{t('timer.workDescription') || 'Nad czym pracujesz?'} {t('timer.optional') || '(opcjonalnie)'}
 						</label>
 						<input
 							type="text"
@@ -928,9 +1070,23 @@ function TimerPanel() {
 						margin: 0,
 						color: '#4b5563',
 						fontSize: '15px',
-						lineHeight: '1.6'
+						lineHeight: '1.6',
+						marginBottom: '15px'
 					}}>
-						{t('timer.infoModal.configurationDesc') || 'Administratorzy i HR mogą skonfigurować kody QR w ustawieniach zespołu (Settings). Tam możesz wygenerować kody QR dla różnych lokalizacji (np. różne wejścia).'}
+						{t('timer.infoModal.configurationDesc') || 'Administratorzy i HR mogą skonfigurować kody QR w ustawieniach zespołu (Settings).'}
+					</p>
+					<p style={{
+						margin: 0,
+						color: '#dc2626',
+						fontSize: '15px',
+						fontWeight: '600',
+						lineHeight: '1.6',
+						padding: '12px',
+						backgroundColor: '#fef2f2',
+						borderRadius: '6px',
+						borderLeft: '4px solid #dc2626'
+					}}>
+						{t('timer.infoModal.canDisable') || 'Administratorzy i HR mogą wyłączyć funkcję timera w ustawieniach zespołu, jeśli nie jest potrzebna.'}
 					</p>
 				</div>
 

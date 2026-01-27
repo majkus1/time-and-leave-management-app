@@ -15,6 +15,7 @@ import { useUserWorkdays } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
+import { useActiveTimer } from '../../hooks/useTimer'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import WorkSessionList from './WorkSessionList'
@@ -80,6 +81,15 @@ function UserCalendar() {
 		return t('workcalendar.overtime5plus')
 	}
 
+	// Funkcja do zaokrąglania godzin do pół godziny (0.5)
+	const roundToHalfHour = (hours) => {
+		if (hours === null || hours === undefined) return null
+		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
+		if (isNaN(numHours)) return null
+		// Zaokrąglij do najbliższej pół godziny
+		return Math.round(numHours * 2) / 2
+	}
+
 	// Funkcja do formatowania godzin - usuwa niepotrzebne zera dziesiętne (np. 8.5 zamiast 8.50, 8 zamiast 8.0)
 	const formatHours = (hours) => {
 		if (hours === null || hours === undefined) return ''
@@ -141,6 +151,7 @@ function UserCalendar() {
 	)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(userId)
 	const { data: settings } = useSettings()
+	const { data: activeTimer } = useActiveTimer()
 
 	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
@@ -859,10 +870,12 @@ function UserCalendar() {
 										const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 										
 										if (hasHoursWorked) {
-											// Wpis z godzinami pracy
-											title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
+											// Wpis z godzinami pracy - zaokrąglamy do pół godziny dla eventów kalendarza
+											const roundedHours = roundToHalfHour(day.hoursWorked)
+											title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
 											if (day.additionalWorked) {
-												title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
+												const roundedAdditional = roundToHalfHour(day.additionalWorked)
+												title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
 											}
 											if (day.notes) {
 												title += ` | ${day.notes}`
@@ -961,7 +974,7 @@ function UserCalendar() {
 								height="auto"
 							/>
 						</div>
-						<div className="col-xl-3 resume-month-work small-mt">
+						<div className={`col-xl-3 resume-month-work small-mt ${settings?.timerEnabled !== false ? 'resume-month-work--with-timer' : ''} ${activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}>
 				<h3 className="resumecales h3resume">{t('workcalendar.allfrommonth')}</h3>
 				<p>
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
@@ -993,7 +1006,7 @@ function UserCalendar() {
 
 			{/* Work Session List */}
 			<div className="work-session-list-mobile col-xl-9">
-				<WorkSessionList month={currentMonth} year={currentYear} userId={userId} />
+				{settings?.timerEnabled !== false && <WorkSessionList month={currentMonth} year={currentYear} userId={userId} />}
 			</div>
 			</div>
 					)}

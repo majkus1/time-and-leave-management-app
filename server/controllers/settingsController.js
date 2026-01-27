@@ -19,7 +19,7 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
 	try {
-		const { workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays, workHours, leaveRequestTypes, leaveCalculationMode, leaveHoursPerDay } = req.body
+		const { workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays, workHours, leaveRequestTypes, leaveCalculationMode, leaveHoursPerDay, timerEnabled } = req.body
 		
 		// Sprawdź uprawnienia - tylko Admin i HR
 		const requestingUser = await require('../models/user')(firmDb).findById(req.user.userId)
@@ -171,6 +171,11 @@ exports.updateSettings = async (req, res) => {
 		}
 		if (leaveHoursPerDay !== undefined && typeof leaveHoursPerDay === 'number' && leaveHoursPerDay >= 0.5 && leaveHoursPerDay <= 24) {
 			settings.leaveHoursPerDay = leaveHoursPerDay
+		}
+		
+		// Obsługa timerEnabled
+		if (timerEnabled !== undefined && typeof timerEnabled === 'boolean') {
+			settings.timerEnabled = timerEnabled
 		}
 
 		await settings.save()

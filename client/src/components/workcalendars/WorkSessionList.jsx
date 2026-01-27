@@ -157,10 +157,12 @@ function WorkSessionList({ month, year, userId }) {
 	const formatTime = (dateString) => {
 		if (!dateString) return ''
 		const date = new Date(dateString)
-		return date.toLocaleTimeString(i18n.resolvedLanguage, {
-			hour: '2-digit',
-			minute: '2-digit'
-		})
+		// Use local time methods - MongoDB stores dates in UTC, but JavaScript Date
+		// automatically converts to local timezone when creating Date object
+		// This ensures we display the correct local time
+		const hours = String(date.getHours()).padStart(2, '0')
+		const minutes = String(date.getMinutes()).padStart(2, '0')
+		return `${hours}:${minutes}`
 	}
 
 	const calculateDuration = (startTime, endTime) => {
@@ -254,12 +256,14 @@ function WorkSessionList({ month, year, userId }) {
 				flexWrap: 'wrap',
 				gap: '15px'
 			}}>
-				<h3 style={{
-					color: '#2c3e50',
-					margin: 0,
-					fontSize: '18px',
-					fontWeight: '600'
-				}}>
+				<h3 
+					id="work-sessions-header"
+					style={{
+						color: '#2c3e50',
+						margin: 0,
+						fontSize: '18px',
+						fontWeight: '600'
+					}}>
 					{month !== undefined && year !== undefined 
 						? (() => {
 							const monthStr = new Date(year, month).toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })

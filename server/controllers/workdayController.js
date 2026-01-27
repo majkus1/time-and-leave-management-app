@@ -417,6 +417,8 @@ exports.stopTimer = async (req, res) => {
 		// Update time range string
 		if (!workday.activeTimer.isBreak) {
 			const formatTime = (date) => {
+				// Use local time methods - JavaScript Date automatically converts UTC to local time
+				// This ensures consistency with frontend display
 				const hours = date.getHours().toString().padStart(2, '0')
 				const minutes = date.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
@@ -570,6 +572,8 @@ exports.splitSession = async (req, res) => {
 		// Update time range string
 		if (!workday.activeTimer.isBreak) {
 			const formatTime = (date) => {
+				// Use local time methods - JavaScript Date automatically converts UTC to local time
+				// This ensures consistency with frontend display
 				const hours = date.getHours().toString().padStart(2, '0')
 				const minutes = date.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
@@ -642,6 +646,8 @@ exports.deleteSession = async (req, res) => {
 		// Remove time range from realTimeDayWorked if exists
 		if (session.startTime && session.endTime && !session.isBreak) {
 			const formatTime = (date) => {
+				// Use local time methods - JavaScript Date automatically converts UTC to local time
+				// This ensures consistency with frontend display
 				const hours = date.getHours().toString().padStart(2, '0')
 				const minutes = date.getMinutes().toString().padStart(2, '0')
 				return `${hours}:${minutes}`
@@ -664,6 +670,23 @@ exports.deleteSession = async (req, res) => {
 
 		// Remove the session using pull
 		workday.timeEntries.pull(sessionId)
+		
+		// Check if workday has no data left - if so, delete it
+		const hasNoData = 
+			(!workday.hoursWorked || workday.hoursWorked === 0) &&
+			(!workday.additionalWorked || workday.additionalWorked === 0) &&
+			(!workday.realTimeDayWorked || workday.realTimeDayWorked.trim() === '') &&
+			(!workday.absenceType || workday.absenceType.trim() === '') &&
+			(!workday.notes || workday.notes.trim() === '') &&
+			(!workday.timeEntries || workday.timeEntries.length === 0) &&
+			(!workday.activeTimer || !workday.activeTimer.startTime)
+		
+		if (hasNoData) {
+			// Delete the workday if it has no data
+			await Workday.findByIdAndDelete(workdayId)
+			return res.json({ message: 'Sesja usunięta pomyślnie. Workday został usunięty, ponieważ nie zawierał już żadnych danych.' })
+		}
+		
 		await workday.save()
 
 		res.json({ message: 'Sesja usunięta pomyślnie' })

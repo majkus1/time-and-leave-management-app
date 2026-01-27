@@ -10,6 +10,7 @@ import { useWorkdays, useCreateWorkday, useDeleteWorkday, useUpdateWorkday } fro
 import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
+import { useActiveTimer } from '../../hooks/useTimer'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import TimerPanel from './TimerPanel'
@@ -125,6 +126,15 @@ function MonthlyCalendar() {
 		return t('workcalendar.overtime5plus')
 	}
 
+	// Funkcja do zaokrąglania godzin do pół godziny (0.5)
+	const roundToHalfHour = (hours) => {
+		if (hours === null || hours === undefined) return null
+		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
+		if (isNaN(numHours)) return null
+		// Zaokrąglij do najbliższej pół godziny
+		return Math.round(numHours * 2) / 2
+	}
+
 	// Funkcja do formatowania godzin - usuwa niepotrzebne zera dziesiętne (np. 8.5 zamiast 8.50, 8 zamiast 8.0)
 	const formatHours = (hours) => {
 		if (hours === null || hours === undefined) return ''
@@ -144,6 +154,7 @@ function MonthlyCalendar() {
 	)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
+	const { data: activeTimer } = useActiveTimer()
 	const createWorkdayMutation = useCreateWorkday()
 	const deleteWorkdayMutation = useDeleteWorkday()
 	const updateWorkdayMutation = useUpdateWorkday()
@@ -392,11 +403,23 @@ function MonthlyCalendar() {
 		const isWeekendDayLocal = !workOnWeekends && isWeekendDate // Weekend dzień tylko gdy zespół nie pracuje w weekendy
 		setIsWeekendDay(isWeekendDayLocal)
 		
-		// Find existing workdays for this date (excluding realTime entries)
+		// Find existing workdays for this date (excluding empty workdays)
 		const clickedDateStr = clickedDateObj.toDateString()
 		const existingWorkdays = workdays.filter(day => {
 			const dayDate = new Date(day.date)
-			return dayDate.toDateString() === clickedDateStr
+			if (dayDate.toDateString() !== clickedDateStr) return false
+			
+			// Filter out empty workdays (no data at all)
+			const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+			const hasAdditionalWorked = day.additionalWorked && day.additionalWorked > 0
+			const hasRealTimeDayWorked = day.realTimeDayWorked && day.realTimeDayWorked.trim() !== ''
+			const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+			const hasNotes = day.notes && day.notes.trim() !== ''
+			const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
+			const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
+			
+			// Only include workdays that have some data
+			return hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries || hasActiveTimer
 		})
 		
 		// Auto-fill work hours from settings if no existing entries and not a holiday and not a weekend (when workOnWeekends = false)
@@ -818,9 +841,9 @@ function MonthlyCalendar() {
 				<hr />
 				
 				{/* Timer Panel */}
-				<TimerPanel />
+			{settings?.timerEnabled !== false && <TimerPanel />}
 
-				<div className="calendar-controls flex flex-wrap items-center" style={{ gap: '5px' }}>
+			<div className="calendar-controls flex flex-wrap items-center" style={{ gap: '5px' }}>
 					<select
 						value={currentMonth}
 						onChange={handleMonthSelect}
@@ -890,7 +913,21 @@ function MonthlyCalendar() {
 					firstDay={1}
 					showNonCurrentDates={false}
 					events={[
-						...workdays.map(day => {
+						...workdays
+							.filter(day => {
+								// Filter out empty workdays (no data at all)
+								const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+								const hasAdditionalWorked = day.additionalWorked && day.additionalWorked > 0
+								const hasRealTimeDayWorked = day.realTimeDayWorked && day.realTimeDayWorked.trim() !== ''
+								const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+								const hasNotes = day.notes && day.notes.trim() !== ''
+								const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
+								const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
+								
+								// Only show workdays that have some data
+								return hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries || hasActiveTimer
+							})
+							.map(day => {
 							// Określ tytuł w zależności od typu wpisu
 							let title = ''
 							const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
@@ -898,10 +935,12 @@ function MonthlyCalendar() {
 							const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 							
 							if (hasHoursWorked) {
-								// Wpis z godzinami pracy
-								title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
+								// Wpis z godzinami pracy - zaokrąglamy do pół godziny dla eventów kalendarza
+								const roundedHours = roundToHalfHour(day.hoursWorked)
+								title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
 								if (day.additionalWorked) {
-									title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
+									const roundedAdditional = roundToHalfHour(day.additionalWorked)
+									title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
 								}
 								if (day.notes) {
 									title += ` | ${day.notes}`
@@ -1005,7 +1044,7 @@ function MonthlyCalendar() {
 				
 				
 			</div>
-			<div className="col-xl-3 resume-month-work">
+			<div className={`col-xl-3 resume-month-work ${settings?.timerEnabled !== false ? 'resume-month-work--with-timer' : ''} ${activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}>
 				<h3 className="resumecales h3resume" style={{ marginTop: '20px' }}>
 					{t('workcalendar.allfrommonth')} {new Date(currentYear, currentMonth)
 						.toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })
@@ -1128,8 +1167,8 @@ function MonthlyCalendar() {
 
 			{/* Work Session List */}
 			<div className="work-session-list-mobile col-xl-9">
-					<WorkSessionList month={currentMonth} year={currentYear} />
-				</div>
+				{settings?.timerEnabled !== false && <WorkSessionList month={currentMonth} year={currentYear} />}
+			</div>
 
 			<Modal
 				isOpen={modalIsOpen}

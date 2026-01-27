@@ -1374,7 +1374,20 @@ button, .btn {
 
 @media (min-width: 1200px) {
 	.resume-month-work {
-		margin-top: 480px;
+		margin-top: 106px;
+	}
+
+	/* Gdy funkcja QR + licznik czasu pracy jest włączona
+	   (dodajemy klasę .resume-month-work--with-timer po stronie React),
+	   kolumna z podsumowaniem miesiąca schodzi niżej żeby zrobić miejsce
+	   na panel timera i listę sesji. */
+	.resume-month-work.resume-month-work--with-timer {
+		margin-top: 500px;
+	}
+
+	/* Gdy timer jest aktywny (liczy czas), kolumna schodzi jeszcze niżej */
+	.resume-month-work.resume-month-work--timer-active {
+		margin-top: 600px;
 	}
 	.small-mt {
 		margin-top: 60px !important;

@@ -101,6 +101,12 @@ const settingsSchema = new mongoose.Schema({
 		min: 0.5,
 		max: 24,
 		required: true
+	},
+	// Włącz/wyłącz funkcję QR i licznika czasu pracy
+	timerEnabled: {
+		type: Boolean,
+		default: true,
+		required: true
 	}
 }, {
 	timestamps: true

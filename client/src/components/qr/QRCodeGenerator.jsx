@@ -95,17 +95,6 @@ function QRCodeGenerator() {
 				flexWrap: 'wrap'
 			}}>
 				<span>📱 {t('settings.qrCodeTitle') || 'Kody QR - Wejście/Wyjście'}</span>
-				<span style={{
-					fontSize: '12px',
-					fontWeight: '400',
-					color: '#e67e22',
-					backgroundColor: '#fff3e0',
-					padding: '4px 8px',
-					borderRadius: '4px',
-					border: '1px solid #ffb74d'
-				}}>
-					{t('settings.qrCodeModernizationInfo') || 'Trwają prace modernizacyjne nad funkcją - koniec prac 28.01'}
-				</span>
 			</h3>
 
 			<p style={{ color: '#7f8c8d', marginBottom: '20px', fontSize: '14px' }}>

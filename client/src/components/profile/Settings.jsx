@@ -26,6 +26,7 @@ function Settings() {
 	const [newHolidayName, setNewHolidayName] = useState('')
 	const [leaveCalculationMode, setLeaveCalculationMode] = useState('days')
 	const [leaveHoursPerDay, setLeaveHoursPerDay] = useState(8)
+	const [timerEnabled, setTimerEnabled] = useState(true)
 	
 	// State for work hours (tablica konfiguracji)
 	const [workHoursList, setWorkHoursList] = useState([])
@@ -87,6 +88,7 @@ function Settings() {
 			setCustomHolidays(Array.isArray(settings.customHolidays) ? settings.customHolidays : [])
 			setLeaveCalculationMode(settings.leaveCalculationMode || 'days')
 			setLeaveHoursPerDay(settings.leaveHoursPerDay || 8)
+			setTimerEnabled(settings.timerEnabled !== undefined ? settings.timerEnabled : true)
 			
 			// Initialize work hours (obsługa starego formatu dla kompatybilności wstecznej)
 			if (settings.workHours) {
@@ -179,7 +181,10 @@ function Settings() {
 				includePolishHolidays,
 				includeCustomHolidays,
 				customHolidays,
-				workHours: workHoursData
+				workHours: workHoursData,
+				leaveCalculationMode,
+				leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
+				timerEnabled
 			})
 			await showAlert(t('settings.saveSuccess'))
 		} catch (error) {
@@ -654,9 +659,103 @@ function Settings() {
 					</div>
 				)}
 
+				{/* Komunikat przypominający o zapisywaniu zmian - tylko dla Admin i HR */}
+				{canEditSettings && (
+					<div style={{ 
+						backgroundColor: '#fff3e0',
+						borderLeft: '4px solid #ff9800',
+						borderRadius: '8px',
+						padding: '16px 20px',
+						marginBottom: '20px',
+						boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+					}}>
+						<p style={{ 
+							margin: 0,
+							color: '#e67e22',
+							fontSize: '15px',
+							fontWeight: '500',
+							lineHeight: '1.5',
+							display: 'flex',
+							alignItems: 'center',
+							gap: '8px'
+						}}>
+							<span style={{ fontSize: '18px' }}>⚠️</span>
+							<span>{t('settings.saveSettingsReminder') || 'Ważne: Po wprowadzeniu jakichkolwiek zmian w konfiguracji poniżej, pamiętaj o zapisaniu ich przyciskiem "Zapisz ustawienia" na dole tej strony.'}</span>
+						</p>
+					</div>
+				)}
+
 				{/* QR Code Generator Section - tylko dla Admin i HR */}
 				{canEditSettings && (
-					<QRCodeGenerator />
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '20px',
+						marginBottom: '20px'
+					}}>
+						<h3 style={{ 
+							color: '#2c3e50',
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600',
+							paddingBottom: '10px',
+							borderBottom: '2px solid #3498db'
+						}}>
+							{t('settings.qrCodeTitle') || 'Kody QR - Wejście/Wyjście'}
+						</h3>
+						
+						{/* Przełącznik włączania/wyłączania funkcji QR i licznika czasu pracy */}
+						<div style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							padding: '20px',
+							backgroundColor: '#f8f9fa',
+							borderRadius: '8px',
+							border: '1px solid #dee2e6',
+							marginBottom: '20px'
+						}}>
+							<div style={{ flex: 1 }}>
+								<label style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									fontSize: '16px',
+									fontWeight: '500',
+									color: '#2c3e50'
+								}}>
+									<input
+										type="checkbox"
+										checked={timerEnabled}
+										onChange={(e) => setTimerEnabled(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#3498db'
+										}}
+									/>
+									<span>{t('settings.timerEnabledLabel') || 'Włącz funkcję QR i licznika czasu pracy'}</span>
+								</label>
+								<div style={{
+									marginTop: '8px',
+									fontSize: '14px',
+									color: '#7f8c8d',
+									marginLeft: '36px'
+								}}>
+									{timerEnabled 
+										? (t('settings.timerEnabledDescription') || 'Funkcja QR i licznika czasu pracy jest włączona. Użytkownicy mogą używać kodów QR do rejestracji czasu pracy oraz licznika czasu pracy z sesjami.')
+										: (t('settings.timerDisabledDescription') || 'Funkcja QR i licznika czasu pracy jest wyłączona. Użytkownicy nie będą mogli używać kodów QR ani licznika czasu pracy.')
+									}
+								</div>
+							</div>
+						</div>
+						
+						{/* QR Code Generator - tylko gdy timerEnabled jest włączone */}
+						{timerEnabled && <QRCodeGenerator />}
+					</div>
 				)}
 
 				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}
@@ -1630,52 +1729,6 @@ function Settings() {
 											</p>
 										</div>
 									)}
-
-									<button
-										type="button"
-										onClick={async () => {
-											try {
-												await updateSettingsMutation.mutateAsync({
-													workOnWeekends,
-													includePolishHolidays,
-													includeCustomHolidays,
-													customHolidays,
-													workHours: workHoursList,
-													leaveCalculationMode,
-													leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined
-												})
-												await showAlert(t('settings.leaveCalculationUpdateSuccess') || 'Konfiguracja urlopów została zaktualizowana')
-											} catch (error) {
-												console.error('Error updating leave calculation settings:', error)
-												await showAlert(error.response?.data?.message || t('settings.leaveCalculationUpdateError') || 'Błąd podczas aktualizacji konfiguracji urlopów')
-											}
-										}}
-										disabled={updateSettingsMutation.isPending}
-										style={{
-											backgroundColor: '#28a745',
-											color: 'white',
-											border: 'none',
-											padding: '12px 24px',
-											borderRadius: '8px',
-											fontSize: '16px',
-											fontWeight: '600',
-											cursor: updateSettingsMutation.isPending ? 'not-allowed' : 'pointer',
-											opacity: updateSettingsMutation.isPending ? 0.6 : 1,
-											transition: 'all 0.2s'
-										}}
-										onMouseEnter={(e) => {
-											if (!updateSettingsMutation.isPending) {
-												e.target.style.backgroundColor = '#218838'
-											}
-										}}
-										onMouseLeave={(e) => {
-											if (!updateSettingsMutation.isPending) {
-												e.target.style.backgroundColor = '#28a745'
-											}
-										}}
-									>
-										{updateSettingsMutation.isPending ? (t('settings.saving') || 'Zapisywanie...') : (t('settings.save') || 'Zapisz')}
-									</button>
 								</div>
 							</div>
 						)}
