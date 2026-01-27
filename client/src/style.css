@@ -3250,3 +3250,7 @@ body:has(.pwa-navigation-bar) .container {
 #calendars-works-review > div.work-session-list-mobile.col-xl-9 > div > div:nth-child(2) > div > div:nth-child(4) > div:nth-child(2) > div > div:nth-child(2) > button {
 	display: none !important;
 }
+
+#formleave {
+	padding-top: 15px !important;
+}
