@@ -3178,7 +3178,7 @@ body:has(.pwa-navigation-bar) .container {
 	}
 }
 
-.login-card-body, .reset-password-container, .set-pass {
+.login-card-body, .reset-password-container {
 	box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
 	border-bottom-left-radius: 15px !important;
 	border-bottom-right-radius: 15px !important;

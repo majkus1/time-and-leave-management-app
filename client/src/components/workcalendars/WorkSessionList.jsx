@@ -341,7 +341,7 @@ function WorkSessionList({ month, year, userId }) {
 					const hasOvertime = group.sessions.some(s => s.isOvertime)
 					const displayName = group.task 
 						? group.task.title 
-						: (group.workDescription || t('sessions.noDescription') || 'Brak opisu')
+						: (group.workDescription || t('sessions.noDescription') || 'Praca')
 
 					return (
 						<div

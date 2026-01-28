@@ -160,7 +160,7 @@ function Blog() {
 
 						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/headerimage.webp" alt="Instalacja Planopii jako PWA na iPhone" className="rounded-md mb-4 h-48" />
+							<img src="/img/worktimeblog.webp" alt="Instalacja Planopii jako PWA na iPhone" className="rounded-md mb-4 h-48" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Jak zainstalować Planopię jako aplikację PWA na iPhone? Instrukcja krok po kroku
 							</h3>

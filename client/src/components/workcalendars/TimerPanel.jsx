@@ -217,7 +217,7 @@ function TimerPanel() {
 			// Clear selections after starting
 			setSelectedTaskId('')
 			setSelectedWorkDescription('')
-			await showAlert(t('timer.started') || 'Timer rozpoczęty')
+			await showAlert(t('timer.started') || 'Miłej pracy!')
 		} catch (error) {
 			console.error('Error starting timer:', error)
 			await showAlert(error.response?.data?.message || t('timer.startError') || 'Błąd podczas uruchamiania timera')
@@ -241,7 +241,7 @@ function TimerPanel() {
 			setSelectedTaskId('')
 			setIsOvertime(false)
 			setIsEditing(false)
-			await showAlert(t('timer.stopped') || 'Timer zatrzymany')
+			await showAlert(t('timer.stopped') || 'Koniec pracy!')
 			
 			// Scroll to work sessions section after stopping timer
 			setTimeout(() => {

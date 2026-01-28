@@ -160,7 +160,7 @@ function ENBlog() {
 						{/* Article card - How to Install Planopia as PWA */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/headerimage.webp"
+								src="/img/worktimeblog.webp"
 								alt="Installing Planopia as PWA on iPhone"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>

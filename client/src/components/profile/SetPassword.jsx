@@ -82,7 +82,7 @@ function SetPassword() {
 					</div>
 				</div>
 				<div className="card">
-					<div className="set-pass" style={{ padding: '30px' }}>
+					<div className="set-pass" style={{ padding: '30px', borderBottomLeftRadius: '15px', borderBottomRightRadius: '15px', boxShadow: '0 .5rem 1rem rgba(0,0,0,.15)' }}>
 						<h2 style={{ marginTop: '10px', marginBottom: '15px', fontSize: '22px' }}>{t('newpass.h2n')}</h2>
 						<form onSubmit={handleSubmit} className="w-full max-w-md" style={{ gap: '12px', display: 'flex', flexDirection: 'column' }}>
 							<div className="relative">
