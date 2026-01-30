@@ -41,6 +41,7 @@ function TimerPanel() {
 	const [newSessionDescription, setNewSessionDescription] = useState('')
 	const [newSessionTaskId, setNewSessionTaskId] = useState('')
 	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
+	const [totalBreakTime, setTotalBreakTime] = useState(0)
 
 	// Get current month and year
 	const currentDate = new Date()
@@ -96,20 +97,32 @@ function TimerPanel() {
 		return Array.from(descriptions).sort()
 	}, [sessionsData])
 
-	// Calculate elapsed time
+	// Calculate elapsed time and break time
 	useEffect(() => {
 		if (!activeTimer?.active || !activeTimer.startTime) {
 			setElapsedTime(0)
+			setTotalBreakTime(0)
 			return
 		}
 
 		const interval = setInterval(() => {
-			if (!activeTimer.isBreak) {
-				const start = new Date(activeTimer.startTime)
-				const now = new Date()
-				const diff = (now - start) / 1000 // seconds
-				setElapsedTime(diff)
+			const start = new Date(activeTimer.startTime)
+			const now = new Date()
+			const totalTime = (now - start) / 1000 // seconds
+			
+			// Calculate break time - backend provides base totalBreakTime (completed breaks)
+			// Add current break duration if currently on break
+			let breakTime = activeTimer.totalBreakTime || 0
+			if (activeTimer.isBreak && activeTimer.breakStartTime) {
+				const currentBreakStart = new Date(activeTimer.breakStartTime)
+				const currentBreakDuration = (now - currentBreakStart) / 1000 // seconds
+				breakTime = breakTime + currentBreakDuration
 			}
+			
+			setTotalBreakTime(breakTime)
+			
+			// Elapsed time is total time (work continues during breaks)
+			setElapsedTime(totalTime)
 		}, 1000)
 
 		return () => clearInterval(interval)
@@ -372,7 +385,8 @@ function TimerPanel() {
 						</div>
 						<div style={{
 							fontSize: '14px',
-							color: '#7f8c8d'
+							color: '#7f8c8d',
+							marginBottom: totalBreakTime > 0 ? '8px' : '0'
 						}}>
 							{isBreak 
 								? (t('timer.onBreak') || 'Przerwa')
@@ -382,6 +396,21 @@ function TimerPanel() {
 								)
 							}
 						</div>
+						{totalBreakTime > 0 && (
+							<div style={{
+								marginTop: '8px',
+								padding: '6px 12px',
+								backgroundColor: 'rgba(255, 193, 7, 0.15)',
+								borderRadius: '6px',
+								display: 'inline-block',
+								fontSize: '12px',
+								color: '#856404',
+								fontWeight: '500'
+							}}>
+								<span style={{ marginRight: '4px' }}>⏸️</span>
+								{t('timer.totalBreakTime') || 'Łączny czas przerwy'}: <strong>{formatTime(totalBreakTime)}</strong>
+							</div>
+						)}
 						{!isEditing && activeTimer.workDescription && (
 							<div style={{
 								marginTop: '10px',

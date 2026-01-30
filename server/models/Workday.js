@@ -38,6 +38,10 @@ const workdaySchema = new mongoose.Schema({
 			type: Boolean,
 			default: false
 		},
+		breakTime: {
+			type: Number,
+			default: 0
+		},
 		isOvertime: {
 			type: Boolean,
 			default: false
@@ -65,6 +69,14 @@ const workdaySchema = new mongoose.Schema({
 		isBreak: {
 			type: Boolean,
 			default: false
+		},
+		breakStartTime: {
+			type: Date,
+			default: null
+		},
+		totalBreakTime: {
+			type: Number,
+			default: 0
 		},
 		isOvertime: {
 			type: Boolean,

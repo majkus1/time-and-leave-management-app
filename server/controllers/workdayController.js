@@ -11,6 +11,44 @@ function isWeekend(date) {
 	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
 }
 
+/**
+ * Finds workday with active timer for a user
+ * Checks both today and yesterday to support overnight shifts
+ * @param {string} userId - User ID
+ * @returns {Promise<Object|null>} Workday with active timer or null
+ */
+exports.findActiveTimerWorkday = async function findActiveTimerWorkday(userId) {
+	const today = new Date()
+	today.setHours(0, 0, 0, 0)
+	
+	const yesterday = new Date(today)
+	yesterday.setDate(yesterday.getDate() - 1)
+	
+	// Check today first
+	let workday = await Workday.findOne({ 
+		userId, 
+		date: today,
+		'activeTimer.startTime': { $exists: true, $ne: null }
+	})
+	
+	if (workday && workday.activeTimer && workday.activeTimer.startTime) {
+		return workday
+	}
+	
+	// Check yesterday (for overnight shifts)
+	workday = await Workday.findOne({ 
+		userId, 
+		date: yesterday,
+		'activeTimer.startTime': { $exists: true, $ne: null }
+	})
+	
+	if (workday && workday.activeTimer && workday.activeTimer.startTime) {
+		return workday
+	}
+	
+	return null
+}
+
 // Helper function to check if timer can be started on a given date
 exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 	try {
@@ -293,6 +331,12 @@ exports.startTimer = async (req, res) => {
 			return res.status(400).json({ message: canStart.reason })
 		}
 
+		// Check if timer is already running (today or yesterday for overnight shifts)
+		const existingActiveTimer = await exports.findActiveTimerWorkday(userId)
+		if (existingActiveTimer && existingActiveTimer.activeTimer && existingActiveTimer.activeTimer.startTime) {
+			return res.status(400).json({ message: 'Timer już działa' })
+		}
+
 		// Find or create workday for today
 		let workday = await Workday.findOne({ userId, date: today })
 
@@ -307,15 +351,12 @@ exports.startTimer = async (req, res) => {
 			})
 		}
 
-		// Check if timer is already running
-		if (workday.activeTimer && workday.activeTimer.startTime) {
-			return res.status(400).json({ message: 'Timer już działa' })
-		}
-
 		// Start timer
 		workday.activeTimer = {
 			startTime: new Date(),
 			isBreak: false,
+			breakStartTime: null,
+			totalBreakTime: 0,
 			isOvertime: isOvertime || false,
 			workDescription: workDescription || '',
 			taskId: taskId || null,
@@ -339,23 +380,43 @@ exports.pauseTimer = async (req, res) => {
 	try {
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		const workday = await Workday.findOne({ userId, date: today })
+		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
 		}
 
+		const now = new Date()
+		
+		// Initialize break tracking if not exists
+		if (workday.activeTimer.totalBreakTime === undefined) {
+			workday.activeTimer.totalBreakTime = 0
+		}
+		if (workday.activeTimer.breakStartTime === undefined) {
+			workday.activeTimer.breakStartTime = null
+		}
+
 		// Toggle break status
-		workday.activeTimer.isBreak = !workday.activeTimer.isBreak
+		if (workday.activeTimer.isBreak) {
+			// Ending break - calculate and add break time
+			if (workday.activeTimer.breakStartTime) {
+				const breakDuration = (now - new Date(workday.activeTimer.breakStartTime)) / 1000 // seconds
+				workday.activeTimer.totalBreakTime = (workday.activeTimer.totalBreakTime || 0) + breakDuration
+				workday.activeTimer.breakStartTime = null
+			}
+			workday.activeTimer.isBreak = false
+		} else {
+			// Starting break - record start time
+			workday.activeTimer.breakStartTime = now
+			workday.activeTimer.isBreak = true
+		}
 
 		await workday.save()
 
 		res.json({
 			message: workday.activeTimer.isBreak ? 'Przerwa rozpoczęta' : 'Przerwa zakończona',
-			isBreak: workday.activeTimer.isBreak
+			isBreak: workday.activeTimer.isBreak,
+			totalBreakTime: workday.activeTimer.totalBreakTime || 0
 		})
 	} catch (error) {
 		console.error('Error pausing timer:', error)
@@ -368,10 +429,7 @@ exports.stopTimer = async (req, res) => {
 	try {
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		const workday = await Workday.findOne({ userId, date: today })
+		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
@@ -380,38 +438,64 @@ exports.stopTimer = async (req, res) => {
 		const endTime = new Date()
 		const startTime = new Date(workday.activeTimer.startTime)
 
-		// Calculate hours (only if not on break)
+		// Calculate final break time (include current break if timer is stopped during break)
+		let finalBreakTime = workday.activeTimer.totalBreakTime || 0
+		if (workday.activeTimer.isBreak && workday.activeTimer.breakStartTime) {
+			const currentBreakDuration = (endTime - new Date(workday.activeTimer.breakStartTime)) / 1000 // seconds
+			finalBreakTime += currentBreakDuration
+		}
+
+		// Calculate hours worked: total time (work continues during breaks, break time is informational only)
 		let hoursWorked = 0
 		if (!workday.activeTimer.isBreak) {
-			hoursWorked = (endTime - startTime) / (1000 * 60 * 60)
+			const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
+			hoursWorked = totalTime
+		} else {
+			// If stopped during break, calculate up to break start
+			const breakStart = workday.activeTimer.breakStartTime ? new Date(workday.activeTimer.breakStartTime) : endTime
+			hoursWorked = (breakStart - startTime) / (1000 * 60 * 60) // hours up to break start
 		}
+
+		// Determine which workday to save the session to (today or the day timer started)
+		const timerStartDate = new Date(startTime)
+		timerStartDate.setHours(0, 0, 0, 0)
+		
+		const today = new Date()
+		today.setHours(0, 0, 0, 0)
+		
+		// If timer started yesterday, we need to handle hours distribution
+		// For simplicity, save session to the day timer started
+		const sessionWorkday = workday.date.getTime() === timerStartDate.getTime() 
+			? workday 
+			: await Workday.findOne({ userId, date: timerStartDate }) || workday
 
 		// Add to timeEntries
 		const timeEntry = {
 			startTime,
 			endTime,
 			isBreak: workday.activeTimer.isBreak,
+			breakTime: finalBreakTime,
 			isOvertime: workday.activeTimer.isOvertime,
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			qrCodeId: workday.activeTimer.qrCodeId || null
 		}
 
-		if (!workday.timeEntries) {
-			workday.timeEntries = []
+		if (!sessionWorkday.timeEntries) {
+			sessionWorkday.timeEntries = []
 		}
-		workday.timeEntries.push(timeEntry)
+		sessionWorkday.timeEntries.push(timeEntry)
 
-		// Update total hours
-		if (!workday.hoursWorked) workday.hoursWorked = 0
+		// Update total hours (only if not on break)
+		if (!sessionWorkday.hoursWorked) sessionWorkday.hoursWorked = 0
 		if (!workday.activeTimer.isBreak) {
-			workday.hoursWorked += hoursWorked
+			sessionWorkday.hoursWorked += hoursWorked
 		}
 
 		// Update overtime if applicable
 		if (workday.activeTimer.isOvertime && !workday.activeTimer.isBreak) {
-			if (!workday.additionalWorked) workday.additionalWorked = 0
-			workday.additionalWorked += hoursWorked
+			if (!sessionWorkday.additionalWorked) sessionWorkday.additionalWorked = 0
+			sessionWorkday.additionalWorked += hoursWorked
 		}
 
 		// Update time range string
@@ -426,17 +510,21 @@ exports.stopTimer = async (req, res) => {
 			}
 			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
 			
-			if (workday.realTimeDayWorked) {
-				workday.realTimeDayWorked += `, ${timeRange}`
+			if (sessionWorkday.realTimeDayWorked) {
+				sessionWorkday.realTimeDayWorked += `, ${timeRange}`
 			} else {
-				workday.realTimeDayWorked = timeRange
+				sessionWorkday.realTimeDayWorked = timeRange
 			}
 		}
 
-		// Clear active timer
+		// Clear active timer from the workday where it was running
 		workday.activeTimer = null
-
 		await workday.save()
+
+		// Save session workday if different
+		if (sessionWorkday._id.toString() !== workday._id.toString()) {
+			await sessionWorkday.save()
+		}
 
 		res.json({
 			message: 'Timer zatrzymany',
@@ -454,19 +542,19 @@ exports.getActiveTimer = async (req, res) => {
 	try {
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		const workday = await Workday.findOne({ userId, date: today })
+		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.json({ active: false })
 		}
 
+		// Return base totalBreakTime (without current break) - frontend will calculate current break in real-time
 		res.json({
 			active: true,
 			startTime: workday.activeTimer.startTime,
 			isBreak: workday.activeTimer.isBreak,
+			breakStartTime: workday.activeTimer.breakStartTime || null,
+			totalBreakTime: workday.activeTimer.totalBreakTime || 0, // Base break time (completed breaks only)
 			isOvertime: workday.activeTimer.isOvertime,
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
@@ -484,10 +572,7 @@ exports.updateActiveTimer = async (req, res) => {
 		const { workDescription, taskId, isOvertime } = req.body
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		const workday = await Workday.findOne({ userId, date: today })
+		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
@@ -524,10 +609,7 @@ exports.splitSession = async (req, res) => {
 		const { workDescription, taskId, isOvertime } = req.body
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		const workday = await Workday.findOne({ userId, date: today })
+		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
@@ -536,38 +618,59 @@ exports.splitSession = async (req, res) => {
 		const endTime = new Date()
 		const startTime = new Date(workday.activeTimer.startTime)
 
-		// Calculate hours (only if not on break)
+		// Calculate final break time (include current break if splitting during break)
+		let finalBreakTime = workday.activeTimer.totalBreakTime || 0
+		if (workday.activeTimer.isBreak && workday.activeTimer.breakStartTime) {
+			const currentBreakDuration = (endTime - new Date(workday.activeTimer.breakStartTime)) / 1000 // seconds
+			finalBreakTime += currentBreakDuration
+		}
+
+		// Calculate hours worked: total time (work continues during breaks, break time is informational only)
 		let hoursWorked = 0
 		if (!workday.activeTimer.isBreak) {
-			hoursWorked = (endTime - startTime) / (1000 * 60 * 60)
+			const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
+			hoursWorked = totalTime
+		} else {
+			// If splitting during break, calculate up to break start
+			const breakStart = workday.activeTimer.breakStartTime ? new Date(workday.activeTimer.breakStartTime) : endTime
+			hoursWorked = (breakStart - startTime) / (1000 * 60 * 60) // hours up to break start
 		}
+
+		// Determine which workday to save the session to (day timer started)
+		const timerStartDate = new Date(startTime)
+		timerStartDate.setHours(0, 0, 0, 0)
+		
+		const sessionWorkday = workday.date.getTime() === timerStartDate.getTime() 
+			? workday 
+			: await Workday.findOne({ userId, date: timerStartDate }) || workday
 
 		// Add current session to timeEntries
 		const timeEntry = {
 			startTime,
 			endTime,
 			isBreak: workday.activeTimer.isBreak,
+			breakTime: finalBreakTime,
 			isOvertime: workday.activeTimer.isOvertime,
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			qrCodeId: workday.activeTimer.qrCodeId || null
 		}
 
-		if (!workday.timeEntries) {
-			workday.timeEntries = []
+		if (!sessionWorkday.timeEntries) {
+			sessionWorkday.timeEntries = []
 		}
-		workday.timeEntries.push(timeEntry)
+		sessionWorkday.timeEntries.push(timeEntry)
 
 		// Update total hours
-		if (!workday.hoursWorked) workday.hoursWorked = 0
+		if (!sessionWorkday.hoursWorked) sessionWorkday.hoursWorked = 0
 		if (!workday.activeTimer.isBreak) {
-			workday.hoursWorked += hoursWorked
+			sessionWorkday.hoursWorked += hoursWorked
 		}
 
 		// Update overtime if applicable
 		if (workday.activeTimer.isOvertime && !workday.activeTimer.isBreak) {
-			if (!workday.additionalWorked) workday.additionalWorked = 0
-			workday.additionalWorked += hoursWorked
+			if (!sessionWorkday.additionalWorked) sessionWorkday.additionalWorked = 0
+			sessionWorkday.additionalWorked += hoursWorked
 		}
 
 		// Update time range string
@@ -582,29 +685,69 @@ exports.splitSession = async (req, res) => {
 			}
 			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
 			
-			if (workday.realTimeDayWorked) {
-				workday.realTimeDayWorked += `, ${timeRange}`
+			if (sessionWorkday.realTimeDayWorked) {
+				sessionWorkday.realTimeDayWorked += `, ${timeRange}`
 			} else {
-				workday.realTimeDayWorked = timeRange
+				sessionWorkday.realTimeDayWorked = timeRange
 			}
 		}
 
 		// Start new session with new description (continue from where we left off)
-		workday.activeTimer = {
+		// If timer was from yesterday, we need to move it to today's workday
+		const today = new Date()
+		today.setHours(0, 0, 0, 0)
+		
+		let activeTimerWorkday = workday
+		if (workday.date.getTime() !== today.getTime()) {
+			// Timer was from yesterday, move to today
+			let todayWorkday = await Workday.findOne({ userId, date: today })
+			if (!todayWorkday) {
+				todayWorkday = new Workday({
+					userId,
+					date: today,
+					hoursWorked: 0,
+					realTimeDayWorked: '',
+					timeEntries: [],
+					activeTimer: null
+				})
+			}
+			activeTimerWorkday = todayWorkday
+		}
+
+		// Preserve break tracking when continuing session
+		const preservedBreakTime = workday.activeTimer.totalBreakTime || 0
+		const preservedBreakStart = workday.activeTimer.isBreak && workday.activeTimer.breakStartTime 
+			? workday.activeTimer.breakStartTime 
+			: null
+
+		activeTimerWorkday.activeTimer = {
 			startTime: endTime, // Continue from where we left off
 			isBreak: workday.activeTimer.isBreak, // Keep break status
+			breakStartTime: preservedBreakStart,
+			totalBreakTime: preservedBreakTime,
 			isOvertime: isOvertime !== undefined ? isOvertime : workday.activeTimer.isOvertime,
 			workDescription: workDescription || '',
 			taskId: taskId || null,
 			qrCodeId: workday.activeTimer.qrCodeId || null // Keep QR code ID if it was from QR
 		}
 
-		await workday.save()
+		// Clear timer from old workday if moved
+		if (activeTimerWorkday._id.toString() !== workday._id.toString()) {
+			workday.activeTimer = null
+			await workday.save()
+		}
+
+		await activeTimerWorkday.save()
+		
+		// Save session workday if different
+		if (sessionWorkday._id.toString() !== activeTimerWorkday._id.toString()) {
+			await sessionWorkday.save()
+		}
 
 		res.json({
 			message: 'Sesja zapisana, kontynuacja z nowym opisem',
 			savedSession: timeEntry,
-			activeTimer: workday.activeTimer
+			activeTimer: activeTimerWorkday.activeTimer
 		})
 	} catch (error) {
 		console.error('Error splitting session:', error)
@@ -750,7 +893,7 @@ exports.getTodaySessions = async (req, res) => {
 		const allSessions = []
 		let totalMinutes = 0
 
-		// Helper function to calculate minutes between two dates
+		// Helper function to calculate minutes between two dates (work continues during breaks)
 		const calculateMinutes = (start, end) => {
 			if (!start || !end) return 0
 			return Math.round((new Date(end) - new Date(start)) / (1000 * 60))

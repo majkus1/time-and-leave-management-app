@@ -6,6 +6,211 @@ import axios from 'axios'
 import { API_URL } from '../../config'
 import { useQuery } from '@tanstack/react-query'
 
+// Session item component with mobile expand/collapse
+function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, onDelete, deleteSession, t, i18n }) {
+	const [isExpanded, setIsExpanded] = useState(false)
+	const sessionDate = session.date || session.startTime
+	const duration = session.endTime ? calculateDuration(session.startTime, session.endTime) : null
+	
+	// Check if mobile (screen width < 768px)
+	const [isMobile, setIsMobile] = useState(() => {
+		if (typeof window !== 'undefined') {
+			return window.innerWidth < 768
+		}
+		return false
+	})
+	
+	React.useEffect(() => {
+		const handleResize = () => {
+			setIsMobile(window.innerWidth < 768)
+		}
+		window.addEventListener('resize', handleResize)
+		return () => window.removeEventListener('resize', handleResize)
+	}, [])
+
+	return (
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				backgroundColor: '#ffffff',
+				borderRadius: '6px',
+				border: '1px solid #e8e8e8',
+				fontSize: '13px',
+				overflow: 'hidden'
+			}}
+		>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					padding: '8px 12px',
+					cursor: isMobile ? 'pointer' : 'default',
+					transition: isMobile ? 'background-color 0.2s' : 'none'
+				}}
+				onClick={() => isMobile && setIsExpanded(!isExpanded)}
+				onMouseEnter={(e) => {
+					if (isMobile) {
+						e.currentTarget.style.backgroundColor = '#f5f5f5'
+					}
+				}}
+				onMouseLeave={(e) => {
+					if (isMobile) {
+						e.currentTarget.style.backgroundColor = '#ffffff'
+					}
+				}}
+			>
+				<div style={{
+					color: '#2c3e50',
+					fontWeight: '500',
+					display: 'flex',
+					alignItems: 'center',
+					gap: '8px',
+					flex: 1
+				}}>
+					<span>
+						{formatDate(sessionDate)}
+						{/* On desktop, show time range inline */}
+						{!isMobile && (
+							<span style={{ marginLeft: '8px', color: '#7f8c8d', fontSize: '12px', fontWeight: '400' }}>
+								{formatTime(session.startTime)}
+								{session.endTime && ` - ${formatTime(session.endTime)}`}
+							</span>
+						)}
+					</span>
+					{/* QR badge - always visible on desktop, only when expanded on mobile */}
+					{((!isMobile || isExpanded) && session.qrCode) && (
+						<span style={{
+							fontSize: '10px',
+							backgroundColor: '#e3f2fd',
+							color: '#1976d2',
+							padding: '2px 6px',
+							borderRadius: '10px',
+							fontWeight: '500'
+						}}>
+							{t('sessions.fromQR') || 'QR'}
+						</span>
+					)}
+					{isMobile && (
+						<span style={{
+							fontSize: '12px',
+							color: '#95a5a6',
+							marginLeft: '8px'
+						}}>
+							{isExpanded ? '▼' : '▶'}
+						</span>
+					)}
+				</div>
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '10px'
+				}}>
+					{/* Duration - always visible on desktop, only when expanded on mobile */}
+					{((!isMobile || isExpanded) && duration) && (
+						<div style={{
+							color: session.isOvertime ? '#e74c3c' : '#27ae60',
+							fontWeight: '600',
+							fontSize: '12px'
+						}} className='detailsess'>
+							{duration} {t('sessions.hours') || 'godz.'}
+							{session.breakTime && session.breakTime > 0 && (
+								<span style={{
+									fontSize: '10px',
+									fontWeight: '400',
+									color: '#95a5a6',
+									marginLeft: '4px'
+								}}>
+									({formatBreakTime(session.breakTime)} {t('sessions.break') || 'przerwa'})
+								</span>
+							)}
+						</div>
+					)}
+					<button
+						onClick={(e) => {
+							e.stopPropagation()
+							onDelete()
+						}}
+						disabled={deleteSession.isPending}
+						style={{
+							backgroundColor: 'transparent',
+							border: 'none',
+							color: '#e74c3c',
+							cursor: deleteSession.isPending ? 'not-allowed' : 'pointer',
+							fontSize: '18px',
+							fontWeight: 'bold',
+							padding: '4px 8px',
+							borderRadius: '4px',
+							opacity: deleteSession.isPending ? 0.5 : 1,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							width: '24px',
+							height: '24px',
+							transition: 'background-color 0.2s'
+						}}
+						onMouseEnter={(e) => {
+							if (!deleteSession.isPending) {
+								e.target.style.backgroundColor = '#fee'
+							}
+						}}
+						onMouseLeave={(e) => {
+							e.target.style.backgroundColor = 'transparent'
+						}}
+						title={t('sessions.delete') || 'Usuń sesję'}
+					>
+						×
+					</button>
+				</div>
+			</div>
+			{/* Expanded details on mobile */}
+			{isMobile && isExpanded && (
+				<div style={{
+					padding: '8px 12px',
+					paddingTop: '8px',
+					borderTop: '1px solid #e8e8e8',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: '6px',
+					backgroundColor: '#fafafa'
+				}}>
+					<div style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						flexWrap: 'wrap'
+					}}>
+						<span style={{ color: '#7f8c8d', fontSize: '12px' }}>
+							{formatTime(session.startTime)}
+							{session.endTime && ` - ${formatTime(session.endTime)}`}
+						</span>
+					</div>
+					{duration && (
+						<div style={{
+							color: session.isOvertime ? '#e74c3c' : '#27ae60',
+							fontWeight: '600',
+							fontSize: '12px'
+						}}>
+							{duration} {t('sessions.hours') || 'godz.'}
+							{session.breakTime && session.breakTime > 0 && (
+								<span style={{
+									fontSize: '10px',
+									fontWeight: '400',
+									color: '#95a5a6',
+									marginLeft: '4px'
+								}}>
+									({formatBreakTime(session.breakTime)} {t('sessions.break') || 'przerwa'})
+								</span>
+							)}
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	)
+}
+
 function WorkSessionList({ month, year, userId }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
@@ -173,6 +378,18 @@ function WorkSessionList({ month, year, userId }) {
 		const hours = Math.floor(diff / 60)
 		const minutes = Math.floor(diff % 60)
 		return `${hours}:${minutes.toString().padStart(2, '0')}`
+	}
+
+	const formatBreakTime = (breakTimeSeconds) => {
+		if (!breakTimeSeconds || breakTimeSeconds === 0) return null
+		const totalMinutes = Math.floor(breakTimeSeconds / 60)
+		const hours = Math.floor(totalMinutes / 60)
+		const minutes = totalMinutes % 60
+		
+		if (hours > 0) {
+			return `${hours}:${minutes.toString().padStart(2, '0')}`
+		}
+		return `${minutes} min`
 	}
 
 	const formatDateForInput = (dateString) => {
@@ -464,9 +681,6 @@ function WorkSessionList({ month, year, userId }) {
 										gap: '8px'
 									}}>
 										{group.sessions.map((session, sessionIndex) => {
-											const sessionDate = session.date || session.startTime
-											const duration = session.endTime ? calculateDuration(session.startTime, session.endTime) : null
-											
 											const handleDelete = async () => {
 												if (!session._id || !session.workdayId) {
 													await showAlert(t('sessions.deleteError') || 'Błąd: brak identyfikatora sesji')
@@ -496,92 +710,19 @@ function WorkSessionList({ month, year, userId }) {
 											}
 											
 											return (
-												<div
+												<SessionItem
 													key={sessionIndex}
-													style={{
-														display: 'flex',
-														justifyContent: 'space-between',
-														alignItems: 'center',
-														padding: '8px 12px',
-														backgroundColor: '#ffffff',
-														borderRadius: '6px',
-														border: '1px solid #e8e8e8',
-														fontSize: '13px'
-													}}
-												>
-													<div style={{
-														color: '#2c3e50',
-														fontWeight: '500',
-														display: 'flex',
-														alignItems: 'center',
-														gap: '8px',
-														flex: 1
-													}}>
-														<span>
-															{formatDate(sessionDate)} {formatTime(session.startTime)}
-															{session.endTime && ` - ${formatTime(session.endTime)}`}
-														</span>
-														{session.qrCode && (
-															<span style={{
-																fontSize: '10px',
-																backgroundColor: '#e3f2fd',
-																color: '#1976d2',
-																padding: '2px 6px',
-																borderRadius: '10px',
-																fontWeight: '500'
-															}}>
-																{t('sessions.fromQR') || 'QR'}
-															</span>
-														)}
-													</div>
-													<div style={{
-														display: 'flex',
-														alignItems: 'center',
-														gap: '10px'
-													}}>
-														{duration && (
-															<div style={{
-																color: session.isOvertime ? '#e74c3c' : '#27ae60',
-																fontWeight: '600',
-																fontSize: '12px'
-															}}>
-																{duration} {t('sessions.hours') || 'godz.'}
-															</div>
-														)}
-														<button
-															onClick={handleDelete}
-															disabled={deleteSession.isPending}
-															style={{
-																backgroundColor: 'transparent',
-																border: 'none',
-																color: '#e74c3c',
-																cursor: deleteSession.isPending ? 'not-allowed' : 'pointer',
-																fontSize: '18px',
-																fontWeight: 'bold',
-																padding: '4px 8px',
-																borderRadius: '4px',
-																opacity: deleteSession.isPending ? 0.5 : 1,
-																display: 'flex',
-																alignItems: 'center',
-																justifyContent: 'center',
-																width: '24px',
-																height: '24px',
-																transition: 'background-color 0.2s'
-															}}
-															onMouseEnter={(e) => {
-																if (!deleteSession.isPending) {
-																	e.target.style.backgroundColor = '#fee'
-																}
-															}}
-															onMouseLeave={(e) => {
-																e.target.style.backgroundColor = 'transparent'
-															}}
-															title={t('sessions.delete') || 'Usuń sesję'}
-														>
-															×
-														</button>
-													</div>
-												</div>
+													session={session}
+													sessionIndex={sessionIndex}
+													formatDate={formatDate}
+													formatTime={formatTime}
+													calculateDuration={calculateDuration}
+													formatBreakTime={formatBreakTime}
+													onDelete={handleDelete}
+													deleteSession={deleteSession}
+													t={t}
+													i18n={i18n}
+												/>
 											)
 										})}
 									</div>
