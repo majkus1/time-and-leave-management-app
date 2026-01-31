@@ -166,18 +166,8 @@ function TimerPanel() {
 
 		const today = new Date()
 		today.setHours(0, 0, 0, 0)
-		const todayStr = normalizeDate(today)
 
-		// Check if there's already a workday entry with hours worked for today
-		if (Array.isArray(workdays)) {
-			for (const workday of workdays) {
-				if (!workday.date) continue
-				const workdayDateStr = normalizeDate(workday.date)
-				if (workdayDateStr === todayStr && workday.hoursWorked && workday.hoursWorked > 0) {
-					return { canStart: false, reason: t('timer.workdayExists') || 'Nie można uruchomić timera w dniu, w którym jest już wpisana łączna liczba godzin pracy' }
-				}
-			}
-		}
+		// No limit on timer sessions - timer hours will be added to existing hoursWorked
 
 		// Check if it's a weekend and team doesn't work on weekends
 		const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true

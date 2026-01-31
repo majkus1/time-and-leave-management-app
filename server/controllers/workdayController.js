@@ -67,15 +67,7 @@ exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 		const checkDate = new Date(date)
 		checkDate.setHours(0, 0, 0, 0)
 
-		// Check if there's already a workday entry with hours worked for this date
-		const existingWorkday = await Workday.findOne({ 
-			userId: userId, 
-			date: checkDate 
-		})
-
-		if (existingWorkday && existingWorkday.hoursWorked && existingWorkday.hoursWorked > 0) {
-			return { canStart: false, reason: 'Nie można uruchomić timera w dniu, w którym jest już wpisana łączna liczba godzin pracy' }
-		}
+		// No limit on timer sessions - timer hours will be added to existing hoursWorked
 
 		// Check if it's a weekend and team doesn't work on weekends
 		const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
@@ -446,15 +438,9 @@ exports.stopTimer = async (req, res) => {
 		}
 
 		// Calculate hours worked: total time (work continues during breaks, break time is informational only)
-		let hoursWorked = 0
-		if (!workday.activeTimer.isBreak) {
-			const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
-			hoursWorked = totalTime
-		} else {
-			// If stopped during break, calculate up to break start
-			const breakStart = workday.activeTimer.breakStartTime ? new Date(workday.activeTimer.breakStartTime) : endTime
-			hoursWorked = (breakStart - startTime) / (1000 * 60 * 60) // hours up to break start
-		}
+		// Always calculate total time from start to end, regardless of break status
+		const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
+		const hoursWorked = totalTime
 
 		// Determine which workday to save the session to (today or the day timer started)
 		const timerStartDate = new Date(startTime)
@@ -470,10 +456,13 @@ exports.stopTimer = async (req, res) => {
 			: await Workday.findOne({ userId, date: timerStartDate }) || workday
 
 		// Add to timeEntries
+		// Note: isBreak should always be false for work sessions
+		// isBreak in timeEntry is meant for dedicated break sessions (not used currently)
+		// The break time is tracked separately in breakTime field
 		const timeEntry = {
 			startTime,
 			endTime,
-			isBreak: workday.activeTimer.isBreak,
+			isBreak: false, // Always false for work sessions, break time is tracked in breakTime field
 			breakTime: finalBreakTime,
 			isOvertime: workday.activeTimer.isOvertime,
 			workDescription: workday.activeTimer.workDescription,
@@ -486,35 +475,31 @@ exports.stopTimer = async (req, res) => {
 		}
 		sessionWorkday.timeEntries.push(timeEntry)
 
-		// Update total hours (only if not on break)
+		// Update total hours (always, regardless of break status)
 		if (!sessionWorkday.hoursWorked) sessionWorkday.hoursWorked = 0
-		if (!workday.activeTimer.isBreak) {
-			sessionWorkday.hoursWorked += hoursWorked
-		}
+		sessionWorkday.hoursWorked += hoursWorked
 
-		// Update overtime if applicable
-		if (workday.activeTimer.isOvertime && !workday.activeTimer.isBreak) {
+		// Update overtime if applicable (always, regardless of break status)
+		if (workday.activeTimer.isOvertime) {
 			if (!sessionWorkday.additionalWorked) sessionWorkday.additionalWorked = 0
 			sessionWorkday.additionalWorked += hoursWorked
 		}
 
-		// Update time range string
-		if (!workday.activeTimer.isBreak) {
-			const formatTime = (date) => {
-				// Convert UTC date to local time string (Europe/Warsaw timezone)
-				// This ensures the time displayed matches the user's local time
-				const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
-				const hours = localDate.getHours().toString().padStart(2, '0')
-				const minutes = localDate.getMinutes().toString().padStart(2, '0')
-				return `${hours}:${minutes}`
-			}
-			const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
-			
-			if (sessionWorkday.realTimeDayWorked) {
-				sessionWorkday.realTimeDayWorked += `, ${timeRange}`
-			} else {
-				sessionWorkday.realTimeDayWorked = timeRange
-			}
+		// Update time range string (always, regardless of break status)
+		const formatTime = (date) => {
+			// Convert UTC date to local time string (Europe/Warsaw timezone)
+			// This ensures the time displayed matches the user's local time
+			const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
+			const hours = localDate.getHours().toString().padStart(2, '0')
+			const minutes = localDate.getMinutes().toString().padStart(2, '0')
+			return `${hours}:${minutes}`
+		}
+		const timeRange = `${formatTime(startTime)}-${formatTime(endTime)}`
+		
+		if (sessionWorkday.realTimeDayWorked) {
+			sessionWorkday.realTimeDayWorked += `, ${timeRange}`
+		} else {
+			sessionWorkday.realTimeDayWorked = timeRange
 		}
 
 		// Clear active timer from the workday where it was running

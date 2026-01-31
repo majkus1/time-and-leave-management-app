@@ -115,16 +115,19 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							fontSize: '12px'
 						}} className='detailsess'>
 							{duration} {t('sessions.hours') || 'godz.'}
-							{session.breakTime && session.breakTime > 0 && (
-								<span style={{
-									fontSize: '10px',
-									fontWeight: '400',
-									color: '#95a5a6',
-									marginLeft: '4px'
-								}}>
-									({formatBreakTime(session.breakTime)} {t('sessions.break') || 'przerwa'})
-								</span>
-							)}
+							{(() => {
+								const breakTimeFormatted = session.breakTime && session.breakTime > 0 ? formatBreakTime(session.breakTime) : null
+								return breakTimeFormatted ? (
+									<span style={{
+										fontSize: '10px',
+										fontWeight: '400',
+										color: '#95a5a6',
+										marginLeft: '4px'
+									}}>
+										({breakTimeFormatted} {t('sessions.break') || 'przerwa'})
+									</span>
+								) : null
+							})()}
 						</div>
 					)}
 					<button
@@ -193,16 +196,19 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							fontSize: '12px'
 						}}>
 							{duration} {t('sessions.hours') || 'godz.'}
-							{session.breakTime && session.breakTime > 0 && (
-								<span style={{
-									fontSize: '10px',
-									fontWeight: '400',
-									color: '#95a5a6',
-									marginLeft: '4px'
-								}}>
-									({formatBreakTime(session.breakTime)} {t('sessions.break') || 'przerwa'})
-								</span>
-							)}
+							{(() => {
+								const breakTimeFormatted = session.breakTime && session.breakTime > 0 ? formatBreakTime(session.breakTime) : null
+								return breakTimeFormatted ? (
+									<span style={{
+										fontSize: '10px',
+										fontWeight: '400',
+										color: '#95a5a6',
+										marginLeft: '4px'
+									}}>
+										({breakTimeFormatted} {t('sessions.break') || 'przerwa'})
+									</span>
+								) : null
+							})()}
 						</div>
 					)}
 				</div>
@@ -383,13 +389,21 @@ function WorkSessionList({ month, year, userId }) {
 	const formatBreakTime = (breakTimeSeconds) => {
 		if (!breakTimeSeconds || breakTimeSeconds === 0) return null
 		const totalMinutes = Math.floor(breakTimeSeconds / 60)
+		
+		// Don't show break time if it's 0 minutes or less
+		if (totalMinutes <= 0) return null
+		
 		const hours = Math.floor(totalMinutes / 60)
 		const minutes = totalMinutes % 60
 		
 		if (hours > 0) {
 			return `${hours}:${minutes.toString().padStart(2, '0')}`
 		}
-		return `${minutes} min`
+		// Only return minutes if it's greater than 0
+		if (minutes > 0) {
+			return `${minutes} min`
+		}
+		return null
 	}
 
 	const formatDateForInput = (dateString) => {
