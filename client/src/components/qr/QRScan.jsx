@@ -108,7 +108,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
 						{t('qrScan.verifying') || 'Weryfikowanie kodu QR...'}
 					</h2>
 					<p className="text-gray-500">
@@ -131,7 +131,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
 						{t('qrScan.verifying') || 'Weryfikowanie kodu QR...'}
 					</h2>
 					<p className="text-gray-500">
@@ -154,7 +154,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
 						{t('qrScan.invalidCode') || 'Nieprawidłowy kod QR'}
 					</h2>
 					<p className="text-gray-500 mb-6">
@@ -184,7 +184,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
 						{t('qrScan.registering') || 'Rejestrowanie czasu...'}
 					</h2>
 					<p className="text-gray-500">
@@ -216,7 +216,7 @@ function QRScan() {
 							)}
 						</div>
 					</div>
-					<h2 className={`text-2xl font-semibold mb-2 ${
+					<h2 className={`text-2xl font-semibold mb-2 text-center ${
 						isEntry ? 'text-green-600' : 'text-blue-600'
 					}`}>
 						{isEntry 
@@ -224,7 +224,7 @@ function QRScan() {
 							: (t('qrScan.exitSuccess') || 'Wyjście zarejestrowane!')
 						}
 					</h2>
-					<p className="text-gray-500 mb-4">
+					<p className="text-gray-500 mb-4 text-center">
 						{t('qrScan.location') || 'Miejsce:'} <span className="font-semibold text-gray-700">{qrData.name}</span>
 					</p>
 					<div className="mt-6 pt-6 border-t border-gray-200">
@@ -243,17 +243,17 @@ function QRScan() {
 	// Main scanning state - ready to register
 	return (
 		<div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4">
-			<div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
-				<div className="text-center mb-6">
+			<div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+				<div className="mb-6">
 					<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 mb-4">
 						<svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2.01M8 8h.01M5 16h2.01M8 16h.01M12 8h.01M12 16h.01M16 8h.01M16 16h.01M20 8h.01M20 16h.01" />
 						</svg>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
 						{t('qrScan.scanning') || 'Skanowanie kodu QR'}
 					</h2>
-					<div className="mt-4 p-4 bg-gray-50 rounded-lg">
+					<div className="mt-4 p-4 bg-gray-50 rounded-lg text-center">
 						<p className="text-sm text-gray-600 mb-1">
 							{t('qrScan.location') || 'Miejsce:'}
 						</p>
