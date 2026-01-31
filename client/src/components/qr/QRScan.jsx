@@ -108,7 +108,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center flex justify-center items-center">
 						{t('qrScan.verifying') || 'Weryfikowanie kodu QR...'}
 					</h2>
 					<p className="text-gray-500">
@@ -131,7 +131,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center flex justify-center items-center">
 						{t('qrScan.verifying') || 'Weryfikowanie kodu QR...'}
 					</h2>
 					<p className="text-gray-500">
@@ -154,7 +154,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center flex justify-center items-center">
 						{t('qrScan.invalidCode') || 'Nieprawidłowy kod QR'}
 					</h2>
 					<p className="text-gray-500 mb-6">
@@ -184,7 +184,7 @@ function QRScan() {
 							</svg>
 						</div>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center flex justify-center items-center">
 						{t('qrScan.registering') || 'Rejestrowanie czasu...'}
 					</h2>
 					<p className="text-gray-500">
@@ -216,7 +216,7 @@ function QRScan() {
 							)}
 						</div>
 					</div>
-					<h2 className={`text-2xl font-semibold mb-2 text-center ${
+					<h2 className={`text-2xl font-semibold mb-2 text-center flex justify-center items-center ${
 						isEntry ? 'text-green-600' : 'text-blue-600'
 					}`}>
 						{isEntry 
@@ -250,7 +250,7 @@ function QRScan() {
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2.01M8 8h.01M5 16h2.01M8 16h.01M12 8h.01M12 16h.01M16 8h.01M16 16h.01M20 8h.01M20 16h.01" />
 						</svg>
 					</div>
-					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center">
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2 text-center flex justify-center items-center">
 						{t('qrScan.scanning') || 'Skanowanie kodu QR'}
 					</h2>
 					<div className="mt-4 p-4 bg-gray-50 rounded-lg text-center">
