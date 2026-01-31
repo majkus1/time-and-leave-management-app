@@ -7,7 +7,7 @@ import { API_URL } from '../../config'
 import { useQuery } from '@tanstack/react-query'
 
 // Session item component with mobile expand/collapse
-function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, onDelete, deleteSession, t, i18n }) {
+function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, formatOvertimeTime, onDelete, deleteSession, t, i18n }) {
 	const [isExpanded, setIsExpanded] = useState(false)
 	const sessionDate = session.date || session.startTime
 	const duration = session.endTime ? calculateDuration(session.startTime, session.endTime) : null
@@ -128,6 +128,19 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 									</span>
 								) : null
 							})()}
+							{(() => {
+								const overtimeTimeFormatted = session.overtimeTime && session.overtimeTime > 0 ? formatOvertimeTime(session.overtimeTime) : null
+								return overtimeTimeFormatted ? (
+									<span style={{
+										fontSize: '10px',
+										fontWeight: '400',
+										color: '#e74c3c',
+										marginLeft: '4px'
+									}}>
+										({overtimeTimeFormatted} {t('sessions.overtime') || 'nadgodziny'})
+									</span>
+								) : null
+							})()}
 						</div>
 					)}
 					<button
@@ -206,6 +219,19 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 										marginLeft: '4px'
 									}}>
 										({breakTimeFormatted} {t('sessions.break') || 'przerwa'})
+									</span>
+								) : null
+							})()}
+							{(() => {
+								const overtimeTimeFormatted = session.overtimeTime && session.overtimeTime > 0 ? formatOvertimeTime(session.overtimeTime) : null
+								return overtimeTimeFormatted ? (
+									<span style={{
+										fontSize: '10px',
+										fontWeight: '400',
+										color: '#e74c3c',
+										marginLeft: '4px'
+									}}>
+										({overtimeTimeFormatted} {t('sessions.overtime') || 'nadgodziny'})
 									</span>
 								) : null
 							})()}
@@ -391,6 +417,26 @@ function WorkSessionList({ month, year, userId }) {
 		const totalMinutes = Math.floor(breakTimeSeconds / 60)
 		
 		// Don't show break time if it's 0 minutes or less
+		if (totalMinutes <= 0) return null
+		
+		const hours = Math.floor(totalMinutes / 60)
+		const minutes = totalMinutes % 60
+		
+		if (hours > 0) {
+			return `${hours}:${minutes.toString().padStart(2, '0')}`
+		}
+		// Only return minutes if it's greater than 0
+		if (minutes > 0) {
+			return `${minutes} min`
+		}
+		return null
+	}
+
+	const formatOvertimeTime = (overtimeTimeSeconds) => {
+		if (!overtimeTimeSeconds || overtimeTimeSeconds === 0) return null
+		const totalMinutes = Math.floor(overtimeTimeSeconds / 60)
+		
+		// Don't show overtime time if it's 0 minutes or less
 		if (totalMinutes <= 0) return null
 		
 		const hours = Math.floor(totalMinutes / 60)
@@ -732,6 +778,7 @@ function WorkSessionList({ month, year, userId }) {
 													formatTime={formatTime}
 													calculateDuration={calculateDuration}
 													formatBreakTime={formatBreakTime}
+													formatOvertimeTime={formatOvertimeTime}
 													onDelete={handleDelete}
 													deleteSession={deleteSession}
 													t={t}

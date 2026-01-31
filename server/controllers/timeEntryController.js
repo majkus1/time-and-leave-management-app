@@ -129,16 +129,20 @@ exports.registerTimeEntry = async (req, res) => {
 					finalBreakTime += currentBreakDuration
 				}
 
-				// Calculate hours worked: total time (work continues during breaks, break time is informational only)
-				let hoursWorked = 0
-				if (!workday.activeTimer.isBreak) {
-					const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
-					hoursWorked = totalTime
-				} else {
-					// If stopped during break, calculate up to break start
-					const breakStart = workday.activeTimer.breakStartTime ? new Date(workday.activeTimer.breakStartTime) : endTime
-					hoursWorked = (breakStart - startTime) / (1000 * 60 * 60) // hours up to break start
+				// Calculate final overtime time (include current overtime if timer is stopped during overtime)
+				let finalOvertimeTime = workday.activeTimer.totalOvertimeTime || 0
+				if (workday.activeTimer.isOvertime && workday.activeTimer.overtimeStartTime) {
+					const currentOvertimeDuration = (endTime - new Date(workday.activeTimer.overtimeStartTime)) / 1000 // seconds
+					finalOvertimeTime += currentOvertimeDuration
 				}
+
+				// Calculate hours worked: total time (work continues during breaks, break time is informational only)
+				// Always calculate total time from start to end, regardless of break or overtime status
+				const totalTime = (endTime - startTime) / (1000 * 60 * 60) // hours
+				const hoursWorked = totalTime
+				
+				// Calculate overtime hours (only time spent in overtime mode)
+				const overtimeHours = finalOvertimeTime / 3600 // convert seconds to hours
 
 				// Determine which workday to save the session to (day timer started)
 				const timerStartDate = new Date(startTime)
@@ -152,9 +156,10 @@ exports.registerTimeEntry = async (req, res) => {
 				const timeEntry = {
 					startTime,
 					endTime,
-					isBreak: workday.activeTimer.isBreak,
+					isBreak: false, // Always false for work sessions, break time is tracked in breakTime field
 					breakTime: finalBreakTime,
-					isOvertime: workday.activeTimer.isOvertime,
+					isOvertime: overtimeHours > 0, // True if any overtime time was recorded
+					overtimeTime: finalOvertimeTime, // Time in seconds spent in overtime mode
 					workDescription: workday.activeTimer.workDescription,
 					taskId: workday.activeTimer.taskId,
 					qrCodeId: workday.activeTimer.qrCodeId
@@ -165,16 +170,15 @@ exports.registerTimeEntry = async (req, res) => {
 				}
 				sessionWorkday.timeEntries.push(timeEntry)
 
-				// Update total hours
+				// Update total hours (always, regardless of break or overtime status)
+				// Total time always goes to hoursWorked
 				if (!sessionWorkday.hoursWorked) sessionWorkday.hoursWorked = 0
-				if (!workday.activeTimer.isBreak) {
-					sessionWorkday.hoursWorked += hoursWorked
-				}
+				sessionWorkday.hoursWorked += hoursWorked
 
-				// Update overtime if applicable
-				if (workday.activeTimer.isOvertime && !workday.activeTimer.isBreak) {
+				// Update overtime hours separately (only time spent in overtime mode)
+				if (overtimeHours > 0) {
 					if (!sessionWorkday.additionalWorked) sessionWorkday.additionalWorked = 0
-					sessionWorkday.additionalWorked += hoursWorked
+					sessionWorkday.additionalWorked += overtimeHours
 				}
 
 				// Update time range string
@@ -261,6 +265,8 @@ exports.registerTimeEntry = async (req, res) => {
 				breakStartTime: null,
 				totalBreakTime: 0,
 				isOvertime: false,
+				overtimeStartTime: null,
+				totalOvertimeTime: 0,
 				workDescription: '',
 				taskId: null,
 				qrCodeId: qrCode._id

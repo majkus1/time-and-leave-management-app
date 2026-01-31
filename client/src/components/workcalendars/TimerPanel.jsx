@@ -42,6 +42,7 @@ function TimerPanel() {
 	const [newSessionTaskId, setNewSessionTaskId] = useState('')
 	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
 	const [totalBreakTime, setTotalBreakTime] = useState(0)
+	const [totalOvertimeTime, setTotalOvertimeTime] = useState(0)
 
 	// Get current month and year
 	const currentDate = new Date()
@@ -97,11 +98,12 @@ function TimerPanel() {
 		return Array.from(descriptions).sort()
 	}, [sessionsData])
 
-	// Calculate elapsed time and break time
+	// Calculate elapsed time, break time, and overtime time
 	useEffect(() => {
 		if (!activeTimer?.active || !activeTimer.startTime) {
 			setElapsedTime(0)
 			setTotalBreakTime(0)
+			setTotalOvertimeTime(0)
 			return
 		}
 
@@ -121,7 +123,18 @@ function TimerPanel() {
 			
 			setTotalBreakTime(breakTime)
 			
-			// Elapsed time is total time (work continues during breaks)
+			// Calculate overtime time - backend provides base totalOvertimeTime (completed overtime periods)
+			// Add current overtime duration if currently in overtime mode
+			let overtimeTime = activeTimer.totalOvertimeTime || 0
+			if (activeTimer.isOvertime && activeTimer.overtimeStartTime) {
+				const currentOvertimeStart = new Date(activeTimer.overtimeStartTime)
+				const currentOvertimeDuration = (now - currentOvertimeStart) / 1000 // seconds
+				overtimeTime = overtimeTime + currentOvertimeDuration
+			}
+			
+			setTotalOvertimeTime(overtimeTime)
+			
+			// Elapsed time is total time (work continues during breaks and overtime)
 			setElapsedTime(totalTime)
 		}, 1000)
 
@@ -399,6 +412,21 @@ function TimerPanel() {
 							}}>
 								<span style={{ marginRight: '4px' }}>⏸️</span>
 								{t('timer.totalBreakTime') || 'Łączny czas przerwy'}: <strong>{formatTime(totalBreakTime)}</strong>
+							</div>
+						)}
+						{activeTimer.isOvertime && totalOvertimeTime > 0 && (
+							<div style={{
+								marginTop: '8px',
+								padding: '6px 12px',
+								backgroundColor: 'rgba(231, 76, 60, 0.15)',
+								borderRadius: '6px',
+								display: 'inline-block',
+								fontSize: '12px',
+								color: '#c0392b',
+								fontWeight: '500'
+							}}>
+								<span style={{ marginRight: '4px' }}>⏰</span>
+								{t('timer.totalOvertimeTime') || 'Łączny czas nadgodzin'}: <strong>{formatTime(totalOvertimeTime)}</strong>
 							</div>
 						)}
 						{!isEditing && activeTimer.workDescription && (
