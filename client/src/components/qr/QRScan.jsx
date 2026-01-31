@@ -10,7 +10,7 @@ function QRScan() {
 	const { code } = useParams()
 	const navigate = useNavigate()
 	const { t } = useTranslation()
-	const { loggedIn, userId } = useAuth()
+	const { loggedIn, userId, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
 	const { data: qrData, isLoading: verifying } = useVerifyQRCode(code)
 	const registerTimeEntry = useRegisterTimeEntry()
@@ -22,6 +22,11 @@ function QRScan() {
 	useEffect(() => {
 		if (!code) {
 			navigate('/dashboard')
+			return
+		}
+
+		// Wait for auth check to complete before proceeding
+		if (isCheckingAuth) {
 			return
 		}
 
@@ -42,9 +47,14 @@ function QRScan() {
 		if (loggedIn && qrData && qrData.valid && !registered && !registering) {
 			handleRegister()
 		}
-	}, [code, loggedIn, qrData, registered, registering, settings, showAlert, t, navigate])
+	}, [code, loggedIn, isCheckingAuth, qrData, registered, registering, settings, showAlert, t, navigate])
 
 	const handleRegister = async () => {
+		// Wait for auth check to complete before proceeding
+		if (isCheckingAuth) {
+			return
+		}
+
 		// Check if timer is enabled
 		if (settings && settings.timerEnabled === false) {
 			await showAlert(t('qrScan.timerDisabled') || 'Funkcja QR i licznika czasu pracy jest wyłączona')
@@ -84,6 +94,29 @@ function QRScan() {
 			)
 			setRegistering(false)
 		}
+	}
+
+	// Checking authentication state - wait for auth check to complete
+	if (isCheckingAuth) {
+		return (
+			<div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4">
+				<div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+					<div className="mb-6">
+						<div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 animate-pulse">
+							<svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2.01M8 8h.01M5 16h2.01M8 16h.01M12 8h.01M12 16h.01M16 8h.01M16 16h.01M20 8h.01M20 16h.01" />
+							</svg>
+						</div>
+					</div>
+					<h2 className="text-2xl font-semibold text-gray-800 mb-2">
+						{t('qrScan.verifying') || 'Weryfikowanie kodu QR...'}
+					</h2>
+					<p className="text-gray-500">
+						{t('qrScan.pleaseWait') || 'Proszę czekać'}
+					</p>
+				</div>
+			</div>
+		)
 	}
 
 	// Verifying state - professional loading without Loader component

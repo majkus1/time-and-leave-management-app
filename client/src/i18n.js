@@ -919,7 +919,8 @@ i18n
 						exitSuccess: 'Exit registered!',
 						redirecting: 'Redirecting to dashboard...',
 						registrationError: 'Error registering time',
-						timerDisabled: 'QR and work time counter function is disabled'
+						timerDisabled: 'QR and work time counter function is disabled',
+						pleaseWait: 'Please wait'
 					},
 					sessions: {
 						title: 'Today\'s Work Sessions',
@@ -1868,7 +1869,9 @@ i18n
 						entrySuccess: 'Wejście zarejestrowane!',
 						exitSuccess: 'Wyjście zarejestrowane!',
 						redirecting: 'Przekierowywanie do panelu...',
-						registrationError: 'Błąd podczas rejestracji czasu'
+						registrationError: 'Błąd podczas rejestracji czasu',
+						timerDisabled: 'Funkcja QR i licznika czasu pracy jest wyłączona',
+						pleaseWait: 'Proszę czekać'
 					},
 					sessions: {
 						title: 'Dzisiejsze sesje pracy',

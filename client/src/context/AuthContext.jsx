@@ -202,12 +202,15 @@ export const AuthProvider = ({ children }) => {
 
 	// Handle app visibility change (PWA/mobile background/foreground)
 	// This ensures token is validated when app returns from background
+	// Important: This handles cases where user returns after long inactivity (>7 days)
 	useEffect(() => {
-		if (!loggedIn) return // Don't set up listeners if not logged in
+		// Don't set up listeners if auth check is in progress or user is explicitly logged out
+		if (isCheckingAuth || loggedIn === false) return
 
 		const handleVisibilityChange = async () => {
-			// Only check if app becomes visible and user is logged in
-			if (document.visibilityState === 'visible' && loggedIn === true && isMountedRef.current) {
+			// Only check if app becomes visible and user appears to be logged in
+			// Check both loggedIn === true and loggedIn === null (in case state is stale)
+			if (document.visibilityState === 'visible' && loggedIn !== false && isMountedRef.current && !isCheckingAuth) {
 				// Small delay to ensure network is ready
 				await sleep(300)
 				// Silently check auth without showing loader (better UX)
@@ -242,12 +245,14 @@ export const AuthProvider = ({ children }) => {
 								}
 							} catch (retryError) {
 								// Still failed after refresh, user needs to login
+								// This handles case where refresh token expired (>7 days)
 								if (isMountedRef.current) {
 									clearAuthState()
 								}
 							}
 						} else {
-							// Refresh failed, user needs to login
+							// Refresh failed - refresh token expired or invalid
+							// This handles case where user returns after >7 days
 							if (isMountedRef.current) {
 								clearAuthState()
 							}
@@ -268,7 +273,8 @@ export const AuthProvider = ({ children }) => {
 		
 		// Handle window focus (browser tabs)
 		const handleFocus = async () => {
-			if (loggedIn === true && isMountedRef.current) {
+			// Check if user appears to be logged in and auth check is not in progress
+			if (loggedIn !== false && isMountedRef.current && !isCheckingAuth) {
 				await sleep(300)
 				try {
 					const response = await axios.get(`${API_URL}/api/users/me`, {
@@ -297,11 +303,13 @@ export const AuthProvider = ({ children }) => {
 									updateAuthState(response.data)
 								}
 							} catch (retryError) {
+								// Refresh token expired or invalid
 								if (isMountedRef.current) {
 									clearAuthState()
 								}
 							}
 						} else {
+							// Refresh token expired or invalid - user needs to login
 							if (isMountedRef.current) {
 								clearAuthState()
 							}
@@ -322,7 +330,7 @@ export const AuthProvider = ({ children }) => {
 			document.removeEventListener('visibilitychange', handleVisibilityChange)
 			window.removeEventListener('focus', handleFocus)
 		}
-	}, [loggedIn, attemptRefreshToken]) // Re-run when loggedIn or attemptRefreshToken changes
+	}, [loggedIn, isCheckingAuth, attemptRefreshToken]) // Re-run when loggedIn, isCheckingAuth, or attemptRefreshToken changes
 
 	const logout = async () => {
 		try {
