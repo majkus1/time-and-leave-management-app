@@ -51,6 +51,16 @@ exports.registerTeam = async (req, res) => {
 			});
 		}
 
+		// Validate password using password validation service
+		const passwordValidator = require('../services/passwordValidator')
+		const passwordValidation = passwordValidator.validatePassword(adminPassword)
+		if (!passwordValidation.isValid) {
+			return res.status(400).json({
+				success: false,
+				message: passwordValidation.errorMessage
+			});
+		}
+
 		
 		// Check for existing active team (ignore soft-deleted)
 		const existingTeam = await Team.findOne({ name: teamName, isActive: true });

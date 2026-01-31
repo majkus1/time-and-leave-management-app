@@ -176,8 +176,18 @@ export const AuthProvider = ({ children }) => {
 	}
 
 	// Check authentication on mount
+	// Skip check if we're on login page (prevents blocking login after password setup)
 	useEffect(() => {
 		isMountedRef.current = true
+		
+		// If we're on login page, don't check auth (user is trying to log in)
+		// This prevents race condition where checkAuth blocks login after setting password
+		if (window.location.pathname === '/login' || window.location.pathname.startsWith('/login')) {
+			setIsCheckingAuth(false)
+			clearAuthState()
+			return
+		}
+		
 		setIsCheckingAuth(true)
 		checkAuth()
 
@@ -357,6 +367,12 @@ export const AuthProvider = ({ children }) => {
 		}
 	}
 
+	// Expose clearAuthState for external use (e.g., after setting password)
+	const forceClearAuth = () => {
+		clearAuthState()
+		setIsCheckingAuth(false)
+	}
+
 	return (
 		<AuthContext.Provider
 			value={{
@@ -374,6 +390,7 @@ export const AuthProvider = ({ children }) => {
 				setIsTeamAdmin,
 				logout,
 				refreshUserData,
+				forceClearAuth,
 			}}>
 			{children}
 		</AuthContext.Provider>

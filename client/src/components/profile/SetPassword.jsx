@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
+import { useAuth } from '../../context/AuthContext'
 
 function SetPassword() {
 	const [password, setPassword] = useState('')
@@ -16,6 +17,7 @@ function SetPassword() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
+	const { forceClearAuth } = useAuth()
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -43,8 +45,14 @@ function SetPassword() {
 				password,
 				position,
 			})
+			// Clear auth state before redirecting to login
+			// This ensures that isCheckingAuth is false and user can login immediately
+			forceClearAuth()
 			await showAlert(t('newpass.messtwo'))
-			navigate('/login')
+			// Small delay to ensure state is cleared before navigation
+			setTimeout(() => {
+				navigate('/login', { replace: true })
+			}, 100)
 		} catch (error) {
 			console.error('Error setting password:', error)
 			await showAlert(t('newpass.messthree'))
@@ -187,7 +195,9 @@ function SetPassword() {
 			<Link
 				to="/login"
 				style={{ 
-					display: 'inline-block',
+					display: 'flex',
+					alignItems: 'center',
+					gap: '5px',
 					margin: '12px auto',
 					padding: '8px 16px',
 					fontSize: '13px',
@@ -209,6 +219,9 @@ function SetPassword() {
 					e.target.style.color = '#6b7280'
 					e.target.style.borderColor = '#e5e7eb'
 				}}>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<path d="M19 12H5M12 19l-7-7 7-7"/>
+					</svg>
 				{t('resetpass.backto')}
 			</Link>
 		</div>

@@ -200,6 +200,8 @@ i18n
 							'The password must have at least 8 characters, contain a lowercase letter, an uppercase letter, a digit, and a special character.',
 						requirements:
 							'The password must have a minimum of 8 characters, an uppercase letter, a lowercase letter, a digit, and a special character.',
+						passwordRequirements:
+							'Password must contain at least 8 characters, including a lowercase letter, uppercase letter, digit, and special character.',
 					},
 					pwaNav: {
 						back: 'Back',
@@ -1173,6 +1175,7 @@ i18n
 						invalidPassword:
 							'Hasło musi mieć co najmniej 8 znaków, zawierać małą i dużą literę, cyfrę oraz znak specjalny.',
 						requirements: 'Hasło musi mieć min. 8 znaków, dużą, małą literę, cyfrę i znak specjalny.',
+						passwordRequirements: 'Hasło musi zawierać co najmniej 8 znaków, w tym małą literę, wielką literę, cyfrę i znak specjalny.',
 					},
 					pwaNav: {
 						back: 'Wstecz',

@@ -46,13 +46,18 @@ function Login() {
 					withCredentials: true,
 				}
 			)
-			// localStorage.setItem('roles', JSON.stringify(response.data.roles))
-			// localStorage.setItem('username', response.data.username)
+			// Update auth state immediately after successful login
+			// This ensures the state is synchronized before navigation
 			setRole(response.data.roles)
 			setLoggedIn(true)
 			setUsername(response.data.username)
 			setTeamId(response.data.teamId)
 			setIsTeamAdmin(response.data.isTeamAdmin)
+			
+			// Small delay to ensure state is updated before navigation
+			// This prevents race conditions with AuthContext's checkAuth
+			await new Promise(resolve => setTimeout(resolve, 50))
+			
 			navigate(from)
 		} catch (error) {
 			console.error('Login error:', error)

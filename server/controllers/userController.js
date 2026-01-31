@@ -308,9 +308,11 @@ exports.setPassword = async (req, res) => {
 		return res.status(400).send('Missing password or token')
 	}
 
-	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
-	if (!passwordRegex.test(password)) {
-		return res.status(400).send('Hasło nie spełnia wymagań bezpieczeństwa.')
+	// Validate password using password validation service
+	const passwordValidator = require('../services/passwordValidator')
+	const passwordValidation = passwordValidator.validatePassword(password)
+	if (!passwordValidation.isValid) {
+		return res.status(400).send(passwordValidation.errorMessage)
 	}
 
 	try {
@@ -340,9 +342,11 @@ exports.resetPassword = async (req, res) => {
 		return res.status(400).send('Token i nowe hasło są wymagane')
 	}
 
-	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
-	if (!passwordRegex.test(newPassword)) {
-		return res.status(400).send('Hasło nie spełnia wymagań bezpieczeństwa')
+	// Validate password using password validation service
+	const passwordValidator = require('../services/passwordValidator')
+	const passwordValidation = passwordValidator.validatePassword(newPassword)
+	if (!passwordValidation.isValid) {
+		return res.status(400).send(passwordValidation.errorMessage)
 	}
 
 	try {
