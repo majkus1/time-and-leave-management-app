@@ -34,8 +34,9 @@ function QRCodeGenerator() {
 	}
 
 	const handleDelete = async (id, name) => {
+		const confirmMessage = t('settings.qrCodeDeleteConfirm', { name }) || `Czy na pewno chcesz usunąć kod QR "${name}"?`
 		const confirmed = await showConfirm(
-			t('settings.qrCodeDeleteConfirm') || `Czy na pewno chcesz usunąć kod QR "${name}"?`,
+			confirmMessage,
 			t('settings.qrCodeDeleteTitle') || 'Usuń kod QR'
 		)
 

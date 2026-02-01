@@ -434,7 +434,12 @@ function WorkSessionList({ month, year, userId }) {
 
 	const formatOvertimeTime = (overtimeTimeSeconds) => {
 		if (!overtimeTimeSeconds || overtimeTimeSeconds === 0) return null
-		const totalMinutes = Math.floor(overtimeTimeSeconds / 60)
+		// Ensure it's a number
+		const seconds = typeof overtimeTimeSeconds === 'number' ? overtimeTimeSeconds : parseFloat(overtimeTimeSeconds) || 0
+		if (seconds <= 0) return null
+		
+		// Round to nearest minute (not floor) for more accurate display
+		const totalMinutes = Math.round(seconds / 60)
 		
 		// Don't show overtime time if it's 0 minutes or less
 		if (totalMinutes <= 0) return null
@@ -615,7 +620,14 @@ function WorkSessionList({ month, year, userId }) {
 				gap: '12px'
 			}}>
 				{displayData.map((group, index) => {
-					const hasOvertime = group.sessions.some(s => s.isOvertime)
+					const hasOvertime = group.sessions.some(s => s.isOvertime || (s.overtimeTime && s.overtimeTime > 0))
+					// Calculate total overtime time for the group (sum all overtimeTime in seconds)
+					const totalOvertimeSeconds = group.sessions.reduce((sum, s) => {
+						// Ensure overtimeTime is a number and in seconds
+						const overtimeSeconds = typeof s.overtimeTime === 'number' ? s.overtimeTime : 0
+						return sum + overtimeSeconds
+					}, 0)
+					const totalOvertimeFormatted = totalOvertimeSeconds > 0 ? formatOvertimeTime(totalOvertimeSeconds) : null
 					const displayName = group.task 
 						? group.task.title 
 						: (group.workDescription || t('sessions.noDescription') || 'Praca')
@@ -628,7 +640,7 @@ function WorkSessionList({ month, year, userId }) {
 								borderRadius: '8px',
 								padding: '15px',
 								backgroundColor: '#f8f9fa',
-								borderLeft: `4px solid ${hasOvertime ? '#e74c3c' : '#3498db'}`,
+								borderLeft: `4px solid #3498db`,
 								position: 'relative'
 							}}
 						>
@@ -639,7 +651,7 @@ function WorkSessionList({ month, year, userId }) {
 								left: 0,
 								height: '4px',
 								width: `${Math.min(parseFloat(group.percentage) || 0, 100)}%`,
-								backgroundColor: hasOvertime ? '#e74c3c' : '#3498db',
+								backgroundColor: '#3498db',
 								borderRadius: '8px 0 0 0'
 							}} />
 
@@ -685,10 +697,20 @@ function WorkSessionList({ month, year, userId }) {
 									<div style={{
 										fontSize: '16px',
 										fontWeight: '600',
-										color: hasOvertime ? '#e74c3c' : '#27ae60',
+										color: '#27ae60',
 										marginBottom: '5px'
 									}}>
 										{formatHours(group.totalHours)} {t('sessions.hours') || 'godz.'}
+										{totalOvertimeFormatted && (
+											<span style={{
+												fontSize: '12px',
+												fontWeight: '400',
+												color: '#7f8c8d',
+												marginLeft: '4px'
+											}}>
+												({totalOvertimeFormatted} {t('sessions.overtime') || 'Nadgodziny'})
+											</span>
+										)}
 									</div>
 									<div style={{
 										fontSize: '14px',
@@ -699,25 +721,6 @@ function WorkSessionList({ month, year, userId }) {
 										{group.percentage}%
 									</div>
 								</div>
-							</div>
-							<div style={{
-								display: 'flex',
-								gap: '8px',
-								flexWrap: 'wrap',
-								marginTop: '8px'
-							}}>
-								{hasOvertime && (
-									<span style={{
-										backgroundColor: '#e74c3c',
-										color: 'white',
-										padding: '4px 8px',
-										borderRadius: '4px',
-										fontSize: '11px',
-										fontWeight: '500'
-									}}>
-										{t('sessions.overtime') || 'Nadgodziny'}
-									</span>
-								)}
 							</div>
 
 							{/* Session details - dates and times */}

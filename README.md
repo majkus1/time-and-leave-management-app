@@ -4,6 +4,8 @@ Time tracking and leave management system for teams. Built with React and Node.j
 
 **Live:** [planopia.pl](https://planopia.pl)
 
+**Note:** The codebase is currently undergoing refactoring to improve architecture. Business logic is being moved from controllers to services following MVC principles, SOLID principles, and best practices. This is an ongoing process.
+
 ## What it does
 
 Planopia helps teams manage work hours and leave requests. Employees log daily hours, request time off, and supervisors approve requests. Everything is organized by departments within teams.
@@ -11,6 +13,11 @@ Planopia helps teams manage work hours and leave requests. Employees log daily h
 ## Features
 
 - **Time tracking** - Daily hour logging with monthly calendar view and PDF export
+- **Work timer** - Real-time work session tracking with break and overtime support
+- **QR code registration** - QR code-based entry/exit time registration
+- **Task boards** - Kanban-style task management with drag-and-drop
+- **Schedules** - Team scheduling and shift planning
+- **Chat** - Team communication with real-time messaging
 - **Leave management** - Request system with department-based approval workflows
 - **Team organization** - Multi-tenant setup where each team has isolated data and departments
 - **Role-based access** - Admin, HR, Department Supervisor, and Worker roles with different permissions
@@ -66,7 +73,8 @@ The app includes several security measures:
 │       ├── context/       # Auth and alert context
 │       └── utils/         # Helper functions
 └── server/                 # Node.js backend
-    ├── controllers/       # Request handlers
+    ├── controllers/       # Request handlers (HTTP layer)
+    ├── services/          # Business logic layer
     ├── models/           # Database schemas
     ├── routes/           # API endpoints
     └── middleware/       # Auth and validation
