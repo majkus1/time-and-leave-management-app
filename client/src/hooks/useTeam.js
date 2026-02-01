@@ -18,7 +18,7 @@ export const useTeamInfo = (teamId) => {
 	})
 }
 
-// Mutation hook - usuwanie zespołu
+// Mutation hook - usuwanie zespołu (soft delete)
 export const useDeleteTeam = () => {
 	const queryClient = useQueryClient()
 
@@ -36,3 +36,20 @@ export const useDeleteTeam = () => {
 	})
 }
 
+// Mutation hook - trwałe usunięcie zespołu (hard delete)
+export const usePermanentlyDeleteTeam = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (teamId) => {
+			const response = await axios.delete(`${API_URL}/api/teams/${teamId}/permanent`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ['team'] })
+		},
+	})
+}

@@ -8,7 +8,7 @@ import { useAlert } from '../../context/AlertContext'
 import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail, useDeletedUsers, useRestoreUser, usePermanentlyDeleteUser } from '../../hooks/useUsers'
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs } from '../../hooks/useLogs'
-import { useDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
+import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
@@ -37,7 +37,9 @@ function Logs() {
 	const [subordinatesModal, setSubordinatesModal] = useState({ isOpen: false, userId: null })
 	const [expandedRoleDescriptions, setExpandedRoleDescriptions] = useState({}) // Stan dla rozwiniętych opisów ról
 	const [deleteTeamModal, setDeleteTeamModal] = useState(false)
+	const [permanentlyDeleteTeamModal, setPermanentlyDeleteTeamModal] = useState(false)
 	const deleteTeamMutation = useDeleteTeam()
+	const permanentlyDeleteTeamMutation = usePermanentlyDeleteTeam()
 	const [activeTab, setActiveTab] = useState('active') // 'active' or 'deleted'
 	const [deletedUsersModal, setDeletedUsersModal] = useState(false)
 	const { data: deletedUsers = [], isLoading: loadingDeletedUsers } = useDeletedUsers()
@@ -2307,46 +2309,88 @@ function Logs() {
 					}}>
 						{t('logs.deleteTeamDescription')}
 					</p>
-					<button
-						type="button"
-						onClick={() => setDeleteTeamModal(true)}
-						disabled={deleteTeamMutation.isPending}
-						style={{
-							padding: '12px 24px',
-							borderRadius: '6px',
-							border: '1px solid #dc3545',
-							backgroundColor: 'white',
-							color: '#dc3545',
-							cursor: deleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
-							fontSize: '14px',
-							fontWeight: '500',
-							transition: 'all 0.2s',
-							opacity: deleteTeamMutation.isPending ? 0.5 : 1
-						}}
-						onMouseEnter={(e) => {
-							if (!deleteTeamMutation.isPending) {
-								e.target.style.backgroundColor = '#dc3545'
-								e.target.style.color = 'white'
-							}
-						}}
-						onMouseLeave={(e) => {
-							if (!deleteTeamMutation.isPending) {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.color = '#dc3545'
-							}
-						}}>
-						{deleteTeamMutation.isPending ? (
-							<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-								<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
-								{t('logs.deletingTeam')}
-							</span>
-						) : (
-							t('logs.deleteTeamButton')
-						)}
-					</button>
+					<div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+						<button
+							type="button"
+							onClick={() => setDeleteTeamModal(true)}
+							disabled={deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending}
+							style={{
+								padding: '12px 24px',
+								borderRadius: '6px',
+								border: '1px solid #dc3545',
+								backgroundColor: 'white',
+								color: '#dc3545',
+								cursor: (deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending) ? 'not-allowed' : 'pointer',
+								fontSize: '14px',
+								fontWeight: '500',
+								transition: 'all 0.2s',
+								opacity: (deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending) ? 0.5 : 1
+							}}
+							onMouseEnter={(e) => {
+								if (!deleteTeamMutation.isPending && !permanentlyDeleteTeamMutation.isPending) {
+									e.target.style.backgroundColor = '#dc3545'
+									e.target.style.color = 'white'
+								}
+							}}
+							onMouseLeave={(e) => {
+								if (!deleteTeamMutation.isPending && !permanentlyDeleteTeamMutation.isPending) {
+									e.target.style.backgroundColor = 'white'
+									e.target.style.color = '#dc3545'
+								}
+							}}>
+							{deleteTeamMutation.isPending ? (
+								<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+									<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+									{t('logs.deletingTeam')}
+								</span>
+							) : (
+								t('logs.deleteTeamButton')
+							)}
+						</button>
+						<button
+							type="button"
+							onClick={() => setPermanentlyDeleteTeamModal(true)}
+							disabled={deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending}
+							style={{
+								padding: '12px 24px',
+								borderRadius: '6px',
+								border: '1px solid #8b0000',
+								backgroundColor: 'white',
+								color: '#8b0000',
+								cursor: (deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending) ? 'not-allowed' : 'pointer',
+								fontSize: '14px',
+								fontWeight: '600',
+								transition: 'all 0.2s',
+								opacity: (deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending) ? 0.5 : 1
+							}}
+							onMouseEnter={(e) => {
+								if (!deleteTeamMutation.isPending && !permanentlyDeleteTeamMutation.isPending) {
+									e.target.style.backgroundColor = '#8b0000'
+									e.target.style.color = 'white'
+								}
+							}}
+							onMouseLeave={(e) => {
+								if (!deleteTeamMutation.isPending && !permanentlyDeleteTeamMutation.isPending) {
+									e.target.style.backgroundColor = 'white'
+									e.target.style.color = '#8b0000'
+								}
+							}}>
+							{permanentlyDeleteTeamMutation.isPending ? (
+								<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+									<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+									{t('logs.deletingTeam')}
+								</span>
+							) : (
+								t('logs.permanentlyDeleteTeamButton')
+							)}
+						</button>
+					</div>
 				</div>
 			)}
 
@@ -2854,6 +2898,126 @@ function Logs() {
 									</span>
 								) : (
 									t('logs.deleteTeamConfirmButton')
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal potwierdzenia trwałego usunięcia zespołu */}
+			{permanentlyDeleteTeamModal && (
+				<div 
+					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+					style={{
+						zIndex: 100000000,
+						padding: '20px'
+					}} 
+					onClick={() => setPermanentlyDeleteTeamModal(false)}>
+					<div style={{
+						backgroundColor: 'white',
+						borderRadius: '8px',
+						padding: '30px',
+						maxWidth: '500px',
+						width: '100%',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						position: 'relative'
+					}} onClick={(e) => e.stopPropagation()}>
+					<h3 style={{
+						margin: '0 0 20px 0',
+						color: '#8b0000',
+						fontSize: '24px',
+						fontWeight: '600'
+					}}>
+						{t('logs.permanentlyDeleteTeamConfirmTitle')}
+					</h3>
+					<p style={{
+						margin: '0 0 20px 0',
+						color: '#4b5563',
+						fontSize: '16px',
+						lineHeight: '1.6'
+					}}>
+						{t('logs.permanentlyDeleteTeamConfirmMessage')}
+					</p>
+					<div style={{
+						backgroundColor: '#fee',
+						padding: '15px',
+						borderRadius: '6px',
+						marginBottom: '20px',
+						border: '2px solid #8b0000',
+						color: '#8b0000',
+						fontSize: '14px',
+						lineHeight: '1.6',
+						fontWeight: '600'
+					}}>
+						<p style={{ margin: 0 }}>
+							{t('logs.permanentlyDeleteTeamWarning')}
+						</p>
+					</div>
+						<div style={{
+							display: 'flex',
+							gap: '12px',
+							justifyContent: 'flex-end'
+						}}>
+							<button
+								onClick={() => setPermanentlyDeleteTeamModal(false)}
+								disabled={permanentlyDeleteTeamMutation.isPending}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: '1px solid #d1d5db',
+									backgroundColor: 'white',
+									color: '#374151',
+									cursor: permanentlyDeleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '500',
+									transition: 'all 0.2s',
+									opacity: permanentlyDeleteTeamMutation.isPending ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !permanentlyDeleteTeamMutation.isPending && (e.target.style.backgroundColor = '#f9fafb')}
+								onMouseLeave={(e) => !permanentlyDeleteTeamMutation.isPending && (e.target.style.backgroundColor = 'white')}>
+								{t('logs.cancel')}
+							</button>
+							<button
+								onClick={async () => {
+									try {
+										await permanentlyDeleteTeamMutation.mutateAsync(teamId)
+										await showAlert(t('logs.permanentlyDeleteTeamSuccess'))
+										setPermanentlyDeleteTeamModal(false)
+										// Wyloguj użytkownika i przekieruj do logowania
+										setTimeout(() => {
+											window.location.href = '/login'
+										}, 2000)
+									} catch (error) {
+										await showAlert(t('logs.permanentlyDeleteTeamError'))
+										console.error('Error permanently deleting team:', error)
+									}
+								}}
+								disabled={permanentlyDeleteTeamMutation.isPending}
+								style={{
+									padding: '10px 20px',
+									borderRadius: '6px',
+									border: 'none',
+									backgroundColor: '#8b0000',
+									color: 'white',
+									cursor: permanentlyDeleteTeamMutation.isPending ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									fontWeight: '600',
+									transition: 'all 0.2s',
+									opacity: permanentlyDeleteTeamMutation.isPending ? 0.5 : 1
+								}}
+								onMouseEnter={(e) => !permanentlyDeleteTeamMutation.isPending && (e.target.style.backgroundColor = '#6b0000')}
+								onMouseLeave={(e) => !permanentlyDeleteTeamMutation.isPending && (e.target.style.backgroundColor = '#8b0000')}>
+								{permanentlyDeleteTeamMutation.isPending ? (
+									<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+										<svg className="animate-spin" style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										{t('logs.deletingTeam')}
+									</span>
+								) : (
+									t('logs.permanentlyDeleteTeamConfirmButton')
 								)}
 							</button>
 						</div>

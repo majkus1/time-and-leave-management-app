@@ -11,5 +11,6 @@ router.get('/:teamId', authenticateToken, teamController.getTeamInfo);
 router.get('/:teamId/users', authenticateToken, teamController.getTeamUsers);
 router.post('/:teamId/check-limit', authenticateToken, teamController.checkUserLimit);
 router.delete('/:teamId', authenticateToken, teamController.deleteTeam);
+router.delete('/:teamId/permanent', authenticateToken, teamController.permanentlyDeleteTeam);
 
 module.exports = router;

@@ -61,8 +61,9 @@ export const AuthProvider = ({ children }) => {
 				timeout: 10000, // 10 second timeout for refresh
 				skipAuthRefresh: true // Prevent interceptor from trying refresh on refresh-token endpoint
 			})
-			// Small delay to ensure cookie is set before next request
-			await sleep(100)
+			// Delay to ensure cookie is properly set and propagated before next request
+			// Increased from 100ms to 150ms for better reliability
+			await sleep(150)
 			return { success: true, response }
 		} catch (error) {
 			// Check if it's a 401/403 (no refresh token or invalid) vs network error
@@ -76,6 +77,8 @@ export const AuthProvider = ({ children }) => {
 
 	// Function to check authentication with retry logic
 	// Strategy: First try to refresh token (if exists), then check /me endpoint
+	// CRITICAL: This function must ALWAYS set isCheckingAuth(false) before returning
+	// unless it's making a recursive call (in which case the recursive call will handle it)
 	const checkAuth = async (retryCount = 0, maxRetries = 3, hasAttemptedRefresh = false) => {
 		// Cancel previous request if exists
 		if (abortControllerRef.current) {
@@ -94,8 +97,12 @@ export const AuthProvider = ({ children }) => {
 		if (!refreshAttempted && retryCount === 0) {
 			const refreshResult = await attemptRefreshToken()
 			
-			// If component was unmounted during refresh, abort
+			// If component was unmounted during refresh, abort and finalize
 			if (!isMountedRef.current || abortController.signal.aborted) {
+				// Component unmounted or request aborted - finalize auth check
+				if (isMountedRef.current) {
+					setIsCheckingAuth(false)
+				}
 				return
 			}
 
@@ -107,8 +114,15 @@ export const AuthProvider = ({ children }) => {
 				if (retryCount < maxRetries) {
 					const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
 					await sleep(delay)
+					// Recursive call - it will handle isCheckingAuth(false) at the end
 					return checkAuth(retryCount + 1, maxRetries, false)
 				}
+				// Max retries reached - finalize auth check
+				if (isMountedRef.current) {
+					clearAuthState()
+					setIsCheckingAuth(false)
+				}
+				return
 			}
 			
 			// Mark that we've attempted refresh and continue to /me check
@@ -128,10 +142,17 @@ export const AuthProvider = ({ children }) => {
 			if (!abortController.signal.aborted && isMountedRef.current) {
 				updateAuthState(response.data)
 				setIsCheckingAuth(false)
+			} else if (isMountedRef.current) {
+				// Request was aborted but component still mounted - finalize
+				setIsCheckingAuth(false)
 			}
 		} catch (error) {
 			// Don't process if request was aborted or component unmounted
 			if (abortController.signal.aborted || !isMountedRef.current) {
+				// If component is still mounted but request was aborted, finalize
+				if (isMountedRef.current) {
+					setIsCheckingAuth(false)
+				}
 				return
 			}
 
@@ -144,13 +165,19 @@ export const AuthProvider = ({ children }) => {
 					const refreshResult = await attemptRefreshToken()
 					
 					if (!isMountedRef.current || abortController.signal.aborted) {
+						// Component unmounted or request aborted - finalize
+						if (isMountedRef.current) {
+							setIsCheckingAuth(false)
+						}
 						return
 					}
 
 					if (refreshResult.success) {
 						// Token refreshed successfully, retry /me
+						// Increased delay from 200ms to 400ms for better cookie propagation
 						if (retryCount < maxRetries) {
-							await sleep(200) // Small delay to ensure cookie propagation
+							await sleep(400)
+							// Recursive call - it will handle isCheckingAuth(false) at the end
 							return checkAuth(retryCount + 1, maxRetries, true)
 						}
 					}
@@ -166,6 +193,7 @@ export const AuthProvider = ({ children }) => {
 			if (isNetworkErr && retryCount < maxRetries) {
 				const delay = Math.min(1000 * Math.pow(2, retryCount), 10000) // Exponential backoff, max 10s
 				await sleep(delay)
+				// Recursive call - it will handle isCheckingAuth(false) at the end
 				return checkAuth(retryCount + 1, maxRetries, refreshAttempted)
 			}
 
@@ -233,7 +261,8 @@ export const AuthProvider = ({ children }) => {
 						if (!isMountedRef.current) return
 						
 						if (refreshResult.success) {
-							// Token refreshed, verify with /me
+							// Token refreshed, wait for cookie propagation before verifying with /me
+							await sleep(300)
 							try {
 								const response = await axios.get(`${API_URL}/api/users/me`, {
 									withCredentials: true,
@@ -293,6 +322,8 @@ export const AuthProvider = ({ children }) => {
 						if (!isMountedRef.current) return
 						
 						if (refreshResult.success) {
+							// Token refreshed, wait for cookie propagation before verifying with /me
+							await sleep(300)
 							try {
 								const response = await axios.get(`${API_URL}/api/users/me`, {
 									withCredentials: true,
@@ -360,11 +391,14 @@ export const AuthProvider = ({ children }) => {
 			if (error.response?.status === 401) {
 				const refreshResult = await attemptRefreshToken()
 				if (refreshResult.success) {
+					// Wait for cookie propagation before retry
+					await sleep(300)
 					// Retry after token refresh
 					try {
 						const res = await axios.get(`${API_URL}/api/users/me`, { 
 							withCredentials: true,
-							timeout: 30000
+							timeout: 30000,
+							skipAuthRefresh: true
 						})
 						updateAuthState(res.data)
 					} catch (retryError) {

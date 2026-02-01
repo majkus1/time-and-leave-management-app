@@ -7,17 +7,7 @@ const { createLog } = require('../services/logService');
 const { createGeneralChannel } = require('./chatController');
 const { createTeamBoard } = require('./boardController');
 const { createTeamSchedule } = require('./scheduleController');
-const Workday = require('../models/Workday')(firmDb);
-const LeaveRequest = require('../models/LeaveRequest')(firmDb);
-const LeavePlan = require('../models/LeavePlan')(firmDb);
-const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb);
-const Log = require('../models/log')(firmDb);
-const Message = require('../models/Message')(firmDb);
-const Channel = require('../models/Channel')(firmDb);
-const Board = require('../models/Board')(firmDb);
-const Schedule = require('../models/Schedule')(firmDb);
-const Department = require('../models/Department')(firmDb);
-const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
+const teamService = require('../services/teamService');
 
 // Helper function to update maxUsers for special teams
 const updateSpecialTeamLimit = async (team) => {
@@ -412,65 +402,53 @@ exports.deleteTeam = async (req, res) => {
 		const { teamId } = req.params;
 		const currentUser = await User.findById(req.user.userId);
 
-		// Sprawdź czy użytkownik jest adminem
-		if (!currentUser || !currentUser.roles.includes('Admin')) {
+		// Check permissions using service
+		const permissionCheck = await teamService.checkDeleteTeamPermission(currentUser, teamId);
+		if (!permissionCheck.hasPermission) {
 			return res.status(403).json({
 				success: false,
-				message: 'Brak uprawnień do usunięcia zespołu'
+				message: permissionCheck.error
 			});
 		}
 
-		// Sprawdź czy zespół istnieje
-		const team = await Team.findById(teamId);
-		if (!team) {
-			return res.status(404).json({
-				success: false,
-				message: 'Zespół nie został znaleziony'
-			});
-		}
+		// Soft delete team using service
+		const result = await teamService.softDeleteTeam(teamId);
 
-		// Sprawdź czy użytkownik należy do tego zespołu
-		if (currentUser.teamId.toString() !== teamId) {
-			return res.status(403).json({
-				success: false,
-				message: 'Brak uprawnień do usunięcia tego zespołu'
-			});
-		}
-
-		// Soft delete wszystkich użytkowników zespołu
-		const deletedAt = new Date();
-		await User.updateMany(
-			{ teamId, $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
-			{ isActive: false, deletedAt }
-		);
-
-		// Soft delete zasobów zespołu (boards, schedules, departments, channels, supervisor configs)
-		// Note: Workday, LeaveRequest, LeavePlan, CalendarConfirmation, Log, Message są historyczne
-		// i pozostaną w bazie - zostaną usunięte przez cleanup job po 30 dniach
-		await Promise.all([
-			Board.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
-			Schedule.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
-			Department.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
-			Channel.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
-			SupervisorConfig.updateMany({ teamId }, { isActive: false, deletedAt })
-		]);
-
-		// Soft delete zespołu
-		await Team.findByIdAndUpdate(teamId, {
-			isActive: false,
-			deletedAt
-		});
-
-		res.json({
-			success: true,
-			message: 'Zespół i wszyscy użytkownicy zostali oznaczeni jako usunięci. Dane zostaną trwale usunięte po 30 dniach zgodnie z Regulaminem.'
-		});
+		res.json(result);
 
 	} catch (error) {
 		console.error('Delete team error:', error);
 		res.status(500).json({
 			success: false,
-			message: 'Błąd serwera podczas usuwania zespołu'
+			message: error.message || 'Błąd serwera podczas usuwania zespołu'
+		});
+	}
+};
+
+exports.permanentlyDeleteTeam = async (req, res) => {
+	try {
+		const { teamId } = req.params;
+		const currentUser = await User.findById(req.user.userId);
+
+		// Check permissions using service
+		const permissionCheck = await teamService.checkDeleteTeamPermission(currentUser, teamId);
+		if (!permissionCheck.hasPermission) {
+			return res.status(403).json({
+				success: false,
+				message: permissionCheck.error
+			});
+		}
+
+		// Permanently delete team using service
+		const result = await teamService.permanentlyDeleteTeam(teamId);
+
+		res.json(result);
+
+	} catch (error) {
+		console.error('Permanently delete team error:', error);
+		res.status(500).json({
+			success: false,
+			message: error.message || 'Błąd serwera podczas trwałego usuwania zespołu'
 		});
 	}
 };
