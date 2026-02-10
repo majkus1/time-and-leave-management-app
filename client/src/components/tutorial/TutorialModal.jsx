@@ -50,8 +50,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Filling in daily work time records',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Na głównym ekranie znajdziesz kalendarz miesięczny. Kliknij na wybrany dzień, aby dodać wpis czasu pracy. W formularzu wprowadź godzinę rozpoczęcia i zakończenia pracy lub liczbę godzin pracy oraz ewentualne nadgodziny. Wszystkie wpisy są automatycznie zapisywane. Ewidencję możesz przeglądać w widoku miesięcznym.'
-				: 'On the main screen, you will find a monthly calendar. Click on a selected day to add a work time entry. In the form, enter start and end times or the number of work hours, and any overtime. All entries are automatically saved. You can view your timesheet in monthly view.'
+				? 'Na głównym ekranie znajdziesz kalendarz miesięczny. Kliknij na wybrany dzień, aby dodać wpis czasu pracy. W formularzu wprowadź godzinę rozpoczęcia i zakończenia pracy lub liczbę godzin pracy oraz ewentualne nadgodziny. Wszystkie wpisy są automatycznie zapisywane. Ewidencję możesz przeglądać w widoku miesięcznym. Zaakceptowane wnioski urlopowe oraz nieobecności zgłoszone, które nie wymagają zatwierdzenia, są automatycznie dodawane do kalendarza ewidencji czasu pracy i odnotowane w podsumowaniu.'
+				: 'On the main screen, you will find a monthly calendar. Click on a selected day to add a work time entry. In the form, enter start and end times or the number of work hours, and any overtime. All entries are automatically saved. You can view your timesheet in monthly view. Approved leave requests and reported absences that do not require approval are automatically added to the timesheet calendar and noted in the summary.'
 		},
 		{
 			id: 'timer',
