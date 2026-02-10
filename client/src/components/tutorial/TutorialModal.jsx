@@ -22,7 +22,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const baseSections = [
 		{
 			id: 'leave-request',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak zgłosić urlop?' : 'How to request leave?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Zgłoś urlop' : 'Request Leave',
 			icon: '/img/sunbed.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Zgłaszanie urlopów i nieobecności'
@@ -34,7 +34,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'timesheet',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak wypełnić ewidencję czasu pracy?' : 'How to fill in timesheet?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Ewidencja czasu pracy' : 'Timesheet',
 			icon: '/img/schedule time works.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Wypełnianie codziennej ewidencji czasu pracy'
@@ -46,7 +46,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'timer',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak uruchomić sesję pracy (timer)?' : 'How to start a work session (timer)?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Timer pracy' : 'Work Timer',
 			icon: '/img/clock.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Używanie timera do śledzenia czasu pracy'
@@ -58,7 +58,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'boards',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z tablic zadań?' : 'How to use task boards?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Tablice zadań' : 'Task Boards',
 			icon: '/img/task-list.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Zarządzanie zadaniami'
@@ -70,7 +70,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'schedule',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z grafików?' : 'How to use schedules?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Grafiki' : 'Schedules',
 			icon: '/img/project.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Planowanie grafików pracy'
@@ -82,7 +82,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'chat',
-			title: i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z czatu?' : 'How to use chat?',
+			title: i18n.resolvedLanguage === 'pl' ? 'Czat' : 'Chat',
 			icon: '/img/chat.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Komunikacja z zespołem'
@@ -91,6 +91,30 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			content: i18n.resolvedLanguage === 'pl' 
 				? 'Czat umożliwia komunikację z zespołem w czasie rzeczywistym. Kanał ogólny dla całego zespołu jest automatycznie utworzony na starcie. Gdy dodasz nowy dział w zespole, automatycznie tworzy się kanał czatu dla tego działu. Możesz również tworzyć niestandardowe czaty z dowolnymi pracownikami oraz prowadzić czaty prywatne. Możesz wysyłać wiadomości, otrzymywać powiadomienia o nowych wiadomościach (w przeglądarce i email). Wszystkie wiadomości są zapisywane i dostępne w historii.'
 				: 'Chat enables real-time communication with your team. A general channel for the entire team is automatically created at the start. When you add a new department to the team, a chat channel for that department is automatically created. You can also create custom chats with any employees and have private chats. You can send messages, receive notifications about new messages (in browser and email). All messages are saved and available in history.'
+		},
+		{
+			id: 'leave-planner',
+			title: i18n.resolvedLanguage === 'pl' ? 'Zaplanuj swój urlop' : 'Plan your leave',
+			icon: '/img/sunbed.png',
+			description: i18n.resolvedLanguage === 'pl' 
+				? 'Planowanie urlopów w kalendarzu'
+				: 'Planning leave in calendar',
+			path: '/leave-planner',
+			content: i18n.resolvedLanguage === 'pl' 
+				? 'W sekcji "Zaplanuj swój urlop" znajdziesz kalendarz, w którym możesz zaznaczać dni, w których planujesz wziąć urlop. W kalendarzu widoczne są również wszystkie Twoje zatwierdzone i zgłoszone wnioski urlopowe oraz nieobecności. Możesz przeglądać zaakceptowane wnioski urlopowe i planować kolejne urlopy, unikając konfliktów terminów. Zaznaczone dni są widoczne w sekcji "Plany urlopowe" dla całego zespołu, co pomaga w koordynacji urlopów.'
+				: 'In the "Plan your leave" section, you will find a calendar where you can mark days when you plan to take leave. The calendar also shows all your approved and submitted leave requests and absences. You can review accepted leave requests and plan future leaves, avoiding date conflicts. Marked days are visible in the "Vacation plans" section for the entire team, which helps coordinate leaves.'
+		},
+		{
+			id: 'leave-plans',
+			title: i18n.resolvedLanguage === 'pl' ? 'Plany urlopowe' : 'Vacation plans',
+			icon: '/img/trip.png',
+			description: i18n.resolvedLanguage === 'pl' 
+				? 'Przeglądanie planów urlopowych wszystkich pracowników'
+				: 'Viewing vacation plans of all employees',
+			path: '/all-leave-plans',
+			content: i18n.resolvedLanguage === 'pl' 
+				? 'W sekcji "Plany urlopowe" widoczne są plany i zaakceptowane wnioski urlopowe wszystkich pracowników w zespole. Możesz filtrować kalendarz według konkretnego pracownika lub działu, co ułatwia planowanie i koordynację urlopów w zespole. Widzisz wszystkie zatwierdzone wnioski urlopowe i nieobecności, co pomaga w zarządzaniu dostępnością pracowników i unikaniu konfliktów terminów.'
+				: 'In the "Vacation plans" section, you can see plans and accepted leave requests of all employees in the team. You can filter the calendar by a specific employee or department, which facilitates planning and coordinating leaves in the team. You see all approved leave requests and absences, which helps manage employee availability and avoid date conflicts.'
 		}
 	]
 
@@ -143,6 +167,18 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			content: i18n.resolvedLanguage === 'pl' 
 				? 'W sekcji "Urlopy" Admin i HR widzą wszystkie wnioski urlopowe w zespole. Przełożony widzi wnioski pracowników ze swojego działu lub wybranych pracowników (zgodnie z konfiguracją). Możesz zatwierdzić, odrzucić lub anulować wniosek. Po zatwierdzeniu, urlop automatycznie pojawia się w kalendarzu urlopowym. Każda zmiana statusu wniosku wysyła powiadomienie email do pracownika. Możesz również wygenerować wniosek do PDF. Admin i HR mają zawsze pełny dostęp do wszystkich wniosków. Przełożony może mieć ograniczone uprawnienia w zależności od konfiguracji (może zatwierdzać tylko urlopy pracowników z działu lub wybranych pracowników).'
 				: 'In the "Leaves" section, Admin and HR see all leave requests in the team. Supervisors see requests from employees in their department or selected employees (according to configuration). You can approve, reject, or cancel a request. After approval, the leave automatically appears in the leave calendar. Any change in request status sends an email notification to the employee. You can also generate the request to PDF. Admin and HR always have full access to all requests. Supervisors may have limited permissions depending on configuration (can only approve leaves from department employees or selected employees).'
+		},
+		{
+			id: 'help-center',
+			title: i18n.resolvedLanguage === 'pl' ? 'Centrum pomocy' : 'Help Center',
+			icon: '/img/technical-support.png',
+			description: i18n.resolvedLanguage === 'pl' 
+				? 'Zgłaszanie problemów i kontakt z obsługą'
+				: 'Reporting issues and contacting support',
+			path: '/helpcenter',
+			content: i18n.resolvedLanguage === 'pl' 
+				? 'W sekcji "Centrum pomocy" możesz zgłaszać problemy z działaniem aplikacji, proponować usprawnienia lub poprosić o kontakt w sprawie zakupu lub przedłużenia pakietu. Tworzysz zgłoszenie, opisujesz problem lub potrzebę, możesz dołączyć załączniki (np. zrzuty ekranu). Wszystkie Twoje zgłoszenia są widoczne w liście "Twoje zgłoszenia" – możesz śledzić ich status (otwarte/zamknięte) i historię odpowiedzi zespołu wsparcia.'
+				: 'In the "Help Center" section, you can report issues with the application, suggest improvements, or request contact regarding purchasing or extending a subscription. You create a ticket, describe the issue or need, and can attach files (e.g., screenshots). All your tickets are visible in the "Your tickets" list – you can track their status (open/closed) and the response history from the support team.'
 		}
 	]
 
