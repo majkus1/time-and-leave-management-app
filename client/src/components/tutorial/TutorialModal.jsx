@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -12,6 +12,15 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const { refreshUserData, role } = useAuth()
 	const [activeSection, setActiveSection] = useState(null)
 	const [isMarkingAsSeen, setIsMarkingAsSeen] = useState(false)
+	const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+	useEffect(() => {
+		const handleResize = () => {
+			setIsMobile(window.innerWidth < 768)
+		}
+		window.addEventListener('resize', handleResize)
+		return () => window.removeEventListener('resize', handleResize)
+	}, [])
 	
 	// Sprawdź role użytkownika
 	const isAdmin = role && role.includes('Admin')
@@ -185,6 +194,19 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	// Połącz sekcje - podstawowe dla wszystkich + dodatkowe dla Admina/HR
 	const sections = [...baseSections, ...(isAdmin || isHR ? adminHRSections : [])]
 
+	// Podziel sekcje na kolumny (maksymalnie 2 kolumny na desktop, 1 na mobile)
+	const columns = useMemo(() => {
+		const numColumns = isMobile ? 1 : 2
+		const cols = Array(numColumns).fill(null).map(() => [])
+		
+		// Rozdziel sekcje równomiernie między kolumny
+		sections.forEach((section, index) => {
+			cols[index % numColumns].push(section)
+		})
+		
+		return cols
+	}, [sections, isMobile])
+
 	const handleMarkAsSeen = async () => {
 		if (isMarkingAsSeen) return
 		
@@ -322,27 +344,40 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 
 			{/* Sections Grid */}
 			<div style={{
-				display: 'grid',
-				gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+				display: 'flex',
+				flexDirection: isMobile ? 'column' : 'row',
 				gap: '16px',
-				marginBottom: '30px'
+				marginBottom: '30px',
+				alignItems: 'flex-start'
 			}}>
-				{sections.map((section) => (
+				{columns.map((columnSections, columnIndex) => (
 					<div
-						key={section.id}
-						onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
+						key={columnIndex}
 						style={{
-							padding: '20px',
-							border: '2px solid',
-							borderColor: activeSection === section.id ? '#667eea' : '#e5e7eb',
-							borderRadius: '12px',
-							cursor: 'pointer',
-							transition: 'all 0.3s ease',
-							backgroundColor: activeSection === section.id ? '#f0f4ff' : 'white',
-							boxShadow: activeSection === section.id 
-								? '0 4px 12px rgba(102, 126, 234, 0.2)' 
-								: '0 2px 4px rgba(0, 0, 0, 0.05)'
+							flex: isMobile ? 'none' : '1',
+							width: isMobile ? '100%' : 'auto',
+							minWidth: isMobile ? 'auto' : '300px',
+							display: 'flex',
+							flexDirection: 'column',
+							gap: '16px'
 						}}
+					>
+						{columnSections.map((section) => (
+							<div
+								key={section.id}
+								onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
+								style={{
+									padding: '20px',
+									border: '2px solid',
+									borderColor: activeSection === section.id ? '#667eea' : '#e5e7eb',
+									borderRadius: '12px',
+									cursor: 'pointer',
+									transition: 'all 0.3s ease',
+									backgroundColor: activeSection === section.id ? '#f0f4ff' : 'white',
+									boxShadow: activeSection === section.id 
+										? '0 4px 12px rgba(102, 126, 234, 0.2)' 
+										: '0 2px 4px rgba(0, 0, 0, 0.05)'
+								}}
 						onMouseEnter={(e) => {
 							if (activeSection !== section.id) {
 								e.currentTarget.style.borderColor = '#cbd5e1'
@@ -467,6 +502,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								</button>
 							</div>
 						)}
+					</div>
+						))}
 					</div>
 				))}
 			</div>
