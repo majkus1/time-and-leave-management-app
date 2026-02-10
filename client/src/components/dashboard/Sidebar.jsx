@@ -274,7 +274,7 @@ function Sidebar() {
 					<NavLink
 						to="/dashboard"
 						style={{ marginTop: '20px'}}
-						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} dashboard-link`}>
 						<div className="nav-icon">
 							<img src="/img/clock.png" alt="Dashboard" />
 						</div>
@@ -421,7 +421,7 @@ function Sidebar() {
 									<img src="/img/info.png" alt="How to use" />
 								</div>
 								<span className="nav-text">
-									{i18n.resolvedLanguage === 'pl' ? 'Jak korzystać' : 'How to use'}
+									{i18n.resolvedLanguage === 'pl' ? 'Jak korzystać?' : 'How to use?'}
 								</span>
 							</button>
 						</div>
