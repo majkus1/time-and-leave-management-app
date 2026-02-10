@@ -403,7 +403,6 @@ function Sidebar() {
 									width: '100%',
 									textAlign: 'left',
 									cursor: 'pointer',
-									padding: '12px 15px',
 									margin: 0
 								}}
 								onMouseEnter={(e) => {
