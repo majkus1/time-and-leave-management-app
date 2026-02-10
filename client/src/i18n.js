@@ -904,7 +904,7 @@ i18n
 						infoModal: {
 							title: 'Work Time Counter Information',
 							howItWorks: 'How does the timer work?',
-							howItWorksDesc: 'The timer allows you to record work time. Click "Start" to begin tracking. You can add a work description or select a task from the list.',
+							howItWorksDesc: 'The timer allows you to record work time. Click "Start" to begin tracking. You can add a work description or select a task from the list.\n\nImportant: work time is counted from start to stop - the timer continues counting even during breaks. Breaks and overtime are tracked separately and visible in session details after stopping.',
 							qrCode: 'QR Codes - Entry/Exit',
 							qrCodeDesc: 'Scan a QR code to start the timer (entry), then scan the same code again to stop it (exit).',
 							configuration: 'Configuration',
@@ -1864,7 +1864,7 @@ i18n
 						infoModal: {
 							title: 'Informacje o liczniku czasu pracy',
 							howItWorks: 'Jak działa timer?',
-							howItWorksDesc: 'Timer pozwala na rejestrację czasu pracy. Kliknij "Start" aby rozpocząć pomiar. Możesz dodać opis pracy lub wybrać zadanie z listy.',
+							howItWorksDesc: 'Timer pozwala na rejestrację czasu pracy. Kliknij "Start" aby rozpocząć pomiar. Możesz dodać opis pracy lub wybrać zadanie z listy.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy timer dalej liczy czas. Przerwy i nadgodziny są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu.',
 							qrCode: 'Kody QR - Wejście/Wyjście',
 							qrCodeDesc: 'Zeskanuj kod QR aby rozpocząć timer (wejście), a następnie zeskanuj ten sam kod ponownie aby go zatrzymać (wyjście).',
 							configuration: 'Konfiguracja',

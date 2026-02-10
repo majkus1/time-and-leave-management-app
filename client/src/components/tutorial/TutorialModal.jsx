@@ -62,8 +62,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Using timer to track work time',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Na głównym ekranie znajdziesz panel timera (jeśli jest włączony w ustawieniach). Możesz uruchomić timer na dwa sposoby: 1) Kliknij "Start" w panelu timera, aby rozpocząć sesję pracy ręcznie. 2) Zeskanuj kod QR w miejscu pracy - jeśli nie masz aktywnego timera, skanowanie automatycznie zarejestruje wejście i uruchomi timer. Jeśli masz aktywny timer, skanowanie QR zarejestruje wyjście i zatrzyma timer. Timer automatycznie śledzi czas pracy w czasie rzeczywistym. Możesz wstrzymać timer na przerwy (przycisk "Pauza") i wznowić go później. Po zakończeniu pracy kliknij "Stop" lub zeskanuj QR ponownie - czas zostanie automatycznie dodany do ewidencji czasu pracy dla aktualnego dnia. Wszystkie sesje są zapisywane i możesz je przeglądać w historii sesji.'
-				: 'On the main screen, you will find the timer panel (if enabled in settings). You can start the timer in two ways: 1) Click "Start" in the timer panel to manually begin a work session. 2) Scan the QR code at your workplace - if you don\'t have an active timer, scanning will automatically register entry and start the timer. If you have an active timer, scanning the QR will register exit and stop the timer. The timer automatically tracks work time in real-time. You can pause the timer for breaks (the "Pause" button) and resume it later. After finishing work, click "Stop" or scan the QR again - the time will be automatically added to your timesheet for the current day. All sessions are saved and you can view them in the session history.'
+				? 'Na głównym ekranie znajdziesz panel timera (jeśli jest włączony w ustawieniach). Możesz uruchomić timer na dwa sposoby: 1) Kliknij "Start" w panelu timera, aby rozpocząć sesję pracy ręcznie. 2) Zeskanuj kod QR w miejscu pracy - jeśli nie masz aktywnego timera, skanowanie automatycznie zarejestruje wejście i uruchomi timer. Jeśli masz aktywny timer, skanowanie QR zarejestruje wyjście i zatrzyma timer. Timer automatycznie śledzi czas pracy w czasie rzeczywistym.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy timer dalej liczy czas. Przerwy są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu. Możesz również oznaczyć czas jako nadgodziny - są one liczone osobno i widoczne w szczegółach. Po zakończeniu pracy kliknij "Stop" lub zeskanuj QR ponownie - czas zostanie automatycznie dodany do ewidencji czasu pracy dla aktualnego dnia. Wszystkie sesje są zapisywane i możesz je przeglądać w historii sesji, gdzie widoczne są: całkowity czas pracy, czas przerwy i czas nadgodzin.'
+				: 'On the main screen, you will find the timer panel (if enabled in settings). You can start the timer in two ways: 1) Click "Start" in the timer panel to manually begin a work session. 2) Scan the QR code at your workplace - if you don\'t have an active timer, scanning will automatically register entry and start the timer. If you have an active timer, scanning the QR will register exit and stop the timer. The timer automatically tracks work time in real-time.\n\nImportant: work time is counted from start to stop - the timer continues counting even during breaks. Breaks are tracked separately and visible in session details after stopping. You can also mark time as overtime - it is counted separately and visible in details. After finishing work, click "Stop" or scan the QR again - the time will be automatically added to your timesheet for the current day. All sessions are saved and you can view them in the session history, where you can see: total work time, break time, and overtime.'
 		},
 		{
 			id: 'boards',
@@ -473,7 +473,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 									margin: '0 0 16px 0',
 									color: '#374151',
 									fontSize: '15px',
-									lineHeight: '1.6'
+									lineHeight: '1.6',
+									whiteSpace: 'pre-line'
 								}}>
 									{section.content}
 								</p>

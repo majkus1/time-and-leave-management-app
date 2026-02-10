@@ -1079,7 +1079,8 @@ function TimerPanel() {
 						margin: 0,
 						color: '#4b5563',
 						fontSize: '15px',
-						lineHeight: '1.6'
+						lineHeight: '1.6',
+						whiteSpace: 'pre-line'
 					}}>
 						{t('timer.infoModal.howItWorksDesc') || 'Timer pozwala na rejestrację czasu pracy. Kliknij "Start" aby rozpocząć pomiar czasu. Możesz dodać opis pracy lub wybrać zadanie z listy. Timer można zatrzymać, zapauzować lub wznowić w dowolnym momencie.'}
 					</p>
