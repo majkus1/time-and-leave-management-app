@@ -26,6 +26,8 @@ export const AuthProvider = ({ children }) => {
 	const [userId, setUserId] = useState(null)
 	const [teamId, setTeamId] = useState(null)
 	const [isTeamAdmin, setIsTeamAdmin] = useState(false)
+	const [hasSeenTutorial, setHasSeenTutorial] = useState(false)
+	const [firstLoginAt, setFirstLoginAt] = useState(null)
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 	
 	// Ref to track if component is mounted (prevent state updates after unmount)
@@ -41,6 +43,8 @@ export const AuthProvider = ({ children }) => {
 		setUserId(data._id || null)
 		setTeamId(data.teamId || null)
 		setIsTeamAdmin(data.isTeamAdmin || false)
+		setHasSeenTutorial(data.hasSeenTutorial || false)
+		setFirstLoginAt(data.firstLoginAt || null)
 	}
 
 	const clearAuthState = () => {
@@ -51,6 +55,8 @@ export const AuthProvider = ({ children }) => {
 		setUserId(null)
 		setTeamId(null)
 		setIsTeamAdmin(false)
+		setHasSeenTutorial(false)
+		setFirstLoginAt(null)
 	}
 
 	// Function to attempt refresh token (memoized to avoid stale closures)
@@ -424,6 +430,8 @@ export const AuthProvider = ({ children }) => {
 				userId,
 				teamId,
 				isTeamAdmin,
+				hasSeenTutorial,
+				firstLoginAt,
 				isCheckingAuth,
 				setLoggedIn,
 				setRole,

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR, isSupervisor, isWorker } from '../../utils/roleHelpers'
 import { useUnreadCount } from '../../hooks/useChat'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
+import TutorialModal from '../tutorial/TutorialModal'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -12,6 +13,7 @@ function Sidebar() {
 	const [isAnimating, setIsAnimating] = useState(false)
 	const [isNavbarVisible, setIsNavbarVisible] = useState(true)
 	const [lastScrollY, setLastScrollY] = useState(0)
+	const [showTutorialModal, setShowTutorialModal] = useState(false)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
@@ -389,7 +391,40 @@ function Sidebar() {
 									<img src="/img/settings.png" alt="Settings" />
 								</div>
 								<span className="nav-text">{t('sidebar.btnSettings')}</span>
-							</NavLink></div>
+							</NavLink>
+							
+							{/* Przycisk "Jak korzystać" */}
+							<button
+								onClick={() => setShowTutorialModal(true)}
+								className="nav-link"
+								style={{
+									background: 'rgba(102, 126, 234, 0.1)',
+									border: '1px solid rgba(102, 126, 234, 0.2)',
+									width: '100%',
+									textAlign: 'left',
+									cursor: 'pointer',
+									padding: '8px 10px',
+									margin: 0
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.background = 'rgba(102, 126, 234, 0.15)'
+									e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.3)'
+									e.currentTarget.style.transform = 'translateX(5px)'
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)'
+									e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.2)'
+									e.currentTarget.style.transform = 'translateX(0)'
+								}}
+							>
+								<div className="nav-icon">
+									<img src="/img/info.png" alt="How to use" />
+								</div>
+								<span className="nav-text">
+									{i18n.resolvedLanguage === 'pl' ? 'Jak korzystać' : 'How to use'}
+								</span>
+							</button>
+						</div>
 
 					{/* Admin Links */}
 					{isAdmin(role) && (
@@ -456,6 +491,13 @@ function Sidebar() {
 			{isMenuOpen && window.innerWidth <= 1500 && (
 				<div className="sidebar-overlay" onClick={toggleMenu}></div>
 			)}
+
+			{/* Modal samouczka */}
+			<TutorialModal 
+				isOpen={showTutorialModal}
+				onClose={() => setShowTutorialModal(false)}
+				showOnFirstView={false}
+			/>
 		</div>
 	)
 }

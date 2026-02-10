@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema({
     deletedAt: {
         type: Date,
         default: null
+    },
+    hasSeenTutorial: {
+        type: Boolean,
+        default: false
+    },
+    firstLoginAt: {
+        type: Date,
+        default: null
     }
 }, { collection: 'users' });
 

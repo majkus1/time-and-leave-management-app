@@ -10,6 +10,7 @@ router.post('/refresh-token', userController.refreshToken)
 
 
 router.get('/me', authenticateToken, userController.getMe)
+router.post('/tutorial/seen', authenticateToken, userController.markTutorialAsSeen)
 router.post('/logout', authenticateToken, userController.logout)
 router.post('/change-password', authenticateToken, userController.changePassword)
 router.post('/register', authenticateToken, userController.register)

@@ -127,6 +127,7 @@ exports.registerTeam = async (req, res) => {
 			teamId: newTeam._id,
 			roles: ['Admin'],
 			isTeamAdmin: true,
+			firstLoginAt: new Date(), // Oznacz jako pierwsze logowanie przy rejestracji
 			...(position ? { position } : {})
 		});
 

@@ -1083,7 +1083,7 @@ exports.deleteUser = async (req, res) => {
 
 exports.getMe = async (req, res) => {
 	try {
-		const user = await User.findById(req.user.userId).select('firstName lastName username roles teamId isTeamAdmin')
+		const user = await User.findById(req.user.userId).select('firstName lastName username roles teamId isTeamAdmin hasSeenTutorial firstLoginAt')
 		if (!user) return res.status(404).json({ message: 'Użytkownik nie został znaleziony' })
 		
 		return res.status(200).json({
@@ -1091,10 +1091,32 @@ exports.getMe = async (req, res) => {
 			roles: user.roles,
 			username: user.username,
 			teamId: user.teamId,
-			isTeamAdmin: user.isTeamAdmin
+			isTeamAdmin: user.isTeamAdmin,
+			hasSeenTutorial: user.hasSeenTutorial || false,
+			firstLoginAt: user.firstLoginAt
 		})
 	} catch (error) {
 		// console.error('Błąd w /me:', error)
+		return res.status(500).json({ message: 'Błąd serwera' })
+	}
+}
+
+exports.markTutorialAsSeen = async (req, res) => {
+	try {
+		const user = await User.findById(req.user.userId)
+		if (!user) return res.status(404).json({ message: 'Użytkownik nie został znaleziony' })
+		
+		user.hasSeenTutorial = true
+		await user.save()
+		
+		await createLog(user._id, 'TUTORIAL_SEEN', 'Tutorial marked as seen')
+		
+		return res.status(200).json({ 
+			success: true,
+			message: 'Samouczek został oznaczony jako obejrzany' 
+		})
+	} catch (error) {
+		console.error('Błąd podczas oznaczania samouczka:', error)
 		return res.status(500).json({ message: 'Błąd serwera' })
 	}
 }
@@ -1198,12 +1220,20 @@ exports.login = async (req, res) => {
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		})
 
+		// Oznacz pierwsze logowanie jeśli jeszcze nie było
+		if (!user.firstLoginAt) {
+			user.firstLoginAt = new Date()
+			await user.save()
+		}
+
 		res.status(200).json({
 			message: 'Logged in successfully',
 			roles: user.roles,
 			username: user.username,
 			teamId: user.teamId,
-			isTeamAdmin: user.isTeamAdmin
+			isTeamAdmin: user.isTeamAdmin,
+			hasSeenTutorial: user.hasSeenTutorial || false,
+			firstLoginAt: user.firstLoginAt
 		})
 
 		await createLog(user._id, 'LOGIN', 'Login successfully')

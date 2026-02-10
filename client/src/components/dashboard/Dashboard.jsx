@@ -3,14 +3,19 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import MonthlyCalendar from '../workcalendars/MonthlyCalendar';
+import TutorialModal from '../tutorial/TutorialModal';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../../context/AuthContext';
 
 function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [tutorialShowOnFirstView, setTutorialShowOnFirstView] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { hasSeenTutorial, firstLoginAt, isTeamAdmin } = useAuth();
 
   console.log('[Dashboard] Render - location.state:', location.state, 'showSuccessModal:', showSuccessModal);
 
@@ -46,6 +51,25 @@ function Dashboard() {
     }
   }, [location.state]);
 
+  // Sprawdź czy użytkownik loguje się pierwszy raz i nie widział jeszcze samouczka
+  // UWAGA: Ten useEffect NIE pokazuje samouczka po rejestracji - to robi handleGoToDashboard
+  useEffect(() => {
+    // Nie pokazuj samouczka jeśli:
+    // 1. Użytkownik już widział samouczek (hasSeenTutorial === true)
+    // 2. To nie jest pierwsze logowanie (firstLoginAt === null)
+    // 3. Pokazuje się modal sukcesu rejestracji (showSuccessModal === true) - wtedy samouczek pokaże się po zamknięciu modala sukcesu
+    if (hasSeenTutorial || !firstLoginAt || showSuccessModal) {
+      return
+    }
+
+    // Jeśli użytkownik ma firstLoginAt ustawiony i nie widział samouczka, pokaż samouczek
+    // Pokaż samouczek po małym opóźnieniu
+    setTimeout(() => {
+      setTutorialShowOnFirstView(true)
+      setShowTutorialModal(true)
+    }, 500)
+  }, [hasSeenTutorial, firstLoginAt, showSuccessModal])
+
   const triggerConfetti = () => {
     const duration = 3000;
     const animationEnd = Date.now() + duration;
@@ -76,13 +100,15 @@ function Dashboard() {
     }, 250);
   };
 
-  const handleGoToSettings = () => {
-    setShowSuccessModal(false);
-    navigate('/settings');
-  };
-
   const handleGoToDashboard = () => {
     setShowSuccessModal(false);
+    // Po zamknięciu powitalnego modala, pokaż samouczek jeśli użytkownik nie widział go wcześniej
+    if (!hasSeenTutorial) {
+      setTimeout(() => {
+        setTutorialShowOnFirstView(true);
+        setShowTutorialModal(true);
+      }, 300);
+    }
   };
 
   const toggleMenu = () => {
@@ -134,7 +160,10 @@ function Dashboard() {
               textAlign: 'center',
               position: 'relative',
               overflow: 'hidden',
-              zIndex: 100000002
+              zIndex: 100000002,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
             }}>
             {/* Dekoracyjne tło */}
             <div style={{
@@ -171,26 +200,39 @@ function Dashboard() {
               fontSize: '28px',
               fontWeight: '700',
               color: '#1f2937',
-              marginBottom: '16px',
-              lineHeight: '1.2'
+              margin: '0 0 16px 0',
+              padding: 0,
+              lineHeight: '1.2',
+              textAlign: 'center',
+              width: '100%',
+              display: 'block',
+              justifyContent: 'unset',
+              alignItems: 'unset'
             }}>
-              {t('newteam.successMessageWithSettings')}
+              {i18n.resolvedLanguage === 'pl' 
+                ? 'Zespół został utworzony pomyślnie!'
+                : 'Team created successfully!'
+              }
             </h2>
 
             {/* Opis */}
             <p style={{
               fontSize: '16px',
               color: '#6b7280',
-              marginBottom: '30px',
-              lineHeight: '1.6'
+              margin: '0 0 30px 0',
+              padding: 0,
+              lineHeight: '1.6',
+              textAlign: 'center',
+              width: '100%',
+              display: 'block'
             }}>
               {i18n.resolvedLanguage === 'pl' 
-                ? 'W zakładce Ustawienia możesz skonfigurować godziny pracy, święta, typy urlopów i wiele innych opcji dostosowanych do Twojego zespołu.'
-                : 'In the Settings section, you can configure working hours, holidays, leave types, and many other options tailored to your team.'
+                ? 'Twój zespół został pomyślnie zarejestrowany. Możesz teraz rozpocząć korzystanie z aplikacji. W sekcji Ustawienia znajdziesz opcje konfiguracji dostosowane do Twojego zespołu.'
+                : 'Your team has been successfully registered. You can now start using the application. In the Settings section, you will find configuration options tailored to your team.'
               }
             </p>
 
-            {/* Przyciski */}
+            {/* Przycisk */}
             <div style={{
               display: 'flex',
               gap: '12px',
@@ -198,7 +240,7 @@ function Dashboard() {
               flexWrap: 'wrap'
             }}>
               <button
-                onClick={handleGoToSettings}
+                onClick={handleGoToDashboard}
                 style={{
                   backgroundColor: '#667eea',
                   color: 'white',
@@ -226,35 +268,7 @@ function Dashboard() {
                   e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
-                </svg>
-                {t('newteam.settingsLink')}
-              </button>
-              <button
-                onClick={handleGoToDashboard}
-                style={{
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  border: 'none',
-                  padding: '14px 28px',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#e5e7eb';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#f3f4f6';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                {i18n.resolvedLanguage === 'pl' ? 'Przejdź do panelu' : 'Go to Dashboard'}
+                {i18n.resolvedLanguage === 'pl' ? 'Rozpocznij' : 'Get Started'}
               </button>
             </div>
           </div>
@@ -281,6 +295,16 @@ function Dashboard() {
           `}</style>
         </div>
       )}
+
+      {/* Modal samouczka */}
+      <TutorialModal 
+        isOpen={showTutorialModal}
+        onClose={() => {
+          setShowTutorialModal(false)
+          setTutorialShowOnFirstView(false)
+        }}
+        showOnFirstView={tutorialShowOnFirstView}
+      />
     </>
   );
 }

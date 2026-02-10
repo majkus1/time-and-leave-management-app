@@ -2905,6 +2905,106 @@ body:has(.pwa-navigation-bar) .container {
 	padding-top: 25px !important;
 }
 
+/* Tutorial Info Bar */
+.tutorial-info-bar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 10000;
+	background-color: rgba(102, 126, 234, 0.95);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+	padding: 12px 20px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tutorial-info-text {
+	font-size: 14px;
+	color: #1f2937;
+	line-height: 1.5;
+}
+
+.tutorial-info-link {
+	background: none;
+	border: none;
+	color: #667eea;
+	cursor: pointer;
+	text-decoration: underline;
+	font-size: 14px;
+	font-weight: 600;
+	padding: 0;
+	margin: 0;
+	transition: color 0.2s;
+}
+
+.tutorial-info-link:hover {
+	color: #5568d3;
+}
+
+/* Dodaj padding-top do content gdy pasek jest widoczny */
+body:has(.tutorial-info-bar) .content,
+body:has(.tutorial-info-bar) .logs-container,
+body:has(.tutorial-info-bar) .chat-container,
+body:has(.tutorial-info-bar) .board-list,
+body:has(.tutorial-info-bar) .schedule-container,
+body:has(.tutorial-info-bar) #leave-request-form,
+body:has(.tutorial-info-bar) #leave-planner,
+body:has(.tutorial-info-bar) .container {
+	padding-top: 60px !important;
+}
+
+/* Sidebar musi być pod paskiem informacyjnym */
+body:has(.tutorial-info-bar) .sidebar {
+	top: 60px;
+	height: calc(100vh - 60px);
+}
+
+/* Na mobile navbar też potrzebuje padding */
+body:has(.tutorial-info-bar) .mobile-navbar {
+	top: 60px;
+}
+
+/* Responsywność dla paska informacyjnego */
+@media (max-width: 768px) {
+	.tutorial-info-bar {
+		padding: 10px 12px;
+	}
+	
+	.tutorial-info-text {
+		font-size: 12px;
+	}
+	
+	.tutorial-info-link {
+		font-size: 12px;
+	}
+	
+	body:has(.tutorial-info-bar) .content,
+	body:has(.tutorial-info-bar) .logs-container,
+	body:has(.tutorial-info-bar) .chat-container,
+	body:has(.tutorial-info-bar) .board-list,
+	body:has(.tutorial-info-bar) .schedule-container,
+	body:has(.tutorial-info-bar) #leave-request-form,
+	body:has(.tutorial-info-bar) #leave-planner,
+	body:has(.tutorial-info-bar) .container {
+		padding-top: 50px !important;
+	}
+	
+	body:has(.tutorial-info-bar) .mobile-navbar {
+		top: 50px;
+	}
+	
+	body:has(.tutorial-info-bar) .sidebar {
+		top: 50px;
+		height: calc(100vh - 50px);
+	}
+}
+
 @media (max-width: 1500px) {
 	.sidebar {
 		width: 100% !important;
