@@ -67,8 +67,8 @@ function Logs() {
 			en: 'Basic employee role. Can view own data, submit leave requests, record own work time and use application features such as task boards, chat and others.'
 		},
 		'Przełożony (Supervisor)': {
-			pl: 'Rola przełożonego z możliwością konfiguracji uprawnień. Może zatwierdzać urlopy, przeglądać ewidencję czasu pracy i zarządzać grafikiem dla swojego działu oraz wybranych pracowników.',
-			en: 'Supervisor role with configurable permissions. Can approve leaves, view timesheets and manage schedules for their department and selected employees.'
+			pl: 'Rola przełożonego z możliwością konfiguracji uprawnień. Może zatwierdzać urlopy, przeglądać ewidencję czasu pracy i zarządzać grafikiem dla swojego działu oraz/lub wybranych pracowników.',
+			en: 'Supervisor role with configurable permissions. Can approve leaves, view timesheets and manage schedules for their department and/or selected employees.'
 		},
 		'HR': {
 			pl: 'Rola HR. Może przeglądać wszystkie wnioski urlopowe i ewidencje czasu pracy wszystkich pracowników w zespole. Może również ustalać i sprawdzać grafiki pracy.',
@@ -580,7 +580,7 @@ function Logs() {
 								<div style={{ flex: 1 }}>
 									<div style={{ 
 										fontWeight: '600', 
-										color: '#2c3e50',
+										color: role === 'Przełożony (Supervisor)' ? '#27ae60' : '#2c3e50',
 										marginBottom: '8px',
 										fontSize: '16px'
 									}}>
@@ -599,9 +599,10 @@ function Logs() {
 											<div>
 												<div style={{ 
 													fontSize: '13px', 
-													color: '#7f8c8d',
+													color: role === 'Przełożony (Supervisor)' ? '#27ae60' : '#7f8c8d',
 													lineHeight: '1.5',
-													marginBottom: shouldTruncate ? '5px' : '0'
+													marginBottom: shouldTruncate ? '5px' : '0',
+													fontWeight: role === 'Przełożony (Supervisor)' ? '500' : 'normal'
 												}}>
 													{displayText}
 												</div>
