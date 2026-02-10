@@ -245,7 +245,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
-						<Route path="/logs" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
+						<Route path="/team-management" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
 						<Route path="/settings" element={<Settings />} />
 					<Route
 						path="/work-calendars/:userId"

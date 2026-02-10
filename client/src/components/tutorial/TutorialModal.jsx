@@ -142,16 +142,28 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable timer. Push and email notifications are configured individually by each user in their profile settings.'
 		},
 		{
-			id: 'team-management',
-			title: i18n.resolvedLanguage === 'pl' ? 'Zarządzanie zespołem i rolami' : 'Team and Role Management',
+			id: 'create-user',
+			title: i18n.resolvedLanguage === 'pl' ? 'Dodawanie użytkowników' : 'Adding Users',
 			icon: '/img/add-group.png',
 			description: i18n.resolvedLanguage === 'pl' 
-				? 'Dodawanie użytkowników i zarządzanie rolami'
-				: 'Adding users and managing roles',
+				? 'Tworzenie nowych użytkowników w zespole'
+				: 'Creating new users in the team',
 			path: '/create-user',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Jako Admin możesz dodawać nowych użytkowników do zespołu w sekcji "Utwórz użytkownika". Podczas tworzenia użytkownika możesz przypisać mu jedną lub więcej ról: Admin (pełny dostęp), HR (dostęp do urlopów i ewidencji wszystkich), Przełożony (z konfigurowalnymi uprawnieniami), Pracownik (podstawowa rola). Możesz również przypisać użytkownika do działów i ustawić przełożonych. Hierarchia ról: Admin > HR > Przełożony > Pracownik. Admin i HR mają zawsze pełny dostęp, niezależnie od konfiguracji. Możesz edytować role i działy użytkowników w sekcji "Lista użytkowników".'
-				: 'As Admin, you can add new users to the team in the "Create User" section. When creating a user, you can assign one or more roles: Admin (full access), HR (access to leaves and timesheets of all), Supervisor (with configurable permissions), Worker (basic role). You can also assign users to departments and set supervisors. Role hierarchy: Admin > HR > Supervisor > Worker. Admin and HR always have full access, regardless of configuration. You can edit user roles and departments in the "User List" section.'
+				? 'Jako Admin możesz dodawać nowych użytkowników do zespołu w sekcji "Utwórz użytkownika". Podczas tworzenia użytkownika możesz przypisać mu jedną lub więcej ról: Admin (pełny dostęp), HR (dostęp do urlopów i ewidencji wszystkich), Przełożony (z konfigurowalnymi uprawnieniami), Pracownik (podstawowa rola). Możesz również przypisać użytkownika do działów i ustawić przełożonych. Hierarchia ról: Admin > HR > Przełożony > Pracownik.'
+				: 'As Admin, you can add new users to the team in the "Create User" section. When creating a user, you can assign one or more roles: Admin (full access), HR (access to leaves and timesheets of all), Supervisor (with configurable permissions), Worker (basic role). You can also assign users to departments and set supervisors. Role hierarchy: Admin > HR > Supervisor > Worker.'
+		},
+		{
+			id: 'team-management',
+			title: i18n.resolvedLanguage === 'pl' ? 'Zarządzanie zespołem i rolami' : 'Team and Role Management',
+			icon: '/img/contact-list.png',
+			description: i18n.resolvedLanguage === 'pl' 
+				? 'Zarządzanie rolami, działami i logami użytkowników'
+				: 'Managing roles, departments and user logs',
+			path: '/team-management',
+			content: i18n.resolvedLanguage === 'pl' 
+				? 'W sekcji "Zarządzanie zespołem" możesz zarządzać rolami i działami. Możesz edytować role i działy użytkowników, konfigurować uprawnienia przełożonych, przeglądać opisy ról (Admin, HR, Przełożony, Pracownik) oraz przeglądać logi aktywności użytkowników. Admin ma zawsze pełny dostęp, niezależnie od konfiguracji. W tej sekcji znajdziesz również szczegółowe informacje o hierarchii ról i uprawnieniach.'
+				: 'In the "Team Management" section, you can manage roles and departments. You can edit user roles and departments, configure supervisor permissions, review role descriptions (Admin, HR, Supervisor, Worker), and view user activity logs. Admin always has full access, regardless of configuration. This section also contains detailed information about role hierarchy and permissions.'
 		},
 		{
 			id: 'timesheets-admin',

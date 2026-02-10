@@ -439,7 +439,7 @@ function Sidebar() {
 							</NavLink>
 
 							<NavLink
-								to="/logs"
+								to="/team-management"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 								<div className="nav-icon">
 									<img src="/img/contact-list.png" alt="Logs" />
