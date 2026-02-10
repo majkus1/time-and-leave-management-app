@@ -196,11 +196,16 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				{ withCredentials: true }
 			)
 			await refreshUserData()
-			onClose()
 		} catch (error) {
-			console.error('Error marking tutorial as seen:', error)
+			// Cicho loguj błąd, ale nie blokuj użytkownika
+			// Jeśli endpoint nie istnieje lub jest błąd, po prostu kontynuuj
+			if (process.env.NODE_ENV === 'development') {
+				console.error('Error marking tutorial as seen:', error)
+			}
 		} finally {
 			setIsMarkingAsSeen(false)
+			// Zawsze zamykaj modal, niezależnie od wyniku zapytania
+			onClose()
 		}
 	}
 
