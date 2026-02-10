@@ -274,7 +274,7 @@ function Sidebar() {
 					<NavLink
 						to="/dashboard"
 						style={{ marginTop: '20px'}}
-						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} dashboard-link`}>
+						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">
 							<img src="/img/clock.png" alt="Dashboard" />
 						</div>

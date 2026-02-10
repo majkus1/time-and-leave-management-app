@@ -397,7 +397,7 @@ function ENProductPromotion() {
 						{/* 1: Small teams */}
 						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-green-100 text-green-700 font-semibold">👥</span>
+								<img src="/img/group.png" alt="Small teams" className="w-10 h-10 rounded-lg object-contain" />
 								<p className="font-semibold text-gray-900">Small teams</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
@@ -408,7 +408,7 @@ function ENProductPromotion() {
 						{/* 2: Companies and organizations */}
 						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100 text-blue-700 font-semibold">🏢</span>
+								<img src="/img/enterprise.png" alt="Companies and organizations" className="w-10 h-10 rounded-lg object-contain" />
 								<p className="font-semibold text-gray-900">Companies & organizations</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
@@ -419,7 +419,7 @@ function ENProductPromotion() {
 						{/* 3: HR and managers */}
 						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100 text-purple-700 font-semibold">👩‍💼</span>
+								<img src="/img/hr-manager.png" alt="HR and managers" className="w-10 h-10 rounded-lg object-contain" />
 								<p className="font-semibold text-gray-900">HR & managers</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
