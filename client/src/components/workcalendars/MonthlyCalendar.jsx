@@ -913,6 +913,15 @@ function MonthlyCalendar() {
 					locale={i18n.resolvedLanguage}
 					firstDay={1}
 					showNonCurrentDates={false}
+					dayCellClassNames={(arg) => {
+						const today = new Date()
+						const cellDate = new Date(arg.date)
+						const isToday = 
+							cellDate.getDate() === today.getDate() &&
+							cellDate.getMonth() === today.getMonth() &&
+							cellDate.getFullYear() === today.getFullYear()
+						return isToday ? 'fc-day-today-highlight' : ''
+					}}
 					events={[
 						...workdays
 							.filter(day => {
