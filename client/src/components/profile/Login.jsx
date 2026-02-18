@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 
@@ -28,6 +28,12 @@ function Login() {
 	const { t, i18n } = useTranslation()
 	const { setLoggedIn, setRole, setUsername, setTeamId, setIsTeamAdmin, loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
+
+	useEffect(() => {
+		if (loggedIn) {
+			navigate('/dashboard', { replace: true })
+		}
+	}, [loggedIn, navigate])
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -82,12 +88,6 @@ function Login() {
 				<Loader />
 			</div>
 		)
-	}
-
-	// Jeśli użytkownik jest już zalogowany, przekieruj (to powinno być obsłużone przez App.jsx, ale na wszelki wypadek)
-	if (loggedIn) {
-		navigate('/dashboard', { replace: true })
-		return null
 	}
 
 	return (

@@ -44,6 +44,7 @@ import Legal from './components/legal/Legal'
 import PWANavigationBar from './components/PWANavigationBar'
 import QRScan from './components/qr/QRScan'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
+import { handleAuthError } from './utils/authErrorHandler'
 import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
 import '../src/style.css'
@@ -69,7 +70,7 @@ axios.defaults.withCredentials = true
 
 function AppContent() {
 	const location = useLocation()
-	const { loggedIn, role, logout, isCheckingAuth, userId } = useAuth()
+	const { loggedIn, role, logout, isCheckingAuth, userId, username } = useAuth()
 	
 	// HIERARCHIA RÓL: Admin > HR > Przełożony
 	// Sprawdź konfigurację przełożonego jeśli jest przełożonym (ale nie Admin ani HR)
@@ -90,68 +91,7 @@ function AppContent() {
 	useEffect(() => {
 		const interceptor = axios.interceptors.response.use(
 			res => res,
-			async err => {
-				const originalRequest = err.config
-				
-				// Skip error logging if flag is set (for expected errors like 403 on board access)
-				if (originalRequest.skipErrorLog && (err.response?.status === 403 || err.response?.status === 404)) {
-					// Silently reject without logging
-					return Promise.reject(err)
-				}
-				
-				// Skip refresh if AuthContext is handling it (checkAuth, refreshUserData)
-				// or if this is a refresh-token request itself
-				if (
-					err.response?.status === 401 &&
-					originalRequest.url !== `${API_URL}/api/users/refresh-token` &&
-					!originalRequest._retry &&
-					!originalRequest.skipAuthRefresh
-				) {
-					originalRequest._retry = true
-					try {
-						await axios.post(`${API_URL}/api/users/refresh-token`, {}, { 
-							withCredentials: true,
-							timeout: 10000
-						})
-						return axios(originalRequest)
-					} catch (refreshError) {
-						// Refresh failed - token is invalid, logout user
-						if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
-							// Only logout if user is actually logged in (avoid infinite loops)
-							if (loggedIn) {
-								logout()
-							}
-						}
-						return Promise.reject(refreshError)
-					}
-				}
-				
-				// Handle 403 Forbidden - user might have lost permissions
-				// But skip if skipErrorLog is set (expected 403s)
-				if (err.response?.status === 403 && loggedIn && !originalRequest.skipErrorLog) {
-					// Try to refresh token first
-					if (
-						originalRequest.url !== `${API_URL}/api/users/refresh-token` &&
-						!originalRequest._retry &&
-						!originalRequest.skipAuthRefresh
-					) {
-						originalRequest._retry = true
-						try {
-							await axios.post(`${API_URL}/api/users/refresh-token`, {}, { 
-								withCredentials: true,
-								timeout: 10000
-							})
-							return axios(originalRequest)
-						} catch (refreshError) {
-							// If refresh fails, logout
-							logout()
-							return Promise.reject(refreshError)
-						}
-					}
-				}
-				
-				return Promise.reject(err)
-			}
+			err => handleAuthError({ err, axiosInstance: axios, apiUrl: API_URL, loggedIn, logout })
 		)
 		return () => axios.interceptors.response.eject(interceptor)
 	}, [loggedIn, logout])
@@ -245,7 +185,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
-						<Route path="/team-management" element={isAdmin(role) ? <Logs /> : <Navigate to="/" />} />
+						<Route path="/team-management" element={(isAdmin(role) || username === 'michalipka1@gmail.com') ? <Logs /> : <Navigate to="/" />} />
 						<Route path="/settings" element={<Settings />} />
 					<Route
 						path="/work-calendars/:userId"

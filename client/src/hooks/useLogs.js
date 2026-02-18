@@ -18,3 +18,18 @@ export const useUserLogs = (userId) => {
 	})
 }
 
+// Query hook - pobieranie wszystkich logów (dla super admina)
+export const useAllLogs = (enabled = false) => {
+	return useQuery({
+		queryKey: ['logs', 'all'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/userlogs/logs`, {
+				withCredentials: true,
+			})
+			return response.data.filter((log) => log.action !== 'LOGOUT')
+		},
+		enabled,
+		staleTime: 2 * 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+	})
+}

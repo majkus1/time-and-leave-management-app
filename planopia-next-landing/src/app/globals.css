@@ -351,7 +351,7 @@ span {
 /* Old fadeInSlide animation removed - using enhanced styles below */
 
 .for a, .forcontact a {
-	background-color: green !important;
+	background-color: #00a63e !important;
 	color: white !important;
 	text-decoration: none !important;
 }
@@ -1898,6 +1898,15 @@ textarea {
 	text-align: left !important;
 }
 
+/* Pricing button - white text */
+.pricing-button-text {
+	color: #ffffff !important;
+}
+
+.pricing-button-text svg {
+	color: #ffffff !important;
+}
+
 .calendar-my-work .fc-daygrid-day-frame:hover,
 #leave-planner .fc-daygrid-day-frame:hover {
 	background-color: #007bff6f;
@@ -2938,6 +2947,48 @@ button {
 @media (min-width: 1024px) {
 	.mobile-menu-panel,
 	.mobile-menu-backdrop {
+		display: none !important;
+	}
+}
+
+/* Package Modal - White text styles */
+.package-modal-title {
+	color: #ffffff !important;
+}
+
+.package-modal-text {
+	color: #ffffff !important;
+}
+
+.package-modal-text-secondary {
+	color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Custom Package Modal - Description text */
+.custom-package-description {
+	color: #ffffff !important;
+}
+
+/* Custom Package Modal - Feature names */
+.custom-feature-name {
+	color: #1f2937 !important;
+	opacity: 1 !important;
+}
+
+.custom-feature-required {
+	color: #6b7280 !important;
+	opacity: 1 !important;
+}
+
+.desktop-mockup {
+	margin-top: -300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (max-width: 1024px) {
+	.desktop-mockup {
 		display: none !important;
 	}
 }

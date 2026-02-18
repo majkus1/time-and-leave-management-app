@@ -7,7 +7,7 @@ import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, useSendApologyEmail, useDeletedUsers, useRestoreUser, usePermanentlyDeleteUser } from '../../hooks/useUsers'
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
-import { useUserLogs } from '../../hooks/useLogs'
+import { useUserLogs, useAllLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
@@ -48,6 +48,7 @@ function Logs() {
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
+	const isEnglish = i18n.language === 'en'
 
 	const availableRoles = [
 		'Admin',
@@ -78,6 +79,8 @@ function Logs() {
 
 	// TanStack Query hooks
 	const { data: users = [], isLoading: loadingUsers } = useUsers()
+	const { data: allLogs = [], isLoading: loadingAllLogs } = useAllLogs(isSuperAdmin)
+	const allLogsSorted = [...allLogs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 	// Pobierz działy dla edytowanego użytkownika (jeśli edytujemy) lub dla własnego zespołu
 	const editingUserTeamId = editingUser?.teamId || teamId
 	const { data: departments = [], refetch: refetchDepartments } = useDepartments(editingUserTeamId)
@@ -972,6 +975,83 @@ function Logs() {
 									</span>
 								)}
 							</button>
+						</div>
+					)}
+
+					{isSuperAdmin && (
+						<div style={{
+							backgroundColor: 'white',
+							borderRadius: '12px',
+							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+							overflow: 'hidden',
+							marginBottom: '24px'
+						}}>
+							<div style={{
+								padding: '16px 20px',
+								borderBottom: '1px solid #e9ecef',
+								backgroundColor: '#f8f9fa',
+								fontWeight: '600',
+								color: '#2c3e50'
+							}}>
+								{isEnglish ? 'All logs (newest first)' : 'Wszystkie logi (od najnowszych)'}
+							</div>
+
+							{loadingAllLogs ? (
+								<div className="content-with-loader" style={{ padding: '20px' }}>
+									<Loader />
+								</div>
+							) : (
+								<>
+									<div className="logs-desktop-view" style={{ display: 'none' }}>
+										<table className="table" style={{ margin: 0 }}>
+											<thead style={{ backgroundColor: '#f8f9fa' }}>
+												<tr>
+													<th style={{ padding: '14px 16px' }}>{isEnglish ? 'Time' : 'Czas'}</th>
+													<th style={{ padding: '14px 16px' }}>{isEnglish ? 'Log name' : 'Nazwa logu'}</th>
+													<th style={{ padding: '14px 16px' }}>{isEnglish ? 'User' : 'Użytkownik'}</th>
+													<th style={{ padding: '14px 16px' }}>{isEnglish ? 'Team' : 'Zespół'}</th>
+												</tr>
+											</thead>
+											<tbody>
+												{allLogsSorted.map((log, index) => (
+													<tr key={log._id || `${log.timestamp}-${index}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa' }}>
+														<td style={{ padding: '14px 16px', fontSize: '14px', color: '#6c757d' }}>{new Date(log.timestamp).toLocaleString()}</td>
+														<td style={{ padding: '14px 16px', fontWeight: '600', color: '#2c3e50' }}>{log.action}</td>
+														<td style={{ padding: '14px 16px' }}>{log.user?.username || (isEnglish ? 'Unknown user' : 'Nieznany użytkownik')}</td>
+														<td style={{ padding: '14px 16px' }}>{log.user?.teamId?.name || (isEnglish ? 'No team' : 'Brak zespołu')}</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+
+									<div className="logs-mobile-view" style={{ display: 'block' }}>
+										{allLogsSorted.map((log, index) => (
+											<div
+												key={log._id || `${log.timestamp}-mobile-${index}`}
+												style={{
+													padding: '14px 16px',
+													borderBottom: index < allLogsSorted.length - 1 ? '1px solid #e9ecef' : 'none',
+													backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa'
+												}}
+											>
+												<div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '6px' }}>
+													{new Date(log.timestamp).toLocaleString()}
+												</div>
+												<div style={{ fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>
+													{isEnglish ? 'Log name' : 'Nazwa logu'}: {log.action}
+												</div>
+												<div style={{ fontSize: '14px', color: '#495057' }}>
+													{isEnglish ? 'User' : 'Użytkownik'}: {log.user?.username || (isEnglish ? 'Unknown user' : 'Nieznany użytkownik')}
+												</div>
+												<div style={{ fontSize: '14px', color: '#495057' }}>
+													{isEnglish ? 'Team' : 'Zespół'}: {log.user?.teamId?.name || (isEnglish ? 'No team' : 'Brak zespołu')}
+												</div>
+											</div>
+										))}
+									</div>
+								</>
+							)}
 						</div>
 					)}
 

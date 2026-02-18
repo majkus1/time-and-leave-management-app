@@ -3,16 +3,28 @@ const Log = require('../models/log')(firmDb)
 
 exports.getLogs = async (req, res) => {
 	try {
-		const allowedRoles = ['Admin']
-		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+		const User = require('../models/user')(require('../db/db').firmDb)
+		const currentUser = await User.findById(req.user.userId).select('username roles')
+		if (!currentUser) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
+		const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com'
+		const isAdmin = Array.isArray(currentUser.roles) && currentUser.roles.includes('Admin')
+		if (!isSuperAdmin && !isAdmin) {
 			return res.status(403).send('Access denied')
 		}
 
-		const logs = await Log.find().populate({
-			path: 'user',
-			select: 'username',
-			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-		}).sort({ timestamp: -1 })
+		const logs = await Log.find()
+			.populate({
+				path: 'user',
+				select: 'username teamId',
+				populate: {
+					path: 'teamId',
+					select: 'name'
+				}
+			})
+			.sort({ timestamp: -1 })
 		res.json(logs)
 	} catch (error) {
 		console.error('Error retrieving logs:', error)

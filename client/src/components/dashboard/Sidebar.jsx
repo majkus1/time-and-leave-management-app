@@ -426,7 +426,7 @@ function Sidebar() {
 						</div>
 
 					{/* Admin Links */}
-					{isAdmin(role) && (
+					{(isAdmin(role) || username === 'michalipka1@gmail.com') && (
 						<div className="admin-section">
 							<NavLink
 								to="/create-user"
