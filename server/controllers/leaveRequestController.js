@@ -89,6 +89,26 @@ async function trimWeekendsFromDateRange(startDate, endDate, teamId) {
 	return { trimmedStartDate, trimmedEndDate }
 }
 
+async function getSupervisorVisibleLeaveUsers(supervisor) {
+	const { canSupervisorApproveLeaves } = require('../services/roleService')
+	const teamUsers = await User.find({
+		teamId: supervisor.teamId,
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+	}).select('username firstName lastName roles position department teamId')
+
+	const visibleUsers = []
+	for (const user of teamUsers) {
+		// Lista w /leave-list ma pokazywać pracowników, za których przełożony odpowiada.
+		if (user._id.toString() === supervisor._id.toString()) continue
+		const canApprove = await canSupervisorApproveLeaves(supervisor, user)
+		if (canApprove) {
+			visibleUsers.push(user)
+		}
+	}
+
+	return visibleUsers
+}
+
 exports.markLeaveRequestAsProcessed = async (req, res) => {
 	try {
 		const leaveRequest = await LeaveRequest.findById(req.params.id)
@@ -180,8 +200,8 @@ exports.getUserLeaveRequests = async (req, res) => {
 		const userToView = await User.findById(userId)
 		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
 		
-		const { canSupervisorViewTimesheets } = require('../services/roleService')
-		const canView = await canSupervisorViewTimesheets(requestingUser, userToView)
+		const { canSupervisorApproveLeaves } = require('../services/roleService')
+		const canView = await canSupervisorApproveLeaves(requestingUser, userToView)
 		
 		if (!canView) return res.status(403).send('Brak uprawnień')
 		// OK
@@ -425,7 +445,10 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			}
 
 			if (usersToNotify.length > 0) {
-				const hrUserIds = usersToNotify.map(u => u._id.toString())
+				// Autor wniosku dostaje już powiadomienie pracownicze - wyklucz go z puli HR.
+				const hrUserIds = usersToNotify
+					.map(u => u._id.toString())
+					.filter(id => id !== user._id.toString())
 				sendLeaveRequestPushNotification(
 					leaveRequest,
 					user,
@@ -483,16 +506,16 @@ exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 		// Sprawdź czy użytkownicy są w tym samym zespole
 		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
 		
-		// Sprawdź uprawnienia przełożonego używając nowych helperów
+		// Sprawdź uprawnienia przełożonego używając helpera urlopowego
 		let canSupervisorView = false
 		if (requestingUser.roles.includes('Przełożony (Supervisor)')) {
-			const { canSupervisorViewTimesheets } = require('../services/roleService')
-			canSupervisorView = await canSupervisorViewTimesheets(requestingUser, userToView)
+			const { canSupervisorApproveLeaves } = require('../services/roleService')
+			canSupervisorView = await canSupervisorApproveLeaves(requestingUser, userToView)
 		}
 
 		// HIERARCHIA RÓL: Admin > HR > Przełożony
 		// Admin/HR widzi wszystkich ze swojego zespołu
-		// Przełożony widzi zgodnie z konfiguracją (sprawdzane w canSupervisorViewTimesheets)
+		// Przełożony widzi zgodnie z konfiguracją urlopową (sprawdzane w canSupervisorApproveLeaves)
 		if (!isOwnRequest && !isSameTeam && !isAdmin && !isHR && !canSupervisorView) {
 			return res.status(403).send('Brak uprawnień')
 		}
@@ -668,21 +691,8 @@ exports.getAllLeaveRequests = async (req, res) => {
 				.sort({ startDate: 1 })
 		} else if (isSupervisor) {
 			// Przełożony widzi tylko swoich podwładnych
-			const { canSupervisorViewTimesheets } = require('../services/roleService')
-			
-			// Pobierz wszystkich użytkowników z zespołu
-			const teamUsers = await User.find({ 
-				teamId: requestingUser.teamId,
-				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-			}).select('_id firstName lastName department')
-
-			// Filtruj użytkowników na podstawie uprawnień przełożonego
-			for (const user of teamUsers) {
-				const canView = await canSupervisorViewTimesheets(requestingUser, user)
-				if (canView) {
-					allowedUserIds.push(user._id)
-				}
-			}
+			const visibleUsers = await getSupervisorVisibleLeaveUsers(requestingUser)
+			allowedUserIds = visibleUsers.map(user => user._id)
 
 			if (allowedUserIds.length > 0) {
 				allLeaveRequests = await LeaveRequest.find({ 
@@ -732,6 +742,39 @@ exports.getAllLeaveRequests = async (req, res) => {
 	} catch (error) {
 		console.error('Error fetching all leave requests:', error)
 		res.status(500).send('Failed to fetch all leave requests.')
+	}
+}
+
+exports.getVisibleLeaveUsers = async (req, res) => {
+	try {
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) return res.status(404).send('Brak użytkownika')
+
+		const isAdmin = requestingUser.roles.includes('Admin')
+		const isHR = requestingUser.roles.includes('HR')
+		const isSupervisor = requestingUser.roles.includes('Przełożony (Supervisor)')
+
+		const teamFilter = {
+			teamId: requestingUser.teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}
+
+		if (isAdmin || isHR) {
+			const users = await User.find(teamFilter).select(
+				'username firstName lastName roles position department teamId'
+			)
+			return res.status(200).json(users)
+		}
+
+		if (isSupervisor) {
+			const users = await getSupervisorVisibleLeaveUsers(requestingUser)
+			return res.status(200).json(users)
+		}
+
+		return res.status(200).json([])
+	} catch (error) {
+		console.error('Error fetching visible leave users:', error)
+		return res.status(500).send('Failed to fetch visible leave users.')
 	}
 }
 

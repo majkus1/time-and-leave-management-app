@@ -76,6 +76,34 @@ export const useUpdateUserRoles = () => {
 			return response.data
 		},
 		onSuccess: (data, variables) => {
+			const updatedUser = data?.user
+
+			// Natychmiast zaktualizuj cache, żeby checkboxy ról/działów były poprawne bez odświeżania strony.
+			if (updatedUser && variables?.userId) {
+				queryClient.setQueryData(['users'], (oldUsers) => {
+					if (!Array.isArray(oldUsers)) return oldUsers
+					return oldUsers.map((user) => {
+						if (user?._id !== variables.userId) return user
+						return {
+							...user,
+							...updatedUser,
+							roles: Array.isArray(updatedUser.roles) ? updatedUser.roles : user.roles,
+							department: updatedUser.department !== undefined ? updatedUser.department : user.department,
+						}
+					})
+				})
+
+				queryClient.setQueryData(['users', variables.userId], (oldUser) => {
+					if (!oldUser) return updatedUser
+					return {
+						...oldUser,
+						...updatedUser,
+						roles: Array.isArray(updatedUser.roles) ? updatedUser.roles : oldUser.roles,
+						department: updatedUser.department !== undefined ? updatedUser.department : oldUser.department,
+					}
+				})
+			}
+
 			// Invaliduj listę użytkowników, konkretnego użytkownika i profil użytkownika
 			queryClient.invalidateQueries({ queryKey: ['users'] })
 			queryClient.invalidateQueries({ queryKey: ['users', variables.userId] })

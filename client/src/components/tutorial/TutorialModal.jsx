@@ -166,8 +166,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Team settings configuration',
 			path: '/settings',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push i email każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.'
-				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push and email notifications are configured individually by each user in their profile settings.'
+				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.'
+				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push notifications are configured individually by each user in their profile settings.'
 		},
 		{
 			id: 'create-user',
@@ -231,8 +231,29 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		}
 	]
 
-	// Połącz sekcje - podstawowe dla wszystkich + dodatkowe dla Admina/HR
-	const sections = [...baseSections, ...(isAdmin || isHR ? adminHRSections : [])]
+	// Sekcja ustawień dla pozostałych użytkowników (bez Admin/HR)
+	const nonAdminHRSections = [
+		{
+			id: 'settings-personal',
+			title: i18n.resolvedLanguage === 'pl' ? 'Ustawienia' : 'Settings',
+			icon: '/img/settings.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Personalizacja ustawień użytkownika'
+				: 'Personalizing user settings',
+			path: '/settings',
+			content: i18n.resolvedLanguage === 'pl'
+				? 'W sekcji "Ustawienia" możesz personalizować własne preferencje. Na ten moment szczególnie ważne są ustawienia powiadomień push - możesz zdecydować, które typy powiadomień chcesz otrzymywać w przeglądarce, a które wyłączyć.'
+				: 'In the "Settings" section, you can personalize your own preferences. At the moment, push notification settings are especially important - you can decide which notification types you want to receive in your browser and which ones to disable.'
+		}
+	]
+
+	// Połącz sekcje:
+	// - Admin/HR: sekcje administracyjne
+	// - pozostali: sekcja personalizacji ustawień
+	const sections = [
+		...baseSections,
+		...(isAdmin || isHR ? adminHRSections : nonAdminHRSections)
+	]
 
 	// Podziel sekcje na kolumny (maksymalnie 2 kolumny na desktop, 1 na mobile)
 	const columns = useMemo(() => {

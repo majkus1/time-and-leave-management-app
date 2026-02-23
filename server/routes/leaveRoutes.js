@@ -13,5 +13,6 @@ router.get('/accepted-leave-requests', authenticateToken, leaveRequestController
 router.get('/user-accepted-leave-requests', authenticateToken, leaveRequestController.getUserAcceptedLeaveRequests)
 router.get('/accepted-leave-requests/:userId', authenticateToken, leaveRequestController.getAcceptedLeaveRequestsForUser)
 router.get('/all-leave-requests', authenticateToken, leaveRequestController.getAllLeaveRequests)
+router.get('/visible-users', authenticateToken, leaveRequestController.getVisibleLeaveUsers)
 
 module.exports = router

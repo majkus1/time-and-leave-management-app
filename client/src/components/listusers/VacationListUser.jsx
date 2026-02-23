@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
-import { useUsers } from '../../hooks/useUsers'
+import { useQuery } from '@tanstack/react-query'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
@@ -16,6 +16,8 @@ import { useDepartments } from '../../hooks/useDepartments'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
+import axios from 'axios'
+import { API_URL } from '../../config.js'
 
 function VacationListUser() {
 	const navigate = useNavigate()
@@ -44,12 +46,19 @@ function VacationListUser() {
 	const canApproveLeaves = isAdminRole || isHRRole 
 		? true 
 		: (isSupervisorRole && (supervisorConfig?.permissions?.canApproveLeaves !== false))
-	const canViewTimesheets = isAdminRole || isHRRole 
-		? true 
-		: (isSupervisorRole && (supervisorConfig?.permissions?.canViewTimesheets !== false))
 
 	// TanStack Query hooks
-	const { data: users = [], isLoading: loadingUsers, error: usersError } = useUsers()
+	const { data: users = [], isLoading: loadingUsers, error: usersError } = useQuery({
+		queryKey: ['leave', 'visible-users'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/leaveworks/visible-users`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		staleTime: 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+	})
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
 		enabled: isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves),

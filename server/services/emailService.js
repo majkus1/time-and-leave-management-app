@@ -106,8 +106,10 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 
-		// Jeśli nie znaleziono HR, wyślij do Adminów jako fallback
-		let usersToNotify = hrUsers
+		// Nigdy nie wysyłaj "HR notification" do autora wniosku.
+		let usersToNotify = hrUsers.filter(hr => hr.username !== user.username)
+
+		// Jeśli nie znaleziono HR (lub po wykluczeniu autora nie ma odbiorców), wyślij do Adminów jako fallback
 		if (hrUsers.length === 0) {
 			const adminUsers = await User.find({
 				teamId,
