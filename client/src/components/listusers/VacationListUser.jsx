@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useUsers } from '../../hooks/useUsers'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -50,8 +51,12 @@ function VacationListUser() {
 	// TanStack Query hooks
 	const { data: users = [], isLoading: loadingUsers, error: usersError } = useUsers()
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
+	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
+		enabled: isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves),
+	})
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
+	const pendingByUser = pendingSummary?.pendingByUser || {}
 
 	const loading = loadingUsers || loadingRequests
 	const error = usersError || requestsError
@@ -436,6 +441,16 @@ function VacationListUser() {
 							<span className="user-text">
 								{user.firstName} {user.lastName} - {user.position || t('newuser.noPosition')}
 							</span>
+							{(pendingByUser[user._id] || 0) > 0 && (
+								<span
+									className="leave-pending-badge"
+									title={`${t('sidebar.pendingLeaveRequests') || 'Pending leave requests'}: ${pendingByUser[user._id]}`}
+								>
+									<span className="leave-pending-badge-count">
+										{pendingByUser[user._id] > 99 ? '99+' : pendingByUser[user._id]}
+									</span>
+								</span>
+							)}
 							<span className="user-hint">{t('vacationlisteq.clickToView')}</span>
 						</li>
 					))}

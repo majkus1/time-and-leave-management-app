@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config'
+import { useSocket } from '../context/SocketContext'
 
 // Get user's boards
 export const useBoards = () => {
@@ -198,7 +200,8 @@ export const useDeleteTask = () => {
 }
 
 // Get task comments
-export const useTaskComments = (taskId) => {
+export const useTaskComments = (taskId, options = {}) => {
+	const { enabled = true, isModalOpen = false } = options
 	return useQuery({
 		queryKey: ['taskComments', taskId],
 		queryFn: async () => {
@@ -207,7 +210,11 @@ export const useTaskComments = (taskId) => {
 			})
 			return response.data
 		},
-		enabled: !!taskId
+		enabled: enabled && !!taskId,
+		refetchOnMount: 'always',
+		refetchOnWindowFocus: isModalOpen,
+		// Safety net: if a socket event is missed, modal still self-heals quickly.
+		refetchInterval: isModalOpen ? 5000 : false
 	})
 }
 
@@ -309,3 +316,116 @@ export const useUploadCommentAttachment = () => {
 	})
 }
 
+// Delete comment attachment
+export const useDeleteCommentAttachment = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ commentId, attachmentIndex }) => {
+			const response = await axios.delete(`${API_URL}/api/boards/comments/${commentId}/attachments/${attachmentIndex}`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['taskComments'] })
+		}
+	})
+}
+
+// Board/task notifications (unread)
+export const useBoardsUnreadSummary = ({ enabled = true } = {}) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	const query = useQuery({
+		queryKey: ['boardsUnreadSummary'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/boards/unread-summary`, {
+				withCredentials: true
+			})
+			return response.data || { totalUnread: 0, unreadBoardsCount: 0, byBoard: {} }
+		},
+		enabled,
+		staleTime: 10 * 1000,
+		refetchInterval: 30 * 1000,
+	})
+
+	useEffect(() => {
+		if (!socket || !enabled) return
+		const handleRealtimeUpdate = () => {
+			queryClient.invalidateQueries({ queryKey: ['boardsUnreadSummary'] })
+			queryClient.invalidateQueries({ queryKey: ['boardUnreadSummary'] })
+		}
+		socket.on('task-notification-updated', handleRealtimeUpdate)
+		return () => {
+			socket.off('task-notification-updated', handleRealtimeUpdate)
+		}
+	}, [socket, enabled, queryClient])
+
+	return query
+}
+
+export const useBoardUnreadSummary = (boardId, { enabled = true } = {}) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	const query = useQuery({
+		queryKey: ['boardUnreadSummary', boardId],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/boards/${boardId}/unread-summary`, {
+				withCredentials: true
+			})
+			return response.data || { boardId, unreadCount: 0, unreadByTask: {} }
+		},
+		enabled: enabled && !!boardId,
+		staleTime: 5 * 1000,
+		refetchInterval: 20 * 1000,
+	})
+
+	useEffect(() => {
+		if (!socket || !enabled || !boardId) return
+		const handleRealtimeUpdate = (payload) => {
+			if (payload?.boardId && payload.boardId !== boardId) return
+			queryClient.invalidateQueries({ queryKey: ['boardUnreadSummary', boardId] })
+			queryClient.invalidateQueries({ queryKey: ['boardsUnreadSummary'] })
+		}
+		socket.on('task-notification-updated', handleRealtimeUpdate)
+		return () => {
+			socket.off('task-notification-updated', handleRealtimeUpdate)
+		}
+	}, [socket, enabled, boardId, queryClient])
+
+	return query
+}
+
+export const useMarkBoardViewed = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (boardId) => {
+			const response = await axios.post(`${API_URL}/api/boards/${boardId}/mark-viewed`, {}, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, boardId) => {
+			queryClient.invalidateQueries({ queryKey: ['boardsUnreadSummary'] })
+			queryClient.invalidateQueries({ queryKey: ['boardUnreadSummary', boardId] })
+		}
+	})
+}
+
+export const useMarkTaskViewed = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async (taskId) => {
+			const response = await axios.post(`${API_URL}/api/boards/tasks/${taskId}/mark-viewed`, {}, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['boardsUnreadSummary'] })
+			queryClient.invalidateQueries({ queryKey: ['boardUnreadSummary'] })
+		}
+	})
+}

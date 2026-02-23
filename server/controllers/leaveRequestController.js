@@ -8,6 +8,7 @@ const LeavePlan = require('../models/LeavePlan')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
+const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
 const { isHoliday } = require('../utils/holidays')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
@@ -449,6 +450,13 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			})
 			.lean()
 
+		emitLeaveRequestsUpdated(req, {
+			teamId: user.teamId || req.user.teamId,
+			userId: user._id,
+			leaveRequestId: updatedLeaveRequest?._id || leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'status-updated',
+		})
 		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
 	} catch (error) {
 		console.error('Error updating leave request status:', error)
@@ -933,6 +941,13 @@ exports.cancelLeaveRequest = async (req, res) => {
 			}
 		}
 
+		emitLeaveRequestsUpdated(req, {
+			teamId: teamId || req.user.teamId,
+			userId: user._id,
+			leaveRequestId: leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'cancelled',
+		})
 		res.status(200).json({ message: 'Leave request cancelled successfully.' })
 	} catch (error) {
 		console.error('Error cancelling leave request:', error)
@@ -1173,6 +1188,13 @@ exports.updateLeaveRequest = async (req, res) => {
 			}
 		}
 
+		emitLeaveRequestsUpdated(req, {
+			teamId: teamId || req.user.teamId,
+			userId: user._id,
+			leaveRequestId: leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'updated',
+		})
 		res.status(200).json({ message: 'Leave request updated successfully.', leaveRequest })
 	} catch (error) {
 		console.error('Error updating leave request:', error)

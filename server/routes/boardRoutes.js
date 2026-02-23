@@ -4,6 +4,7 @@ const { authenticateToken } = require('../middleware/authMiddleware')
 const boardController = require('../controllers/boardController')
 const taskController = require('../controllers/taskController')
 const taskCommentController = require('../controllers/taskCommentController')
+const taskNotificationController = require('../controllers/taskNotificationController')
 const multer = require('multer')
 const path = require('path')
 const crypto = require('crypto')
@@ -27,6 +28,10 @@ const upload = multer({
 
 // Board routes
 router.get('/', authenticateToken, boardController.getUserBoards)
+router.get('/unread-summary', authenticateToken, taskNotificationController.getBoardsUnreadSummary)
+router.get('/:boardId/unread-summary', authenticateToken, taskNotificationController.getBoardUnreadSummary)
+router.post('/:boardId/mark-viewed', authenticateToken, taskNotificationController.markBoardViewed)
+router.post('/tasks/:taskId/mark-viewed', authenticateToken, taskNotificationController.markTaskViewed)
 router.get('/:boardId', authenticateToken, boardController.getBoard)
 router.get('/:boardId/users', authenticateToken, boardController.getBoardUsers)
 router.post('/', authenticateToken, boardController.createBoard)

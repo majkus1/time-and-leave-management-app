@@ -188,14 +188,14 @@ function TimerPanel() {
 		const isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6 // 0 = niedziela, 6 = sobota
 
 		if (!workOnWeekends && isWeekendDay) {
-			return { canStart: false, reason: t('timer.weekendBlocked') || 'Nie można uruchomić timera w weekend (zespół nie pracuje w weekendy)' }
+			return { canStart: false, reason: t('timer.weekendBlocked') || 'Nie można uruchomić licznika czasu pracy w weekend (zespół nie pracuje w weekendy)' }
 		}
 
 		// Check if it's a holiday
 		const holidayInfo = isHolidayDate(today, settings)
 		if (holidayInfo) {
 			const holidayName = holidayInfo.name || 'Święto'
-			return { canStart: false, reason: t('timer.holidayBlocked', { holiday: holidayName }) || `Nie można uruchomić timera w święto: ${holidayName}` }
+			return { canStart: false, reason: t('timer.holidayBlocked', { holiday: holidayName }) || `Nie można uruchomić licznika czasu pracy w święto: ${holidayName}` }
 		}
 
 		// Check if user has accepted leave request for today
@@ -208,7 +208,7 @@ function TimerPanel() {
 					endDate.setHours(23, 59, 59, 999)
 
 					if (today >= startDate && today <= endDate) {
-						return { canStart: false, reason: t('timer.leaveBlocked') || 'Nie można uruchomić timera w dniu z zaakceptowanym wnioskiem urlopowym/nieobecnością' }
+						return { canStart: false, reason: t('timer.leaveBlocked') || 'Nie można uruchomić licznika czasu pracy w dniu z zaakceptowanym wnioskiem urlopowym/nieobecnością' }
 					}
 				}
 			}
@@ -236,7 +236,7 @@ function TimerPanel() {
 			await showAlert(t('timer.started') || 'Miłej pracy!')
 		} catch (error) {
 			console.error('Error starting timer:', error)
-			await showAlert(error.response?.data?.message || t('timer.startError') || 'Błąd podczas uruchamiania timera')
+			await showAlert(error.response?.data?.message || t('timer.startError') || 'Błąd podczas uruchamiania licznika czasu pracy')
 		}
 	}
 
@@ -245,7 +245,7 @@ function TimerPanel() {
 			await pauseTimer.mutateAsync()
 		} catch (error) {
 			console.error('Error pausing timer:', error)
-			await showAlert(error.response?.data?.message || t('timer.pauseError') || 'Błąd podczas pauzowania timera')
+			await showAlert(error.response?.data?.message || t('timer.pauseError') || 'Błąd podczas pauzowania licznika czasu pracy')
 		}
 	}
 
@@ -268,7 +268,7 @@ function TimerPanel() {
 			}, 100)
 		} catch (error) {
 			console.error('Error stopping timer:', error)
-			await showAlert(error.response?.data?.message || t('timer.stopError') || 'Błąd podczas zatrzymywania timera')
+			await showAlert(error.response?.data?.message || t('timer.stopError') || 'Błąd podczas zatrzymywania licznika czasu pracy')
 		}
 	}
 
@@ -852,7 +852,7 @@ function TimerPanel() {
 								cursor: (stopTimer.isPending || isFromQR) ? 'not-allowed' : 'pointer',
 								opacity: (stopTimer.isPending || isFromQR) ? 0.6 : 1
 							}}
-							title={isFromQR ? (t('timer.stopQROnly') || 'Timer uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : ''}
+							title={isFromQR ? (t('timer.stopQROnly') || 'Licznik czasu pracy uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : ''}
 						>
 							{t('timer.stop') || 'Stop'}
 						</button>
@@ -1073,7 +1073,7 @@ function TimerPanel() {
 						fontSize: '18px',
 						fontWeight: '600'
 					}}>
-						{t('timer.infoModal.howItWorks') || 'Jak działa timer?'}
+						{t('timer.infoModal.howItWorks') || 'Jak działa licznik czasu pracy?'}
 					</h3>
 					<p style={{
 						margin: 0,
@@ -1082,7 +1082,7 @@ function TimerPanel() {
 						lineHeight: '1.6',
 						whiteSpace: 'pre-line'
 					}}>
-						{t('timer.infoModal.howItWorksDesc') || 'Timer pozwala na rejestrację czasu pracy. Kliknij "Start" aby rozpocząć pomiar czasu. Możesz dodać opis pracy lub wybrać zadanie z listy. Timer można zatrzymać, zapauzować lub wznowić w dowolnym momencie.'}
+						{t('timer.infoModal.howItWorksDesc') || 'Licznik czasu pracy pozwala na rejestrację czasu pracy. Kliknij "Start", aby rozpocząć pomiar czasu. Możesz dodać opis pracy lub wybrać zadanie z listy. Licznik czasu pracy można zatrzymać, zapauzować lub wznowić w dowolnym momencie.'}
 					</p>
 				</div>
 
@@ -1101,7 +1101,7 @@ function TimerPanel() {
 						fontSize: '15px',
 						lineHeight: '1.6'
 					}}>
-						{t('timer.infoModal.qrCodeDesc') || 'Możesz używać kodów QR do automatycznego rejestrowania wejścia i wyjścia. Zeskanuj kod QR aby rozpocząć timer (wejście), a następnie zeskanuj ten sam kod ponownie aby go zatrzymać (wyjście).'}
+						{t('timer.infoModal.qrCodeDesc') || 'Możesz używać kodów QR do automatycznego rejestrowania wejścia i wyjścia. Zeskanuj kod QR, aby rozpocząć licznik czasu pracy (wejście), a następnie zeskanuj ten sam kod ponownie, aby go zatrzymać (wyjście).'}
 					</p>
 				</div>
 
@@ -1134,7 +1134,7 @@ function TimerPanel() {
 						borderRadius: '6px',
 						borderLeft: '4px solid #dc2626'
 					}}>
-						{t('timer.infoModal.canDisable') || 'Administratorzy i HR mogą wyłączyć funkcję timera w ustawieniach zespołu, jeśli nie jest potrzebna.'}
+						{t('timer.infoModal.canDisable') || 'Administratorzy i HR mogą wyłączyć funkcję licznika czasu pracy w ustawieniach zespołu, jeśli nie jest potrzebna.'}
 					</p>
 				</div>
 

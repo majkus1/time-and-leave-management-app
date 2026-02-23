@@ -40,6 +40,7 @@ router.post('/register', authenticateToken, async (req, res) => {
 				chat: true,
 				tasks: true,
 				taskStatusChanges: true,
+				taskComments: true,
 				leaves: true
 			}
 			})
@@ -92,6 +93,7 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 					'preferences.chat': preferences.chat !== undefined ? preferences.chat : true,
 					'preferences.tasks': preferences.tasks !== undefined ? preferences.tasks : true,
 					'preferences.taskStatusChanges': preferences.taskStatusChanges !== undefined ? preferences.taskStatusChanges : true,
+					'preferences.taskComments': preferences.taskComments !== undefined ? preferences.taskComments : true,
 					'preferences.leaves': preferences.leaves !== undefined ? preferences.leaves : true
 				}
 			}
@@ -121,14 +123,23 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 					chat: true,
 					tasks: true,
 					taskStatusChanges: true,
+					taskComments: true,
 					leaves: true
 				}
 			})
 		}
 
+		const preferences = {
+			chat: subscription.preferences?.chat !== false,
+			tasks: subscription.preferences?.tasks !== false,
+			taskStatusChanges: subscription.preferences?.taskStatusChanges !== false,
+			taskComments: subscription.preferences?.taskComments !== false,
+			leaves: subscription.preferences?.leaves !== false,
+		}
+
 		res.json({
 			enabled: subscription.enabled,
-			preferences: subscription.preferences
+			preferences
 		})
 	} catch (error) {
 		console.error('Error getting push preferences:', error)

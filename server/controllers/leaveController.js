@@ -7,6 +7,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
+const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
 const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
@@ -298,6 +299,13 @@ exports.submitLeaveRequest = async (req, res) => {
 
 		if (recipients.length === 0) {
 			// Jeśli nie ma odbiorców, zakończ (nie wysyłaj emaili)
+			emitLeaveRequestsUpdated(req, {
+				teamId,
+				userId,
+				leaveRequestId: leaveRequest._id,
+				status: leaveRequest.status,
+				action: 'created',
+			})
 			res.status(201).json({ message: 'Wniosek został wysłany.', leaveRequest })
 			return
 		}
@@ -363,6 +371,13 @@ exports.submitLeaveRequest = async (req, res) => {
 			}
 		}
 
+		emitLeaveRequestsUpdated(req, {
+			teamId,
+			userId,
+			leaveRequestId: leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'created',
+		})
 		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
 	} catch (error) {
 		console.error('Błąd podczas zgłaszania nieobecności:', error)

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
+import { useSocket } from '../../context/SocketContext'
 import Loader from '../Loader'
-import { useBoard, useBoardTasks, useCreateTask, useUpdateTaskStatus, useDeleteTask } from '../../hooks/useBoards'
+import { useBoard, useBoardTasks, useCreateTask, useUpdateTaskStatus, useDeleteTask, useBoardUnreadSummary, useMarkBoardViewed, useMarkTaskViewed } from '../../hooks/useBoards'
 import { useQueryClient } from '@tanstack/react-query'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
@@ -19,7 +20,14 @@ const STATUSES = [
 	{ id: 'done', color: '#27ae60' }
 ]
 
-function Column({ status, tasks, onTaskClick, onDeleteTask }) {
+const PRIORITY_SORT_WEIGHT = {
+	urgent: 4,
+	high: 3,
+	medium: 2,
+	low: 1,
+}
+
+function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} }) {
 	const { t } = useTranslation()
 	const { setNodeRef } = useDroppable({
 		id: status.id
@@ -82,6 +90,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask }) {
 								task={task}
 								onClick={() => onTaskClick(task)}
 								onDelete={() => onDeleteTask(task._id)}
+								unreadCount={unreadByTask?.[task._id] || 0}
 							/>
 						))
 					)}
@@ -97,11 +106,15 @@ function Board() {
 	const { t } = useTranslation()
 	const { userId, role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
+	const { socket } = useSocket()
 	const { data: board, isLoading: loadingBoard } = useBoard(boardId)
 	const { data: tasks = [], isLoading: loadingTasks, refetch: refetchTasks } = useBoardTasks(boardId)
+	const { data: boardUnreadSummary } = useBoardUnreadSummary(boardId, { enabled: !!boardId })
 	const createTaskMutation = useCreateTask()
 	const updateTaskStatusMutation = useUpdateTaskStatus()
 	const deleteTaskMutation = useDeleteTask()
+	const markBoardViewedMutation = useMarkBoardViewed()
+	const markTaskViewedMutation = useMarkTaskViewed()
 	const queryClient = useQueryClient()
 	
 	const [selectedTask, setSelectedTask] = useState(null)
@@ -118,8 +131,32 @@ function Board() {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
+	useEffect(() => {
+		if (!boardId) return
+		markBoardViewedMutation.mutate(boardId)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [boardId])
+
+	useEffect(() => {
+		if (!socket || !boardId) return
+
+		const handleTaskRealtimeUpdate = (payload) => {
+			if (!payload?.boardId) return
+			if (String(payload.boardId) !== String(boardId)) return
+			refetchTasks()
+		}
+
+		socket.on('task-notification-updated', handleTaskRealtimeUpdate)
+		return () => {
+			socket.off('task-notification-updated', handleTaskRealtimeUpdate)
+		}
+	}, [socket, boardId, refetchTasks])
+
 	const isAdmin = role && role.includes('Admin')
 	const canEdit = board && (isAdmin || (board.createdBy && board.createdBy._id === userId))
+	// Task visibility is already enforced on the backend in /boards/:boardId/tasks.
+	// Keeping a second client-side filter can drift and desync unread badges.
+	const visibleTasks = useMemo(() => tasks || [], [tasks])
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -139,11 +176,11 @@ function Board() {
 
 		if (!over) return
 
-		const activeTask = tasks.find(t => t._id === active.id)
+		const activeTask = visibleTasks.find(t => t._id === active.id)
 		if (!activeTask) return
 
 		// Check if dropped on another task
-		const overTask = tasks.find(t => t._id === over.id)
+		const overTask = visibleTasks.find(t => t._id === over.id)
 		
 		let newStatus = activeTask.status
 		let newOrder = activeTask.order || 0
@@ -170,7 +207,7 @@ function Board() {
 
 			if (newStatus && newStatus !== activeTask.status) {
 				// Get tasks in the new status column (excluding the dragged task)
-				const newStatusTasks = tasks.filter(t => t.status === newStatus && t._id !== activeTask._id)
+				const newStatusTasks = visibleTasks.filter(t => t.status === newStatus && t._id !== activeTask._id)
 				newOrder = newStatusTasks.length > 0 
 					? Math.max(...newStatusTasks.map(t => t.order || 0)) + 1 
 					: 0
@@ -218,6 +255,13 @@ function Board() {
 		}
 	}
 
+	const markTaskAsSeen = (taskId) => {
+		if (!taskId) return
+		// Avoid stacking multiple mark-viewed calls while one is in flight.
+		if (markTaskViewedMutation.isPending) return
+		markTaskViewedMutation.mutate(taskId)
+	}
+
 	if (loadingBoard || loadingTasks) {
 		return (
 			<>
@@ -245,11 +289,28 @@ function Board() {
 
 	// Group tasks by status
 	const tasksByStatus = STATUSES.reduce((acc, status) => {
-		acc[status.id] = tasks
+		acc[status.id] = visibleTasks
 			.filter(task => task.status === status.id)
-			.sort((a, b) => (a.order || 0) - (b.order || 0))
+			.sort((a, b) => {
+				const priorityA = PRIORITY_SORT_WEIGHT[a?.priority] || 0
+				const priorityB = PRIORITY_SORT_WEIGHT[b?.priority] || 0
+
+				if (priorityA !== priorityB) {
+					return priorityB - priorityA // higher priority first
+				}
+
+				return (a.order || 0) - (b.order || 0)
+			})
 		return acc
 	}, {})
+
+	const unreadByTask = boardUnreadSummary?.unreadByTask || {}
+
+	const handleTaskClick = (task) => {
+		if (!task?._id) return
+		setSelectedTask(task)
+		markTaskAsSeen(task._id)
+	}
 
 	return (
 		<>
@@ -318,15 +379,16 @@ function Board() {
 								<Column
 									status={status}
 									tasks={tasksByStatus[status.id] || []}
-									onTaskClick={setSelectedTask}
+									onTaskClick={handleTaskClick}
 									onDeleteTask={handleDeleteTask}
+									unreadByTask={unreadByTask}
 								/>
 							</div>
 						))}
 					</div>
 					<DragOverlay dropAnimation={null}>
 						{activeId ? (() => {
-							const draggedTask = tasks.find(t => t._id === activeId)
+							const draggedTask = visibleTasks.find(t => t._id === activeId)
 							if (!draggedTask) return null
 							
 							return (
@@ -396,7 +458,13 @@ function Board() {
 				<TaskCard
 					task={selectedTask}
 					isModal={true}
-					onClose={() => setSelectedTask(null)}
+					onClose={() => {
+						if (selectedTask?._id) {
+							markTaskAsSeen(selectedTask._id)
+						}
+						setSelectedTask(null)
+					}}
+					onSeen={markTaskAsSeen}
 					onUpdate={async () => {
 						// Refetch tasks to update the board
 						await refetchTasks()

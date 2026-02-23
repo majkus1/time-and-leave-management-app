@@ -183,39 +183,20 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 }
 
 // Send task notification to board members
-const sendTaskNotification = async (task, board, createdByUser, t, isStatusChange = false) => {
+const sendTaskNotification = async (task, board, recipientUserIds, createdByUser, t, isStatusChange = false) => {
 	try {
-		// Get board members - for department boards, get users from department
-		let memberIds = []
-		
-		if (board.type === 'department' && board.departmentName) {
-			// For department boards, get all active users in that department
-			const departmentUsers = await User.find({
-				teamId: board.teamId,
-				$or: [
-					{ department: board.departmentName },
-					{ department: { $in: [board.departmentName] } }
-				],
-				$and: [
-					{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-				]
-			}).select('_id username')
-			memberIds = departmentUsers.map(u => u._id.toString())
-		} else {
-			// For regular boards, use board.members
-			memberIds = board.members.map(m => m.toString())
-		}
-		
-		// Remove the creator from recipients (they don't need to be notified)
-		memberIds = memberIds.filter(id => id !== createdByUser._id.toString())
-		
-		if (memberIds.length === 0) {
+		const uniqueRecipientIds = Array.isArray(recipientUserIds)
+			? Array.from(new Set(recipientUserIds.map(id => (id && id.toString ? id.toString() : String(id)))))
+			: []
+		const filteredRecipientIds = uniqueRecipientIds.filter(id => id !== createdByUser._id.toString())
+
+		if (filteredRecipientIds.length === 0) {
 			return
 		}
 		
 		// Get member users (only active)
 		const members = await User.find({ 
-			_id: { $in: memberIds },
+			_id: { $in: filteredRecipientIds },
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		}).select('username firstName lastName')
 		
@@ -239,15 +220,34 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 		const boardName = escapeHtml(board.name)
 		const taskTitle = escapeHtml(task.title)
 		const creatorName = `${escapeHtml(createdByUser.firstName)} ${escapeHtml(createdByUser.lastName)}`
+		const priorityKey = `boards.priority.${task.priority || 'medium'}`
+		const translatedPriority = t(priorityKey)
+		const priorityText = translatedPriority && translatedPriority !== priorityKey
+			? translatedPriority
+			: (task.priority || 'medium')
+		let assigneesText = t('email.task.unassigned')
+		if (task.assignedScope === 'all-members') {
+			assigneesText = t('email.task.assignedToAllMembers')
+		} else if (Array.isArray(task.assignedTo) && task.assignedTo.length > 0) {
+			const assignedUsers = await User.find({
+				_id: { $in: task.assignedTo },
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			}).select('firstName lastName username')
+			if (assignedUsers.length > 0) {
+				assigneesText = assignedUsers
+					.map(user => `${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}`.trim() || escapeHtml(user.username))
+					.join(', ')
+			}
+		}
 		
 		// Build email content
 		let title, content, subject
 		
 		if (isStatusChange) {
 			title = t('email.task.statusChangedTitle')
-			subject = t('email.task.statusChangedSubject', { taskTitle, status: statusText })
+			subject = t('email.task.statusChangedSubject', { taskTitle, status: statusText, priority: priorityText })
 			content = `
-				<p style="margin: 0 0 16px 0;">${t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName })}</p>
+				<p style="margin: 0 0 16px 0;">${t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText })}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
@@ -262,6 +262,14 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 						<tr>
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.board')}:</td>
 							<td style="padding: 8px 0; color: #1f2937;">${boardName}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.priority')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(priorityText)}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.assignedTo')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${assigneesText}</td>
 						</tr>
 						${task.description ? `
 						<tr>
@@ -274,9 +282,9 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 			`
 		} else {
 			title = t('email.task.newTaskTitle')
-			subject = t('email.task.newTaskSubject', { taskTitle })
+			subject = t('email.task.newTaskSubject', { taskTitle, priority: priorityText })
 			content = `
-				<p style="margin: 0 0 16px 0;">${t('email.task.newTaskMessage', { creatorName, taskTitle, boardName })}</p>
+				<p style="margin: 0 0 16px 0;">${t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText })}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
@@ -291,6 +299,14 @@ const sendTaskNotification = async (task, board, createdByUser, t, isStatusChang
 						<tr>
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.board')}:</td>
 							<td style="padding: 8px 0; color: #1f2937;">${boardName}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.priority')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(priorityText)}</td>
+						</tr>
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.assignedTo')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${assigneesText}</td>
 						</tr>
 						${task.description ? `
 						<tr>

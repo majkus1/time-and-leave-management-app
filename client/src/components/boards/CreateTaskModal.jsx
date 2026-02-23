@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
-import { useCreateTask } from '../../hooks/useBoards'
+import { useBoardUsers, useCreateTask } from '../../hooks/useBoards'
 import { useAlert } from '../../context/AlertContext'
+import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
 import { API_URL } from '../../config'
 
@@ -12,22 +13,40 @@ const STATUSES = [
 	{ id: 'review', label: 'Do sprawdzenia' },
 	{ id: 'done', label: 'Gotowe' }
 ]
+const PRIORITIES = ['low', 'medium', 'high', 'urgent']
 
 function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }) {
 	const { t } = useTranslation()
 	const { showAlert } = useAlert()
+	const { userId } = useAuth()
 	const createTaskMutation = useCreateTask()
+	const { data: boardUsers = [] } = useBoardUsers(boardId, true)
 	
 	const [title, setTitle] = useState('')
 	const [description, setDescription] = useState('')
 	const [status, setStatus] = useState(initialStatus)
+	const [priority, setPriority] = useState('medium')
+	const [assignToAllMembers, setAssignToAllMembers] = useState(false)
+	const [selectedAssignees, setSelectedAssignees] = useState([])
 	const [selectedFile, setSelectedFile] = useState(null)
+
+	useEffect(() => {
+		if (!userId || assignToAllMembers || selectedAssignees.length > 0) return
+		const currentUserInBoard = boardUsers.find((user) => String(user._id) === String(userId))
+		if (currentUserInBoard) {
+			setSelectedAssignees([String(userId)])
+		}
+	}, [userId, boardUsers, assignToAllMembers, selectedAssignees.length])
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 
 		if (!title.trim()) {
 			await showAlert(t('boards.taskTitleRequired') || 'Tytuł zadania jest wymagany')
+			return
+		}
+		if (!assignToAllMembers && selectedAssignees.length === 0) {
+			await showAlert(t('boards.assigneeRequired') || 'Wybierz przynajmniej jedną osobę lub opcję przypisania do wszystkich')
 			return
 		}
 
@@ -37,7 +56,9 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 				title: title.trim(),
 				description: description.trim(),
 				status,
-				assignedTo: []
+				priority,
+				assignToAllMembers,
+				assignedTo: assignToAllMembers ? [] : selectedAssignees
 			}
 			
 			const createdTask = await createTaskMutation.mutateAsync({
@@ -78,17 +99,20 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 					display: 'flex',
 					justifyContent: 'center',
 					alignItems: 'center',
+					padding: '20px 0',
 					backgroundColor: 'rgba(0, 0, 0, 0.5)',
 					backdropFilter: 'blur(2px)',
 				},
 				content: {
 					position: 'relative',
 					inset: 'unset',
-					margin: '0',
+					margin: '0 auto',
 					maxWidth: '600px',
 					width: '90%',
+					maxHeight: 'calc(100vh - 40px)',
+					overflowY: 'auto',
 					borderRadius: '12px',
-					padding: '30px',
+					padding: '20px',
 					backgroundColor: 'white',
 				},
 			}}
@@ -200,6 +224,86 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							</option>
 						))}
 					</select>
+				</div>
+
+				<div style={{ marginBottom: '20px' }}>
+					<label style={{ 
+						display: 'block',
+						marginBottom: '8px',
+						fontWeight: '600',
+						color: '#2c3e50'
+					}}>
+						{t('boards.priority') || 'Priorytet'}
+					</label>
+					<select
+						value={priority}
+						onChange={(e) => setPriority(e.target.value)}
+						style={{
+							width: '100%',
+							padding: '12px',
+							border: '1px solid #bdc3c7',
+							borderRadius: '6px',
+							fontSize: '16px'
+						}}>
+						{PRIORITIES.map((priorityOption) => (
+							<option key={priorityOption} value={priorityOption}>
+								{t(`boards.priority.${priorityOption}`)}
+							</option>
+						))}
+					</select>
+				</div>
+
+				<div style={{ marginBottom: '20px' }}>
+					<label style={{ 
+						display: 'block',
+						marginBottom: '8px',
+						fontWeight: '600',
+						color: '#2c3e50'
+					}}>
+						{t('boards.assignTo') || 'Przypisz do'}
+					</label>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', cursor: 'pointer' }}>
+						<input
+							type="checkbox"
+							checked={assignToAllMembers}
+							onChange={(e) => {
+								setAssignToAllMembers(e.target.checked)
+								if (e.target.checked) setSelectedAssignees([])
+							}}
+						/>
+						<span>{t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy'}</span>
+					</label>
+					{!assignToAllMembers && (
+						<div style={{
+							border: '1px solid #e1e8ed',
+							borderRadius: '6px',
+							maxHeight: '180px',
+							overflowY: 'auto',
+							padding: '10px',
+							backgroundColor: '#fafbfd'
+						}}>
+							{boardUsers.length === 0 ? (
+								<p style={{ margin: 0, color: '#7f8c8d' }}>{t('boards.noMembersToAssign') || 'Brak członków tablicy do przypisania'}</p>
+							) : (
+								boardUsers.map((user) => (
+									<label key={user._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+										<input
+											type="checkbox"
+											checked={selectedAssignees.includes(user._id)}
+											onChange={() => {
+												setSelectedAssignees((prev) =>
+													prev.includes(user._id)
+														? prev.filter((id) => id !== user._id)
+														: [...prev, user._id]
+												)
+											}}
+										/>
+										<span>{user.firstName} {user.lastName} ({user.username})</span>
+									</label>
+								))
+							)}
+						</div>
+					)}
 				</div>
 
 				<div style={{ marginBottom: '20px' }}>

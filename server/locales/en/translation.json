@@ -70,16 +70,20 @@
 		},
 		"task": {
 			"newTaskTitle": "New task in board",
-			"newTaskSubject": "New task: {{taskTitle}}",
-			"newTaskMessage": "{{creatorName}} added a new task \"{{taskTitle}}\" in board \"{{boardName}}\".",
+			"newTaskSubject": "New task: {{taskTitle}} [{{priority}}]",
+			"newTaskMessage": "{{creatorName}} added a new task \"{{taskTitle}}\" (priority: {{priority}}) in board \"{{boardName}}\".",
 			"statusChangedTitle": "Task status changed",
-			"statusChangedSubject": "Task status changed: {{taskTitle}} - {{status}}",
-			"statusChangedMessage": "{{creatorName}} changed the status of task \"{{taskTitle}}\" to \"{{status}}\" in board \"{{boardName}}\".",
+			"statusChangedSubject": "Task status changed: {{taskTitle}} - {{status}} [{{priority}}]",
+			"statusChangedMessage": "{{creatorName}} changed the status of task \"{{taskTitle}}\" to \"{{status}}\" (priority: {{priority}}) in board \"{{boardName}}\".",
 			"taskDetails": "Task details:",
 			"taskTitle": "Task title",
 			"status": "Status",
 			"board": "Board",
 			"description": "Description",
+			"priority": "Priority",
+			"assignedTo": "Assigned to",
+			"assignedToAllMembers": "All board members",
+			"unassigned": "Unassigned",
 			"viewBoard": "View board"
 		}
 	},
@@ -146,6 +150,12 @@
 			"in-progress": "In Progress",
 			"review": "Review",
 			"done": "Done"
+		},
+		"priority": {
+			"low": "Low",
+			"medium": "Medium",
+			"high": "High",
+			"urgent": "Urgent"
 		}
 	},
 	"push": {
@@ -156,6 +166,10 @@
 			"statusChangedBody": "{{userName}}'s request ({{type}}) status has been changed to \"{{status}}\" by {{updatedByName}}",
 			"cancelledTitle": "Leave request cancelled",
 			"cancelledBody": "{{userName}} cancelled the request: {{type}} ({{startDate}} - {{endDate}})"
+		},
+		"task": {
+			"newCommentTitle": "New comment in task",
+			"newCommentBody": "{{commenterName}} added a comment to task \"{{taskTitle}}\""
 		}
 	}
 }

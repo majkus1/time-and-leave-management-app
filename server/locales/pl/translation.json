@@ -70,16 +70,20 @@
 		},
 		"task": {
 			"newTaskTitle": "Nowe zadanie w tablicy",
-			"newTaskSubject": "Nowe zadanie: {{taskTitle}}",
-			"newTaskMessage": "{{creatorName}} dodał nowe zadanie \"{{taskTitle}}\" w tablicy \"{{boardName}}\".",
+			"newTaskSubject": "Nowe zadanie: {{taskTitle}} [{{priority}}]",
+			"newTaskMessage": "{{creatorName}} dodał nowe zadanie \"{{taskTitle}}\" (priorytet: {{priority}}) w tablicy \"{{boardName}}\".",
 			"statusChangedTitle": "Zmiana statusu zadania",
-			"statusChangedSubject": "Status zadania zmieniony: {{taskTitle}} - {{status}}",
-			"statusChangedMessage": "{{creatorName}} zmienił status zadania \"{{taskTitle}}\" na \"{{status}}\" w tablicy \"{{boardName}}\".",
+			"statusChangedSubject": "Status zadania zmieniony: {{taskTitle}} - {{status}} [{{priority}}]",
+			"statusChangedMessage": "{{creatorName}} zmienił status zadania \"{{taskTitle}}\" na \"{{status}}\" (priorytet: {{priority}}) w tablicy \"{{boardName}}\".",
 			"taskDetails": "Szczegóły zadania:",
 			"taskTitle": "Tytuł zadania",
 			"status": "Status",
 			"board": "Tablica",
 			"description": "Opis",
+			"priority": "Priorytet",
+			"assignedTo": "Przypisane do",
+			"assignedToAllMembers": "Wszyscy członkowie tablicy",
+			"unassigned": "Nieprzypisane",
 			"viewBoard": "Zobacz tablicę"
 		}
 	},
@@ -146,6 +150,12 @@
 			"in-progress": "W trakcie",
 			"review": "Do sprawdzenia",
 			"done": "Gotowe"
+		},
+		"priority": {
+			"low": "Niski",
+			"medium": "Średni",
+			"high": "Wysoki",
+			"urgent": "Pilny"
 		}
 	},
 	"push": {
@@ -156,6 +166,10 @@
 			"statusChangedBody": "Status wniosku {{userName}} ({{type}}) został zmieniony na \"{{status}}\" przez {{updatedByName}}",
 			"cancelledTitle": "Wniosek urlopowy anulowany",
 			"cancelledBody": "{{userName}} anulował wniosek: {{type}} ({{startDate}} - {{endDate}})"
+		},
+		"task": {
+			"newCommentTitle": "Nowy komentarz w zadaniu",
+			"newCommentBody": "{{commenterName}} dodał komentarz do zadania \"{{taskTitle}}\""
 		}
 	}
 }

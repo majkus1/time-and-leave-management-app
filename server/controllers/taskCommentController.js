@@ -2,8 +2,62 @@ const { firmDb } = require('../db/db')
 const TaskComment = require('../models/TaskComment')(firmDb)
 const Task = require('../models/Task')(firmDb)
 const Board = require('../models/Board')(firmDb)
+const User = require('../models/user')(firmDb)
 const path = require('path')
 const fs = require('fs').promises
+const { sendTaskCommentNotification } = require('../services/pushNotificationService')
+const { isAdminUser, canUserAccessTask, getTaskNotificationRecipients, normalizeObjectIdString } = require('../utils/taskAccess')
+
+const emitTaskCommentRealtimeUpdate = async ({
+	req,
+	task,
+	board,
+	actorUserId,
+	action,
+	commentId,
+}) => {
+	try {
+		const io = req.app?.io
+		if (!io || !task || !board) return
+
+		const recipients = new Set(
+			(await getTaskNotificationRecipients(task, board))
+				.map((id) => normalizeObjectIdString(id))
+				.filter(Boolean)
+		)
+
+		// Ensure commenter receives instant update in every open tab/device.
+		const normalizedActorId = normalizeObjectIdString(actorUserId)
+		if (normalizedActorId) {
+			recipients.add(normalizedActorId)
+		}
+
+		// Admin can see every task, so include active admins from the same team.
+		const adminUsers = await User.find({
+			teamId: board.teamId,
+			roles: { $in: ['Admin'] },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select('_id')
+		adminUsers.forEach((admin) => {
+			const adminId = normalizeObjectIdString(admin?._id)
+			if (adminId) recipients.add(adminId)
+		})
+
+		const payload = {
+			taskId: normalizeObjectIdString(task._id),
+			boardId: normalizeObjectIdString(board._id),
+			commentId: normalizeObjectIdString(commentId),
+			action,
+		}
+
+		recipients.forEach((recipientId) => {
+			io.to(`user:${recipientId}`).emit('task-comment-updated', payload)
+			io.to(`user:${recipientId}`).emit('task-notification-updated', payload)
+		})
+	} catch (error) {
+		console.error('Error emitting task comment realtime update:', error)
+	}
+}
 
 // Get comments for a task
 exports.getTaskComments = async (req, res) => {
@@ -27,6 +81,10 @@ exports.getTaskComments = async (req, res) => {
 		const isDepartmentBoard = board.type === 'department'
 
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
@@ -77,6 +135,10 @@ exports.createComment = async (req, res) => {
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		const newComment = new TaskComment({
 			taskId,
@@ -90,6 +152,40 @@ exports.createComment = async (req, res) => {
 			path: 'createdBy',
 			select: 'username firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
+
+		// Push only: notify users assigned to this task (excluding comment author).
+		try {
+			const recipientUserIds = (await getTaskNotificationRecipients(task, board))
+				.map((id) => id.toString())
+				.filter((id) => id !== userId.toString())
+
+			if (recipientUserIds.length > 0) {
+				const commenterName = populatedComment?.createdBy?.firstName && populatedComment?.createdBy?.lastName
+					? `${populatedComment.createdBy.firstName} ${populatedComment.createdBy.lastName}`
+					: (populatedComment?.createdBy?.username || 'Someone')
+				const t = req.t
+				sendTaskCommentNotification({
+					task,
+					board,
+					commenterName,
+					recipientUserIds,
+					t,
+				}).catch((pushError) => {
+					console.error('Error sending task comment push notification:', pushError)
+				})
+			}
+		} catch (notificationError) {
+			console.error('Error preparing task comment push notification:', notificationError)
+		}
+
+		await emitTaskCommentRealtimeUpdate({
+			req,
+			task,
+			board,
+			actorUserId: userId,
+			action: 'created',
+			commentId: populatedComment?._id || newComment._id,
 		})
 
 		res.status(201).json(populatedComment)
@@ -114,6 +210,18 @@ exports.updateComment = async (req, res) => {
 		if (!comment) {
 			return res.status(404).json({ message: 'Comment not found' })
 		}
+		const task = await Task.findById(comment.taskId)
+		if (!task) {
+			return res.status(404).json({ message: 'Task not found' })
+		}
+		const board = await Board.findById(task.boardId)
+		if (!board) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		// Check if user is creator
 		if (comment.createdBy.toString() !== userId) {
@@ -128,6 +236,15 @@ exports.updateComment = async (req, res) => {
 			path: 'createdBy',
 			select: 'username firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
+
+		await emitTaskCommentRealtimeUpdate({
+			req,
+			task,
+			board,
+			actorUserId: userId,
+			action: 'updated',
+			commentId: populatedComment?._id || comment._id,
 		})
 
 		res.json(populatedComment)
@@ -147,9 +264,20 @@ exports.deleteComment = async (req, res) => {
 		if (!comment) {
 			return res.status(404).json({ message: 'Comment not found' })
 		}
+		const task = await Task.findById(comment.taskId)
+		if (!task) {
+			return res.status(404).json({ message: 'Task not found' })
+		}
+		const board = await Board.findById(task.boardId)
+		if (!board) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		// Check if user is creator or Admin
-		const isAdmin = req.user.roles && req.user.roles.includes('Admin')
 		const isCreator = comment.createdBy.toString() === userId
 
 		if (!isAdmin && !isCreator) {
@@ -172,6 +300,15 @@ exports.deleteComment = async (req, res) => {
 			}
 		}
 
+		await emitTaskCommentRealtimeUpdate({
+			req,
+			task,
+			board,
+			actorUserId: userId,
+			action: 'deleted',
+			commentId: comment._id,
+		})
+
 		res.json({ message: 'Comment deleted successfully' })
 	} catch (error) {
 		console.error('Error deleting comment:', error)
@@ -193,6 +330,18 @@ exports.uploadCommentAttachment = async (req, res) => {
 		if (!comment) {
 			return res.status(404).json({ message: 'Comment not found' })
 		}
+		const task = await Task.findById(comment.taskId)
+		if (!task) {
+			return res.status(404).json({ message: 'Task not found' })
+		}
+		const board = await Board.findById(task.boardId)
+		if (!board) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		// Check if user is creator
 		if (comment.createdBy.toString() !== userId) {
@@ -211,6 +360,15 @@ exports.uploadCommentAttachment = async (req, res) => {
 			path: 'createdBy',
 			select: 'username firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		})
+
+		await emitTaskCommentRealtimeUpdate({
+			req,
+			task,
+			board,
+			actorUserId: userId,
+			action: 'attachment-uploaded',
+			commentId: populatedComment?._id || comment._id,
 		})
 
 		res.json(populatedComment)
@@ -261,6 +419,19 @@ exports.deleteCommentAttachment = async (req, res) => {
 			select: 'username firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 		})
+
+		const task = await Task.findById(comment.taskId)
+		const board = task ? await Board.findById(task.boardId) : null
+		if (task && board) {
+			await emitTaskCommentRealtimeUpdate({
+				req,
+				task,
+				board,
+				actorUserId: userId,
+				action: 'attachment-deleted',
+				commentId: populatedComment?._id || comment._id,
+			})
+		}
 
 		res.json(populatedComment)
 	} catch (error) {

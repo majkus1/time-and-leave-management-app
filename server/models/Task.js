@@ -21,6 +21,12 @@ const taskSchema = new mongoose.Schema({
 		required: true,
 		default: 'todo'
 	},
+	priority: {
+		type: String,
+		enum: ['low', 'medium', 'high', 'urgent'],
+		required: true,
+		default: 'medium'
+	},
 	attachments: [{
 		filename: String,
 		path: String,
@@ -33,6 +39,12 @@ const taskSchema = new mongoose.Schema({
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User'
 	}],
+	assignedScope: {
+		type: String,
+		enum: ['specific', 'all-members'],
+		required: true,
+		default: 'specific'
+	},
 	createdBy: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',

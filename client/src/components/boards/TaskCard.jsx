@@ -3,8 +3,10 @@ import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
-import { useTaskComments, useCreateComment, useDeleteComment, useUploadTaskAttachment, useDeleteTaskAttachment, useUploadCommentAttachment, useTask } from '../../hooks/useBoards'
+import { useSocket } from '../../context/SocketContext'
+import { useTaskComments, useCreateComment, useDeleteComment, useUploadTaskAttachment, useDeleteTaskAttachment, useUploadCommentAttachment, useDeleteCommentAttachment, useTask } from '../../hooks/useBoards'
 import { useUpdateTask, useDeleteTask, useUpdateTaskStatus } from '../../hooks/useBoards'
+import { useBoardUsers } from '../../hooks/useBoards'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { API_URL } from '../../config.js'
@@ -15,19 +17,32 @@ const STATUSES = [
 	{ id: 'review', color: '#3498db' },
 	{ id: 'done', color: '#27ae60' }
 ]
+const PRIORITY_META = {
+	low: { bg: '#e8f5e9', color: '#2e7d32' },
+	medium: { bg: '#fff8e1', color: '#ef6c00' },
+	high: { bg: '#ffe8e8', color: '#c62828' },
+	urgent: { bg: '#f3e5f5', color: '#6a1b9a' },
+}
+const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
 
-function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate }) {
+function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate, unreadCount = 0, onSeen }) {
 	const { t } = useTranslation()
 	const { userId, role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
+	const { socket } = useSocket()
 	
 	// Use useTask hook to get fresh task data when in modal mode
 	const { data: freshTask, refetch: refetchTask } = useTask(isModal ? task?._id : null)
 	
 	// Use fresh task data in modal, fallback to prop task
 	const currentTask = (isModal && freshTask) ? freshTask : task
+	const taskBoardId = currentTask?.boardId?._id || currentTask?.boardId || null
+	const { data: boardUsers = [] } = useBoardUsers(isModal ? taskBoardId : null, !!isModal && !!taskBoardId)
 	
-	const { data: comments = [], refetch: refetchComments } = useTaskComments(isModal ? task?._id : null)
+	const { data: comments = [], refetch: refetchComments } = useTaskComments(isModal ? task?._id : null, {
+		enabled: isModal,
+		isModalOpen: isModal,
+	})
 	const createCommentMutation = useCreateComment()
 	const deleteCommentMutation = useDeleteComment()
 	const updateTaskMutation = useUpdateTask()
@@ -36,11 +51,17 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 	const uploadTaskAttachmentMutation = useUploadTaskAttachment()
 	const deleteTaskAttachmentMutation = useDeleteTaskAttachment()
 	const uploadCommentAttachmentMutation = useUploadCommentAttachment()
+	const deleteCommentAttachmentMutation = useDeleteCommentAttachment()
 	
 	const [commentText, setCommentText] = useState('')
+	const [selectedCommentFile, setSelectedCommentFile] = useState(null)
+	const [uploadingCommentFile, setUploadingCommentFile] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
 	const [editTitle, setEditTitle] = useState(currentTask?.title || '')
 	const [editDescription, setEditDescription] = useState(currentTask?.description || '')
+	const [editPriority, setEditPriority] = useState(currentTask?.priority || 'medium')
+	const [editAssignToAll, setEditAssignToAll] = useState(currentTask?.assignedScope === 'all-members')
+	const [editAssignees, setEditAssignees] = useState([])
 	const [uploadingFile, setUploadingFile] = useState(false)
 	
 	// Update edit fields when task data changes
@@ -48,8 +69,37 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 		if (currentTask) {
 			setEditTitle(currentTask.title || '')
 			setEditDescription(currentTask.description || '')
+			setEditPriority(currentTask.priority || 'medium')
+			setEditAssignToAll(currentTask.assignedScope === 'all-members')
+			setEditAssignees((currentTask.assignedTo || []).map((u) => (u?._id ? u._id : u)).filter(Boolean))
 		}
 	}, [currentTask])
+
+	useEffect(() => {
+		if (!socket || !isModal || !currentTask?._id) return
+
+		const handleCommentRealtimeUpdate = (payload) => {
+			if (!payload?.taskId) return
+			if (String(payload.taskId) !== String(currentTask._id)) return
+			refetchComments()
+			if (isModal && typeof onSeen === 'function') {
+				onSeen(currentTask._id)
+			}
+		}
+
+		socket.on('task-comment-updated', handleCommentRealtimeUpdate)
+		socket.on('task-notification-updated', handleCommentRealtimeUpdate)
+		return () => {
+			socket.off('task-comment-updated', handleCommentRealtimeUpdate)
+			socket.off('task-notification-updated', handleCommentRealtimeUpdate)
+		}
+	}, [socket, isModal, currentTask?._id, refetchComments])
+
+	useEffect(() => {
+		if (!isModal || !currentTask?._id) return
+		// Ensure freshest comments every time modal is opened/switched to a task.
+		refetchComments()
+	}, [isModal, currentTask?._id, refetchComments])
 
 	const sortable = useSortable({
 		id: task?._id,
@@ -74,17 +124,36 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 
 	const isAdmin = role && role.includes('Admin')
 	const canEdit = currentTask && (isAdmin || (currentTask.createdBy && currentTask.createdBy._id === userId))
+	const priorityKey = currentTask?.priority || 'medium'
+	const priorityStyle = PRIORITY_META[priorityKey] || PRIORITY_META.medium
+	const priorityLabel = t(`boards.priority.${priorityKey}`)
+	const assignedText = currentTask?.assignedScope === 'all-members'
+		? (t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy')
+		: (currentTask?.assignedTo || []).map(u => u.username).join(', ')
 
 	const handleCommentSubmit = async (e) => {
 		e.preventDefault()
 		if (!commentText.trim()) return
 
 		try {
-			await createCommentMutation.mutateAsync({
+			const createdComment = await createCommentMutation.mutateAsync({
 				taskId: currentTask._id,
 				content: commentText.trim()
 			})
+
+			if (selectedCommentFile && createdComment?._id) {
+				setUploadingCommentFile(true)
+				try {
+					await uploadCommentAttachmentMutation.mutateAsync({
+						commentId: createdComment._id,
+						file: selectedCommentFile,
+					})
+				} finally {
+					setUploadingCommentFile(false)
+				}
+			}
 			setCommentText('')
+			setSelectedCommentFile(null)
 			refetchComments()
 		} catch (error) {
 			await showAlert(error.response?.data?.message || t('boards.commentError') || 'Błąd podczas dodawania komentarza')
@@ -105,13 +174,34 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 		}
 	}
 
+	const handleDeleteCommentAttachment = async (commentId, attachmentIndex) => {
+		const confirmed = await showConfirm(
+			t('boards.deleteAttachmentConfirm') || 'Czy na pewno chcesz usunąć ten załącznik?'
+		)
+		if (!confirmed) return
+
+		try {
+			await deleteCommentAttachmentMutation.mutateAsync({ commentId, attachmentIndex })
+			refetchComments()
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('boards.attachmentDeleteError') || 'Błąd podczas usuwania załącznika')
+		}
+	}
+
 	const handleSaveEdit = async () => {
+		if (!editAssignToAll && editAssignees.length === 0) {
+			await showAlert(t('boards.assigneeRequired') || 'Wybierz przynajmniej jedną osobę lub przypisz do wszystkich')
+			return
+		}
 		try {
 			await updateTaskMutation.mutateAsync({
 				taskId: currentTask._id,
 				data: {
 					title: editTitle.trim(),
-					description: editDescription.trim()
+					description: editDescription.trim(),
+					priority: editPriority,
+					assignToAllMembers: editAssignToAll,
+					assignedTo: editAssignToAll ? [] : editAssignees
 				}
 			})
 			setIsEditing(false)
@@ -167,6 +257,15 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 			if (onClose) onClose()
 			return null
 		}
+
+		const sectionCardStyle = {
+			marginBottom: '16px',
+			padding: '16px',
+			backgroundColor: '#ffffff',
+			border: '1px solid #e5e7eb',
+			borderRadius: '10px',
+			boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+		}
 		
 		return (
 			<Modal
@@ -189,11 +288,11 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 						maxHeight: '90vh',
 						overflowY: 'auto',
 						borderRadius: '12px',
-						padding: '30px',
-						backgroundColor: 'white',
+						padding: '20px',
+						backgroundColor: '#f8fafc',
 					},
 				}}>
-				<div style={{ marginBottom: '20px' }}>
+				<div style={{ ...sectionCardStyle, marginBottom: '16px' }}>
 					{isEditing ? (
 						<>
 							<input
@@ -223,6 +322,70 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 									marginBottom: '10px'
 								}}
 							/>
+							<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
+								{t('boards.priority') || 'Priorytet'}
+							</label>
+							<select
+								value={editPriority}
+								onChange={(e) => setEditPriority(e.target.value)}
+								style={{
+									width: '100%',
+									padding: '10px',
+									border: '1px solid #bdc3c7',
+									borderRadius: '6px',
+									fontSize: '16px',
+									marginBottom: '10px'
+								}}
+							>
+								{PRIORITY_OPTIONS.map((priorityOption) => (
+									<option key={priorityOption} value={priorityOption}>
+										{t(`boards.priority.${priorityOption}`)}
+									</option>
+								))}
+							</select>
+							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+								<input
+									type="checkbox"
+									checked={editAssignToAll}
+									onChange={(e) => {
+										setEditAssignToAll(e.target.checked)
+										if (e.target.checked) setEditAssignees([])
+									}}
+								/>
+								<span>{t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy'}</span>
+							</label>
+							{!editAssignToAll && (
+								<div style={{
+									border: '1px solid #e1e8ed',
+									borderRadius: '6px',
+									maxHeight: '150px',
+									overflowY: 'auto',
+									padding: '10px',
+									backgroundColor: '#fafbfd',
+									marginBottom: '10px'
+								}}>
+									{boardUsers.length === 0 ? (
+										<p style={{ margin: 0, color: '#7f8c8d' }}>{t('boards.noMembersToAssign') || 'Brak członków tablicy do przypisania'}</p>
+									) : (
+										boardUsers.map((user) => (
+											<label key={user._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+												<input
+													type="checkbox"
+													checked={editAssignees.includes(user._id)}
+													onChange={() => {
+														setEditAssignees((prev) =>
+															prev.includes(user._id)
+																? prev.filter((id) => id !== user._id)
+																: [...prev, user._id]
+														)
+													}}
+												/>
+												<span>{user.firstName} {user.lastName} ({user.username})</span>
+											</label>
+										))
+									)}
+								</div>
+							)}
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
 									onClick={handleSaveEdit}
@@ -241,6 +404,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 										setIsEditing(false)
 										setEditTitle(currentTask.title)
 										setEditDescription(currentTask.description)
+										setEditPriority(currentTask.priority || 'medium')
+										setEditAssignToAll(currentTask.assignedScope === 'all-members')
+										setEditAssignees((currentTask.assignedTo || []).map((u) => (u?._id ? u._id : u)).filter(Boolean))
 									}}
 									style={{
 										padding: '8px 16px',
@@ -316,17 +482,36 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 									color: '#7f8c8d', 
 									fontSize: '16px',
 									marginBottom: '20px',
-									whiteSpace: 'pre-wrap'
+									whiteSpace: 'pre-wrap',
+									overflowWrap: 'anywhere',
+									wordBreak: 'break-word',
+									maxWidth: '100%'
 								}}>
 									{currentTask.description}
 								</p>
 							)}
+							<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+								<span style={{
+									display: 'inline-block',
+									padding: '4px 10px',
+									borderRadius: '999px',
+									backgroundColor: priorityStyle.bg,
+									color: priorityStyle.color,
+									fontSize: '12px',
+									fontWeight: '600',
+								}}>
+									{t('boards.priority') || 'Priorytet'}: {priorityLabel}
+								</span>
+							</div>
+							<div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '16px' }}>
+								<strong>{t('boards.assignTo') || 'Przypisz do'}:</strong> {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}
+							</div>
 						</>
 					)}
 				</div>
 
 				{/* Status selector */}
-				<div style={{ marginBottom: '20px' }}>
+				<div style={sectionCardStyle}>
 					<label style={{ 
 						display: 'block',
 						marginBottom: '8px',
@@ -356,7 +541,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 				</div>
 
 				{/* Attachments */}
-				<div style={{ marginBottom: '20px' }}>
+				<div style={sectionCardStyle}>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
 						<h4 style={{ margin: 0, color: '#2c3e50' }}>
 							{t('boards.attachments') || 'Załączniki'}
@@ -466,8 +651,8 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 				</div>
 
 				{/* Comments */}
-				<div style={{ marginTop: '30px', borderTop: '1px solid #e9ecef', paddingTop: '20px' }}>
-					<h4 style={{ marginBottom: '15px', color: '#2c3e50' }}>
+				<div style={{ ...sectionCardStyle, marginTop: '8px', marginBottom: 0 }}>
+					<h4 style={{ marginBottom: '15px', color: '#2c3e50', paddingBottom: '10px', borderBottom: '1px solid #e5e7eb' }}>
 						{t('boards.comments') || 'Komentarze'}
 					</h4>
 					
@@ -477,8 +662,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 								key={comment._id}
 								style={{
 									padding: '12px',
-									backgroundColor: '#f8f9fa',
-									borderRadius: '6px',
+									backgroundColor: '#ffffff',
+									border: '1px solid #e5e7eb',
+									borderRadius: '8px',
 									marginBottom: '10px'
 								}}>
 								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -500,6 +686,38 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 										}}>
 											{new Date(comment.createdAt).toLocaleString()}
 										</div>
+										{Array.isArray(comment.attachments) && comment.attachments.length > 0 && (
+											<div style={{ marginTop: '8px' }}>
+												{comment.attachments.map((attachment, attachmentIndex) => (
+													<div key={`${comment._id}-${attachmentIndex}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+														<a
+															href={`${API_URL.replace('/api', '')}/uploads/${attachment.path}`}
+															target="_blank"
+															rel="noopener noreferrer"
+															style={{ color: '#3498db', textDecoration: 'none', fontSize: '13px' }}
+														>
+															📎 {attachment.filename}
+														</a>
+														{comment.createdBy && comment.createdBy._id === userId && (
+															<button
+																type="button"
+																onClick={() => handleDeleteCommentAttachment(comment._id, attachmentIndex)}
+																style={{
+																	background: 'transparent',
+																	border: 'none',
+																	color: '#dc3545',
+																	cursor: 'pointer',
+																	fontSize: '14px',
+																	padding: '0 4px'
+																}}
+															>
+																×
+															</button>
+														)}
+													</div>
+												))}
+											</div>
+										)}
 									</div>
 									{(isAdmin || (comment.createdBy && comment.createdBy._id === userId)) && (
 										<button
@@ -521,7 +739,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 					</div>
 
 					<form onSubmit={handleCommentSubmit}>
-						<div style={{ display: 'flex', gap: '10px' }}>
+						<div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
 							<input
 								type="text"
 								value={commentText}
@@ -530,26 +748,72 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 								style={{
 									flex: 1,
 									padding: '10px',
-									border: '1px solid #bdc3c7',
+									border: '1px solid #cbd5e1',
 									borderRadius: '6px',
 									fontSize: '16px'
 								}}
 							/>
+							<label
+								style={{
+									padding: '10px 12px',
+									backgroundColor: '#ecf0f1',
+									color: '#2c3e50',
+									borderRadius: '6px',
+									cursor: uploadingCommentFile ? 'not-allowed' : 'pointer',
+									fontSize: '14px',
+									opacity: uploadingCommentFile ? 0.6 : 1,
+									whiteSpace: 'nowrap'
+								}}
+							>
+								{t('boards.attachFile') || 'Załącz plik'}
+								<input
+									type="file"
+									style={{ display: 'none' }}
+									disabled={uploadingCommentFile}
+									onChange={(e) => setSelectedCommentFile(e.target.files?.[0] || null)}
+								/>
+							</label>
 							<button
 								type="submit"
-								disabled={!commentText.trim()}
+								disabled={!commentText.trim() || uploadingCommentFile}
 								style={{
 									padding: '10px 20px',
 									backgroundColor: '#3498db',
 									color: 'white',
 									border: 'none',
 									borderRadius: '6px',
-									cursor: commentText.trim() ? 'pointer' : 'not-allowed',
-									opacity: commentText.trim() ? 1 : 0.5
+									cursor: commentText.trim() && !uploadingCommentFile ? 'pointer' : 'not-allowed',
+									opacity: commentText.trim() && !uploadingCommentFile ? 1 : 0.5
 								}}>
 								{t('boards.send') || 'Wyślij'}
 							</button>
 						</div>
+						{selectedCommentFile && (
+							<div style={{
+								padding: '8px 10px',
+								borderRadius: '6px',
+								backgroundColor: '#f8f9fa',
+								fontSize: '13px',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between'
+							}}>
+								<span>📎 {selectedCommentFile.name}</span>
+								<button
+									type="button"
+									onClick={() => setSelectedCommentFile(null)}
+									style={{
+										background: 'transparent',
+										border: 'none',
+										color: '#dc3545',
+										cursor: 'pointer',
+										fontSize: '16px'
+									}}
+								>
+									×
+								</button>
+							</div>
+						)}
 					</form>
 				</div>
 			</Modal>
@@ -572,6 +836,22 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 			{...attributes}
 			onMouseEnter={(e) => !isDragging && (e.currentTarget.style.transform = 'translateY(-2px)')}
 			onMouseLeave={(e) => !isDragging && (e.currentTarget.style.transform = 'translateY(0)')}>
+			{!isModal && unreadCount > 0 && (
+				<span
+					className="sidebar-notification-badge"
+					style={{
+						right: '8px',
+						top: '8px',
+						transform: 'none',
+						zIndex: 2,
+					}}
+					title={t('boards.comments') || 'Komentarze'}
+				>
+					<span className="sidebar-notification-badge-count">
+						{unreadCount > 99 ? '99+' : unreadCount}
+					</span>
+				</span>
+			)}
 			{/* Drag handle */}
 			<div
 				ref={setActivatorNodeRef}
@@ -621,15 +901,28 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate 
 						{currentTask.description}
 					</p>
 				)}
-				{currentTask.assignedTo && currentTask.assignedTo.length > 0 && (
+				{(currentTask.assignedScope === 'all-members' || (currentTask.assignedTo && currentTask.assignedTo.length > 0)) && (
 					<div style={{ 
 						fontSize: '12px', 
 						color: '#95a5a6',
 						marginTop: '8px'
 					}}>
-						👤 {currentTask.assignedTo.map(u => u.username).join(', ')}
+						👤 {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}
 					</div>
 				)}
+				<div style={{ marginTop: '8px' }}>
+					<span style={{
+						display: 'inline-block',
+						padding: '3px 8px',
+						borderRadius: '999px',
+						backgroundColor: priorityStyle.bg,
+						color: priorityStyle.color,
+						fontSize: '11px',
+						fontWeight: '600',
+					}}>
+						{t('boards.priority') || 'Priorytet'}: {priorityLabel}
+					</span>
+				</div>
 			</div>
 		</div>
 	)

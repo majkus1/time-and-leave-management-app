@@ -422,6 +422,9 @@ io.use(async (socket, next) => {
 io.on('connection', (socket) => {
 	console.log(`User connected: ${socket.userId}`)
 
+	// Join personal room for user-scoped real-time updates (e.g. calendar confirmation status)
+	socket.join(`user:${socket.userId}`)
+
 	// Join team room
 	socket.join(`team:${socket.teamId}`)
 

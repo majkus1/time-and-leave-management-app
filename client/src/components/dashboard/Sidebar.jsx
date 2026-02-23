@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR, isSupervisor, isWorker } from '../../utils/roleHelpers'
 import { useUnreadCount } from '../../hooks/useChat'
+import { useBoardsUnreadSummary } from '../../hooks/useBoards'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
+import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import TutorialModal from '../tutorial/TutorialModal'
 
 function Sidebar() {
@@ -19,6 +21,8 @@ function Sidebar() {
 	const location = useLocation()
 	const { role, logout, username, loggedIn, userId } = useAuth()
 	const { data: unreadCount = 0 } = useUnreadCount({ enabled: !!loggedIn })
+	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: !!loggedIn })
+	const unreadBoardsTotal = boardsUnreadSummary?.totalUnread || 0
 	
 	// HIERARCHIA RÓL: Admin > HR > Przełożony
 	// Sprawdź konfigurację przełożonego jeśli jest przełożonym (ale nie Admin ani HR)
@@ -38,6 +42,11 @@ function Sidebar() {
 	const canManageSchedule = isAdminRole || isHRRole 
 		? true // Admin i HR mają zawsze dostęp
 		: (isSupervisorRole && (supervisorConfig?.permissions?.canManageSchedule !== false)) // Przełożony - sprawdź konfigurację
+	const canOpenLeaveList = isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves)
+	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
+		enabled: !!loggedIn && canOpenLeaveList,
+	})
+	const pendingLeaveCount = pendingSummary?.totalPending || 0
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -325,6 +334,13 @@ function Sidebar() {
 								<img src="/img/task-list.png" alt='icon of boards' />
 								</div>
 								<span className="nav-text">{t('sidebar.btnBoards')}</span>
+								{unreadBoardsTotal > 0 && (
+									<span className="sidebar-notification-badge">
+										<span className="sidebar-notification-badge-count">
+											{unreadBoardsTotal > 99 ? '99+' : unreadBoardsTotal}
+										</span>
+									</span>
+								)}
 							</NavLink>
 
 					<NavLink
@@ -336,21 +352,10 @@ function Sidebar() {
 								</div>
 								<span className="nav-text">{t('sidebar.btnChat')}</span>
 								{unreadCount > 0 && (
-									<span className="unread-badge-sidebar" style={{
-										position: 'absolute',
-										right: '10px',
-										top: '50%',
-										transform: 'translateY(-50%)',
-										background: '#e74c3c',
-										color: 'white',
-										borderRadius: '12px',
-										padding: '2px 8px',
-										fontSize: '12px',
-										fontWeight: '600',
-										minWidth: '20px',
-										textAlign: 'center'
-									}}>
-										{unreadCount > 99 ? '99+' : unreadCount}
+									<span className="sidebar-notification-badge">
+										<span className="sidebar-notification-badge-count">
+											{unreadCount > 99 ? '99+' : unreadCount}
+										</span>
 									</span>
 								)}
 							</NavLink>
@@ -374,11 +379,22 @@ function Sidebar() {
 							{(isAdmin(role) || isHR(role) || (isSupervisor(role) && canApproveLeaves)) && (
 								<NavLink
 									to="/leave-list"
-									className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}>
+									className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}
+									style={{ position: 'relative' }}>
 									<div className="nav-icon">
 										<img src="/img/trip.png" alt="Leave List" />
 									</div>
 									<span className="nav-text">{t('sidebar.btn7')}</span>
+									{pendingLeaveCount > 0 && (
+										<span
+											className="sidebar-notification-badge"
+											title={t('sidebar.pendingLeaveRequests') || 'Pending leave requests'}
+										>
+											<span className="sidebar-notification-badge-count">
+												{pendingLeaveCount > 99 ? '99+' : pendingLeaveCount}
+											</span>
+										</span>
+									)}
 								</NavLink>
 							)}
 						</div>

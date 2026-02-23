@@ -49,6 +49,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
 			type: Boolean,
 			default: true
 		},
+		taskComments: {
+			type: Boolean,
+			default: true
+		},
 		leaves: {
 			type: Boolean,
 			default: true

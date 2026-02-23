@@ -1708,13 +1708,22 @@ exports.getMyTasks = async (req, res) => {
 			return res.json([])
 		}
 
-		// Get all tasks from accessible boards (not filtered by assignedTo - all tasks in boards user has access to)
-		// Exclude tasks with status "done" (completed tasks)
-		const tasks = await Task.find({
+		const taskQuery = {
 			boardId: { $in: boardIds },
 			isActive: true,
 			status: { $ne: 'done' } // Exclude completed tasks
-		})
+		}
+
+		// Admin sees all tasks in team boards.
+		// Others see only tasks assigned to them or assigned to all board members.
+		if (!isAdmin) {
+			taskQuery.$or = [
+				{ assignedScope: 'all-members' },
+				{ assignedTo: userId }
+			]
+		}
+
+		const tasks = await Task.find(taskQuery)
 			.populate({
 				path: 'createdBy',
 				select: 'username firstName lastName',

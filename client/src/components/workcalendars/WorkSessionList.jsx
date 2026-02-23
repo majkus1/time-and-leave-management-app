@@ -89,16 +89,26 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							borderRadius: '10px',
 							fontWeight: '500'
 						}}>
-							{t('sessions.fromQR') || 'QR'}
+							{session.qrCode?.name ? `${t('sessions.fromQR') || 'QR'}: ${session.qrCode.name}` : (t('sessions.fromQR') || 'QR')}
 						</span>
 					)}
 					{isMobile && (
-						<span style={{
-							fontSize: '12px',
-							color: '#95a5a6',
-							marginLeft: '8px'
-						}}>
-							{isExpanded ? '▼' : '▶'}
+						<span
+							style={{
+								display: 'inline-flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: '18px',
+								height: '18px',
+								color: '#95a5a6',
+								marginLeft: '8px',
+								transition: 'transform 0.2s ease',
+								transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'
+							}}
+						>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+								<polyline points="9 18 15 12 9 6"></polyline>
+							</svg>
 						</span>
 					)}
 				</div>
@@ -112,7 +122,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 						<div style={{
 							color: session.isOvertime ? '#e74c3c' : '#27ae60',
 							fontWeight: '600',
-							fontSize: '12px'
+							fontSize: '16px'
 						}} className='detailsess'>
 							{duration} {t('sessions.hours') || 'godz.'}
 							{(() => {
@@ -202,11 +212,30 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							{session.endTime && ` - ${formatTime(session.endTime)}`}
 						</span>
 					</div>
+					{session.qrCode?.name && (
+						<div style={{
+							color: '#4b5563',
+							fontSize: '12px',
+							display: 'flex',
+							alignItems: 'center',
+							gap: '6px'
+						}}>
+							<span style={{ color: '#6b7280', display: 'inline-flex', alignItems: 'center' }}>
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"></path>
+									<circle cx="12" cy="10" r="3"></circle>
+								</svg>
+							</span>
+							<span>
+								{t('sessions.qrLocation') || 'Miejsce QR'}: <strong>{session.qrCode.name}</strong>
+							</span>
+						</div>
+					)}
 					{duration && (
 						<div style={{
 							color: session.isOvertime ? '#e74c3c' : '#27ae60',
 							fontWeight: '600',
-							fontSize: '12px'
+							fontSize: '16px'
 						}}>
 							{duration} {t('sessions.hours') || 'godz.'}
 							{(() => {

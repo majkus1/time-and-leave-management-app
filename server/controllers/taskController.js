@@ -6,6 +6,52 @@ const path = require('path')
 const fs = require('fs').promises
 const { sendTaskNotification } = require('../services/emailService')
 const { sendTaskNotification: sendTaskPushNotification } = require('../services/pushNotificationService')
+const {
+	isAdminUser,
+	getBoardAssignableUsers,
+	buildTaskAssignment,
+	getTaskNotificationRecipients,
+	canUserAccessTask,
+	normalizeObjectIdString,
+} = require('../utils/taskAccess')
+
+const emitTaskNotificationRealtimeUpdate = async ({ req, task, board, actorUserId, action }) => {
+	try {
+		const io = req.app?.io
+		if (!io || !task || !board) return
+
+		const recipients = new Set(
+			(await getTaskNotificationRecipients(task, board))
+				.map((id) => normalizeObjectIdString(id))
+				.filter(Boolean)
+		)
+
+		const adminUsers = await User.find({
+			teamId: board.teamId,
+			roles: { $in: ['Admin'] },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select('_id')
+		adminUsers.forEach((admin) => {
+			const adminId = normalizeObjectIdString(admin?._id)
+			if (adminId) recipients.add(adminId)
+		})
+
+		// Keep all opened sessions for actor in sync too.
+		const normalizedActorId = normalizeObjectIdString(actorUserId)
+		if (normalizedActorId) recipients.add(normalizedActorId)
+
+		const payload = {
+			taskId: normalizeObjectIdString(task._id),
+			boardId: normalizeObjectIdString(board._id),
+			action,
+		}
+		recipients.forEach((recipientId) => {
+			io.to(`user:${recipientId}`).emit('task-notification-updated', payload)
+		})
+	} catch (error) {
+		console.error('Error emitting task notification realtime update:', error)
+	}
+}
 
 // Get tasks for a board
 exports.getBoardTasks = async (req, res) => {
@@ -27,10 +73,21 @@ exports.getBoardTasks = async (req, res) => {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
+		const isAdmin = isAdminUser(req.user)
+		const taskVisibilityFilter = isAdmin
+			? {}
+			: {
+				$or: [
+					{ assignedScope: 'all-members' },
+					{ assignedTo: userId },
+				]
+			}
+
 		// Get all tasks for this board
 		const tasks = await Task.find({ 
 			boardId, 
-			isActive: true 
+			isActive: true,
+			...taskVisibilityFilter,
 		})
 		.populate({
 			path: 'createdBy',
@@ -86,6 +143,10 @@ exports.getTask = async (req, res) => {
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		res.json(task)
 	} catch (error) {
@@ -98,7 +159,7 @@ exports.getTask = async (req, res) => {
 exports.createTask = async (req, res) => {
 	try {
 		const { boardId } = req.params
-		const { title, description, status, assignedTo } = req.body
+		const { title, description, status, assignedTo, assignToAllMembers, priority } = req.body
 		const userId = req.user.userId
 
 		if (!title || !title.trim()) {
@@ -119,6 +180,12 @@ exports.createTask = async (req, res) => {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
+		const boardUsers = await getBoardAssignableUsers(board)
+		const assignment = buildTaskAssignment({ assignedTo, assignToAllMembers, boardUsers })
+		if (assignment.assignedScope === 'specific' && assignment.assignedTo.length === 0) {
+			return res.status(400).json({ message: 'At least one assignee is required or select assign to all members' })
+		}
+
 		// Get max order for this status
 		const maxOrderTask = await Task.findOne({ 
 			boardId, 
@@ -131,7 +198,9 @@ exports.createTask = async (req, res) => {
 			description: description || '',
 			boardId,
 			status: status || 'todo',
-			assignedTo: assignedTo && Array.isArray(assignedTo) ? assignedTo : [],
+			priority: ['low', 'medium', 'high', 'urgent'].includes(priority) ? priority : 'medium',
+			assignedScope: assignment.assignedScope,
+			assignedTo: assignment.assignedTo,
 			createdBy: userId,
 			order: maxOrderTask ? maxOrderTask.order + 1 : 0
 		})
@@ -170,28 +239,9 @@ exports.createTask = async (req, res) => {
 				}
 				
 				// Send email notification
-				await sendTaskNotification(populatedTask, board, createdByUser, t, false)
-				
-				// Get recipient user IDs for push notifications
-				let recipientUserIds = []
-				if (board.type === 'department' && board.departmentName) {
-					const departmentUsers = await User.find({
-						teamId: board.teamId,
-						$or: [
-							{ department: board.departmentName },
-							{ department: { $in: [board.departmentName] } }
-						],
-						$and: [
-							{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-						]
-					}).select('_id')
-					recipientUserIds = departmentUsers.map(u => u._id.toString())
-				} else {
-					recipientUserIds = board.members.map(m => m.toString())
-				}
-				
-				// Remove creator from recipients
+				let recipientUserIds = await getTaskNotificationRecipients(populatedTask, board)
 				recipientUserIds = recipientUserIds.filter(id => id !== userId.toString())
+				await sendTaskNotification(populatedTask, board, recipientUserIds, createdByUser, t, false)
 				
 				// Send push notifications (non-blocking)
 				if (recipientUserIds.length > 0) {
@@ -207,6 +257,14 @@ exports.createTask = async (req, res) => {
 			// Don't fail the request if notification fails
 		}
 
+		await emitTaskNotificationRealtimeUpdate({
+			req,
+			task: populatedTask,
+			board,
+			actorUserId: userId,
+			action: 'task-created',
+		})
+
 		res.status(201).json(populatedTask)
 	} catch (error) {
 		console.error('Error creating task:', error)
@@ -218,7 +276,7 @@ exports.createTask = async (req, res) => {
 exports.updateTask = async (req, res) => {
 	try {
 		const { taskId } = req.params
-		const { title, description, status, assignedTo, order } = req.body
+		const { title, description, status, assignedTo, assignToAllMembers, priority, order } = req.body
 		const userId = req.user.userId
 
 		const task = await Task.findById(taskId)
@@ -239,6 +297,10 @@ exports.updateTask = async (req, res) => {
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		if (title !== undefined) {
 			task.title = title.trim()
@@ -250,7 +312,20 @@ exports.updateTask = async (req, res) => {
 			task.status = status
 		}
 		if (assignedTo !== undefined && Array.isArray(assignedTo)) {
-			task.assignedTo = assignedTo
+			// assignment is applied below in a single branch together with assignToAllMembers
+		}
+		const shouldUpdateAssignment = assignedTo !== undefined || assignToAllMembers !== undefined
+		if (shouldUpdateAssignment) {
+			const boardUsers = await getBoardAssignableUsers(board)
+			const assignment = buildTaskAssignment({ assignedTo, assignToAllMembers, boardUsers })
+			if (assignment.assignedScope === 'specific' && assignment.assignedTo.length === 0) {
+				return res.status(400).json({ message: 'At least one assignee is required or select assign to all members' })
+			}
+			task.assignedScope = assignment.assignedScope
+			task.assignedTo = assignment.assignedTo
+		}
+		if (priority !== undefined && ['low', 'medium', 'high', 'urgent'].includes(priority)) {
+			task.priority = priority
 		}
 		if (order !== undefined) {
 			task.order = order
@@ -268,6 +343,14 @@ exports.updateTask = async (req, res) => {
 				select: 'username firstName lastName',
 				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 			})
+
+		await emitTaskNotificationRealtimeUpdate({
+			req,
+			task: populatedTask,
+			board,
+			actorUserId: userId,
+			action: 'task-updated',
+		})
 
 		res.json(populatedTask)
 	} catch (error) {
@@ -299,6 +382,10 @@ exports.updateTaskStatus = async (req, res) => {
 		const isDepartmentBoard = board.type === 'department'
 
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
@@ -342,29 +429,11 @@ exports.updateTaskStatus = async (req, res) => {
 						t = i18nInstance.t.bind(i18nInstance)
 					}
 					
-					// Send email notification
-					await sendTaskNotification(populatedTask, board, updatedByUser, t, true)
-					
-					// Get recipient user IDs for push notifications
-					let recipientUserIds = []
-					if (board.type === 'department' && board.departmentName) {
-						const departmentUsers = await User.find({
-							teamId: board.teamId,
-							$or: [
-								{ department: board.departmentName },
-								{ department: { $in: [board.departmentName] } }
-							],
-							$and: [
-								{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-							]
-						}).select('_id')
-						recipientUserIds = departmentUsers.map(u => u._id.toString())
-					} else {
-						recipientUserIds = board.members.map(m => m.toString())
-					}
-					
-					// Remove updater from recipients
+					let recipientUserIds = await getTaskNotificationRecipients(populatedTask, board)
 					recipientUserIds = recipientUserIds.filter(id => id !== userId.toString())
+
+					// Send email notification
+					await sendTaskNotification(populatedTask, board, recipientUserIds, updatedByUser, t, true)
 					
 					// Send push notifications (non-blocking)
 					if (recipientUserIds.length > 0) {
@@ -380,6 +449,14 @@ exports.updateTaskStatus = async (req, res) => {
 				// Don't fail the request if notification fails
 			}
 		}
+
+		await emitTaskNotificationRealtimeUpdate({
+			req,
+			task: populatedTask,
+			board,
+			actorUserId: userId,
+			action: 'task-status-updated',
+		})
 
 		res.json(populatedTask)
 	} catch (error) {
@@ -412,9 +489,12 @@ exports.deleteTask = async (req, res) => {
 		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
 			return res.status(403).json({ message: 'Access denied' })
 		}
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
 
 		// Check if user is creator or Admin
-		const isAdmin = req.user.roles && req.user.roles.includes('Admin')
 		const isCreator = task.createdBy && task.createdBy.toString() === userId
 
 		if (!isAdmin && !isCreator) {
@@ -436,6 +516,14 @@ exports.deleteTask = async (req, res) => {
 				}
 			}
 		}
+
+		await emitTaskNotificationRealtimeUpdate({
+			req,
+			task,
+			board,
+			actorUserId: userId,
+			action: 'task-deleted',
+		})
 
 		res.json({ message: 'Task deleted successfully' })
 	} catch (error) {

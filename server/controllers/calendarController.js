@@ -28,6 +28,24 @@ exports.confirmCalendar = async (req, res) => {
 		}
 
 		await confirmation.save()
+
+		// Real-time sync:
+		// 1) notify this user on all their active sessions/devices
+		// 2) notify whole team so Admin/HR viewing another user's calendar gets instant update
+		const io = req.app?.io
+		if (io) {
+			const payload = {
+				userId: userId.toString(),
+				month: Number(month),
+				year: Number(year),
+				isConfirmed: !!isConfirmed,
+			}
+			io.to(`user:${userId}`).emit('calendar-confirmation-updated', payload)
+			if (req.user?.teamId) {
+				io.to(`team:${req.user.teamId}`).emit('calendar-confirmation-updated', payload)
+			}
+		}
+
 		res.status(200).json({ message: 'Calendar confirmation status updated successfully.' })
 	} catch (error) {
 		console.error('Error updating calendar confirmation status:', error)

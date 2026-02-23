@@ -146,6 +146,25 @@ function MonthlyCalendar() {
 		return numHours.toFixed(1).replace(/\.0$/, '')
 	}
 
+	// Keep calendar time ranges consistent with session details by deriving them from time entries.
+	const formatSessionTime = (dateString) => {
+		if (!dateString) return ''
+		const date = new Date(dateString)
+		if (isNaN(date.getTime())) return ''
+		const hours = String(date.getHours()).padStart(2, '0')
+		const minutes = String(date.getMinutes()).padStart(2, '0')
+		return `${hours}:${minutes}`
+	}
+
+	const buildRealTimeFromEntries = (timeEntries = []) => {
+		if (!Array.isArray(timeEntries) || timeEntries.length === 0) return ''
+		return timeEntries
+			.filter(entry => entry && !entry.isBreak && entry.startTime && entry.endTime)
+			.map(entry => `${formatSessionTime(entry.startTime)}-${formatSessionTime(entry.endTime)}`)
+			.filter(Boolean)
+			.join(', ')
+	}
+
 	// TanStack Query hooks
 	const { data: workdays = [], isLoading: loadingWorkdays, refetch: refetchWorkdays } = useWorkdays()
 	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
@@ -947,12 +966,10 @@ function MonthlyCalendar() {
 							const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 							
 							if (hasHoursWorked) {
-								// Wpis z godzinami pracy - zaokrąglamy do pół godziny dla eventów kalendarza
-								const roundedHours = roundToHalfHour(day.hoursWorked)
-								title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
+								// Keep the same precision as in "Istniejące wpisy" to avoid mismatched values
+								title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
 								if (day.additionalWorked) {
-									const roundedAdditional = roundToHalfHour(day.additionalWorked)
-									title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
+									title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
 								}
 								if (day.notes) {
 									title += ` | ${day.notes}`
@@ -1008,15 +1025,20 @@ function MonthlyCalendar() {
 						})
 						.filter(event => event !== null), // Usuń null eventy (dni z tylko activeTimer)
 						...workdays
-							.filter(day => day.realTimeDayWorked)
-							.map(day => ({
-								title: `${t('workcalendar.worktime')} ${day.realTimeDayWorked}`,
-								start: day.date,
-								backgroundColor: 'yellow',
-								textColor: 'black',
-								id: `${day._id}-realTime`,
-								classNames: 'event-real-time',
-							})),
+							.map(day => {
+								const timeFromEntries = buildRealTimeFromEntries(day.timeEntries)
+								const timeLabel = timeFromEntries || day.realTimeDayWorked
+								if (!timeLabel) return null
+								return {
+									title: `${t('workcalendar.worktime')} ${timeLabel}`,
+									start: day.date,
+									backgroundColor: 'yellow',
+									textColor: 'black',
+									id: `${day._id}-realTime`,
+									classNames: 'event-real-time',
+								}
+							})
+							.filter(event => event !== null),
 						// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
 						...acceptedLeaveRequests
 							.filter(request => request.startDate && request.endDate)
@@ -1161,10 +1183,10 @@ function MonthlyCalendar() {
 					<img src="/img/calendar mono.png" /> {t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatHours(roundToHalfHour(totalHours))} {t('workcalendar.allfrommonthhours')}
+				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatHours(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHours(roundToHalfHour(additionalHours))} {getOvertimeWord(additionalHours)}
+				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHours(additionalHours)} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p className='allfrommonth-p'>
@@ -1526,8 +1548,10 @@ function MonthlyCalendar() {
 										return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
 									})
 									.map((workday) => {
+									const timeFromEntries = buildRealTimeFromEntries(workday.timeEntries)
+									const timeLabel = timeFromEntries || workday.realTimeDayWorked
 									const displayText = workday.hoursWorked
-										? `${formatHours(workday.hoursWorked)} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${formatHours(workday.additionalWorked)} ${getOvertimeWord(workday.additionalWorked)}` : ''}${workday.realTimeDayWorked ? ` | ${t('workcalendar.worktime')} ${workday.realTimeDayWorked}` : ''}`
+										? `${formatHours(workday.hoursWorked)} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${formatHours(workday.additionalWorked)} ${getOvertimeWord(workday.additionalWorked)}` : ''}${timeLabel ? ` | ${t('workcalendar.worktime')} ${timeLabel}` : ''}`
 										: workday.absenceType
 										? workday.absenceType
 										: workday.notes

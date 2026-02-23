@@ -571,7 +571,7 @@ function Settings() {
 										}}>
 											<input
 												type="checkbox"
-												checked={pushPreferences.chat || false}
+												checked={pushPreferences.chat !== false}
 												onChange={(e) => handleUpdatePushPreferences('chat', e.target.checked)}
 												disabled={pushLoading}
 												style={{
@@ -594,7 +594,7 @@ function Settings() {
 										}}>
 											<input
 												type="checkbox"
-												checked={pushPreferences.tasks || false}
+												checked={pushPreferences.tasks !== false}
 												onChange={(e) => handleUpdatePushPreferences('tasks', e.target.checked)}
 												disabled={pushLoading}
 												style={{
@@ -617,7 +617,7 @@ function Settings() {
 										}}>
 											<input
 												type="checkbox"
-												checked={pushPreferences.taskStatusChanges || false}
+												checked={pushPreferences.taskStatusChanges !== false}
 												onChange={(e) => handleUpdatePushPreferences('taskStatusChanges', e.target.checked)}
 												disabled={pushLoading}
 												style={{
@@ -640,7 +640,30 @@ function Settings() {
 										}}>
 											<input
 												type="checkbox"
-												checked={pushPreferences.leaves || false}
+												checked={pushPreferences.taskComments !== false}
+												onChange={(e) => handleUpdatePushPreferences('taskComments', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsTaskComments')}</span>
+										</label>
+									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.leaves !== false}
 												onChange={(e) => handleUpdatePushPreferences('leaves', e.target.checked)}
 												disabled={pushLoading}
 												style={{

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
-import { useBoards, useCreateBoard, useDeleteBoard, useBoardUsers } from '../../hooks/useBoards'
+import { useBoards, useCreateBoard, useDeleteBoard, useBoardUsers, useBoardsUnreadSummary } from '../../hooks/useBoards'
 import CreateBoardModal from './CreateBoardModal'
 import EditBoardModal from './EditBoardModal'
 import UsersInfoModal from '../shared/UsersInfoModal'
@@ -15,6 +15,7 @@ function BoardList() {
 	const { role, userId } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
 	const { data: boards = [], isLoading, refetch } = useBoards()
+	const { data: unreadSummary } = useBoardsUnreadSummary()
 	const createBoardMutation = useCreateBoard()
 	const deleteBoardMutation = useDeleteBoard()
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -122,6 +123,16 @@ function BoardList() {
 									fontWeight: '600'
 								}}>
 									{board.name}
+									{(unreadSummary?.byBoard?.[board._id] || 0) > 0 && (
+										<span
+											className="sidebar-notification-badge"
+											style={{ marginLeft: '8px', position: 'static', transform: 'none', verticalAlign: 'middle' }}
+										>
+											<span className="sidebar-notification-badge-count">
+												{unreadSummary.byBoard[board._id] > 99 ? '99+' : unreadSummary.byBoard[board._id]}
+											</span>
+										</span>
+									)}
 								</h3>
 								{board.description && (
 									<p style={{ 

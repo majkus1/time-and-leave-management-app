@@ -12,6 +12,7 @@ export const usePushNotifications = () => {
 		chat: true,
 		tasks: true,
 		taskStatusChanges: true,
+		taskComments: true,
 		leaves: true
 	})
 	const { loggedIn } = useAuth()
@@ -96,7 +97,13 @@ export const usePushNotifications = () => {
 					const response = await axios.get(`${API_URL}/api/push/preferences`, {
 						withCredentials: true
 					})
-					setPreferences(response.data.preferences || preferences)
+					setPreferences({
+						chat: response.data.preferences?.chat !== false,
+						tasks: response.data.preferences?.tasks !== false,
+						taskStatusChanges: response.data.preferences?.taskStatusChanges !== false,
+						taskComments: response.data.preferences?.taskComments !== false,
+						leaves: response.data.preferences?.leaves !== false,
+					})
 				} catch (error) {
 					console.error('Error loading push preferences:', error)
 				}

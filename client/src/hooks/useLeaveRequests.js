@@ -1,6 +1,26 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
+import { useSocket } from '../context/SocketContext'
+
+const ALL_LEAVE_REQUESTS_QUERY_KEY = ['leaveRequests', 'all']
+const PENDING_STATUSES = new Set(['status.pending', 'pending'])
+
+const fetchAllLeaveRequests = async () => {
+	const response = await axios.get(`${API_URL}/api/leaveworks/all-leave-requests`, {
+		withCredentials: true,
+	})
+	return response.data
+}
+
+const extractRequestUserId = (request) => {
+	if (!request?.userId) return null
+	if (typeof request.userId === 'string') return request.userId
+	if (request.userId?._id) return request.userId._id.toString()
+	if (typeof request.userId?.toString === 'function') return request.userId.toString()
+	return null
+}
 
 // Query hook - pobieranie własnych wniosków urlopowych (current user)
 export const useOwnLeaveRequests = () => {
@@ -68,16 +88,59 @@ export const useAllAcceptedLeaveRequests = () => {
 // Query hook - pobieranie wszystkich wniosków urlopowych (wszystkie statusy) dla zespołu
 export const useAllLeaveRequests = () => {
 	return useQuery({
-		queryKey: ['leaveRequests', 'all'],
-		queryFn: async () => {
-			const response = await axios.get(`${API_URL}/api/leaveworks/all-leave-requests`, {
-				withCredentials: true,
-			})
-			return response.data
-		},
+		queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY,
+		queryFn: fetchAllLeaveRequests,
 		staleTime: 1 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
+}
+
+// Query hook - podsumowanie oczekujących wniosków (łącznie + per użytkownik)
+export const usePendingLeaveRequestsSummary = ({ enabled = true } = {}) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+	const query = useQuery({
+		queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY,
+		queryFn: fetchAllLeaveRequests,
+		enabled,
+		staleTime: 30 * 1000,
+		cacheTime: 5 * 60 * 1000,
+		refetchOnMount: 'always',
+		select: (requests = []) => {
+			const pendingByUser = {}
+			let totalPending = 0
+
+			for (const request of requests) {
+				if (!PENDING_STATUSES.has(request?.status)) continue
+
+				totalPending += 1
+				const requestUserId = extractRequestUserId(request)
+				if (!requestUserId) continue
+
+				pendingByUser[requestUserId] = (pendingByUser[requestUserId] || 0) + 1
+			}
+
+			return {
+				totalPending,
+				pendingByUser,
+			}
+		},
+	})
+
+	useEffect(() => {
+		if (!enabled || !socket) return
+
+		const handleLeaveRequestsUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY })
+		}
+
+		socket.on('leave-requests-updated', handleLeaveRequestsUpdated)
+		return () => {
+			socket.off('leave-requests-updated', handleLeaveRequestsUpdated)
+		}
+	}, [enabled, socket, queryClient])
+
+	return query
 }
 
 // Query hook - pobieranie zaakceptowanych wniosków konkretnego użytkownika

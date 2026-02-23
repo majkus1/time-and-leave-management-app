@@ -239,6 +239,11 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 
 	const boardName = board.name || 'Tablica'
 	const taskTitle = task.title || 'Zadanie'
+	const priorityKey = `boards.priority.${task.priority || 'medium'}`
+	const translatedPriority = t ? t(priorityKey) : null
+	const priorityText = translatedPriority && translatedPriority !== priorityKey
+		? translatedPriority
+		: (task.priority || 'medium')
 
 	let title, body, statusText = task.status
 
@@ -258,13 +263,13 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	if (isStatusChange) {
 		title = t ? t('email.task.statusChangedTitle') : 'Zmiana statusu zadania'
 		body = t 
-			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName })
-			: `${creatorName} zmienił status zadania "${taskTitle}" na "${statusText}" w tablicy "${boardName}"`
+			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText })
+			: `${creatorName} zmienił status zadania "${taskTitle}" na "${statusText}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
 	} else {
 		title = t ? t('email.task.newTaskTitle') : 'Nowe zadanie'
 		body = t
-			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName })
-			: `${creatorName} dodał nowe zadanie "${taskTitle}" w tablicy "${boardName}"`
+			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText })
+			: `${creatorName} dodał nowe zadanie "${taskTitle}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
 	}
 
 	const payload = {
@@ -321,6 +326,81 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
 	console.log(`[Push] Task notification result: ${sent} sent, ${failed} failed`)
+	return { sent, failed }
+}
+
+/**
+ * Send push notification for new comment in task (only to assigned users).
+ */
+const sendTaskCommentNotification = async ({ task, board, commenterName, recipientUserIds, t = null }) => {
+	if (!task || !board || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	let subscriptions = await PushSubscription.find({
+		userId: { $in: recipientUserIds },
+		enabled: true,
+		$or: [
+			{ 'preferences.taskComments': true },
+			{ 'preferences.taskComments': { $exists: false } }
+		]
+	})
+
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+
+	if (subscriptions.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	const taskTitle = task.title || (t ? t('email.task.taskTitle') : 'Zadanie')
+	const title = t ? t('push.task.newCommentTitle') : 'Nowy komentarz w zadaniu'
+	const body = t
+		? t('push.task.newCommentBody', { commenterName, taskTitle })
+		: `${commenterName} dodał komentarz do zadania "${taskTitle}"`
+
+	const payload = {
+		title,
+		body,
+		icon: '/icon-192x192.png',
+		badge: '/icon-96x96.png',
+		tag: `task-comment-${task._id}`,
+		data: {
+			url: `/boards/${board._id}`,
+			type: 'task-comment',
+			taskId: task._id?.toString(),
+			boardId: board._id?.toString(),
+		},
+		requireInteraction: false,
+		silent: false,
+	}
+
+	const results = await Promise.allSettled(
+		subscriptions.map(async (subscription) => {
+			try {
+				const subscriptionData = {
+					endpoint: subscription.endpoint,
+					keys: {
+						p256dh: subscription.keys.p256dh,
+						auth: subscription.keys.auth
+					}
+				}
+
+				await webpush.sendNotification(subscriptionData, JSON.stringify(payload))
+				subscription.lastUsed = new Date()
+				await subscription.save()
+				return { success: true }
+			} catch (error) {
+				if (error.statusCode === 410) {
+					await PushSubscription.findByIdAndDelete(subscription._id)
+					return { success: false, error: 'Subscription expired' }
+				}
+				return { success: false, error: error.message }
+			}
+		})
+	)
+
+	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
+	const failed = results.length - sent
 	return { sent, failed }
 }
 
@@ -491,5 +571,6 @@ module.exports = {
 	sendPushNotificationToUsers,
 	sendChatNotification,
 	sendTaskNotification,
+	sendTaskCommentNotification,
 	sendLeaveRequestPushNotification
 }

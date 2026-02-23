@@ -55,15 +55,15 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'timer',
-			title: i18n.resolvedLanguage === 'pl' ? 'Timer pracy' : 'Work Timer',
+			title: i18n.resolvedLanguage === 'pl' ? 'Licznik czasu pracy' : 'Work Time Counter',
 			icon: '/img/clock.png',
 			description: i18n.resolvedLanguage === 'pl' 
-				? 'Używanie timera do śledzenia czasu pracy'
-				: 'Using timer to track work time',
+				? 'Używanie licznika czasu pracy do śledzenia czasu pracy'
+				: 'Using work time counter to track work time',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Na głównym ekranie znajdziesz panel timera (jeśli jest włączony w ustawieniach). Możesz uruchomić timer na dwa sposoby: 1) Kliknij "Start" w panelu timera, aby rozpocząć sesję pracy ręcznie. 2) Zeskanuj kod QR w miejscu pracy - jeśli nie masz aktywnego timera, skanowanie automatycznie zarejestruje wejście i uruchomi timer. Jeśli masz aktywny timer, skanowanie QR zarejestruje wyjście i zatrzyma timer. Timer automatycznie śledzi czas pracy w czasie rzeczywistym.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy timer dalej liczy czas. Przerwy są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu. Możesz również oznaczyć czas jako nadgodziny - są one liczone osobno i widoczne w szczegółach. Po zakończeniu pracy kliknij "Stop" lub zeskanuj QR ponownie - czas zostanie automatycznie dodany do ewidencji czasu pracy dla aktualnego dnia. Wszystkie sesje są zapisywane i możesz je przeglądać w historii sesji, gdzie widoczne są: całkowity czas pracy, czas przerwy i czas nadgodzin.'
-				: 'On the main screen, you will find the timer panel (if enabled in settings). You can start the timer in two ways: 1) Click "Start" in the timer panel to manually begin a work session. 2) Scan the QR code at your workplace - if you don\'t have an active timer, scanning will automatically register entry and start the timer. If you have an active timer, scanning the QR will register exit and stop the timer. The timer automatically tracks work time in real-time.\n\nImportant: work time is counted from start to stop - the timer continues counting even during breaks. Breaks are tracked separately and visible in session details after stopping. You can also mark time as overtime - it is counted separately and visible in details. After finishing work, click "Stop" or scan the QR again - the time will be automatically added to your timesheet for the current day. All sessions are saved and you can view them in the session history, where you can see: total work time, break time, and overtime.'
+				? 'Na głównym ekranie znajdziesz panel licznika czasu pracy (jeśli jest włączony w ustawieniach). Możesz uruchomić licznik na dwa sposoby: 1) Kliknij "Start" w panelu licznika, aby rozpocząć sesję pracy ręcznie. 2) Zeskanuj kod QR w miejscu pracy - jeśli nie masz aktywnego licznika, skanowanie automatycznie zarejestruje wejście i uruchomi licznik. Jeśli masz aktywny licznik, skanowanie QR zarejestruje wyjście i zatrzyma licznik. Licznik automatycznie śledzi czas pracy w czasie rzeczywistym.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy licznik dalej liczy czas. Przerwy są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu. Możesz również oznaczyć czas jako nadgodziny - są one liczone osobno i widoczne w szczegółach. Po zakończeniu pracy kliknij "Stop" lub zeskanuj QR ponownie - czas zostanie automatycznie dodany do ewidencji czasu pracy dla aktualnego dnia. Wszystkie sesje są zapisywane i możesz je przeglądać w historii sesji, gdzie widoczne są: całkowity czas pracy, czas przerwy i czas nadgodzin.'
+				: 'On the main screen, you will find the work time counter panel (if enabled in settings). You can start the counter in two ways: 1) Click "Start" in the counter panel to manually begin a work session. 2) Scan the QR code at your workplace - if you don\'t have an active counter, scanning will automatically register entry and start the counter. If you have an active counter, scanning the QR will register exit and stop the counter. The counter automatically tracks work time in real-time.\n\nImportant: work time is counted from start to stop - the counter continues counting even during breaks. Breaks are tracked separately and visible in session details after stopping. You can also mark time as overtime - it is counted separately and visible in details. After finishing work, click "Stop" or scan the QR again - the time will be automatically added to your timesheet for the current day. All sessions are saved and you can view them in the session history, where you can see: total work time, break time, and overtime.'
 		},
 		{
 			id: 'boards',
@@ -138,8 +138,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Team settings configuration',
 			path: '/settings',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie timera. Powiadomienia push i email każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.'
-				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable timer. Push and email notifications are configured individually by each user in their profile settings.'
+				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push i email każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.'
+				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push and email notifications are configured individually by each user in their profile settings.'
 		},
 		{
 			id: 'create-user',
@@ -252,8 +252,12 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		}
 	}
 
-	const handleNavigateToSection = (path) => {
-		onClose()
+	const handleNavigateToSection = async (path) => {
+		if (showOnFirstView) {
+			await handleMarkAsSeen()
+		} else {
+			onClose()
+		}
 		setTimeout(() => {
 			navigate(path)
 		}, 300)
