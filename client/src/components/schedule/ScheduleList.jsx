@@ -187,7 +187,7 @@ function ScheduleList() {
 												setEditingSchedule(schedule)
 											}}
 											style={{
-												background: '#3498db',
+												background: 'none',
 												border: 'none',
 												color: 'white',
 												cursor: 'pointer',

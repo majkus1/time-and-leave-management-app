@@ -30,6 +30,34 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	// Podstawowe sekcje dla wszystkich użytkowników
 	const baseSections = [
 		{
+			id: 'login-session',
+			title: i18n.resolvedLanguage === 'pl' ? 'Logowanie i sesja' : 'Login and Session',
+			icon: '/img/auth.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Jak działa utrzymanie zalogowania'
+				: 'How login session persistence works',
+			path: '/dashboard',
+			hideNavigateButton: true,
+			content: i18n.resolvedLanguage === 'pl'
+				? 'Po zalogowaniu, przy regularnym korzystaniu z aplikacji, użytkownik pozostaje zalogowany. Jeśli jednak po zalogowaniu nastąpi dłuższa przerwa i wejście dopiero np. około 8. dnia, system może poprosić o ponowne zalogowanie. Wyjątkiem są też sytuacje ze słabym lub niestabilnym połączeniem internetowym - wtedy chwilowo może wystąpić problem z rozpoznaniem sesji i wykonaniem części działań w aplikacji.'
+				: 'After logging in, regular use of the application keeps the user logged in. If there is a longer break after login and the user returns only around day 8, the system may ask for login again. An exception is weak or unstable internet connection - in such cases there may be temporary issues with session recognition and performing some actions in the application.'
+		},
+		{
+			id: 'edit-profile',
+			title: i18n.resolvedLanguage === 'pl' ? 'Edytuj profil' : 'My Profile',
+			icon: '/img/user-avatar.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Zarządzanie własnymi danymi i bezpieczeństwem konta'
+				: 'Managing your personal data and account security',
+			path: '/edit-profile',
+			content: i18n.resolvedLanguage === 'pl'
+				? 'W sekcji "Edytuj profil" możesz zaktualizować swoje dane, takie jak imię i nazwisko oraz stanowisko. Możesz też sprawdzić, jakie role masz przypisane w systemie. W razie potrzeby zmienisz tutaj również swoje hasło.'
+				: 'In the "My Profile" section, you can update your personal data such as first and last name and your position. You can also check which roles are assigned to your account. If needed, you can change your password here as well.',
+			securityReminder: i18n.resolvedLanguage === 'pl'
+				? 'Przypomnienie bezpieczeństwa: regularnie zmieniaj hasło (najlepiej co 30 dni) i używaj skomplikowanego hasła.'
+				: 'Security reminder: change your password regularly (ideally every 30 days) and use a strong, complex password.'
+		},
+		{
 			id: 'leave-request',
 			title: i18n.resolvedLanguage === 'pl' ? 'Zgłoś urlop' : 'Request Leave',
 			icon: '/img/sunbed.png',
@@ -104,7 +132,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		{
 			id: 'leave-planner',
 			title: i18n.resolvedLanguage === 'pl' ? 'Zaplanuj swój urlop' : 'Plan your leave',
-			icon: '/img/sunbed.png',
+			icon: '/img/calendar.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Planowanie urlopów w kalendarzu'
 				: 'Planning leave in calendar',
@@ -116,7 +144,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		{
 			id: 'leave-plans',
 			title: i18n.resolvedLanguage === 'pl' ? 'Plany urlopowe' : 'Vacation plans',
-			icon: '/img/trip.png',
+			icon: '/img/schedule.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Przeglądanie planów urlopowych wszystkich pracowników'
 				: 'Viewing vacation plans of all employees',
@@ -482,41 +510,58 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								}}>
 									{section.content}
 								</p>
-								<button
-									onClick={(e) => {
-										e.stopPropagation()
-										handleNavigateToSection(section.path)
-									}}
-									style={{
-										width: '100%',
-										padding: '10px 16px',
-										backgroundColor: '#667eea',
-										color: 'white',
-										border: 'none',
+								{section.securityReminder && (
+									<div style={{
+										marginBottom: '16px',
+										padding: '10px 12px',
 										borderRadius: '8px',
+										backgroundColor: '#fff7ed',
+										border: '1px solid #fdba74',
+										color: '#9a3412',
 										fontSize: '14px',
-										fontWeight: '600',
-										cursor: 'pointer',
-										transition: 'all 0.2s',
-										display: 'flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										gap: '8px'
-									}}
-									onMouseEnter={(e) => {
-										e.target.style.backgroundColor = '#5568d3'
-										e.target.style.transform = 'translateY(-1px)'
-									}}
-									onMouseLeave={(e) => {
-										e.target.style.backgroundColor = '#667eea'
-										e.target.style.transform = 'translateY(0)'
-									}}
-								>
-									{i18n.resolvedLanguage === 'pl' ? 'Przejdź do sekcji' : 'Go to section'}
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-										<path d="M5 12h14M12 5l7 7-7 7"></path>
-									</svg>
-								</button>
+										lineHeight: '1.5',
+										fontWeight: '500'
+									}}>
+										{section.securityReminder}
+									</div>
+								)}
+								{!section.hideNavigateButton && (
+									<button
+										onClick={(e) => {
+											e.stopPropagation()
+											handleNavigateToSection(section.path)
+										}}
+										style={{
+											width: '100%',
+											padding: '10px 16px',
+											backgroundColor: '#667eea',
+											color: 'white',
+											border: 'none',
+											borderRadius: '8px',
+											fontSize: '14px',
+											fontWeight: '600',
+											cursor: 'pointer',
+											transition: 'all 0.2s',
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: '8px'
+										}}
+										onMouseEnter={(e) => {
+											e.target.style.backgroundColor = '#5568d3'
+											e.target.style.transform = 'translateY(-1px)'
+										}}
+										onMouseLeave={(e) => {
+											e.target.style.backgroundColor = '#667eea'
+											e.target.style.transform = 'translateY(0)'
+										}}
+									>
+										{i18n.resolvedLanguage === 'pl' ? 'Przejdź do sekcji' : 'Go to section'}
+										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+											<path d="M5 12h14M12 5l7 7-7 7"></path>
+										</svg>
+									</button>
+								)}
 							</div>
 						)}
 					</div>
