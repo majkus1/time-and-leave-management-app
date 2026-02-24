@@ -687,75 +687,86 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 						</div>
 					</form>
 
-					<h3>{t('leaveform.listsofreq')}</h3>
-					<ul>
-						{leaveRequests.map((request, index) => {
+					<h3 style={{ marginTop: '24px', marginBottom: '16px' }}>{t('leaveform.listsofreq')}</h3>
+					<div>
+						{leaveRequests.map((request) => {
 							const translatedType = getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)
 							const canEdit = request.status === 'status.pending'
+							const statusClass =
+								request.status === 'status.accepted'
+									? 'status-accepted'
+									: request.status === 'status.pending'
+									? 'status-pending'
+									: request.status === 'status.sent'
+									? 'status-sent'
+									: 'status-rejected'
 
 							return (
-								<li key={index} style={{ marginTop: '25px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-									<p>
-										{t('leaveform.typeLabel')}: {translatedType}
-									</p>
-									<p>
-										{t('leaveform.date')}: {formatDate(request.startDate)} - {formatDate(request.endDate)}
-									</p>
-									<p>
-										{settings?.leaveCalculationMode === 'hours' 
-											? `${t('leaveform.hoursRequested') || 'Liczba godzin'}: ${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)}`
-											: `${t('leaveform.daysRequested') || 'Liczba dni'}: ${request.daysRequested}`
-										}
-									</p>
-									<p>
-										{t('leaveform.substitute')} {request.replacement || t('leaveform.empty')}
-									</p>
-									<p>
-										{t('leaveform.additionalInfo')}: {request.additionalInfo || t('leaveform.empty')}
-									</p>
-									<p>
-										{t('leaveform.status')}:
-										<span
-											className={`autocol ${
-												request.status === 'status.accepted'
-													? 'status-accepted'
-													: request.status === 'status.pending'
-													? 'status-pending'
-													: request.status === 'status.sent'
-													? 'status-sent'
-													: 'status-rejected'
-											}`}
-											style={{ marginLeft: '5px' }}>
-											{t(`leaveform.statuses.${statusMap[request.status]}`) || t(request.status)}
-										</span>
-										{request.updatedBy && (
-											<span>
-												{' '}
-												( {t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName} )
+								<div key={request._id} style={{ marginBottom: '14px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '650px' }}>
+									<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+										<strong style={{ fontSize: '16px' }}>
+											{translatedType}
+										</strong>
+										<div className="leave-request-status-desktop" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+											<span className={`autocol ${statusClass}`}>
+												{t(`leaveform.statuses.${statusMap[request.status]}`) || t(request.status)}
 											</span>
+											{request.updatedBy && (
+												<span style={{ fontSize: '13px', color: '#6b7280' }}>
+													{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
+												</span>
+											)}
+										</div>
+									</div>
+
+									<div style={{ display: 'grid', gap: '6px', marginBottom: '12px' }}>
+										<p style={{ margin: 0 }}>
+											<strong>{t('leaveform.date')}:</strong> {formatDate(request.startDate)} - {formatDate(request.endDate)}
+										</p>
+										<p style={{ margin: 0 }}>
+											<strong>{settings?.leaveCalculationMode === 'hours' ? (t('leaveform.hoursRequested') || 'Liczba godzin') : (t('leaveform.daysRequested') || 'Liczba dni')}:</strong>{' '}
+											{settings?.leaveCalculationMode === 'hours'
+												? (request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)
+												: request.daysRequested}
+										</p>
+										<p style={{ margin: 0 }}>
+											<strong>{t('leaveform.substitute').replace(':', '')}:</strong> {request.replacement || t('leaveform.empty')}
+										</p>
+										<p style={{ margin: 0 }}>
+											<strong>{t('leaveform.additionalInfo')}:</strong> {request.additionalInfo || t('leaveform.empty')}
+										</p>
+										<p className="leave-request-status-mobile" style={{ margin: 0 }}>
+											<strong>{t('leaveform.status')}:</strong>{' '}
+											<span className={`autocol ${statusClass}`}>
+												{t(`leaveform.statuses.${statusMap[request.status]}`) || t(request.status)}
+											</span>
+										</p>
+										{request.updatedBy && (
+											<p className="leave-request-updated-by-mobile" style={{ margin: 0, color: '#6b7280' }}>
+												{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
+											</p>
 										)}
-									</p>
-									<div style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+									</div>
+
+									<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
 										{canEdit && (
 											<button
 												onClick={() => handleEditRequest(request)}
-												className="btn btn-primary"
-												style={{ marginRight: '5px' }}>
+												className="btn btn-primary">
 												{t('leaveform.editButton')}
 											</button>
 										)}
 										<button
 											onClick={() => setShowCancelModal(request._id)}
 											disabled={cancelLeaveRequestMutation.isPending}
-											className="btn btn-danger"
-											style={{ marginRight: '5px' }}>
+											className="btn btn-danger">
 											{t('leaveform.cancelButton')}
 										</button>
 									</div>
-								</li>
+								</div>
 							)
 						})}
-					</ul>
+					</div>
 					</div>
 
 					{/* Modal anulowania */}
@@ -937,6 +948,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												}
 											}}
 											required
+											style={{ maxWidth: '300px', marginLeft: '5px' }}
 											className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 										<br></br>
@@ -970,6 +982,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												setEditEndDate(selectedDate)
 											}}
 											required
+											style={{ maxWidth: '300px' }}
 											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>

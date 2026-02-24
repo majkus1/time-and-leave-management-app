@@ -172,7 +172,7 @@
 			"statusChangedTitle": "Leave request status changed",
 			"statusChangedBody": "{{userName}}'s request ({{type}}) status has been changed to \"{{status}}\" by {{updatedByName}}",
 			"statusChangedSelfTitle": "Your leave request was {{status}}.",
-			"statusChangedSelfBody": "Your leave request was {{status}} ({{type}}).",
+			"statusChangedSelfBody": "Your leave request was {{status}} ({{type}}, {{startDate}} - {{endDate}}).",
 			"cancelledTitle": "Leave request cancelled",
 			"cancelledBody": "{{userName}} cancelled the request: {{type}} ({{startDate}} - {{endDate}})"
 		},

@@ -2,7 +2,20 @@ const webpush = require('web-push')
 const { firmDb } = require('../db/db')
 const PushSubscription = require('../models/PushSubscription')(firmDb)
 const User = require('../models/user')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
+const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+
+const formatPushDate = (dateValue, locale) => {
+	if (!dateValue) return ''
+	const date = new Date(dateValue)
+	if (Number.isNaN(date.getTime())) return ''
+	return new Intl.DateTimeFormat(locale, {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+	}).format(date)
+}
 
 // Helper function to filter subscriptions by environment
 // In production, only send to app.planopia.pl subscriptions
@@ -463,12 +476,23 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 		? `${user.firstName} ${user.lastName}`
 		: 'Pracownik'
 
-	const startDate = leaveRequest.startDate ? new Date(leaveRequest.startDate).toISOString().split('T')[0] : ''
-	const endDate = leaveRequest.endDate ? new Date(leaveRequest.endDate).toISOString().split('T')[0] : ''
+	const language = t && t('email.leaveRequest.footerNotification')?.includes('automatycznie') ? 'pl' : 'en'
+	const dateLocale = language === 'pl' ? 'pl-PL' : 'en-US'
+	const startDate = formatPushDate(leaveRequest.startDate, dateLocale)
+	const endDate = formatPushDate(leaveRequest.endDate, dateLocale)
 	
-	// Get leave request type name
+	// Get leave request type name (supports custom-* types from team settings)
 	let typeText = leaveRequest.type || 'Urlop'
-	if (t) {
+	try {
+		const teamId = user?.teamId || leaveRequest?.teamId
+		if (teamId) {
+			const settings = await Settings.getSettings(teamId)
+			typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
+		}
+	} catch (error) {
+		// Fallback to translation/default handling below
+	}
+	if (t && (!typeText || typeText === leaveRequest.type)) {
 		try {
 			// Try to get translated type name
 			const translatedType = t(leaveRequest.type)
@@ -485,7 +509,7 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 
 	switch (notificationType) {
 		case 'new':
-			title = t ? t('push.leave.newRequestTitle') : 'Nowy wniosek urlopowy'
+			title = t ? t('push.leave.newRequestTitle') : 'Nowy wniosek'
 			body = t
 				? t('push.leave.newRequestBody', { userName, type: typeText, startDate, endDate, days: leaveRequest.daysRequested })
 				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
@@ -510,11 +534,11 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 				? t('push.leave.statusChangedSelfTitle', { status: selfStatusText })
 				: `Twój wniosek został ${selfStatusText}.`
 			body = t
-				? t('push.leave.statusChangedSelfBody', { type: typeText, status: selfStatusText })
-				: `Twój wniosek został ${selfStatusText} (${typeText}).`
+				? t('push.leave.statusChangedSelfBody', { type: typeText, status: selfStatusText, startDate, endDate })
+				: `Twój wniosek został ${selfStatusText} (${typeText}, ${startDate} - ${endDate}).`
 			break
 		case 'cancelled':
-			title = t ? t('push.leave.cancelledTitle') : 'Wniosek urlopowy anulowany'
+			title = t ? t('push.leave.cancelledTitle') : 'Wniosek anulowany'
 			body = t
 				? t('push.leave.cancelledBody', { userName, type: typeText, startDate, endDate })
 				: `${userName} anulował wniosek: ${typeText} (${startDate} - ${endDate})`

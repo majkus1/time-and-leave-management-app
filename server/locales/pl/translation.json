@@ -19,10 +19,10 @@
 			"requestDetails": "Szczegóły wniosku:",
 			"clickButtonToReview": "Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.",
 			"clickButtonToView": "Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć.",
-			"requestCancelledTitle": "Wniosek urlopowy anulowany",
-			"requestCancelledSupervisor": "Wniosek urlopowy został anulowany.",
-			"requestCancelledHR": "Wniosek urlopowy został anulowany.",
-			"requestUpdatedSupervisor": "Wniosek urlopowy został zaktualizowany i wymaga Twojego przeglądu.",
+			"requestCancelledTitle": "Wniosek anulowany",
+			"requestCancelledSupervisor": "Wniosek został anulowany.",
+			"requestCancelledHR": "Wniosek został anulowany.",
+			"requestUpdatedSupervisor": "Wniosek został zaktualizowany i wymaga Twojego przeglądu.",
 			"newL4Request": "Otrzymałeś powiadomienie o zwolnieniu lekarskim (L4).",
 			"newAutoApprovedRequest": "Otrzymałeś powiadomienie o nowym zgłoszeniu urlopu/nieobecności, które zostało automatycznie dodane do kalendarza.",
 			"l4Info": "To jest powiadomienie o zwolnieniu lekarskim (L4). Wniosek został automatycznie dodany do kalendarza urlopowego i nie wymaga zatwierdzenia.",
@@ -167,13 +167,13 @@
 	},
 	"push": {
 		"leave": {
-			"newRequestTitle": "Nowy wniosek urlopowy",
+			"newRequestTitle": "Nowy wniosek",
 			"newRequestBody": "{{userName}} złożył wniosek: {{type}} ({{startDate}} - {{endDate}}, {{days}} dni)",
 			"statusChangedTitle": "Status wniosku zmieniony",
 			"statusChangedBody": "Wniosek {{userName}} ({{type}}) został {{status}} przez {{updatedByName}}.",
 			"statusChangedSelfTitle": "Twój wniosek został {{status}}.",
-			"statusChangedSelfBody": "Twój wniosek został {{status}} ({{type}}).",
-			"cancelledTitle": "Wniosek urlopowy anulowany",
+			"statusChangedSelfBody": "Twój wniosek został {{status}} ({{type}}, {{startDate}} - {{endDate}}).",
+			"cancelledTitle": "Wniosek anulowany",
 			"cancelledBody": "{{userName}} anulował wniosek: {{type}} ({{startDate}} - {{endDate}})"
 		},
 		"task": {
