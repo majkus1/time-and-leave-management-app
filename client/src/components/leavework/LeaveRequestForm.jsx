@@ -922,7 +922,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 									</div>
 
 									<div style={{ maxWidth: '400px', marginRight: '2px' }}>
-										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.datefrom')}</label>
 										<input
 											type="date"
 											value={editStartDate}
@@ -948,11 +948,11 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												}
 											}}
 											required
-											style={{ maxWidth: '300px', marginLeft: '5px' }}
+											style={{ maxWidth: '300px' }}
 											className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 										<br></br>
-										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
+										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.dateto')}</label>
 										<input
 											type="date"
 											value={editEndDate}

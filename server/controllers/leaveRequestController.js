@@ -929,7 +929,6 @@ exports.cancelLeaveRequest = async (req, res) => {
 
 		if (recipients.length > 0) {
 			const cancelContent = `
-				<p style="margin: 0 0 16px 0;">${t('email.leaveform.requestCancelledSupervisor')}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #ef4444; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
