@@ -2242,10 +2242,6 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 	align-items: center !important;
 }
 
-#formleave div:nth-child(2) {
-	max-width: 300px !important;
-}
-
 #planopia-welcome {
 	margin-top: 70px;
 }

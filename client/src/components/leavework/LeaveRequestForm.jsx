@@ -584,94 +584,112 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 							</p>
 						)}
 
-						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6 max-w-xl">
-						
-						<div>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.type')}</label>
-							<select
-								value={type}
-								onChange={e => setType(e.target.value)}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								required>
-								{enabledLeaveTypes.length === 0 ? (
-									<option value="">{t('leaveform.loadingTypes') || 'Ładowanie typów...'}</option>
-								) : (
-									enabledLeaveTypes.map(leaveType => (
-										<option key={leaveType.id} value={leaveType.id}>
-											{i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name}
-										</option>
-									))
-								)}
-							</select>
-						</div>
+						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6" style={{ width: '100%', maxWidth: '780px' }}>
+							<div style={{
+								padding: '16px',
+								border: '1px solid #e5e7eb',
+								borderRadius: '10px',
+								backgroundColor: '#f8fafc',
+								display: 'grid',
+								gap: '14px'
+							}}>
+								<div>
+									<label className="block text-gray-700 font-medium mb-1">{t('leaveform.type')}</label>
+									<select
+										value={type}
+										onChange={e => setType(e.target.value)}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										required>
+										{enabledLeaveTypes.length === 0 ? (
+											<option value="">{t('leaveform.loadingTypes') || 'Ładowanie typów...'}</option>
+										) : (
+											enabledLeaveTypes.map(leaveType => (
+												<option key={leaveType.id} value={leaveType.id}>
+													{i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name}
+												</option>
+											))
+										)}
+									</select>
+								</div>
 
-						
-						<div style={{ maxWidth: '400px', marginRight: '2px' }}>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
-							<input
-								type="date"
-								value={startDate}
-								onChange={handleStartDateChange}
-								required
-								className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-							<br></br>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
-							<input
-								type="date"
-								value={endDate}
-								min={startDate || undefined}
-								onChange={(e) => handleEndDateChange(e, true)}
-								required
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-						</div>
+								<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+										<input
+											type="date"
+											value={startDate}
+											onChange={handleStartDateChange}
+											required
+											style={{ width: '100%', maxWidth: '300px' }}
+											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</div>
+									<div>
+										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
+										<input
+											type="date"
+											value={endDate}
+											min={startDate || undefined}
+											onChange={(e) => handleEndDateChange(e, true)}
+											required
+											style={{ width: '100%', maxWidth: '300px' }}
+											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										/>
+									</div>
+								</div>
 
-						
-						<div>
-							<label className="block text-gray-700 font-medium mb-1">
-								{settings?.leaveCalculationMode === 'hours' 
-									? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
-									: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
-								}
-							</label>
-							<input
-								type="text"
-								value={formatLeaveValue(daysRequested).display}
-								readOnly
-								className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
-							/>
-						</div>
+								<div>
+									<label className="block text-gray-700 font-medium mb-1">
+										{settings?.leaveCalculationMode === 'hours' 
+											? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
+											: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
+										}
+									</label>
+									<input
+										type="text"
+										value={formatLeaveValue(daysRequested).display}
+										readOnly
+										className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
+									/>
+								</div>
+							</div>
 
-						
-						<div>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.substitute')}</label>
-							<input
-								type="text"
-								value={replacement}
-								onChange={e => setReplacement(e.target.value)}
-								placeholder={t('leaveform.optional')}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-						</div>
+							<div style={{
+								padding: '16px',
+								border: '1px solid #e5e7eb',
+								borderRadius: '10px',
+								backgroundColor: '#ffffff',
+								display: 'grid',
+								gap: '14px'
+							}}>
+								<div>
+									<label className="block text-gray-700 font-medium mb-1">{t('leaveform.substitute')}</label>
+									<input
+										type="text"
+										value={replacement}
+										onChange={e => setReplacement(e.target.value)}
+										placeholder={t('leaveform.optional')}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
 
-						
-						<div>
-							<label className="block text-gray-700 font-medium mb-1">{t('leaveform.addinfo')}</label>
-							<textarea
-								value={additionalInfo}
-								onChange={e => setAdditionalInfo(e.target.value)}
-								placeholder={t('leaveform.optional')}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 resize-none h-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-						</div>
+								<div>
+									<label className="block text-gray-700 font-medium mb-1">{t('leaveform.addinfo')}</label>
+									<textarea
+										value={additionalInfo}
+										onChange={e => setAdditionalInfo(e.target.value)}
+										placeholder={t('leaveform.optional')}
+										className="w-full border border-gray-300 rounded-md px-4 py-2 resize-none h-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									/>
+								</div>
+							</div>
 
-					
-						<div className="flex justify-end">
+							<div style={{ width: '100%' }}>
 							<button
 								type="submit"
 								disabled={isSubmitting}
-								className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+								className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600"
+								style={{ width: '100%' }}>
 								{isSubmitting ? (
 									<span className="flex items-center">
 										<svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
