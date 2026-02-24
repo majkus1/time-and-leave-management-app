@@ -70,6 +70,16 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		return isWeekend(dateString) // Jeśli nie pracuje w weekendy, blokuj weekendy
 	}
 
+	const isIsoDateBefore = (dateA, dateB) => {
+		if (!dateA || !dateB) return false
+		return dateA < dateB
+	}
+
+	const isIsoDateAfter = (dateA, dateB) => {
+		if (!dateA || !dateB) return false
+		return dateA > dateB
+	}
+
 	// Funkcja do obsługi wyboru daty "od" z weryfikacją weekendów i minDaysBefore
 	const handleStartDateChange = (e) => {
 		const selectedDate = e.target.value
@@ -115,7 +125,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 		setStartDate(selectedDate)
 		// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
-		if (endDate && selectedDate && new Date(selectedDate) > new Date(endDate)) {
+		if (endDate && selectedDate && isIsoDateAfter(selectedDate, endDate)) {
 			setEndDate('')
 		}
 	}
@@ -129,7 +139,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		}
 
 		// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
-		if (startDate && selectedDate && new Date(selectedDate) < new Date(startDate)) {
+		if (startDate && selectedDate && isIsoDateBefore(selectedDate, startDate)) {
 			showAlert(t('leaveform.dateValidationError'))
 			return
 		}
@@ -272,7 +282,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		e.preventDefault()
 		
 		// Walidacja dat
-		if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+		if (startDate && endDate && isIsoDateBefore(endDate, startDate)) {
 			await showAlert(t('leaveform.dateValidationError'))
 			return
 		}
@@ -400,7 +410,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		e.preventDefault()
 		
 		// Walidacja dat
-		if (editStartDate && editEndDate && new Date(editEndDate) < new Date(editStartDate)) {
+		if (editStartDate && editEndDate && isIsoDateBefore(editEndDate, editStartDate)) {
 			await showAlert(t('leaveform.dateValidationError'))
 			return
 		}
@@ -621,7 +631,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 											onChange={handleStartDateChange}
 											required
 											style={{ width: '100%', maxWidth: '300px' }}
-											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
 									<div>
@@ -633,7 +643,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 											onChange={(e) => handleEndDateChange(e, true)}
 											required
 											style={{ width: '100%', maxWidth: '300px' }}
-											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
 								</div>
@@ -961,7 +971,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 												setEditStartDate(selectedDate)
 												// Jeśli data "do" jest wcześniejsza niż nowa data "od", zresetuj datę "do"
-												if (editEndDate && selectedDate && new Date(selectedDate) > new Date(editEndDate)) {
+												if (editEndDate && selectedDate && isIsoDateAfter(selectedDate, editEndDate)) {
 													setEditEndDate('')
 												}
 											}}
@@ -983,7 +993,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												}
 
 												// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
-												if (editStartDate && selectedDate && new Date(selectedDate) < new Date(editStartDate)) {
+												if (editStartDate && selectedDate && isIsoDateBefore(selectedDate, editStartDate)) {
 													showAlert(t('leaveform.dateValidationError'))
 													return
 												}

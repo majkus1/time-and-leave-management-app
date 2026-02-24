@@ -1092,7 +1092,7 @@ td {
 
 #formleave {
 	margin-bottom: 40px;
-	font-size: 18px;
+	font-size: 16px;
 }
 
 #formleave div {
@@ -3571,5 +3571,10 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 	.leave-request-updated-by-mobile {
 		display: block;
+	}
+
+	#formleave input.leave-request-date-input {
+		max-width: 300px !important;
+		width: 100%;
 	}
 }
