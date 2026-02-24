@@ -4,6 +4,7 @@ const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { getLeaveStatusText } = require('../utils/leaveStatusText')
 
 // Funkcja escapująca HTML dla bezpieczeństwa (ochrona przed XSS)
 const escapeHtml = (text) => {
@@ -127,7 +128,9 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
-		const statusText = t(leaveRequest.status)
+		const statusText = getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
+		const requestWord = t('email.leaveRequest.requestWord') || 'wniosek'
+		const statusWithRequestWord = `${requestWord} ${statusText}`
 		
 		// Pobierz Settings dla zespołu i nazwę typu
 		const settings = await Settings.getSettings(teamId)
@@ -135,7 +138,6 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 		
 		const content = `
-			<p style="margin: 0 0 16px 0;">${t('email.leaveRequest.requestUpdatedHR')} <strong>${statusText}</strong>.</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 				<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveRequest.requestDetails')}</p>
 				<table style="width: 100%; border-collapse: collapse;">
@@ -167,9 +169,9 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			sendEmail(
 				notifyUser.username,
 				`${appUrl}/leave-requests/${user._id}`,
-				`${typeText} - ${statusText}`,
+				`${typeText} - ${statusWithRequestWord}`,
 				getEmailTemplate(
-					`${typeText} - ${statusText}`,
+					`${typeText} - ${statusWithRequestWord}`,
 					content,
 					t('email.leaveRequest.goToRequest'),
 					`${appUrl}/leave-requests/${user._id}`,

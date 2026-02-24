@@ -3537,3 +3537,43 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	top: 5px;
 	right: 5px;
 }
+
+.leave-request-status-mobile {
+	display: none;
+}
+
+.leave-request-updated-by-mobile {
+	display: none;
+}
+
+@media (max-width: 576px) {
+	.task-comment-form-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.task-comment-input,
+	.task-comment-attach-btn,
+	.task-comment-send-btn {
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.task-comment-send-btn {
+		margin-top: 2px;
+	}
+}
+
+@media (max-width: 768px) {
+	.leave-request-status-desktop {
+		display: none !important;
+	}
+
+	.leave-request-status-mobile {
+		display: block;
+	}
+
+	.leave-request-updated-by-mobile {
+		display: block;
+	}
+}

@@ -422,54 +422,28 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						</>
 					) : (
 						<>
-							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '10px' }}>
 								<h3 style={{ 
 									color: '#2c3e50', 
 									fontSize: '24px',
 									fontWeight: '600',
 									margin: 0,
-									flex: 1
+									flex: 1,
+									minWidth: 0,
+									overflowWrap: 'anywhere',
+									wordBreak: 'break-word',
+									maxWidth: '100%'
 								}}>
 									{currentTask.title}
 								</h3>
-								{canEdit && (
-									<>
-										<button
-											onClick={() => setIsEditing(true)}
-											style={{
-												padding: '6px 12px',
-												backgroundColor: '#3498db',
-												color: 'white',
-												border: 'none',
-												borderRadius: '6px',
-												cursor: 'pointer',
-												fontSize: '12px',
-												marginLeft: '10px'
-											}}>
-											{t('boards.edit') || 'Edytuj'}
-										</button>
-										<button
-											onClick={handleDeleteTask}
-											style={{
-												padding: '6px 12px',
-												backgroundColor: '#dc3545',
-												color: 'white',
-												border: 'none',
-												borderRadius: '6px',
-												cursor: 'pointer',
-												fontSize: '12px',
-												marginLeft: '10px'
-											}}>
-											{t('boards.delete') || 'Usuń'}
-										</button>
-									</>
-								)}
 								<button
 									onClick={onClose}
 									style={{
 										background: 'transparent',
 										border: 'none',
-										fontSize: '24px',
+										fontSize: '30px',
+										lineHeight: 1,
+										padding: '2px 6px',
 										cursor: 'pointer',
 										color: '#7f8c8d',
 										marginLeft: '10px'
@@ -489,6 +463,36 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								}}>
 									{currentTask.description}
 								</p>
+							)}
+							{canEdit && (
+								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+									<button
+										onClick={() => setIsEditing(true)}
+										style={{
+											padding: '8px 14px',
+											backgroundColor: '#3498db',
+											color: 'white',
+											border: 'none',
+											borderRadius: '6px',
+											cursor: 'pointer',
+											fontSize: '13px'
+										}}>
+										{t('boards.edit') || 'Edytuj'}
+									</button>
+									<button
+										onClick={handleDeleteTask}
+										style={{
+											padding: '8px 14px',
+											backgroundColor: '#dc3545',
+											color: 'white',
+											border: 'none',
+											borderRadius: '6px',
+											cursor: 'pointer',
+											fontSize: '13px'
+										}}>
+										{t('boards.delete') || 'Usuń'}
+									</button>
+								</div>
 							)}
 							<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
 								<span style={{
@@ -739,8 +743,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					</div>
 
 					<form onSubmit={handleCommentSubmit}>
-						<div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+						<div className="task-comment-form-row" style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
 							<input
+								className="task-comment-input"
 								type="text"
 								value={commentText}
 								onChange={(e) => setCommentText(e.target.value)}
@@ -754,6 +759,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								}}
 							/>
 							<label
+								className="task-comment-attach-btn"
 								style={{
 									padding: '10px 12px',
 									backgroundColor: '#ecf0f1',
@@ -774,6 +780,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								/>
 							</label>
 							<button
+								className="task-comment-send-btn"
 								type="submit"
 								disabled={!commentText.trim() || uploadingCommentFile}
 								style={{
@@ -883,7 +890,10 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					color: '#2c3e50', 
 					marginBottom: '8px',
 					fontSize: '16px',
-					fontWeight: '600'
+					fontWeight: '600',
+					overflowWrap: 'anywhere',
+					wordBreak: 'break-word',
+					maxWidth: '100%'
 				}}>
 					{currentTask.title}
 				</h4>

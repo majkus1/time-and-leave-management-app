@@ -2,6 +2,7 @@ const webpush = require('web-push')
 const { firmDb } = require('../db/db')
 const PushSubscription = require('../models/PushSubscription')(firmDb)
 const User = require('../models/user')(firmDb)
+const { getLeaveStatusText } = require('../utils/leaveStatusText')
 
 // Helper function to filter subscriptions by environment
 // In production, only send to app.planopia.pl subscriptions
@@ -480,6 +481,7 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	}
 
 	let title, body
+	const isSelfStatusChange = notificationType === 'statusChangedSelf'
 
 	switch (notificationType) {
 		case 'new':
@@ -489,14 +491,27 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
 			break
 		case 'statusChanged':
-			const statusText = leaveRequest.status ? (t ? t(leaveRequest.status) : leaveRequest.status) : 'zmieniony'
+			const statusText = leaveRequest.status
+				? getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
+				: 'zmieniony'
 			const updatedByName = updatedByUser?.firstName && updatedByUser?.lastName
 				? `${updatedByUser.firstName} ${updatedByUser.lastName}`
 				: 'Ktoś'
 			title = t ? t('push.leave.statusChangedTitle') : 'Status wniosku zmieniony'
 			body = t
 				? t('push.leave.statusChangedBody', { userName, type: typeText, status: statusText, updatedByName })
-				: `Status wniosku ${userName} (${typeText}) został zmieniony na "${statusText}" przez ${updatedByName}`
+				: `Wniosek ${userName} (${typeText}) został ${statusText} przez ${updatedByName}.`
+			break
+		case 'statusChangedSelf':
+			const selfStatusText = leaveRequest.status
+				? getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
+				: 'zmieniony'
+			title = t
+				? t('push.leave.statusChangedSelfTitle', { status: selfStatusText })
+				: `Twój wniosek został ${selfStatusText}.`
+			body = t
+				? t('push.leave.statusChangedSelfBody', { type: typeText, status: selfStatusText })
+				: `Twój wniosek został ${selfStatusText} (${typeText}).`
 			break
 		case 'cancelled':
 			title = t ? t('push.leave.cancelledTitle') : 'Wniosek urlopowy anulowany'
@@ -516,7 +531,7 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 		badge: '/icon-96x96.png',
 		tag: `leave-${leaveRequest._id}`,
 		data: {
-			url: `/leave-requests/${user._id}`,
+			url: isSelfStatusChange ? '/leave-request' : `/leave-requests/${user._id}`,
 			type: 'leave',
 			leaveRequestId: leaveRequest._id?.toString(),
 			userId: user._id?.toString()

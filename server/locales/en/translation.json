@@ -14,8 +14,8 @@
 			"days": "Number of days",
 			"hours": "Number of hours",
 			"goToRequest": "Go to request",
-			"newRequestSupervisor": "You have received a new leave request for approval.",
-			"newRequestHR": "You have received a new leave request for review.",
+			"newRequestSupervisor": "A new request for approval has been received.",
+			"newRequestHR": "A new request for review has been received.",
 			"requestDetails": "Request details:",
 			"clickButtonToReview": "Click the button below to go to the request and approve or reject it.",
 			"clickButtonToView": "Click the button below to go to the request and review it.",
@@ -55,6 +55,7 @@
 			"notFound": "Request not found",
 			"titlemail": "Notification of",
 			"titlemailsecond": "Notification of absence",
+			"requestWord": "request",
 			"requestUpdated": "Your leave request has been",
 			"requestUpdatedHR": "Leave request has been",
 			"requestDetails": "Request details:",
@@ -113,6 +114,12 @@
 		"accepted": "Accepted",
 		"rejected": "Rejected"
 	},
+	"statusRequestFeminine": {
+		"pending": "pending",
+		"accepted": "approved",
+		"rejected": "rejected",
+		"sent": "sent"
+	},
 	"newuser": {
 		"errorRolesConflict": "Cannot have role \"View All Leaves And Timesheets (HR)\" together with \"Approve Leaves Department\" or \"View Timesheets Department\" role.",
 		"errorAllRolesConflict": "Cannot have all three roles simultaneously: \"Approve Leaves Department\", \"View Timesheets Department\" and \"View All Leaves And Timesheets (HR)\"."
@@ -164,6 +171,8 @@
 			"newRequestBody": "{{userName}} submitted a request: {{type}} ({{startDate}} - {{endDate}}, {{days}} days)",
 			"statusChangedTitle": "Leave request status changed",
 			"statusChangedBody": "{{userName}}'s request ({{type}}) status has been changed to \"{{status}}\" by {{updatedByName}}",
+			"statusChangedSelfTitle": "Your leave request was {{status}}.",
+			"statusChangedSelfBody": "Your leave request was {{status}} ({{type}}).",
 			"cancelledTitle": "Leave request cancelled",
 			"cancelledBody": "{{userName}} cancelled the request: {{type}} ({{startDate}} - {{endDate}})"
 		},

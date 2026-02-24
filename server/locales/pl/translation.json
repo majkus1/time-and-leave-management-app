@@ -14,8 +14,8 @@
 			"days": "Liczba dni",
 			"hours": "Liczba godzin",
 			"goToRequest": "Przejdź do zgłoszenia",
-			"newRequestSupervisor": "Otrzymałeś nową prośbę urlopową do zatwierdzenia.",
-			"newRequestHR": "Otrzymałeś nową prośbę urlopową do przeglądu.",
+			"newRequestSupervisor": "Otrzymano nowy wniosek do zatwierdzenia.",
+			"newRequestHR": "Otrzymano nowy wniosek do przeglądu.",
 			"requestDetails": "Szczegóły wniosku:",
 			"clickButtonToReview": "Kliknij przycisk poniżej, aby przejść do wniosku i go zatwierdzić lub odrzucić.",
 			"clickButtonToView": "Kliknij przycisk poniżej, aby przejść do wniosku i go przeglądnąć.",
@@ -55,8 +55,9 @@
 			"notFound": "Zgłoszenie nie zostało znalezione",
 			"titlemail": "Zgłoszenie o",
 			"titlemailsecond": "Zgłoszenie urlopu/nieobecności",
-			"requestUpdated": "Twoja prośba urlopowa została",
-			"requestUpdatedHR": "Prośba urlopowa została",
+			"requestWord": "wniosek",
+			"requestUpdated": "Twój wniosek został",
+			"requestUpdatedHR": "Wniosek został",
 			"requestDetails": "Szczegóły wniosku:",
 			"footerNotification": "To powiadomienie zostało wysłane automatycznie z systemu Planopia.",
 			"footerCopyright": "© {{year}} Planopia. Wszelkie prawa zastrzeżone."
@@ -113,6 +114,12 @@
 		"accepted": "Zaakceptowano",
 		"rejected": "Odrzucono"
 	},
+	"statusRequestFeminine": {
+		"pending": "oczekujący na akceptację",
+		"accepted": "zaakceptowany",
+		"rejected": "odrzucony",
+		"sent": "wysłany"
+	},
 	"newuser": {
 		"errorRolesConflict": "Nie można mieć jednocześnie roli \"Może widzieć wszystkie wnioski i ewidencje (HR)\" razem z rolą \"Może zatwierdzać urlopy swojego działu\" lub \"Może widzieć ewidencję czasu pracy swojego działu\".",
 		"errorAllRolesConflict": "Nie można mieć jednocześnie wszystkich trzech ról: \"Może zatwierdzać urlopy swojego działu\", \"Może widzieć ewidencję czasu pracy swojego działu\" oraz \"Może widzieć wszystkie wnioski i ewidencje (HR)\"."
@@ -163,7 +170,9 @@
 			"newRequestTitle": "Nowy wniosek urlopowy",
 			"newRequestBody": "{{userName}} złożył wniosek: {{type}} ({{startDate}} - {{endDate}}, {{days}} dni)",
 			"statusChangedTitle": "Status wniosku zmieniony",
-			"statusChangedBody": "Status wniosku {{userName}} ({{type}}) został zmieniony na \"{{status}}\" przez {{updatedByName}}",
+			"statusChangedBody": "Wniosek {{userName}} ({{type}}) został {{status}} przez {{updatedByName}}.",
+			"statusChangedSelfTitle": "Twój wniosek został {{status}}.",
+			"statusChangedSelfBody": "Twój wniosek został {{status}} ({{type}}).",
 			"cancelledTitle": "Wniosek urlopowy anulowany",
 			"cancelledBody": "{{userName}} anulował wniosek: {{type}} ({{startDate}} - {{endDate}})"
 		},

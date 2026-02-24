@@ -341,13 +341,46 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			}}
 			contentLabel={i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z aplikacji' : 'How to use the app'}
 		>
+			<button
+				onClick={handleClose}
+				style={{
+					position: 'absolute',
+					top: '12px',
+					right: '12px',
+					background: 'transparent',
+					border: 'none',
+					fontSize: '30px',
+					cursor: 'pointer',
+					color: '#7f8c8d',
+					lineHeight: '1',
+					padding: '2px',
+					width: '34px',
+					height: '34px',
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'center',
+					borderRadius: '50%',
+					transition: 'all 0.2s',
+					zIndex: 2
+				}}
+				onMouseEnter={(e) => {
+					e.target.style.color = '#2c3e50'
+					e.target.style.backgroundColor = '#f3f4f6'
+				}}
+				onMouseLeave={(e) => {
+					e.target.style.color = '#7f8c8d'
+					e.target.style.backgroundColor = 'transparent'
+				}}>
+				×
+			</button>
 			{/* Header */}
 			<div style={{ 
 				display: 'flex', 
 				justifyContent: 'space-between', 
-				alignItems: 'center', 
+				alignItems: 'center',
 				marginBottom: '30px',
 				paddingBottom: '20px',
+				paddingRight: '44px',
 				borderBottom: '2px solid #e5e7eb'
 			}}>
 				<div>
@@ -377,34 +410,6 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						}
 					</p>
 				</div>
-				<button
-					onClick={handleClose}
-					style={{
-						background: 'transparent',
-						border: 'none',
-						fontSize: '28px',
-						cursor: 'pointer',
-						color: '#7f8c8d',
-						lineHeight: '1',
-						padding: '0',
-						width: '30px',
-						height: '30px',
-						display: 'flex',
-						alignItems: 'center',
-						justifyContent: 'center',
-						borderRadius: '50%',
-						transition: 'all 0.2s'
-					}}
-					onMouseEnter={(e) => {
-						e.target.style.color = '#2c3e50'
-						e.target.style.backgroundColor = '#f3f4f6'
-					}}
-					onMouseLeave={(e) => {
-						e.target.style.color = '#7f8c8d'
-						e.target.style.backgroundColor = 'transparent'
-					}}>
-					×
-				</button>
 			</div>
 
 			{/* Sections Grid */}

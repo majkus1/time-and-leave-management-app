@@ -117,105 +117,130 @@ function AdminLeaveRequests() {
 				</div>
 			) : (
 			<div id="leave-requests-review">
-				<h3><img src="/img/trip.png" alt="ikonka w sidebar" /> {t('adminleavereq.h3')}</h3>
-				<hr />
-				{user && (
-					<h3 style={{ marginBottom: '25px' }}>
-						{user.firstName} {user.lastName} ({user.position})
-					</h3>
-				)}
-				<div>
-					{leaveTypesWithLimit.length > 0 && (
-						<>
-							<div style={{ marginBottom: '15px' }}>
-								<label style={{ marginRight: '5px', fontWeight: '600', fontSize: '16px', display: 'block', marginBottom: '10px' }}>
-									{t('adminleavereq.label1') || 'Dni urlopu'}
-								</label>
-								{leaveTypesWithLimit.map(leaveType => {
-									const typeName = i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name
-									const currentValue = leaveTypeDays[leaveType.id] || ''
-									return (
-										<div key={leaveType.id} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-											<label style={{ minWidth: '200px', fontSize: '14px' }}>{typeName}:</label>
-											<input
-												type="number"
-												min="0"
-												value={currentValue}
-												onChange={e => handleLeaveTypeDaysChange(leaveType.id, e.target.value)}
-												style={{ width: '80px', padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '6px' }}
-												className='focus:outline-none focus:ring-2 focus:ring-blue-500'
-											/>
-										</div>
-									)
-								})}
-								<button onClick={updateLeaveTypeDays} style={{ marginTop: '10px' }} className="btn btn-success">
-									{t('adminleavereq.btnupdatenumber') || 'Zaktualizuj'}
-								</button>
-							</div>
-						</>
-					)}
-					<div style={{ 
-						marginTop: '8px', 
-						marginBottom: '38px',
-						padding: '10px 12px',
-						backgroundColor: '#fff3cd',
-						border: '1px solid #ffc107',
-						borderRadius: '6px',
-						fontSize: '13px',
-						color: '#856404',
-						maxWidth: '600px'
-					}}>
-						<strong>💡 {t('adminleavereq.reminder')}</strong>
-					</div>
-					{showVacationUpdateMessage && (
-						<p style={{ display: 'inline-block' }} className="update-days">
-							{t('adminleavereq.updatedays')}
-						</p>
+				<div style={{ maxWidth: '900px' }}>
+				<div style={{ marginBottom: '20px' }}>
+					<h3><img src="/img/trip.png" alt="ikonka w sidebar" /> {t('adminleavereq.h3')}</h3>
+					<hr />
+					{user && (
+						<div style={{ marginBottom: '12px' }}>
+							<h3 style={{ marginBottom: '6px' }}>
+								{user.firstName} {user.lastName}
+							</h3>
+							<p style={{ margin: 0, color: '#6b7280' }}>
+								{user.position || '-'}
+							</p>
+						</div>
 					)}
 				</div>
 
-				<ul style={{ marginTop: '20px' }}>
-					<h4 style={{ marginBottom: '20px' }}>{t('adminleavereq.h4')}</h4>
-					{leaveRequests.map(request => (
-						<li key={request._id} style={{ marginBottom: '30px' }}>
-							<p>
-								{t('adminleavereq.type')} {getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
-							</p>
-							<p>
-								{t('adminleavereq.date')} {formatDate(request.startDate)} - {formatDate(request.endDate)}
-							</p>
-							<p>
-								{settings?.leaveCalculationMode === 'hours' 
-									? `${t('adminleavereq.hours') || 'Liczba godzin'}: ${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)}`
-									: `${t('adminleavereq.days')} ${request.daysRequested}`
-								}
-							</p>
-							<p>
-								{t('adminleavereq.subst')} {request.replacement || t('adminleavereq.none')}
-							</p>
-							<p>
-								{t('adminleavereq.comment')} {request.additionalInfo || t('adminleavereq.none')}
-							</p>
-							<p>
-								{t('adminleavereq.status')}{' '}
-								<span className={`autocol ${statusLabels[request.status] || 'status-unknown'}`}>
-									{t(`leaveform.statuses.${request.status.split('.')[1]}`) || request.status}
-								</span>
-								{request.updatedBy && (
-									<span>
-										{' '}
-										({t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName})
-									</span>
-								)}
-							</p>
+				{leaveTypesWithLimit.length > 0 && (
+					<div style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '450px' }}>
+						<label style={{ fontWeight: '700', fontSize: '16px', display: 'block', marginBottom: '12px' }}>
+							{t('adminleavereq.label1') || 'Dni urlopu'}
+						</label>
+						<div style={{ display: 'grid', gap: '10px' }}>
+							{leaveTypesWithLimit.map(leaveType => {
+								const typeName = i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name
+								const currentValue = leaveTypeDays[leaveType.id] || ''
+								return (
+									<div key={leaveType.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+										<label style={{ fontSize: '14px', fontWeight: '500' }}>{typeName}</label>
+										<input
+											type="number"
+											min="0"
+											value={currentValue}
+											onChange={e => handleLeaveTypeDaysChange(leaveType.id, e.target.value)}
+											style={{ width: '96px', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '8px' }}
+											className='focus:outline-none focus:ring-2 focus:ring-blue-500'
+										/>
+									</div>
+								)
+							})}
+						</div>
+						<button onClick={updateLeaveTypeDays} style={{ marginTop: '14px' }} className="btn btn-success">
+							{t('adminleavereq.btnupdatenumber') || 'Zaktualizuj'}
+						</button>
+					</div>
+				)}
 
-							{/* Ukryj przyciski akceptacji/odrzucenia dla L4 (status.sent) */}
-							{request.status !== 'status.sent' && (
-								<>
+				<div style={{ 
+					marginBottom: '20px',
+					padding: '12px 14px',
+					backgroundColor: '#fff8e1',
+					border: '1px solid #f59e0b',
+					borderRadius: '8px',
+					fontSize: '14px',
+					color: '#92400e',
+					lineHeight: 1.45
+				}}>
+					<strong>💡 {t('adminleavereq.reminder')}</strong>
+				</div>
+
+				{showVacationUpdateMessage && (
+					<p style={{ display: 'inline-block', marginBottom: '20px' }} className="update-days">
+						{t('adminleavereq.updatedays')}
+					</p>
+				)}
+
+				<div style={{ marginTop: '8px' }}>
+					<h4 style={{ marginBottom: '16px' }}>{t('adminleavereq.h4')}</h4>
+					{leaveRequests.length === 0 && (
+						<div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', color: '#6b7280', backgroundColor: '#fff' }}>
+							{t('adminleavereq.none') || 'Brak danych'}
+						</div>
+					)}
+					{leaveRequests.map(request => (
+						<div key={request._id} style={{ marginBottom: '14px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '650px' }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+								<strong style={{ fontSize: '16px' }}>
+									{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
+								</strong>
+								<div className="leave-request-status-desktop" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+									<span className={`autocol ${statusLabels[request.status] || 'status-unknown'}`}>
+										{t(`leaveform.statuses.${request.status.split('.')[1]}`) || request.status}
+									</span>
+									{request.updatedBy && (
+										<span style={{ fontSize: '13px', color: '#6b7280' }}>
+											{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
+										</span>
+									)}
+								</div>
+							</div>
+
+							<div style={{ display: 'grid', gap: '6px', marginBottom: '12px' }}>
+								<p style={{ margin: 0 }}>
+									<strong>{t('adminleavereq.date')}</strong> {formatDate(request.startDate)} - {formatDate(request.endDate)}
+								</p>
+								<p style={{ margin: 0 }}>
+									<strong>{settings?.leaveCalculationMode === 'hours' ? (t('adminleavereq.hours') || 'Liczba godzin') : (t('adminleavereq.days') || 'Liczba dni')}:</strong>{' '}
+									{settings?.leaveCalculationMode === 'hours'
+										? (request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)
+										: request.daysRequested}
+								</p>
+								<p style={{ margin: 0 }}>
+									<strong>{t('adminleavereq.subst')}</strong> {request.replacement || t('adminleavereq.none')}
+								</p>
+								<p style={{ margin: 0 }}>
+									<strong>{t('adminleavereq.comment')}</strong> {request.additionalInfo || t('adminleavereq.none')}
+								</p>
+								<p className="leave-request-status-mobile" style={{ margin: 0 }}>
+									<strong>{t('adminleavereq.status')}</strong>{' '}
+									<span className={`autocol ${statusLabels[request.status] || 'status-unknown'}`}>
+										{t(`leaveform.statuses.${request.status.split('.')[1]}`) || request.status}
+									</span>
+								</p>
+								{request.updatedBy && (
+									<p className="leave-request-updated-by-mobile" style={{ margin: 0, color: '#6b7280' }}>
+										{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
+									</p>
+								)}
+							</div>
+
+							<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+								{request.status !== 'status.sent' && request.status !== 'status.accepted' && (
 									<button
 										onClick={() => {
 											updateLeaveRequestStatus(request._id, 'status.accepted')
-											// Sprawdź czy typ ma allowDaysLimit - wtedy pokaż przypomnienie
 											if (settings && settings.leaveRequestTypes) {
 												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
 												if (leaveType && leaveType.allowDaysLimit) {
@@ -225,7 +250,6 @@ function AdminLeaveRequests() {
 										}}
 										disabled={updatingRequestId === request._id}
 										style={{ 
-											marginRight: '5px',
 											opacity: updatingRequestId === request._id ? 0.6 : 1,
 											cursor: updatingRequestId === request._id ? 'not-allowed' : 'pointer',
 											position: 'relative'
@@ -250,11 +274,12 @@ function AdminLeaveRequests() {
 											t('adminleavereq.btn1')
 										)}
 									</button>
+								)}
 
+								{request.status !== 'status.sent' && request.status !== 'status.rejected' && (
 									<button
 										onClick={() => {
 											updateLeaveRequestStatus(request._id, 'status.rejected')
-											// Sprawdź czy typ ma allowDaysLimit - wtedy pokaż przypomnienie
 											if (settings && settings.leaveRequestTypes) {
 												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
 												if (leaveType && leaveType.allowDaysLimit) {
@@ -264,7 +289,6 @@ function AdminLeaveRequests() {
 										}}
 										disabled={updatingRequestId === request._id}
 										style={{ 
-											marginRight: '5px',
 											opacity: updatingRequestId === request._id ? 0.6 : 1,
 											cursor: updatingRequestId === request._id ? 'not-allowed' : 'pointer',
 											position: 'relative'
@@ -289,18 +313,18 @@ function AdminLeaveRequests() {
 											t('adminleavereq.btn2')
 										)}
 									</button>
-								</>
-							)}
+								)}
 
-							<button
-								onClick={() => goToPDFPreview(request)}
-								style={{ marginRight: '5px' }}
-								className="btn btn-primary">
-								{t('adminleavereq.btn3')}
-							</button>
-						</li>
+								<button
+									onClick={() => goToPDFPreview(request)}
+									className="btn btn-primary">
+									{t('adminleavereq.btn3')}
+								</button>
+							</div>
+						</div>
 					))}
-				</ul>
+				</div>
+				</div>
 			</div>
 			)}
 		</>

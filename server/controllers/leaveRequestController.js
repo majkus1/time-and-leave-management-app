@@ -10,6 +10,7 @@ const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
 const { isHoliday } = require('../utils/holidays')
+const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 
 // Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
@@ -341,7 +342,8 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
-		const statusText = t(leaveRequest.status)
+		const statusText = getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
+		const ownRequestStatusTitle = `${t('email.leaveRequest.requestUpdated')} ${statusText}.`
 		
 		// Pobierz Settings dla zespołu i nazwę typu
 		const settings = await Settings.getSettings(user.teamId)
@@ -380,7 +382,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			</div>
 		`
 		const mailContent = getEmailTemplate(
-			`${typeText} - ${statusText}`,
+			typeText,
 			content,
 			t('email.leaveRequest.goToRequest'),
 			`${appUrl}/leave-requests/${user._id}`,
@@ -393,7 +395,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 				await sendEmail(
 					user.username,
 					null,
-					`${t('email.leaveRequest.titlemail')} ${typeText} ${t(status)}`,
+					ownRequestStatusTitle,
 					mailContent
 				)
 			} catch (emailError) {
@@ -416,7 +418,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 					leaveRequest,
 					user,
 					[user._id.toString()],
-					'statusChanged',
+					'statusChangedSelf',
 					updatedByUser,
 					t
 				)
