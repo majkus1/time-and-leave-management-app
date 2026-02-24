@@ -3575,6 +3575,11 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 	#formleave input.leave-request-date-input {
 		max-width: 300px !important;
+	}
+}
+
+@media (min-width: 768px) {
+	.leave-request-date-input {
 		width: 100%;
 	}
 }

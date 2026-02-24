@@ -14,6 +14,7 @@
 			"days": "Number of days",
 			"hours": "Number of hours",
 			"goToRequest": "Go to request",
+			"goToApp": "Go to app",
 			"newRequestSupervisor": "A new request for approval has been received.",
 			"newRequestHR": "A new request for review has been received.",
 			"requestDetails": "Request details:",

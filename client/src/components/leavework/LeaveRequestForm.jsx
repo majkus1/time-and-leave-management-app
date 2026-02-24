@@ -140,7 +140,9 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 		// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
 		if (startDate && selectedDate && isIsoDateBefore(selectedDate, startDate)) {
-			showAlert(t('leaveform.dateValidationError'))
+			// Mobile datepickers can emit "today" as an initial value before the user confirms.
+			// Clamp end date to start date instead of showing a noisy false-positive alert.
+			setEndDate(startDate)
 			return
 		}
 
@@ -630,7 +632,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 											value={startDate}
 											onChange={handleStartDateChange}
 											required
-											style={{ width: '100%', maxWidth: '300px' }}
+											style={{ maxWidth: '300px' }}
 											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
@@ -642,7 +644,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 											min={startDate || undefined}
 											onChange={(e) => handleEndDateChange(e, true)}
 											required
-											style={{ width: '100%', maxWidth: '300px' }}
+											style={{ maxWidth: '300px' }}
 											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
@@ -976,8 +978,8 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												}
 											}}
 											required
-											style={{ maxWidth: '300px' }}
-											className="w-full border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											style={{ maxWidth: '300px', marginLeft: '5px' }}
+											className="border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 										<br></br>
 										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.dateto')}</label>
@@ -994,7 +996,8 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 
 												// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
 												if (editStartDate && selectedDate && isIsoDateBefore(selectedDate, editStartDate)) {
-													showAlert(t('leaveform.dateValidationError'))
+													// Same mobile picker quirk as in the main form; clamp silently.
+													setEditEndDate(editStartDate)
 													return
 												}
 
@@ -1010,8 +1013,8 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												setEditEndDate(selectedDate)
 											}}
 											required
-											style={{ maxWidth: '300px' }}
-											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+											style={{ maxWidth: '300px', marginLeft: '5px' }}
+											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
 

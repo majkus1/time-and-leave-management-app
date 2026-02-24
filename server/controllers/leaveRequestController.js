@@ -961,7 +961,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 					getEmailTemplate(
 						t('email.leaveform.requestCancelledTitle'),
 						cancelContent,
-						t('email.leaveform.goToRequest'),
+						t('email.leaveform.goToApp') || 'Przejdź do aplikacji',
 						`${appUrl}/leave-requests/${user._id}`,
 						t
 					)
