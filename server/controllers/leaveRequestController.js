@@ -9,6 +9,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
+const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestConflicts')
 const { isHoliday } = require('../utils/holidays')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
@@ -334,6 +335,24 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		if (!isAdmin && !isHR && !canApprove) {
 			return res.status(403).send('Access denied')
+		}
+
+		// Przy akceptacji (lub statusie sent) blokujemy kolizję z już aktywnym wnioskiem.
+		if (status === 'status.accepted' || status === 'status.sent') {
+			const conflictingRequest = await findConflictingApprovedLeaveRequest({
+				LeaveRequest,
+				userId: leaveRequest.userId,
+				startDate: leaveRequest.startDate,
+				endDate: leaveRequest.endDate,
+				excludeRequestId: leaveRequest._id,
+			})
+
+			if (conflictingRequest) {
+				return res.status(409).json({
+					message:
+						'Nie można zatwierdzić wniosku: zakres dat koliduje z innym już zatwierdzonym wnioskiem tego użytkownika.',
+				})
+			}
 		}
 
 		leaveRequest.status = status
@@ -1071,6 +1090,20 @@ exports.updateLeaveRequest = async (req, res) => {
 
 		const oldStartDate = leaveRequest.startDate
 		const oldEndDate = leaveRequest.endDate
+
+		const conflictingRequest = await findConflictingApprovedLeaveRequest({
+			LeaveRequest,
+			userId: leaveRequest.userId,
+			startDate: trimmedStartDate,
+			endDate: trimmedEndDate,
+			excludeRequestId: leaveRequest._id,
+		})
+		if (conflictingRequest) {
+			return res.status(409).json({
+				message:
+					'Nie można zapisać zmian: zakres dat koliduje z innym już zatwierdzonym wnioskiem tego użytkownika.',
+			})
+		}
 
 		// Aktualizuj wniosek
 		leaveRequest.type = type

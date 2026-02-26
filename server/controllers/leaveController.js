@@ -8,6 +8,7 @@ const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailSe
 const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
+const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestConflicts')
 const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
@@ -209,6 +210,20 @@ exports.submitLeaveRequest = async (req, res) => {
 		
 		// Ustaw status: jeśli nie wymaga zatwierdzenia -> "sent", w przeciwnym razie -> "pending"
 		const status = typeRequiresApproval ? 'status.pending' : 'status.sent'
+
+		// Blokuj nakładające się okresy z już zaakceptowanymi/auto-zatwierdzonymi wnioskami.
+		const conflictingRequest = await findConflictingApprovedLeaveRequest({
+			LeaveRequest,
+			userId,
+			startDate: trimmedStartDate,
+			endDate: trimmedEndDate,
+		})
+		if (conflictingRequest) {
+			return res.status(409).json({
+				message:
+					'Ten zakres dat koliduje z już zatwierdzonym wnioskiem. Zmień daty albo zaktualizuj istniejący wniosek.',
+			})
+		}
 		
 		const leaveRequest = new LeaveRequest({
 			userId,

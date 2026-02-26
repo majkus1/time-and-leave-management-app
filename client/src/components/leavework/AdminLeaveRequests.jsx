@@ -13,7 +13,6 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 function AdminLeaveRequests() {
 	const { userId } = useParams()
 	const [leaveTypeDays, setLeaveTypeDays] = useState({})
-	const [showVacationUpdateMessage, setShowVacationUpdateMessage] = useState(false)
 	const [updatingRequestId, setUpdatingRequestId] = useState(null)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
@@ -86,7 +85,11 @@ function AdminLeaveRequests() {
 			await showAlert(t('adminleavereq.updateSuccess'))
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
-			await showAlert(t('adminleavereq.updateError'))
+			const backendMessage =
+				typeof error?.response?.data === 'string'
+					? error.response.data
+					: error?.response?.data?.message
+			await showAlert(backendMessage || t('adminleavereq.updateError'))
 		} finally {
 			setUpdatingRequestId(null)
 		}
@@ -176,12 +179,6 @@ function AdminLeaveRequests() {
 					<strong>💡 {t('adminleavereq.reminder')}</strong>
 				</div>
 
-				{showVacationUpdateMessage && (
-					<p style={{ display: 'inline-block', marginBottom: '20px' }} className="update-days">
-						{t('adminleavereq.updatedays')}
-					</p>
-				)}
-
 				<div style={{ marginTop: '8px' }}>
 					<h4 style={{ marginBottom: '16px' }}>{t('adminleavereq.h4')}</h4>
 					{leaveRequests.length === 0 && (
@@ -239,15 +236,7 @@ function AdminLeaveRequests() {
 							<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
 								{request.status !== 'status.sent' && request.status !== 'status.accepted' && (
 									<button
-										onClick={() => {
-											updateLeaveRequestStatus(request._id, 'status.accepted')
-											if (settings && settings.leaveRequestTypes) {
-												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
-												if (leaveType && leaveType.allowDaysLimit) {
-													setShowVacationUpdateMessage(true)
-												}
-											}
-										}}
+										onClick={() => updateLeaveRequestStatus(request._id, 'status.accepted')}
 										disabled={updatingRequestId === request._id}
 										style={{ 
 											opacity: updatingRequestId === request._id ? 0.6 : 1,
@@ -278,15 +267,7 @@ function AdminLeaveRequests() {
 
 								{request.status !== 'status.sent' && request.status !== 'status.rejected' && (
 									<button
-										onClick={() => {
-											updateLeaveRequestStatus(request._id, 'status.rejected')
-											if (settings && settings.leaveRequestTypes) {
-												const leaveType = settings.leaveRequestTypes.find(t => t.id === request.type)
-												if (leaveType && leaveType.allowDaysLimit) {
-													setShowVacationUpdateMessage(true)
-												}
-											}
-										}}
+										onClick={() => updateLeaveRequestStatus(request._id, 'status.rejected')}
 										disabled={updatingRequestId === request._id}
 										style={{ 
 											opacity: updatingRequestId === request._id ? 0.6 : 1,

@@ -6,6 +6,15 @@ import { useSocket } from '../context/SocketContext'
 
 const ALL_LEAVE_REQUESTS_QUERY_KEY = ['leaveRequests', 'all']
 const PENDING_STATUSES = new Set(['status.pending', 'pending'])
+const LEAVE_REQUESTS_UPDATED_EVENT = 'leave-requests-updated'
+
+const normalizeUserId = (value) => {
+	if (!value) return null
+	if (typeof value === 'string') return value
+	if (value?._id) return value._id.toString()
+	if (typeof value?.toString === 'function') return value.toString()
+	return null
+}
 
 const fetchAllLeaveRequests = async () => {
 	const response = await axios.get(`${API_URL}/api/leaveworks/all-leave-requests`, {
@@ -24,6 +33,24 @@ const extractRequestUserId = (request) => {
 
 // Query hook - pobieranie własnych wniosków urlopowych (current user)
 export const useOwnLeaveRequests = () => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket) return
+
+		const handleLeaveRequestsUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'own'] })
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted'] })
+			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', 'own'] })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient])
+
 	return useQuery({
 		queryKey: ['leaveRequests', 'own'],
 		queryFn: async () => {
@@ -39,6 +66,28 @@ export const useOwnLeaveRequests = () => {
 
 // Query hook - pobieranie wniosków urlopowych użytkownika
 export const useUserLeaveRequests = (userId) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket || !userId) return
+
+		const normalizedUserId = String(userId)
+		const handleLeaveRequestsUpdated = (payload) => {
+			const eventUserId = normalizeUserId(payload?.userId)
+			if (eventUserId && eventUserId !== normalizedUserId) return
+
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', userId] })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient, userId])
+
 	return useQuery({
 		queryKey: ['leaveRequests', 'user', userId],
 		queryFn: async () => {
@@ -55,6 +104,22 @@ export const useUserLeaveRequests = (userId) => {
 
 // Query hook - pobieranie zaakceptowanych wniosków
 export const useAcceptedLeaveRequests = () => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket) return
+
+		const handleLeaveRequestsUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted'] })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient])
+
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted'],
 		queryFn: async () => {
@@ -72,6 +137,22 @@ export const useAcceptedLeaveRequests = () => {
 
 // Query hook - pobieranie wszystkich zaakceptowanych wniosków (dla wszystkich użytkowników z zespołu)
 export const useAllAcceptedLeaveRequests = () => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket) return
+
+		const handleLeaveRequestsUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted', 'all'] })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient])
+
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted', 'all'],
 		queryFn: async () => {
@@ -87,6 +168,22 @@ export const useAllAcceptedLeaveRequests = () => {
 
 // Query hook - pobieranie wszystkich wniosków urlopowych (wszystkie statusy) dla zespołu
 export const useAllLeaveRequests = () => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket) return
+
+		const handleLeaveRequestsUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient])
+
 	return useQuery({
 		queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY,
 		queryFn: fetchAllLeaveRequests,
@@ -134,9 +231,9 @@ export const usePendingLeaveRequestsSummary = ({ enabled = true } = {}) => {
 			queryClient.invalidateQueries({ queryKey: ALL_LEAVE_REQUESTS_QUERY_KEY })
 		}
 
-		socket.on('leave-requests-updated', handleLeaveRequestsUpdated)
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
 		return () => {
-			socket.off('leave-requests-updated', handleLeaveRequestsUpdated)
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
 		}
 	}, [enabled, socket, queryClient])
 
@@ -145,6 +242,26 @@ export const usePendingLeaveRequestsSummary = ({ enabled = true } = {}) => {
 
 // Query hook - pobieranie zaakceptowanych wniosków konkretnego użytkownika
 export const useUserAcceptedLeaveRequests = (userId) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket || !userId) return
+
+		const normalizedUserId = String(userId)
+		const handleLeaveRequestsUpdated = (payload) => {
+			const eventUserId = normalizeUserId(payload?.userId)
+			if (eventUserId && eventUserId !== normalizedUserId) return
+
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted', 'user', userId] })
+		}
+
+		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		return () => {
+			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		}
+	}, [socket, queryClient, userId])
+
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted', 'user', userId],
 		queryFn: async () => {
