@@ -498,33 +498,43 @@ function LeavePlanner() {
 					{/* Sekcja widocznych wniosków */}
 					{visibleOwnLeaveRequests.length > 0 && (
 						<div style={{ marginBottom: '20px' }}>
-							<h4 style={{ color: 'green', marginBottom: '10px' }}>{t('leaveplanner.acceptedRequests')}</h4>
+							<h4 style={{ color: 'green', marginBottom: '10px' }}>
+								{i18n.resolvedLanguage === 'pl' ? 'Wnioski urlopowe' : 'Leave requests'}
+							</h4>
 							<ul style={{ listStyle: 'none', padding: 0 }}>
-								{visibleOwnLeaveRequests.map(request => (
-									<li
-										key={request._id}
-										style={{
-											padding: '8px 12px',
-											border: '1px solid #4ade80',
-											marginBottom: '5px',
-											backgroundColor: '#f0fdf4',
-											borderRadius: '6px',
-											maxWidth: '400px',
-										}}>
-										<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-											{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
-										</div>
-										<div style={{ fontSize: '14px', color: '#666' }}>
-											{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-											<span style={{ marginLeft: '10px', color: '#059669' }}>
-												({settings?.leaveCalculationMode === 'hours' 
-												? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
-												: `${request.daysRequested} ${t('leaveplanner.days')}`
-											})
-											</span>
-										</div>
-									</li>
-								))}
+								{visibleOwnLeaveRequests.map(request => {
+									const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
+									return (
+										<li
+											key={request._id}
+											style={{
+												padding: '8px 12px',
+												border: isPendingRequest ? '1px solid #60a5fa' : '1px solid #4ade80',
+												marginBottom: '5px',
+												backgroundColor: isPendingRequest ? '#eff6ff' : '#f0fdf4',
+												borderRadius: '6px',
+												maxWidth: '400px',
+											}}>
+											<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+												{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
+											</div>
+											<div style={{ fontSize: '14px', color: '#666' }}>
+												{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+												<span style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
+													({settings?.leaveCalculationMode === 'hours'
+														? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
+														: `${request.daysRequested} ${t('leaveplanner.days')}`
+													})
+												</span>
+											</div>
+											{isPendingRequest && (
+												<div style={{ fontSize: '12px', fontWeight: '600', color: '#1d4ed8', marginTop: '4px' }}>
+													{i18n.resolvedLanguage === 'pl' ? 'Oczekuje na akceptację' : 'Pending approval'}
+												</div>
+											)}
+										</li>
+									)
+								})}
 							</ul>
 						</div>
 					)}
