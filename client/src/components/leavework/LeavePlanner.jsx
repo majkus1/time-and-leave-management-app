@@ -6,7 +6,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
-import { useAcceptedLeaveRequests, useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useAllLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
@@ -70,8 +70,8 @@ function LeavePlanner() {
 
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
-	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
-	const { data: allTeamAcceptedRequests = [], isLoading: loadingAllTeamRequests } = useAllAcceptedLeaveRequests()
+	const { data: ownLeaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
+	const { data: allTeamLeaveRequests = [], isLoading: loadingAllTeamRequests } = useAllLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const availableLeaveDays = vacationData?.vacationDays || 0
 	const leaveTypeDays = vacationData?.leaveTypeDays || {}
@@ -99,6 +99,32 @@ function LeavePlanner() {
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
 	const loading = loadingPlans || loadingRequests || loadingAllTeamRequests || loadingVacation
+
+	const visibleOwnLeaveRequests = React.useMemo(() => {
+		if (!Array.isArray(ownLeaveRequests)) return []
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
+		return ownLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
+	}, [ownLeaveRequests])
+
+	const checkerRequests = React.useMemo(() => {
+		if (!Array.isArray(allTeamLeaveRequests)) return []
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
+		return allTeamLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
+	}, [allTeamLeaveRequests])
 
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
@@ -138,15 +164,15 @@ function LeavePlanner() {
 		return dates
 	}
 
-	// Filtruj selectedDates, aby wykluczyć daty pokryte przez wnioski urlopowe (akceptowane lub sent)
+	// Filtruj selectedDates, aby wykluczyć daty pokryte przez wnioski urlopowe
 	const filteredSelectedDates = React.useMemo(() => {
-		if (!acceptedLeaveRequests || acceptedLeaveRequests.length === 0) {
+		if (!visibleOwnLeaveRequests || visibleOwnLeaveRequests.length === 0) {
 			return selectedDates
 		}
 
 		// Utwórz Set z dat pokrytych przez wnioski urlopowe
 		const requestDatesSet = new Set()
-		acceptedLeaveRequests.forEach(request => {
+		visibleOwnLeaveRequests.forEach(request => {
 			if (request.startDate && request.endDate) {
 				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 				dates.forEach(date => requestDatesSet.add(date))
@@ -155,7 +181,7 @@ function LeavePlanner() {
 
 		// Filtruj selectedDates, wykluczając daty pokryte przez wnioski
 		return selectedDates.filter(date => !requestDatesSet.has(date))
-	}, [selectedDates, acceptedLeaveRequests, settings])
+	}, [selectedDates, visibleOwnLeaveRequests, settings])
 
 	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
 	const holidaysForMonth = React.useMemo(() => {
@@ -312,28 +338,34 @@ function LeavePlanner() {
 								return dateObj.getFullYear() === currentYear && dateObj.getMonth() === month
 							})
 							.map(date => ({
-								title: t('leaveplanner.vactiontitle'),
+								title: `${t('leaveplanner.vactiontitle')} - plan`,
 								start: date,
 								allDay: true,
 								backgroundColor: 'blue',
 								extendedProps: { type: 'plan', date: date }
 							})),
-						// Zaakceptowane wnioski urlopowe
-						...acceptedLeaveRequests
+						// Widoczne wnioski urlopowe (zaakceptowane/wysłane/oczekujące)
+						...visibleOwnLeaveRequests
 							.filter(request => request.startDate && request.endDate)
 							.flatMap(request => {
 								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+											const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
 								return dates
 									.filter(date => {
 										const dateObj = new Date(date)
 										return dateObj.getFullYear() === currentYear && dateObj.getMonth() === month
 									})
 									.map(date => ({
-										title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+										title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}${
+											isPendingRequest
+												? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+												: ''
+										}`,
 										start: date,
 										allDay: true,
-										backgroundColor: 'green',
-										borderColor: 'darkgreen',
+													backgroundColor: isPendingRequest ? '#2563eb' : 'green',
+													borderColor: isPendingRequest ? '#1d4ed8' : 'darkgreen',
+													textColor: 'white',
 										extendedProps: { type: 'request', requestId: request._id }
 									}))
 							}),
@@ -463,12 +495,12 @@ function LeavePlanner() {
 						)}
 					</div>
 
-					{/* Sekcja zaakceptowanych wniosków */}
-					{acceptedLeaveRequests.length > 0 && (
+					{/* Sekcja widocznych wniosków */}
+					{visibleOwnLeaveRequests.length > 0 && (
 						<div style={{ marginBottom: '20px' }}>
 							<h4 style={{ color: 'green', marginBottom: '10px' }}>{t('leaveplanner.acceptedRequests')}</h4>
 							<ul style={{ listStyle: 'none', padding: 0 }}>
-								{acceptedLeaveRequests.map(request => (
+								{visibleOwnLeaveRequests.map(request => (
 									<li
 										key={request._id}
 										style={{
@@ -498,7 +530,7 @@ function LeavePlanner() {
 					)}
 
 					<LeaveAvailabilityChecker
-						requests={allTeamAcceptedRequests}
+						requests={checkerRequests}
 						settings={settings}
 						showUserName={true}
 						scopeHint={t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół'}
@@ -631,23 +663,29 @@ function LeavePlanner() {
 								events={[
 									// Plany urlopów (klikalne) - wykluczamy daty pokryte przez wnioski urlopowe
 									...filteredSelectedDates.map(date => ({
-										title: t('leaveplanner.vactiontitle'),
+										title: `${t('leaveplanner.vactiontitle')} - plan`,
 										start: date,
 										allDay: true,
 										backgroundColor: 'blue',
 										extendedProps: { type: 'plan', date: date }
 									})),
-									// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów)
-									...acceptedLeaveRequests
+									// Widoczne wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów)
+									...visibleOwnLeaveRequests
 										.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
 										.flatMap(request => {
 											const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+											const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
 											return dates.map(date => ({
-												title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+												title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}${
+													isPendingRequest
+														? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+														: ''
+												}`,
 												start: date,
 												allDay: true,
-												backgroundColor: 'green',
-												borderColor: 'darkgreen',
+												backgroundColor: isPendingRequest ? '#2563eb' : 'green',
+												borderColor: isPendingRequest ? '#1d4ed8' : 'darkgreen',
+												textColor: 'white',
 												extendedProps: { type: 'request', requestId: request._id }
 											}))
 										}),

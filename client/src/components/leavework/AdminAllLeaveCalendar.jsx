@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
 import { useAllLeavePlans } from '../../hooks/useLeavePlans'
-import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -98,19 +98,19 @@ function AdminAllLeaveCalendar() {
 	})
 	
 	const { data: allLeavePlans = [], isLoading: loadingPlans, error: plansError } = useAllLeavePlans()
-	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
+	const { data: allTeamLeaveRequests = [], isLoading: loadingRequests, error: requestsError } = useAllLeaveRequests()
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
 	
 	// Debug - sprawdź czy dane są pobierane
 	React.useEffect(() => {
-		if (allAcceptedRequests && allAcceptedRequests.length > 0) {
-			console.log('[AdminAllLeaveCalendar] Pobrano wnioski:', allAcceptedRequests.length)
-			console.log('[AdminAllLeaveCalendar] Przykładowy wniosek:', allAcceptedRequests[0])
+		if (allTeamLeaveRequests && allTeamLeaveRequests.length > 0) {
+			console.log('[AdminAllLeaveCalendar] Pobrano wnioski:', allTeamLeaveRequests.length)
+			console.log('[AdminAllLeaveCalendar] Przykładowy wniosek:', allTeamLeaveRequests[0])
 		} else {
 			console.log('[AdminAllLeaveCalendar] Brak wniosków lub błąd:', requestsError)
 		}
-	}, [allAcceptedRequests, requestsError])
+	}, [allTeamLeaveRequests, requestsError])
 
 	const loading = loadingUsers || loadingPlans || loadingRequests
 	const error = usersError || plansError || requestsError
@@ -219,16 +219,27 @@ function AdminAllLeaveCalendar() {
 	}, [allLeavePlans, filteredUsers])
 
 	const acceptedLeaveRequests = useMemo(() => {
-		if (!allAcceptedRequests || allAcceptedRequests.length === 0) {
+		if (!allTeamLeaveRequests || allTeamLeaveRequests.length === 0) {
 			return []
 		}
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
 		
 		const filteredUserIds = new Set(filteredUsers.map(u => {
 			if (!u || !u._id) return null
 			return u._id.toString()
 		}).filter(Boolean))
 		
-		return allAcceptedRequests.filter(request => {
+		return allTeamLeaveRequests.filter(request => {
+			if (!visibleStatuses.has(request?.status)) {
+				return false
+			}
 			// Sprawdź czy request ma userId (może być obiektem lub stringiem)
 			if (!request || !request.userId) {
 				return false
@@ -254,7 +265,7 @@ function AdminAllLeaveCalendar() {
 			
 			return false
 		})
-	}, [allAcceptedRequests, filteredUsers])
+	}, [allTeamLeaveRequests, filteredUsers])
 
 	const singleFilteredUser = useMemo(() => {
 		if (!Array.isArray(filteredUsers) || filteredUsers.length !== 1) return null
@@ -461,7 +472,11 @@ function AdminAllLeaveCalendar() {
 										return dateObj.getFullYear() === currentYear && dateObj.getMonth() === month
 									})
 									.map(date => ({
-										title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})`,
+										title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})${
+											(request.status === 'status.pending' || request.status === 'pending')
+												? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+												: ''
+										}`,
 										start: date,
 										allDay: true,
 										backgroundColor: getColorForUser(employeeName),
@@ -730,7 +745,11 @@ function AdminAllLeaveCalendar() {
 										}
 										
 										return dates.map(date => ({
-											title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})`,
+											title: `${employeeName} (${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)})${
+												(request.status === 'status.pending' || request.status === 'pending')
+													? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+													: ''
+											}`,
 											start: date,
 											allDay: true,
 											backgroundColor: getColorForUser(employeeName),

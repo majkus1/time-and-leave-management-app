@@ -6,7 +6,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useQuery } from '@tanstack/react-query'
-import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
@@ -34,6 +34,7 @@ function VacationListUser() {
 	const [selectedDepartments, setSelectedDepartments] = useState([])
 	const [selectedUserIds, setSelectedUserIds] = useState([])
 	const [expandedDepartments, setExpandedDepartments] = useState({})
+	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
 	
 	// Sprawdź uprawnienia - Admin i HR mogą filtrować
 	const isAdminRole = isAdmin(role)
@@ -59,7 +60,7 @@ function VacationListUser() {
 		staleTime: 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
-	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
+	const { data: allLeaveRequests = [], isLoading: loadingRequests, error: requestsError } = useAllLeaveRequests()
 	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
 		enabled: isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves),
 	})
@@ -122,6 +123,24 @@ function VacationListUser() {
 			settings
 		)
 	}, [settings, currentMonth, currentYear])
+
+	// Pobierz święta dla całego roku (dla widoku wszystkich miesięcy)
+	const holidaysForYear = useMemo(() => {
+		if (!settings) return []
+		const yearStart = new Date(currentYear, 0, 1)
+		const yearEnd = new Date(currentYear, 11, 31)
+		const formatDateLocal = (date) => {
+			const year = date.getFullYear()
+			const month = String(date.getMonth() + 1).padStart(2, '0')
+			const day = String(date.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}`
+		}
+		return getHolidaysInRange(
+			formatDateLocal(yearStart),
+			formatDateLocal(yearEnd),
+			settings
+		)
+	}, [settings, currentYear])
 
 	// Filtrowanie użytkowników na podstawie wybranych opcji i uprawnień
 	// Admin/HR widzą wszystkich z zespołu, przełożony widzi swoich pracowników (filtrowanie po stronie serwera)
@@ -214,20 +233,30 @@ function VacationListUser() {
 	}
 
 	// Formatuj zaakceptowane wnioski urlopowe dla kalendarza (tylko status.accepted i status.sent)
-	const allLeaveRequestsForMonth = useMemo(() => {
-		if (!allAcceptedRequests || allAcceptedRequests.length === 0) {
+	const leaveRequestEventsForYear = useMemo(() => {
+		if (!allLeaveRequests || allLeaveRequests.length === 0) {
 			return []
 		}
+
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
 		
 		const filteredUserIds = new Set(filteredUsers.map(u => {
 			if (!u || !u._id) return null
 			return u._id.toString()
 		}).filter(Boolean))
 		
-		return allAcceptedRequests
+		return allLeaveRequests
 			.filter(request => {
 				// Sprawdź czy request ma wszystkie wymagane dane
 				if (!request || !request.startDate || !request.endDate) return false
+				if (!visibleStatuses.has(request.status)) return false
 				
 				// Sprawdź userId - może być obiektem lub stringiem
 				if (!request.userId) return false
@@ -266,6 +295,10 @@ function VacationListUser() {
 				}
 				
 				const leaveTypeName = getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)
+				const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
+				const pendingTitleSuffix = isPendingRequest
+					? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+					: ''
 				
 				// Użyj koloru przypisanego do pracownika (tak jak w /all-leave-plans)
 				const userColor = getColorForUser(employeeName)
@@ -273,10 +306,10 @@ function VacationListUser() {
 				return dates
 					.filter(date => {
 						const dateObj = new Date(date)
-						return dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear
+						return dateObj.getFullYear() === currentYear
 					})
 					.map(date => ({
-						title: `${employeeName} (${leaveTypeName})`,
+						title: `${employeeName} (${leaveTypeName})${pendingTitleSuffix}`,
 						start: date,
 						allDay: true,
 						backgroundColor: userColor,
@@ -294,7 +327,59 @@ function VacationListUser() {
 						}
 					}))
 			})
-	}, [allAcceptedRequests, filteredUsers, currentMonth, currentYear, settings, t, i18n.resolvedLanguage, getColorForUser])
+	}, [allLeaveRequests, filteredUsers, currentYear, settings, t, i18n.resolvedLanguage, getColorForUser])
+
+	const allLeaveRequestsForMonth = useMemo(() => {
+		return leaveRequestEventsForYear.filter(event => {
+			const eventDate = new Date(event.start)
+			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+		})
+	}, [leaveRequestEventsForYear, currentMonth, currentYear])
+
+	const renderAllMonthsCalendars = () => {
+		return Array.from({ length: 12 }, (_, month) => (
+			<div key={`${currentYear}-${month}`} className="month-calendar allleaveplans all-leaveplans-all-months" style={{ margin: '10px', border: '1px solid #ddd' }}>
+				<FullCalendar
+					plugins={[dayGridPlugin]}
+					initialView="dayGridMonth"
+					initialDate={new Date(currentYear, month, 1)}
+					locale={i18n.resolvedLanguage}
+					height="auto"
+					firstDay={1}
+					showNonCurrentDates={false}
+					headerToolbar={{
+						left: '',
+						center: 'title',
+						right: '',
+					}}
+					events={[
+						...leaveRequestEventsForYear.filter(event => {
+							const eventDate = new Date(event.start)
+							return eventDate.getMonth() === month && eventDate.getFullYear() === currentYear
+						}),
+						...holidaysForYear
+							.filter(holiday => {
+								const holidayDate = new Date(holiday.date)
+								return holidayDate.getMonth() === month && holidayDate.getFullYear() === currentYear
+							})
+							.map(holiday => ({
+								title: holiday.name,
+								start: holiday.date,
+								allDay: true,
+								backgroundColor: 'green',
+								borderColor: 'darkgreen',
+								textColor: 'white',
+								classNames: 'event-absence',
+								extendedProps: {
+									type: 'holiday',
+									holidayName: holiday.name,
+								},
+							})),
+					]}
+				/>
+			</div>
+		))
+	}
 
 	// Funkcje do obsługi filtrowania
 	const handleToggleDepartment = (departmentName) => {
@@ -467,19 +552,21 @@ function VacationListUser() {
 
 					{/* Kalendarz z wnioskami urlopowymi */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
-						<select
-							value={currentMonth}
-							onChange={handleMonthSelect}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-							{Array.from({ length: 12 }, (_, i) => (
-								<option key={i} value={i}>
-									{new Date(0, i)
-										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-										.replace(/^./, str => str.toUpperCase())}
-								</option>
-							))}
-						</select>
+						{calendarView === 'single' && (
+							<select
+								value={currentMonth}
+								onChange={handleMonthSelect}
+								style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+								className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+								{Array.from({ length: 12 }, (_, i) => (
+									<option key={i} value={i}>
+										{new Date(0, i)
+											.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+											.replace(/^./, str => str.toUpperCase())}
+									</option>
+								))}
+							</select>
+						)}
 						<select
 							value={currentYear}
 							onChange={handleYearSelect}
@@ -494,36 +581,40 @@ function VacationListUser() {
 								)
 							})}
 						</select>
-						<button
-							type="button"
-							onClick={handlePrevMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
-							}}
-							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
-							}}
-						>
-							&lt;
-						</button>
-						<button
-							type="button"
-							onClick={handleNextMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
-							}}
-							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
-							}}
-						>
-							&gt;
-						</button>
+						{calendarView === 'single' && (
+							<>
+								<button
+									type="button"
+									onClick={handlePrevMonth}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&lt;
+								</button>
+								<button
+									type="button"
+									onClick={handleNextMonth}
+									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&gt;
+								</button>
+							</>
+						)}
 						{canFilter && (
 							<button
 								type="button"
@@ -557,37 +648,43 @@ function VacationListUser() {
 						)}
 					</div>
 
-					<div>
-						<FullCalendar
-							plugins={[dayGridPlugin]}
-							initialView="dayGridMonth"
-							initialDate={new Date()}
-							locale={i18n.resolvedLanguage}
-							height="auto"
-							firstDay={1}
-							showNonCurrentDates={false}
-							events={[
-								// Wszystkie wnioski urlopowe (wszystkie statusy)
-								...allLeaveRequestsForMonth,
-								// Dni świąteczne
-								...holidaysForMonth.map(holiday => ({
-									title: holiday.name,
-									start: holiday.date,
-									allDay: true,
-									backgroundColor: 'green',
-									borderColor: 'darkgreen',
-									textColor: 'white',
-									classNames: 'event-absence',
-									extendedProps: {
-										type: 'holiday',
-										holidayName: holiday.name
-									}
-								}))
-							]}
-							ref={calendarRef}
-							datesSet={handleMonthChange}
-						/>
-					</div>
+					{calendarView === 'single' ? (
+						<div>
+							<FullCalendar
+								plugins={[dayGridPlugin]}
+								initialView="dayGridMonth"
+								initialDate={new Date()}
+								locale={i18n.resolvedLanguage}
+								height="auto"
+								firstDay={1}
+								showNonCurrentDates={false}
+								events={[
+									// Wszystkie wnioski urlopowe (status.accepted i status.sent)
+									...allLeaveRequestsForMonth,
+									// Dni świąteczne
+									...holidaysForMonth.map(holiday => ({
+										title: holiday.name,
+										start: holiday.date,
+										allDay: true,
+										backgroundColor: 'green',
+										borderColor: 'darkgreen',
+										textColor: 'white',
+										classNames: 'event-absence',
+										extendedProps: {
+											type: 'holiday',
+											holidayName: holiday.name
+										}
+									}))
+								]}
+								ref={calendarRef}
+								datesSet={handleMonthChange}
+							/>
+						</div>
+					) : (
+						<div className="all-months-calendar-container" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+							{renderAllMonthsCalendars()}
+						</div>
+					)}
 
 					{/* Modal filtrowania - tylko dla Admin i HR */}
 					{canFilter && (
@@ -649,6 +746,34 @@ function VacationListUser() {
 
 							{/* Filtrowanie użytkowników */}
 							<div style={{ marginBottom: '20px' }}>
+								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+									{t('planslist.calendarView') || 'Widok kalendarza'}
+								</h3>
+								<div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef' }}>
+										<input
+											type="radio"
+											name="calendarView"
+											value="single"
+											checked={calendarView === 'single'}
+											onChange={(e) => setCalendarView(e.target.value)}
+											style={{ marginRight: '8px', cursor: 'pointer' }}
+										/>
+										<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
+									</label>
+									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef' }}>
+										<input
+											type="radio"
+											name="calendarView"
+											value="all-months"
+											checked={calendarView === 'all-months'}
+											onChange={(e) => setCalendarView(e.target.value)}
+											style={{ marginRight: '8px', cursor: 'pointer' }}
+										/>
+										<span>{t('planslist.allMonths') || 'Wszystkie miesiące'}</span>
+									</label>
+								</div>
+
 								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
 								</h3>

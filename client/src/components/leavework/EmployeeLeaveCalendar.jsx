@@ -7,7 +7,7 @@ import Sidebar from '../dashboard/Sidebar'
 import Loader from '../Loader'
 import { useUser } from '../../hooks/useUsers'
 import { useUserLeavePlans } from '../../hooks/useLeavePlans'
-import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useUserLeaveRequests, useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -20,10 +20,24 @@ function EmployeeLeaveCalendar() {
 	// TanStack Query hooks
 	const { data: user, isLoading: loadingUser } = useUser(userId)
 	const { data: leavePlans = [], isLoading: loadingPlans } = useUserLeavePlans(userId)
+	const { data: userLeaveRequests = [], isLoading: loadingUserRequests } = useUserLeaveRequests(userId)
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useUserAcceptedLeaveRequests(userId)
 	const { data: settings } = useSettings()
 
-	const loading = loadingUser || loadingPlans || loadingRequests
+	const loading = loadingUser || loadingPlans || loadingRequests || loadingUserRequests
+
+	const leaveRequestsForCalendar = React.useMemo(() => {
+		if (!Array.isArray(userLeaveRequests)) return []
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
+		return userLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
+	}, [userLeaveRequests])
 
 	// Pobierz święta dla całego roku (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
 	const holidaysForYear = React.useMemo(() => {
@@ -140,17 +154,22 @@ function EmployeeLeaveCalendar() {
 						backgroundColor: 'blue',
 						extendedProps: { type: 'plan', date: date }
 					})),
-					// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
-					...acceptedLeaveRequests
+					// Wnioski urlopowe (zaakceptowane/wysłane/oczekujące)
+					...leaveRequestsForCalendar
 						.filter(request => request.startDate && request.endDate) // Sprawdź czy daty istnieją
 						.flatMap(request => {
 							const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+							const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
+							const pendingLabel = isPendingRequest
+								? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+								: ''
 							return dates.map(date => ({
-								title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+								title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}${pendingLabel}`,
 								start: date,
 								allDay: true,
-								backgroundColor: 'green',
-								borderColor: 'darkgreen',
+								backgroundColor: isPendingRequest ? '#2563eb' : 'green',
+								borderColor: isPendingRequest ? '#1d4ed8' : 'darkgreen',
+								textColor: 'white',
 								extendedProps: { type: 'request', requestId: request._id }
 							}))
 						}),

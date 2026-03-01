@@ -13,6 +13,10 @@ const toIsoDate = (value) => {
 	return `${year}-${month}-${day}`
 }
 
+const PENDING_STATUSES = new Set(['status.pending', 'pending'])
+const ACCEPTED_STATUSES = new Set(['status.accepted', 'accepted'])
+const SENT_STATUSES = new Set(['status.sent', 'sent'])
+
 const formatDate = (value, locale) => {
 	if (!value) return ''
 	const date = new Date(value)
@@ -198,9 +202,13 @@ function LeaveAvailabilityChecker({
 										{item.startDate} - {item.endDate}
 									</div>
 									<div style={{ color: '#64748b', fontSize: '12px', marginTop: '3px' }}>
-										{item.status === 'status.sent'
+										{SENT_STATUSES.has(item.status)
 											? (t('leaveform.statuses.sent') || 'Wysłano')
-											: (t('leaveform.statuses.accepted') || 'Zaakceptowano')}
+											: PENDING_STATUSES.has(item.status)
+												? (t('leaveform.statuses.pending') || 'Oczekuje')
+												: ACCEPTED_STATUSES.has(item.status)
+													? (t('leaveform.statuses.accepted') || 'Zaakceptowano')
+													: (item.status || '-')}
 									</div>
 								</div>
 							))}

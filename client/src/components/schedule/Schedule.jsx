@@ -25,7 +25,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
-import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -148,7 +148,7 @@ function Schedule() {
 		currentMonth,
 		currentYear
 	)
-	const { data: allAcceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAllAcceptedLeaveRequests()
+	const { data: allTeamLeaveRequests = [], isLoading: loadingLeaveRequests } = useAllLeaveRequests()
 	const { data: settings } = useSettings()
 	const isAvailabilityEnabled = schedule?.availabilityEnabled === true
 	const draftEntriesCountCurrentMonth = React.useMemo(
@@ -308,9 +308,19 @@ function Schedule() {
 		// Get user IDs from the schedule users
 		const scheduleUserIds = users.map(u => u._id?.toString() || u.toString()).filter(Boolean)
 		
+		const visibleLeaveStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
+
 		// Filter leave requests for users in this schedule
-		const scheduleLeaveRequests = allAcceptedLeaveRequests.filter(request => {
+		const scheduleLeaveRequests = allTeamLeaveRequests.filter(request => {
 			if (!request.userId || !request.startDate || !request.endDate) return false
+			if (!visibleLeaveStatuses.has(request.status)) return false
 			const requestUserId = request.userId._id?.toString() || request.userId?.toString()
 			return scheduleUserIds.includes(requestUserId)
 		})
@@ -331,8 +341,12 @@ function Schedule() {
 				const userName = request.userId?.firstName && request.userId?.lastName
 					? `${request.userId.firstName} ${request.userId.lastName}`
 					: request.userId?.username || 'Unknown'
+				const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
+				const pendingLabel = isPendingRequest
+					? (i18n.resolvedLanguage === 'pl' ? ' - oczekuje na akceptację' : ' - pending approval')
+					: ''
 				return dates.map(date => ({
-					title: `${userName}: ${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+					title: `${userName}: ${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}${pendingLabel}`,
 					start: date,
 					allDay: true,
 					textColor: 'white',
@@ -403,7 +417,7 @@ function Schedule() {
 			const timeB = b.extendedProps?.timeFrom ? timeToMinutes(b.extendedProps.timeFrom) : 9999
 			return timeA - timeB
 		})
-	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allAcceptedLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage])
+	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allTeamLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage])
 
 	// Sort selected entries by timeFrom for display in modal
 	const sortedSelectedEntries = React.useMemo(() => {
