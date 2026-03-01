@@ -29,8 +29,8 @@ export function validatePackageRequest(data: Partial<PackageRequestInput>): {
 		errors.push('Nazwa firmy jest wymagana')
 	}
 
-	if (!data.usersCount || data.usersCount < 7) {
-		errors.push('Liczba użytkowników musi być co najmniej 7 (aplikacja jest darmowa do 6 użytkowników)')
+	if (!data.usersCount || data.usersCount < 5) {
+		errors.push('Liczba użytkowników musi być co najmniej 5 (aplikacja jest darmowa do 4 użytkowników)')
 	}
 
 	if (!data.packageType || !data.packageType.trim()) {

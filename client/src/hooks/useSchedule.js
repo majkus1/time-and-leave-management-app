@@ -1,6 +1,10 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config'
+import { useSocket } from '../context/SocketContext'
+
+const SCHEDULE_UPDATED_EVENT = 'schedule-updated'
 
 // Get all schedules for current user
 export const useSchedules = () => {
@@ -17,6 +21,24 @@ export const useSchedules = () => {
 
 // Get schedule by ID
 export const useSchedule = (scheduleId) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket || !scheduleId) return
+
+		const handleScheduleUpdated = (payload) => {
+			if (payload?.scheduleId && payload.scheduleId !== String(scheduleId)) return
+			queryClient.invalidateQueries({ queryKey: ['schedule', scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', scheduleId] })
+		}
+
+		socket.on(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
+		return () => {
+			socket.off(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
+		}
+	}, [socket, queryClient, scheduleId])
+
 	return useQuery({
 		queryKey: ['schedule', scheduleId],
 		queryFn: async () => {
@@ -31,6 +53,24 @@ export const useSchedule = (scheduleId) => {
 
 // Get schedule entries for a specific month
 export const useScheduleEntries = (scheduleId, month, year) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+
+	useEffect(() => {
+		if (!socket || !scheduleId) return
+
+		const handleScheduleUpdated = (payload) => {
+			if (payload?.scheduleId && payload.scheduleId !== String(scheduleId)) return
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['schedule', scheduleId] })
+		}
+
+		socket.on(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
+		return () => {
+			socket.off(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
+		}
+	}, [socket, queryClient, scheduleId])
+
 	return useQuery({
 		queryKey: ['scheduleEntries', scheduleId, month, year],
 		queryFn: async () => {
@@ -62,6 +102,41 @@ export const useUpsertScheduleEntry = () => {
 	})
 }
 
+export const useUpsertScheduleAvailability = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ scheduleId, data }) => {
+			const response = await axios.post(`${API_URL}/api/schedules/${scheduleId}/availability`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+		}
+	})
+}
+
+export const useDeleteScheduleAvailability = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ scheduleId, date }) => {
+			const response = await axios.delete(`${API_URL}/api/schedules/${scheduleId}/availability`, {
+				params: { date },
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+		}
+	})
+}
+
 // Delete schedule entry
 export const useDeleteScheduleEntry = () => {
 	const queryClient = useQueryClient()
@@ -74,6 +149,57 @@ export const useDeleteScheduleEntry = () => {
 			return response.data
 		},
 		onSuccess: (data, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+		}
+	})
+}
+
+export const useAutoGenerateScheduleMonth = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ scheduleId, data }) => {
+			const response = await axios.post(`${API_URL}/api/schedules/${scheduleId}/entries/auto-generate`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+		}
+	})
+}
+
+export const useClearScheduleMonth = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ scheduleId, data }) => {
+			const response = await axios.post(`${API_URL}/api/schedules/${scheduleId}/entries/clear-month`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+		}
+	})
+}
+
+export const usePublishScheduleMonth = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ scheduleId, data }) => {
+			const response = await axios.post(`${API_URL}/api/schedules/${scheduleId}/entries/publish-month`, data, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
 			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
 		}

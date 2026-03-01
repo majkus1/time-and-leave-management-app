@@ -7,6 +7,7 @@ import { useUnreadCount } from '../../hooks/useChat'
 import { useBoardsUnreadSummary } from '../../hooks/useBoards'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
+import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import TutorialModal from '../tutorial/TutorialModal'
 
 function Sidebar() {
@@ -21,6 +22,7 @@ function Sidebar() {
 	const location = useLocation()
 	const { role, logout, username, loggedIn, userId } = useAuth()
 	const { data: unreadCount = 0 } = useUnreadCount({ enabled: !!loggedIn })
+	const { data: unreadAnnouncementsCount = 0 } = useAnnouncementsUnreadCount({ enabled: !!loggedIn })
 	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: !!loggedIn })
 	const unreadBoardsTotal = boardsUnreadSummary?.totalUnread || 0
 	
@@ -62,6 +64,7 @@ function Sidebar() {
 		location.pathname.startsWith('/leave-request-pdf-preview')
 
 	const isLeavePlans = location.pathname === '/all-leave-plans' || location.pathname.startsWith('/leave-plans')
+	const isAnnouncementsActive = location.pathname.startsWith('/announcements')
 
 	useEffect(() => {
 		let lastWidth = window.innerWidth
@@ -355,6 +358,23 @@ function Sidebar() {
 									<span className="sidebar-notification-badge">
 										<span className="sidebar-notification-badge-count">
 											{unreadCount > 99 ? '99+' : unreadCount}
+										</span>
+									</span>
+								)}
+							</NavLink>
+
+					<NavLink
+								to="/announcements"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+								style={{ position: 'relative' }}>
+								<div className="nav-icon">
+									<img src="/img/announcement.png" alt="announcement icon" />
+								</div>
+								<span className="nav-text">{t('sidebar.btnAnnouncements')}</span>
+								{unreadAnnouncementsCount > 0 && !isAnnouncementsActive && (
+									<span className="sidebar-notification-badge">
+										<span className="sidebar-notification-badge-count">
+											{unreadAnnouncementsCount > 99 ? '99+' : unreadAnnouncementsCount}
 										</span>
 									</span>
 								)}

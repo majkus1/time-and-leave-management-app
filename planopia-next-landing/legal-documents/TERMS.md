@@ -23,7 +23,7 @@
 ## 3. Rodzaje kont i zasady korzystania
 
 3.1. Usługodawca oferuje dwa rodzaje kont:
-   - **Plan darmowy**: dostęp do 6 użytkowników, podstawowe funkcje
+   - **Plan darmowy**: dostęp do 4 użytkowników, podstawowe funkcje
    - **Plany płatne**: nielimitowana liczba użytkowników, dodatkowe funkcje (szczegóły w cenniku)
 
 3.2. Klient jest odpowiedzialny za:

@@ -208,7 +208,7 @@ function ENBlogPWA() {
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Start Using Planopia Today!</h3>
 					<p className="mb-4 text-gray-700">
 						Planopia is a comprehensive app for managing work time, leave, and teams. 
-						Free version for teams up to 6 users!
+						Free version for teams up to 4 users!
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link

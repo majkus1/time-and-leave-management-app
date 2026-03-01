@@ -6,11 +6,12 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
-import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAcceptedLeaveRequests, useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
@@ -70,6 +71,7 @@ function LeavePlanner() {
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
 	const { data: acceptedLeaveRequests = [], isLoading: loadingRequests } = useAcceptedLeaveRequests()
+	const { data: allTeamAcceptedRequests = [], isLoading: loadingAllTeamRequests } = useAllAcceptedLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const availableLeaveDays = vacationData?.vacationDays || 0
 	const leaveTypeDays = vacationData?.leaveTypeDays || {}
@@ -96,7 +98,7 @@ function LeavePlanner() {
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
-	const loading = loadingPlans || loadingRequests || loadingVacation
+	const loading = loadingPlans || loadingRequests || loadingAllTeamRequests || loadingVacation
 
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
@@ -495,7 +497,14 @@ function LeavePlanner() {
 						</div>
 					)}
 
-					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
+					<LeaveAvailabilityChecker
+						requests={allTeamAcceptedRequests}
+						settings={settings}
+						showUserName={true}
+						scopeHint={t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół'}
+					/>
+
+					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '20px', gap: '5px', alignItems: 'center' }}>
 						{calendarView === 'single' && (
 							<>
 								<select

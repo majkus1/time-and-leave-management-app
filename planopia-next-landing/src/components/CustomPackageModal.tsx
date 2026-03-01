@@ -23,7 +23,7 @@ interface CustomPackageModalProps {
 
 export default function CustomPackageModal({ isOpen, onClose, lang = 'pl' }: CustomPackageModalProps) {
 	const [packageType, setPackageType] = useState<PackageType>('monthly')
-	const [usersCountInput, setUsersCountInput] = useState<string>('7')
+	const [usersCountInput, setUsersCountInput] = useState<string>('5')
 	const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
 	const [dedicatedEnvironment, setDedicatedEnvironment] = useState<boolean>(false)
 	const [companyName, setCompanyName] = useState('')
@@ -37,7 +37,7 @@ export default function CustomPackageModal({ isOpen, onClose, lang = 'pl' }: Cus
 	const t = getCustomPackageModalTranslations(lang)
 
 	// Convert input to number for calculations
-	const usersCount = Math.max(7, parseInt(usersCountInput) || 7)
+	const usersCount = Math.max(5, parseInt(usersCountInput) || 5)
 
 	// Calculate price
 	const pricePerUser = calculateCustomPricePerUser(selectedFeatures, packageType, lang)
@@ -46,7 +46,7 @@ export default function CustomPackageModal({ isOpen, onClose, lang = 'pl' }: Cus
 	// Reset form function
 	const resetForm = () => {
 		setPackageType('monthly')
-		setUsersCountInput('7')
+		setUsersCountInput('5')
 		setSelectedFeatures([])
 		setDedicatedEnvironment(false)
 		setCompanyName('')
@@ -212,15 +212,15 @@ export default function CustomPackageModal({ isOpen, onClose, lang = 'pl' }: Cus
 						<input
 							id="usersCount"
 							type="number"
-							min="7"
+							min="5"
 							value={usersCountInput}
 							onChange={(e) => {
 								setUsersCountInput(e.target.value)
 							}}
 							onBlur={(e) => {
 								const value = parseInt(e.target.value)
-								if (isNaN(value) || value < 7) {
-									setUsersCountInput('7')
+								if (isNaN(value) || value < 5) {
+									setUsersCountInput('5')
 								} else {
 									setUsersCountInput(value.toString())
 								}

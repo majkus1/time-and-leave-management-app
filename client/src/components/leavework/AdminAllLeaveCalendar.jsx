@@ -16,6 +16,7 @@ import axios from 'axios'
 import { API_URL } from '../../config.js'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
+import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 
 function AdminAllLeaveCalendar() {
 	const colorsRef = useRef({})
@@ -78,7 +79,6 @@ function AdminAllLeaveCalendar() {
 			window.removeEventListener('resize', handleResize)
 		}
 	}, [calendarView])
-	const [selectedUser, setSelectedUser] = useState(null)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { role, logout, username, teamId } = useAuth()
@@ -255,6 +255,24 @@ function AdminAllLeaveCalendar() {
 			return false
 		})
 	}, [allAcceptedRequests, filteredUsers])
+
+	const singleFilteredUser = useMemo(() => {
+		if (!Array.isArray(filteredUsers) || filteredUsers.length !== 1) return null
+		return filteredUsers[0]
+	}, [filteredUsers])
+
+	const selectedUserAcceptedLeaveRequests = useMemo(() => {
+		if (!singleFilteredUser) return []
+		const selectedUserId = singleFilteredUser._id?.toString()
+		if (!selectedUserId) return []
+		return acceptedLeaveRequests.filter((request) => {
+			if (!request?.userId) return false
+			if (typeof request.userId === 'object' && request.userId._id) {
+				return request.userId._id.toString() === selectedUserId
+			}
+			return request.userId.toString() === selectedUserId
+		})
+	}, [acceptedLeaveRequests, singleFilteredUser])
 
 	// Generate stable color based on user name (deterministic) - same as in Schedule
 	const getColorForUser = useCallback((userIdentifier) => {
@@ -510,7 +528,53 @@ function AdminAllLeaveCalendar() {
 						</li>
 					))}
 				</ul>
-				<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
+				{singleFilteredUser && selectedUserAcceptedLeaveRequests.length > 0 && (
+					<div style={{ padding: '10px 0 20px 0' }}>
+						<h4 style={{ color: 'green', marginBottom: '15px', fontSize: '18px' }}>
+							{t('leaveplanner.acceptedAndAutoSentRequests') || 'Zaakceptowane i zgłoszone (bez akceptacji) wnioski:'}
+						</h4>
+						<div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+							{selectedUserAcceptedLeaveRequests.map((request) => (
+								<div
+									key={request._id}
+									style={{
+										padding: '10px 15px',
+										border: '2px solid #4ade80',
+										backgroundColor: '#f0fdf4',
+										borderRadius: '8px',
+										minWidth: '250px',
+										boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+									}}
+								>
+									<div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#059669' }}>
+										{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
+									</div>
+									<div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+										{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+									</div>
+									<div style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
+										{settings?.leaveCalculationMode === 'hours'
+											? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
+											: `${request.daysRequested} ${t('leaveplanner.days')}`}
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+				<LeaveAvailabilityChecker
+					requests={acceptedLeaveRequests}
+					settings={settings}
+					showUserName={true}
+					scopeHint={
+						showAllTeam
+							? (t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół')
+							: (singleFilteredUser
+								? `${t('leaveplanner.availabilityChecker.scopeUser') || 'Zakres'}: ${singleFilteredUser.firstName} ${singleFilteredUser.lastName}`
+								: (t('leaveplanner.availabilityChecker.scopeCurrentFilter') || 'Zakres: aktualny filtr'))
+					}
+				/>
+				<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '20px', gap: '5px', alignItems: 'center' }}>
 					{calendarView === 'single' && (
 						<>
 							<select value={currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">

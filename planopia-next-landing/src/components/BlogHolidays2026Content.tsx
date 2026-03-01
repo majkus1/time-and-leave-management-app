@@ -59,8 +59,8 @@ export default function BlogHolidays2026Content() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										👉 <strong>Darmowa aplikacja do planowania urlopów</strong>  
-										<br />dla zespołów do 6 użytkowników
+										<strong>Darmowa aplikacja do planowania urlopów</strong>  
+										{' '}dla zespołów do 4 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -71,7 +71,7 @@ export default function BlogHolidays2026Content() {
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-									👉 <strong>Dla większych firm: </strong>  
+									<strong>Dla większych firm: </strong>  
 									nielimitowana liczba użytkowników, elastyczne funkcje i integracje
 									</p>
 									<Link

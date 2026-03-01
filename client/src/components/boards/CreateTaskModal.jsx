@@ -14,6 +14,13 @@ const STATUSES = [
 	{ id: 'done', label: 'Gotowe' }
 ]
 const PRIORITIES = ['low', 'medium', 'high', 'urgent']
+const ATTACH_ICON_SRC = '/img/attach-file.png'
+const ATTACH_ICON_STYLE = {
+	width: '16px',
+	height: '16px',
+	objectFit: 'contain',
+	flexShrink: 0
+}
 
 function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }) {
 	const { t } = useTranslation()
@@ -337,7 +344,10 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							justifyContent: 'space-between',
 							alignItems: 'center'
 						}}>
-							<span>📎 {selectedFile.name}</span>
+							<span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+								<img src={ATTACH_ICON_SRC} alt="" aria-hidden="true" style={ATTACH_ICON_STYLE} />
+								<span>{selectedFile.name}</span>
+							</span>
 							<button
 								type="button"
 								onClick={() => setSelectedFile(null)}

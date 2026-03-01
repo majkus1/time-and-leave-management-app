@@ -27,6 +27,44 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const isHR = role && role.includes('HR')
 	const isSupervisor = role && role.includes('Przełożony (Supervisor)')
 
+	const formatTutorialContent = (content) => {
+		if (!content || typeof content !== 'string') return []
+
+		const paragraphs = content
+			.replace(/\r/g, '')
+			.split('\n')
+			.map((paragraph) => paragraph.trim())
+			.filter(Boolean)
+
+		return paragraphs.map((paragraph) => {
+			// For longer blocks, split into readable bullet points without changing wording.
+			if (paragraph.length > 220) {
+				const protectedParagraph = paragraph
+					.replace(/\bnp\./gi, 'np§')
+					.replace(/\bitp\./gi, 'itp§')
+					.replace(/\bitd\./gi, 'itd§')
+					.replace(/\be\.g\./gi, 'e§g§')
+					// Protect ordinal numbers like "8. dnia", "1. sekcja"
+					.replace(/\b(\d+)\.\s+(?=[a-ząćęłńóśźż])/gi, '$1§ ')
+
+				const sentences = (protectedParagraph.match(/[^.!?]+[.!?]?/g) || [protectedParagraph])
+					.map((sentence) => sentence.trim())
+					.map((sentence) =>
+						sentence
+							.replace(/np§/g, 'np.')
+							.replace(/itp§/g, 'itp.')
+							.replace(/itd§/g, 'itd.')
+							.replace(/e§g§/g, 'e.g.')
+							.replace(/(\d+)§\s/g, '$1. ')
+					)
+					.filter(Boolean)
+				return { type: 'list', items: sentences }
+			}
+
+			return { type: 'text', text: paragraph }
+		})
+	}
+
 	// Podstawowe sekcje dla wszystkich użytkowników
 	const baseSections = [
 		{
@@ -41,6 +79,23 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			content: i18n.resolvedLanguage === 'pl'
 				? 'Po zalogowaniu, przy regularnym korzystaniu z aplikacji, użytkownik pozostaje zalogowany. Jeśli jednak po zalogowaniu nastąpi dłuższa przerwa i wejście dopiero np. około 8. dnia, system może poprosić o ponowne zalogowanie. Wyjątkiem są też sytuacje ze słabym lub niestabilnym połączeniem internetowym - wtedy chwilowo może wystąpić problem z rozpoznaniem sesji i wykonaniem części działań w aplikacji.'
 				: 'After logging in, regular use of the application keeps the user logged in. If there is a longer break after login and the user returns only around day 8, the system may ask for login again. An exception is weak or unstable internet connection - in such cases there may be temporary issues with session recognition and performing some actions in the application.'
+		},
+		{
+			id: 'pwa-install',
+			title: i18n.resolvedLanguage === 'pl' ? 'Używaj jak aplikacji (telefon/komputer)' : 'Use it like an app (mobile/computer)',
+			icon: '/img/mobile-app.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Szybciej, wygodniej i z powiadomieniami push'
+				: 'Short: faster, easier, and with push notifications',
+			path: '/settings',
+			hideNavigateButton: true,
+			content: i18n.resolvedLanguage === 'pl'
+				? 'Planopię możesz dodać do ekranu głównego telefonu lub zainstalować na komputerze jak zwykłą aplikację.\n\nZalety: szybkie otwieranie, wygodna praca bez szukania karty w przeglądarce i lepsze działanie powiadomień push.\n\nJak to zrobić: na telefonie wybierz „Dodaj do ekranu głównego”, a na komputerze „Zainstaluj aplikację”.\n\nInstrukcja krok po kroku jest w naszym krótkim wpisie blogowym:'
+				: 'You can add Planopia to your phone home screen or install it on your computer like a regular app.\n\nBenefits: faster opening, better daily workflow without browser tab switching, and improved push notification experience.\n\nHow to do it: on mobile choose "Add to Home Screen", and on computer choose "Install app".\n\nStep-by-step guide is in our short blog post:',
+			externalLink: 'https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa',
+			externalLinkLabel: i18n.resolvedLanguage === 'pl'
+				? 'Jak zainstalować Planopię jako aplikację'
+				: 'How to install Planopia as an app'
 		},
 		{
 			id: 'edit-profile',
@@ -114,8 +169,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Planning work schedules',
 			path: '/schedule',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Grafiki pozwalają na planowanie zmian i harmonogramów pracy. Gdy dodasz nowy dział w zespole, automatycznie tworzy się grafik dla tego działu. Możesz również tworzyć niestandardowe grafiki. W każdym grafiku możesz przypisywać pracowników do konkretnych dni i godzin pracy. Grafiki są widoczne tylko dla członków przypisanych do danego grafiku i pomagają w koordynacji pracy. Admin, HR i przełożony (z uprawnieniami) mogą zarządzać grafikami. Pracownicy widzą przypisane im zmiany w kalendarzu. W kalendarzach grafików widoczne są również zaakceptowane wnioski urlopowe, nieobecności oraz zgłoszenia nieobecności, które nie wymagają zatwierdzenia.'
-				: 'Schedules allow you to plan shifts and work schedules. When you add a new department to the team, a schedule for that department is automatically created. You can also create custom schedules. In each schedule, you can assign employees to specific days and work hours. Schedules are visible only to members assigned to the schedule and help coordinate work. Admin, HR, and supervisors (with permissions) can manage schedules. Employees see their assigned shifts in the calendar. Schedule calendars also show approved leave requests, absences, and reported absences that do not require approval.'
+				? 'Grafiki pozwalają na planowanie zmian i harmonogramów pracy. Gdy dodasz nowy dział w zespole, automatycznie tworzy się grafik dla tego działu. Możesz również tworzyć niestandardowe grafiki. W każdym grafiku możesz przypisywać pracowników do konkretnych dni i godzin pracy. Grafiki są widoczne tylko dla członków przypisanych do danego grafiku i pomagają w koordynacji pracy. Admin, HR i przełożony (z uprawnieniami) mogą zarządzać grafikami. Pracownicy widzą przypisane im zmiany w kalendarzu. W kalendarzach grafików widoczne są również zaakceptowane wnioski urlopowe, nieobecności oraz zgłoszenia nieobecności, które nie wymagają zatwierdzenia. Dodatkowo możesz zgłaszać dyspozycyjność i skorzystać z automatycznego generowania miesięcznego grafiku przez system.'
+				: 'Schedules allow you to plan shifts and work schedules. When you add a new department to the team, a schedule for that department is automatically created. You can also create custom schedules. In each schedule, you can assign employees to specific days and work hours. Schedules are visible only to members assigned to the schedule and help coordinate work. Admin, HR, and supervisors (with permissions) can manage schedules. Employees see their assigned shifts in the calendar. Schedule calendars also show approved leave requests, absences, and reported absences that do not require approval. You can also submit availability and use automatic monthly schedule generation by the system.'
 		},
 		{
 			id: 'chat',
@@ -130,6 +185,18 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Chat enables real-time communication with your team. A general channel for the entire team is automatically created at the start. When you add a new department to the team, a chat channel for that department is automatically created. You can also create custom chats with any employees and have private chats. You can send messages, receive notifications about new messages (in browser and email). All messages are saved and available in history.'
 		},
 		{
+			id: 'announcements',
+			title: i18n.resolvedLanguage === 'pl' ? 'Komunikaty' : 'Announcements',
+			icon: '/img/announcement.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Szybkie ogłoszenia dla wybranych osób lub działów'
+				: 'Quick announcements for selected users or departments',
+			path: '/announcements',
+			content: i18n.resolvedLanguage === 'pl'
+				? 'W sekcji "Komunikaty" możesz dodawać ważne informacje dla zespołu. Komunikat może być skierowany do wszystkich, konkretnego działu lub wybranych użytkowników. Możesz dodać tytuł, opis oraz załączniki. Odbiorcy dostaną powiadomienie email i push (jeśli mają je włączone).'
+				: 'In the "Announcements" section, you can add important information for your team. An announcement can target everyone, a specific department, or selected users. You can add a title, description, and attachments. Recipients get email and push notifications (if enabled).'
+		},
+		{
 			id: 'leave-planner',
 			title: i18n.resolvedLanguage === 'pl' ? 'Zaplanuj swój urlop' : 'Plan your leave',
 			icon: '/img/calendar.png',
@@ -138,8 +205,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Planning leave in calendar',
 			path: '/leave-planner',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Zaplanuj swój urlop" znajdziesz kalendarz, w którym możesz zaznaczać dni, w których planujesz wziąć urlop. W kalendarzu widoczne są również wszystkie Twoje zatwierdzone i zgłoszone wnioski urlopowe oraz nieobecności. Możesz przeglądać zaakceptowane wnioski urlopowe i planować kolejne urlopy, unikając konfliktów terminów. Zaznaczone dni są widoczne w sekcji "Plany urlopowe" dla całego zespołu, co pomaga w koordynacji urlopów.'
-				: 'In the "Plan your leave" section, you will find a calendar where you can mark days when you plan to take leave. The calendar also shows all your approved and submitted leave requests and absences. You can review accepted leave requests and plan future leaves, avoiding date conflicts. Marked days are visible in the "Vacation plans" section for the entire team, which helps coordinate leaves.'
+				? 'W sekcji "Zaplanuj swój urlop" znajdziesz kalendarz, w którym możesz zaznaczać dni, w których planujesz wziąć urlop. W kalendarzu widoczne są również wszystkie Twoje zatwierdzone i zgłoszone wnioski urlopowe oraz nieobecności. Możesz przeglądać zaakceptowane wnioski urlopowe i planować kolejne urlopy, unikając konfliktów terminów. Dodatkowo masz dostęp do Asystenta terminu urlopu, który sprawdza wybraną datę lub zakres i pokazuje potencjalne konflikty oraz święta. Zaznaczone dni są widoczne w sekcji "Plany urlopowe" dla całego zespołu, co pomaga w koordynacji urlopów.'
+				: 'In the "Plan your leave" section, you will find a calendar where you can mark days when you plan to take leave. The calendar also shows all your approved and submitted leave requests and absences. You can review accepted leave requests and plan future leaves, avoiding date conflicts. Additionally, you can use the Leave date assistant, which checks the selected date or range and shows potential conflicts and holidays. Marked days are visible in the "Vacation plans" section for the entire team, which helps coordinate leaves.'
 		},
 		{
 			id: 'leave-plans',
@@ -150,8 +217,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Viewing vacation plans of all employees',
 			path: '/all-leave-plans',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Plany urlopowe" widoczne są plany i zaakceptowane wnioski urlopowe wszystkich pracowników w zespole. Możesz filtrować kalendarz według konkretnego pracownika lub działu, co ułatwia planowanie i koordynację urlopów w zespole. Widzisz wszystkie zatwierdzone wnioski urlopowe i nieobecności, co pomaga w zarządzaniu dostępnością pracowników i unikaniu konfliktów terminów.'
-				: 'In the "Vacation plans" section, you can see plans and accepted leave requests of all employees in the team. You can filter the calendar by a specific employee or department, which facilitates planning and coordinating leaves in the team. You see all approved leave requests and absences, which helps manage employee availability and avoid date conflicts.'
+				? 'W sekcji "Plany urlopowe" widoczne są plany i zaakceptowane wnioski urlopowe wszystkich pracowników w zespole. Możesz filtrować kalendarz według konkretnego pracownika lub działu, co ułatwia planowanie i koordynację urlopów w zespole. Widzisz wszystkie zatwierdzone wnioski urlopowe i nieobecności, co pomaga w zarządzaniu dostępnością pracowników i unikaniu konfliktów terminów. W tej sekcji również dostępny jest Asystent terminu urlopu, który automatycznie sprawdza wybrany termin pod kątem nieobecności i świąt.'
+				: 'In the "Vacation plans" section, you can see plans and accepted leave requests of all employees in the team. You can filter the calendar by a specific employee or department, which facilitates planning and coordinating leaves in the team. You see all approved leave requests and absences, which helps manage employee availability and avoid date conflicts. This section also includes the Leave date assistant, which automatically checks the selected period for absences and holidays.'
 		}
 	]
 
@@ -527,15 +594,71 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								borderTop: '1px solid #e5e7eb',
 								animation: 'fadeIn 0.3s ease'
 							}}>
-								<p style={{
-									margin: '0 0 16px 0',
-									color: '#374151',
-									fontSize: '15px',
-									lineHeight: '1.6',
-									whiteSpace: 'pre-line'
-								}}>
-									{section.content}
-								</p>
+								<div style={{ marginBottom: '16px' }}>
+									{formatTutorialContent(section.content).map((block, blockIndex) => (
+										block.type === 'list' ? (
+											<ul
+												key={`${section.id}-list-${blockIndex}`}
+												style={{
+													margin: blockIndex === 0 ? '0 0 12px 0' : '6px 0 12px 0',
+													padding: 0,
+													listStyle: 'none'
+												}}
+											>
+												{block.items.map((item, itemIndex) => (
+													<li
+														key={`${section.id}-list-item-${blockIndex}-${itemIndex}`}
+														style={{
+															display: 'flex',
+															alignItems: 'flex-start',
+															gap: '8px',
+															color: '#374151',
+															fontSize: '15px',
+															lineHeight: '1.7',
+															marginBottom: '6px'
+														}}
+													>
+														<span style={{ color: '#4b5563', fontWeight: '600' }}>-</span>
+														<span>{item}</span>
+													</li>
+												))}
+											</ul>
+										) : (
+											<p
+												key={`${section.id}-text-${blockIndex}`}
+												style={{
+													margin: blockIndex === 0 ? '0 0 12px 0' : '6px 0 12px 0',
+													color: '#374151',
+													fontSize: '15px',
+													lineHeight: '1.7'
+												}}
+											>
+												{block.text}
+											</p>
+										)
+									))}
+								</div>
+								{section.externalLink && (
+									<a
+										href={section.externalLink}
+										target="_blank"
+										rel="noopener noreferrer"
+										onClick={(e) => e.stopPropagation()}
+										style={{
+											display: 'inline-flex',
+											alignItems: 'center',
+											gap: '6px',
+											marginBottom: '16px',
+											color: '#2563eb',
+											textDecoration: 'underline',
+											fontWeight: '600',
+											fontSize: '14px'
+										}}
+									>
+										{section.externalLinkLabel || section.externalLink}
+										<span aria-hidden="true">→</span>
+									</a>
+								)}
 								{section.securityReminder && (
 									<div style={{
 										marginBottom: '16px',

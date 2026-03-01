@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
     firstLoginAt: {
         type: Date,
         default: null
+    },
+    announcementsLastSeenAt: {
+        type: Date,
+        default: null
     }
 }, { collection: 'users' });
 

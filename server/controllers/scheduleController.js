@@ -2,6 +2,108 @@ const { firmDb } = require('../db/db')
 const Schedule = require('../models/Schedule')(firmDb)
 const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
+const { emitScheduleUpdated } = require('../utils/scheduleRealtime')
+const { canSupervisorManageSchedule } = require('../services/roleService')
+const { autoGenerateScheduleMonth } = require('../services/scheduleAutoPlannerService')
+
+const normalizeDepartments = (departmentValue) =>
+	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
+
+const canAccessSchedule = (schedule, user) => {
+	if (!schedule || !user || !user.teamId) return false
+	if (user.teamId.toString() !== schedule.teamId.toString()) return false
+
+	const roles = Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : [])
+	const isAdmin = roles.includes('Admin')
+	const isHR = roles.includes('HR')
+	if (isAdmin || isHR) return true
+
+	if (schedule.type === 'team') return true
+	if (schedule.type === 'department') {
+		const userDepartments = normalizeDepartments(user.department)
+		return userDepartments.includes(schedule.departmentName)
+	}
+	if (schedule.type === 'custom') {
+		return schedule.members && schedule.members.some(memberId => memberId.toString() === user._id.toString())
+	}
+
+	return false
+}
+
+const parseDateInput = (value) => {
+	if (!value) return null
+	if (value instanceof Date) return value
+	if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+		const [year, month, day] = value.split('-').map(Number)
+		return new Date(year, month - 1, day)
+	}
+	return new Date(value)
+}
+
+const isWeekendDate = (dateValue) => {
+	const date = parseDateInput(dateValue)
+	if (!date || Number.isNaN(date.getTime())) return false
+	const day = date.getDay()
+	return day === 0 || day === 6
+}
+
+const normalizeTime = (timeValue) => {
+	if (!timeValue || typeof timeValue !== 'string') return null
+	const trimmed = timeValue.trim()
+	const match = trimmed.match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/)
+	if (!match) return null
+	return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+}
+
+const timeToMinutes = (timeValue) => {
+	const normalized = normalizeTime(timeValue)
+	if (!normalized) return null
+	const [hours, minutes] = normalized.split(':').map(Number)
+	return hours * 60 + minutes
+}
+
+const normalizeAvailabilityWindows = (timeWindows) => {
+	if (!timeWindows) return []
+	if (!Array.isArray(timeWindows)) return null
+
+	const normalized = []
+	for (const window of timeWindows) {
+		const timeFrom = normalizeTime(window?.timeFrom)
+		const timeTo = normalizeTime(window?.timeTo)
+		if (!timeFrom || !timeTo) return null
+		const fromMinutes = timeToMinutes(timeFrom)
+		const toMinutes = timeToMinutes(timeTo)
+		if (fromMinutes === null || toMinutes === null || fromMinutes >= toMinutes) return null
+		normalized.push({ timeFrom, timeTo })
+	}
+
+	// Remove duplicates
+	const uniqueMap = new Map()
+	for (const window of normalized) {
+		uniqueMap.set(`${window.timeFrom}-${window.timeTo}`, window)
+	}
+	return Array.from(uniqueMap.values())
+}
+
+const canManageScheduleEntries = async (user, schedule) => {
+	if (!user || !schedule) return false
+	const isAdmin = user.roles && user.roles.includes('Admin')
+	const isHR = user.roles && user.roles.includes('HR')
+	if (isAdmin || isHR) {
+		return user.teamId.toString() === schedule.teamId.toString()
+	}
+
+	const isCreator =
+		schedule.type === 'custom' &&
+		schedule.createdBy &&
+		schedule.createdBy.toString() === user._id.toString()
+	if (isCreator) {
+		return user.teamId.toString() === schedule.teamId.toString()
+	}
+
+	return canSupervisorManageSchedule(user, schedule)
+}
 
 // Helper function to create schedule for department
 exports.createScheduleForDepartment = async (teamId, departmentName) => {
@@ -227,36 +329,221 @@ exports.getScheduleEntries = async (req, res) => {
 			return res.status(404).json({ message: 'User not found' })
 		}
 
-		// Check access (same as getSchedule)
-		if (schedule.type === 'team') {
-			if (user.teamId.toString() !== schedule.teamId.toString()) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (schedule.type === 'department') {
-			const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-			if (!userDepartments.includes(schedule.departmentName)) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (schedule.type === 'custom') {
-			const isMember = schedule.members && schedule.members.some(memberId => memberId.toString() === userId.toString())
-			if (!isMember) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
+		if (!canAccessSchedule(schedule, user)) {
+			return res.status(403).json({ message: 'Access denied' })
 		}
 
 		// Filter days for the specified month and year
 		const targetMonth = parseInt(month)
 		const targetYear = parseInt(year)
 		
-		const filteredDays = schedule.days.filter(day => {
+		let filteredDays = schedule.days.filter(day => {
 			const dayDate = new Date(day.date)
 			return dayDate.getMonth() === targetMonth && dayDate.getFullYear() === targetYear
 		})
+
+		const canViewDraftEntries = await canManageScheduleEntries(user, schedule)
+		if (!canViewDraftEntries) {
+			filteredDays = filteredDays.map((day) => ({
+				...day.toObject(),
+				entries: (day.entries || []).filter((entry) => entry.isPublished !== false)
+			}))
+		}
 
 		res.json(filteredDays)
 	} catch (error) {
 		console.error('Error getting schedule entries:', error)
 		res.status(500).json({ message: 'Error getting schedule entries' })
+	}
+}
+
+// Declare employee availability for one or multiple days
+exports.upsertAvailability = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const { dates, notes, timeWindows } = req.body
+		const userId = req.user.userId
+
+		if (!Array.isArray(dates) || dates.length === 0) {
+			return res.status(400).json({ message: 'At least one date is required' })
+		}
+
+		const validDates = dates
+			.filter(Boolean)
+			.map(dateValue => {
+				const date = parseDateInput(dateValue)
+				if (Number.isNaN(date.getTime())) return null
+				date.setHours(0, 0, 0, 0)
+				return date
+			})
+			.filter(Boolean)
+
+		if (validDates.length === 0) {
+			return res.status(400).json({ message: 'No valid dates provided' })
+		}
+
+		const normalizedTimeWindows = normalizeAvailabilityWindows(timeWindows)
+		if (normalizedTimeWindows === null) {
+			return res.status(400).json({ message: 'Invalid availability time windows' })
+		}
+
+		const [schedule, user] = await Promise.all([
+			Schedule.findById(scheduleId),
+			User.findById(userId).select('_id teamId firstName lastName username roles department')
+		])
+
+		if (!schedule) {
+			return res.status(404).json({ message: 'Schedule not found' })
+		}
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!canAccessSchedule(schedule, user)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+		if (!schedule.availabilityEnabled) {
+			return res.status(400).json({ message: 'Availability is disabled for this schedule' })
+		}
+
+		const settings = await Settings.getSettings(schedule.teamId)
+		const workOnWeekends = settings?.workOnWeekends !== false
+		if (!workOnWeekends && validDates.some((entryDate) => isWeekendDate(entryDate))) {
+			return res.status(400).json({ message: 'Cannot declare availability on weekends because team does not work on weekends.' })
+		}
+
+		const employeeName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Pracownik'
+		const cleanNotes = typeof notes === 'string' ? notes.trim().slice(0, 500) : ''
+		const now = new Date()
+
+		validDates.forEach((entryDate) => {
+			const dayIndex = schedule.days.findIndex((day) => {
+				const dayDate = new Date(day.date)
+				dayDate.setHours(0, 0, 0, 0)
+				return dayDate.getTime() === entryDate.getTime()
+			})
+
+			if (dayIndex === -1) {
+				schedule.days.push({
+					date: entryDate,
+					availabilities: [{
+						employeeId: user._id,
+						employeeName,
+						notes: cleanNotes,
+						timeWindows: normalizedTimeWindows,
+						declaredAt: now,
+						updatedAt: now
+					}],
+					entries: []
+				})
+				return
+			}
+
+			if (!Array.isArray(schedule.days[dayIndex].availabilities)) {
+				schedule.days[dayIndex].availabilities = []
+			}
+
+			const availabilityIndex = schedule.days[dayIndex].availabilities.findIndex(
+				(availability) => availability.employeeId.toString() === user._id.toString()
+			)
+
+			if (availabilityIndex === -1) {
+				schedule.days[dayIndex].availabilities.push({
+					employeeId: user._id,
+					employeeName,
+					notes: cleanNotes,
+					timeWindows: normalizedTimeWindows,
+					declaredAt: now,
+					updatedAt: now
+				})
+			} else {
+				schedule.days[dayIndex].availabilities[availabilityIndex].employeeName = employeeName
+				schedule.days[dayIndex].availabilities[availabilityIndex].notes = cleanNotes
+				schedule.days[dayIndex].availabilities[availabilityIndex].timeWindows = normalizedTimeWindows
+				schedule.days[dayIndex].availabilities[availabilityIndex].updatedAt = now
+			}
+		})
+
+		await schedule.save()
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'availability-updated'
+		})
+
+		res.json({ message: 'Availability saved successfully' })
+	} catch (error) {
+		console.error('Error upserting availability:', error)
+		res.status(500).json({ message: 'Error saving availability' })
+	}
+}
+
+exports.deleteAvailability = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const { date } = req.query
+		const userId = req.user.userId
+
+		if (!date) {
+			return res.status(400).json({ message: 'Date is required' })
+		}
+
+		const targetDate = parseDateInput(date)
+		if (Number.isNaN(targetDate.getTime())) {
+			return res.status(400).json({ message: 'Invalid date' })
+		}
+		targetDate.setHours(0, 0, 0, 0)
+
+		const [schedule, user] = await Promise.all([
+			Schedule.findById(scheduleId),
+			User.findById(userId).select('_id teamId roles department')
+		])
+
+		if (!schedule) {
+			return res.status(404).json({ message: 'Schedule not found' })
+		}
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!canAccessSchedule(schedule, user)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+
+		const dayIndex = schedule.days.findIndex((day) => {
+			const dayDate = new Date(day.date)
+			dayDate.setHours(0, 0, 0, 0)
+			return dayDate.getTime() === targetDate.getTime()
+		})
+
+		if (dayIndex === -1 || !Array.isArray(schedule.days[dayIndex].availabilities)) {
+			return res.status(404).json({ message: 'Availability not found' })
+		}
+
+		const beforeCount = schedule.days[dayIndex].availabilities.length
+		schedule.days[dayIndex].availabilities = schedule.days[dayIndex].availabilities.filter(
+			(availability) => availability.employeeId.toString() !== user._id.toString()
+		)
+
+		if (beforeCount === schedule.days[dayIndex].availabilities.length) {
+			return res.status(404).json({ message: 'Availability not found' })
+		}
+
+		if (
+			schedule.days[dayIndex].entries.length === 0 &&
+			schedule.days[dayIndex].availabilities.length === 0
+		) {
+			schedule.days.splice(dayIndex, 1)
+		}
+
+		await schedule.save()
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'availability-removed'
+		})
+		res.json({ message: 'Availability removed successfully' })
+	} catch (error) {
+		console.error('Error deleting availability:', error)
+		res.status(500).json({ message: 'Error removing availability' })
 	}
 }
 
@@ -285,11 +572,16 @@ exports.upsertScheduleEntry = async (req, res) => {
 		// Check permissions
 		const isAdmin = user.roles && user.roles.includes('Admin')
 		const isHR = user.roles && user.roles.includes('HR')
-		const { canSupervisorManageSchedule } = require('../services/roleService')
 		const schedule = await Schedule.findById(scheduleId)
 		
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
+		}
+
+		const settings = await Settings.getSettings(schedule.teamId)
+		const workOnWeekends = settings?.workOnWeekends !== false
+		if (!workOnWeekends && isWeekendDate(date)) {
+			return res.status(400).json({ message: 'Cannot add schedule entries on weekends because team does not work on weekends.' })
 		}
 
 		// Sprawdź czy użytkownik jest twórcą niestandardowego grafiku
@@ -368,13 +660,16 @@ exports.upsertScheduleEntry = async (req, res) => {
 			timeFrom: timeFrom,
 			timeTo: timeTo,
 			createdBy: userId,
-			notes: notes || null
+			notes: notes || null,
+			isPublished: true,
+			autoGenerated: false
 		}
 
 		if (dayIndex === -1) {
 			// Create new day entry
 			schedule.days.push({
 				date: entryDate,
+				availabilities: [],
 				entries: [newEntry]
 			})
 		} else {
@@ -388,6 +683,285 @@ exports.upsertScheduleEntry = async (req, res) => {
 	} catch (error) {
 		console.error('Error upserting schedule entry:', error)
 		res.status(500).json({ message: 'Error adding schedule entry' })
+	}
+}
+
+exports.autoGenerateMonthEntries = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const {
+			year,
+			month,
+			timeFrom,
+			timeTo,
+			minEmployeesPerDay,
+			shifts = [],
+			dayOverrides = [],
+			manualExclusions = [],
+			allowMultipleShiftsPerDay = false,
+			notes,
+			preferAvailability = true,
+			strictAvailability = false,
+		} = req.body
+
+		const hasStructuredShifts = Array.isArray(shifts) && shifts.length > 0
+		if (!year || !month || (!hasStructuredShifts && (!timeFrom || !timeTo || !minEmployeesPerDay))) {
+			return res.status(400).json({ message: 'Missing required fields for auto-generation' })
+		}
+
+		const parsedYear = Number(year)
+		const parsedMonth = Number(month)
+		const parsedMinEmployees = hasStructuredShifts ? 1 : Number(minEmployeesPerDay)
+		if (
+			Number.isNaN(parsedYear) ||
+			Number.isNaN(parsedMonth) ||
+			(!hasStructuredShifts && Number.isNaN(parsedMinEmployees)) ||
+			parsedMonth < 1 ||
+			parsedMonth > 12 ||
+			parsedMinEmployees < 1
+		) {
+			return res.status(400).json({ message: 'Invalid auto-generation parameters' })
+		}
+
+		const userId = req.user.userId
+		const [user, schedule] = await Promise.all([
+			User.findById(userId),
+			Schedule.findById(scheduleId)
+		])
+
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!schedule) {
+			return res.status(404).json({ message: 'Schedule not found' })
+		}
+
+		const isAdmin = user.roles && user.roles.includes('Admin')
+		const isHR = user.roles && user.roles.includes('HR')
+		const isCreator = schedule.type === 'custom' && schedule.createdBy && schedule.createdBy.toString() === userId.toString()
+
+		if (isAdmin || isHR) {
+			if (user.teamId.toString() !== schedule.teamId.toString()) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
+		} else if (isCreator) {
+			if (user.teamId.toString() !== schedule.teamId.toString()) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
+		} else {
+			const canManage = await canSupervisorManageSchedule(user, schedule)
+			if (!canManage) {
+				return res.status(403).json({ message: 'Access denied. You do not have permission to auto-generate this schedule.' })
+			}
+		}
+
+		const settings = await Settings.getSettings(schedule.teamId)
+		const workOnWeekends = settings?.workOnWeekends !== false
+		const summary = await autoGenerateScheduleMonth({
+			schedule,
+			currentUserId: userId,
+			year: parsedYear,
+			month: parsedMonth,
+			timeFrom,
+			timeTo,
+			minEmployeesPerDay: parsedMinEmployees,
+			shifts,
+			dayOverrides,
+			manualExclusions,
+			allowMultipleShiftsPerDay: Boolean(allowMultipleShiftsPerDay),
+			notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
+			preferAvailability: Boolean(preferAvailability),
+			strictAvailability: Boolean(strictAvailability),
+			workOnWeekends
+		})
+
+		await schedule.save()
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'auto-generated'
+		})
+
+		return res.json({
+			message: 'Schedule auto-generation completed. Generated entries are saved as draft until published.',
+			summary
+		})
+	} catch (error) {
+		console.error('Error auto-generating schedule month:', error)
+		return res.status(500).json({ message: 'Error auto-generating schedule month' })
+	}
+}
+
+exports.publishMonthDraftEntries = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const { year, month } = req.body
+		const parsedYear = Number(year)
+		const parsedMonth = Number(month)
+		if (
+			Number.isNaN(parsedYear) ||
+			Number.isNaN(parsedMonth) ||
+			parsedMonth < 1 ||
+			parsedMonth > 12
+		) {
+			return res.status(400).json({ message: 'Invalid month or year' })
+		}
+
+		const userId = req.user.userId
+		const [user, schedule] = await Promise.all([
+			User.findById(userId),
+			Schedule.findById(scheduleId)
+		])
+
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!schedule) {
+			return res.status(404).json({ message: 'Schedule not found' })
+		}
+
+		const canManage = await canManageScheduleEntries(user, schedule)
+		if (!canManage) {
+			return res.status(403).json({ message: 'Access denied. You do not have permission to publish draft entries.' })
+		}
+
+		const monthPrefix = `${parsedYear}-${String(parsedMonth).padStart(2, '0')}`
+		let publishedEntries = 0
+		let touchedDays = 0
+
+		for (const day of schedule.days) {
+			const dayDate = new Date(day.date)
+			const dayKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`
+			if (!dayKey.startsWith(monthPrefix)) continue
+			let dayUpdated = false
+			for (const entry of day.entries || []) {
+				if (entry.isPublished === false) {
+					entry.isPublished = true
+					publishedEntries += 1
+					dayUpdated = true
+				}
+			}
+			if (dayUpdated) touchedDays += 1
+		}
+
+		await schedule.save()
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'month-published'
+		})
+
+		return res.json({
+			message: 'Draft schedule entries published successfully',
+			summary: {
+				publishedEntries,
+				touchedDays,
+				year: parsedYear,
+				month: parsedMonth
+			}
+		})
+	} catch (error) {
+		console.error('Error publishing schedule month draft entries:', error)
+		return res.status(500).json({ message: 'Error publishing schedule month draft entries' })
+	}
+}
+
+exports.clearMonthEntries = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const { year, month } = req.body
+		const parsedYear = Number(year)
+		const parsedMonth = Number(month)
+		if (
+			Number.isNaN(parsedYear) ||
+			Number.isNaN(parsedMonth) ||
+			parsedMonth < 1 ||
+			parsedMonth > 12
+		) {
+			return res.status(400).json({ message: 'Invalid month or year' })
+		}
+
+		const userId = req.user.userId
+		const [user, schedule] = await Promise.all([
+			User.findById(userId),
+			Schedule.findById(scheduleId)
+		])
+
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!schedule) {
+			return res.status(404).json({ message: 'Schedule not found' })
+		}
+
+		const isAdmin = user.roles && user.roles.includes('Admin')
+		const isHR = user.roles && user.roles.includes('HR')
+		const isCreator = schedule.type === 'custom' && schedule.createdBy && schedule.createdBy.toString() === userId.toString()
+
+		if (isAdmin || isHR) {
+			if (user.teamId.toString() !== schedule.teamId.toString()) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
+		} else if (isCreator) {
+			if (user.teamId.toString() !== schedule.teamId.toString()) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
+		} else {
+			const canManage = await canSupervisorManageSchedule(user, schedule)
+			if (!canManage) {
+				return res.status(403).json({ message: 'Access denied. You do not have permission to clear this schedule month.' })
+			}
+		}
+
+		const monthPrefix = `${parsedYear}-${String(parsedMonth).padStart(2, '0')}`
+		let removedEntries = 0
+		let touchedDays = 0
+
+		schedule.days = schedule.days
+			.map((day) => {
+				const dayKey = (() => {
+					const dayDate = new Date(day.date)
+					const y = dayDate.getFullYear()
+					const m = String(dayDate.getMonth() + 1).padStart(2, '0')
+					const d = String(dayDate.getDate()).padStart(2, '0')
+					return `${y}-${m}-${d}`
+				})()
+
+				if (!dayKey.startsWith(monthPrefix)) return day
+
+				const before = Array.isArray(day.entries) ? day.entries.length : 0
+				removedEntries += before
+				if (before > 0) touchedDays += 1
+				return {
+					...day.toObject(),
+					entries: []
+				}
+			})
+			.filter((day) => {
+				const hasEntries = Array.isArray(day.entries) && day.entries.length > 0
+				const hasAvailabilities = Array.isArray(day.availabilities) && day.availabilities.length > 0
+				return hasEntries || hasAvailabilities
+			})
+
+		await schedule.save()
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'month-cleared'
+		})
+
+		return res.json({
+			message: 'Schedule month entries cleared successfully',
+			summary: {
+				removedEntries,
+				touchedDays,
+				year: parsedYear,
+				month: parsedMonth
+			}
+		})
+	} catch (error) {
+		console.error('Error clearing schedule month entries:', error)
+		return res.status(500).json({ message: 'Error clearing schedule month entries' })
 	}
 }
 
@@ -429,7 +1003,6 @@ exports.deleteScheduleEntry = async (req, res) => {
 			}
 		} else {
 			// Dla przełożonego sprawdź uprawnienia przez canSupervisorManageSchedule
-			const { canSupervisorManageSchedule } = require('../services/roleService')
 			const canManage = await canSupervisorManageSchedule(user, schedule)
 			if (!canManage) {
 				return res.status(403).json({ message: 'Access denied. Only Admin, HR, supervisor with proper permissions, or schedule creator can delete schedule entries.' })
@@ -458,8 +1031,8 @@ exports.deleteScheduleEntry = async (req, res) => {
 				day.entries.splice(entryIndex, 1)
 				entryFound = true
 				
-				// Remove day if no entries left
-				if (day.entries.length === 0) {
+				// Remove day only when both entries and availabilities are empty
+				if (day.entries.length === 0 && (!Array.isArray(day.availabilities) || day.availabilities.length === 0)) {
 					schedule.days.splice(i, 1)
 				}
 				break
@@ -570,7 +1143,7 @@ exports.getScheduleUsers = async (req, res) => {
 // Create custom schedule
 exports.createSchedule = async (req, res) => {
 	try {
-		const { name, memberIds } = req.body
+		const { name, memberIds, availabilityEnabled } = req.body
 		const userId = req.user.userId
 		const user = await User.findById(userId)
 		
@@ -580,6 +1153,19 @@ exports.createSchedule = async (req, res) => {
 
 		if (!name || !name.trim()) {
 			return res.status(400).json({ message: 'Schedule name is required' })
+		}
+
+		const roles = Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : [])
+		const isAdmin = roles.includes('Admin')
+		const isHR = roles.includes('HR')
+		let canCreateCustomSchedule = isAdmin || isHR
+
+		if (!canCreateCustomSchedule && roles.includes('Przełożony (Supervisor)')) {
+			canCreateCustomSchedule = await canSupervisorManageSchedule(user)
+		}
+
+		if (!canCreateCustomSchedule) {
+			return res.status(403).json({ message: 'Access denied. Only Admin, HR or authorized supervisor can create schedule.' })
 		}
 
 		// Ensure creator is included in members
@@ -603,6 +1189,7 @@ exports.createSchedule = async (req, res) => {
 			name: name.trim(),
 			teamId: user.teamId,
 			type: 'custom',
+			availabilityEnabled: !!availabilityEnabled,
 			members: members,
 			createdBy: userId,
 			days: []

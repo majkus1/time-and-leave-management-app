@@ -5,6 +5,71 @@ const User = require('../models/user')(firmDb)
 const Department = require('../models/Department')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const { sendChatNotification } = require('../services/pushNotificationService')
+const fs = require('fs').promises
+const path = require('path')
+const mongoose = require('mongoose')
+
+const hasUserInMembers = (members, userId) =>
+	Array.isArray(members) && members.some(m => m?.toString() === userId?.toString())
+
+const userHasAccessToChannel = (channel, user) => {
+	if (!channel || !user) return false
+	const userId = user._id?.toString()
+	if (!userId) return false
+
+	if (channel.type === 'department') {
+		const userDepartments = Array.isArray(user.department)
+			? user.department
+			: (user.department ? [user.department] : [])
+		return userDepartments.includes(channel.departmentName)
+	}
+
+	if (channel.type === 'private') {
+		return hasUserInMembers(channel.members, userId)
+	}
+
+	if (channel.type === 'general') {
+		if (channel.isTeamChannel) return true
+		return hasUserInMembers(channel.members, userId)
+	}
+
+	return false
+}
+
+const cleanupUploadedFiles = async (files = []) => {
+	if (!Array.isArray(files) || files.length === 0) return
+
+	await Promise.allSettled(
+		files.map(async (file) => {
+			if (!file?.filename) return
+			const filePath = path.join(__dirname, '..', 'uploads', file.filename)
+			await fs.unlink(filePath)
+		})
+	)
+}
+
+const cleanupStoredAttachments = async (attachments = []) => {
+	if (!Array.isArray(attachments) || attachments.length === 0) return
+
+	await Promise.allSettled(
+		attachments.map(async (attachment) => {
+			if (!attachment?.path) return
+			const filePath = path.join(__dirname, '..', 'uploads', attachment.path)
+			await fs.unlink(filePath)
+		})
+	)
+}
+
+const messagePopulateConfig = {
+	path: 'userId',
+	select: 'firstName lastName username',
+	match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+}
+
+const getPopulatedMessageById = async (messageId) => {
+	if (!mongoose.Types.ObjectId.isValid(messageId)) return null
+	return Message.findById(messageId).populate(messagePopulateConfig)
+}
 
 // Helper function to create channels automatically
 exports.createChannelForDepartment = async (teamId, departmentName) => {
@@ -258,26 +323,8 @@ exports.getChannelMessages = async (req, res) => {
 		}
 
 		// Check access
-		if (channel.type === 'department') {
-			const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-			if (!userDepartments.includes(channel.departmentName)) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (channel.type === 'private') {
-			if (!channel.members || !channel.members.includes(req.user.userId)) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (channel.type === 'general') {
-			// Check if this is the automatic team channel or a custom general channel
-			// Automatic team channel (isTeamChannel: true) - accessible to all team members
-			if (channel.isTeamChannel) {
-				// Allow access
-			} else {
-				// Custom general channel - only accessible to members
-				if (!channel.members || !channel.members.some(m => m.toString() === req.user.userId)) {
-					return res.status(403).json({ message: 'Access denied' })
-				}
-			}
+		if (!userHasAccessToChannel(channel, user)) {
+			return res.status(403).json({ message: 'Access denied' })
 		}
 
 		// Get messages
@@ -318,51 +365,53 @@ exports.getChannelMessages = async (req, res) => {
 // Send a message
 exports.sendMessage = async (req, res) => {
 	try {
-		const { channelId, content } = req.body
+		const { channelId } = req.body
+		const rawContent = typeof req.body?.content === 'string' ? req.body.content : ''
+		const trimmedContent = rawContent.trim()
+		const uploadedFiles = Array.isArray(req.files) ? req.files : []
 
-		if (!content || !content.trim()) {
-			return res.status(400).json({ message: 'Message content is required' })
+		if (!channelId) {
+			await cleanupUploadedFiles(uploadedFiles)
+			return res.status(400).json({ message: 'Channel ID is required' })
+		}
+
+		if (!trimmedContent && uploadedFiles.length === 0) {
+			await cleanupUploadedFiles(uploadedFiles)
+			return res.status(400).json({ message: 'Message content or attachment is required' })
 		}
 
 		// Verify user has access to this channel
 		const channel = await Channel.findById(channelId)
 		if (!channel) {
+			await cleanupUploadedFiles(uploadedFiles)
 			return res.status(404).json({ message: 'Channel not found' })
 		}
 
 		const user = await User.findById(req.user.userId)
 		if (!user) {
+			await cleanupUploadedFiles(uploadedFiles)
 			return res.status(404).json({ message: 'User not found' })
 		}
 
 		// Check access
-		if (channel.type === 'department') {
-			const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-			if (!userDepartments.includes(channel.departmentName)) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (channel.type === 'private') {
-			if (!channel.members || !channel.members.includes(req.user.userId)) {
-				return res.status(403).json({ message: 'Access denied' })
-			}
-		} else if (channel.type === 'general') {
-			// Check if this is the automatic team channel or a custom general channel
-			// Automatic team channel (isTeamChannel: true) - accessible to all team members
-			if (channel.isTeamChannel) {
-				// Allow access
-			} else {
-				// Custom general channel - only accessible to members
-				if (!channel.members || !channel.members.some(m => m.toString() === req.user.userId)) {
-					return res.status(403).json({ message: 'Access denied' })
-				}
-			}
+		if (!userHasAccessToChannel(channel, user)) {
+			await cleanupUploadedFiles(uploadedFiles)
+			return res.status(403).json({ message: 'Access denied' })
 		}
+
+		const attachments = uploadedFiles.map(file => ({
+			filename: file.originalname,
+			path: file.filename,
+			mimeType: file.mimetype,
+			size: file.size
+		}))
 
 		// Create message
 		const message = new Message({
 			channelId,
 			userId: req.user.userId,
-			content: content.trim(),
+			content: trimmedContent,
+			attachments,
 			readBy: [{
 				userId: req.user.userId,
 				readAt: new Date()
@@ -370,11 +419,7 @@ exports.sendMessage = async (req, res) => {
 		})
 
 		await message.save()
-		await message.populate({
-			path: 'userId',
-			select: 'firstName lastName username',
-			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-		})
+		await message.populate(messagePopulateConfig)
 
 		// Emit socket event for real-time update
 		if (req.app && req.app.io) {
@@ -435,8 +480,98 @@ exports.sendMessage = async (req, res) => {
 
 		res.status(201).json(message)
 	} catch (error) {
+		await cleanupUploadedFiles(req.files)
 		console.error('Error sending message:', error)
 		res.status(500).json({ message: 'Failed to send message' })
+	}
+}
+
+// Edit own message
+exports.updateMessage = async (req, res) => {
+	try {
+		const { messageId } = req.params
+		const rawContent = typeof req.body?.content === 'string' ? req.body.content : ''
+		const trimmedContent = rawContent.trim()
+
+		const message = await Message.findById(messageId)
+		if (!message) {
+			return res.status(404).json({ message: 'Message not found' })
+		}
+
+		if (message.userId.toString() !== req.user.userId.toString()) {
+			return res.status(403).json({ message: 'You can only edit your own messages' })
+		}
+
+		if (message.isDeleted) {
+			return res.status(400).json({ message: 'Deleted message cannot be edited' })
+		}
+
+		const hasAttachments = Array.isArray(message.attachments) && message.attachments.length > 0
+		if (!trimmedContent && !hasAttachments) {
+			return res.status(400).json({ message: 'Message content is required' })
+		}
+
+		message.content = trimmedContent
+		message.isEdited = true
+		message.editedAt = new Date()
+		await message.save()
+
+		const populatedMessage = await getPopulatedMessageById(message._id)
+		if (!populatedMessage) {
+			return res.status(500).json({ message: 'Failed to load updated message' })
+		}
+
+		if (req.app?.io) {
+			req.app.io.to(`channel:${message.channelId}`).emit('message-updated', populatedMessage.toObject())
+		}
+
+		res.json(populatedMessage)
+	} catch (error) {
+		console.error('Error updating message:', error)
+		res.status(500).json({ message: 'Failed to update message' })
+	}
+}
+
+// Delete own message (soft delete)
+exports.deleteMessage = async (req, res) => {
+	try {
+		const { messageId } = req.params
+		const message = await Message.findById(messageId)
+
+		if (!message) {
+			return res.status(404).json({ message: 'Message not found' })
+		}
+
+		if (message.userId.toString() !== req.user.userId.toString()) {
+			return res.status(403).json({ message: 'You can only delete your own messages' })
+		}
+
+		if (message.isDeleted) {
+			return res.status(400).json({ message: 'Message already deleted' })
+		}
+
+		await cleanupStoredAttachments(message.attachments || [])
+		message.attachments = []
+		message.content = ''
+		message.isDeleted = true
+		message.deletedAt = new Date()
+		message.isEdited = false
+		message.editedAt = null
+		await message.save()
+
+		const populatedMessage = await getPopulatedMessageById(message._id)
+		if (!populatedMessage) {
+			return res.status(500).json({ message: 'Failed to load deleted message' })
+		}
+
+		if (req.app?.io) {
+			req.app.io.to(`channel:${message.channelId}`).emit('message-deleted', populatedMessage.toObject())
+		}
+
+		res.json({ message: 'Message deleted successfully', data: populatedMessage })
+	} catch (error) {
+		console.error('Error deleting message:', error)
+		res.status(500).json({ message: 'Failed to delete message' })
 	}
 }
 

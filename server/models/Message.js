@@ -13,9 +13,44 @@ const messageSchema = new mongoose.Schema({
 	},
 	content: {
 		type: String,
-		required: true,
+		required: false,
+		default: '',
 		trim: true,
 		maxlength: 2000
+	},
+	attachments: [{
+		filename: {
+			type: String,
+			required: true
+		},
+		path: {
+			type: String,
+			required: true
+		},
+		mimeType: {
+			type: String,
+			required: true
+		},
+		size: {
+			type: Number,
+			required: true
+		}
+	}],
+	isEdited: {
+		type: Boolean,
+		default: false
+	},
+	editedAt: {
+		type: Date,
+		default: null
+	},
+	isDeleted: {
+		type: Boolean,
+		default: false
+	},
+	deletedAt: {
+		type: Date,
+		default: null
 	},
 	readBy: [{
 		userId: {

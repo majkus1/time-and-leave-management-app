@@ -9,8 +9,17 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import Modal from 'react-modal'
-import { useSchedule, useScheduleEntries, useUpsertScheduleEntry, useDeleteScheduleEntry } from '../../hooks/useSchedule'
-import { useUsers } from '../../hooks/useUsers'
+import {
+	useSchedule,
+	useScheduleEntries,
+	useUpsertScheduleEntry,
+	useDeleteScheduleEntry,
+	useUpsertScheduleAvailability,
+	useDeleteScheduleAvailability,
+	useAutoGenerateScheduleMonth,
+	useClearScheduleMonth,
+	usePublishScheduleMonth
+} from '../../hooks/useSchedule'
 import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
@@ -87,10 +96,32 @@ function Schedule() {
 	const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
 	const [selectedEmployeeName, setSelectedEmployeeName] = useState('')
 	const [notes, setNotes] = useState('')
+	const [showOnlyAvailableEmployees, setShowOnlyAvailableEmployees] = useState(true)
+	const [availabilityFromDate, setAvailabilityFromDate] = useState('')
+	const [availabilityToDate, setAvailabilityToDate] = useState('')
+	const [availabilityNotes, setAvailabilityNotes] = useState('')
+	const [availabilityTimeWindows, setAvailabilityTimeWindows] = useState([])
+	const [isAutoGenerateModalOpen, setIsAutoGenerateModalOpen] = useState(false)
+	const [autoGenerateMonth, setAutoGenerateMonth] = useState(new Date().getMonth() + 1)
+	const [autoGenerateYear, setAutoGenerateYear] = useState(new Date().getFullYear())
+	const [autoShiftRows, setAutoShiftRows] = useState([
+		{ id: `shift-${Date.now()}`, timeFrom: '08:00', timeTo: '16:00', minEmployees: 2, weekdays: [1, 2, 3, 4, 5] }
+	])
+	const [autoDayOverrideRows, setAutoDayOverrideRows] = useState([])
+	const [autoManualExclusionRows, setAutoManualExclusionRows] = useState([])
+	const [autoAllowMultipleShiftsPerDay, setAutoAllowMultipleShiftsPerDay] = useState(false)
+	const [autoGenerateNotes, setAutoGenerateNotes] = useState('')
+	const [autoPreferAvailability, setAutoPreferAvailability] = useState(true)
+	const [autoStrictAvailability, setAutoStrictAvailability] = useState(false)
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(null)
 	const calendarRef = useRef(null)
 	const upsertEntryMutation = useUpsertScheduleEntry()
 	const deleteEntryMutation = useDeleteScheduleEntry()
+	const upsertAvailabilityMutation = useUpsertScheduleAvailability()
+	const deleteAvailabilityMutation = useDeleteScheduleAvailability()
+	const autoGenerateMutation = useAutoGenerateScheduleMonth()
+	const clearScheduleMonthMutation = useClearScheduleMonth()
+	const publishScheduleMonthMutation = usePublishScheduleMonth()
 	
 	// Color management for employees - generate stable colors based on name
 	const colorsRef = useRef({})
@@ -119,12 +150,27 @@ function Schedule() {
 	)
 	const { data: allAcceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAllAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
+	const isAvailabilityEnabled = schedule?.availabilityEnabled === true
+	const draftEntriesCountCurrentMonth = React.useMemo(
+		() =>
+			(Array.isArray(scheduleEntries) ? scheduleEntries : []).reduce((sum, day) => {
+				const dayEntries = Array.isArray(day?.entries) ? day.entries : []
+				return sum + dayEntries.filter((entry) => entry?.isPublished === false).length
+			}, 0),
+		[scheduleEntries]
+	)
 
 	// Check if user can edit - uwzględnij konfigurację przełożonego i twórcę niestandardowego grafiku
 	const isSupervisorRole = isSupervisor(role)
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
+	const isManagerLikeRole = isAdminRole || isHRRole || isSupervisorRole
 	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	const [showAvailabilityForm, setShowAvailabilityForm] = useState(!isManagerLikeRole)
+
+	useEffect(() => {
+		setShowAvailabilityForm(!isManagerLikeRole)
+	}, [isManagerLikeRole, scheduleId])
 	
 	// Sprawdź czy użytkownik jest twórcą niestandardowego grafiku
 	const isCreator = React.useMemo(() => {
@@ -320,8 +366,9 @@ function Schedule() {
 			
 			return entriesToProcess.map((entry) => {
 				const employeeColor = getColorForEmployee(entry.employeeName)
+				const isDraftEntry = entry?.isPublished === false
 				return {
-					title: `${entry.employeeName} (${entry.timeFrom} - ${entry.timeTo})${entry.notes ? ` | ${entry.notes}` : ''}`,
+					title: `${entry.employeeName} (${entry.timeFrom} - ${entry.timeTo})${entry.notes ? ` | ${entry.notes}` : ''}${isDraftEntry ? ` • ${t('schedule.auto.draftBadge') || 'ROBOCZY'}` : ''}`,
 					start: day.date,
 					allDay: true,
 					backgroundColor: employeeColor,
@@ -334,7 +381,8 @@ function Schedule() {
 						employeeId: entry.employeeId,
 						timeFrom: entry.timeFrom,
 						timeTo: entry.timeTo,
-						notes: entry.notes
+						notes: entry.notes,
+						isPublished: entry.isPublished
 					}
 				}
 			})
@@ -374,6 +422,47 @@ function Schedule() {
 			return timeA - timeB
 		})
 	}, [selectedEntries])
+
+	const selectedDayAvailabilities = React.useMemo(() => {
+		if (!isAvailabilityEnabled) return []
+		if (!selectedDate || !Array.isArray(scheduleEntries)) return []
+		const normalizedSelectedDate = selectedDate.includes('T') ? selectedDate.split('T')[0] : selectedDate
+
+		const targetDay = scheduleEntries.find((day) => {
+			if (!day?.date) return false
+			const dayDate = new Date(day.date)
+			const year = dayDate.getFullYear()
+			const month = String(dayDate.getMonth() + 1).padStart(2, '0')
+			const date = String(dayDate.getDate()).padStart(2, '0')
+			return `${year}-${month}-${date}` === normalizedSelectedDate
+		})
+
+		return Array.isArray(targetDay?.availabilities) ? targetDay.availabilities : []
+	}, [selectedDate, scheduleEntries, isAvailabilityEnabled])
+
+	const availableEmployeeIds = React.useMemo(
+		() => selectedDayAvailabilities.map((availability) => availability.employeeId?.toString()).filter(Boolean),
+		[selectedDayAvailabilities]
+	)
+
+	const filteredUsersForEntry = React.useMemo(() => {
+		if (!isAvailabilityEnabled) return users
+		if (!showOnlyAvailableEmployees || availableEmployeeIds.length === 0) {
+			return users
+		}
+		return users.filter((user) => availableEmployeeIds.includes(user._id?.toString()))
+	}, [users, showOnlyAvailableEmployees, availableEmployeeIds, isAvailabilityEnabled])
+
+	const myAvailabilityForSelectedDate = React.useMemo(() => {
+		const currentUserId = userId?.toString()
+		if (!currentUserId) return null
+		return selectedDayAvailabilities.find((availability) => availability.employeeId?.toString() === currentUserId) || null
+	}, [selectedDayAvailabilities, userId])
+
+	const isSelectedDateWeekendBlocked = React.useMemo(() => {
+		if (!selectedDate) return false
+		return settings?.workOnWeekends === false && isWeekend(selectedDate)
+	}, [selectedDate, settings])
 
 	if (!schedule) {
 		return (
@@ -513,6 +602,27 @@ function Schedule() {
 		}
 		
 		setNotes('')
+		setShowOnlyAvailableEmployees(true)
+		setAvailabilityFromDate(clickedDateNormalized || '')
+		setAvailabilityToDate(clickedDateNormalized || '')
+		const currentUserId = userId?.toString()
+		const existingAvailability = entriesArray
+			.find((day) => normalizeDate(day?.date) === clickedDateNormalized)
+			?.availabilities
+			?.find((availability) => availability.employeeId?.toString() === currentUserId)
+		setAvailabilityNotes(existingAvailability?.notes || '')
+		const existingWindows = Array.isArray(existingAvailability?.timeWindows)
+			? existingAvailability.timeWindows
+			: []
+		setAvailabilityTimeWindows(
+			existingWindows.length > 0
+				? existingWindows.map((window, index) => ({
+					id: `availability-existing-${index}-${Date.now()}`,
+					timeFrom: window.timeFrom || '',
+					timeTo: window.timeTo || ''
+				}))
+				: []
+		)
 		setIsModalOpen(true)
 	}
 
@@ -558,6 +668,71 @@ function Schedule() {
 		goToSelectedDate(newMonth, newYear)
 	}
 
+	const weekdayOptions = [
+		{ value: 1, label: t('schedule.auto.weekdays.mon') || 'Pn' },
+		{ value: 2, label: t('schedule.auto.weekdays.tue') || 'Wt' },
+		{ value: 3, label: t('schedule.auto.weekdays.wed') || 'Śr' },
+		{ value: 4, label: t('schedule.auto.weekdays.thu') || 'Cz' },
+		{ value: 5, label: t('schedule.auto.weekdays.fri') || 'Pt' },
+		{ value: 6, label: t('schedule.auto.weekdays.sat') || 'Sb' },
+		{ value: 0, label: t('schedule.auto.weekdays.sun') || 'Nd' }
+	]
+
+	const createDefaultShiftRow = () => ({
+		id: `shift-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+		timeFrom: '08:00',
+		timeTo: '16:00',
+		minEmployees: 2,
+		weekdays: [1, 2, 3, 4, 5]
+	})
+
+	const createDefaultOverrideRow = () => ({
+		id: `override-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+		date: '',
+		timeFrom: '08:00',
+		timeTo: '16:00',
+		minEmployees: 2
+	})
+
+	const createDefaultManualExclusionRow = () => ({
+		id: `manual-exclusion-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+		userId: '',
+		date: '',
+		timeFrom: '',
+		timeTo: ''
+	})
+
+	const createDefaultAvailabilityWindow = () => ({
+		id: `availability-window-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+		timeFrom: '08:00',
+		timeTo: '16:00'
+	})
+
+	const openAutoGenerateModal = () => {
+		setAutoGenerateMonth(currentMonth + 1)
+		setAutoGenerateYear(currentYear)
+		if (settings?.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 0) {
+			const defaultFrom = settings.workHours[0].timeFrom || '08:00'
+			const defaultTo = settings.workHours[0].timeTo || '16:00'
+			setAutoShiftRows([{
+				id: `shift-${Date.now()}`,
+				timeFrom: defaultFrom,
+				timeTo: defaultTo,
+				minEmployees: 2,
+				weekdays: [1, 2, 3, 4, 5]
+			}])
+		} else {
+			setAutoShiftRows([createDefaultShiftRow()])
+		}
+		setAutoDayOverrideRows([])
+		setAutoManualExclusionRows([])
+		setAutoAllowMultipleShiftsPerDay(false)
+		setAutoGenerateNotes(t('schedule.auto.defaultNote') || 'Auto-plan')
+		setAutoPreferAvailability(true)
+		setAutoStrictAvailability(false)
+		setIsAutoGenerateModalOpen(true)
+	}
+
 	const goToSelectedDate = (month, year) => {
 		const calendarApi = calendarRef.current.getApi()
 		calendarApi.gotoDate(new Date(year, month, 1))
@@ -572,6 +747,312 @@ function Schedule() {
 		}
 	}
 
+	const buildDateRange = (from, to) => {
+		if (!from || !to) return []
+		const start = new Date(from)
+		const end = new Date(to)
+		if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return []
+		if (start > end) return []
+
+		const dates = []
+		const cursor = new Date(start)
+		while (cursor <= end) {
+			const year = cursor.getFullYear()
+			const month = String(cursor.getMonth() + 1).padStart(2, '0')
+			const day = String(cursor.getDate()).padStart(2, '0')
+			dates.push(`${year}-${month}-${day}`)
+			cursor.setDate(cursor.getDate() + 1)
+		}
+		return dates
+	}
+
+	const normalizeTimeInput = (timeValue) => {
+		if (!timeValue || typeof timeValue !== 'string') return null
+		const trimmed = timeValue.trim()
+		const match = trimmed.match(/^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/)
+		if (!match) return null
+		return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+	}
+
+	const timeToMinutes = (timeValue) => {
+		const normalized = normalizeTimeInput(timeValue)
+		if (!normalized) return null
+		const [hours, minutes] = normalized.split(':').map(Number)
+		return hours * 60 + minutes
+	}
+
+	const formatAvailabilityWindows = (timeWindows) => {
+		if (!Array.isArray(timeWindows) || timeWindows.length === 0) {
+			return t('schedule.availability.fullDay') || 'cały dzień'
+		}
+		return timeWindows
+			.map((window) => `${window.timeFrom} - ${window.timeTo}`)
+			.join(', ')
+	}
+
+	const handleSaveAvailability = async (e) => {
+		e.preventDefault()
+		const dates = buildDateRange(availabilityFromDate, availabilityToDate)
+		if (dates.length === 0) {
+			await showAlert(t('schedule.availability.invalidDateRange') || 'Wybierz poprawny zakres dat dyspozycyjności.')
+			return
+		}
+		if (settings?.workOnWeekends === false && dates.some((dateValue) => isWeekend(dateValue))) {
+			await showAlert(t('schedule.availability.weekendBlocked') || 'Nie można zgłaszać dyspozycyjności na weekendy, gdy zespół nie pracuje w weekendy.')
+			return
+		}
+
+		const normalizedTimeWindows = availabilityTimeWindows
+			.map((window) => ({
+				timeFrom: normalizeTimeInput(window.timeFrom),
+				timeTo: normalizeTimeInput(window.timeTo)
+			}))
+			.filter((window) => window.timeFrom || window.timeTo)
+
+		const hasInvalidWindow = normalizedTimeWindows.some((window) => {
+			if (!window.timeFrom || !window.timeTo) return true
+			const fromMinutes = timeToMinutes(window.timeFrom)
+			const toMinutes = timeToMinutes(window.timeTo)
+			return fromMinutes === null || toMinutes === null || fromMinutes >= toMinutes
+		})
+		if (hasInvalidWindow) {
+			await showAlert(t('schedule.availability.invalidTimeWindows') || 'Uzupełnij poprawnie okna godzinowe dyspozycyjności (od/do).')
+			return
+		}
+
+		try {
+			await upsertAvailabilityMutation.mutateAsync({
+				scheduleId,
+				data: {
+					dates,
+					notes: availabilityNotes || '',
+					timeWindows: normalizedTimeWindows
+				}
+			})
+			await refetchEntries()
+			await showAlert(t('schedule.availability.saved') || 'Dyspozycyjność została zapisana.')
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.availability.saveError') || 'Nie udało się zapisać dyspozycyjności.')
+		}
+	}
+
+	const handleAutoGenerateMonth = async (e) => {
+		e.preventDefault()
+
+		const normalizedShifts = autoShiftRows
+			.map((shift) => ({
+				timeFrom: shift.timeFrom,
+				timeTo: shift.timeTo,
+				minEmployees: Number(shift.minEmployees),
+				weekdays: Array.isArray(shift.weekdays) ? shift.weekdays : []
+			}))
+			.filter((shift) => shift.timeFrom && shift.timeTo && shift.minEmployees > 0)
+
+		if (normalizedShifts.length === 0) {
+			await showAlert(t('schedule.auto.atLeastOneShift') || 'Dodaj przynajmniej jedną poprawną zmianę.')
+			return
+		}
+
+		const normalizedOverrides = autoDayOverrideRows
+			.map((override) => ({
+				date: override.date,
+				timeFrom: override.timeFrom,
+				timeTo: override.timeTo,
+				minEmployees: Number(override.minEmployees)
+			}))
+			.filter((override) => override.date && override.timeFrom && override.timeTo && override.minEmployees > 0)
+
+		const normalizedManualExclusions = autoManualExclusionRows
+			.map((row) => ({
+				userId: row.userId,
+				date: row.date,
+				timeFrom: row.timeFrom || null,
+				timeTo: row.timeTo || null
+			}))
+			.filter((row) => row.userId && row.date)
+
+		const hasInvalidManualTime = normalizedManualExclusions.some((row) =>
+			(row.timeFrom && !row.timeTo) || (!row.timeFrom && row.timeTo)
+		)
+		if (hasInvalidManualTime) {
+			await showAlert(t('schedule.auto.manualExclusionsTimeValidation') || 'W ręcznych wykluczeniach podaj oba pola czasu (od i do) albo zostaw oba puste.')
+			return
+		}
+
+		try {
+			const response = await autoGenerateMutation.mutateAsync({
+				scheduleId,
+				data: {
+					year: Number(autoGenerateYear),
+					month: Number(autoGenerateMonth),
+					shifts: normalizedShifts,
+					dayOverrides: normalizedOverrides,
+					manualExclusions: normalizedManualExclusions,
+					allowMultipleShiftsPerDay: autoAllowMultipleShiftsPerDay,
+					notes: autoGenerateNotes,
+					preferAvailability: autoPreferAvailability,
+					strictAvailability: autoStrictAvailability
+				}
+			})
+
+			const summary = response?.summary || {}
+			await refetchEntries()
+			setIsAutoGenerateModalOpen(false)
+			await showAlert(
+				`${t('schedule.auto.completed') || 'Auto-plan zakończony.'}\n` +
+				`${t('schedule.auto.summary.generatedAsDraft') || 'Wpisy robocze do publikacji'}: ${summary.generatedEntries || 0}\n` +
+				`${t('schedule.auto.summary.generatedEntries') || 'Dodane wpisy'}: ${summary.generatedEntries || 0}\n` +
+				`${t('schedule.auto.summary.processedDays') || 'Przetworzone dni'}: ${summary.processedDays || 0}\n` +
+				`${t('schedule.auto.summary.processedShifts') || 'Przetworzone zmiany'}: ${summary.processedShifts || 0}\n` +
+				`${t('schedule.auto.summary.skippedWeekends') || 'Pominięte weekendy'}: ${summary.skippedWeekendDays || 0}\n` +
+				`${t('schedule.auto.summary.daysWithoutCoverage') || 'Dni bez pełnej obsady'}: ${summary.skippedNoCandidates || 0}`
+			)
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.auto.generateError') || 'Nie udało się automatycznie wygenerować grafiku.')
+		}
+	}
+
+	const handleAddShiftRow = () => {
+		setAutoShiftRows((prev) => [...prev, createDefaultShiftRow()])
+	}
+
+	const handleRemoveShiftRow = (rowId) => {
+		setAutoShiftRows((prev) => prev.filter((row) => row.id !== rowId))
+	}
+
+	const handleUpdateShiftRow = (rowId, field, value) => {
+		setAutoShiftRows((prev) =>
+			prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+		)
+	}
+
+	const handleToggleShiftWeekday = (rowId, weekdayValue) => {
+		setAutoShiftRows((prev) =>
+			prev.map((row) => {
+				if (row.id !== rowId) return row
+				const exists = row.weekdays.includes(weekdayValue)
+				const nextWeekdays = exists
+					? row.weekdays.filter((day) => day !== weekdayValue)
+					: [...row.weekdays, weekdayValue]
+				return { ...row, weekdays: nextWeekdays }
+			})
+		)
+	}
+
+	const handleAddOverrideRow = () => {
+		setAutoDayOverrideRows((prev) => [...prev, createDefaultOverrideRow()])
+	}
+
+	const handleRemoveOverrideRow = (rowId) => {
+		setAutoDayOverrideRows((prev) => prev.filter((row) => row.id !== rowId))
+	}
+
+	const handleUpdateOverrideRow = (rowId, field, value) => {
+		setAutoDayOverrideRows((prev) =>
+			prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+		)
+	}
+
+	const handleAddManualExclusionRow = () => {
+		setAutoManualExclusionRows((prev) => [...prev, createDefaultManualExclusionRow()])
+	}
+
+	const handleRemoveManualExclusionRow = (rowId) => {
+		setAutoManualExclusionRows((prev) => prev.filter((row) => row.id !== rowId))
+	}
+
+	const handleUpdateManualExclusionRow = (rowId, field, value) => {
+		setAutoManualExclusionRows((prev) =>
+			prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+		)
+	}
+
+	const handleAddAvailabilityWindow = () => {
+		setAvailabilityTimeWindows((prev) => [...prev, createDefaultAvailabilityWindow()])
+	}
+
+	const handleRemoveAvailabilityWindow = (windowId) => {
+		setAvailabilityTimeWindows((prev) => prev.filter((window) => window.id !== windowId))
+	}
+
+	const handleUpdateAvailabilityWindow = (windowId, field, value) => {
+		setAvailabilityTimeWindows((prev) =>
+			prev.map((window) => (window.id === windowId ? { ...window, [field]: value } : window))
+		)
+	}
+
+	const handleClearMonthEntries = async () => {
+		const confirmed = await showConfirm(
+			`${t('schedule.auto.clearConfirm') || 'Wyczyścić wszystkie wpisy z'} ${new Date(0, currentMonth).toLocaleString(i18n.resolvedLanguage, { month: 'long' })} ${currentYear}?`
+		)
+		if (!confirmed) return
+
+		try {
+			const response = await clearScheduleMonthMutation.mutateAsync({
+				scheduleId,
+				data: {
+					year: currentYear,
+					month: currentMonth + 1
+				}
+			})
+			const summary = response?.summary || {}
+			await refetchEntries()
+			await showAlert(
+				`${t('schedule.auto.clearDone') || 'Wyczyszczono miesiąc.'}\n` +
+				`${t('schedule.auto.summary.removedEntries') || 'Usunięte wpisy'}: ${summary.removedEntries || 0}\n` +
+				`${t('schedule.auto.summary.daysTouched') || 'Dni z usunięciami'}: ${summary.touchedDays || 0}`
+			)
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.auto.clearError') || 'Nie udało się wyczyścić miesiąca.')
+		}
+	}
+
+	const handlePublishMonthEntries = async () => {
+		if (draftEntriesCountCurrentMonth <= 0) {
+			await showAlert(t('schedule.auto.noDrafts') || 'Brak roboczych wpisów do publikacji.')
+			return
+		}
+
+		const confirmed = await showConfirm(
+			`${t('schedule.auto.publishConfirm') || 'Opublikować roboczy grafik z'} ${new Date(0, currentMonth).toLocaleString(i18n.resolvedLanguage, { month: 'long' })} ${currentYear}?`
+		)
+		if (!confirmed) return
+
+		try {
+			const response = await publishScheduleMonthMutation.mutateAsync({
+				scheduleId,
+				data: {
+					year: currentYear,
+					month: currentMonth + 1
+				}
+			})
+			const summary = response?.summary || {}
+			await refetchEntries()
+			await showAlert(
+				`${t('schedule.auto.publishDone') || 'Opublikowano roboczy grafik.'}\n` +
+				`${t('schedule.auto.summary.publishedEntries') || 'Opublikowane wpisy'}: ${summary.publishedEntries || 0}\n` +
+				`${t('schedule.auto.summary.daysTouched') || 'Dni ze zmianami'}: ${summary.touchedDays || 0}`
+			)
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.auto.publishError') || 'Nie udało się opublikować roboczego grafiku.')
+		}
+	}
+
+	const handleRemoveAvailabilityForSelectedDate = async () => {
+		if (!selectedDate) return
+		const date = selectedDate.includes('T') ? selectedDate.split('T')[0] : selectedDate
+
+		try {
+			await deleteAvailabilityMutation.mutateAsync({ scheduleId, date })
+			setAvailabilityNotes('')
+			setAvailabilityTimeWindows([])
+			await refetchEntries()
+			await showAlert(t('schedule.availability.removed') || 'Dyspozycyjność dla tego dnia została usunięta.')
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.availability.removeError') || 'Nie udało się usunąć dyspozycyjności.')
+		}
+	}
+
 	const handleAddEntry = async (e) => {
 		e.preventDefault()
 
@@ -582,6 +1063,10 @@ function Schedule() {
 
 		if (!timeFrom || !timeTo) {
 			await showAlert(t('schedule.fillTimes') || 'Wypełnij godziny pracy')
+			return
+		}
+		if (settings?.workOnWeekends === false && isWeekend(selectedDate)) {
+			await showAlert(t('schedule.weekendEntryBlocked') || 'Nie można dodać wpisu w weekend, gdy zespół nie pracuje w weekendy.')
 			return
 		}
 
@@ -925,6 +1410,79 @@ function Schedule() {
 					>
 						&gt;
 					</button>
+					{canEdit && (
+						<button
+							type="button"
+							onClick={openAutoGenerateModal}
+							style={{
+								padding: '8px 12px',
+								border: '1px solid #0ea5e9',
+								borderRadius: '6px',
+								backgroundColor: '#f0f9ff',
+								cursor: 'pointer',
+								fontSize: '15px',
+								fontWeight: '600',
+								color: '#0369a1',
+								transition: 'all 0.2s ease'
+							}}
+							onMouseOver={(e) => {
+								e.target.style.backgroundColor = '#e0f2fe'
+								e.target.style.borderColor = '#0284c7'
+							}}
+							onMouseOut={(e) => {
+								e.target.style.backgroundColor = '#f0f9ff'
+								e.target.style.borderColor = '#0ea5e9'
+							}}
+						>
+							{t('schedule.auto.openButton') || 'Auto-uzupełnij miesiąc'}
+						</button>
+					)}
+					{canEdit && (
+						<button
+							type="button"
+							onClick={handlePublishMonthEntries}
+							disabled={publishScheduleMonthMutation.isPending || draftEntriesCountCurrentMonth <= 0}
+							style={{
+								padding: '8px 12px',
+								border: '1px solid #16a34a',
+								borderRadius: '6px',
+								backgroundColor: '#f0fdf4',
+								cursor: publishScheduleMonthMutation.isPending || draftEntriesCountCurrentMonth <= 0 ? 'not-allowed' : 'pointer',
+								fontSize: '15px',
+								fontWeight: '600',
+								color: '#15803d',
+								transition: 'all 0.2s ease',
+								opacity: publishScheduleMonthMutation.isPending || draftEntriesCountCurrentMonth <= 0 ? 0.7 : 1
+							}}
+						>
+							{publishScheduleMonthMutation.isPending
+								? (t('schedule.auto.publishing') || 'Publikowanie...')
+								: `${t('schedule.auto.publishButton') || 'Opublikuj miesiąc'} (${draftEntriesCountCurrentMonth})`}
+						</button>
+					)}
+					{canEdit && (
+						<button
+							type="button"
+							onClick={handleClearMonthEntries}
+							disabled={clearScheduleMonthMutation.isPending}
+							style={{
+								padding: '8px 12px',
+								border: '1px solid #dc2626',
+								borderRadius: '6px',
+								backgroundColor: '#fff1f2',
+								cursor: clearScheduleMonthMutation.isPending ? 'not-allowed' : 'pointer',
+								fontSize: '15px',
+								fontWeight: '600',
+								color: '#b91c1c',
+								transition: 'all 0.2s ease',
+								opacity: clearScheduleMonthMutation.isPending ? 0.7 : 1
+							}}
+						>
+							{clearScheduleMonthMutation.isPending
+								? (t('schedule.auto.clearing') || 'Czyszczenie...')
+								: (t('schedule.auto.clearButton') || 'Wyczyść miesiąc')}
+						</button>
+					)}
 
 					<label style={{
 						display: 'flex',
@@ -952,6 +1510,21 @@ function Schedule() {
 						</span>
 					</label>
 				</div>
+				{canEdit && draftEntriesCountCurrentMonth > 0 && (
+					<div style={{
+						marginTop: '10px',
+						marginBottom: '10px',
+						padding: '10px 12px',
+						backgroundColor: '#fffbeb',
+						border: '1px solid #fde68a',
+						borderRadius: '8px',
+						color: '#92400e',
+						fontSize: '14px',
+						fontWeight: '500'
+					}}>
+						{t('schedule.auto.draftInfo') || 'W tym miesiącu są robocze wpisy po auto-uzupełnieniu. Możesz je poprawić i opublikować przyciskiem "Opublikuj miesiąc".'}
+					</div>
+				)}
 
 				{loadingEntries || loadingLeaveRequests ? (
 					<Loader />
@@ -992,12 +1565,494 @@ function Schedule() {
 					</div>
 				)}
 				<Modal
+					isOpen={isAutoGenerateModalOpen}
+					onRequestClose={() => setIsAutoGenerateModalOpen(false)}
+					style={{
+						overlay: {
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							backgroundColor: 'rgba(0, 0, 0, 0.5)',
+							backdropFilter: 'blur(2px)'
+						},
+						content: {
+							position: 'relative',
+							inset: 'unset',
+							margin: '0',
+							maxWidth: '800px',
+							width: '92%',
+							maxHeight: '90vh',
+							overflowY: 'auto',
+							borderRadius: '12px',
+							padding: '24px',
+							backgroundColor: 'white'
+						}
+					}}
+					contentLabel={t('schedule.auto.modalAriaLabel') || 'Auto-uzupełnij grafik'}
+				>
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+						<h3 style={{ margin: 0, color: '#0f172a', fontSize: '22px' }}>
+							{t('schedule.auto.modalTitle') || 'Auto-uzupełnij miesiąc'}
+						</h3>
+						<button
+							type="button"
+							onClick={() => setIsAutoGenerateModalOpen(false)}
+							style={{
+								background: 'transparent',
+								border: 'none',
+								fontSize: '28px',
+								cursor: 'pointer',
+								color: '#64748b',
+								lineHeight: '1'
+							}}
+						>
+							×
+						</button>
+					</div>
+					<p style={{ marginTop: 0, marginBottom: '16px', color: '#64748b', fontSize: '14px' }}>
+						{t('schedule.auto.modalDescription') || 'System uzupełni brakujące wpisy do minimum obsady na dzień, uwzględniając nieobecności i istniejące wpisy.'}
+					</p>
+					<form onSubmit={handleAutoGenerateMonth}>
+						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+							<div>
+								<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
+									{t('schedule.month') || 'Miesiąc'}
+								</label>
+								<select
+									value={autoGenerateMonth}
+									onChange={(e) => setAutoGenerateMonth(Number(e.target.value))}
+									style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+								>
+									{Array.from({ length: 12 }, (_, i) => i + 1).map((monthNumber) => (
+										<option key={monthNumber} value={monthNumber}>
+											{new Date(0, monthNumber - 1).toLocaleString(i18n.resolvedLanguage, { month: 'long' })}
+										</option>
+									))}
+								</select>
+							</div>
+							<div>
+								<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
+									{t('schedule.year') || 'Rok'}
+								</label>
+								<input
+									type="number"
+									min={new Date().getFullYear() - 1}
+									max={new Date().getFullYear() + 3}
+									value={autoGenerateYear}
+									onChange={(e) => setAutoGenerateYear(Number(e.target.value))}
+									style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+								/>
+							</div>
+						</div>
+
+						<div style={{ marginBottom: '12px', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px', backgroundColor: '#f8fbff' }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+									{t('schedule.auto.shifts.title') || 'Zmiany (przedziały czasowe)'}
+								</label>
+								<button
+									type="button"
+									onClick={handleAddShiftRow}
+									style={{
+										padding: '6px 10px',
+										border: '1px solid #0284c7',
+										backgroundColor: '#e0f2fe',
+										borderRadius: '6px',
+										color: '#0369a1',
+										fontWeight: 600,
+										cursor: 'pointer',
+										maxWidth: '100%'
+									}}
+								>
+									{t('schedule.auto.shifts.add') || '+ Dodaj zmianę'}
+								</button>
+							</div>
+							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+								{autoShiftRows.map((shiftRow, index) => (
+									<div key={shiftRow.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', backgroundColor: '#fff' }}>
+										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Od</label>
+												<input
+													type="text"
+													value={shiftRow.timeFrom}
+													onChange={(e) => handleUpdateShiftRow(shiftRow.id, 'timeFrom', e.target.value)}
+													placeholder="08:00"
+													pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													required
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Do</label>
+												<input
+													type="text"
+													value={shiftRow.timeTo}
+													onChange={(e) => handleUpdateShiftRow(shiftRow.id, 'timeTo', e.target.value)}
+													placeholder="16:00"
+													pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													required
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.auto.shifts.minPeople') || 'Min. osób'}
+												</label>
+												<input
+													type="number"
+													min={1}
+													value={shiftRow.minEmployees}
+													onChange={(e) => handleUpdateShiftRow(shiftRow.id, 'minEmployees', Number(e.target.value))}
+													required
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<button
+												type="button"
+												onClick={() => handleRemoveShiftRow(shiftRow.id)}
+												disabled={autoShiftRows.length <= 1}
+												style={{
+													padding: '8px 10px',
+													border: '1px solid #fecaca',
+													backgroundColor: '#fff1f2',
+													borderRadius: '6px',
+													color: '#b91c1c',
+													cursor: autoShiftRows.length <= 1 ? 'not-allowed' : 'pointer',
+													opacity: autoShiftRows.length <= 1 ? 0.6 : 1,
+													minHeight: '36px',
+													width: '100%'
+												}}
+											>
+												{t('schedule.auto.remove') || 'Usuń'}
+											</button>
+										</div>
+										<div style={{ marginTop: '8px' }}>
+											<div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Dni tygodnia</div>
+											<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+												{weekdayOptions.map((weekday) => (
+													<label key={`${shiftRow.id}-${weekday.value}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#334155' }}>
+														<input
+															type="checkbox"
+															checked={shiftRow.weekdays.includes(weekday.value)}
+															onChange={() => handleToggleShiftWeekday(shiftRow.id, weekday.value)}
+														/>
+														{weekday.label}
+													</label>
+												))}
+											</div>
+										</div>
+										{index === 0 && (
+											<div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+												{t('schedule.auto.shifts.tip') || 'Wskazówka: możesz dodać np. zmianę poranną i popołudniową.'}
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+
+						<div style={{ marginBottom: '12px', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px', backgroundColor: '#fffbeb' }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+									{t('schedule.auto.overrides.title') || 'Nadpisania konkretnych dni (opcjonalnie)'}
+								</label>
+								<button
+									type="button"
+									onClick={handleAddOverrideRow}
+									style={{
+										padding: '6px 10px',
+										border: '1px solid #ca8a04',
+										backgroundColor: '#fef3c7',
+										borderRadius: '6px',
+										color: '#92400e',
+										fontWeight: 600,
+										cursor: 'pointer',
+										maxWidth: '100%'
+									}}
+								>
+									{t('schedule.auto.overrides.add') || '+ Dodaj nadpisanie dnia'}
+								</button>
+							</div>
+							{autoDayOverrideRows.length === 0 ? (
+								<div style={{ fontSize: '13px', color: '#78716c' }}>
+									{t('schedule.auto.overrides.empty') || 'Brak nadpisań. Domyślnie zadziałają zmiany i dni tygodnia z sekcji wyżej.'}
+								</div>
+							) : (
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+									{autoDayOverrideRows.map((overrideRow) => (
+										<div key={overrideRow.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.date') || 'Data'}
+												</label>
+												<input
+													type="date"
+													value={overrideRow.date}
+													onChange={(e) => handleUpdateOverrideRow(overrideRow.id, 'date', e.target.value)}
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Od</label>
+												<input
+													type="text"
+													value={overrideRow.timeFrom}
+													onChange={(e) => handleUpdateOverrideRow(overrideRow.id, 'timeFrom', e.target.value)}
+													placeholder="08:00"
+													pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Do</label>
+												<input
+													type="text"
+													value={overrideRow.timeTo}
+													onChange={(e) => handleUpdateOverrideRow(overrideRow.id, 'timeTo', e.target.value)}
+													placeholder="16:00"
+													pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.minShort') || 'Min.'}
+												</label>
+												<input
+													type="number"
+													min={1}
+													value={overrideRow.minEmployees}
+													onChange={(e) => handleUpdateOverrideRow(overrideRow.id, 'minEmployees', Number(e.target.value))}
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<button
+												type="button"
+												onClick={() => handleRemoveOverrideRow(overrideRow.id)}
+												style={{
+													padding: '8px 10px',
+													border: '1px solid #fecaca',
+													backgroundColor: '#fff1f2',
+													borderRadius: '6px',
+													color: '#b91c1c',
+													cursor: 'pointer',
+													minHeight: '36px',
+													width: '100%'
+												}}
+											>
+												{t('schedule.auto.remove') || 'Usuń'}
+											</button>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+
+						<div style={{ marginBottom: '12px', border: '1px solid #fecdd3', borderRadius: '10px', padding: '12px', backgroundColor: '#fff7f8' }}>
+							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+									{t('schedule.auto.manualExclusions.title') || 'Ręczne wykluczenia użytkowników (opcjonalnie)'}
+								</label>
+								<button
+									type="button"
+									onClick={handleAddManualExclusionRow}
+									style={{
+										padding: '6px 10px',
+										border: '1px solid #be123c',
+										backgroundColor: '#ffe4e6',
+										borderRadius: '6px',
+										color: '#9f1239',
+										fontWeight: 600,
+										cursor: 'pointer',
+										maxWidth: '100%'
+									}}
+								>
+									{t('schedule.auto.manualExclusions.add') || '+ Dodaj wykluczenie'}
+								</button>
+							</div>
+							{autoManualExclusionRows.length === 0 ? (
+								<div style={{ fontSize: '13px', color: '#7f1d1d' }}>
+									{t('schedule.auto.manualExclusions.empty') || 'Brak wykluczeń. Planner uwzględni tylko standardowe reguły (urlopy, dyspozycyjność, zmiany).'}
+								</div>
+							) : (
+								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+									{autoManualExclusionRows.map((row) => (
+										<div key={row.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.auto.manualExclusions.user') || 'Użytkownik'}
+												</label>
+												<select
+													value={row.userId}
+													onChange={(e) => handleUpdateManualExclusionRow(row.id, 'userId', e.target.value)}
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												>
+													<option value="">{t('schedule.auto.manualExclusions.selectUser') || 'Wybierz użytkownika'}</option>
+													{users.map((userOption) => (
+														<option key={userOption._id} value={userOption._id}>
+															{userOption.firstName} {userOption.lastName}
+														</option>
+													))}
+												</select>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.date') || 'Data'}
+												</label>
+												<input
+													type="date"
+													value={row.date}
+													onChange={(e) => handleUpdateManualExclusionRow(row.id, 'date', e.target.value)}
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.auto.manualExclusions.timeFromOptional') || 'Od (opc.)'}
+												</label>
+												<input
+													type="text"
+													value={row.timeFrom}
+													onChange={(e) => handleUpdateManualExclusionRow(row.id, 'timeFrom', e.target.value)}
+													placeholder="08:00"
+													pattern="^$|^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<div>
+												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+													{t('schedule.auto.manualExclusions.timeToOptional') || 'Do (opc.)'}
+												</label>
+												<input
+													type="text"
+													value={row.timeTo}
+													onChange={(e) => handleUpdateManualExclusionRow(row.id, 'timeTo', e.target.value)}
+													placeholder="12:00"
+													pattern="^$|^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+												/>
+											</div>
+											<button
+												type="button"
+												onClick={() => handleRemoveManualExclusionRow(row.id)}
+												style={{
+													padding: '8px 10px',
+													border: '1px solid #fecaca',
+													backgroundColor: '#fff1f2',
+													borderRadius: '6px',
+													color: '#b91c1c',
+													cursor: 'pointer',
+													minHeight: '36px',
+													width: '100%'
+												}}
+											>
+												{t('schedule.auto.remove') || 'Usuń'}
+											</button>
+										</div>
+									))}
+								</div>
+							)}
+							<div style={{ marginTop: '8px', fontSize: '12px', color: '#7f1d1d' }}>
+								{t('schedule.auto.manualExclusions.emptyTimeHint') || 'Puste godziny oznaczają wykluczenie użytkownika przez cały dzień.'}
+							</div>
+						</div>
+
+						<div style={{ marginBottom: '12px' }}>
+							<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
+								{t('schedule.auto.notesLabel') || 'Uwagi (dla wpisów auto)'}
+							</label>
+							<input
+								type="text"
+								value={autoGenerateNotes}
+								onChange={(e) => setAutoGenerateNotes(e.target.value)}
+								placeholder={t('schedule.auto.defaultNote') || 'Auto-plan'}
+								style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+							/>
+						</div>
+
+						<div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+								<input
+									type="checkbox"
+									checked={autoAllowMultipleShiftsPerDay}
+									onChange={(e) => setAutoAllowMultipleShiftsPerDay(e.target.checked)}
+								/>
+								<span style={{ fontSize: '14px', color: '#334155' }}>
+									{t('schedule.auto.allowMultipleShiftsPerDay') || 'Pozwól tej samej osobie mieć więcej niż jedną zmianę dziennie'}
+								</span>
+							</label>
+							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+								<input
+									type="checkbox"
+									checked={autoPreferAvailability}
+									onChange={(e) => setAutoPreferAvailability(e.target.checked)}
+									disabled={!isAvailabilityEnabled}
+								/>
+								<span style={{ fontSize: '14px', color: '#334155' }}>
+									{t('schedule.auto.preferAvailability') || 'Priorytetowo uwzględnij zgłoszoną dyspozycyjność'}
+								</span>
+							</label>
+							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isAvailabilityEnabled ? 'pointer' : 'not-allowed' }}>
+								<input
+									type="checkbox"
+									checked={autoStrictAvailability}
+									onChange={(e) => setAutoStrictAvailability(e.target.checked)}
+									disabled={!isAvailabilityEnabled || !autoPreferAvailability}
+								/>
+								<span style={{ fontSize: '14px', color: '#334155' }}>
+									{t('schedule.auto.strictAvailability') || 'Tylko osoby dyspozycyjne (bez fallbacku)'}
+								</span>
+							</label>
+						</div>
+
+						<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+							<button
+								type="button"
+								onClick={() => setIsAutoGenerateModalOpen(false)}
+								style={{
+									padding: '10px 16px',
+									border: '1px solid #cbd5e1',
+									backgroundColor: '#fff',
+									borderRadius: '6px',
+									cursor: 'pointer',
+									color: '#334155'
+								}}
+							>
+								{t('schedule.cancel') || 'Anuluj'}
+							</button>
+							<button
+								type="submit"
+								disabled={autoGenerateMutation.isPending}
+								style={{
+									padding: '10px 16px',
+									border: 'none',
+									backgroundColor: '#0284c7',
+									borderRadius: '6px',
+									cursor: autoGenerateMutation.isPending ? 'not-allowed' : 'pointer',
+									color: '#fff',
+									fontWeight: 600,
+									opacity: autoGenerateMutation.isPending ? 0.7 : 1
+								}}
+							>
+								{autoGenerateMutation.isPending
+									? (t('schedule.auto.generating') || 'Generowanie...')
+									: (t('schedule.auto.generate') || 'Generuj')}
+							</button>
+						</div>
+					</form>
+				</Modal>
+				<Modal
 					isOpen={isModalOpen}
 					onRequestClose={() => {
 						setIsModalOpen(false)
 						setSelectedDate(null)
 						setSelectedEntries([])
 						setNotes('')
+						setAvailabilityFromDate('')
+						setAvailabilityToDate('')
+						setAvailabilityNotes('')
+						setAvailabilityTimeWindows([])
 					}}
 					style={{
 						overlay: {
@@ -1025,9 +2080,29 @@ function Schedule() {
 				<>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
 						{selectedDate && (
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 							<h2 className="text-xl font-semibold mb-4 text-gray-800" style={{ margin: 0 }}>
 								{t('schedule.entriesForDate') || 'Wpisy dla daty'}: {new Date(selectedDate).toLocaleDateString(i18n.resolvedLanguage, { day: 'numeric', month: 'numeric', year: 'numeric' })}
 							</h2>
+							{isSelectedDateWeekendBlocked && (
+								<div style={{
+									display: 'inline-flex',
+									alignItems: 'center',
+									gap: '8px',
+									padding: '6px 10px',
+									borderRadius: '999px',
+									backgroundColor: '#f1f5f9',
+									border: '1px solid #cbd5e1',
+									color: '#475569',
+									fontSize: '13px',
+									fontWeight: '600',
+									width: 'fit-content'
+								}}>
+									<span style={{ fontSize: '14px' }}>⛔</span>
+									{t('schedule.weekendBlockedBadge') || 'Weekend zablokowany (zespół nie pracuje w weekendy)'}
+								</div>
+							)}
+						</div>
 						)}
 						<button
 							onClick={() => {
@@ -1040,6 +2115,10 @@ function Schedule() {
 								setTimeFrom('08:00')
 								setTimeTo('16:00')
 								setSelectedWorkHoursIndex(null)
+								setAvailabilityFromDate('')
+								setAvailabilityToDate('')
+								setAvailabilityNotes('')
+								setAvailabilityTimeWindows([])
 							}}
 							style={{
 								background: 'transparent',
@@ -1063,6 +2142,222 @@ function Schedule() {
 							×
 						</button>
 					</div>
+					{isAvailabilityEnabled && (
+					<div
+						style={{
+							marginBottom: '24px',
+							padding: '16px',
+							borderRadius: '10px',
+							backgroundColor: '#f7fafc',
+							border: '1px solid #e2e8f0'
+						}}
+					>
+						<h3 style={{ margin: '0 0 10px 0', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+							{t('schedule.availability.title') || 'Moja dyspozycyjność'}
+						</h3>
+						<p style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '14px' }}>
+							{t('schedule.availability.description') || 'Zgłoś dni, w których możesz pracować. Osoba układająca grafik zobaczy to przy przypisaniu.'}
+						</p>
+						{isSelectedDateWeekendBlocked ? (
+							<div style={{
+								padding: '10px 12px',
+								borderRadius: '8px',
+								backgroundColor: '#f8fafc',
+								border: '1px solid #e2e8f0',
+								color: '#64748b',
+								fontSize: '14px'
+							}}>
+								{t('schedule.availability.dayBlockedInfo') || 'Dla tego dnia nie można zgłosić dyspozycyjności ani dodać wpisu.'}
+							</div>
+						) : isManagerLikeRole && !showAvailabilityForm ? (
+							<button
+								type="button"
+								onClick={() => setShowAvailabilityForm(true)}
+								style={{
+									padding: '10px 14px',
+									backgroundColor: '#2563eb',
+									color: '#fff',
+									border: 'none',
+									borderRadius: '6px',
+									cursor: 'pointer',
+									fontWeight: '500'
+								}}
+							>
+								{t('schedule.availability.openForm') || 'Określ dyspozycyjność'}
+							</button>
+						) : (
+						<form onSubmit={handleSaveAvailability}>
+							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+								<div>
+									<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#334155' }}>
+										{t('schedule.availability.dateFrom') || 'Od'}
+									</label>
+									<input
+										type="date"
+										value={availabilityFromDate}
+										onChange={(e) => setAvailabilityFromDate(e.target.value)}
+										required
+										style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+									/>
+								</div>
+								<div>
+									<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#334155' }}>
+										{t('schedule.availability.dateTo') || 'Do'}
+									</label>
+									<input
+										type="date"
+										value={availabilityToDate}
+										onChange={(e) => setAvailabilityToDate(e.target.value)}
+										required
+										style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+									/>
+								</div>
+							</div>
+							<div style={{ marginBottom: '10px', border: '1px solid #dbeafe', borderRadius: '8px', padding: '10px', backgroundColor: '#f8fbff' }}>
+								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+									<label style={{ marginBottom: 0, fontWeight: '600', color: '#334155' }}>
+										{t('schedule.availability.timeWindowsTitle') || 'Godziny dyspozycyjności (opcjonalnie)'}
+									</label>
+									<button
+										type="button"
+										onClick={handleAddAvailabilityWindow}
+										style={{
+											padding: '6px 10px',
+											border: '1px solid #0284c7',
+											backgroundColor: '#e0f2fe',
+											borderRadius: '6px',
+											color: '#0369a1',
+											fontWeight: 600,
+											cursor: 'pointer',
+										}}
+									>
+										{t('schedule.availability.addTimeWindow') || '+ Dodaj przedział'}
+									</button>
+								</div>
+								{availabilityTimeWindows.length === 0 ? (
+									<div style={{ fontSize: '13px', color: '#64748b' }}>
+										{t('schedule.availability.timeWindowsEmptyHint') || 'Brak przedziałów oznacza dyspozycyjność na cały dzień.'}
+									</div>
+								) : (
+									<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+										{availabilityTimeWindows.map((window) => (
+											<div key={window.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+												<div>
+													<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+														{t('schedule.timeFrom') || 'Od'}
+													</label>
+													<input
+														type="text"
+														value={window.timeFrom}
+														onChange={(e) => handleUpdateAvailabilityWindow(window.id, 'timeFrom', e.target.value)}
+														placeholder="08:00"
+														pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+														style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+													/>
+												</div>
+												<div>
+													<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
+														{t('schedule.timeTo') || 'Do'}
+													</label>
+													<input
+														type="text"
+														value={window.timeTo}
+														onChange={(e) => handleUpdateAvailabilityWindow(window.id, 'timeTo', e.target.value)}
+														placeholder="16:00"
+														pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+														style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+													/>
+												</div>
+												<button
+													type="button"
+													onClick={() => handleRemoveAvailabilityWindow(window.id)}
+													style={{
+														padding: '8px 10px',
+														border: '1px solid #fecaca',
+														backgroundColor: '#fff1f2',
+														borderRadius: '6px',
+														color: '#b91c1c',
+														cursor: 'pointer',
+														minHeight: '36px'
+													}}
+												>
+													{t('schedule.auto.remove') || 'Usuń'}
+												</button>
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+							<textarea
+								value={availabilityNotes}
+								onChange={(e) => setAvailabilityNotes(e.target.value)}
+								placeholder={t('schedule.availability.notesPlaceholder') || 'Opcjonalna uwaga do dyspozycyjności...'}
+								rows={2}
+								style={{
+									width: '100%',
+									padding: '10px',
+									border: '1px solid #cbd5e1',
+									borderRadius: '6px',
+									fontSize: '14px',
+									marginBottom: '10px',
+									resize: 'vertical'
+								}}
+							/>
+							<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+								<button
+									type="submit"
+									disabled={upsertAvailabilityMutation.isPending}
+									style={{
+										padding: '10px 14px',
+										backgroundColor: '#2563eb',
+										color: '#fff',
+										border: 'none',
+										borderRadius: '6px',
+										cursor: upsertAvailabilityMutation.isPending ? 'not-allowed' : 'pointer',
+										opacity: upsertAvailabilityMutation.isPending ? 0.7 : 1
+									}}
+								>
+									{t('schedule.availability.save') || 'Zapisz dyspozycyjność'}
+								</button>
+								{myAvailabilityForSelectedDate && (
+									<button
+										type="button"
+										onClick={handleRemoveAvailabilityForSelectedDate}
+										disabled={deleteAvailabilityMutation.isPending}
+										style={{
+											padding: '10px 14px',
+											backgroundColor: '#fff',
+											color: '#b91c1c',
+											border: '1px solid #ef4444',
+											borderRadius: '6px',
+											cursor: deleteAvailabilityMutation.isPending ? 'not-allowed' : 'pointer',
+											opacity: deleteAvailabilityMutation.isPending ? 0.7 : 1
+										}}
+									>
+										{t('schedule.availability.removeForDay') || 'Usuń dyspozycyjność na ten dzień'}
+									</button>
+								)}
+								{isManagerLikeRole && (
+									<button
+										type="button"
+										onClick={() => setShowAvailabilityForm(false)}
+										style={{
+											padding: '10px 14px',
+											backgroundColor: '#fff',
+											color: '#334155',
+											border: '1px solid #cbd5e1',
+											borderRadius: '6px',
+											cursor: 'pointer'
+										}}
+									>
+										{t('schedule.availability.hideForm') || 'Ukryj formularz'}
+									</button>
+								)}
+							</div>
+						</form>
+						)}
+					</div>
+					)}
 					{sortedSelectedEntries.length > 0 ? (
 					<div style={{ marginBottom: '30px' }}>
 						<h3 style={{
@@ -1095,8 +2390,23 @@ function Schedule() {
 												color: '#2c3e50',
 												marginBottom: '5px'
 											}}>
-												{entry.employeeName || 'Brak nazwy'}
+												{entry.employeeName || (t('schedule.noName') || 'Brak nazwy')}
 											</div>
+											{entry?.isPublished === false && (
+												<div style={{
+													display: 'inline-block',
+													fontSize: '12px',
+													fontWeight: '700',
+													color: '#92400e',
+													backgroundColor: '#fef3c7',
+													border: '1px solid #fcd34d',
+													borderRadius: '9999px',
+													padding: '2px 8px',
+													marginBottom: '6px'
+												}}>
+													{t('schedule.auto.draftBadge') || 'ROBOCZY'}
+												</div>
+											)}
 											<div style={{
 												color: '#7f8c8d',
 												fontSize: '16px'
@@ -1149,7 +2459,7 @@ function Schedule() {
 												color: '#999',
 												marginLeft: '10px'
 											}}>
-												Brak uprawnień
+												{t('schedule.noPermissions') || 'Brak uprawnień'}
 											</div>
 										)}
 									</div>
@@ -1170,6 +2480,19 @@ function Schedule() {
 						{t('schedule.addNewEntry') || 'Dodaj nowy wpis'}
 					</h3>
 
+					{isSelectedDateWeekendBlocked && (
+						<div style={{
+							marginBottom: '16px',
+							padding: '10px 12px',
+							borderRadius: '8px',
+							backgroundColor: '#fff7ed',
+							border: '1px solid #fdba74',
+							color: '#9a3412',
+							fontSize: '14px'
+						}}>
+							{t('schedule.weekendEntryBlocked') || 'Nie można dodać wpisu na weekend, gdy zespół nie pracuje w weekendy.'}
+						</div>
+					)}
 					<div style={{ marginBottom: '20px' }}>
 						<label style={{
 							display: 'block',
@@ -1183,6 +2506,7 @@ function Schedule() {
 							value={selectedEmployeeId}
 							onChange={handleEmployeeSelect}
 							required
+								disabled={isSelectedDateWeekendBlocked}
 							style={{
 								width: '100%',
 								padding: '12px',
@@ -1193,13 +2517,49 @@ function Schedule() {
 							<option value="">
 								{t('schedule.selectEmployee') || 'Wybierz pracownika'}
 							</option>
-							{users.map((user) => (
+							{filteredUsersForEntry.map((user) => (
 								<option key={user._id} value={user._id}>
 									{user.firstName} {user.lastName}
 									{user.position ? ` - ${user.position}` : ''}
 								</option>
 							))}
 						</select>
+						{isAvailabilityEnabled && (
+							<>
+								<div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+									<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+										<input
+											type="checkbox"
+											checked={showOnlyAvailableEmployees}
+											onChange={(e) => setShowOnlyAvailableEmployees(e.target.checked)}
+										/>
+										<span style={{ fontSize: '14px', color: '#334155' }}>
+											{t('schedule.availability.showOnlyAvailable') || 'Pokaż tylko osoby dyspozycyjne na ten dzień'}
+										</span>
+									</label>
+								</div>
+								{selectedDayAvailabilities.length > 0 ? (
+									<div style={{ marginTop: '10px', padding: '10px', backgroundColor: '#ecfeff', border: '1px solid #a5f3fc', borderRadius: '6px' }}>
+										<div style={{ fontSize: '14px', color: '#0f172a', fontWeight: '600', marginBottom: '6px' }}>
+											{(t('schedule.availability.availableCount') || 'Dyspozycyjni')} ({selectedDayAvailabilities.length})
+										</div>
+										<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+											{selectedDayAvailabilities.map((availability, index) => (
+												<div key={`${availability.employeeId}-${index}`} style={{ fontSize: '14px', color: '#334155' }}>
+													<strong>{availability.employeeName}</strong>
+													{` (${formatAvailabilityWindows(availability.timeWindows)})`}
+													{availability.notes ? ` - ${availability.notes}` : ''}
+												</div>
+											))}
+										</div>
+									</div>
+								) : (
+									<div style={{ marginTop: '10px', fontSize: '13px', color: '#64748b' }}>
+										{t('schedule.availability.noneForDay') || 'Brak deklaracji dyspozycyjności na ten dzień.'}
+									</div>
+								)}
+							</>
+						)}
 					</div>
 
 					{/* Checkboxy dla wielu konfiguracji godzin pracy */}
@@ -1293,6 +2653,7 @@ function Schedule() {
 								}}
 								placeholder="08:00"
 								required
+								disabled={isSelectedDateWeekendBlocked}
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
@@ -1324,6 +2685,7 @@ function Schedule() {
 								}}
 								placeholder="16:00"
 								required
+								disabled={isSelectedDateWeekendBlocked}
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
@@ -1350,6 +2712,7 @@ function Schedule() {
 							onChange={(e) => setNotes(e.target.value)}
 							placeholder={t('schedule.notesPlaceholder') || 'Dodaj uwagi...'}
 							rows="3"
+							disabled={isSelectedDateWeekendBlocked}
 							style={{
 								width: '100%',
 								padding: '12px',
@@ -1374,6 +2737,10 @@ function Schedule() {
 							setSelectedDate(null)
 							setSelectedEntries([])
 							setNotes('')
+							setAvailabilityFromDate('')
+							setAvailabilityToDate('')
+							setAvailabilityNotes('')
+							setAvailabilityTimeWindows([])
 						}}
 							style={{
 								padding: '12px 24px',
@@ -1389,6 +2756,7 @@ function Schedule() {
 						</button>
 						<button
 							type="submit"
+							disabled={isSelectedDateWeekendBlocked}
 							style={{
 								padding: '12px 24px',
 								backgroundColor: '#27ae60',
@@ -1397,7 +2765,8 @@ function Schedule() {
 								borderRadius: '6px',
 								fontSize: '16px',
 								fontWeight: '500',
-								cursor: 'pointer'
+								cursor: isSelectedDateWeekendBlocked ? 'not-allowed' : 'pointer',
+								opacity: isSelectedDateWeekendBlocked ? 0.6 : 1
 							}}>
 							{t('schedule.add') || 'Dodaj'}
 						</button>

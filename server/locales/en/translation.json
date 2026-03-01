@@ -152,6 +152,17 @@
 		"saveError": "Error saving settings",
 		"noAccess": "At the moment, your permissions do not allow for any configurations."
 	},
+	"announcements": {
+		"targetAll": "All team members",
+		"targetDepartment": "Department",
+		"targetUsers": "Selected users",
+		"createdBy": "Author",
+		"recipients": "Recipients",
+		"attachments": "Attachments",
+		"openInApp": "Go to announcements",
+		"emailSubjectPrefix": "New announcement",
+		"pushTitle": "New announcement"
+	},
 	"boards": {
 		"status": {
 			"todo": "To Do",

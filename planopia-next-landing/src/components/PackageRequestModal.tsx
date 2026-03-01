@@ -16,7 +16,7 @@ interface PackageRequestModalProps {
 }
 
 export default function PackageRequestModal({ isOpen, onClose, packageType, lang = 'pl' }: PackageRequestModalProps) {
-	const [usersCountInput, setUsersCountInput] = useState<string>('7')
+	const [usersCountInput, setUsersCountInput] = useState<string>('5')
 	const [dedicatedEnvironment, setDedicatedEnvironment] = useState<boolean>(false)
 	const [companyName, setCompanyName] = useState('')
 	const [email, setEmail] = useState('')
@@ -26,7 +26,7 @@ export default function PackageRequestModal({ isOpen, onClose, packageType, lang
 	const [submitMessage, setSubmitMessage] = useState('')
 
 	// Convert input to number for calculations
-	const usersCount = Math.max(7, parseInt(usersCountInput) || 7)
+	const usersCount = Math.max(5, parseInt(usersCountInput) || 5)
 
 	// Use pricing module
 	const pricePerUser = getPricePerUser(packageType, lang)
@@ -37,7 +37,7 @@ export default function PackageRequestModal({ isOpen, onClose, packageType, lang
 
 	// Reset form function
 	const resetForm = () => {
-		setUsersCountInput('7')
+		setUsersCountInput('5')
 		setDedicatedEnvironment(false)
 		setCompanyName('')
 		setEmail('')
@@ -148,15 +148,15 @@ export default function PackageRequestModal({ isOpen, onClose, packageType, lang
 						<input
 							id="usersCount"
 							type="number"
-							min="7"
+							min="5"
 							value={usersCountInput}
 							onChange={(e) => {
 								setUsersCountInput(e.target.value)
 							}}
 							onBlur={(e) => {
 								const value = parseInt(e.target.value)
-								if (isNaN(value) || value < 7) {
-									setUsersCountInput('7')
+								if (isNaN(value) || value < 5) {
+									setUsersCountInput('5')
 								} else {
 									setUsersCountInput(value.toString())
 								}

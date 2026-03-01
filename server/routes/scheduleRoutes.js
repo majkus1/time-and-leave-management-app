@@ -12,7 +12,12 @@ router.delete('/:scheduleId', authenticateToken, scheduleController.deleteSchedu
 router.get('/:scheduleId/users', authenticateToken, scheduleController.getScheduleUsers)
 router.get('/:scheduleId/entries', authenticateToken, scheduleController.getScheduleEntries)
 router.post('/:scheduleId/entries', authenticateToken, scheduleController.upsertScheduleEntry)
+router.post('/:scheduleId/entries/auto-generate', authenticateToken, scheduleController.autoGenerateMonthEntries)
+router.post('/:scheduleId/entries/publish-month', authenticateToken, scheduleController.publishMonthDraftEntries)
+router.post('/:scheduleId/entries/clear-month', authenticateToken, scheduleController.clearMonthEntries)
 router.delete('/:scheduleId/entries/:entryId', authenticateToken, scheduleController.deleteScheduleEntry)
+router.post('/:scheduleId/availability', authenticateToken, scheduleController.upsertAvailability)
+router.delete('/:scheduleId/availability', authenticateToken, scheduleController.deleteAvailability)
 
 module.exports = router
 

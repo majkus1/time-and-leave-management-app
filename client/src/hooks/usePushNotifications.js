@@ -13,7 +13,8 @@ export const usePushNotifications = () => {
 		tasks: true,
 		taskStatusChanges: true,
 		taskComments: true,
-		leaves: true
+		leaves: true,
+		announcements: true
 	})
 	const { loggedIn } = useAuth()
 
@@ -103,6 +104,7 @@ export const usePushNotifications = () => {
 						taskStatusChanges: response.data.preferences?.taskStatusChanges !== false,
 						taskComments: response.data.preferences?.taskComments !== false,
 						leaves: response.data.preferences?.leaves !== false,
+						announcements: response.data.preferences?.announcements !== false,
 					})
 				} catch (error) {
 					console.error('Error loading push preferences:', error)

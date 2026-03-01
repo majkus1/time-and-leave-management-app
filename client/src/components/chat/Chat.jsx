@@ -3,7 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import Sidebar from '../dashboard/Sidebar'
 import Loader from '../Loader'
-import { useChannels, useChannelMessages, useSendMessage, useUnreadCount, useDeleteChannel, useChannelUsers } from '../../hooks/useChat'
+import {
+	useChannels,
+	useChannelMessages,
+	useSendMessage,
+	useUnreadCount,
+	useDeleteChannel,
+	useChannelUsers,
+	useUpdateMessage,
+	useDeleteMessage
+} from '../../hooks/useChat'
 import { useSocket } from '../../context/SocketContext'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
@@ -36,7 +45,9 @@ function Chat() {
 		selectedChannel?._id,
 		!!selectedChannel
 	)
-	const { mutate: sendMessage } = useSendMessage()
+	const { mutate: sendMessage, isPending: isSendingMessage, isLoading: isSendingMessageLegacy } = useSendMessage()
+	const { mutateAsync: updateMessage } = useUpdateMessage()
+	const { mutateAsync: deleteMessage } = useDeleteMessage()
 	const { data: unreadCount = 0 } = useUnreadCount()
 	const { mutate: deleteChannel } = useDeleteChannel()
 	// Hook dla użytkowników czatu w modalu
@@ -124,8 +135,11 @@ function Chat() {
 	useEffect(() => {
 		if (!socket) return
 
+		const selectedChannelId = selectedChannel?._id?.toString()
+		const normalizeChannelId = (value) => (value?.toString ? value.toString() : String(value || ''))
+
 		const handleNewMessage = (message) => {
-			if (message.channelId === selectedChannel?._id) {
+			if (normalizeChannelId(message.channelId) === selectedChannelId) {
 				setMessages(prev => [...prev, message])
 				// Play notification sound
 				playNotificationSound()
@@ -147,12 +161,33 @@ function Chat() {
 			}, 100)
 		}
 
+		const handleUpdatedMessage = (updatedMessage) => {
+			if (normalizeChannelId(updatedMessage.channelId) !== selectedChannelId) return
+			setMessages(prev =>
+				prev.map(msg => (msg._id === updatedMessage._id ? updatedMessage : msg))
+			)
+		}
+
+		const handleDeletedMessage = (deletedMessage) => {
+			if (normalizeChannelId(deletedMessage.channelId) !== selectedChannelId) return
+			setMessages(prev =>
+				prev.map(msg => (msg._id === deletedMessage._id ? deletedMessage : msg))
+			)
+			setTimeout(() => {
+				refetchChannelsRef.current()
+			}, 100)
+		}
+
 		socket.on('message-received', handleNewMessage)
 		socket.on('new-message-notification', handleNotification)
+		socket.on('message-updated', handleUpdatedMessage)
+		socket.on('message-deleted', handleDeletedMessage)
 
 		return () => {
 			socket.off('message-received', handleNewMessage)
 			socket.off('new-message-notification', handleNotification)
+			socket.off('message-updated', handleUpdatedMessage)
+			socket.off('message-deleted', handleDeletedMessage)
 		}
 	}, [socket, selectedChannel?._id])
 
@@ -165,11 +200,13 @@ function Chat() {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
 	}
 
-	const handleSendMessage = (content) => {
-		if (!selectedChannel || !content.trim()) return
+	const handleSendMessage = ({ content, attachments = [] }) => {
+		const trimmedContent = (content || '').trim()
+		const hasAttachments = Array.isArray(attachments) && attachments.length > 0
+		if (!selectedChannel || (!trimmedContent && !hasAttachments)) return
 
 		sendMessage(
-			{ channelId: selectedChannel._id, content },
+			{ channelId: selectedChannel._id, content: trimmedContent, attachments },
 			{
 				onSuccess: (newMessage) => {
 					// Message will be added via socket event
@@ -177,9 +214,43 @@ function Chat() {
 				},
 				onError: (error) => {
 					console.error('Error sending message:', error)
+					showAlert(error?.response?.data?.message || t('chat.messageSendError') || 'Nie udało się wysłać wiadomości.')
 				}
 			}
 		)
+	}
+
+	const handleEditMessage = async (messageId, content) => {
+		if (!selectedChannel?._id) return false
+		try {
+			await updateMessage({
+				messageId,
+				content,
+				channelId: selectedChannel._id
+			})
+			return true
+		} catch (error) {
+			await showAlert(error?.response?.data?.message || t('chat.editMessageError') || 'Nie udało się edytować wiadomości')
+			return false
+		}
+	}
+
+	const handleDeleteMessage = async (messageId) => {
+		if (!selectedChannel?._id) return false
+
+		const confirmed = await showConfirm(t('chat.deleteMessageConfirm') || 'Czy na pewno chcesz usunąć tę wiadomość?')
+		if (!confirmed) return false
+
+		try {
+			await deleteMessage({
+				messageId,
+				channelId: selectedChannel._id
+			})
+			return true
+		} catch (error) {
+			await showAlert(error?.response?.data?.message || t('chat.deleteMessageError') || 'Nie udało się usunąć wiadomości')
+			return false
+		}
 	}
 
 	const playNotificationSound = () => {
@@ -307,8 +378,16 @@ function Chat() {
 								messages={messages}
 								isLoading={messagesLoading}
 								messagesEndRef={messagesEndRef}
+								onEditMessage={handleEditMessage}
+								onDeleteMessage={handleDeleteMessage}
 							/>
-							<MessageInput onSendMessage={handleSendMessage} />
+							<MessageInput
+								onSendMessage={handleSendMessage}
+								isSending={Boolean(isSendingMessage || isSendingMessageLegacy)}
+								onValidationError={(message) => {
+									if (message) showAlert(message)
+								}}
+							/>
 						</>
 					) : (
 						<div className="chat-empty">

@@ -676,6 +676,29 @@ function Settings() {
 											<span>{t('settings.pushNotificationsLeaves')}</span>
 										</label>
 									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.announcements !== false}
+												onChange={(e) => handleUpdatePushPreferences('announcements', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsAnnouncements')}</span>
+										</label>
+									</div>
 								</div>
 							</>
 						)}

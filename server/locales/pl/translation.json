@@ -152,6 +152,17 @@
 		"saveError": "Błąd podczas zapisywania ustawień",
 		"noAccess": "Na tę chwilę twoje uprawnienia nie pozwalają na żadne konfiguracje."
 	},
+	"announcements": {
+		"targetAll": "Wszyscy członkowie zespołu",
+		"targetDepartment": "Dział",
+		"targetUsers": "Wybrani użytkownicy",
+		"createdBy": "Autor",
+		"recipients": "Odbiorcy",
+		"attachments": "Załączniki",
+		"openInApp": "Przejdź do komunikatów",
+		"emailSubjectPrefix": "Nowy komunikat",
+		"pushTitle": "Nowy komunikat"
+	},
 	"boards": {
 		"status": {
 			"todo": "Do zrobienia",

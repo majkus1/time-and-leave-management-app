@@ -54,18 +54,77 @@ export const useSendMessage = () => {
 	const queryClient = useQueryClient()
 	
 	return useMutation({
-		mutationFn: async ({ channelId, content }) => {
-			const response = await axios.post(
-				`${API_URL}/api/chat/messages`,
-				{ channelId, content },
-				{ withCredentials: true }
-			)
+		mutationFn: async ({ channelId, content, attachments = [] }) => {
+			const hasAttachments = Array.isArray(attachments) && attachments.length > 0
+			let response
+
+			if (hasAttachments) {
+				const formData = new FormData()
+				formData.append('channelId', channelId)
+				formData.append('content', content || '')
+				attachments.forEach((file) => {
+					formData.append('attachments', file)
+				})
+				response = await axios.post(`${API_URL}/api/chat/messages`, formData, {
+					withCredentials: true,
+					headers: {
+						'Content-Type': 'multipart/form-data'
+					}
+				})
+			} else {
+				response = await axios.post(
+					`${API_URL}/api/chat/messages`,
+					{ channelId, content },
+					{ withCredentials: true }
+				)
+			}
+
 			return response.data
 		},
 		onSuccess: (data, variables) => {
 			// Invalidate messages query to refetch
 			queryClient.invalidateQueries({ queryKey: ['messages', variables.channelId] })
 			// Also invalidate channels to update unread counts
+			queryClient.invalidateQueries({ queryKey: ['channels'] })
+			queryClient.invalidateQueries({ queryKey: ['unreadCount'] })
+		}
+	})
+}
+
+// Update own message
+export const useUpdateMessage = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ messageId, content, channelId }) => {
+			const response = await axios.put(
+				`${API_URL}/api/chat/messages/${messageId}`,
+				{ content },
+				{ withCredentials: true }
+			)
+			return { ...response.data, channelId }
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['messages', variables.channelId] })
+			queryClient.invalidateQueries({ queryKey: ['channels'] })
+			queryClient.invalidateQueries({ queryKey: ['unreadCount'] })
+		}
+	})
+}
+
+// Delete own message
+export const useDeleteMessage = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ messageId, channelId }) => {
+			const response = await axios.delete(`${API_URL}/api/chat/messages/${messageId}`, {
+				withCredentials: true
+			})
+			return { ...response.data, channelId }
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({ queryKey: ['messages', variables.channelId] })
 			queryClient.invalidateQueries({ queryKey: ['channels'] })
 			queryClient.invalidateQueries({ queryKey: ['unreadCount'] })
 		}

@@ -134,8 +134,8 @@ function BlogThree() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										👉 <strong>Darmowa aplikacja do planowania urlopów</strong>  
-										<br />dla zespołów do 6 użytkowników
+										<strong>Darmowa aplikacja do planowania urlopów</strong>  
+										{' '}dla zespołów do 4 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
@@ -146,7 +146,7 @@ function BlogThree() {
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-									👉 <strong>Dla większych firm: </strong>  
+									<strong>Dla większych firm: </strong>  
 									nielimitowana liczba użytkowników, elastyczne funkcje i integracje
 									</p>
 									<Link
@@ -205,7 +205,7 @@ function BlogThree() {
 				<h2 className="text-2xl font-semibold mb-3">Planopia – aplikacja do planowania urlopów</h2>
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong> 
-					z planowaniem urlopów. Wersja darmowa pozwala na korzystanie z systemu w zespołach do 6 osób. 
+					z planowaniem urlopów. Wersja darmowa pozwala na korzystanie z systemu w zespołach do 4 osób. 
 					W płatnych planach otrzymasz dodatkowe funkcje – nielimitowaną liczbę użytkowników, personalizację 
 					i integracje z innymi systemami.
 				</p>
@@ -220,7 +220,7 @@ function BlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Planowanie urlopów online</strong> to sposób na porządek, przejrzystość i mniej stresu w zarządzaniu firmą. 
 					Dzięki aplikacji Planopia unikniesz chaosu, przyspieszysz akceptacje i zyskasz kontrolę nad dostępnością zespołu. 
-					Sprawdź darmową wersję dla <strong>zespołów do 6 osób</strong> i zobacz, jak łatwe może być zarządzanie urlopami.
+					Sprawdź darmową wersję dla <strong>zespołów do 4 osób</strong> i zobacz, jak łatwe może być zarządzanie urlopami.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">

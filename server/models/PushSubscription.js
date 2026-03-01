@@ -56,6 +56,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
 		leaves: {
 			type: Boolean,
 			default: true
+		},
+		announcements: {
+			type: Boolean,
+			default: true
 		}
 	},
 	createdAt: {

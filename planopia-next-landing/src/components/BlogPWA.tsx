@@ -209,7 +209,7 @@ function BlogPWA() {
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Zacznij korzystać z Planopii już dziś!</h3>
 					<p className="mb-4 text-gray-700">
 						Planopia to kompleksowa aplikacja do zarządzania czasem pracy, urlopami i zespołem. 
-						Darmowa wersja dla zespołów do 6 użytkowników!
+						Darmowa wersja dla zespołów do 4 użytkowników!
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link

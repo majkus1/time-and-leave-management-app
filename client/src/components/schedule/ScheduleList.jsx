@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import CreateScheduleModal from './CreateScheduleModal'
 import EditScheduleModal from './EditScheduleModal'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
+import { useSupervisorConfig } from '../../hooks/useSupervisor'
 
 function ScheduleList() {
 	const { t } = useTranslation()
@@ -19,7 +21,13 @@ function ScheduleList() {
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 	const [editingSchedule, setEditingSchedule] = useState(null)
 	const [usersInfoModal, setUsersInfoModal] = useState({ isOpen: false, scheduleId: null })
-	const isAdmin = role && role.includes('Admin')
+	const isAdminRole = isAdmin(role)
+	const isHRRole = isHR(role)
+	const isSupervisorRole = isSupervisor(role)
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	const canCreateSchedule = isAdminRole || isHRRole || (
+		isSupervisorRole && (supervisorConfig ? supervisorConfig?.permissions?.canManageSchedule !== false : true)
+	)
 	
 	// Hook for schedule users in modal
 	const { data: scheduleUsers = [], isLoading: loadingScheduleUsers } = useScheduleUsers(
@@ -64,21 +72,23 @@ function ScheduleList() {
 						{t('schedule.title') || 'Grafiki'}
 					</h2>
 					<hr />
-					<button
-						onClick={() => setIsCreateModalOpen(true)}
-						style={{
-							padding: '12px 24px',
-							backgroundColor: '#3498db',
-							color: 'white',
-							border: 'none',
-							borderRadius: '8px',
-							fontSize: '16px',
-							fontWeight: '500',
-							cursor: 'pointer',
-							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-						}}>
-						{t('schedule.createSchedule') || 'Utwórz nowy grafik'}
-					</button>
+					{canCreateSchedule && (
+						<button
+							onClick={() => setIsCreateModalOpen(true)}
+							style={{
+								padding: '12px 24px',
+								backgroundColor: '#3498db',
+								color: 'white',
+								border: 'none',
+								borderRadius: '8px',
+								fontSize: '16px',
+								fontWeight: '500',
+								cursor: 'pointer',
+								boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+							}}>
+							{t('schedule.createSchedule') || 'Utwórz nowy grafik'}
+						</button>
+					)}
 				</div>
 				<div style={{
 					display: 'grid',
@@ -178,7 +188,7 @@ function ScheduleList() {
 										<path d="M8 12V8M8 4H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
 									</svg>
 								</button>
-								{schedule.type === 'custom' && (isAdmin || (schedule.createdBy && (schedule.createdBy._id === userId || schedule.createdBy.toString() === userId))) && (
+								{schedule.type === 'custom' && (isAdminRole || (schedule.createdBy && (schedule.createdBy._id === userId || schedule.createdBy.toString() === userId))) && (
 									<>
 										<button
 											onClick={(e) => {

@@ -161,9 +161,17 @@ const sendChatNotification = async (channelId, message, recipientUserIds) => {
 		? `${message.userId.firstName} ${message.userId.lastName}`
 		: 'Ktoś'
 
+	const hasAttachments = Array.isArray(message.attachments) && message.attachments.length > 0
+	const messagePreview = (message.content || '').trim()
+	const fallbackBody = hasAttachments
+		? `${messageSender} wysłał załącznik`
+		: `${messageSender} wysłał wiadomość`
+
 	const payload = {
 		title: 'Nowa wiadomość',
-		body: `${messageSender}: ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}`,
+		body: messagePreview
+			? `${messageSender}: ${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`
+			: fallbackBody,
 		icon: '/icon-192x192.png',
 		badge: '/icon-96x96.png',
 		tag: `chat-${channelId}`,
@@ -419,6 +427,78 @@ const sendTaskCommentNotification = async ({ task, board, commenterName, recipie
 }
 
 /**
+ * Send announcement push notification
+ */
+const sendAnnouncementPushNotification = async ({ announcement, createdByName, recipientUserIds, t = null }) => {
+	if (!announcement || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	let subscriptions = await PushSubscription.find({
+		userId: { $in: recipientUserIds },
+		enabled: true,
+		$or: [{ 'preferences.announcements': true }, { 'preferences.announcements': { $exists: false } }],
+	})
+
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+
+	if (subscriptions.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	const title = t ? t('announcements.pushTitle') : 'Nowy komunikat'
+	const bodyPrefix = createdByName ? `${createdByName}: ` : ''
+	const contentPreview = (announcement.content || '').trim()
+	const body = contentPreview
+		? `${bodyPrefix}${contentPreview.substring(0, 100)}${contentPreview.length > 100 ? '...' : ''}`
+		: `${bodyPrefix}${announcement.title || ''}`.trim()
+
+	const payload = {
+		title,
+		body,
+		icon: '/icon-192x192.png',
+		badge: '/icon-96x96.png',
+		tag: `announcement-${announcement._id}`,
+		data: {
+			url: '/announcements',
+			type: 'announcement',
+			announcementId: announcement._id?.toString(),
+		},
+		requireInteraction: false,
+		silent: false,
+	}
+
+	const results = await Promise.allSettled(
+		subscriptions.map(async (subscription) => {
+			try {
+				const subscriptionData = {
+					endpoint: subscription.endpoint,
+					keys: {
+						p256dh: subscription.keys.p256dh,
+						auth: subscription.keys.auth,
+					},
+				}
+
+				await webpush.sendNotification(subscriptionData, JSON.stringify(payload))
+				subscription.lastUsed = new Date()
+				await subscription.save()
+				return { success: true }
+			} catch (error) {
+				if (error.statusCode === 410) {
+					await PushSubscription.findByIdAndDelete(subscription._id)
+					return { success: false, error: 'Subscription expired' }
+				}
+				return { success: false, error: error.message }
+			}
+		})
+	)
+
+	const sent = results.filter((r) => r.status === 'fulfilled' && r.value.success).length
+	const failed = results.length - sent
+	return { sent, failed }
+}
+
+/**
  * Send leave request notification
  * @param {Object} leaveRequest - The leave request object
  * @param {Object} user - The employee who created the request
@@ -611,5 +691,6 @@ module.exports = {
 	sendChatNotification,
 	sendTaskNotification,
 	sendTaskCommentNotification,
+	sendAnnouncementPushNotification,
 	sendLeaveRequestPushNotification
 }

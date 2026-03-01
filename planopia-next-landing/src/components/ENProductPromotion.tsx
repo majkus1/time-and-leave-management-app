@@ -118,13 +118,13 @@ function ENProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 6 users. Paid plans include unlimited users, advanced customization, and integrations.",
+						"description": "Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 4 users. Paid plans include unlimited users, advanced customization, and integrations.",
 						"offers": {
 							"@type": "Offer",
 							"price": "0",
 							"priceCurrency": "USD",
 							"category": "Free",
-							"description": "Free plan for teams up to 6 users"
+							"description": "Free plan for teams up to 4 users"
 						}
 					})
 				}}
@@ -247,7 +247,7 @@ function ENProductPromotion() {
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-								Time and leave tracking app – free for up to 6 users
+								Time and leave tracking app – free for up to 4 users
 							</h1>
 							<h2 className="font-semibold text-gray-800" id="underheader">
 								Planopia helps teams and companies organize working hours and leave management.
@@ -429,7 +429,7 @@ function ENProductPromotion() {
 								<p className="font-semibold text-gray-900">Small teams</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Quick tracking, simple requests, clear calendar. <span className="font-semibold text-green-700">Free for up to 6 users.</span>
+								Quick tracking, simple requests, clear calendar. <span className="font-semibold text-green-700">Free for up to 4 users.</span>
 							</p>
 						</div>
 
@@ -471,7 +471,7 @@ function ENProductPromotion() {
 					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Pricing</h2>
 
 					<p className="mt-3 text-gray-600 text-left">
-						Payment is charged for each user. The app is free for up to 6 users — above this limit, you pay for all active users.
+						Payment is charged for each user. The app is free for up to 4 users — above this limit, you pay for all active users.
 					</p>
 
 					{/* Plan cards */}

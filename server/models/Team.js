@@ -29,7 +29,7 @@ const teamSchema = new mongoose.Schema({
 	},
 	maxUsers: {
 		type: Number,
-		default: 6
+		default: 4
 	},
 	currentUserCount: {
 		type: Number,

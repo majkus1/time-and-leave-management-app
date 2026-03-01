@@ -28,6 +28,7 @@ import BoardList from './components/boards/BoardList'
 import Board from './components/boards/Board'
 import ScheduleList from './components/schedule/ScheduleList'
 import Schedule from './components/schedule/Schedule'
+import Announcements from './components/announcements/Announcements'
 import { useSupervisorConfig } from './hooks/useSupervisor'
 // import ProductPromotion from './components/ProductPromotion'
 // import ENProductPromotion from './components/ENProductPromotion.jsx'
@@ -150,6 +151,7 @@ function AppContent() {
 					<Route path="/schedule" element={<ScheduleList />} />
 					<Route path="/schedule/:scheduleId" element={<Schedule />} />
 					<Route path="/chat" element={<Chat />} />
+					<Route path="/announcements" element={<Announcements />} />
 					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />
 					<Route

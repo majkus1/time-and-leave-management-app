@@ -23,7 +23,7 @@
 ## 3. Account Types and Usage Rules
 
 3.1. The Service Provider offers two types of accounts:
-   - **Free plan**: access for up to 6 users, basic features
+   - **Free plan**: access for up to 4 users, basic features
    - **Paid plans**: unlimited users, additional features (details in pricing)
 
 3.2. The Client is responsible for:

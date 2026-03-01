@@ -24,6 +24,13 @@ const PRIORITY_META = {
 	urgent: { bg: '#f3e5f5', color: '#6a1b9a' },
 }
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
+const ATTACH_ICON_SRC = '/img/attach-file.png'
+const ATTACH_ICON_STYLE = {
+	width: '16px',
+	height: '16px',
+	objectFit: 'contain',
+	flexShrink: 0
+}
 
 function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate, unreadCount = 0, onSeen }) {
 	const { t } = useTranslation()
@@ -612,9 +619,13 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									style={{
 										textDecoration: 'none',
 										color: '#3498db',
-										flex: 1
+										flex: 1,
+										display: 'inline-flex',
+										alignItems: 'center',
+										gap: '6px'
 									}}>
-									📎 {attachment.filename}
+									<img src={ATTACH_ICON_SRC} alt="" aria-hidden="true" style={ATTACH_ICON_STYLE} />
+									<span>{attachment.filename}</span>
 								</a>
 								{canEdit && (
 									<button
@@ -698,9 +709,17 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 															href={`${API_URL.replace('/api', '')}/uploads/${attachment.path}`}
 															target="_blank"
 															rel="noopener noreferrer"
-															style={{ color: '#3498db', textDecoration: 'none', fontSize: '13px' }}
+															style={{
+																color: '#3498db',
+																textDecoration: 'none',
+																fontSize: '13px',
+																display: 'inline-flex',
+																alignItems: 'center',
+																gap: '6px'
+															}}
 														>
-															📎 {attachment.filename}
+															<img src={ATTACH_ICON_SRC} alt="" aria-hidden="true" style={ATTACH_ICON_STYLE} />
+															<span>{attachment.filename}</span>
 														</a>
 														{comment.createdBy && comment.createdBy._id === userId && (
 															<button
@@ -768,10 +787,19 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									cursor: uploadingCommentFile ? 'not-allowed' : 'pointer',
 									fontSize: '14px',
 									opacity: uploadingCommentFile ? 0.6 : 1,
-									whiteSpace: 'nowrap'
+									whiteSpace: 'nowrap',
+									display: 'inline-flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									minWidth: '44px'
 								}}
+								title={t('boards.attachFile') || 'Załącz plik'}
 							>
-								{t('boards.attachFile') || 'Załącz plik'}
+								<img
+									src={ATTACH_ICON_SRC}
+									alt={t('boards.attachFile') || 'Załącz plik'}
+									style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+								/>
 								<input
 									type="file"
 									style={{ display: 'none' }}
@@ -805,7 +833,10 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								alignItems: 'center',
 								justifyContent: 'space-between'
 							}}>
-								<span>📎 {selectedCommentFile.name}</span>
+								<span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+									<img src={ATTACH_ICON_SRC} alt="" aria-hidden="true" style={ATTACH_ICON_STYLE} />
+									<span>{selectedCommentFile.name}</span>
+								</span>
 								<button
 									type="button"
 									onClick={() => setSelectedCommentFile(null)}

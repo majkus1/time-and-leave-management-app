@@ -15,6 +15,7 @@ function CreateScheduleModal({ onClose, onSuccess }) {
 	
 	const [name, setName] = useState('')
 	const [selectedMembers, setSelectedMembers] = useState([])
+	const [availabilityEnabled, setAvailabilityEnabled] = useState(false)
 
 	// Filter users to only show users from the same team
 	const teamUsers = users.filter(user => user.teamId === teamId)
@@ -38,7 +39,8 @@ function CreateScheduleModal({ onClose, onSuccess }) {
 		try {
 			await createScheduleMutation.mutateAsync({
 				name: name.trim(),
-				memberIds: selectedMembers
+				memberIds: selectedMembers,
+				availabilityEnabled
 			})
 			await showAlert(t('schedule.createSuccess') || 'Grafik został utworzony pomyślnie')
 			onSuccess()
@@ -126,6 +128,31 @@ function CreateScheduleModal({ onClose, onSuccess }) {
 						}}
 						required
 					/>
+				</div>
+
+				<div style={{ marginBottom: '20px' }}>
+					<label
+						style={{
+							display: 'flex',
+							alignItems: 'flex-start',
+							gap: '10px',
+							cursor: 'pointer',
+							padding: '10px',
+							border: '1px solid #e2e8f0',
+							borderRadius: '8px',
+							backgroundColor: '#f8fafc'
+						}}
+					>
+						<input
+							type="checkbox"
+							checked={availabilityEnabled}
+							onChange={(e) => setAvailabilityEnabled(e.target.checked)}
+							style={{ marginTop: '2px', transform: 'scale(1.2)' }}
+						/>
+						<span style={{ color: '#334155', fontSize: '14px', lineHeight: '1.4' }}>
+							{t('schedule.availabilityEnabledDescription') || 'Uwzględnij dyspozycyjność w tym grafiku (pracownicy będą mogli deklarować dostępne dni i uwagi).'}
+						</span>
+					</label>
 				</div>
 
 				<div style={{ marginBottom: '20px' }}>
