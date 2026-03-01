@@ -1579,7 +1579,7 @@ function Schedule() {
 							position: 'relative',
 							inset: 'unset',
 							margin: '0',
-							maxWidth: '800px',
+							maxWidth: '1200px',
 							width: '92%',
 							maxHeight: '90vh',
 							overflowY: 'auto',
@@ -1670,7 +1670,7 @@ function Schedule() {
 							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 								{autoShiftRows.map((shiftRow, index) => (
 									<div key={shiftRow.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', backgroundColor: '#fff' }}>
-										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', alignItems: 'end' }}>
 											<div>
 												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Od</label>
 												<input
@@ -1781,7 +1781,7 @@ function Schedule() {
 							) : (
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 									{autoDayOverrideRows.map((overrideRow) => (
-										<div key={overrideRow.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+										<div key={overrideRow.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', alignItems: 'end' }}>
 											<div>
 												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
 													{t('schedule.date') || 'Data'}
@@ -1878,7 +1878,7 @@ function Schedule() {
 							) : (
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 									{autoManualExclusionRows.map((row) => (
-										<div key={row.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', alignItems: 'end' }}>
+										<div key={row.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', alignItems: 'end' }}>
 											<div>
 												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
 													{t('schedule.auto.manualExclusions.user') || 'Użytkownik'}
@@ -2186,8 +2186,8 @@ function Schedule() {
 								{t('schedule.availability.openForm') || 'Określ dyspozycyjność'}
 							</button>
 						) : (
-						<form onSubmit={handleSaveAvailability}>
-							<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+						<form onSubmit={handleSaveAvailability} className="schedule-availability-form">
+							<div className="schedule-availability-date-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
 								<div>
 									<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#334155' }}>
 										{t('schedule.availability.dateFrom') || 'Od'}
@@ -2221,6 +2221,7 @@ function Schedule() {
 									<button
 										type="button"
 										onClick={handleAddAvailabilityWindow}
+										className="schedule-availability-add-btn"
 										style={{
 											padding: '6px 10px',
 											border: '1px solid #0284c7',
@@ -2239,10 +2240,10 @@ function Schedule() {
 										{t('schedule.availability.timeWindowsEmptyHint') || 'Brak przedziałów oznacza dyspozycyjność na cały dzień.'}
 									</div>
 								) : (
-									<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+									<div className="schedule-availability-window-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
 										{availabilityTimeWindows.map((window) => (
-											<div key={window.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
-												<div>
+											<div key={window.id} className="schedule-availability-window-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'end' }}>
+												<div className="schedule-availability-window-field">
 													<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
 														{t('schedule.timeFrom') || 'Od'}
 													</label>
@@ -2255,7 +2256,7 @@ function Schedule() {
 														style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
 													/>
 												</div>
-												<div>
+												<div className="schedule-availability-window-field">
 													<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>
 														{t('schedule.timeTo') || 'Do'}
 													</label>
@@ -2271,6 +2272,7 @@ function Schedule() {
 												<button
 													type="button"
 													onClick={() => handleRemoveAvailabilityWindow(window.id)}
+													className="schedule-availability-window-remove-btn"
 													style={{
 														padding: '8px 10px',
 														border: '1px solid #fecaca',
@@ -2303,7 +2305,7 @@ function Schedule() {
 									resize: 'vertical'
 								}}
 							/>
-							<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+							<div className="schedule-availability-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
 								<button
 									type="submit"
 									disabled={upsertAvailabilityMutation.isPending}

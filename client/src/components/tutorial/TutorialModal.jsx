@@ -126,8 +126,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'timesheet',
-			title: i18n.resolvedLanguage === 'pl' ? 'Ewidencja czasu pracy' : 'Timesheet',
-			icon: '/img/schedule time works.png',
+			title: i18n.resolvedLanguage === 'pl' ? 'Czas pracy' : 'Timesheet',
+			icon: '/img/clock.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Wypełnianie codziennej ewidencji czasu pracy'
 				: 'Filling in daily work time records',
@@ -139,7 +139,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		{
 			id: 'timer',
 			title: i18n.resolvedLanguage === 'pl' ? 'Licznik czasu pracy' : 'Work Time Counter',
-			icon: '/img/clock.png',
+			icon: '/img/timer.png',
 			description: i18n.resolvedLanguage === 'pl' 
 				? 'Używanie licznika czasu pracy do śledzenia czasu pracy'
 				: 'Using work time counter to track work time',

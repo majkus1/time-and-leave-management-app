@@ -3642,3 +3642,47 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		margin-left: 35px;
 	}
 }
+
+/* Schedule availability form responsive fixes */
+.schedule-availability-form,
+.schedule-availability-form * {
+	box-sizing: border-box;
+}
+
+.schedule-availability-form input,
+.schedule-availability-form textarea,
+.schedule-availability-form button {
+	max-width: 100%;
+}
+
+.schedule-availability-window-field {
+	min-width: 0;
+}
+
+@media (max-width: 640px) {
+	.schedule-availability-date-grid {
+		grid-template-columns: 1fr !important;
+	}
+
+	.schedule-availability-add-btn {
+		width: 100%;
+	}
+
+	.schedule-availability-window-row {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+		align-items: stretch !important;
+	}
+
+	.schedule-availability-window-remove-btn {
+		grid-column: 1 / -1;
+		width: 100%;
+	}
+
+	.schedule-availability-actions {
+		flex-direction: column;
+	}
+
+	.schedule-availability-actions button {
+		width: 100%;
+	}
+}

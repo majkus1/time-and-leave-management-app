@@ -107,7 +107,7 @@ function LeaveAvailabilityChecker({
 				{t('leaveplanner.availabilityChecker.description') || 'Wybierz datę lub zakres, a system automatycznie sprawdzi konflikty nieobecności.'}
 			</p>
 
-			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px', alignItems: 'end' }}>
+			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', alignItems: 'end' }}>
 				<label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
 					<input
 						type="radio"
