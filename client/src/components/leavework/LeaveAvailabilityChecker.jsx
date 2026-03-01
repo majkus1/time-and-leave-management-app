@@ -134,7 +134,7 @@ function LeaveAvailabilityChecker({
 						type="date"
 						value={startDate}
 						onChange={(e) => setStartDate(e.target.value)}
-						style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+						style={{ width: '80%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
 					/>
 				</div>
 				{mode === 'range' && (
@@ -146,7 +146,7 @@ function LeaveAvailabilityChecker({
 							type="date"
 							value={endDate}
 							onChange={(e) => setEndDate(e.target.value)}
-							style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+							style={{ width: '80%', padding: '9px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
 						/>
 					</div>
 				)}

@@ -1790,7 +1790,7 @@ function Schedule() {
 													type="date"
 													value={overrideRow.date}
 													onChange={(e) => handleUpdateOverrideRow(overrideRow.id, 'date', e.target.value)}
-													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+													style={{ width: '80%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
 												/>
 											</div>
 											<div>
@@ -1904,7 +1904,7 @@ function Schedule() {
 													type="date"
 													value={row.date}
 													onChange={(e) => handleUpdateManualExclusionRow(row.id, 'date', e.target.value)}
-													style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+													style={{ width: '80%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
 												/>
 											</div>
 											<div>
@@ -2197,7 +2197,7 @@ function Schedule() {
 										value={availabilityFromDate}
 										onChange={(e) => setAvailabilityFromDate(e.target.value)}
 										required
-										style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+										style={{ width: '80%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
 									/>
 								</div>
 								<div>
@@ -2209,7 +2209,7 @@ function Schedule() {
 										value={availabilityToDate}
 										onChange={(e) => setAvailabilityToDate(e.target.value)}
 										required
-										style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+										style={{ width: '80%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
 									/>
 								</div>
 							</div>
