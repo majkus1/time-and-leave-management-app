@@ -145,9 +145,9 @@ function ScheduleList() {
 									color: '#95a5a6',
 									marginTop: '10px'
 								}}>
-									{schedule.type === 'team' && `📋 ${t('schedule.boardType.team') || 'Grafik zespołu'}`}
-									{schedule.type === 'department' && `🏢 ${t('schedule.boardType.department') || 'Grafik działu'}`}
-									{schedule.type === 'custom' && `⭐ ${t('schedule.boardType.custom') || 'Grafik niestandardowy'}`}
+									{schedule.type === 'team' && `${t('schedule.boardType.team') || 'Grafik zespołu'}`}
+									{schedule.type === 'department' && `${t('schedule.boardType.department') || 'Grafik działu'}`}
+									{schedule.type === 'custom' && `${t('schedule.boardType.custom') || 'Grafik niestandardowy'}`}
 								</div>
 								</Link>
 								<div style={{

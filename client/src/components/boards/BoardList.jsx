@@ -148,9 +148,9 @@ function BoardList() {
 									color: '#95a5a6',
 									marginTop: '10px'
 								}}>
-									{board.type === 'team' && `📋 ${t('boards.boardType.team')}`}
-									{board.type === 'department' && `🏢 ${t('boards.boardType.department')}`}
-									{board.type === 'custom' && `⭐ ${t('boards.boardType.custom')}`}
+									{board.type === 'team' && `${t('boards.boardType.team')}`}
+									{board.type === 'department' && `${t('boards.boardType.department')}`}
+									{board.type === 'custom' && `${t('boards.boardType.custom')}`}
 								</div>
 							</Link>
 							<div style={{

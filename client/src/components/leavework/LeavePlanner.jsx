@@ -19,6 +19,7 @@ function LeavePlanner() {
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
 	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
+	const [visibleRequestCount, setVisibleRequestCount] = useState(3)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
@@ -125,6 +126,15 @@ function LeavePlanner() {
 		])
 		return allTeamLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
 	}, [allTeamLeaveRequests])
+
+	const displayedOwnLeaveRequests = React.useMemo(
+		() => visibleOwnLeaveRequests.slice(0, visibleRequestCount),
+		[visibleOwnLeaveRequests, visibleRequestCount]
+	)
+
+	useEffect(() => {
+		setVisibleRequestCount(3)
+	}, [visibleOwnLeaveRequests.length])
 
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
@@ -446,6 +456,74 @@ function LeavePlanner() {
 						)}
 					</div>
 
+					<LeaveAvailabilityChecker
+						requests={checkerRequests}
+						settings={settings}
+						showUserName={true}
+						scopeHint={t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół'}
+					/>
+
+					{/* Sekcja widocznych wniosków */}
+					{visibleOwnLeaveRequests.length > 0 && (
+						<div style={{ marginBottom: '20px' }}>
+							<h4 style={{ color: 'green', marginBottom: '10px' }}>
+								{i18n.resolvedLanguage === 'pl' ? 'Moje wnioski urlopowe' : 'My leave requests'}
+							</h4>
+							<ul style={{ listStyle: 'none', padding: 0 }}>
+								{displayedOwnLeaveRequests.map(request => {
+									const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
+									return (
+										<li
+											key={request._id}
+											style={{
+												padding: '8px 12px',
+												border: isPendingRequest ? '1px solid #60a5fa' : '1px solid #4ade80',
+												marginBottom: '5px',
+												backgroundColor: isPendingRequest ? '#eff6ff' : '#f0fdf4',
+												borderRadius: '6px',
+												maxWidth: '400px',
+											}}>
+											<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+												{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
+											</div>
+											<div style={{ fontSize: '14px', color: '#666' }}>
+												{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+												<span style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
+													({settings?.leaveCalculationMode === 'hours'
+														? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
+														: `${request.daysRequested} ${t('leaveplanner.days')}`
+													})
+												</span>
+											</div>
+											{isPendingRequest && (
+												<div style={{ fontSize: '12px', fontWeight: '600', color: '#1d4ed8', marginTop: '4px' }}>
+													{i18n.resolvedLanguage === 'pl' ? 'Oczekuje na akceptację' : 'Pending approval'}
+												</div>
+											)}
+										</li>
+									)
+								})}
+							</ul>
+							{visibleOwnLeaveRequests.length > visibleRequestCount && (
+								<button
+									type="button"
+									onClick={() => setVisibleRequestCount((prev) => prev + 3)}
+									style={{
+										background: 'transparent',
+										border: '1px solid #cbd5e1',
+										color: '#334155',
+										padding: '6px 10px',
+										borderRadius: '999px',
+										fontSize: '13px',
+										cursor: 'pointer',
+									}}
+								>
+									{i18n.resolvedLanguage === 'pl' ? 'Pokaż więcej' : 'Show more'}
+								</button>
+							)}
+						</div>
+					)}
+
 					{/* Sekcja zaznaczonych dat */}
 					<div style={{ marginBottom: '20px' }}>
 						<p style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '10px' }}>
@@ -494,57 +572,6 @@ function LeavePlanner() {
 							</p>
 						)}
 					</div>
-
-					{/* Sekcja widocznych wniosków */}
-					{visibleOwnLeaveRequests.length > 0 && (
-						<div style={{ marginBottom: '20px' }}>
-							<h4 style={{ color: 'green', marginBottom: '10px' }}>
-								{i18n.resolvedLanguage === 'pl' ? 'Wnioski urlopowe' : 'Leave requests'}
-							</h4>
-							<ul style={{ listStyle: 'none', padding: 0 }}>
-								{visibleOwnLeaveRequests.map(request => {
-									const isPendingRequest = request.status === 'status.pending' || request.status === 'pending'
-									return (
-										<li
-											key={request._id}
-											style={{
-												padding: '8px 12px',
-												border: isPendingRequest ? '1px solid #60a5fa' : '1px solid #4ade80',
-												marginBottom: '5px',
-												backgroundColor: isPendingRequest ? '#eff6ff' : '#f0fdf4',
-												borderRadius: '6px',
-												maxWidth: '400px',
-											}}>
-											<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-												{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
-											</div>
-											<div style={{ fontSize: '14px', color: '#666' }}>
-												{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-												<span style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
-													({settings?.leaveCalculationMode === 'hours'
-														? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
-														: `${request.daysRequested} ${t('leaveplanner.days')}`
-													})
-												</span>
-											</div>
-											{isPendingRequest && (
-												<div style={{ fontSize: '12px', fontWeight: '600', color: '#1d4ed8', marginTop: '4px' }}>
-													{i18n.resolvedLanguage === 'pl' ? 'Oczekuje na akceptację' : 'Pending approval'}
-												</div>
-											)}
-										</li>
-									)
-								})}
-							</ul>
-						</div>
-					)}
-
-					<LeaveAvailabilityChecker
-						requests={checkerRequests}
-						settings={settings}
-						showUserName={true}
-						scopeHint={t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół'}
-					/>
 
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '20px', gap: '5px', alignItems: 'center' }}>
 						{calendarView === 'single' && (
