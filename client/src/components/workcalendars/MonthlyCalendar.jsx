@@ -165,6 +165,16 @@ function MonthlyCalendar() {
 			.join(', ')
 	}
 
+	// Merge manual ranges with timer/session ranges so timer data never visually hides manual input.
+	const mergeTimeRanges = (manualRanges = '', sessionRanges = '') => {
+		const parts = [manualRanges, sessionRanges]
+			.filter(Boolean)
+			.flatMap(value => String(value).split(','))
+			.map(value => value.trim())
+			.filter(Boolean)
+		return [...new Set(parts)].join(', ')
+	}
+
 	// TanStack Query hooks
 	const { data: workdays = [], isLoading: loadingWorkdays, refetch: refetchWorkdays } = useWorkdays()
 	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
@@ -1027,7 +1037,7 @@ function MonthlyCalendar() {
 						...workdays
 							.map(day => {
 								const timeFromEntries = buildRealTimeFromEntries(day.timeEntries)
-								const timeLabel = timeFromEntries || day.realTimeDayWorked
+								const timeLabel = mergeTimeRanges(day.realTimeDayWorked, timeFromEntries)
 								if (!timeLabel) return null
 								return {
 									title: `${t('workcalendar.worktime')} ${timeLabel}`,
@@ -1549,7 +1559,7 @@ function MonthlyCalendar() {
 									})
 									.map((workday) => {
 									const timeFromEntries = buildRealTimeFromEntries(workday.timeEntries)
-									const timeLabel = timeFromEntries || workday.realTimeDayWorked
+									const timeLabel = mergeTimeRanges(workday.realTimeDayWorked, timeFromEntries)
 									const displayText = workday.hoursWorked
 										? `${formatHours(workday.hoursWorked)} ${t('workcalendar.allfrommonthhours')}${workday.additionalWorked ? ` ${t('workcalendar.include')} ${formatHours(workday.additionalWorked)} ${getOvertimeWord(workday.additionalWorked)}` : ''}${timeLabel ? ` | ${t('workcalendar.worktime')} ${timeLabel}` : ''}`
 										: workday.absenceType
