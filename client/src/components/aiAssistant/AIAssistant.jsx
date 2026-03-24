@@ -37,7 +37,7 @@ function formatDateInput(d) {
 function AIAssistant() {
 	const { t, i18n } = useTranslation()
 	const queryClient = useQueryClient()
-	const { data: status, isLoading: statusLoading } = useAIAssistantStatus()
+	const { data: status, isPending: statusPending, isError: statusError } = useAIAssistantStatus()
 	const [streaming, setStreaming] = useState(false)
 
 	const sessionsApi = useAIAssistantSessions()
@@ -79,13 +79,14 @@ function AIAssistant() {
 	const enabled = status?.enabled === true
 	const ent = status?.aiEntitlements
 	const aiBillingBlock =
-		!statusLoading &&
+		!statusPending &&
+		!statusError &&
 		enabled &&
 		ent?.metered === true &&
 		(ent?.needsSubscription === true || ent?.hasAccess === false)
 
 	const busy = streaming || createLeaveMutation.isPending || createWorkdayMutation.isPending
-	const disabled = !enabled || statusLoading || aiBillingBlock
+	const disabled = statusPending || statusError || !enabled || aiBillingBlock
 
 	useEffect(() => {
 		setPendingLeaveDraft(null)
@@ -328,8 +329,13 @@ function AIAssistant() {
 						/>
 					</div>
 					<div className="ai-assistant-shell">
-						<AIAssistantHeader enabled={enabled} aiEntitlements={ent} />
-						{!statusLoading && !enabled && (
+						<AIAssistantHeader
+							enabled={enabled}
+							aiEntitlements={ent}
+							statusPending={statusPending}
+							statusError={statusError}
+						/>
+						{!statusPending && !statusError && !enabled && (
 							<div className="ai-assistant-banner" role="status">
 								{t('aiAssistant.configHint')}
 							</div>

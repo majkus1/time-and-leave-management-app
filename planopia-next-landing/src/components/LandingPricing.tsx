@@ -96,7 +96,7 @@ const copy = {
 		tiersFootnote:
 			'* Płatny pakiet możesz anulować w dowolnym momencie — bez długoterminowego zobowiązania.',
 		purchaseInfo:
-			'Zakup subskrypcji Planopia odbywa się w aplikacji po zalogowaniu (sekcja Pakiety i rozliczenia): wybierz plan i wyślij zgłoszenie mailem — po weryfikacji aktywujemy subskrypcję. Wkrótce dołożymy płatność online (m.in. Przelewy24).\nMożesz też najpierw założyć konto i rozpocząć 30-dniowy okres próbny.',
+			'Zakup subskrypcji Planopia odbywa się w aplikacji po zalogowaniu (sekcja Pakiety i rozliczenia): wybierz plan i wyślij zgłoszenie mailem — po weryfikacji aktywujemy subskrypcję. Wkrótce dołożymy płatność online.\nMożesz też najpierw założyć konto i rozpocząć 30-dniowy okres próbny.',
 		purchaseInfoSummary: 'Jak działa zakup i płatność',
 		legalTitle: 'Regulaminy',
 		legalLinks: [
@@ -188,7 +188,7 @@ const copy = {
 		tiersFootnote:
 			'* You can cancel your paid plan at any time — no long-term commitment. Settlement is in PLN; USD amounts are indicative (1 USD ≈ 3.69 PLN).',
 		purchaseInfo:
-			'Subscriptions are purchased in the Planopia app after sign-in (Packages & billing): pick a plan and send a purchase request by email — we activate after verification. Online checkout (incl. Przelewy24) will be added here soon.\nYou can also start with the 30-day free trial first.',
+			'Subscriptions are purchased in the Planopia app after sign-in (Packages & billing): pick a plan and send a purchase request by email — we activate after verification. Online checkout will be added here soon.\nYou can also start with the 30-day free trial first.',
 		purchaseInfoSummary: 'How purchase & payment work',
 		legalTitle: 'Legal',
 		legalLinks: [

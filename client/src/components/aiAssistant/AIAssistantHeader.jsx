@@ -5,11 +5,15 @@ import { useTranslation } from 'react-i18next'
 /**
  * Short intro above the chat (presentational).
  * @param {object} [props.aiEntitlements] — z /api/ai-assistant/status (pole ai z buildClientEntitlements)
+ * @param {boolean} [props.statusPending] — pierwsze pobranie statusu (nie pokazuj „wyłączony” zanim przyjdzie odpowiedź)
+ * @param {boolean} [props.statusError] — błąd pobrania statusu
  */
-function AIAssistantHeader({ enabled, aiEntitlements }) {
+function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError }) {
 	const { t } = useTranslation()
 
 	const showQuota =
+		!statusPending &&
+		!statusError &&
 		enabled &&
 		aiEntitlements &&
 		!aiEntitlements.unrestricted &&
@@ -26,7 +30,18 @@ function AIAssistantHeader({ enabled, aiEntitlements }) {
 					height={40}
 				/>
 				<h1 className="ai-assistant-header__title">{t('aiAssistant.title')}</h1>
-				{!enabled && (
+				{statusPending && (
+					<span className="ai-assistant-header__badge ai-assistant-header__badge--pending" aria-live="polite">
+						<span className="ai-assistant-header__badge-dot" aria-hidden />
+						{t('aiAssistant.statusChecking')}
+					</span>
+				)}
+				{!statusPending && statusError && (
+					<span className="ai-assistant-header__badge ai-assistant-header__badge--warn" role="status">
+						{t('aiAssistant.statusLoadError')}
+					</span>
+				)}
+				{!statusPending && !statusError && !enabled && (
 					<span className="ai-assistant-header__badge ai-assistant-header__badge--off">
 						{t('aiAssistant.disabledBadge')}
 					</span>

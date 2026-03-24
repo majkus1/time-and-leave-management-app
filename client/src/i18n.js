@@ -45,6 +45,8 @@ i18n
 						introLegalNote: 'Not legal advice.',
 						introToggle: 'About AI Asystent',
 						disabledBadge: 'Not configured',
+						statusChecking: 'Checking status…',
+						statusLoadError: 'Could not load status',
 						configHint:
 							'The assistant is disabled until OPENAI_API_KEY is set on the server. Ask your administrator.',
 						dataPeriod: 'Data period for context',
@@ -1515,6 +1517,8 @@ i18n
 						introLegalNote: 'To nie jest porada prawna.',
 						introToggle: 'Informacje o AI Asystent',
 						disabledBadge: 'Wyłączony',
+						statusChecking: 'Sprawdzanie statusu…',
+						statusLoadError: 'Nie udało się pobrać statusu',
 						configHint:
 							'Asystent jest nieaktywny, dopóki administrator nie ustawi OPENAI_API_KEY na serwerze.',
 						dataPeriod: 'Okres danych do analizy',
