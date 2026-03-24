@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Nawigacja: mobile menu poniżej 1400px, pasek desktop od 1400px (spójne z @media poniżej) */
+@theme {
+	--breakpoint-desktop: 1400px;
+}
+
 /* @import url('https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap');
 
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap'); */
@@ -308,6 +313,111 @@ span {
 	color: #213555 !important;
 }
 
+/* Landing: Asystent AI — jasna karta (nadpisanie globalnych h2 / p / span) */
+.landing-ai-highlight h2 {
+	color: #0f172a !important;
+	font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem) !important;
+	font-weight: 800 !important;
+	line-height: 1.15 !important;
+	display: block !important;
+	align-items: unset !important;
+}
+.landing-ai-highlight h3.ai-highlight-features {
+	color: #0f172a !important;
+	font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem) !important;
+	font-weight: 800 !important;
+	line-height: 1.3 !important;
+	letter-spacing: -0.02em !important;
+	margin-top: 2rem !important;
+	padding-top: 0.35rem !important;
+}
+.landing-ai-highlight .ai-highlight-eyebrow {
+	color: #0369a1 !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.22em !important;
+	text-transform: uppercase !important;
+}
+.landing-ai-highlight .ai-highlight-lead {
+	color: #334155 !important;
+	font-size: 1rem !important;
+	line-height: 1.65 !important;
+	font-weight: 500 !important;
+}
+@media (min-width: 768px) {
+	.landing-ai-highlight .ai-highlight-lead {
+		font-size: 1.125rem !important;
+	}
+}
+.landing-ai-highlight .ai-highlight-card {
+	color: #1e293b !important;
+	font-size: 0.875rem !important;
+	line-height: 1.4 !important;
+}
+.landing-ai-highlight .ai-highlight-card .ai-bullet-icon {
+	color: #0891b2 !important;
+	font-size: 1.125rem !important;
+}
+
+.landing-ai-highlight a.landing-ai-cta {
+	color: #ffffff !important;
+	text-decoration: none !important;
+}
+.landing-ai-highlight a.landing-ai-cta:hover,
+.landing-ai-highlight a.landing-ai-cta:focus-visible {
+	color: #ffffff !important;
+}
+
+/* Landing: cennik — badge’e i CTA (globalne span / a + grupa h1–h6 nadpisują kolory) */
+.landing-pricing span.pricing-badge-pill {
+	color: #ffffff !important;
+	font-size: 0.75rem !important;
+	line-height: 1rem !important;
+	font-weight: 700 !important;
+}
+.landing-pricing span.pricing-badge-pill--tier {
+	font-size: 0.7rem !important;
+	max-width: 100%;
+}
+@media (min-width: 400px) {
+	.landing-pricing span.pricing-badge-pill--tier {
+		font-size: 0.75rem !important;
+	}
+}
+.landing-pricing a.pricing-cta {
+	color: #ffffff !important;
+	text-decoration: none !important;
+}
+.landing-pricing a.pricing-cta:hover,
+.landing-pricing a.pricing-cta:focus-visible {
+	color: #ffffff !important;
+}
+.landing-pricing h3.pricing-trial-title {
+	color: #111827 !important;
+	font-size: 1.25rem !important;
+}
+@media (min-width: 768px) {
+	.landing-pricing h3.pricing-trial-title {
+		font-size: 1.5rem !important;
+	}
+}
+.landing-pricing h3.pricing-tier-name {
+	color: #0f172a !important;
+	font-size: 1.25rem !important;
+}
+.landing-pricing span.pricing-feature-check {
+	color: #059669 !important;
+	font-size: 1rem !important;
+}
+.landing-pricing span.pricing-trial-feature-text {
+	color: #374151 !important;
+	font-size: 0.875rem !important;
+}
+@media (min-width: 768px) {
+	.landing-pricing span.pricing-trial-feature-text {
+		font-size: 1rem !important;
+	}
+}
 .fc-event-title {
 	font-family: 'Titillium Web', serif !important;
 	font-size: 17px;
@@ -738,8 +848,6 @@ h5 {
 	align-items: start;
 	/* height: 100vh !important; */
 	justify-content: center;
-	padding-left: 20px;
-	padding-right: 20px;
 }
 
 th,
@@ -1617,9 +1725,13 @@ textarea {
 	.logout {
 		max-width: 300px !important;
 	}
-	.boxlog .card-body {
+	/* .boxlog .card-body {
 		padding: 20px !important;
-	}
+	} */
+}
+
+.newpass .card-body {
+	padding: 0px !important;
 }
 
 .h3resume {
@@ -1681,12 +1793,16 @@ textarea {
 	.planopiaimgaboutmobile {
 		display: none;
 	}
+	.blogh1 {
+		text-align: center;
+	}
+}
+
+/* Desktopowa nawigacja w headerze dopiero od 1400px (poniżej: hamburger + panel) */
+@media (min-width: 1400px) {
 	.navdesktop {
 		display: flex !important;
 		align-items: center;
-	}
-	.blogh1 {
-		text-align: center;
 	}
 }
 
@@ -1745,7 +1861,7 @@ textarea {
 	margin-right: 10px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1399px) {
 	#planopiaheader nav {
 		display: none !important;
 	}
@@ -1814,7 +1930,6 @@ textarea {
 
 #underheader {
 	border-top: 2px solid black;
-	max-width: 400px;
 	padding-top: 12px;
 	margin-top: 18px;
 	font-size: 22px !important;
@@ -2888,7 +3003,7 @@ button {
 }
 
 /* Hide hamburger on desktop - important to override any other styles */
-@media (min-width: 1024px) {
+@media (min-width: 1400px) {
 	.mobile-menu-hamburger {
 		display: none !important;
 	}
@@ -2944,7 +3059,7 @@ button {
 }
 
 /* Large screens - hide mobile menu */
-@media (min-width: 1024px) {
+@media (min-width: 1400px) {
 	.mobile-menu-panel,
 	.mobile-menu-backdrop {
 		display: none !important;
@@ -2991,4 +3106,8 @@ button {
 	.desktop-mockup {
 		display: none !important;
 	}
+}
+
+.navdesktop a, .mobile-menu-item {
+	font-weight: bold;
 }

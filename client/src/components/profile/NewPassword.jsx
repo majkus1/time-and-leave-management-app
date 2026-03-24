@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
+import './AuthForms.css'
 
 function NewPassword() {
 	const [password, setPassword] = useState('')
@@ -79,12 +80,12 @@ function NewPassword() {
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</div>
 				</div>
-				<div className="card boxlog">
-					<div className="card-body login-card-body padr">
+				<div className="newpass card boxlog auth-form-shell">
+					<div className="card-body login-card-body padr auth-form-card-inner">
 						<div className="set-pass">
-							<h2 style={{ marginBottom: '20px' }}>{t('newpass.h2')}</h2>
-							<form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
-								<div className="relative">
+							<h2 className="auth-form-title">{t('newpass.h2')}</h2>
+							<form onSubmit={handleSubmit} className="w-full max-w-md auth-form-stack">
+								<div className="auth-field-relative">
 									<input
 										type={showPassword ? 'text' : 'password'}
 										id="password"
@@ -92,13 +93,13 @@ function NewPassword() {
 										onChange={e => setPassword(e.target.value)}
 										required
 										placeholder={t('newpass.newpassone')}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										className="auth-input auth-input--with-toggle"
 									/>
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
-										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-										style={{ cursor: 'pointer' }}
+										className="auth-toggle-vis"
+										aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
 									>
 										{showPassword ? (
 											<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +114,7 @@ function NewPassword() {
 									</button>
 								</div>
 
-								<div className="relative">
+								<div className="auth-field-relative">
 									<input
 										type={showConfirmPassword ? 'text' : 'password'}
 										id="confirmPassword"
@@ -121,13 +122,13 @@ function NewPassword() {
 										onChange={e => setConfirmPassword(e.target.value)}
 										required
 										placeholder={t('newpass.newpassrepeat')}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										className="auth-input auth-input--with-toggle"
 									/>
 									<button
 										type="button"
 										onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-										className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-										style={{ cursor: 'pointer' }}
+										className="auth-toggle-vis"
+										aria-label={showConfirmPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
 									>
 										{showConfirmPassword ? (
 											<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,14 +143,13 @@ function NewPassword() {
 									</button>
 								</div>
 
-								
-								<small className="text-gray-500 block">{t('newpass.requirements')}</small>
+								<small className="auth-form-hint">{t('newpass.requirements')}</small>
 
-								
 								<button
 									type="submit"
 									disabled={isLoading}
-									className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+									className="auth-submit-btn"
+								>
 									{isLoading ? (
 										<span className="flex items-center justify-center">
 											<svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -167,42 +167,14 @@ function NewPassword() {
 					</div>
 				</div>
 			</div>
-			<Link
-				to="/login"
-				style={{ 
-					display: 'inline-flex',
-					alignItems: 'center',
-					gap: '8px',
-					padding: '12px 24px',
-					fontSize: '14px',
-					fontWeight: '500',
-					textDecoration: 'none',
-					color: '#6b7280',
-					backgroundColor: '#f9fafb',
-					border: '1px solid #e5e7eb',
-					borderRadius: '8px',
-					transition: 'all 0.2s ease',
-					boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-				}}
-				onMouseEnter={(e) => {
-					e.target.style.backgroundColor = '#f3f4f6'
-					e.target.style.borderColor = '#d1d5db'
-					e.target.style.color = '#374151'
-					e.target.style.transform = 'translateY(-1px)'
-					e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
-				}}
-				onMouseLeave={(e) => {
-					e.target.style.backgroundColor = '#f9fafb'
-					e.target.style.borderColor = '#e5e7eb'
-					e.target.style.color = '#6b7280'
-					e.target.style.transform = 'translateY(0)'
-					e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
-				}}>
+			<div className="auth-back-row">
+				<Link to="/login" className="auth-back-link">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 						<path d="M19 12H5M12 19l-7-7 7-7"/>
 					</svg>
-				{t('resetpass.backto')}
-			</Link>
+					{t('resetpass.backto')}
+				</Link>
+			</div>
 		</div>
 	)
 }

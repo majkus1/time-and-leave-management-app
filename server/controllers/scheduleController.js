@@ -6,6 +6,9 @@ const Settings = require('../models/Settings')(firmDb)
 const { emitScheduleUpdated } = require('../utils/scheduleRealtime')
 const { canSupervisorManageSchedule } = require('../services/roleService')
 const { autoGenerateScheduleMonth } = require('../services/scheduleAutoPlannerService')
+const { runScheduleAutoDraftTurn } = require('../services/aiScheduleAutoDraftService')
+const entitlementsService = require('../services/entitlementsService')
+const { isHoliday } = require('../utils/holidays')
 
 const normalizeDepartments = (departmentValue) =>
 	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
@@ -410,6 +413,10 @@ exports.upsertAvailability = async (req, res) => {
 		if (!workOnWeekends && validDates.some((entryDate) => isWeekendDate(entryDate))) {
 			return res.status(400).json({ message: 'Cannot declare availability on weekends because team does not work on weekends.' })
 		}
+		const trackHolidays = settings?.includePolishHolidays === true || settings?.includeCustomHolidays === true
+		if (trackHolidays && validDates.some((entryDate) => isHoliday(entryDate, settings))) {
+			return res.status(400).json({ message: 'Cannot declare availability on team holidays.' })
+		}
 
 		const employeeName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Pracownik'
 		const cleanNotes = typeof notes === 'string' ? notes.trim().slice(0, 500) : ''
@@ -582,6 +589,10 @@ exports.upsertScheduleEntry = async (req, res) => {
 		const workOnWeekends = settings?.workOnWeekends !== false
 		if (!workOnWeekends && isWeekendDate(date)) {
 			return res.status(400).json({ message: 'Cannot add schedule entries on weekends because team does not work on weekends.' })
+		}
+		const trackHolidays = settings?.includePolishHolidays === true || settings?.includeCustomHolidays === true
+		if (trackHolidays && isHoliday(date, settings)) {
+			return res.status(400).json({ message: 'Cannot add schedule entries on team holidays.' })
 		}
 
 		// Sprawdź czy użytkownik jest twórcą niestandardowego grafiku
@@ -772,7 +783,8 @@ exports.autoGenerateMonthEntries = async (req, res) => {
 			notes: typeof notes === 'string' ? notes.trim().slice(0, 500) : '',
 			preferAvailability: Boolean(preferAvailability),
 			strictAvailability: Boolean(strictAvailability),
-			workOnWeekends
+			workOnWeekends,
+			teamSettings: settings
 		})
 
 		await schedule.save()
@@ -1296,5 +1308,49 @@ exports.deleteSchedule = async (req, res) => {
 	}
 }
 
+/**
+ * POST body: { messages, year, month, locale } — conversational draft for auto-fill month (preview; confirm → POST .../auto-generate).
+ */
+exports.aiScheduleAutoDraft = async (req, res) => {
+	try {
+		const { scheduleId } = req.params
+		const { messages, year, month, locale } = req.body || {}
+		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const result = await runScheduleAutoDraftTurn({
+			userId: req.user.userId,
+			scheduleId,
+			year: Number(year),
+			month: Number(month),
+			messages,
+			locale,
+		})
+		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		res.json({
+			reply: result.reply,
+			draft: result.draft,
+			draftError: result.draftError,
+			model: result.model,
+			usage: result.usage,
+		})
+	} catch (err) {
+		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
+			return res.status(403).json({ message: err.message, code: err.code })
+		}
+		if (err.code === 'OPENAI_NOT_CONFIGURED') {
+			return res.status(503).json({ message: err.message, code: err.code })
+		}
+		if (err.code === 'VALIDATION' || err.code === 'USER_INVALID' || err.code === 'NOT_FOUND') {
+			return res.status(400).json({ message: err.message, code: err.code })
+		}
+		if (err.code === 'FORBIDDEN') {
+			return res.status(403).json({ message: err.message, code: err.code })
+		}
+		if (err.code === 'OPENAI_HTTP_ERROR') {
+			return res.status(502).json({ message: err.message, code: err.code, status: err.status })
+		}
+		console.error('scheduleController.aiScheduleAutoDraft:', err)
+		res.status(500).json({ message: 'AI schedule draft failed' })
+	}
+}
 
 

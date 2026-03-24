@@ -59,14 +59,14 @@ export default function BlogHolidays2026Content() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										<strong>Darmowa aplikacja do planowania urlopów</strong>  
-										{' '}dla zespołów do 4 użytkowników
+										<strong>Aplikacja do planowania urlopów</strong>  
+										{' '}— 30 dni za darmo, do 5 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Załóż darmowy zespół
+										Rozpocznij okres próbny
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -292,12 +292,12 @@ export default function BlogHolidays2026Content() {
 						<li><strong>Pamiętaj o dniach do odbioru</strong> – wykorzystaj dodatkowe dni wolne za święta przypadające w sobotę</li>
 					</ul>
 
-					<h2 className="text-2xl font-semibold mb-3 mt-8">Program do urlopów darmowy – alternatywa dla Excela</h2>
+					<h2 className="text-2xl font-semibold mb-3 mt-8">Program do urlopów online – alternatywa dla Excela</h2>
 					<p className="mb-4 text-gray-700">
 						<strong>Planowanie urlopów</strong> w firmie może być skomplikowane, szczególnie gdy masz do czynienia z większym zespołem. 
 						Chociaż wiele osób korzysta z <strong>rocznego planu urlopów 2026 w Excelu</strong>, istnieją lepsze rozwiązania. 
-						<Link href="/blog/planowanie-urlopow" className="text-blue-600 hover:underline font-semibold"> Planopia to darmowy program do urlopów</Link>, 
-						który pomaga w prosty i efektywny sposób zarządzać urlopami pracowników. Dzięki <strong>kalendarzowi urlopowemu online</strong> możesz:
+						<Link href="/blog/planowanie-urlopow" className="text-blue-600 hover:underline font-semibold"> Planopia oferuje 30 dni za darmo (do 5 użytkowników, pełne funkcje)</Link>, 
+						co pozwala w prosty i efektywny sposób zarządzać urlopami pracowników. Dzięki <strong>kalendarzowi urlopowemu online</strong> możesz:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
 						<li>Widzieć wszystkie wnioski urlopowe w jednym miejscu</li>
@@ -328,16 +328,16 @@ export default function BlogHolidays2026Content() {
 					{/* CTA */}
 					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl mt-8">
 						<h2 className="text-3xl font-bold text-gray-900 mb-4 justify-center">
-							Gotowy na darmową aplikację do planowania urlopów?
+							Chcesz wypróbować aplikację do planowania urlopów?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!
+							30 dni za darmo, do 5 użytkowników — rozpocznij zarządzanie urlopami i uporządkuj planowanie w firmie.
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Załóż darmowy zespół już dziś
+							Rozpocznij okres próbny
 						</Link>
 					</div>
 				</article>

@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "node server/migrations/addTeamIdToUsers.js"
+    "migrate": "node server/migrations/addTeamIdToUsers.js",
+    "simulate:trial-lapsed": "node server/scripts/simulateTeamTrialExpired.js",
+    "simulate:legacy-grace": "node server/scripts/simulateTeamLegacyGrace.js",
+    "simulate:business-plan": "node server/scripts/simulateTeamBusinessPlan.js",
+    "simulate:halo-like": "node server/scripts/simulateTeamHaloLike.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +25,7 @@
     "cors": "^2.8.5",
     "csrf": "^3.1.0",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
@@ -34,6 +39,8 @@
     "mongoose": "^8.4.0",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.12",
+    "open-sans-fonts": "^1.6.2",
+    "pdfmake": "^0.3.7",
     "react-datepicker": "^8.4.0",
     "socket.io": "^4.8.3",
     "web-push": "^3.6.7",

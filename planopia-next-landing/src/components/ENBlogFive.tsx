@@ -83,7 +83,7 @@ function ENBlogFive() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create free team
+							Start free trial
 						</Link>
 						<Link href="/blog/elektroniczna-ewidencja-czasu-pracy" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function ENBlogFive() {
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -263,7 +258,7 @@ function ENBlogFive() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Free for Small Companies</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• Up to 4 users free</li>
+										<li>• 30-day trial, up to 5 users</li>
 										<li>• Full functionality</li>
 										<li>• No hidden costs</li>
 										<li>• Technical support</li>

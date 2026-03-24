@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-	description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Dowiedz się jak efektywnie planować, ewidencjonować i zatwierdzać wnioski urlopowe. Planopia - darmowa aplikacja do zarządzania urlopami.',
+	description:
+		'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje — potem plany płatne.',
 	keywords: [
 		'zarządzanie urlopami',
 		'aplikacja do urlopów',
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Dowiedz się jak efektywnie planować, ewidencjonować i zatwierdzać wnioski urlopowe.',
+		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników — potem plany płatne.',
 		url: 'https://planopia.pl/blog/zarzadzanie-urlopami',
 		siteName: 'Planopia',
 		images: [
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Dowiedz się jak efektywnie planować, ewidencjonować i zatwierdzać wnioski urlopowe.',
+		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników — potem plany płatne.',
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

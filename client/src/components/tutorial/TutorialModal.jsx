@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
-	const { refreshUserData, role } = useAuth()
+	const { refreshUserData, role, username } = useAuth()
 	const [activeSection, setActiveSection] = useState(null)
 	const [isMarkingAsSeen, setIsMarkingAsSeen] = useState(false)
 	const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -24,6 +24,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	
 	// Sprawdź role użytkownika
 	const isAdmin = role && role.includes('Admin')
+	const canSeePackagesTutorial = isAdmin || username === 'michalipka1@gmail.com'
 	const isHR = role && role.includes('HR')
 	const isSupervisor = role && role.includes('Przełożony (Supervisor)')
 
@@ -40,10 +41,13 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			// For longer blocks, split into readable bullet points without changing wording.
 			if (paragraph.length > 220) {
 				const protectedParagraph = paragraph
+					.replace(/\bm\.in\./gi, 'm§in§')
 					.replace(/\bnp\./gi, 'np§')
 					.replace(/\bitp\./gi, 'itp§')
 					.replace(/\bitd\./gi, 'itd§')
 					.replace(/\be\.g\./gi, 'e§g§')
+					// ".txt" must not split sentences (e.g. "pliku .txt")
+					.replace(/\.txt\b/gi, '§TXT§')
 					// Protect ordinal numbers like "8. dnia", "1. sekcja"
 					.replace(/\b(\d+)\.\s+(?=[a-ząćęłńóśźż])/gi, '$1§ ')
 
@@ -51,10 +55,12 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 					.map((sentence) => sentence.trim())
 					.map((sentence) =>
 						sentence
+							.replace(/m§in§/g, 'm.in.')
 							.replace(/np§/g, 'np.')
 							.replace(/itp§/g, 'itp.')
 							.replace(/itd§/g, 'itd.')
 							.replace(/e§g§/g, 'e.g.')
+							.replace(/§TXT§/g, '.txt')
 							.replace(/(\d+)§\s/g, '$1. ')
 					)
 					.filter(Boolean)
@@ -169,8 +175,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Planning work schedules',
 			path: '/schedule',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Grafiki pozwalają na planowanie zmian i harmonogramów pracy. Gdy dodasz nowy dział w zespole, automatycznie tworzy się grafik dla tego działu. Możesz również tworzyć niestandardowe grafiki. W każdym grafiku możesz przypisywać pracowników do konkretnych dni i godzin pracy. Grafiki są widoczne tylko dla członków przypisanych do danego grafiku i pomagają w koordynacji pracy. Admin, HR i przełożony (z uprawnieniami) mogą zarządzać grafikami. Pracownicy widzą przypisane im zmiany w kalendarzu. W kalendarzach grafików widoczne są również zaakceptowane wnioski urlopowe, nieobecności oraz zgłoszenia nieobecności, które nie wymagają zatwierdzenia. Dodatkowo możesz zgłaszać dyspozycyjność i skorzystać z automatycznego generowania miesięcznego grafiku przez system.'
-				: 'Schedules allow you to plan shifts and work schedules. When you add a new department to the team, a schedule for that department is automatically created. You can also create custom schedules. In each schedule, you can assign employees to specific days and work hours. Schedules are visible only to members assigned to the schedule and help coordinate work. Admin, HR, and supervisors (with permissions) can manage schedules. Employees see their assigned shifts in the calendar. Schedule calendars also show approved leave requests, absences, and reported absences that do not require approval. You can also submit availability and use automatic monthly schedule generation by the system.'
+				? 'Grafiki pozwalają na planowanie zmian i harmonogramów pracy. Gdy dodasz nowy dział w zespole, automatycznie tworzy się grafik dla tego działu. Możesz również tworzyć niestandardowe grafiki. W każdym grafiku możesz przypisywać pracowników do konkretnych dni i godzin pracy. Grafiki są widoczne tylko dla członków przypisanych do danego grafiku i pomagają w koordynacji pracy. Admin, HR i przełożony (z uprawnieniami) mogą zarządzać grafikami. Pracownicy widzą przypisane im zmiany w kalendarzu. W kalendarzach grafików widoczne są również zaakceptowane wnioski urlopowe, nieobecności oraz zgłoszenia nieobecności, które nie wymagają zatwierdzenia. Dodatkowo możesz zgłaszać dyspozycyjność i skorzystać z automatycznego generowania miesięcznego grafiku przez system. Na stronie grafiku dostępny jest też osobny panel AI grafiku: możesz opisać potrzeby i otrzymać propozycję szkicu miesiąca do wglądu lub zastosowania obok klasycznego auto-uzupełnienia.'
+				: 'Schedules allow you to plan shifts and work schedules. When you add a new department to the team, a schedule for that department is automatically created. You can also create custom schedules. In each schedule, you can assign employees to specific days and work hours. Schedules are visible only to members assigned to the schedule and help coordinate work. Admin, HR, and supervisors (with permissions) can manage schedules. Employees see their assigned shifts in the calendar. Schedule calendars also show approved leave requests, absences, and reported absences that do not require approval. You can also submit availability and use automatic monthly schedule generation by the system. On the schedule page there is also a dedicated AI schedule panel: describe what you need and get a proposed month draft to review or apply, alongside the rule-based auto-fill.'
 		},
 		{
 			id: 'chat',
@@ -183,6 +189,20 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			content: i18n.resolvedLanguage === 'pl' 
 				? 'Czat umożliwia komunikację z zespołem w czasie rzeczywistym. Kanał ogólny dla całego zespołu jest automatycznie utworzony na starcie. Gdy dodasz nowy dział w zespole, automatycznie tworzy się kanał czatu dla tego działu. Możesz również tworzyć niestandardowe czaty z dowolnymi pracownikami oraz prowadzić czaty prywatne. Możesz wysyłać wiadomości, otrzymywać powiadomienia o nowych wiadomościach (w przeglądarce i email). Wszystkie wiadomości są zapisywane i dostępne w historii.'
 				: 'Chat enables real-time communication with your team. A general channel for the entire team is automatically created at the start. When you add a new department to the team, a chat channel for that department is automatically created. You can also create custom chats with any employees and have private chats. You can send messages, receive notifications about new messages (in browser and email). All messages are saved and available in history.'
+		},
+		{
+			id: 'ai-assistant',
+			title: 'AI Asystent',
+			icon: '/img/aiasystent.png',
+			description:
+				i18n.resolvedLanguage === 'pl'
+					? 'Pytania o czas pracy, urlopy, zadania, grafiki i zespół'
+					: 'Work time, leave, tasks, schedules and team data',
+			path: '/ai-assistant',
+			content:
+				i18n.resolvedLanguage === 'pl'
+					? 'Pytaj o czas pracy, urlopy, zadania, grafiki, tablice i ustawienia zespołu. Odpowiedzi pochodzą tylko z danych Planopii, do których masz dostęp w aplikacji.\n\nPlanopia ma też **osobny moduł AI w widoku grafiku** (na stronie konkretnego harmonogramu): tam możesz przygotować **szkic miesiąca** z opisu — to uzupełnia klasyczne auto-uzupełnianie grafiku przez system, ale działa w innym panelu niż ten czat.\n\nWybierasz okres (np. miesiąc) i możesz poprosić o podsumowanie. Gdy w pytaniu poprosisz o Excel lub PDF, pod odpowiedzią pojawią się przyciski z bazy (jak w czacie). Nad czatem zapiszesz rozmowę do pliku TXT.\n\nHistoria czatu jest tylko w tej przeglądarce. To nie jest porada prawna; odpowiedzi nie zastępują decyzji HR ani procedur w firmie.'
+					: 'Ask about work time, leave, tasks, schedules, boards and team settings. Answers use only Planopia data you are allowed to see.\n\nPlanopia also has a **separate AI schedule module** on the **schedule detail page**: you can generate a **month draft** from a description — it complements rule-based auto-fill but lives outside this chat.\n\nPick a period (e.g. this month). Ask for a summary — if you request Excel or PDF in your message, buttons appear under the reply to download from the database (same scope as the chat). From the toolbar you can export the conversation as a TXT file.\n\nChats stay in this browser only. Not legal advice; answers do not replace HR decisions or company procedures.'
 		},
 		{
 			id: 'announcements',
@@ -284,6 +304,27 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				? 'W sekcji "Urlopy" Admin i HR widzą wszystkie wnioski urlopowe w zespole. Przełożony widzi wnioski pracowników ze swojego działu lub wybranych pracowników (zgodnie z konfiguracją). W sekcji dostępny jest zbiorowy kalendarz z zaakceptowanymi wnioskami urlopowymi, zgłoszonymi nieobecnościami i innymi wpisami z możliwością filtrowania po działach i pracownikach. Możesz zatwierdzić, odrzucić lub anulować wniosek. Po zatwierdzeniu, urlop automatycznie pojawia się w kalendarzu urlopowym. Każda zmiana statusu wniosku wysyła powiadomienie email do pracownika. Możesz również wygenerować wniosek do PDF. Admin i HR mają zawsze pełny dostęp do wszystkich wniosków. Przełożony może mieć ograniczone uprawnienia w zależności od konfiguracji (może zatwierdzać tylko urlopy pracowników z działu lub wybranych pracowników).'
 				: 'In the "Leaves" section, Admin and HR see all leave requests in the team. Supervisors see requests from employees in their department or selected employees (according to configuration). The section includes a collective calendar with approved leave requests, reported absences, and other entries with the ability to filter by departments and employees. You can approve, reject, or cancel a request. After approval, the leave automatically appears in the leave calendar. Any change in request status sends an email notification to the employee. You can also generate the request to PDF. Admin and HR always have full access to all requests. Supervisors may have limited permissions depending on configuration (can only approve leaves from department employees or selected employees).'
 		},
+		...(canSeePackagesTutorial
+			? [
+					{
+						id: 'packages-billing-legal',
+						title:
+							i18n.resolvedLanguage === 'pl'
+								? 'Pakiety, rozliczenia i dokumenty prawne'
+								: 'Packages, billing & legal documents',
+						icon: '/img/wallet.png',
+						description:
+							i18n.resolvedLanguage === 'pl'
+								? 'Plan, limity AI, dokupy i akceptacje regulaminów na jednej stronie'
+								: 'Plans, AI limits, add-ons and legal acceptances on one page',
+						path: '/packages',
+						content:
+							i18n.resolvedLanguage === 'pl'
+								? 'W menu bocznym wybierz "Pakiety i rozliczenia" (ikona portfela). U góry zobaczysz aktualną subskrypcję zespołu i wykorzystanie wspólnego limitu Asystenta AI (czat, grafik, drafty). Możesz przełączyć rozliczenie miesięczne/roczne, wybrać plan i wysłać zgłoszenie mailem. Pakiety dodatkowych wiadomości AI zamówisz, gdy zespół miał już co najmniej jedną aktywowaną płatną subskrypcję.\n\nNa dole tej samej strony znajdują się Dokumenty prawne: regulamin, polityka prywatności i ewentualna umowa powierzenia (DPA). Gdy wymagana jest akceptacja nowej wersji, zobaczysz ostrzeżenie i możesz zaakceptować wszystkie brakujące dokumenty jednym przyciskiem.'
+								: 'In the sidebar, open "Packages & billing" (wallet icon). At the top you see the team\'s current subscription and shared AI Assistant usage (chat, schedule, drafts). You can switch monthly/yearly billing, pick a plan, and send a purchase request by email. Extra AI message packs can be ordered once the team has had at least one active paid subscription.\n\nAt the bottom of the same page you will find Legal documents: terms, privacy policy, and DPA when applicable. When a new version needs acceptance, you will see a warning and can accept all pending documents in one step.',
+					},
+				]
+			: []),
 		{
 			id: 'help-center',
 			title: i18n.resolvedLanguage === 'pl' ? 'Centrum pomocy' : 'Help Center',

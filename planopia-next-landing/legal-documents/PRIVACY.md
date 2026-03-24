@@ -1,10 +1,10 @@
 # Polityka prywatności Planopia.pl
 
-**Wersja 1.0 - obowiązuje od 07.01.2026r.**
+**Wersja 1.1 - obowiązuje od 19.03.2026r.**
 
 ## 1. Administrator danych
 
-W zakresie danych użytkowników serwisu administratorem danych osobowych jest ML Devworks Michał Lipka z siedzibą w Rynek Główny 34 lok. 15, 31-010 Kraków, NIP: 6762707876.
+W zakresie danych użytkowników serwisu administratorem danych osobowych jest ML Devworks Michał Lipka z siedzibą w Rynek Główny 34 lok. 15, 31-010 Kraków, NIP: 6762707876, REGON: 543372505.
 
 W zakresie danych pracowników Klientów administratorem danych jest Klient (pracodawca), a ML Devworks Michał Lipka działa jako podmiot przetwarzający dane na podstawie umowy powierzenia przetwarzania danych (DPA).
 
@@ -110,5 +110,5 @@ Kontakt: office@ml-devworks.com
 
 9.2. O istotnych zmianach poinformujemy użytkowników.
 
-**Data ostatniej aktualizacji: 07.01.2026r.**
+**Data ostatniej aktualizacji: 19.03.2026r.**
 

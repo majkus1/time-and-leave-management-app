@@ -3,6 +3,18 @@ export const CSRF_ERROR_CODES = ['CSRF_SECRET_MISSING', 'CSRF_TOKEN_MISSING', 'C
 export const handleAuthError = async ({ err, axiosInstance, apiUrl, loggedIn, logout }) => {
 	const originalRequest = err?.config || {}
 
+	if (
+		err?.response?.status === 403 &&
+		err?.response?.data?.code === 'TRIAL_LAPSED' &&
+		typeof window !== 'undefined'
+	) {
+		const path = window.location.pathname || ''
+		if (!path.startsWith('/packages')) {
+			window.location.assign('/packages')
+		}
+		throw err
+	}
+
 	// Skip error handling for expected 403/404 flows
 	if (originalRequest.skipErrorLog && (err?.response?.status === 403 || err?.response?.status === 404)) {
 		throw err

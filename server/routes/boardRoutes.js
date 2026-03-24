@@ -29,6 +29,7 @@ const upload = multer({
 // Board routes
 router.get('/', authenticateToken, boardController.getUserBoards)
 router.get('/unread-summary', authenticateToken, taskNotificationController.getBoardsUnreadSummary)
+router.get('/calendar/tasks', authenticateToken, taskController.getCalendarTasks)
 router.get('/:boardId/unread-summary', authenticateToken, taskNotificationController.getBoardUnreadSummary)
 router.post('/:boardId/mark-viewed', authenticateToken, taskNotificationController.markBoardViewed)
 router.post('/tasks/:taskId/mark-viewed', authenticateToken, taskNotificationController.markTaskViewed)

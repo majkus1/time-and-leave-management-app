@@ -1,6 +1,6 @@
 # Terms of Service for Planopia.pl
 
-**Version 1.0 - effective from January 7, 2026**
+**Version 1.2 - effective from March 19, 2026**
 
 ## 1. General Provisions
 
@@ -22,9 +22,9 @@
 
 ## 3. Account Types and Usage Rules
 
-3.1. The Service Provider offers two types of accounts:
-   - **Free plan**: access for up to 4 users, basic features
-   - **Paid plans**: unlimited users, additional features (details in pricing)
+3.1. The Service Provider makes available, among others, the following commercial options:
+   - **Trial period**: for **30 days** from Account creation (first month), the Client may use the Service **without charge**, for **up to 5 Users**, with the full functionality of the Service, subject to any limits on optional features (including AI Assistant message limits) specified in the Service interface or pricing.
+   - **Paid plans**: after the trial period ends, continued use of the Service requires selecting a paid subscription plan in accordance with the current pricing; paid plans include, among other things, a higher number of Users and additional features (details in pricing).
 
 3.2. The Client is responsible for:
    - maintaining confidentiality of Account access credentials
@@ -35,9 +35,9 @@
 
 ## 4. Payments and Invoicing
 
-4.1. The free plan does not require payment.
+4.1. During the trial period referred to in section 3.1, no fees are charged for basic access to the Service within the terms of that period.
 
-4.2. Paid plans are charged according to the selected subscription plan.
+4.2. After the trial period ends, fees for using the Service are charged according to the selected paid plan and current pricing, if the Client continues to use the Service.
 
 4.3. The Service Provider issues invoices in accordance with applicable law. Currently, the Service Provider is exempt from VAT obligations under Article 113(1) of the VAT Act (exemption for small taxpayers at the beginning of business activity).
 
@@ -59,7 +59,7 @@
    - decisions made based on data from the Service
    - Client's hardware or network failures
 
-5.5. The Service Provider's liability is limited to the amount of fees paid by the Client in the 12 months preceding the event. For the free plan, the Service Provider's liability is excluded to the maximum extent permitted, and in any case limited to $0.
+5.5. The Service Provider's liability is limited to the amount of fees paid by the Client in the 12 months preceding the event. During the trial period (with no subscription fees charged for that period), the Service Provider's liability is excluded to the maximum extent permitted, and in any case limited to $0.
 
 ## 6. Personal Data Protection
 
@@ -105,5 +105,15 @@
 
 9.4. Contact: office@ml-devworks.com
 
-**Last updated: January 7, 2026**
+## 10. Complaints
+
+10.1. Complaints regarding the Service (including payments and access to the application) may be submitted by email to: office@ml-devworks.com. Please mark the message as a “Planopia complaint” and include information that allows us to identify the Account.
+
+10.2. A complaint should be filed within a reasonable time after the circumstances arise, and in any case not later than 14 days from the day the entitled party became aware of the grounds for the complaint, where applicable under mandatory consumer protection rules.
+
+10.3. The Service Provider will handle the complaint within 14 days of receiving it (incoming message at the email address above) and will reply to the email used for the complaint unless the complainant specifies otherwise.
+
+10.4. Additional information about the complaints procedure is available at: https://planopia.pl/en/complaints
+
+**Last updated: March 19, 2026**
 

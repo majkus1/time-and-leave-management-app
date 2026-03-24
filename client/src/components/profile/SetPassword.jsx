@@ -5,6 +5,7 @@ import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
+import './AuthForms.css'
 
 function SetPassword() {
 	const [password, setPassword] = useState('')
@@ -89,11 +90,11 @@ function SetPassword() {
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '150px' }}/>
 					</div>
 				</div>
-				<div className="card">
-					<div className="set-pass" style={{ padding: '30px', borderBottomLeftRadius: '15px', borderBottomRightRadius: '15px', boxShadow: '0 .5rem 1rem rgba(0,0,0,.15)' }}>
-						<h2 style={{ marginTop: '10px', marginBottom: '15px', fontSize: '22px' }}>{t('newpass.h2n')}</h2>
-						<form onSubmit={handleSubmit} className="w-full max-w-md" style={{ gap: '12px', display: 'flex', flexDirection: 'column' }}>
-							<div className="relative">
+				<div className="card auth-form-shell">
+					<div className="set-pass auth-setpass-block">
+						<h2 className="auth-form-title">{t('newpass.h2n')}</h2>
+						<form onSubmit={handleSubmit} className="w-full max-w-md auth-form-stack">
+							<div className="auth-field-relative">
 								<input
 									type={showPassword ? 'text' : 'password'}
 									id="password"
@@ -101,14 +102,13 @@ function SetPassword() {
 									onChange={e => setPassword(e.target.value)}
 									required
 									placeholder={t('newpass.newpassone')}
-									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									
+									className="auth-input auth-input--with-toggle"
 								/>
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-									style={{ cursor: 'pointer' }}
+									className="auth-toggle-vis"
+									aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
 								>
 									{showPassword ? (
 										<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ function SetPassword() {
 								</button>
 							</div>
 
-							<div className="relative">
+							<div className="auth-field-relative">
 								<input
 									type={showConfirmPassword ? 'text' : 'password'}
 									id="confirmPassword"
@@ -131,14 +131,13 @@ function SetPassword() {
 									onChange={e => setConfirmPassword(e.target.value)}
 									required
 									placeholder={t('newpass.newpassrepeat')}
-									className="w-full border border-gray-300 rounded-md px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									
+									className="auth-input auth-input--with-toggle"
 								/>
 								<button
 									type="button"
 									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-									style={{ cursor: 'pointer' }}
+									className="auth-toggle-vis"
+									aria-label={showConfirmPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
 								>
 									{showConfirmPassword ? (
 										<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,10 +152,8 @@ function SetPassword() {
 								</button>
 							</div>
 
-							
-							<small className="text-gray-500 block" style={{ fontSize: '12px', marginBottom: '8px', lineHeight: '1.4' }}>{t('newpass.requirements')}</small>
+							<small className="auth-form-hint">{t('newpass.requirements')}</small>
 
-							
 							<input
 								type="text"
 								id="position"
@@ -164,18 +161,17 @@ function SetPassword() {
 								onChange={e => setPosition(e.target.value)}
 								required
 								placeholder={t('newpass.position')}
-								className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								style={{ marginBottom: '4px', marginTop: '4px' }}
+								className="auth-input"
 							/>
-							<small className="text-gray-500 block" style={{ fontSize: '12px', marginBottom: '12px', lineHeight: '1.4' }}>
+							<small className="auth-form-hint auth-form-hint--after-field">
 								{t('newpass.positionInfo') || 'Stanowisko można później edytować w panelu użytkownika.'}
 							</small>
 
-							
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+								className="auth-submit-btn"
+							>
 								{isLoading ? (
 									<span className="flex items-center justify-center">
 										<svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -192,38 +188,14 @@ function SetPassword() {
 					</div>
 				</div>
 			</div>
-			<Link
-				to="/login"
-				style={{ 
-					display: 'flex',
-					alignItems: 'center',
-					gap: '5px',
-					margin: '12px auto',
-					padding: '8px 16px',
-					fontSize: '13px',
-					textDecoration: 'none',
-					color: '#6b7280',
-					backgroundColor: '#f3f4f6',
-					borderRadius: '6px',
-					border: '1px solid #e5e7eb',
-					transition: 'all 0.2s',
-					textAlign: 'center'
-				}}
-				onMouseEnter={(e) => {
-					e.target.style.backgroundColor = '#e5e7eb'
-					e.target.style.color = '#374151'
-					e.target.style.borderColor = '#d1d5db'
-				}}
-				onMouseLeave={(e) => {
-					e.target.style.backgroundColor = '#f3f4f6'
-					e.target.style.color = '#6b7280'
-					e.target.style.borderColor = '#e5e7eb'
-				}}>
+			<div className="auth-back-row">
+				<Link to="/login" className="auth-back-link">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 						<path d="M19 12H5M12 19l-7-7 7-7"/>
 					</svg>
-				{t('resetpass.backto')}
-			</Link>
+					{t('resetpass.backto')}
+				</Link>
+			</div>
 		</div>
 	)
 }

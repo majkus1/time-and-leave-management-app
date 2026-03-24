@@ -22,7 +22,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia",
-  description: "Planopia to kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafiki pracy, czaty, tablice zadań i elastyczna konfiguracja ról. Wszystko w jednym narzędziu dla Twojego zespołu.",
+  description: "Planopia to kompleksowa aplikacja do zarządzania firmą. 30 dni za darmo, do 5 użytkowników, pełne funkcje. Ewidencja czasu pracy, urlopy, grafiki, czaty, tablice zadań i role — potem plany płatne.",
   keywords: [
     "kompleksowa aplikacja do zarządzania firmą",
     "aplikacja do zarządzania zespołem",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
     siteName: 'Planopia',
     title: 'Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia',
-    description: 'Planopia to kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafiki pracy, czaty, tablice zadań i elastyczna konfiguracja ról. Wszystko w jednym narzędziu.',
+    description: 'Planopia: 30 dni za darmo, do 5 użytkowników. Kompleksowe zarządzanie firmą — ewidencja czasu, urlopy, grafiki, czaty, zadania i role.',
     images: [
       {
         url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia',
-    description: 'Planopia łączy ewidencję czasu pracy, urlopy, grafiki pracy, czaty, tablice zadań i elastyczną konfigurację ról. Wszystko w jednym narzędziu dla Twojego zespołu.',
+    description: '30 dni za darmo, do 5 użytkowników. Ewidencja czasu, urlopy, grafiki, czaty, tablice zadań i role w jednym narzędziu.',
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {

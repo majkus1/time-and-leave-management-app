@@ -34,7 +34,7 @@ function BlogSix() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Kompletny przewodnik po zarządzaniu urlopami w firmie. Dowiedz się jak efektywnie planować, ewidencjonować i zatwierdzać wnioski urlopowe. Planopia - darmowa aplikacja do zarządzania urlopami.",
+						"description": "Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.",
 						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
@@ -83,7 +83,7 @@ function BlogSix() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/leave-management" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function BlogSix() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -291,7 +286,7 @@ function BlogSix() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">💰 Darmowa dla małych firm</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• Do 4 użytkowników bez opłat</li>
+										<li>• 30 dni za darmo, do 5 użytkowników (pełne funkcje)</li>
 										<li>• Pełna funkcjonalność</li>
 										<li>• Bez ukrytych kosztów</li>
 										<li>• Wsparcie techniczne</li>

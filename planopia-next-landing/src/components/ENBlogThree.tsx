@@ -19,7 +19,7 @@ function ENBlogThree() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Employee Leave Planning – Best Tools and Practices",
-						"description": "Learn how to improve leave planning and absence management in your company. Planopia offers an online leave calendar, approval workflow, and reports. Free plan for up to 4 users.",
+						"description": "Improve leave planning and absence management. Planopia: online leave calendar, approvals, reports. 30-day trial, up to 5 users.",
 						"image": "https://planopia.pl/img/desktopnew.webp",
 						"author": {
 							"@type": "Person",
@@ -80,7 +80,7 @@ function ENBlogThree() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create a free team
+							Start free trial
 						</Link>
 						<Link href="/blog/planowanie-urlopow" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
@@ -101,11 +101,6 @@ function ENBlogThree() {
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -136,13 +131,14 @@ function ENBlogThree() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 									<strong>Free leave planning app</strong>  
-									<br />for teams up to 4 users
+									<br />
+									30 days free, up to 5 users
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Create a free team
+										Start free trial
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -206,7 +202,7 @@ function ENBlogThree() {
 				<h2 className="text-2xl font-semibold mb-3">Planopia – leave planning made simple</h2>
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> combines <strong>time tracking</strong> with powerful <strong>leave management</strong>. 
-					The free plan works perfectly for teams of up to 4 users. Paid plans add scalability, 
+					The 30-day trial works for teams of up to 5 users with full features. Paid plans add scalability, 
 					custom branding, and integrations with your existing systems.
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
@@ -220,12 +216,11 @@ function ENBlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Online leave planning</strong> brings order, clarity, and less stress to day-to-day operations. 
 					With Planopia you'll avoid scheduling conflicts, speed up approvals, 
-					and keep full control over team availability. Try the free plan for 
-					<strong> teams up to 4 users</strong> and see how easy <strong>leave management</strong> can be.
+					and keep full control over team availability. Start the <strong>30-day trial for teams up to 5 users</strong> and see how easy <strong>leave management</strong> can be.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">create your free team and start planning leave online</Link>.
+					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial and start planning leave online</Link>.
 				</p>
 			</article>
 

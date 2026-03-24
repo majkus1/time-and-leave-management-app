@@ -106,6 +106,17 @@ function getPolishHolidaysForYear(year) {
 	return holidays
 }
 
+/** Lokalna data YYYY-MM-DD (bez przesunięcia UTC przy Date z kalendarza). */
+function toYmdLocal(date) {
+	if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date
+	const d = date instanceof Date ? date : new Date(date)
+	if (Number.isNaN(d.getTime())) return null
+	const y = d.getFullYear()
+	const m = String(d.getMonth() + 1).padStart(2, '0')
+	const day = String(d.getDate()).padStart(2, '0')
+	return `${y}-${m}-${day}`
+}
+
 /**
  * Sprawdza czy dana data jest świętem (uwzględnia święta polskie i niestandardowe)
  * @param {Date|string} date - Data do sprawdzenia
@@ -116,9 +127,10 @@ function isHoliday(date, settings) {
 	if (!settings) {
 		return null
 	}
-	
-	const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0]
-	const year = new Date(dateStr).getFullYear()
+
+	const dateStr = toYmdLocal(date)
+	if (!dateStr) return null
+	const year = parseInt(dateStr.slice(0, 4), 10)
 	
 	// Sprawdź niestandardowe święta (tylko gdy includeCustomHolidays jest włączone)
 	if (settings.includeCustomHolidays && settings.customHolidays && Array.isArray(settings.customHolidays)) {
@@ -209,6 +221,7 @@ module.exports = {
 	getHolidaysInRange,
 	calculateEaster,
 	calculateCorpusChristi,
-	calculatePentecost
+	calculatePentecost,
+	toYmdLocal,
 }
 

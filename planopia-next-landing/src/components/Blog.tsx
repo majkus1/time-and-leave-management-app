@@ -7,7 +7,6 @@ import HamburgerButton from './HamburgerButton'
 
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
-	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 
 	return (
@@ -39,7 +38,7 @@ function Blog() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden lg:flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -60,38 +59,6 @@ function Blog() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
-						{/* Dropdown Regulaminy */}
-						<div 
-							className="relative"
-							onMouseEnter={() => setLegalDropdownOpen(true)}
-							onMouseLeave={() => setLegalDropdownOpen(false)}
-						>
-							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
-								Regulaminy
-								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
-							{legalDropdownOpen && (
-								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
-									<Link
-										href="/terms"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Regulamin
-									</Link>
-									<Link
-										href="/privacy"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Polityka prywatności
-									</Link>
-									<Link
-										href="/dpa"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Umowa DPA
-									</Link>
-								</div>
-							)}
-						</div>
 						<Link
 							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
@@ -105,7 +72,7 @@ function Blog() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -126,11 +93,6 @@ function Blog() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -241,11 +203,10 @@ function Blog() {
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/worktimeblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Darmowa aplikacja do ewidencji czasu pracy i urlopów
+							Ewidencja czasu pracy i urlopy — 30 dni za darmo
 							</h3>
 							<p className="text-gray-600 flex-1">
-							Odkryj Planopię - kompletną, darmową aplikację do ewidencji czasu pracy i zarządzania urlopami. 
-								Pełna funkcjonalność dla zespołów do 4 osób bez żadnych opłat.
+							30 dni za darmo: pełne funkcje, do 5 użytkowników — potem wybierasz plan dopasowany do zespołu.
 							</p>
 							<Link
 								href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy"

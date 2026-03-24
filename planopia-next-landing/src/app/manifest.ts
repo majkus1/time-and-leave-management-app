@@ -2,9 +2,10 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Planopia - Darmowa aplikacja do ewidencji czasu pracy i urlopów',
+    name: 'Planopia - ewidencja czasu pracy i urlopy',
     short_name: 'Planopia',
-    description: 'Darmowa aplikacja online do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 4 osób.',
+    description:
+      '30 dni za darmo: pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i zarządzanie urlopami w jednej aplikacji.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

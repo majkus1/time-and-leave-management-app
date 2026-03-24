@@ -10,16 +10,14 @@ import { registerLocale } from 'react-datepicker'
 import { enGB } from 'date-fns/locale/en-GB'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
-import PackageRequestModal from './PackageRequestModal'
-import CustomPackageModal from './CustomPackageModal'
+import LandingPricing from './LandingPricing'
+import LandingAIHighlight from './LandingAIHighlight'
+import SellerCompanyDetails from './SellerCompanyDetails'
 
 function ENProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [buttonState, setButtonState] = useState(false) // Separate state for button (changes immediately)
-	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
-	const [packageModalOpen, setPackageModalOpen] = useState(false)
-	const [selectedPackage, setSelectedPackage] = useState<'monthly' | 'yearly'>('monthly')
-	const [customPackageModalOpen, setCustomPackageModalOpen] = useState(false)
+
 	const menuCloseHandlerRef = useRef<(() => void) | null>(null)
 	
 	const toggleMenu = () => {
@@ -118,13 +116,14 @@ function ENProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 4 users. Paid plans include unlimited users, advanced customization, and integrations.",
+						"description": "Planopia - time tracking, leave, schedules, chats, Kanban boards, and an AI Assistant. 30-day trial with full features, up to 5 users, AI message limits during trial. Monthly plans (Starter-Enterprise) with user and AI limits; optional AI add-ons available in-app after a paid plan is active.",
 						"offers": {
-							"@type": "Offer",
-							"price": "0",
-							"priceCurrency": "USD",
-							"category": "Free",
-							"description": "Free plan for teams up to 4 users"
+							"@type": "AggregateOffer",
+							"offerCount": "5",
+							"lowPrice": "99",
+							"highPrice": "799",
+							"priceCurrency": "PLN",
+							"description": "30-day trial; monthly plans from 99 to 799 PLN net; optional AI packs"
 						}
 					})
 				}}
@@ -139,11 +138,16 @@ function ENProductPromotion() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
-					<nav className="hidden lg:flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<a
 							href="#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							About the App
+						</a>
+						<a
+							href="#ai-assistant"
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							AI Assistant
 						</a>
 						<a
 							href="#prices"
@@ -160,38 +164,6 @@ function ENProductPromotion() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
-						{/* Dropdown Legal */}
-						<div 
-							className="relative"
-							onMouseEnter={() => setLegalDropdownOpen(true)}
-							onMouseLeave={() => setLegalDropdownOpen(false)}
-						>
-							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
-								Legal
-								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
-							{legalDropdownOpen && (
-								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
-									<Link
-										href="/en/terms"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Terms of Service
-									</Link>
-									<Link
-										href="/en/privacy"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Privacy Policy
-									</Link>
-									<Link
-										href="/en/dpa"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Data Processing Agreement
-									</Link>
-								</div>
-							)}
-						</div>
 						<Link
 							href="https://app.planopia.pl/"
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
@@ -203,7 +175,7 @@ function ENProductPromotion() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create a free team
+							Start 30-day trial
 						</Link>
 						<Link href="/" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Wersja Polska" className="w-6 h-6" />
@@ -222,14 +194,10 @@ function ENProductPromotion() {
 				lang="en"
 				menuItems={[
 					{ href: '#aboutapp', label: 'About the App' },
+					{ href: '#ai-assistant', label: 'AI Assistant' },
 					{ href: '#prices', label: 'Pricing' },
 					{ href: '#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -247,16 +215,16 @@ function ENProductPromotion() {
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-								Time and leave tracking app – free for up to 4 users
+								Time tracking, leave and AI – 30 days free
 							</h1>
-							<h2 className="font-semibold text-gray-800" id="underheader">
-								Planopia helps teams and companies organize working hours and leave management.
+							<h2 className="font-semibold text-gray-800 mt-2" id="underheader">
+								Planopia helps teams and companies organize work time, leave and tasks.
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
 								className="bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-2"
 							>
-								Create a free team
+								Start 30-day trial
 							</Link>
 						</div>
 						<img
@@ -272,7 +240,7 @@ function ENProductPromotion() {
 				</div>
 			</section>
 
-			<section id="aboutapp" className="py-16 bg-white px-4">
+			<section id="aboutapp" className="py-12 bg-white px-4">
 				<div className="max-w-7xl mx-auto">
 					<div className="grid lg:grid-cols-2 gap-10 items-center">
 						{/* Text */}
@@ -281,7 +249,7 @@ function ENProductPromotion() {
 								Comprehensive company management app
 							</h2>
 							<p className="mt-4 text-lg text-gray-600">
-								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Forget Excel sheets and endless emails. Planopia automates processes — faster, clearer, and error-free.
+								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards, and an AI Assistant - everything in one place. Forget Excel sheets and endless emails. Planopia automates processes - faster, clearer, and error-free.
 							</p>
 
 							{/* Feature grid */}
@@ -355,7 +323,7 @@ function ENProductPromotion() {
 									<img src="/img/booking.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">PWA & mobile</p>
-										<p className="text-sm text-gray-600">Add to your screen and use it like an app.</p>
+										<p className="text-sm text-gray-600">Add to your home screen and use it like an app — including push notifications for important updates.</p>
 									</div>
 								</div>
 								{/* 9 */}
@@ -369,18 +337,19 @@ function ENProductPromotion() {
 							</div>
 
 							<div className="mt-8">
-								<p className="text-gray-700 text-lg mb-4">
-									Need more features, custom integrations, or a dedicated environment for your company? Have many employees?
+								<p className="text-gray-700 text-lg leading-relaxed">
+									Need more features, custom integrations, or a dedicated environment for your company? Have many employees?{' '}
+									<span className="text-gray-600">
+										Plan comparison and limits are in the{' '}
+										<Link
+											href="#prices"
+											className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
+										>
+											Pricing
+										</Link>{' '}
+										section further down.
+									</span>
 								</p>
-								<a
-									href="#prices"
-									className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-[1.02] pricing-button-text"
-								>
-									See pricing
-									<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-									</svg>
-								</a>
 							</div>
 						</div>
 
@@ -412,12 +381,14 @@ function ENProductPromotion() {
 				</div>
 			</section>
 
-			<section id="for" className="py-16 bg-gray-50 px-4 for">
+			<LandingAIHighlight locale="en" />
+
+			<section id="for" className="py-12 bg-gray-50 px-4 for">
 				<div className="max-w-7xl mx-auto">
 					<div className="mb-10">
 						<h3 className="text-3xl md:text-4xl font-extrabold text-gray-900">Who is Planopia for?</h3>
 						<p className="mt-3 text-lg text-gray-600">
-							From just a few to hundreds of employees — Planopia scales with your organization. Choose how you work, and we'll simplify the rest.
+							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant within your plan limits.
 						</p>
 					</div>
 
@@ -429,7 +400,7 @@ function ENProductPromotion() {
 								<p className="font-semibold text-gray-900">Small teams</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Quick tracking, simple requests, clear calendar. <span className="font-semibold text-green-700">Free for up to 4 users.</span>
+								Quick tracking, simple requests, a clear calendar. Straightforward roles and permissions — without unnecessary complexity.
 							</p>
 						</div>
 
@@ -451,193 +422,20 @@ function ENProductPromotion() {
 								<p className="font-semibold text-gray-900">HR & managers</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Efficient request handling, email notifications, and complete documentation for audits and settlements.
+								Efficient request handling, email and push notifications, and complete documentation for audits and settlements.
 							</p>
 						</div>
 					</div>
-				
-					<Link
-						href="https://app.planopia.pl/team-registration"
-						className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition mt-4 for"
-					>
-						Create a free team
-					</Link>
 				</div>
 			</section>
 
-			{/* PRICING */}
-			<section id="prices" className="py-16 px-4">
-				<div className="max-w-7xl mx-auto text-center">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Pricing</h2>
+			<LandingPricing locale="en" />
 
-					<p className="mt-3 text-gray-600 text-left">
-						Payment is charged for each user. The app is free for up to 4 users — above this limit, you pay for all active users.
-					</p>
-
-					{/* Plan cards */}
-					<div className="grid gap-6 md:grid-cols-2 mt-10">
-						{/* Monthly plan */}
-						<div className="relative bg-gradient-to-br from-green-50 via-white to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300 p-8 rounded-2xl border border-green-100 overflow-hidden">
-							<div className="absolute top-0 right-0 w-32 h-32 bg-green-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-							<div className="relative">
-								<h3 className="text-2xl font-semibold mb-4 text-gray-900">Monthly plan</h3>
-								<div className="mb-4">
-									<p className="text-4xl font-bold text-green-600">
-										$5
-									</p>
-									<p className="text-sm text-gray-600 mt-1">per user / month</p>
-									<p className="text-xs text-gray-500 mt-2">Price includes all app features</p>
-								</div>
-								<p className="text-gray-700 mb-8 leading-relaxed">Pay monthly, cancel anytime.</p>
-								<button
-									onClick={() => {
-										setSelectedPackage('monthly')
-										setPackageModalOpen(true)
-									}}
-									className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-[1.02]"
-								>
-									Choose monthly plan
-								</button>
-							</div>
-						</div>
-
-						{/* Yearly plan */}
-						<div className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300 p-8 rounded-2xl border border-blue-100 overflow-hidden">
-							<div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-							<div className="relative">
-								<div className="flex items-center justify-between mb-2">
-									<h3 className="text-2xl font-semibold text-gray-900">Yearly plan</h3>
-									<span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">SAVE</span>
-								</div>
-								<div className="mb-4">
-									<p className="text-4xl font-bold text-blue-600">
-										$51
-									</p>
-									<p className="text-sm text-gray-600 mt-1">per user / year</p>
-									<p className="text-xs text-gray-500 mt-2">Price includes all app features</p>
-								</div>
-								<p className="text-gray-700 mb-8 leading-relaxed">Save with annual payment — pay as for 10 months.</p>
-								<button
-									onClick={() => {
-										setSelectedPackage('yearly')
-										setPackageModalOpen(true)
-									}}
-									className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-[1.02]"
-								>
-									Choose yearly plan
-								</button>
-							</div>
-						</div>
-					</div>
-
-					{/* Custom Package */}
-					<div className="mt-8">
-						<div className="relative bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50/50 rounded-2xl p-8 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden text-left">
-							<div className="absolute top-0 right-0 w-40 h-40 bg-purple-200/20 rounded-full -mr-20 -mt-20 blur-2xl"></div>
-							<div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-200/20 rounded-full -ml-16 -mb-16 blur-2xl"></div>
-							<div className="relative">
-								<div className="flex items-start gap-4 mb-4">
-									
-									<div className="flex-1">
-										<h3 className="text-2xl font-bold text-gray-900 mb-3">Need only selected features?</h3>
-										<p className="text-gray-700 mb-2 leading-relaxed">
-											We are flexible! Choose only the features you need, and we'll adjust the price to your needs.
-										</p>
-										<p className="text-gray-600 mb-6 text-sm">
-											Minimum price from <span className="font-semibold text-purple-600">$3 per user</span> when selecting basic features.
-										</p>
-										<button
-											onClick={() => setCustomPackageModalOpen(true)}
-											className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-[1.02]"
-										>
-											Create custom package
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					{/* Benefits over FREE */}
-					<div className="mt-14">
-						<h3 className="text-2xl font-bold text-gray-900">What do you get in paid plans?</h3>
-						<p className="mt-2 text-gray-600">
-							All app features + flexibility and support tailored to your company.
-						</p>
-
-						<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 text-left">
-							{/* More users */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/add-user.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Unlimited users</p>
-									<p className="text-sm text-gray-600">Grow without limits — add as many people as you need.</p>
-								</div>
-							</div>
-
-							{/* Custom branding */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/creativity.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Custom branding</p>
-									<p className="text-sm text-gray-600">Your logo, colors, and company style in the app.</p>
-								</div>
-							</div>
-
-							{/* Custom features */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/settings.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Custom features</p>
-									<p className="text-sm text-gray-600">Add-ons and modifications tailored to your processes.</p>
-								</div>
-							</div>
-
-							{/* Integrations */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/add.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Custom integrations</p>
-									<p className="text-sm text-gray-600">RCP, imports, automations — connect Planopia with your systems.</p>
-								</div>
-							</div>
-
-							{/* Support */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/technical-support.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Dedicated 24/7 support</p>
-									<p className="text-sm text-gray-600">Chat and quick help whenever you need it.</p>
-								</div>
-							</div>
-
-							{/* Dedicated environment */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/database.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">Dedicated environment</p>
-									<p className="text-sm text-gray-600">Unique subdomain and isolated database for your company. <span className="font-semibold">+ $7 for dedicated server — optional.</span></p>
-								</div>
-							</div>
-
-							{/* PWA / Mobile */}
-							<div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-								<img src="/img/booking.png" className="icon-landing-about" alt='icon in secion about app' loading="eager" />
-								<div>
-									<p className="font-semibold text-gray-900">PWA & mobile</p>
-									<p className="text-sm text-gray-600">Add to your home screen and use it like a mobile app.</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<section id="contact" className="py-16 px-4 bg-gray-50">
+<section id="contact" className="py-12 px-4 bg-gray-50">
 				<div className="max-w-7xl mx-auto">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Contact</h2>
+					<h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Contact & company details</h2>
 					<p className="mt-3 text-left text-gray-600">
-						Have questions, need an implementation or a demo? Send a message, call, or schedule an online meeting.
+						Have questions or want a demo? Send a message, call, or schedule an online meeting.
 					</p>
 
 					<div className="mt-10 grid gap-8 md:grid-cols-2 max-w-7xl mx-auto">
@@ -669,7 +467,7 @@ function ENProductPromotion() {
 
 							<div className="mt-6 space-y-4 mb-6">
 								<a
-									href="mailto:michalipka1@gmail.com"
+									href="mailto:office@ml-devworks.com"
 									className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
 								>
 									 <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -677,7 +475,7 @@ function ENProductPromotion() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-									<span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">michalipka1@gmail.com</span>
+									<span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">office@ml-devworks.com</span>
 								</a>
 
 								<a 
@@ -705,11 +503,7 @@ function ENProductPromotion() {
 								</a>
 							</div>
 
-							<div className="bg-gradient-to-br from-white/80 to-blue-50/50 rounded-xl p-5 border border-blue-100 shadow-sm">
-								<p className="text-gray-700 text-sm leading-relaxed font-medium">
-									I will implement Planopia in your company and help adapt its features to your processes. Reach out — I'll get back quickly.
-								</p>
-							</div>
+							<SellerCompanyDetails locale="en" />
 						</div>
 					</div>
 
@@ -803,26 +597,25 @@ function ENProductPromotion() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className="py-10 px-6 bg-white border-t flex flex-col items-center justify-center text-center">
 				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }} />
+				<a
+					href="https://ml-devworks.com"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="mt-3 text-sm text-gray-500 hover:text-indigo-700 transition-colors"
+				>
+					ml-devworks.com
+				</a>
 			</footer>
 
-			{/* Package Request Modal */}
-			<PackageRequestModal
-				isOpen={packageModalOpen}
-				onClose={() => setPackageModalOpen(false)}
-				packageType={selectedPackage}
-				lang="en"
-			/>
-
-			{/* Custom Package Modal */}
-			<CustomPackageModal
-				isOpen={customPackageModalOpen}
-				onClose={() => setCustomPackageModalOpen(false)}
-				lang="en"
-			/>
 		</>
 	)
 }
 
 export default ENProductPromotion
+
+
+
+
+

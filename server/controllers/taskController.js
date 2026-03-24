@@ -2,6 +2,7 @@ const { firmDb } = require('../db/db')
 const Task = require('../models/Task')(firmDb)
 const Board = require('../models/Board')(firmDb)
 const User = require('../models/user')(firmDb)
+const mongoose = require('mongoose')
 const path = require('path')
 const fs = require('fs').promises
 const { sendTaskNotification } = require('../services/emailService')
@@ -14,6 +15,47 @@ const {
 	canUserAccessTask,
 	normalizeObjectIdString,
 } = require('../utils/taskAccess')
+
+/** @param {unknown} val */
+function parseOptionalDateInput(val) {
+	if (val === undefined || val === null || val === '') return null
+	if (val instanceof Date && !isNaN(val.getTime())) return val
+	const s = String(val).trim()
+	if (!s) return null
+	const d = s.length === 10 ? new Date(`${s}T12:00:00`) : new Date(s)
+	return isNaN(d.getTime()) ? null : d
+}
+
+/**
+ * Deadline albo okres — wzajemnie wykluczają się przy zapisie (jak kalendarz).
+ * @param {import('mongoose').Document} task
+ */
+function normalizeTaskScheduleFields(task) {
+	if (task.workPeriodStart && task.workPeriodEnd) {
+		task.dueDate = null
+	} else if (task.dueDate) {
+		task.workPeriodStart = null
+		task.workPeriodEnd = null
+	}
+}
+
+async function getAccessibleBoardIdsForUser(userId) {
+	const user = await User.findById(userId).lean()
+	if (!user?.teamId) return []
+	const teamId = user.teamId
+	const isAdmin = user.roles && user.roles.includes('Admin')
+	if (isAdmin) {
+		const bs = await Board.find({ teamId, isActive: true }).select('_id').lean()
+		return bs.map(b => b._id)
+	}
+	const userDepartments = Array.isArray(user.department) ? user.department : user.department ? [user.department] : []
+	const orConditions = [{ members: userId }, { isTeamBoard: true }]
+	if (userDepartments.length > 0) {
+		orConditions.push({ type: 'department', departmentName: { $in: userDepartments } })
+	}
+	const bs = await Board.find({ teamId, isActive: true, $or: orConditions }).select('_id').lean()
+	return bs.map(b => b._id)
+}
 
 const emitTaskNotificationRealtimeUpdate = async ({ req, task, board, actorUserId, action }) => {
 	try {
@@ -83,9 +125,9 @@ exports.getBoardTasks = async (req, res) => {
 				]
 			}
 
-		// Get all tasks for this board
-		const tasks = await Task.find({ 
-			boardId, 
+		// Wszystkie aktywne zadania tablicy (w tym „szybkie” z kalendarza — też na Kanbanie)
+		const tasks = await Task.find({
+			boardId,
 			isActive: true,
 			...taskVisibilityFilter,
 		})
@@ -155,11 +197,107 @@ exports.getTask = async (req, res) => {
 	}
 }
 
+// Calendar: tasks with dates for current user (all boards or one board)
+exports.getCalendarTasks = async (req, res) => {
+	try {
+		const userId = req.user.userId
+		const year = parseInt(req.query.year, 10)
+		const month = parseInt(req.query.month, 10)
+		const boardIdFilter = req.query.boardId
+
+		if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+			return res.status(400).json({ message: 'Invalid year/month' })
+		}
+
+		const monthStart = new Date(year, month - 1, 1, 0, 0, 0, 0)
+		const monthEnd = new Date(year, month, 0, 23, 59, 59, 999)
+
+		let boardIds = await getAccessibleBoardIdsForUser(userId)
+		if (boardIdFilter) {
+			if (!mongoose.Types.ObjectId.isValid(boardIdFilter)) {
+				return res.status(400).json({ message: 'Invalid boardId' })
+			}
+			const ok = boardIds.some(id => id.toString() === String(boardIdFilter))
+			if (!ok) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
+			boardIds = [new mongoose.Types.ObjectId(boardIdFilter)]
+		}
+
+		if (boardIds.length === 0) {
+			return res.json({ tasks: [] })
+		}
+
+		const dateOverlap = {
+			$or: [
+				{ dueDate: { $gte: monthStart, $lte: monthEnd } },
+				{
+					$and: [
+						{ workPeriodStart: { $lte: monthEnd } },
+						{ workPeriodEnd: { $gte: monthStart } },
+					],
+				},
+			],
+		}
+
+		// Kalendarz pokazuje zadania przypisane do bieżącego użytkownika (jak widok „moje”)
+		const query = {
+			boardId: { $in: boardIds },
+			isActive: true,
+			$and: [
+				{ $or: [{ assignedScope: 'all-members' }, { assignedTo: userId }] },
+				dateOverlap,
+			],
+		}
+
+		const tasks = await Task.find(query)
+			.select('title boardId dueDate workPeriodStart workPeriodEnd calendarOnly status priority')
+			.sort({ dueDate: 1, workPeriodStart: 1 })
+			.limit(3000)
+			.lean()
+
+		const bIds = [...new Set(tasks.map(t => t.boardId.toString()))]
+		const boards = await Board.find({ _id: { $in: bIds } })
+			.select('name')
+			.lean()
+		const boardNameById = Object.fromEntries(boards.map(b => [b._id.toString(), b.name || '']))
+
+		const out = tasks.map(t => ({
+			_id: t._id,
+			title: t.title,
+			boardId: t.boardId,
+			boardName: boardNameById[t.boardId.toString()] || '',
+			dueDate: t.dueDate,
+			workPeriodStart: t.workPeriodStart,
+			workPeriodEnd: t.workPeriodEnd,
+			calendarOnly: !!t.calendarOnly,
+			status: t.status,
+			priority: t.priority,
+		}))
+
+		res.json({ tasks: out })
+	} catch (error) {
+		console.error('Error getCalendarTasks:', error)
+		res.status(500).json({ message: 'Error loading calendar tasks' })
+	}
+}
+
 // Create task
 exports.createTask = async (req, res) => {
 	try {
 		const { boardId } = req.params
-		const { title, description, status, assignedTo, assignToAllMembers, priority } = req.body
+		const {
+			title,
+			description,
+			status,
+			assignedTo,
+			assignToAllMembers,
+			priority,
+			dueDate,
+			workPeriodStart,
+			workPeriodEnd,
+			calendarOnly,
+		} = req.body
 		const userId = req.user.userId
 
 		if (!title || !title.trim()) {
@@ -202,8 +340,17 @@ exports.createTask = async (req, res) => {
 			assignedScope: assignment.assignedScope,
 			assignedTo: assignment.assignedTo,
 			createdBy: userId,
-			order: maxOrderTask ? maxOrderTask.order + 1 : 0
+			order: maxOrderTask ? maxOrderTask.order + 1 : 0,
+			dueDate: parseOptionalDateInput(dueDate),
+			workPeriodStart: parseOptionalDateInput(workPeriodStart),
+			workPeriodEnd: parseOptionalDateInput(workPeriodEnd),
+			calendarOnly: calendarOnly === true,
 		})
+
+		normalizeTaskScheduleFields(newTask)
+		if (newTask.workPeriodStart && newTask.workPeriodEnd && newTask.workPeriodStart > newTask.workPeriodEnd) {
+			return res.status(400).json({ message: 'Invalid work period (start after end)' })
+		}
 
 		await newTask.save()
 		const populatedTask = await Task.findById(newTask._id)
@@ -276,7 +423,19 @@ exports.createTask = async (req, res) => {
 exports.updateTask = async (req, res) => {
 	try {
 		const { taskId } = req.params
-		const { title, description, status, assignedTo, assignToAllMembers, priority, order } = req.body
+		const {
+			title,
+			description,
+			status,
+			assignedTo,
+			assignToAllMembers,
+			priority,
+			order,
+			dueDate,
+			workPeriodStart,
+			workPeriodEnd,
+			calendarOnly,
+		} = req.body
 		const userId = req.user.userId
 
 		const task = await Task.findById(taskId)
@@ -329,6 +488,22 @@ exports.updateTask = async (req, res) => {
 		}
 		if (order !== undefined) {
 			task.order = order
+		}
+		if (dueDate !== undefined) {
+			task.dueDate = parseOptionalDateInput(dueDate)
+		}
+		if (workPeriodStart !== undefined) {
+			task.workPeriodStart = parseOptionalDateInput(workPeriodStart)
+		}
+		if (workPeriodEnd !== undefined) {
+			task.workPeriodEnd = parseOptionalDateInput(workPeriodEnd)
+		}
+		if (calendarOnly !== undefined) {
+			task.calendarOnly = calendarOnly === true
+		}
+		normalizeTaskScheduleFields(task)
+		if (task.workPeriodStart && task.workPeriodEnd && task.workPeriodStart > task.workPeriodEnd) {
+			return res.status(400).json({ message: 'Invalid work period (start after end)' })
 		}
 
 		await task.save()

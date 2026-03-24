@@ -8,10 +8,15 @@ const { createGeneralChannel } = require('./chatController');
 const { createTeamBoard } = require('./boardController');
 const { createTeamSchedule } = require('./scheduleController');
 const teamService = require('../services/teamService');
+const {
+	SPECIAL_TEAM_NAMES,
+	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
+} = require('../constants/specialTeams')
+const entitlementsService = require('../services/entitlementsService')
 
 // Helper function to update maxUsers for special teams
 const updateSpecialTeamLimit = async (team) => {
-	const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
+	const specialTeamNames = SPECIAL_TEAM_NAMES
 	if (specialTeamNames.includes(team.name) && team.maxUsers !== 11) {
 		team.maxUsers = 11
 		await team.save()
@@ -100,12 +105,38 @@ exports.registerTeam = async (req, res) => {
 		
 		const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
-		// Determine maxUsers based on team name
-		// Special teams keep 11 users, all new other teams get default 4
-		const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
-		const maxUsers = specialTeamNames.includes(teamName) ? 11 : 4
+		// Special names: 11 seats. OficjalnyAdminowy — brak trialu (AI nielimit. w entitlementach).
+		// Halo Rental System — Starter aktywny, rozliczenia ręczne (bez daty końca w UI).
+		// Pozostałe: 5 miejsc + 30-dniowy trial.
+		const isSpecial = SPECIAL_TEAM_NAMES.includes(teamName)
+		const isManualBillingStarter = SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(teamName)
+		const maxUsers = isSpecial ? 11 : 5
+		const trialBilling = !isSpecial
+			? {
+					billingPlanKey: 'trial',
+					billingStatus: 'trial',
+					trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+					trialAiMessagesUsed: 0,
+					aiMessagesUsedInMonth: 0,
+					aiUsageMonthKey: entitlementsService.currentMonthKey(),
+					aiPackBalance: 0,
+				}
+			: isManualBillingStarter
+				? {
+						billingPlanKey: 'starter',
+						billingStatus: 'active',
+						billingHadPaidPlan: true,
+						billingCycle: 'monthly',
+						billingPeriodEnd: null,
+						subscriptionType: 'premium',
+						trialEndsAt: null,
+						trialAiMessagesUsed: 0,
+						aiMessagesUsedInMonth: 0,
+						aiUsageMonthKey: entitlementsService.currentMonthKey(),
+						aiPackBalance: 0,
+					}
+				: {}
 
-	
 		const newTeam = new Team({
 			name: teamName,
 			adminEmail,
@@ -113,8 +144,9 @@ exports.registerTeam = async (req, res) => {
 			adminFirstName,
 			adminLastName,
 			currentUserCount: 1,
-			maxUsers: maxUsers
-		});
+			maxUsers: maxUsers,
+			...trialBilling,
+		})
 
 		await newTeam.save();
 
@@ -299,19 +331,22 @@ exports.getTeamInfo = async (req, res) => {
 			await team.save();
 		}
 
+		const effectiveMax = entitlementsService.effectiveMaxUsers(team)
+
 		res.json({
 			success: true,
 			team: {
 				id: team._id,
 				name: team.name,
-				maxUsers: team.maxUsers,
+				maxUsers: effectiveMax,
 				currentUserCount: actualUserCount,
-				remainingSlots: team.maxUsers - actualUserCount,
-				canAddUser: actualUserCount < team.maxUsers,
+				remainingSlots: Math.max(0, effectiveMax - actualUserCount),
+				canAddUser: actualUserCount < effectiveMax,
 				isActive: team.isActive,
-				subscriptionType: team.subscriptionType
+				subscriptionType: team.subscriptionType,
+				entitlements: entitlementsService.buildClientEntitlements(team),
 			}
-		});
+		})
 
 	} catch (error) {
 		console.error('Get team info error:', error);
@@ -379,15 +414,16 @@ exports.checkUserLimit = async (req, res) => {
 			await team.save();
 		}
 
-		const canAddUser = actualUserCount < team.maxUsers;
+		const effectiveMax = entitlementsService.effectiveMaxUsers(team)
+		const canAddUser = actualUserCount < effectiveMax
 
 		res.json({
 			success: true,
 			canAddUser,
 			currentCount: actualUserCount,
-			maxUsers: team.maxUsers,
-			remainingSlots: Math.max(0, team.maxUsers - actualUserCount)
-		});
+			maxUsers: effectiveMax,
+			remainingSlots: Math.max(0, effectiveMax - actualUserCount)
+		})
 
 	} catch (error) {
 		console.error('Check user limit error:', error);

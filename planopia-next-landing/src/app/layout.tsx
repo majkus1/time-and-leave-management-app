@@ -35,13 +35,16 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: {
-    default: "Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów",
+    default: "Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo",
     template: "%s | Planopia"
   },
-  description: "Planopia to kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 4 osób. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.",
+  description: "Planopia: ewidencja czasu pracy, urlopy, grafiki, czaty, tablice zadań i Asystent AI. 30 dni za darmo — pełne funkcje, do 5 użytkowników, limit wiadomości AI w tym okresie. Potem proste plany od 99 zł miesięcznie (Starter–Enterprise); dodatkowe pakiety wiadomości AI — w aplikacji po aktywnym pakiecie płatnym.",
   keywords: [
-    "darmowa ewidencja czasu pracy",
+    "ewidencja czasu pracy",
     "aplikacja do urlopów", 
+    "asystent AI HR",
+    "30 dni za darmo",
+    "cennik ewidencja czasu pracy",
     "kalendarz urlopów online",
     "program HR",
     "zarządzanie czasem pracy",
@@ -67,21 +70,21 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl',
     siteName: 'Planopia',
-    title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Wypróbuj Planopię za darmo – kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Do 4 użytkowników bez opłat. Plany płatne dla większych firm z dodatkowymi funkcjami.',
+    title: 'Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo',
+    description: '30 dni za darmo: pełne funkcje, do 5 osób, Asystent AI w limitach na start. Potem plany od 99 zł miesięcznie z limitami użytkowników i AI.',
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
         width: 1200,
         height: 630,
-        alt: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
+        alt: 'Planopia - ewidencja czasu pracy, urlopy i Asystent AI',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planopia – Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-    description: 'Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań. Darmowa dla zespołów do 4 osób. Dla większych firm dostępne są płatne plany z większymi możliwościami.',
+    title: 'Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo',
+    description: '30 dni za darmo, pełne funkcje, do 5 użytkowników. Asystent AI, ewidencja czasu pracy, urlopy — później plany od 99 zł miesięcznie.',
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

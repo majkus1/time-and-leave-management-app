@@ -1,0 +1,282 @@
+/* Wspólny wygląd formularzy: logowanie, reset / nowe hasło, pierwsze hasło, rejestracja zespołu (przycisk) */
+
+.card.auth-form-shell {
+	overflow: hidden;
+	border: 1px solid rgba(226, 232, 240, 0.95) !important;
+	box-shadow:
+		0 4px 6px rgba(15, 23, 42, 0.04),
+		0 12px 40px rgba(15, 23, 42, 0.08) !important;
+}
+
+.card.auth-form-shell .login-card-body,
+.card.auth-form-shell .reset-password-container {
+	box-shadow: none !important;
+}
+
+.auth-form-card-inner {
+	padding: 1.5rem 1.35rem 1.6rem;
+}
+
+@media (min-width: 480px) {
+	.auth-form-card-inner {
+		padding: 1.65rem 1.6rem 1.75rem;
+	}
+}
+
+.auth-form-title {
+	margin: 0 0 1.35rem;
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: #0f172a;
+	letter-spacing: -0.02em;
+	line-height: 1.25;
+	text-align: center;
+}
+
+/* .auth-field-wrap {
+	margin-bottom: 1rem;
+} */
+
+.auth-field-wrap--tight {
+	margin-bottom: 0.75rem;
+}
+
+.reset-password-container {
+	padding: 20px;
+}
+
+.auth-field-relative {
+	position: relative;
+}
+
+.auth-input {
+	width: 100%;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 0.68rem 1rem;
+	font-size: 0.95rem;
+	color: #0f172a;
+	background: #f8fafc;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-input::placeholder {
+	color: #94a3b8;
+}
+
+.auth-input:hover {
+	border-color: #cbd5e1;
+	background: #fff;
+}
+
+.auth-input:focus {
+	outline: none;
+	border-color: #6366f1;
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.auth-input--invalid {
+	border-color: #fca5a5 !important;
+	background: #fff;
+}
+
+.auth-input--invalid:focus {
+	border-color: #ef4444 !important;
+	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.auth-input--with-icon-left {
+	padding-left: 2.65rem;
+}
+
+.auth-input--with-toggle {
+	padding-right: 2.75rem;
+}
+
+.auth-input-icon {
+	position: absolute;
+	inset: 0 auto 0 0;
+	display: flex;
+	align-items: center;
+	padding-left: 0.85rem;
+	pointer-events: none;
+	color: #94a3b8;
+	font-size: 0.95rem;
+}
+
+.auth-toggle-vis {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	padding-right: 0.65rem;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #64748b;
+}
+
+.auth-toggle-vis:hover {
+	color: #334155;
+}
+
+.auth-submit-btn {
+	width: 100%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.78rem 1.25rem;
+	margin-top: 0.15rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	color: #fff !important;
+	border: none;
+	border-radius: 12px;
+	cursor: pointer;
+	background: linear-gradient(165deg, #10b981 0%, #059669 42%, #047857 100%);
+	box-shadow: 0 4px 16px rgba(5, 150, 105, 0.38);
+	transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+	filter: brightness(1.06);
+	box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45);
+	transform: translateY(-1px);
+}
+
+.auth-submit-btn:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+.auth-submit-btn:disabled {
+	opacity: 0.62;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+.auth-form-hint {
+	display: block;
+	font-size: 0.8rem;
+	color: #64748b;
+	line-height: 1.45;
+	margin: 0.25rem 0 0.5rem;
+}
+
+.auth-form-hint--after-field {
+	margin-top: 0;
+	margin-bottom: 0.65rem;
+}
+
+.auth-link-subtle {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #4f46e5 !important;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.auth-link-subtle:hover {
+	color: #4338ca !important;
+	text-decoration: underline;
+}
+
+.auth-divider-label {
+	position: relative;
+	text-align: center;
+	margin: 1.15rem 0 0.5rem;
+}
+
+.auth-divider-label::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 1px;
+	background: #e2e8f0;
+}
+
+.auth-divider-label span {
+	position: relative;
+	padding: 0 0.65rem;
+	background: #fff;
+	font-size: 0.8rem;
+	color: #94a3b8;
+	font-weight: 500;
+}
+
+.auth-back-row {
+	display: flex;
+	justify-content: center;
+	margin-top: 1.5rem;
+	margin-bottom: 1.25rem;
+}
+
+.auth-back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.65rem 1.15rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	text-decoration: none !important;
+	color: #475569 !important;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.auth-back-link:hover {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+	color: #0f172a !important;
+}
+
+.auth-form-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+/* SetPassword: jednolity blok wewnętrzny */
+.auth-setpass-block {
+	padding: 1.5rem 1.35rem 1.6rem;
+	border-bottom-left-radius: 15px;
+	border-bottom-right-radius: 15px;
+}
+
+@media (min-width: 480px) {
+	.auth-setpass-block {
+		padding: 1.65rem 1.6rem 1.75rem;
+	}
+}
+
+/* Reset hasła: wyśrodkowanie jak na pozostałych ekranach */
+/* .reset-password-container.auth-form-body-centered {
+	align-items: center !important;
+} */
+
+.newpass .card-body {
+	padding: 0px !important;
+}
+
+.reset-password-container.auth-form-body-centered form {
+	width: 100%;
+	max-width: 22rem;
+}
+
+/* Rejestracja zespołu: karta jak pozostałe formularze auth */
+.auth-form-team-shell {
+	border-radius: 16px !important;
+	border: 1px solid rgba(226, 232, 240, 0.95);
+	box-shadow:
+		0 4px 6px rgba(15, 23, 42, 0.04),
+		0 12px 40px rgba(15, 23, 42, 0.08);
+}

@@ -19,7 +19,7 @@ function ENBlogOne() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Online Time Tracking – modern solutions for businesses",
-						"description": "Planopia is a modern online time tracking app for businesses. Track working hours, overtime, and leaves in a simple way. Free version available for up to 4 users.",
+						"description": "Planopia is a modern online time tracking app. 30-day trial with full features for up to 5 users; then paid plans.",
 						"image": "https://planopia.pl/img/desktopnew.webp",
 						"author": {
 							"@type": "Person",
@@ -82,7 +82,7 @@ function ENBlogOne() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create a free team
+							Start free trial
 						</Link>
 						<Link href="/blog/ewidencja-czasu-pracy-online" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function ENBlogOne() {
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -136,14 +131,15 @@ function ENBlogOne() {
 					<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 							<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 								<p className="text-gray-800 mb-3">
-								<strong>Free time tracking app</strong>  
-								<br />for teams up to 4 users
+								<strong>30-day free trial</strong>
+								<br />
+								Full features, up to 5 users
 								</p>
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 								>
-									Create a free team
+									Start free trial
 								</Link>
 							</div>
 							<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -213,7 +209,7 @@ function ENBlogOne() {
 				<li>Full control over working hours and overtime tracking.</li>
 				<li>Fast leave requests and approvals.</li>
 				<li>Reports and work calendars always available online or in PDF.</li>
-				<li>A <strong>free plan for up to 4 users</strong>.</li>
+				<li>A <strong>30-day trial for up to 5 users</strong> (full product access).</li>
 				<li>Scalability and customization options for larger organizations.</li>
 			</ul>
 
@@ -221,12 +217,12 @@ function ENBlogOne() {
 			<p className="mb-4 text-gray-700">
 				Time tracking doesn't have to be complicated. With solutions like 
 				<strong> Planopia</strong>, your company saves time, avoids errors, 
-				and stays compliant. Whether you run a <strong>small team up to 4 users</strong> 
+				and stays compliant. Whether you run a <strong>small team (up to 5 users in the trial)</strong>
 				or manage a large organization – Planopia keeps everything under control.
 			</p>
 
 			<p className="mt-8 font-medium text-blue-600">
-				Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">create your free team today</Link>.
+				Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial today</Link>.
 			</p>
 		</article>
 

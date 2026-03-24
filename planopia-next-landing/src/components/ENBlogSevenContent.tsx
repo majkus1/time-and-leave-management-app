@@ -37,10 +37,10 @@ export default function ENBlogSevenContent() {
 		"mainEntity": [
 			{
 				"@type": "Question",
-				"name": "Is Planopia free?",
+				"name": "How does the Planopia trial work?",
 				"acceptedAnswer": {
 					"@type": "Answer",
-					"text": "Yes, Planopia offers a free version for teams up to 4 users. All features are available at no cost. For larger companies, paid plans are available with unlimited users."
+					"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you choose a paid plan that fits your team size."
 				}
 			},
 			{
@@ -115,14 +115,15 @@ export default function ENBlogSevenContent() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										<strong>Free app</strong>  
-										<br />for teams up to 4 users
+										<strong>30-day free trial</strong>
+										<br />
+										Full features, up to 5 users
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Create a free team
+										Start free trial
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -232,7 +233,7 @@ export default function ENBlogSevenContent() {
 						<strong>Planopia</strong> works well for both small teams and larger companies:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
-						<li><strong>Small teams</strong> – free version for up to 4 users, all features available</li>
+						<li><strong>Small teams</strong> – 30-day trial, up to 5 users, full features</li>
 						<li><strong>Medium companies</strong> – unlimited number of users, flexible configuration</li>
 						<li><strong>Large organizations</strong> – possibility of personalization, integrations, and dedicated environment</li>
 						<li><strong>HR and managers</strong> – comprehensive tool for team management</li>
@@ -261,12 +262,12 @@ export default function ENBlogSevenContent() {
 						of your company. Everything in one place, for your entire team.
 					</p>
 					<p className="mb-4 text-gray-700">
-						Try <strong>Planopia</strong> for free for teams up to 4 users and see 
+						Try <strong>Planopia</strong> free for the first month (up to 5 users) and see 
 						how a comprehensive tool can streamline your company management.
 					</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">create a free team and start managing your company in one place</Link>.
+						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial and begin managing your company in one place</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -274,10 +275,11 @@ export default function ENBlogSevenContent() {
 						<h2 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h2>
 						<div className="space-y-6">
 							<div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-2">Is Planopia free?</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-2">How does the trial work?</h3>
 								<p className="text-gray-700">
-									Yes, Planopia offers a free version for teams up to 4 users. All features are available at no cost. 
-									For larger companies, paid plans are available with unlimited users, flexible features, and integrations.
+									You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
+									After the trial, choose a paid plan — see{' '}
+									<Link href="/en#prices" className="text-blue-600 hover:underline">pricing</Link>.
 								</p>
 							</div>
 							<div>

@@ -10,7 +10,7 @@ interface HamburgerButtonProps {
 export default function HamburgerButton({ isOpen, onClick }: HamburgerButtonProps) {
 	return (
 		<button
-			className={`mobile-menu-hamburger ${isOpen ? 'active' : ''} lg:hidden`}
+			className={`mobile-menu-hamburger ${isOpen ? 'active' : ''} desktop:hidden`}
 			onClick={onClick}
 			aria-label={isOpen ? 'Zamknij menu' : 'Otwórz menu'}
 			aria-expanded={isOpen}

@@ -33,7 +33,9 @@ export function validateCustomPackageRequest(data: Partial<CustomPackageRequestI
 	}
 
 	if (!data.usersCount || data.usersCount < 5) {
-		errors.push('Liczba użytkowników musi być co najmniej 5 (aplikacja jest darmowa do 4 użytkowników)')
+		errors.push(
+			'Liczba użytkowników musi być co najmniej 5 (płatne plany; okres próbny: do 5 użytkowników przez 30 dni)',
+		)
 	}
 
 	if (!data.packageType || !data.packageType.trim()) {

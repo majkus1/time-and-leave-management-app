@@ -380,6 +380,15 @@ function Sidebar() {
 								)}
 							</NavLink>
 
+					<NavLink
+						to="/ai-assistant"
+						className={({ isActive }) => `nav-link nav-link--ai ${isActive ? 'active' : ''}`}>
+						<div className="nav-icon">
+							<img src="/img/aiasystent.png" alt="AI Asystent" />
+						</div>
+						<span className="nav-text">{t('sidebar.btnAssistant')}</span>
+					</NavLink>
+
 					{/* Admin Links - calendars-list i leave-list w jednym div */}
 					{((isAdmin(role) || isHR(role) || (isSupervisor(role) && (canApproveLeaves || canViewTimesheets)))) && (
 						<div className="admin-section">
@@ -482,23 +491,27 @@ function Sidebar() {
 								<span className="nav-text">{t('sidebar.btn9')}</span>
 							</NavLink>
 
-							<NavLink
-								to="/documents"
-								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-								<div className="nav-icon">
-								<img src="/img/docs.png" alt="docs icon" />
-								</div>
-								<span className="nav-text">{t('sidebar.btnDocuments')}</span>
-							</NavLink>
+							{isAdmin(role) && (
+								<NavLink
+									to="/packages"
+									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/wallet.png" alt="" />
+									</div>
+									<span className="nav-text">{t('sidebar.btnPackages')}</span>
+								</NavLink>
+							)}
 
-							<NavLink
-								to="/helpcenter"
-								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-								<div className="nav-icon">
-									<img src="/img/technical-support.png" alt="Help Center" />
-								</div>
-								<span className="nav-text">{t('tickets.title')}</span>
-							</NavLink>
+							{isAdmin(role) && (
+								<NavLink
+									to="/helpcenter"
+									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/technical-support.png" alt="" />
+									</div>
+									<span className="nav-text">{t('tickets.title')}</span>
+								</NavLink>
+							)}
 						</div>
 					)}
 				</div>

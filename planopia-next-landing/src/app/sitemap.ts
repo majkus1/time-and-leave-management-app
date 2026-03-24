@@ -153,6 +153,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.5,
     },
+    {
+      url: 'https://planopia.pl/reklamacje',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.55,
+    },
     
     // Legal documents - English
     {
@@ -172,6 +178,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.5,
+    },
+    {
+      url: 'https://planopia.pl/en/complaints',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.55,
     },
   ]
 }

@@ -36,6 +36,10 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 	const [assignToAllMembers, setAssignToAllMembers] = useState(false)
 	const [selectedAssignees, setSelectedAssignees] = useState([])
 	const [selectedFile, setSelectedFile] = useState(null)
+	const [scheduleMode, setScheduleMode] = useState('none') // none | deadline | period
+	const [dueDate, setDueDate] = useState('')
+	const [periodStart, setPeriodStart] = useState('')
+	const [periodEnd, setPeriodEnd] = useState('')
 
 	useEffect(() => {
 		if (!userId || assignToAllMembers || selectedAssignees.length > 0) return
@@ -54,6 +58,14 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 		}
 		if (!assignToAllMembers && selectedAssignees.length === 0) {
 			await showAlert(t('boards.assigneeRequired') || 'Wybierz przynajmniej jedną osobę lub opcję przypisania do wszystkich')
+			return
+		}
+		if (scheduleMode === 'deadline' && !dueDate) {
+			await showAlert(t('boards.deadlineRequired') || 'Wybierz datę deadline')
+			return
+		}
+		if (scheduleMode === 'period' && (!periodStart || !periodEnd)) {
+			await showAlert(t('boards.periodRequired') || 'Podaj pełny okres (od–do)')
 			return
 		}
 
@@ -258,6 +270,75 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							</option>
 						))}
 					</select>
+				</div>
+
+				<div style={{ marginBottom: '20px' }}>
+					<label style={{
+						display: 'block',
+						marginBottom: '8px',
+						fontWeight: '600',
+						color: '#2c3e50'
+					}}>
+						{t('boards.scheduleType') || 'Termin / okres'}
+					</label>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+						<input
+							type="radio"
+							name="createSched"
+							checked={scheduleMode === 'none'}
+							onChange={() => setScheduleMode('none')}
+						/>
+						<span>{t('boards.noSchedule') || 'Brak'}</span>
+					</label>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+						<input
+							type="radio"
+							name="createSched"
+							checked={scheduleMode === 'deadline'}
+							onChange={() => setScheduleMode('deadline')}
+						/>
+						<span>{t('boards.deadline') || 'Deadline'}</span>
+					</label>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+						<input
+							type="radio"
+							name="createSched"
+							checked={scheduleMode === 'period'}
+							onChange={() => setScheduleMode('period')}
+						/>
+						<span>{t('boards.workPeriod') || 'Okres realizacji'}</span>
+					</label>
+					{scheduleMode === 'deadline' && (
+						<input
+							type="date"
+							value={dueDate}
+							onChange={(e) => setDueDate(e.target.value)}
+							style={{
+								marginTop: '10px',
+								width: '100%',
+								padding: '10px',
+								border: '1px solid #bdc3c7',
+								borderRadius: '6px',
+								fontSize: '16px'
+							}}
+						/>
+					)}
+					{scheduleMode === 'period' && (
+						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+							<input
+								type="date"
+								value={periodStart}
+								onChange={(e) => setPeriodStart(e.target.value)}
+								style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+							/>
+							<input
+								type="date"
+								value={periodEnd}
+								onChange={(e) => setPeriodEnd(e.target.value)}
+								style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+							/>
+						</div>
+					)}
 				</div>
 
 				<div style={{ marginBottom: '20px' }}>

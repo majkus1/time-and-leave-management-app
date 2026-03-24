@@ -27,8 +27,37 @@ import { API_URL } from '../../config.js'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
-import { isHolidayDate } from '../../utils/holidays'
+import { isHolidayDate, getHolidaysInRange, toYmdLocal } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import ScheduleAutoAiPanel from './ScheduleAutoAiPanel'
+
+/** Polish (and some locales) return month names lowercase — capitalize for UI labels */
+function capitalizeMonthName(locale, monthIndexZeroBased) {
+	const raw = new Date(0, monthIndexZeroBased).toLocaleString(locale, { month: 'long' })
+	if (!raw || typeof raw !== 'string') return raw
+	return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
+/** Ustawienia zespołu: workHours jako tablica lub pojedynczy obiekt (kompatybilność). */
+function normalizedTeamWorkHoursList(workHours) {
+	if (!workHours) return []
+	if (Array.isArray(workHours)) return workHours.filter((w) => w?.timeFrom && w?.timeTo)
+	if (workHours.timeFrom && workHours.timeTo) return [workHours]
+	return []
+}
+
+/** Jedna karta zmiany na każdy przedział z ustawień — do auto-uzupełnienia miesiąca. */
+function buildAutoShiftRowsFromTeamSettings(workHours) {
+	const list = normalizedTeamWorkHoursList(workHours)
+	if (list.length === 0) return null
+	return list.map((wh, idx) => ({
+		id: `shift-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+		timeFrom: wh.timeFrom,
+		timeTo: wh.timeTo,
+		minEmployees: 2,
+		weekdays: [1, 2, 3, 4, 5]
+	}))
+}
 
 function Schedule() {
 	const { scheduleId } = useParams()
@@ -113,6 +142,7 @@ function Schedule() {
 	const [autoGenerateNotes, setAutoGenerateNotes] = useState('')
 	const [autoPreferAvailability, setAutoPreferAvailability] = useState(true)
 	const [autoStrictAvailability, setAutoStrictAvailability] = useState(false)
+	const [autoFillUiMode, setAutoFillUiMode] = useState('form')
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(null)
 	const calendarRef = useRef(null)
 	const upsertEntryMutation = useUpsertScheduleEntry()
@@ -171,6 +201,10 @@ function Schedule() {
 	useEffect(() => {
 		setShowAvailabilityForm(!isManagerLikeRole)
 	}, [isManagerLikeRole, scheduleId])
+
+	useEffect(() => {
+		if (!isAutoGenerateModalOpen) setAutoFillUiMode('form')
+	}, [isAutoGenerateModalOpen])
 	
 	// Sprawdź czy użytkownik jest twórcą niestandardowego grafiku
 	const isCreator = React.useMemo(() => {
@@ -271,7 +305,7 @@ function Schedule() {
 		const workOnWeekends = settings?.workOnWeekends !== false // Domyślnie true
 		
 		while (current <= end) {
-			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const currentDateStr = toYmdLocal(current)
 			const isWeekendDay = isWeekend(current)
 			// Sprawdź święta (niestandardowe zawsze, polskie tylko gdy includeHolidays jest włączone)
 			const holidayInfo = isHolidayDate(current, settings)
@@ -332,6 +366,32 @@ function Schedule() {
 				return requestUserId === currentUserIdStr
 			})
 			: scheduleLeaveRequests
+
+		// Święta ustawowe / własne zespołu — jak w MonthlyCalendar: zwykłe wydarzenia całodniowe
+		// (display: 'background' nie pokazuje nazwy w widoku miesiąca)
+		const pad2 = (n) => String(n).padStart(2, '0')
+		const monthStartStr = `${currentYear}-${pad2(currentMonth + 1)}-01`
+		const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+		const monthEndStr = `${currentYear}-${pad2(currentMonth + 1)}-${pad2(lastDayOfMonth)}`
+		const holidayEvents =
+			settings && (settings.includePolishHolidays || settings.includeCustomHolidays)
+				? getHolidaysInRange(monthStartStr, monthEndStr, settings).map((h) => ({
+						title: h.name,
+						start: h.date,
+						allDay: true,
+						backgroundColor: 'rgba(254, 243, 199, 0.98)',
+						borderColor: 'rgba(217, 119, 6, 0.55)',
+						textColor: '#92400e',
+						classNames: ['schedule-calendar-holiday-event'],
+						extendedProps: { type: 'holiday', holidayName: h.name },
+					}))
+				: []
+
+		const sortEventsSameDay = (a, b) => {
+			const pa = a.extendedProps?.type === 'holiday' ? -1 : a.extendedProps?.timeFrom ? timeToMinutes(a.extendedProps.timeFrom) : 5000
+			const pb = b.extendedProps?.type === 'holiday' ? -1 : b.extendedProps?.timeFrom ? timeToMinutes(b.extendedProps.timeFrom) : 5000
+			return pa - pb
+		}
 		
 		// Add leave request events
 		const leaveRequestEvents = filteredLeaveRequests
@@ -362,9 +422,13 @@ function Schedule() {
 				}))
 			})
 		
-		// Jeśli nie ma wpisów grafiku, zwróć tylko eventy z wniosków urlopowych
+		// Jeśli nie ma wpisów grafiku — święta + wnioski (sort: data, potem święta na początku dnia)
 		if (!scheduleEntries || scheduleEntries.length === 0) {
-			return leaveRequestEvents.sort((a, b) => a.start.localeCompare(b.start))
+			return [...holidayEvents, ...leaveRequestEvents].sort((a, b) => {
+				const dateCompare = a.start.localeCompare(b.start)
+				if (dateCompare !== 0) return dateCompare
+				return sortEventsSameDay(a, b)
+			})
 		}
 		
 		// Create all events first
@@ -402,22 +466,15 @@ function Schedule() {
 			})
 		})
 		
-		// Combine all events
-		const combinedEvents = [...allEvents, ...leaveRequestEvents]
+		// Święta + wpisy grafiku + wnioski (święta pierwsze w obrębie dnia — widać nazwę jak w MonthlyCalendar)
+		const combinedEvents = [...holidayEvents, ...allEvents, ...leaveRequestEvents]
 		
-		// Sort all events: first by date, then by timeFrom within the same date (for schedule entries)
 		return combinedEvents.sort((a, b) => {
-			// First compare dates
 			const dateCompare = a.start.localeCompare(b.start)
-			if (dateCompare !== 0) {
-				return dateCompare
-			}
-			// If same date, sort by timeFrom (if available, otherwise leave requests go after schedule entries)
-			const timeA = a.extendedProps?.timeFrom ? timeToMinutes(a.extendedProps.timeFrom) : 9999
-			const timeB = b.extendedProps?.timeFrom ? timeToMinutes(b.extendedProps.timeFrom) : 9999
-			return timeA - timeB
+			if (dateCompare !== 0) return dateCompare
+			return sortEventsSameDay(a, b)
 		})
-	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allTeamLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage])
+	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allTeamLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage, currentMonth, currentYear])
 
 	// Sort selected entries by timeFrom for display in modal
 	const sortedSelectedEntries = React.useMemo(() => {
@@ -477,6 +534,17 @@ function Schedule() {
 		if (!selectedDate) return false
 		return settings?.workOnWeekends === false && isWeekend(selectedDate)
 	}, [selectedDate, settings])
+
+	const selectedDateHolidayInfo = React.useMemo(() => {
+		if (!selectedDate || !settings) return null
+		if (!settings.includePolishHolidays && !settings.includeCustomHolidays) return null
+		const raw = selectedDate.includes('T') ? selectedDate.split('T')[0] : selectedDate
+		return isHolidayDate(raw, settings)
+	}, [selectedDate, settings])
+
+	const isSelectedDateHolidayBlocked = selectedDateHolidayInfo !== null
+
+	const isNonWorkingScheduleDayBlocked = isSelectedDateWeekendBlocked || isSelectedDateHolidayBlocked
 
 	if (!schedule) {
 		return (
@@ -725,19 +793,8 @@ function Schedule() {
 	const openAutoGenerateModal = () => {
 		setAutoGenerateMonth(currentMonth + 1)
 		setAutoGenerateYear(currentYear)
-		if (settings?.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 0) {
-			const defaultFrom = settings.workHours[0].timeFrom || '08:00'
-			const defaultTo = settings.workHours[0].timeTo || '16:00'
-			setAutoShiftRows([{
-				id: `shift-${Date.now()}`,
-				timeFrom: defaultFrom,
-				timeTo: defaultTo,
-				minEmployees: 2,
-				weekdays: [1, 2, 3, 4, 5]
-			}])
-		} else {
-			setAutoShiftRows([createDefaultShiftRow()])
-		}
+		const fromTeam = buildAutoShiftRowsFromTeamSettings(settings?.workHours)
+		setAutoShiftRows(fromTeam && fromTeam.length > 0 ? fromTeam : [createDefaultShiftRow()])
 		setAutoDayOverrideRows([])
 		setAutoManualExclusionRows([])
 		setAutoAllowMultipleShiftsPerDay(false)
@@ -813,6 +870,16 @@ function Schedule() {
 		}
 		if (settings?.workOnWeekends === false && dates.some((dateValue) => isWeekend(dateValue))) {
 			await showAlert(t('schedule.availability.weekendBlocked') || 'Nie można zgłaszać dyspozycyjności na weekendy, gdy zespół nie pracuje w weekendy.')
+			return
+		}
+		if (
+			(settings?.includePolishHolidays || settings?.includeCustomHolidays) &&
+			dates.some((dateValue) => isHolidayDate(dateValue, settings))
+		) {
+			await showAlert(
+				t('schedule.availability.holidayBlocked') ||
+					'Nie można zgłaszać dyspozycyjności w dni świąteczne wolne od pracy (ustawienia zespołu).'
+			)
 			return
 		}
 
@@ -919,10 +986,88 @@ function Schedule() {
 				`${t('schedule.auto.summary.processedDays') || 'Przetworzone dni'}: ${summary.processedDays || 0}\n` +
 				`${t('schedule.auto.summary.processedShifts') || 'Przetworzone zmiany'}: ${summary.processedShifts || 0}\n` +
 				`${t('schedule.auto.summary.skippedWeekends') || 'Pominięte weekendy'}: ${summary.skippedWeekendDays || 0}\n` +
+				`${t('schedule.auto.summary.skippedHolidays') || 'Pominięte święta'}: ${summary.skippedHolidayDays || 0}\n` +
 				`${t('schedule.auto.summary.daysWithoutCoverage') || 'Dni bez pełnej obsady'}: ${summary.skippedNoCandidates || 0}`
 			)
 		} catch (error) {
 			await showAlert(error.response?.data?.message || t('schedule.auto.generateError') || 'Nie udało się automatycznie wygenerować grafiku.')
+		}
+	}
+
+	const handleAiDraftApply = async (draft) => {
+		const normalizedShifts = (draft?.shifts || [])
+			.map((shift) => ({
+				timeFrom: shift.timeFrom,
+				timeTo: shift.timeTo,
+				minEmployees: Number(shift.minEmployees),
+				weekdays: Array.isArray(shift.weekdays) ? shift.weekdays : []
+			}))
+			.filter((shift) => shift.timeFrom && shift.timeTo && shift.minEmployees > 0)
+
+		if (normalizedShifts.length === 0) {
+			await showAlert(t('schedule.auto.atLeastOneShift') || 'Dodaj przynajmniej jedną poprawną zmianę.')
+			throw new Error('VALIDATION')
+		}
+
+		const normalizedOverrides = (draft?.dayOverrides || [])
+			.map((override) => ({
+				date: override.date,
+				timeFrom: override.timeFrom,
+				timeTo: override.timeTo,
+				minEmployees: Number(override.minEmployees)
+			}))
+			.filter((override) => override.date && override.timeFrom && override.timeTo && override.minEmployees > 0)
+
+		const normalizedManualExclusions = (draft?.manualExclusions || [])
+			.map((row) => ({
+				userId: row.userId,
+				date: row.date,
+				timeFrom: row.timeFrom || null,
+				timeTo: row.timeTo || null
+			}))
+			.filter((row) => row.userId && row.date)
+
+		const hasInvalidManualTime = normalizedManualExclusions.some((row) =>
+			(row.timeFrom && !row.timeTo) || (!row.timeFrom && row.timeTo)
+		)
+		if (hasInvalidManualTime) {
+			await showAlert(t('schedule.auto.manualExclusionsTimeValidation') || 'W ręcznych wykluczeniach podaj oba pola czasu (od i do) albo zostaw oba puste.')
+			throw new Error('VALIDATION')
+		}
+
+		try {
+			const response = await autoGenerateMutation.mutateAsync({
+				scheduleId,
+				data: {
+					year: Number(autoGenerateYear),
+					month: Number(autoGenerateMonth),
+					shifts: normalizedShifts,
+					dayOverrides: normalizedOverrides,
+					manualExclusions: normalizedManualExclusions,
+					allowMultipleShiftsPerDay: Boolean(draft.allowMultipleShiftsPerDay),
+					notes: typeof draft.notes === 'string' ? draft.notes : '',
+					preferAvailability: draft.preferAvailability !== false,
+					strictAvailability: Boolean(draft.strictAvailability)
+				}
+			})
+
+			const summary = response?.summary || {}
+			await refetchEntries()
+			setIsAutoGenerateModalOpen(false)
+			setAutoFillUiMode('form')
+			await showAlert(
+				`${t('schedule.auto.completed') || 'Auto-plan zakończony.'}\n` +
+				`${t('schedule.auto.summary.generatedAsDraft') || 'Wpisy robocze do publikacji'}: ${summary.generatedEntries || 0}\n` +
+				`${t('schedule.auto.summary.generatedEntries') || 'Dodane wpisy'}: ${summary.generatedEntries || 0}\n` +
+				`${t('schedule.auto.summary.processedDays') || 'Przetworzone dni'}: ${summary.processedDays || 0}\n` +
+				`${t('schedule.auto.summary.processedShifts') || 'Przetworzone zmiany'}: ${summary.processedShifts || 0}\n` +
+				`${t('schedule.auto.summary.skippedWeekends') || 'Pominięte weekendy'}: ${summary.skippedWeekendDays || 0}\n` +
+				`${t('schedule.auto.summary.skippedHolidays') || 'Pominięte święta'}: ${summary.skippedHolidayDays || 0}\n` +
+				`${t('schedule.auto.summary.daysWithoutCoverage') || 'Dni bez pełnej obsady'}: ${summary.skippedNoCandidates || 0}`
+			)
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('schedule.auto.generateError') || 'Nie udało się automatycznie wygenerować grafiku.')
+			throw error
 		}
 	}
 
@@ -997,7 +1142,7 @@ function Schedule() {
 
 	const handleClearMonthEntries = async () => {
 		const confirmed = await showConfirm(
-			`${t('schedule.auto.clearConfirm') || 'Wyczyścić wszystkie wpisy z'} ${new Date(0, currentMonth).toLocaleString(i18n.resolvedLanguage, { month: 'long' })} ${currentYear}?`
+			`${t('schedule.auto.clearConfirm') || 'Wyczyścić wszystkie wpisy z'} ${capitalizeMonthName(i18n.resolvedLanguage, currentMonth)} ${currentYear}?`
 		)
 		if (!confirmed) return
 
@@ -1028,7 +1173,7 @@ function Schedule() {
 		}
 
 		const confirmed = await showConfirm(
-			`${t('schedule.auto.publishConfirm') || 'Opublikować roboczy grafik z'} ${new Date(0, currentMonth).toLocaleString(i18n.resolvedLanguage, { month: 'long' })} ${currentYear}?`
+			`${t('schedule.auto.publishConfirm') || 'Opublikować roboczy grafik z'} ${capitalizeMonthName(i18n.resolvedLanguage, currentMonth)} ${currentYear}?`
 		)
 		if (!confirmed) return
 
@@ -1081,6 +1226,14 @@ function Schedule() {
 		}
 		if (settings?.workOnWeekends === false && isWeekend(selectedDate)) {
 			await showAlert(t('schedule.weekendEntryBlocked') || 'Nie można dodać wpisu w weekend, gdy zespół nie pracuje w weekendy.')
+			return
+		}
+		const selectedDayKey = selectedDate.includes('T') ? selectedDate.split('T')[0] : selectedDate
+		if (
+			(settings?.includePolishHolidays || settings?.includeCustomHolidays) &&
+			isHolidayDate(selectedDayKey, settings)
+		) {
+			await showAlert(t('schedule.holidayEntryBlocked') || 'Nie można dodać wpisu w dzień świąteczny wolny od pracy.')
 			return
 		}
 
@@ -1302,6 +1455,22 @@ function Schedule() {
 	}
 
 	const renderEventContent = (eventInfo) => {
+		const props = eventInfo.event.extendedProps || {}
+		if (props.type === 'holiday') {
+			const holidayLabel = props.holidayName || eventInfo.event.title
+			const holidayTextStyle = {
+				flex: 1,
+				whiteSpace: 'normal',
+				wordBreak: 'break-word',
+				fontWeight: 600,
+				color: '#78350f'
+			}
+			return (
+				<div className="event-content schedule-calendar-holiday-event-content" title={holidayLabel}>
+					<span style={holidayTextStyle}>{holidayLabel}</span>
+				</div>
+			)
+		}
 		return (
 			<div className="event-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 				<span style={{ flex: 1, whiteSpace: 'normal', wordBreak: 'break-word' }}>{eventInfo.event.title}</span>
@@ -1349,9 +1518,7 @@ function Schedule() {
 						}}>
 						{Array.from({ length: 12 }, (_, i) => (
 							<option key={i} value={i}>
-								{new Date(0, i)
-									.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-									.replace(/^./, str => str.toUpperCase())}
+								{capitalizeMonthName(i18n.resolvedLanguage, i)}
 							</option>
 						))}
 					</select>
@@ -1562,6 +1729,10 @@ function Schedule() {
 							height="auto"
 							key={`${currentMonth}-${currentYear}`}
 							eventContent={renderEventContent}
+							dayCellClassNames={(arg) => {
+								if (!settings || (!settings.includePolishHolidays && !settings.includeCustomHolidays)) return []
+								return isHolidayDate(arg.date, settings) ? ['schedule-calendar-holiday-cell'] : []
+							}}
 						/>
 					</div>
 				)}
@@ -1626,7 +1797,92 @@ function Schedule() {
 					<p style={{ marginTop: 0, marginBottom: '16px', color: '#64748b', fontSize: '14px' }}>
 						{t('schedule.auto.modalDescription') || 'System uzupełni brakujące wpisy do minimum obsady na dzień, uwzględniając nieobecności i istniejące wpisy.'}
 					</p>
-					<form onSubmit={handleAutoGenerateMonth}>
+					<div>
+						<style>
+							{`
+								@keyframes scheduleAutoAiBorderFlow {
+									0% { background-position: 0% 50%; }
+									50% { background-position: 100% 50%; }
+									100% { background-position: 0% 50%; }
+								}
+							`}
+						</style>
+						<div
+							style={{
+								display: 'flex',
+								gap: '8px',
+								padding: '5px',
+								marginBottom: '16px',
+								background: 'linear-gradient(145deg, #f8fafc 0%, #eef2f7 100%)',
+								borderRadius: '14px',
+								border: '1px solid #e2e8f0',
+								boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75)',
+							}}
+						>
+							<button
+								type="button"
+								onClick={() => setAutoFillUiMode('form')}
+								style={{
+									flex: 1,
+									padding: '11px 14px',
+									borderRadius: '11px',
+									border: 'none',
+									fontWeight: 700,
+									fontSize: '14px',
+									cursor: 'pointer',
+									transition: 'background 0.15s, color 0.15s, box-shadow 0.15s',
+									background: autoFillUiMode === 'form' ? '#ffffff' : 'transparent',
+									color: autoFillUiMode === 'form' ? '#0f172a' : '#64748b',
+									boxShadow: autoFillUiMode === 'form' ? '0 2px 10px rgba(15, 23, 42, 0.08)' : 'none',
+								}}
+							>
+								{t('schedule.auto.ai.modeForm')}
+							</button>
+							{/* Asystent AI — animowany gradient na obwódce */}
+							<div
+								style={{
+									flex: 1,
+									borderRadius: '12px',
+									padding: '2px',
+									background:
+										'linear-gradient(120deg, #6366f1, #22d3ee, #a855f7, #ec4899, #6366f1, #22d3ee)',
+									backgroundSize: '320% 100%',
+									boxShadow:
+										autoFillUiMode === 'ai'
+											? '0 4px 22px rgba(99, 102, 241, 0.45), 0 0 28px rgba(34, 211, 238, 0.2)'
+											: '0 2px 14px rgba(99, 102, 241, 0.35)',
+									animation: 'scheduleAutoAiBorderFlow 5s ease-in-out infinite',
+								}}
+							>
+								<button
+									type="button"
+									onClick={() => setAutoFillUiMode('ai')}
+									style={{
+										width: '100%',
+										padding: '9px 12px',
+										borderRadius: '10px',
+										border: 'none',
+										fontWeight: 800,
+										fontSize: '14px',
+										cursor: 'pointer',
+										transition: 'background 0.2s, color 0.2s, box-shadow 0.2s',
+										background:
+											autoFillUiMode === 'ai'
+												? 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%)'
+												: 'rgba(248, 250, 252, 0.96)',
+										color: autoFillUiMode === 'ai' ? '#4338ca' : '#475569',
+										boxShadow:
+											autoFillUiMode === 'ai'
+												? 'inset 0 1px 0 rgba(255,255,255,1), 0 1px 2px rgba(15,23,42,0.06)'
+												: 'none',
+										letterSpacing: '0.02em',
+									}}
+								>
+									{t('schedule.auto.ai.modeAi')}
+								</button>
+							</div>
+						</div>
+
 						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
 							<div>
 								<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
@@ -1639,7 +1895,7 @@ function Schedule() {
 								>
 									{Array.from({ length: 12 }, (_, i) => i + 1).map((monthNumber) => (
 										<option key={monthNumber} value={monthNumber}>
-											{new Date(0, monthNumber - 1).toLocaleString(i18n.resolvedLanguage, { month: 'long' })}
+											{capitalizeMonthName(i18n.resolvedLanguage, monthNumber - 1)}
 										</option>
 									))}
 								</select>
@@ -1659,6 +1915,39 @@ function Schedule() {
 							</div>
 						</div>
 
+						{autoFillUiMode === 'ai' && (
+							<>
+								<ScheduleAutoAiPanel
+									key={`${autoGenerateYear}-${autoGenerateMonth}`}
+									scheduleId={scheduleId}
+									year={autoGenerateYear}
+									month={autoGenerateMonth}
+									onApply={handleAiDraftApply}
+									busy={autoGenerateMutation.isPending}
+									isAvailabilityEnabled={isAvailabilityEnabled}
+									users={users}
+								/>
+								<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+									<button
+										type="button"
+										onClick={() => setIsAutoGenerateModalOpen(false)}
+										style={{
+											padding: '10px 16px',
+											border: '1px solid #cbd5e1',
+											backgroundColor: '#fff',
+											borderRadius: '6px',
+											cursor: 'pointer',
+											color: '#334155'
+										}}
+									>
+										{t('schedule.cancel') || 'Anuluj'}
+									</button>
+								</div>
+							</>
+						)}
+
+						{autoFillUiMode === 'form' && (
+					<form onSubmit={handleAutoGenerateMonth}>
 						<div style={{ marginBottom: '12px', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px', backgroundColor: '#f8fbff' }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
 								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
@@ -1681,6 +1970,22 @@ function Schedule() {
 									{t('schedule.auto.shifts.add') || '+ Dodaj zmianę'}
 								</button>
 							</div>
+							{normalizedTeamWorkHoursList(settings?.workHours).length > 0 && (
+								<div
+									style={{
+										fontSize: '12px',
+										color: '#0369a1',
+										marginBottom: '10px',
+										padding: '8px 10px',
+										background: '#eff6ff',
+										borderRadius: '8px',
+										border: '1px solid #bae6fd',
+										lineHeight: 1.45
+									}}
+								>
+									{t('schedule.auto.shifts.fromTeamSettings')}
+								</div>
+							)}
 							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 								{autoShiftRows.map((shiftRow, index) => (
 									<div key={shiftRow.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', backgroundColor: '#fff' }}>
@@ -2055,6 +2360,8 @@ function Schedule() {
 							</button>
 						</div>
 					</form>
+						)}
+					</div>
 				</Modal>
 				<Modal
 					isOpen={isModalOpen}
@@ -2116,6 +2423,31 @@ function Schedule() {
 									{t('schedule.weekendBlockedBadge') || 'Weekend zablokowany (zespół nie pracuje w weekendy)'}
 								</div>
 							)}
+							{isSelectedDateHolidayBlocked && (
+								<div style={{
+									display: 'inline-flex',
+									alignItems: 'flex-start',
+									gap: '8px',
+									padding: '8px 12px',
+									borderRadius: '10px',
+									backgroundColor: '#fffbeb',
+									border: '1px solid #fcd34d',
+									color: '#92400e',
+									fontSize: '13px',
+									fontWeight: '600',
+									width: '100%',
+									maxWidth: '100%',
+									boxSizing: 'border-box'
+								}}>
+									<span style={{ fontSize: '16px', lineHeight: 1.2, flexShrink: 0 }} aria-hidden>📅</span>
+									<span style={{ minWidth: 0, wordBreak: 'break-word', lineHeight: 1.35 }}>
+										{selectedDateHolidayInfo?.name || (t('schedule.holidayBlockedBadge') || 'Święto')}
+										<span style={{ display: 'block', fontSize: '12px', fontWeight: '500', marginTop: '4px', color: '#a16207' }}>
+											{t('schedule.holidayBlockedBadgeSub') || 'Dzień wolny od pracy (ustawienia zespołu)'}
+										</span>
+									</span>
+								</div>
+							)}
 						</div>
 						)}
 						<button
@@ -2172,7 +2504,7 @@ function Schedule() {
 						<p style={{ margin: '0 0 12px 0', color: '#64748b', fontSize: '14px' }}>
 							{t('schedule.availability.description') || 'Zgłoś dni, w których możesz pracować. Osoba układająca grafik zobaczy to przy przypisaniu.'}
 						</p>
-						{isSelectedDateWeekendBlocked ? (
+						{isNonWorkingScheduleDayBlocked ? (
 							<div style={{
 								padding: '10px 12px',
 								borderRadius: '8px',
@@ -2496,7 +2828,7 @@ function Schedule() {
 						{t('schedule.addNewEntry') || 'Dodaj nowy wpis'}
 					</h3>
 
-					{isSelectedDateWeekendBlocked && (
+					{isNonWorkingScheduleDayBlocked && (
 						<div style={{
 							marginBottom: '16px',
 							padding: '10px 12px',
@@ -2506,7 +2838,9 @@ function Schedule() {
 							color: '#9a3412',
 							fontSize: '14px'
 						}}>
-							{t('schedule.weekendEntryBlocked') || 'Nie można dodać wpisu na weekend, gdy zespół nie pracuje w weekendy.'}
+							{isSelectedDateWeekendBlocked
+								? (t('schedule.weekendEntryBlocked') || 'Nie można dodać wpisu na weekend, gdy zespół nie pracuje w weekendy.')
+								: (t('schedule.holidayEntryBlocked') || 'Nie można dodać wpisu w święto wolnym od pracy (ustawienia zespołu).')}
 						</div>
 					)}
 					<div style={{ marginBottom: '20px' }}>
@@ -2522,7 +2856,7 @@ function Schedule() {
 							value={selectedEmployeeId}
 							onChange={handleEmployeeSelect}
 							required
-								disabled={isSelectedDateWeekendBlocked}
+								disabled={isNonWorkingScheduleDayBlocked}
 							style={{
 								width: '100%',
 								padding: '12px',
@@ -2669,7 +3003,7 @@ function Schedule() {
 								}}
 								placeholder="08:00"
 								required
-								disabled={isSelectedDateWeekendBlocked}
+								disabled={isNonWorkingScheduleDayBlocked}
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
@@ -2701,7 +3035,7 @@ function Schedule() {
 								}}
 								placeholder="16:00"
 								required
-								disabled={isSelectedDateWeekendBlocked}
+								disabled={isNonWorkingScheduleDayBlocked}
 								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
@@ -2728,7 +3062,7 @@ function Schedule() {
 							onChange={(e) => setNotes(e.target.value)}
 							placeholder={t('schedule.notesPlaceholder') || 'Dodaj uwagi...'}
 							rows="3"
-							disabled={isSelectedDateWeekendBlocked}
+							disabled={isNonWorkingScheduleDayBlocked}
 							style={{
 								width: '100%',
 								padding: '12px',
@@ -2772,7 +3106,7 @@ function Schedule() {
 						</button>
 						<button
 							type="submit"
-							disabled={isSelectedDateWeekendBlocked}
+							disabled={isNonWorkingScheduleDayBlocked}
 							style={{
 								padding: '12px 24px',
 								backgroundColor: '#27ae60',
@@ -2781,8 +3115,8 @@ function Schedule() {
 								borderRadius: '6px',
 								fontSize: '16px',
 								fontWeight: '500',
-								cursor: isSelectedDateWeekendBlocked ? 'not-allowed' : 'pointer',
-								opacity: isSelectedDateWeekendBlocked ? 0.6 : 1
+								cursor: isNonWorkingScheduleDayBlocked ? 'not-allowed' : 'pointer',
+								opacity: isNonWorkingScheduleDayBlocked ? 0.6 : 1
 							}}>
 							{t('schedule.add') || 'Dodaj'}
 						</button>

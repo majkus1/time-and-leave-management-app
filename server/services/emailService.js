@@ -349,10 +349,55 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 	}
 }
 
+/**
+ * Powiadomienie e-mail do autora zgłoszenia (odpowiedź obsługi / zmiana statusu).
+ * Wymaga EMAIL_USER i EMAIL_PASS; błędy są logowane, nie rzucane na zewnątrz.
+ */
+async function notifyTicketReporter({ recipientEmail, kind, topic, extra }) {
+	try {
+		if (!recipientEmail || typeof recipientEmail !== 'string') return
+		if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+			console.warn('[notifyTicketReporter] Brak EMAIL_USER / EMAIL_PASS — pomijam powiadomienie e-mail')
+			return
+		}
+		const helpUrl = `${appUrl}/helpcenter`
+		const safeTopic = escapeHtml(String(topic || 'Zgłoszenie').slice(0, 140))
+
+		if (kind === 'reply') {
+			const preview = escapeHtml(String(extra?.messagePreview || '').slice(0, 500))
+			const subject = `Planopia — odpowiedź w zgłoszeniu: ${String(topic || '').slice(0, 72)}`
+			const title = 'Nowa odpowiedź w zgłoszeniu'
+			const content = `
+				<p style="margin:0 0 12px 0;">W zgłoszeniu <strong>${safeTopic}</strong> pojawiła się nowa wiadomość od zespołu Planopia.</p>
+				<div style="margin:16px 0;padding:14px 16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #10b981;">
+					<p style="margin:0;font-size:14px;color:#374151;white-space:pre-wrap;">${preview || '(załączniki — zobacz w aplikacji)'}</p>
+				</div>
+				<p style="margin:16px 0 0 0;color:#6b7280;font-size:14px;">Otwórz Centrum pomocy w aplikacji, aby przeczytać całość i ewentualnie odpowiedzieć.</p>`
+			const html = getEmailTemplate(title, content, 'Otwórz Centrum pomocy', helpUrl, null)
+			await sendEmail(recipientEmail, helpUrl, subject, html)
+			return
+		}
+
+		if (kind === 'status') {
+			const newStatus = escapeHtml(String(extra?.newStatus || ''))
+			const subject = `Planopia — status zgłoszenia: ${String(topic || '').slice(0, 72)}`
+			const title = 'Zaktualizowano status zgłoszenia'
+			const content = `
+				<p style="margin:0 0 12px 0;">Zgłoszenie <strong>${safeTopic}</strong> ma teraz status: <strong>${newStatus}</strong>.</p>
+				<p style="margin:0;color:#6b7280;font-size:14px;">Szczegóły znajdziesz w Centrum pomocy w aplikacji Planopia.</p>`
+			const html = getEmailTemplate(title, content, 'Otwórz Centrum pomocy', helpUrl, null)
+			await sendEmail(recipientEmail, helpUrl, subject, html)
+		}
+	} catch (err) {
+		console.error('[notifyTicketReporter]', err.message || err)
+	}
+}
+
 module.exports = {
 	sendEmail,
 	sendEmailToHR,
 	sendTaskNotification,
+	notifyTicketReporter,
 	escapeHtml,
 	getEmailTemplate,
 }

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Send email
     await transporter.sendMail({
       from: `"Planopia" <${process.env.EMAIL_USER}>`,
-      to: 'michalipka1@gmail.com',
+      to: 'office@ml-devworks.com',
       subject: 'Nowe zgłoszenie kontaktowe',
       html: htmlContent,
     })

@@ -79,7 +79,7 @@ function BlogThree() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/leave-planning" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -100,11 +100,6 @@ function BlogThree() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -135,13 +130,13 @@ function BlogThree() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										<strong>Darmowa aplikacja do planowania urlopów</strong>  
-										{' '}dla zespołów do 4 użytkowników
+										{' '}— 30 dni za darmo, do 5 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Załóż darmowy zespół
+										Rozpocznij okres próbny
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -205,9 +200,8 @@ function BlogThree() {
 				<h2 className="text-2xl font-semibold mb-3">Planopia – aplikacja do planowania urlopów</h2>
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong> 
-					z planowaniem urlopów. Wersja darmowa pozwala na korzystanie z systemu w zespołach do 4 osób. 
-					W płatnych planach otrzymasz dodatkowe funkcje – nielimitowaną liczbę użytkowników, personalizację 
-					i integracje z innymi systemami.
+					z planowaniem urlopów. Przez pierwszy miesiąc (30 dni) korzystasz z pełnych funkcji za darmo w zespole do 5 osób.
+					W płatnych planach masz wyższe limity użytkowników, personalizację i integracje z innymi systemami.
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
 					<li>Pracownicy składają wnioski urlopowe online</li>
@@ -220,11 +214,11 @@ function BlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Planowanie urlopów online</strong> to sposób na porządek, przejrzystość i mniej stresu w zarządzaniu firmą. 
 					Dzięki aplikacji Planopia unikniesz chaosu, przyspieszysz akceptacje i zyskasz kontrolę nad dostępnością zespołu. 
-					Sprawdź darmową wersję dla <strong>zespołów do 4 osób</strong> i zobacz, jak łatwe może być zarządzanie urlopami.
+					Sprawdź <strong>okres próbny — do 5 osób przez 30 dni</strong> i zobacz, jak łatwe może być zarządzanie urlopami.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">załóż darmowy zespół i zacznij planować urlopy online</Link>.
+					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny i zacznij planować urlopy online</Link>.
 				</p>
 			</article>
 

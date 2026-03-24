@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { API_URL } from '../../config'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
+import './AuthForms.css'
 
 const TeamRegistration = () => {
 	const [formData, setFormData] = useState({
@@ -188,7 +189,7 @@ const TeamRegistration = () => {
 </div>
 
 <div className="mt-2 sm:mx-auto sm:w-full sm:max-w-md">
-  <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+  <div className="bg-white py-8 px-4 sm:px-10 auth-form-team-shell">
     <form className="space-y-6" onSubmit={handleSubmit}>
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -208,7 +209,7 @@ const TeamRegistration = () => {
             required
             value={formData.teamName}
             onChange={handleChange}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="auth-input"
             placeholder={t('newteam.teamNamePlaceholder')}
           />
         </div>
@@ -226,7 +227,7 @@ const TeamRegistration = () => {
             required
             value={formData.adminEmail}
             onChange={handleChange}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="auth-input"
             placeholder={t('newteam.adminEmailPlaceholder')}
           />
         </div>
@@ -237,7 +238,7 @@ const TeamRegistration = () => {
           {t('newteam.adminPassword')}
         </label>
         <div className="mt-1">
-          <div className="relative">
+          <div className="auth-field-relative">
             <input
               id="adminPassword"
               name="adminPassword"
@@ -245,17 +246,15 @@ const TeamRegistration = () => {
               required
               value={formData.adminPassword}
               onChange={handleChange}
-            className={`appearance-none block w-full px-3 py-2 pr-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              showPasswordRequirements ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
-            }`}
+              className={`auth-input auth-input--with-toggle${showPasswordRequirements ? ' auth-input--invalid' : ''}`}
               placeholder={t('newteam.adminPasswordPlaceholder')}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none"
-              style={{ cursor: 'pointer' }}
+              className="auth-toggle-vis"
               tabIndex={-1}
+              aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
             >
               {showPassword ? (
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +288,7 @@ const TeamRegistration = () => {
             required
             value={formData.adminFirstName}
             onChange={handleChange}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="auth-input"
             placeholder={t('newteam.adminFirstNamePlaceholder')}
           />
         </div>
@@ -307,7 +306,7 @@ const TeamRegistration = () => {
             required
             value={formData.adminLastName}
             onChange={handleChange}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="auth-input"
             placeholder={t('newteam.adminLastNamePlaceholder')}
           />
         </div>
@@ -324,7 +323,7 @@ const TeamRegistration = () => {
             type="text"
             value={formData.position}
             onChange={handleChange}
-            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="auth-input"
             placeholder={t('newteam.positionPlaceholder')}
           />
         </div>
@@ -358,7 +357,7 @@ const TeamRegistration = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="auth-submit-btn"
         >
           {loading ? t('newteam.creating') : t('newteam.submit')}
         </button>
@@ -372,44 +371,8 @@ const TeamRegistration = () => {
     </form>
     
     {/* Przycisk powrotu do logowania */}
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      marginTop: '30px',
-      marginBottom: '20px'
-    }}>
-      <Link 
-        to="/login" 
-        style={{ 
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '12px 24px',
-          fontSize: '14px',
-          fontWeight: '500',
-          textDecoration: 'none',
-          color: '#6b7280',
-          backgroundColor: '#f9fafb',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.backgroundColor = '#f3f4f6'
-          e.target.style.borderColor = '#d1d5db'
-          e.target.style.color = '#374151'
-          e.target.style.transform = 'translateY(-1px)'
-          e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.backgroundColor = '#f9fafb'
-          e.target.style.borderColor = '#e5e7eb'
-          e.target.style.color = '#6b7280'
-          e.target.style.transform = 'translateY(0)'
-          e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}
-      >
+    <div className="auth-back-row">
+      <Link to="/login" className="auth-back-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>

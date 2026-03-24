@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Planopia – Free Time Tracking & Leave Management App",
+    default: "Planopia - time tracking, leave & AI assistant | 30-day trial",
     template: "%s | Planopia"
   },
-  description: "Planopia is a comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards — everything in one place. Free for teams up to 4 users. Paid plans available for unlimited users, advanced features, and integrations.",
+  description: "Planopia: time tracking, leave, schedules, chat, Kanban, and an AI Assistant grounded in team data. 30-day free trial - full features, up to 5 users, AI limits during trial. Then simple monthly plans from 99 PLN; extra AI message packs available in the app after you have an active paid plan.",
   keywords: [
-    "free time tracking app",
-    "free leave management software", 
+    "time tracking app",
+    "leave management software", 
+    "HR AI assistant",
+    "30 day trial",
+    "time tracking pricing Poland",
     "employee scheduling",
     "HR software",
     "work hours tracking",
@@ -39,21 +42,21 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://planopia.pl/en',
     siteName: 'Planopia',
-    title: 'Planopia – Free Time Tracking & Leave Management App',
-    description: 'Try Planopia for free – comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards. Free for up to 4 users. Upgrade to paid plans for unlimited users, flexibility, and integrations.',
+    title: 'Planopia - time tracking, leave & AI assistant | 30-day trial',
+    description: '30-day trial: full features, up to 5 users, AI Assistant within trial limits. Then monthly plans from 99 PLN with user and AI quotas.',
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
         width: 1200,
         height: 630,
-        alt: 'Planopia – Free Time Tracking & Leave Management App',
+        alt: 'Planopia - time tracking, leave management and AI assistant',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planopia – Free Time Tracking & Leave Management App',
-    description: 'Comprehensive company management app. Time tracking, leave management, work schedules, chats, task boards. Free for teams up to 4 users. Paid plans available for unlimited users and more features.',
+    title: 'Planopia - time tracking, leave & AI | 30-day trial',
+    description: '30-day trial with full product access. AI Assistant, time and leave tracking - then plans from 99 PLN/mo.',
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {
@@ -64,7 +67,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google verification code
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs',
   },
   category: 'technology',
 };

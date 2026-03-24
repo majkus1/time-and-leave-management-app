@@ -1,0 +1,435 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react'
+import { Helmet } from 'react-helmet-async'
+import { useSearchParams, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import Sidebar from '../dashboard/Sidebar'
+import Loader from '../Loader'
+import { useAlert } from '../../context/AlertContext'
+import { useBillingCatalog, useBillingEntitlements, useBillingPurchaseRequest } from '../../hooks/useBilling'
+import LegalDocumentsSection from '../legal/LegalDocumentsSection'
+import { useAuth } from '../../context/AuthContext'
+import { isAdmin } from '../../utils/roleHelpers'
+import './PackagesPage.css'
+
+const TIER_LABELS = {
+	starter: 'Starter',
+	pro: 'Pro',
+	business: 'Business',
+	enterprise: 'Enterprise',
+}
+
+const PAID_PLAN_IDS = ['starter', 'pro', 'business', 'enterprise']
+
+function paidSubscriptionActive(ent) {
+	if (!ent?.planKey || ent.billingStatus !== 'active') return false
+	if (!PAID_PLAN_IDS.includes(ent.planKey)) return false
+	if (ent.billingPeriodEnd && new Date(ent.billingPeriodEnd) < new Date()) return false
+	return true
+}
+
+function trialSubscriptionActive(ent) {
+	if (!ent || ent.planKey !== 'trial' || !ent.trialEndsAt) return false
+	return new Date(ent.trialEndsAt) > new Date()
+}
+
+function formatPlanDate(iso, localeTag) {
+	if (!iso) return '—'
+	try {
+		return new Date(iso).toLocaleDateString(localeTag, { dateStyle: 'long' })
+	} catch {
+		return String(iso)
+	}
+}
+
+/** Ostatni dzień włącznie (grace kończy się o północy następnego dnia w PL). */
+function formatLegacyGraceLastInclusiveDay(iso, localeTag) {
+	if (!iso) return '—'
+	try {
+		const endExclusive = new Date(iso).getTime()
+		return formatPlanDate(new Date(endExclusive - 1).toISOString(), localeTag)
+	} catch {
+		return String(iso)
+	}
+}
+
+function formatPln(n) {
+	if (n == null) return '—'
+	return `${n} PLN`
+}
+
+function priceBlock(monthlyNet, billing, t) {
+	if (billing === 'monthly') {
+		return { main: formatPln(monthlyNet), sub: t('billingPackages.netPerMonthShort') }
+	}
+	const annualTotal = monthlyNet * 10
+	const eq = annualTotal / 12
+	return {
+		main: `${eq.toFixed(2)} PLN`,
+		sub: t('billingPackages.annualSummary', { total: annualTotal }),
+	}
+}
+
+export default function PackagesPage() {
+	const { t, i18n } = useTranslation()
+	const { showAlert } = useAlert()
+	const { role, isCheckingAuth } = useAuth()
+	const canSubmitPurchaseRequest = isAdmin(role)
+	const { data: catalog, isLoading: catLoading } = useBillingCatalog()
+	const { data: ent, isLoading: entLoading } = useBillingEntitlements()
+	const purchase = useBillingPurchaseRequest()
+
+	const [searchParams] = useSearchParams()
+	const location = useLocation()
+	const appliedQueryRef = useRef(false)
+
+	const [billing, setBilling] = useState('monthly')
+	const [modal, setModal] = useState(null)
+	const [note, setNote] = useState('')
+	const [justSent, setJustSent] = useState(false)
+
+	const loading = catLoading || entLoading
+
+	useEffect(() => {
+		if (!catalog || appliedQueryRef.current || isCheckingAuth) return
+		if (!canSubmitPurchaseRequest) {
+			if (searchParams.get('plan')) appliedQueryRef.current = true
+			return
+		}
+		const plan = searchParams.get('plan')
+		const bill = searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'
+		if (plan === 'addon') {
+			const addonId = searchParams.get('addon')
+			if (addonId && catalog.addons?.some(a => a.id === addonId)) {
+				appliedQueryRef.current = true
+				setNote('')
+				setModal({ kind: 'addon', addonId })
+			}
+			return
+		}
+		if (plan && catalog.tiers?.some(t => t.id === plan)) {
+			if (ent && paidSubscriptionActive(ent) && ent.planKey === plan) {
+				appliedQueryRef.current = true
+				return
+			}
+			if (!ent) return
+			appliedQueryRef.current = true
+			setBilling(bill)
+			setNote('')
+			setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
+		}
+	}, [catalog, ent, searchParams, canSubmitPurchaseRequest, isCheckingAuth])
+
+	useEffect(() => {
+		if (loading || !catalog) return
+		if (location.hash !== '#legal-documents') return
+		const timer = window.setTimeout(() => {
+			document.getElementById('legal-documents')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		}, 150)
+		return () => window.clearTimeout(timer)
+	}, [loading, catalog, location.hash])
+
+	const modalLabels = useMemo(
+		() => ({
+			noteLabel: t('billingPackages.noteLabel'),
+			send: t('billingPackages.send'),
+			cancel: i18n.resolvedLanguage === 'pl' ? 'Anuluj' : 'Cancel',
+		}),
+		[t, i18n.resolvedLanguage]
+	)
+
+	const submitOrder = async () => {
+		if (!modal || !canSubmitPurchaseRequest) return
+		try {
+			if (modal.kind === 'plan') {
+				await purchase.mutateAsync({
+					kind: 'plan',
+					planKey: modal.planKey,
+					billingCycle: modal.billingCycle,
+					note,
+				})
+			} else {
+				await purchase.mutateAsync({
+					kind: 'addon',
+					addonId: modal.addonId,
+					note,
+				})
+			}
+			setModal(null)
+			setNote('')
+			setJustSent(true)
+			await showAlert(t('billingPackages.sent'))
+		} catch (e) {
+			await showAlert(e.response?.data?.message || e.message || 'Error')
+		}
+	}
+
+	if (loading || !catalog) {
+		return (
+			<>
+				<Sidebar />
+				<Loader />
+			</>
+		)
+	}
+
+	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
+	const activePaid = ent ? paidSubscriptionActive(ent) : false
+	const activeTrial = ent ? trialSubscriptionActive(ent) : false
+
+	let currentPlanBody = null
+	if (ent) {
+		if (ent.ai?.unrestricted) {
+			currentPlanBody = t('billingPackages.currentPlanInternal')
+		} else if (ent.legacy && ent.legacyGrandfatheredActive) {
+			currentPlanBody = t('billingPackages.currentPlanLegacyGrandfathered', {
+				date: formatLegacyGraceLastInclusiveDay(ent.legacyGrandfatheredAccessEndsAt, localeTag),
+			})
+		} else if (ent.legacy && !ent.legacyGrandfatheredActive) {
+			currentPlanBody = t('billingPackages.currentPlanLegacyGraceEnded')
+		} else if (activeTrial) {
+			currentPlanBody = t('billingPackages.currentPlanTrial', {
+				date: formatPlanDate(ent.trialEndsAt, localeTag),
+			})
+		} else if (activePaid) {
+			const cycleLabel =
+				ent.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')
+			if (ent.hideBillingPeriodEnd) {
+				currentPlanBody = t('billingPackages.currentPlanPaidNoEnd', {
+					plan: TIER_LABELS[ent.planKey] || ent.planKey,
+					cycle: cycleLabel,
+				})
+			} else {
+				currentPlanBody = t('billingPackages.currentPlanPaid', {
+					plan: TIER_LABELS[ent.planKey] || ent.planKey,
+					cycle: cycleLabel,
+					until: formatPlanDate(ent.billingPeriodEnd, localeTag),
+				})
+			}
+		} else if (ent.planKey === 'trial' && ent.trialEndsAt) {
+			currentPlanBody = t('billingPackages.currentPlanTrialEnded')
+		} else if (
+			ent.billingHadPaidPlan &&
+			ent.planKey &&
+			PAID_PLAN_IDS.includes(ent.planKey) &&
+			!activePaid
+		) {
+			currentPlanBody = t('billingPackages.currentPlanLapsed', {
+				plan: TIER_LABELS[ent.planKey] || ent.planKey,
+			})
+		} else {
+			currentPlanBody = t('billingPackages.currentPlanNoSubscription')
+		}
+	}
+
+	return (
+		<>
+			<Helmet>
+				<title>{t('billingPackages.title')} — Planopia</title>
+			</Helmet>
+			<Sidebar />
+			<div className="logs-container packages-page">
+				<div className="logs-header" style={{ marginBottom: '24px', textAlign: 'center' }}>
+					<h2 style={{ color: '#2c3e50', fontSize: '26px', fontWeight: 600 }}>
+						<img src="/img/wallet.png" alt="" style={{ marginRight: '10px', verticalAlign: 'middle' }} />{' '}
+						{t('billingPackages.title')}
+					</h2>
+					<hr />
+				</div>
+
+				{justSent && <div className="packages-sent-banner">{t('billingPackages.sent')}</div>}
+
+				{!canSubmitPurchaseRequest && (
+					<div className="packages-admin-only-banner" role="status">
+						{t('billingPackages.purchaseRequestAdminOnly')}
+					</div>
+				)}
+
+				{currentPlanBody != null && (
+					<div className="packages-current-plan">
+						<h3>{t('billingPackages.currentPlanTitle')}</h3>
+						<p className="packages-current-plan__body">{currentPlanBody}</p>
+					</div>
+				)}
+
+				{ent && (
+					<div className="packages-usage">
+						<h3>{t('billingPackages.usageTitle')}</h3>
+						{ent.ai?.unrestricted ? (
+							<p style={{ margin: 0, color: '#475569' }}>{t('billingPackages.internalUnlimitedAi')}</p>
+						) : ent.legacy && ent.legacyGrandfatheredActive ? (
+							<>
+								<p style={{ margin: '0 0 0.75rem', color: '#475569' }}>{t('billingPackages.legacyNoAi')}</p>
+								<p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
+									{t('aiAssistant.aiQuota.sharedHint')}
+								</p>
+							</>
+						) : ent.legacy && !ent.legacyGrandfatheredActive ? (
+							<p style={{ margin: 0, color: '#475569' }}>{t('billingPackages.legacyGraceEndedUsage')}</p>
+						) : (
+							<dl>
+								<dt>{t('billingPackages.remaining')}</dt>
+								<dd>
+									{ent.ai.remainingApprox === Number.POSITIVE_INFINITY || ent.ai.remainingApprox == null
+										? '—'
+										: String(ent.ai.remainingApprox)}
+								</dd>
+								{ent.ai.trialCap != null && (
+									<>
+										<dt>{t('billingPackages.trialPool')}</dt>
+										<dd>
+											{Math.max(0, ent.ai.trialCap - (ent.ai.trialUsed || 0))} / {ent.ai.trialCap}
+										</dd>
+									</>
+								)}
+								{ent.ai.monthlyIncluded != null && (
+									<>
+										<dt>{t('billingPackages.monthlyPool')}</dt>
+										<dd>
+											{Math.max(0, ent.ai.monthlyIncluded - (ent.ai.usedInMonth || 0))} / {ent.ai.monthlyIncluded}
+										</dd>
+									</>
+								)}
+								<dt>{t('billingPackages.packBalance')}</dt>
+								<dd>{ent.ai.packBalance ?? 0}</dd>
+							</dl>
+						)}
+					</div>
+				)}
+
+				<div className="packages-billing-toggle">
+					<span style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{t('billingPackages.billingToggle')}:</span>
+					<button type="button" className={billing === 'monthly' ? 'is-on' : ''} onClick={() => setBilling('monthly')}>
+						{t('billingPackages.billingMonthly')}
+					</button>
+					<button type="button" className={billing === 'annual' ? 'is-on' : ''} onClick={() => setBilling('annual')}>
+						{t('billingPackages.billingAnnual')}
+					</button>
+				</div>
+
+				<div className="packages-grid">
+					{catalog.tiers.map(tier => {
+						const isPro = tier.id === 'pro'
+						const isCurrentPlan = Boolean(ent && activePaid && ent.planKey === tier.id)
+						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t)
+						const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+						return (
+							<div
+								key={tier.id}
+								className={`packages-tier ${isPro ? 'packages-tier--highlight' : ''}${isCurrentPlan ? ' packages-tier--current' : ''}`}
+							>
+								{isCurrentPlan && (
+									<span className="packages-tier__badge packages-tier__badge--current">
+										{t('billingPackages.planCurrentBadge')}
+									</span>
+								)}
+								{isPro && !isCurrentPlan && (
+									<span className="packages-tier__badge">{t('billingPackages.recommended')}</span>
+								)}
+								<h3>{TIER_LABELS[tier.id] || tier.id}</h3>
+								<div className="packages-tier__price">{main}</div>
+								<div className="packages-tier__price-sub">{sub}</div>
+								<ul>
+									<li>{t('billingPackages.planMaxUsers', { n: tier.maxUsers })}</li>
+									<li>{t('billingPackages.planAi', { n: tier.aiMessagesPerMonth })}</li>
+								</ul>
+								<button
+									type="button"
+									disabled={isCurrentPlan || !canSubmitPurchaseRequest}
+									title={
+										isCurrentPlan
+											? t('billingPackages.planOrderDisabledOwn')
+											: !canSubmitPurchaseRequest
+												? t('billingPackages.orderEmailAdminOnlyHint')
+												: undefined
+									}
+									onClick={() => {
+										if (isCurrentPlan || !canSubmitPurchaseRequest) return
+										setJustSent(false)
+										setNote('')
+										setModal({ kind: 'plan', planKey: tier.id, billingCycle: cycle })
+									}}
+								>
+									{isCurrentPlan
+										? t('billingPackages.planAlreadyActive')
+										: !canSubmitPurchaseRequest
+											? t('billingPackages.orderEmailAdminOnlyShort')
+											: t('billingPackages.orderEmail')}
+								</button>
+							</div>
+						)
+					})}
+				</div>
+
+				<div className="packages-addons">
+					<h3>{t('billingPackages.addonsTitle')}</h3>
+					<p className="packages-addons__sub">{t('billingPackages.addonsSubtitle')}</p>
+					{ent && !ent.ai?.unrestricted && !ent.billingHadPaidPlan && (
+						<p className="packages-addons__locked">{t('billingPackages.addonsLocked')}</p>
+					)}
+					{catalog.addons.map(a => {
+						const addonLocked = ent && !ent.ai?.unrestricted && !ent.billingHadPaidPlan
+						const orderDisabled = addonLocked || !canSubmitPurchaseRequest
+						return (
+							<div
+								key={a.id}
+								className={`packages-addon-row${addonLocked ? ' packages-addon-row--locked' : ''}`}
+							>
+								<div>
+									<strong>+{a.messages}</strong>
+									<span style={{ color: '#64748b', marginLeft: '0.5rem' }}>{formatPln(a.pricePlnNet)}</span>
+								</div>
+								<button
+									type="button"
+									disabled={orderDisabled}
+									title={!canSubmitPurchaseRequest && !addonLocked ? t('billingPackages.orderEmailAdminOnlyHint') : undefined}
+									onClick={() => {
+										if (orderDisabled) return
+										setJustSent(false)
+										setNote('')
+										setModal({ kind: 'addon', addonId: a.id })
+									}}
+								>
+									{!canSubmitPurchaseRequest ? t('billingPackages.orderEmailAdminOnlyShort') : t('billingPackages.orderEmail')}
+								</button>
+							</div>
+						)
+					})}
+				</div>
+
+				<section id="legal-documents" className="packages-legal-section" aria-label={t('legal.title')}>
+					<LegalDocumentsSection />
+				</section>
+			</div>
+
+			{modal && (
+				<div className="packages-modal-overlay" role="dialog" aria-modal="true" onClick={() => !purchase.isPending && setModal(null)}>
+					<div className="packages-modal" onClick={e => e.stopPropagation()}>
+						<h4>
+							{modal.kind === 'plan'
+								? `${TIER_LABELS[modal.planKey] || modal.planKey} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
+								: `AI +${catalog.addons.find(x => x.id === modal.addonId)?.messages ?? modal.addonId}`}
+						</h4>
+						<label htmlFor="pkg-note" style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.35rem' }}>
+							{modalLabels.noteLabel}
+						</label>
+						<textarea
+							id="pkg-note"
+							value={note}
+							onChange={e => setNote(e.target.value)}
+							placeholder={t('billingPackages.notePlaceholder')}
+							disabled={purchase.isPending}
+						/>
+						<div className="packages-modal__actions">
+							<button type="button" onClick={() => setModal(null)} disabled={purchase.isPending}>
+								{modalLabels.cancel}
+							</button>
+							<button type="button" className="primary" onClick={() => submitOrder()} disabled={purchase.isPending}>
+								{purchase.isPending ? '…' : modalLabels.send}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</>
+	)
+}

@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	title: 'Leave Management in a Company - Complete Guide | Planopia',
-	description: 'Complete guide to leave management in a company. Learn how to effectively plan, track, and approve leave requests. Planopia - free leave management software.',
+	description:
+		'Complete guide to leave management. Planopia: 30-day trial, up to 5 users, full features — then paid plans.',
 	keywords: [
 		'leave management',
 		'leave management software',
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Leave Management in a Company - Complete Guide | Planopia',
-		description: 'Complete guide to leave management in a company. Learn how to effectively plan, track, and approve leave requests.',
+		description: 'Complete guide to leave management. Planopia: 30-day trial, up to 5 users — then paid plans.',
 		url: 'https://planopia.pl/en/blog/leave-management',
 		siteName: 'Planopia',
 		images: [
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Leave Management in a Company - Complete Guide | Planopia',
-		description: 'Complete guide to leave management in a company. Learn how to effectively plan, track, and approve leave requests.',
+		description: 'Complete guide to leave management. Planopia: 30-day trial, up to 5 users — then paid plans.',
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

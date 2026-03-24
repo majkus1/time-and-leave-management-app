@@ -1,10 +1,10 @@
 # Privacy Policy for Planopia.pl
 
-**Version 1.0 - effective from January 7, 2026**
+**Version 1.1 - effective from March 19, 2026**
 
 ## 1. Data Controller
 
-For website user data, the data controller is ML Devworks Michał Lipka with its registered office at Rynek Główny 34 lok. 15, 31-010 Kraków, Poland, Tax ID: 6762707876.
+For website user data, the data controller is ML Devworks Michał Lipka with its registered office at Rynek Główny 34 lok. 15, 31-010 Kraków, Poland, Tax ID (NIP): 6762707876, REGON: 543372505.
 
 For Client employees' data, the data controller is the Client (employer), and ML Devworks Michał Lipka acts as a data processor based on a data processing agreement (DPA).
 
@@ -110,5 +110,5 @@ Contact: office@ml-devworks.com
 
 9.2. Users will be notified of significant changes.
 
-**Last updated: January 7, 2026**
+**Last updated: March 19, 2026**
 

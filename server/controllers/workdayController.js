@@ -4,6 +4,7 @@ const User = require('../models/user')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { isHoliday } = require('../utils/holidays')
+const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -112,21 +113,41 @@ exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 exports.addWorkday = async (req, res) => {
 	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 	try {
-		// Funkcja pomocnicza do parsowania godzin z obsługą liczb dziesiętnych (np. 8.5)
-		const parseHoursValue = (value) => {
-			if (value === null || value === undefined || value === '') return null
-			const parsed = parseFloat(value)
-			return isNaN(parsed) ? null : parsed
+		const user = await User.findById(req.user.userId)
+		if (!user || !user.teamId) {
+			return res.status(403).json({ message: 'Użytkownik nie znaleziony lub brak zespołu', code: 'USER_INVALID' })
+		}
+
+		let dateYmd = null
+		if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+			dateYmd = date.trim().slice(0, 10)
+		} else if (date != null) {
+			dateYmd = toWarsawYmd(date)
+		}
+		if (!dateYmd) {
+			return res.status(400).json({ message: 'Nieprawidłowa data', code: 'INVALID_DATE' })
+		}
+
+		const normalized = normalizeWorkdayPayload({ hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes })
+		const v = await validateNewWorkdayEntry({
+			WorkdayModel: Workday,
+			LeaveRequestModel: LeaveRequest,
+			getSettings: tid => Settings.getSettings(tid),
+			userId: req.user.userId,
+			teamId: user.teamId,
+			dateYmd,
+			normalized,
+			locale: 'pl',
+		})
+
+		if (!v.ok) {
+			return res.status(400).json({ message: v.message, code: v.code })
 		}
 
 		const workday = new Workday({
 			userId: req.user.userId,
-			date,
-			hoursWorked: parseHoursValue(hoursWorked),
-			additionalWorked: parseHoursValue(additionalWorked),
-			realTimeDayWorked,
-			absenceType,
-			notes,
+			date: date != null ? date : new Date(`${dateYmd}T12:00:00.000Z`),
+			...v.sanitized,
 		})
 		await workday.save()
 		res.status(201).send('Workday added successfully.')

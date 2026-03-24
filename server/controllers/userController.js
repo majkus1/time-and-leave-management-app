@@ -7,6 +7,7 @@ const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailSe
 const { createLog } = require('../services/logService')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
+const entitlementsService = require('../services/entitlementsService')
 const { createChannelForDepartment, createGeneralChannel, syncGeneralChannelMembers } = require('./chatController')
 const { createBoardForDepartment, createTeamBoard } = require('./boardController')
 const { createScheduleForDepartment } = require('./scheduleController')
@@ -84,14 +85,15 @@ exports.register = async (req, res) => {
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 		
-		if (actualUserCount >= team.maxUsers) {
+		const effectiveMax = entitlementsService.effectiveMaxUsers(team)
+		if (actualUserCount >= effectiveMax) {
 			// Zaktualizuj currentUserCount aby było zgodne z rzeczywistością
 			team.currentUserCount = actualUserCount
 			await team.save()
 			
 			return res.status(400).json({ 
 				success: false, 
-				message: `Osiągnięto limit użytkowników (${team.maxUsers}). Nie można dodać więcej użytkowników.` 
+				message: `Osiągnięto limit użytkowników (${effectiveMax}). Nie można dodać więcej użytkowników.` 
 			})
 		}
 
@@ -502,6 +504,24 @@ exports.getAllVisibleUsers = async (req, res) => {
         const currentUser = await User.findById(req.user.userId);
         if (!currentUser) return res.status(404).send('Użytkownik nie znaleziony');
 
+        const viewerTeamDoc = currentUser.teamId
+            ? await Team.findById(currentUser.teamId).select('name').lean()
+            : null
+        const viewerTeamName = viewerTeamDoc?.name || null
+
+        /** Nazwa zespołu widzącego (nagłówek UI); przy super adminie nie nadpisujemy teamName wiersza (różne zespoły). */
+        function addTeamMeta(userRow, { preserveRowTeamName = false } = {}) {
+            const row = userRow && typeof userRow === 'object' ? { ...userRow } : userRow
+            row.viewerTeamName = viewerTeamName
+            if (!preserveRowTeamName && viewerTeamName) {
+                row.teamName = viewerTeamName
+            }
+            return row
+        }
+        function addTeamMetaList(arr, opts) {
+            return (arr || []).map((u) => addTeamMeta(u, opts))
+        }
+
         // Sprawdź czy to super admin (tylko dla /logs)
         const isSuperAdmin = currentUser.username === 'michalipka1@gmail.com';
         
@@ -534,7 +554,7 @@ exports.getAllVisibleUsers = async (req, res) => {
                 })
             );
             
-            return res.json(usersWithTeams);
+            return res.json(addTeamMetaList(usersWithTeams, { preserveRowTeamName: true }));
         }
 
         // Wszyscy użytkownicy widzą tylko aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
@@ -552,7 +572,7 @@ exports.getAllVisibleUsers = async (req, res) => {
                 ...user,
                 hasPassword: !!user.password
             }));
-            return res.json(usersWithPasswordInfo);
+            return res.json(addTeamMetaList(usersWithPasswordInfo));
         }
         
         // Potem sprawdź HR
@@ -563,7 +583,7 @@ exports.getAllVisibleUsers = async (req, res) => {
                 ...user,
                 hasPassword: !!user.password
             }));
-            return res.json(usersWithPasswordInfo);
+            return res.json(addTeamMetaList(usersWithPasswordInfo));
         }
         
         // Na końcu sprawdź Przełożony - tylko jeśli nie ma Admin ani HR
@@ -584,7 +604,7 @@ exports.getAllVisibleUsers = async (req, res) => {
                         const userDepts = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : []);
                         return userDepts.some(dept => supervisorDepts.includes(dept));
                     });
-                    return res.json(filteredUsers);
+                    return res.json(addTeamMetaList(filteredUsers));
                 } else {
                     return res.json([]);
                 }
@@ -610,12 +630,12 @@ exports.getAllVisibleUsers = async (req, res) => {
                 }
             }
             
-            return res.json(filteredUsers);
+            return res.json(addTeamMetaList(filteredUsers));
         }
         
         // Zwykły użytkownik (nie admin) - bez informacji o haśle (tylko aktywni)
         const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId');
-        return res.json(users);
+        return res.json(addTeamMetaList(users));
 
     } catch (error) {
         console.error('Error fetching users:', error)
@@ -1544,14 +1564,15 @@ exports.restoreUser = async (req, res) => {
 		})
 
 		// Sprawdź czy przywrócenie nie przekroczy limitu
-		if (actualUserCount >= team.maxUsers) {
+		const effectiveMaxRestore = entitlementsService.effectiveMaxUsers(team)
+		if (actualUserCount >= effectiveMaxRestore) {
 			// Zaktualizuj currentUserCount aby było zgodne z rzeczywistością
 			team.currentUserCount = actualUserCount
 			await team.save()
 			
 			return res.status(400).json({ 
 				success: false,
-				message: `Nie można przywrócić użytkownika - osiągnięto limit użytkowników (${team.maxUsers}/${team.maxUsers}). Najpierw usuń innego użytkownika lub zwiększ limit.` 
+				message: `Nie można przywrócić użytkownika - osiągnięto limit użytkowników (${effectiveMaxRestore}/${effectiveMaxRestore}). Najpierw usuń innego użytkownika lub zwiększ limit.` 
 			})
 		}
 

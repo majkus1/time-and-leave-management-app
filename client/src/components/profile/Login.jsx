@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
+import './AuthForms.css'
 
 function Login() {
 	// const [username, setUsername] = useState('')
@@ -118,12 +119,14 @@ function Login() {
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</div>
 				</div>
-				<div className="card boxlog">
-					<div className="card-body login-card-body padr">
-						<form onSubmit={handleLogin} className="w-full max-w-md space-y-6">
-							
-							<div style={{ marginBottom: '15px' }}>
-								<div className="relative">
+				<div className="card boxlog auth-form-shell">
+					<div className="card-body login-card-body padr auth-form-card-inner">
+						<form onSubmit={handleLogin} className="w-full max-w-md auth-form-stack">
+							<div className="auth-field-wrap">
+								<div className="auth-field-relative">
+									<span className="auth-input-icon" aria-hidden>
+										<i className="fas fa-envelope" />
+									</span>
 									<input
 										type="email"
 										id="email"
@@ -131,18 +134,16 @@ function Login() {
 										value={usernameInput}
 										onChange={e => setUsernameInput(e.target.value.toLowerCase())}
 										required
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										className="auth-input auth-input--with-icon-left"
 									/>
-									<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-										<i className="fas fa-envelope" />
-									</div>
 								</div>
 							</div>
 
-							
-							<div>
-								
-								<div className="relative">
+							<div className="auth-field-wrap">
+								<div className="auth-field-relative">
+									<span className="auth-input-icon" aria-hidden>
+										<i className="fas fa-lock" />
+									</span>
 									<input
 										type={showPassword ? 'text' : 'password'}
 										id="password"
@@ -150,16 +151,13 @@ function Login() {
 										value={password}
 										onChange={e => setPassword(e.target.value)}
 										required
-										className="w-full border border-gray-300 rounded-md px-4 py-2 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										className="auth-input auth-input--with-icon-left auth-input--with-toggle"
 									/>
-									<div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-										<i className="fas fa-lock" />
-									</div>
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
-										className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-										style={{ cursor: 'pointer' }}
+										className="auth-toggle-vis"
+										aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
 									>
 										{showPassword ? (
 											<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,12 +173,12 @@ function Login() {
 								</div>
 							</div>
 
-							
-							<div>
+							<div className="auth-field-wrap auth-field-wrap--tight">
 								<button
 									type="submit"
 									disabled={isLoading}
-									className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 btn-success disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600">
+									className="auth-submit-btn"
+								>
 									{isLoading ? (
 										<span className="flex items-center">
 											<svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -197,32 +195,35 @@ function Login() {
 
 							
 							<div className="text-center">
-								<Link to="/reset-password" className="text-sm text-blue-600 hover:underline">
+								<Link to="/reset-password" className="auth-link-subtle">
 									{t('login.forgotpass')}
 								</Link>
 							</div>
 
-							
-							<div className="relative">
-								<div className="absolute inset-0 flex items-center">
-									<div className="w-full border-t border-gray-300" />
-								</div>
-								<div className="relative flex justify-center text-sm">
-									<span className="px-2 bg-white text-gray-500">lub</span>
-								</div>
+							<div className="auth-divider-label">
+								<span>{t('login.orDivider')}</span>
 							</div>
 
-							
 							<div>
-								<Link
-									to="/team-registration"
-									className="w-full bg-blue-600 text-white py-2 px-4 rounded-md transition block text-center btn-primary"
-									style={{ textDecoration: 'none' }}>
-									{t('login.createTeam')}
+								<Link to="/team-registration" className="login-create-team-cta">
+									<span className="login-create-team-cta__icon" aria-hidden>
+										<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path
+												d="M12 5v14M5 12h14"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+											/>
+										</svg>
+									</span>
+									<span className="login-create-team-cta__text">
+										<span className="login-create-team-cta__title">{t('login.createTeam')}</span>
+										<span className="login-create-team-cta__sub">{t('login.trialCtaSub')}</span>
+									</span>
+									<span className="login-create-team-cta__arrow" aria-hidden>
+										→
+									</span>
 								</Link>
-								<p className="text-xs text-gray-500 text-center mt-2">
-									{t('login.teamDescription')}
-								</p>
 							</div>
 						</form>
 

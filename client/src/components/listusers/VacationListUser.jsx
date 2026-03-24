@@ -18,6 +18,63 @@ import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+
+/** Domyślne filtry statusów (jak wcześniej: oczekujące, zaakceptowane, wysłane/L4). */
+const DEFAULT_STATUS_FILTERS = {
+	pending: true,
+	accepted: true,
+	sent: true,
+	rejected: false,
+}
+
+/** Mapuje status z API na klucz filtra. */
+function normalizeLeaveStatus(status) {
+	if (status == null || status === '') return null
+	const s = String(status).toLowerCase().trim()
+	if (s === 'pending' || s.endsWith('.pending')) return 'pending'
+	if (s === 'accepted' || s.endsWith('.accepted')) return 'accepted'
+	if (s === 'sent' || s.endsWith('.sent')) return 'sent'
+	if (s === 'rejected' || s.endsWith('.rejected')) return 'rejected'
+	if (s === 'cancelled' || s.endsWith('.cancelled')) return 'cancelled'
+	return null
+}
+
+const STATUS_FILTER_KEYS = ['pending', 'accepted', 'sent', 'rejected']
+
+const LEGACY_LEAVE_FORM_OPTION_IDS = [
+	'leaveform.option1',
+	'leaveform.option2',
+	'leaveform.option3',
+	'leaveform.option4',
+	'leaveform.option5',
+	'leaveform.option6',
+]
+
+function getRequestUserIdString(request) {
+	if (!request?.userId) return null
+	if (typeof request.userId === 'object' && request.userId !== null) {
+		if (request.userId._id) return request.userId._id.toString()
+		if (request.userId.toString) return request.userId.toString()
+		return null
+	}
+	if (typeof request.userId === 'string') return request.userId
+	return null
+}
+
+function requestOverlapsVisiblePeriod(request, calendarView, currentYear, currentMonth) {
+	if (!request?.startDate || !request.endDate) return false
+	const s = new Date(request.startDate)
+	const e = new Date(request.endDate)
+	const rangeStart =
+		calendarView === 'single' ? new Date(currentYear, currentMonth, 1) : new Date(currentYear, 0, 1)
+	const rangeEnd =
+		calendarView === 'single'
+			? new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999)
+			: new Date(currentYear, 11, 31, 23, 59, 59, 999)
+	return s <= rangeEnd && e >= rangeStart
+}
 
 function VacationListUser() {
 	const navigate = useNavigate()
@@ -35,7 +92,9 @@ function VacationListUser() {
 	const [selectedUserIds, setSelectedUserIds] = useState([])
 	const [expandedDepartments, setExpandedDepartments] = useState({})
 	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
-	
+	const [statusFilters, setStatusFilters] = useState(() => ({ ...DEFAULT_STATUS_FILTERS }))
+	const [typeFilters, setTypeFilters] = useState({})
+
 	// Sprawdź uprawnienia - Admin i HR mogą filtrować
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
@@ -169,6 +228,54 @@ function VacationListUser() {
 		return availableUsers
 	}, [users, showAllTeam, selectedDepartments, selectedUserIds])
 
+	const filteredUserIdSet = useMemo(
+		() => new Set(filteredUsers.map((u) => (u?._id ? u._id.toString() : null)).filter(Boolean)),
+		[filteredUsers]
+	)
+
+	// Typy wniosków: ustawienia zespołu + legacy + występujące w danych
+	const allLeaveTypeIds = useMemo(() => {
+		const ids = new Set()
+		LEGACY_LEAVE_FORM_OPTION_IDS.forEach((id) => ids.add(id))
+		if (settings?.leaveRequestTypes?.length) {
+			settings.leaveRequestTypes
+				.filter((x) => x && x.enabled !== false && x.id)
+				.forEach((x) => ids.add(x.id))
+		}
+		allLeaveRequests.forEach((r) => {
+			if (r?.type) ids.add(r.type)
+		})
+		return Array.from(ids).sort((a, b) => a.localeCompare(b))
+	}, [settings, allLeaveRequests])
+
+	useEffect(() => {
+		setTypeFilters((prev) => {
+			const next = { ...prev }
+			allLeaveTypeIds.forEach((id) => {
+				if (next[id] === undefined) next[id] = true
+			})
+			Object.keys(next).forEach((k) => {
+				if (!allLeaveTypeIds.includes(k)) delete next[k]
+			})
+			return next
+		})
+	}, [allLeaveTypeIds])
+
+	const requestMatchesLeaveListFilters = useCallback(
+		(request) => {
+			if (!request?.startDate || !request.endDate) return false
+			const norm = normalizeLeaveStatus(request.status)
+			if (norm === 'cancelled') return false
+			if (!norm || !statusFilters[norm]) return false
+			const typeId = request.type
+			if (typeId && typeFilters[typeId] === false) return false
+			const uid = getRequestUserIdString(request)
+			if (!uid) return false
+			return filteredUserIdSet.has(uid)
+		},
+		[filteredUserIdSet, statusFilters, typeFilters]
+	)
+
 	// Generate stable color based on user name (deterministic) - same as in AdminAllLeaveCalendar
 	const getColorForUser = useCallback((userIdentifier) => {
 		if (!userIdentifier) return '#3498db'
@@ -232,54 +339,14 @@ function VacationListUser() {
 		}
 	}
 
-	// Formatuj zaakceptowane wnioski urlopowe dla kalendarza (tylko status.accepted i status.sent)
+	// Wnioski urlopowe dla kalendarza (status, typ, użytkownicy — zgodnie z filtrami)
 	const leaveRequestEventsForYear = useMemo(() => {
 		if (!allLeaveRequests || allLeaveRequests.length === 0) {
 			return []
 		}
 
-		const visibleStatuses = new Set([
-			'status.accepted',
-			'accepted',
-			'status.sent',
-			'sent',
-			'status.pending',
-			'pending',
-		])
-		
-		const filteredUserIds = new Set(filteredUsers.map(u => {
-			if (!u || !u._id) return null
-			return u._id.toString()
-		}).filter(Boolean))
-		
 		return allLeaveRequests
-			.filter(request => {
-				// Sprawdź czy request ma wszystkie wymagane dane
-				if (!request || !request.startDate || !request.endDate) return false
-				if (!visibleStatuses.has(request.status)) return false
-				
-				// Sprawdź userId - może być obiektem lub stringiem
-				if (!request.userId) return false
-				
-				// Pobierz userId jako string
-				let userIdStr
-				if (typeof request.userId === 'object' && request.userId !== null) {
-					if (request.userId._id) {
-						userIdStr = request.userId._id.toString()
-					} else if (request.userId.toString) {
-						userIdStr = request.userId.toString()
-					} else {
-						return false
-					}
-				} else if (typeof request.userId === 'string') {
-					userIdStr = request.userId
-				} else {
-					return false
-				}
-				
-				// Sprawdź czy użytkownik jest w filtrowanych użytkownikach
-				return filteredUserIds.has(userIdStr)
-			})
+			.filter(requestMatchesLeaveListFilters)
 			.flatMap(request => {
 				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 				
@@ -327,7 +394,16 @@ function VacationListUser() {
 						}
 					}))
 			})
-	}, [allLeaveRequests, filteredUsers, currentYear, settings, t, i18n.resolvedLanguage, getColorForUser])
+	}, [
+		allLeaveRequests,
+		filteredUsers,
+		currentYear,
+		settings,
+		t,
+		i18n.resolvedLanguage,
+		getColorForUser,
+		requestMatchesLeaveListFilters,
+	])
 
 	const allLeaveRequestsForMonth = useMemo(() => {
 		return leaveRequestEventsForYear.filter(event => {
@@ -335,6 +411,40 @@ function VacationListUser() {
 			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
 		})
 	}, [leaveRequestEventsForYear, currentMonth, currentYear])
+
+	const resolveEmployeeNameForRequest = useCallback(
+		(request) => {
+			if (
+				typeof request.userId === 'object' &&
+				request.userId !== null &&
+				request.userId.firstName &&
+				request.userId.lastName
+			) {
+				return `${request.userId.firstName} ${request.userId.lastName}`
+			}
+			const uid = getRequestUserIdString(request)
+			const user = filteredUsers.find((u) => u._id?.toString() === uid)
+			return user ? `${user.firstName} ${user.lastName}` : '—'
+		},
+		[filteredUsers]
+	)
+
+	const filteredRequestsForTable = useMemo(() => {
+		if (!allLeaveRequests?.length) return []
+		return allLeaveRequests
+			.filter((request) => {
+				if (!requestMatchesLeaveListFilters(request)) return false
+				return requestOverlapsVisiblePeriod(request, calendarView, currentYear, currentMonth)
+			})
+			.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+	}, [allLeaveRequests, requestMatchesLeaveListFilters, calendarView, currentYear, currentMonth])
+
+	const formatRequestDateRange = (request) => {
+		const a = new Date(request.startDate)
+		const b = new Date(request.endDate)
+		const opts = { day: '2-digit', month: '2-digit', year: 'numeric' }
+		return `${a.toLocaleDateString(i18n.resolvedLanguage, opts)} – ${b.toLocaleDateString(i18n.resolvedLanguage, opts)}`
+	}
 
 	const renderAllMonthsCalendars = () => {
 		return Array.from({ length: 12 }, (_, month) => (
@@ -416,6 +526,22 @@ function VacationListUser() {
 		setShowAllTeam(true)
 		setSelectedDepartments([])
 		setSelectedUserIds([])
+		setStatusFilters({ ...DEFAULT_STATUS_FILTERS })
+		setTypeFilters(() => Object.fromEntries(allLeaveTypeIds.map((id) => [id, true])))
+	}
+
+	const handleToggleStatusFilter = (key) => {
+		setStatusFilters((prev) => ({
+			...prev,
+			[key]: !prev[key],
+		}))
+	}
+
+	const handleToggleTypeFilter = (typeId) => {
+		setTypeFilters((prev) => ({
+			...prev,
+			[typeId]: !prev[typeId],
+		}))
 	}
 
 	// Pobierz użytkowników z wybranych działów
@@ -506,6 +632,118 @@ function VacationListUser() {
 
 	const handleUserClick = userId => {
 		navigate(`/leave-requests/${userId}`)
+	}
+
+	const exportPeriodLabel = useMemo(() => {
+		if (calendarView === 'single') {
+			const raw = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, {
+				month: 'long',
+				year: 'numeric',
+			})
+			return raw.charAt(0).toUpperCase() + raw.slice(1)
+		}
+		return String(currentYear)
+	}, [calendarView, currentYear, currentMonth, i18n.resolvedLanguage])
+
+	const buildExportRows = () => {
+		return filteredRequestsForTable.map((request) => {
+			const norm = normalizeLeaveStatus(request.status)
+			const statusLabel = norm
+				? getStatusInfo(`status.${norm}`).text
+				: getStatusInfo(request.status).text
+			return [
+				resolveEmployeeNameForRequest(request),
+				formatRequestDateRange(request),
+				getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage),
+				statusLabel,
+			]
+		})
+	}
+
+	const exportFileNameBase = () => {
+		if (calendarView === 'single') {
+			return `leave_requests_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`
+		}
+		return `leave_requests_year_${currentYear}`
+	}
+
+	const handleExportExcel = () => {
+		const rows = buildExportRows()
+		if (rows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
+			return
+		}
+		const headers = [
+			t('planslist.columnEmployee'),
+			t('planslist.columnDates'),
+			t('planslist.columnType'),
+			t('planslist.columnStatus'),
+		]
+		const wb = XLSX.utils.book_new()
+		const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+		ws['!cols'] = [{ wch: 26 }, { wch: 22 }, { wch: 36 }, { wch: 20 }]
+		XLSX.utils.book_append_sheet(wb, ws, t('planslist.exportSheetName') || 'Wnioski')
+		XLSX.writeFile(wb, `${exportFileNameBase()}.xlsx`)
+	}
+
+	const handleExportPdf = () => {
+		const rows = buildExportRows()
+		if (rows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
+			return
+		}
+		const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+		const margin = 12
+		let y = 14
+		const pageW = doc.internal.pageSize.getWidth()
+		doc.setFontSize(14)
+		doc.text(t('planslist.requestsListTitle'), margin, y, { maxWidth: pageW - 2 * margin })
+		y += 9
+		doc.setFontSize(10)
+		doc.setTextColor(80, 80, 80)
+		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y, { maxWidth: pageW - 2 * margin })
+		y += 10
+		doc.setTextColor(0, 0, 0)
+		const headers = [
+			t('planslist.columnEmployee'),
+			t('planslist.columnDates'),
+			t('planslist.columnType'),
+			t('planslist.columnStatus'),
+		]
+		const colWidths = [52, 68, 92, 58]
+		doc.setFontSize(9)
+		doc.setFont('helvetica', 'bold')
+		let x = margin
+		headers.forEach((h, i) => {
+			const lines = doc.splitTextToSize(h, colWidths[i] - 2)
+			doc.text(lines, x, y)
+			x += colWidths[i]
+		})
+		doc.setFont('helvetica', 'normal')
+		y += 7
+		const lineStep = 4.2
+		rows.forEach((row) => {
+			const lineBlocks = row.map((cell, i) =>
+				doc.splitTextToSize(String(cell ?? ''), colWidths[i] - 2)
+			)
+			const maxLines = Math.max(...lineBlocks.map((l) => l.length), 1)
+			const rowH = maxLines * lineStep + 3
+			if (y + rowH > 195) {
+				doc.addPage()
+				y = 14
+			}
+			x = margin
+			lineBlocks.forEach((lines, i) => {
+				let yy = y
+				lines.forEach((line) => {
+					doc.text(line, x, yy)
+					yy += lineStep
+				})
+				x += colWidths[i]
+			})
+			y += rowH
+		})
+		doc.save(`${exportFileNameBase()}.pdf`)
 	}
 
 	return (
@@ -686,6 +924,117 @@ function VacationListUser() {
 						</div>
 					)}
 
+					<div style={{ marginTop: '28px', padding: '0 4px' }}>
+						<div
+							style={{
+								display: 'flex',
+								flexWrap: 'wrap',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								gap: '10px',
+								marginBottom: '12px',
+							}}
+						>
+							<h4 style={{ color: '#2c3e50', fontSize: '18px', fontWeight: 600, margin: 0 }}>
+								{t('planslist.requestsListTitle') || 'Wnioski w wybranym okresie (zgodnie z filtrami)'}
+							</h4>
+							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+								<button
+									type="button"
+									onClick={handleExportExcel}
+									style={{
+										padding: '8px 14px',
+										fontSize: '13px',
+										fontWeight: 600,
+										borderRadius: '8px',
+										border: '1px solid #1e7e34',
+										backgroundColor: '#28a745',
+										color: '#fff',
+										cursor: 'pointer',
+									}}
+								>
+									{t('planslist.exportExcel')}
+								</button>
+								<button
+									type="button"
+									onClick={handleExportPdf}
+									style={{
+										padding: '8px 14px',
+										fontSize: '13px',
+										fontWeight: 600,
+										borderRadius: '8px',
+										border: '1px solid #c82333',
+										backgroundColor: '#dc3545',
+										color: '#fff',
+										cursor: 'pointer',
+									}}
+								>
+									{t('planslist.exportPdf')}
+								</button>
+							</div>
+						</div>
+						<div style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }}>
+							<table
+								style={{
+									width: '100%',
+									borderCollapse: 'collapse',
+									fontSize: '14px',
+									minWidth: '520px',
+								}}
+							>
+								<thead>
+									<tr style={{ backgroundColor: '#f4f6f8', borderBottom: '2px solid #dee2e6' }}>
+										<th style={{ textAlign: 'left', padding: '10px 12px', color: '#2c3e50' }}>
+											{t('planslist.columnEmployee') || 'Pracownik'}
+										</th>
+										<th style={{ textAlign: 'left', padding: '10px 12px', color: '#2c3e50' }}>
+											{t('planslist.columnDates') || 'Termin (od – do)'}
+										</th>
+										<th style={{ textAlign: 'left', padding: '10px 12px', color: '#2c3e50' }}>
+											{t('planslist.columnType') || 'Typ'}
+										</th>
+										<th style={{ textAlign: 'left', padding: '10px 12px', color: '#2c3e50' }}>
+											{t('planslist.columnStatus') || 'Status'}
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{filteredRequestsForTable.length === 0 ? (
+										<tr>
+											<td colSpan={4} style={{ padding: '16px 12px', color: '#7f8c8d', fontStyle: 'italic' }}>
+												{t('planslist.noRequestsInPeriod') || 'Brak wniosków dla wybranego okresu i filtrów.'}
+											</td>
+										</tr>
+									) : (
+										filteredRequestsForTable.map((request) => {
+											const norm = normalizeLeaveStatus(request.status)
+											const statusLabel = norm
+												? getStatusInfo(`status.${norm}`).text
+												: getStatusInfo(request.status).text
+											return (
+												<tr
+													key={request._id}
+													style={{ borderBottom: '1px solid #eef2f5' }}
+												>
+													<td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+														{resolveEmployeeNameForRequest(request)}
+													</td>
+													<td style={{ padding: '10px 12px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+														{formatRequestDateRange(request)}
+													</td>
+													<td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+														{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
+													</td>
+													<td style={{ padding: '10px 12px', verticalAlign: 'top' }}>{statusLabel}</td>
+												</tr>
+											)
+										})
+									)}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
 					{/* Modal filtrowania - tylko dla Admin i HR */}
 					{canFilter && (
 						<Modal
@@ -772,6 +1121,90 @@ function VacationListUser() {
 										/>
 										<span>{t('planslist.allMonths') || 'Wszystkie miesiące'}</span>
 									</label>
+								</div>
+
+								<h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+									{t('planslist.filterByStatus') || 'Filtrowanie po statusie wniosku'}
+								</h3>
+								<div
+									style={{
+										marginBottom: '20px',
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '10px',
+										padding: '12px',
+										border: '1px solid #e9ecef',
+										borderRadius: '8px',
+										backgroundColor: '#fafbfc',
+									}}
+								>
+									{STATUS_FILTER_KEYS.map((key) => (
+										<label
+											key={key}
+											style={{
+												display: 'flex',
+												alignItems: 'center',
+												cursor: 'pointer',
+												gap: '10px',
+											}}
+										>
+											<input
+												type="checkbox"
+												checked={!!statusFilters[key]}
+												onChange={() => handleToggleStatusFilter(key)}
+												style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+											/>
+											<span style={{ fontWeight: statusFilters[key] ? 600 : 400 }}>
+												{getStatusInfo(`status.${key}`).text}
+											</span>
+										</label>
+									))}
+								</div>
+
+								<h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+									{t('planslist.filterByLeaveType') || 'Filtrowanie po typie urlopu / nieobecności'}
+								</h3>
+								<div
+									style={{
+										marginBottom: '20px',
+										maxHeight: '240px',
+										overflowY: 'auto',
+										padding: '12px',
+										border: '1px solid #e9ecef',
+										borderRadius: '8px',
+										backgroundColor: '#fafbfc',
+										display: 'flex',
+										flexDirection: 'column',
+										gap: '10px',
+									}}
+								>
+									{allLeaveTypeIds.length === 0 ? (
+										<p style={{ margin: 0, color: '#7f8c8d', fontSize: '14px' }}>
+											{t('planslist.noLeaveTypes') || 'Brak zdefiniowanych typów — typy pojawią się po wczytaniu danych.'}
+										</p>
+									) : (
+										allLeaveTypeIds.map((typeId) => (
+											<label
+												key={typeId}
+												style={{
+													display: 'flex',
+													alignItems: 'flex-start',
+													cursor: 'pointer',
+													gap: '10px',
+												}}
+											>
+												<input
+													type="checkbox"
+													checked={typeFilters[typeId] !== false}
+													onChange={() => handleToggleTypeFilter(typeId)}
+													style={{ cursor: 'pointer', width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }}
+												/>
+												<span style={{ fontWeight: typeFilters[typeId] !== false ? 600 : 400, lineHeight: 1.35 }}>
+													{getLeaveRequestTypeName(settings, typeId, t, i18n.resolvedLanguage)}
+												</span>
+											</label>
+										))
+									)}
 								</div>
 
 								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>

@@ -45,6 +45,24 @@ export const useBoardTasks = (boardId) => {
 	})
 }
 
+/** Zadania z terminami na kalendarz (wszystkie dostępne tablice lub jedna). */
+export const useCalendarTasks = (year, month, boardId, { enabled = true } = {}) => {
+	return useQuery({
+		queryKey: ['boardCalendarTasks', year, month, boardId ?? 'all'],
+		queryFn: async () => {
+			const params = { year, month }
+			if (boardId) params.boardId = boardId
+			const response = await axios.get(`${API_URL}/api/boards/calendar/tasks`, {
+				withCredentials: true,
+				params,
+			})
+			return response.data?.tasks ?? []
+		},
+		enabled: enabled && typeof year === 'number' && typeof month === 'number' && month >= 1 && month <= 12,
+		staleTime: 30 * 1000,
+	})
+}
+
 // Get task by ID
 export const useTask = (taskId) => {
 	return useQuery({
@@ -136,6 +154,7 @@ export const useCreateTask = () => {
 		},
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', variables.boardId] })
+			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
 		}
 	})
 }
@@ -153,6 +172,7 @@ export const useUpdateTask = () => {
 		onSuccess: (data) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', data.boardId] })
 			queryClient.invalidateQueries({ queryKey: ['task', data._id] })
+			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
 			// Refetch the specific task to get updated data
 			queryClient.refetchQueries({ queryKey: ['task', data._id] })
 		}
@@ -174,6 +194,7 @@ export const useUpdateTaskStatus = () => {
 		},
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', data.boardId] })
+			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
 			// Invalidate single task cache so modal shows updated status
 			const taskIdToInvalidate = data._id || variables.taskId
 			queryClient.invalidateQueries({ queryKey: ['task', taskIdToInvalidate] })
@@ -193,6 +214,7 @@ export const useDeleteTask = () => {
 		},
 		onSuccess: (_, taskId) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks'] })
+			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
 			// Remove the task from cache
 			queryClient.removeQueries({ queryKey: ['task', taskId] })
 		}

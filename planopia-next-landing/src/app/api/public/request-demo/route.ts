@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Send email
     await transporter.sendMail({
       from: `"Planopia" <${process.env.EMAIL_USER}>`,
-      to: 'michalipka1@gmail.com',
+      to: 'office@ml-devworks.com',
       subject: 'Demo account request',
       html: `<p>Email użytkownika: <strong>${email}</strong></p><p>Poproszono o konto testowe.</p>`,
     })

@@ -22,6 +22,7 @@ const pushRoutes = require('./routes/pushRoutes')
 const qrRoutes = require('./routes/qrRoutes')
 const timeEntryRoutes = require('./routes/timeEntryRoutes')
 const announcementRoutes = require('./routes/announcementRoutes')
+const aiAssistantRoutes = require('./routes/aiAssistantRoutes')
 const i18next = require('i18next')
 const Backend = require('i18next-fs-backend')
 const i18nextMiddleware = require('i18next-http-middleware')
@@ -57,9 +58,10 @@ firmDb.on('connected', async () => {
 	// Automatically update special teams maxUsers limit on server start
 	try {
 		const Team = require('./models/Team')(firmDb)
-		const specialTeamNames = ['OficjalnyAdminowy', 'Halo Rental System']
-		const specialTeams = await Team.find({ name: { $in: specialTeamNames } })
-		
+		const entitlementsService = require('./services/entitlementsService')
+		const { SPECIAL_TEAM_NAMES, SPECIAL_MANUAL_BILLING_TEAM_NAMES } = require('./constants/specialTeams')
+		const specialTeams = await Team.find({ name: { $in: SPECIAL_TEAM_NAMES } })
+
 		for (const team of specialTeams) {
 			if (team.maxUsers !== 11) {
 				// Safety check: only update if team exists and has valid data
@@ -68,6 +70,38 @@ firmDb.on('connected', async () => {
 					team.maxUsers = 11
 					await team.save()
 					console.log(`Updated team "${team.name}" maxUsers from ${oldMaxUsers} to 11`)
+				}
+			}
+			if (SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(team.name)) {
+				let billingChanged = false
+				if (team.billingPlanKey !== 'starter') {
+					team.billingPlanKey = 'starter'
+					billingChanged = true
+				}
+				if (team.billingStatus !== 'active') {
+					team.billingStatus = 'active'
+					billingChanged = true
+				}
+				if (team.billingHadPaidPlan !== true) {
+					team.billingHadPaidPlan = true
+					billingChanged = true
+				}
+				if (!team.billingCycle) {
+					team.billingCycle = 'monthly'
+					billingChanged = true
+				}
+				if (team.billingPeriodEnd != null) {
+					team.billingPeriodEnd = null
+					billingChanged = true
+				}
+				if (team.subscriptionType !== 'premium') {
+					team.subscriptionType = 'premium'
+					billingChanged = true
+				}
+				entitlementsService.ensureMonthRolloverInMemory(team)
+				if (billingChanged && team._id && team.name) {
+					await team.save()
+					console.log(`Synced manual-billing Starter fields for team "${team.name}"`)
 				}
 			}
 		}
@@ -225,8 +259,14 @@ firmDb.on('connected', async () => {
 	}
 })
 firmDb.on('error', err => console.error('Firm DB error:', err))
-centralTicketConnection.on('connected', () => {})
-centralTicketConnection.on('error', err => console.error('Central tickets DB error:', err))
+if (centralTicketConnection) {
+	centralTicketConnection.on('connected', () => console.log('Tickets DB (MONGO_URI_TICKETS*): połączono'))
+	centralTicketConnection.on('error', err => console.error('Central tickets DB error:', err))
+} else {
+	console.warn(
+		'[Tickets DB] Brak URI — ustaw MONGO_URI_TICKETS (lub TICKETS_MONGO_URI / MONGO_TICKETS_URI / DB_URI_TICKETS). Endpointy /api/tickets zwrócą 503.'
+	)
+}
 
 // mongoose
 // 	.connect(process.env.DB_URI, {
@@ -265,10 +305,17 @@ app.use((req, res, next) => {
 app.use(helmet())
 app.use(i18nextMiddleware.handle(i18next))
 
+const trialLapseApiGuard = require('./middleware/trialLapseApiGuard')
+app.use(trialLapseApiGuard)
 
 app.use('/api/public', publicRoutes)
 app.use('/api/teams', teamRoutes) // nowe trasy dla zespołów
 app.use('/api/legal', legalRoutes) // dokumenty prawne - częściowo publiczne
+
+// Payment webhooks (no CSRF — verified by provider signature when implemented)
+app.use('/api/billing/webhooks', require('./routes/billingWebhookRoutes'))
+// Internal billing activation (shared secret — for ops / future PSP server callbacks)
+app.use('/api/billing/internal', require('./routes/billingInternalRoutes'))
 
 // CSRF Protection using csrf package (replacement for deprecated csurf)
 const tokens = csrf()
@@ -367,11 +414,15 @@ app.use('/api/push', pushRoutes)
 app.use('/api/qr', qrRoutes)
 app.use('/api/time-entry', timeEntryRoutes)
 app.use('/api/announcements', announcementRoutes)
+app.use('/api/ai-assistant', aiAssistantRoutes)
+app.use('/api/billing', require('./routes/billingRoutes'))
 app.use('/uploads', express.static('uploads'))
 
 // Socket.io setup
 const jwt = require('jsonwebtoken')
 const User = require('./models/user')(firmDb)
+const TeamSocket = require('./models/Team')(firmDb)
+const entitlementsServiceSocket = require('./services/entitlementsService')
 
 io.use(async (socket, next) => {
 	try {
@@ -409,6 +460,15 @@ io.use(async (socket, next) => {
 		const user = await User.findById(decoded.userId)
 		if (!user) {
 			return next(new Error('User not found'))
+		}
+
+		const team = await TeamSocket.findById(user.teamId).select(
+			'name billingPlanKey billingStatus trialEndsAt billingHadPaidPlan maxUsers isActive'
+		)
+		if (team && team.isActive !== false) {
+			if (entitlementsServiceSocket.requiresFullAppSubscriptionWall(team)) {
+				return next(new Error('Trial lapsed'))
+			}
 		}
 
 		socket.userId = decoded.userId

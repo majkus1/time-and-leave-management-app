@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
@@ -57,6 +57,10 @@ function Settings() {
 	const addCustomLeaveRequestTypeMutation = useAddCustomLeaveRequestType()
 	const deleteCustomLeaveRequestTypeMutation = useDeleteCustomLeaveRequestType()
 	const [showAddCustomTypeForm, setShowAddCustomTypeForm] = useState(false)
+	const saveSettingsSectionRef = useRef(null)
+	const scrollToSaveSettings = useCallback(() => {
+		saveSettingsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+	}, [])
 	const [newCustomType, setNewCustomType] = useState({
 		name: '',
 		nameEn: '',
@@ -2483,11 +2487,15 @@ function Settings() {
 						)}
 
 						{/* Przycisk zapisu - na całą szerokość */}
-						<div style={{ 
-							width: '100%',
-							marginTop: '20px',
-							marginBottom: '20px'
-						}}>
+						<div
+							ref={saveSettingsSectionRef}
+							id="settings-save-settings-section"
+							style={{
+								width: '100%',
+								marginTop: '20px',
+								marginBottom: '20px',
+							}}
+						>
 							<button
 								onClick={handleSave}
 								disabled={updateSettingsMutation.isPending}
@@ -2712,6 +2720,19 @@ function Settings() {
 				</Modal>
 
 			</div>
+			{canEditSettings && (
+				<button
+					type="button"
+					className="settings-save-scroll-fab"
+					onClick={scrollToSaveSettings}
+					aria-label={t('settings.scrollToSave')}
+					title={t('settings.scrollToSave')}
+				>
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+						<path d="M12 5v14M19 12l-7 7-7-7" />
+					</svg>
+				</button>
+			)}
 		</>
 	)
 }

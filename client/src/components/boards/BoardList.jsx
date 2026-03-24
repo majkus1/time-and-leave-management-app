@@ -9,6 +9,7 @@ import CreateBoardModal from './CreateBoardModal'
 import EditBoardModal from './EditBoardModal'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import { Link } from 'react-router-dom'
+import TasksBoardCalendar from './TasksBoardCalendar'
 
 function BoardList() {
 	const { t } = useTranslation()
@@ -243,6 +244,10 @@ function BoardList() {
 					}}>
 						<p>{t('boards.noBoards') || 'Brak tablic. Utwórz nową tablicę!'}</p>
 					</div>
+				)}
+
+				{boards.length > 0 && (
+					<TasksBoardCalendar boards={boards} showBoardNameInTitle />
 				)}
 			</div>
 

@@ -13,10 +13,6 @@ interface MobileMenuProps {
 		label: string
 		onClick?: () => void
 	}>
-	legalItems?: Array<{
-		href: string
-		label: string
-	}>
 	loginHref?: string
 	registerHref?: string
 	languageSwitcher?: {
@@ -32,12 +28,10 @@ export default function MobileMenu({
 	onCloseRequest,
 	lang = 'pl',
 	menuItems = [],
-	legalItems = [],
 	loginHref = 'https://app.planopia.pl/',
 	registerHref = 'https://app.planopia.pl/team-registration',
 	languageSwitcher
 }: MobileMenuProps) {
-	const [legalDropdownOpen, setLegalDropdownOpen] = React.useState(false)
 	const [isClosing, setIsClosing] = React.useState(false)
 	const isPL = lang === 'pl'
 
@@ -67,7 +61,7 @@ export default function MobileMenu({
 	const handleClose = useCallback(() => {
 		if (isClosing) return // Prevent multiple clicks
 		setIsClosing(true)
-		
+
 		// Wait for animation to complete before actually closing
 		setTimeout(() => {
 			onClose()
@@ -85,7 +79,7 @@ export default function MobileMenu({
 	// Close menu when pressing Escape
 	useEffect(() => {
 		if (!isOpen || isClosing) return
-		
+
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
 				handleClose()
@@ -97,23 +91,17 @@ export default function MobileMenu({
 	}, [isOpen, isClosing, handleClose])
 
 	// Default menu items if not provided
-	const defaultMenuItems = menuItems.length > 0 
-		? menuItems 
-		: [
-				{ href: isPL ? '/#oaplikacji' : '/en#aboutapp', label: isPL ? 'O Aplikacji' : 'About the App' },
-				{ href: isPL ? '/#cennik' : '/en#prices', label: isPL ? 'Cennik' : 'Pricing' },
-				{ href: isPL ? '/#kontakt' : '/en#contact', label: isPL ? 'Kontakt' : 'Contact' },
-				{ href: isPL ? '/blog' : '/en/blog', label: 'Blog' },
-			]
+	const defaultMenuItems =
+		menuItems.length > 0
+			? menuItems
+			: [
+					{ href: isPL ? '/#oaplikacji' : '/en#aboutapp', label: isPL ? 'O Aplikacji' : 'About the App' },
+					{ href: isPL ? '/#cennik' : '/en#prices', label: isPL ? 'Cennik' : 'Pricing' },
+					{ href: isPL ? '/#kontakt' : '/en#contact', label: isPL ? 'Kontakt' : 'Contact' },
+					{ href: isPL ? '/blog' : '/en/blog', label: 'Blog' },
+				]
 
-	// Default legal items if not provided
-	const defaultLegalItems = legalItems.length > 0
-		? legalItems
-		: [
-				{ href: isPL ? '/terms' : '/en/terms', label: isPL ? 'Regulamin' : 'Terms of Service' },
-				{ href: isPL ? '/privacy' : '/en/privacy', label: isPL ? 'Polityka prywatności' : 'Privacy Policy' },
-				{ href: isPL ? '/dpa' : '/en/dpa', label: isPL ? 'Umowa DPA' : 'Data Processing Agreement' },
-			]
+	const menuCount = defaultMenuItems.length
 
 	// Keep menu visible during closing animation even if isOpen becomes false
 	if (!isOpen && !isClosing) return null
@@ -148,43 +136,6 @@ export default function MobileMenu({
 								{item.label}
 							</Link>
 						))}
-
-						{/* Legal Dropdown */}
-						{defaultLegalItems.length > 0 && (
-							<div className="mobile-menu-legal-dropdown">
-								<button
-									onClick={() => setLegalDropdownOpen(!legalDropdownOpen)}
-									className="mobile-menu-legal-button"
-									style={{
-										animationDelay: `${defaultMenuItems.length * 0.05}s`
-									}}
-								>
-									<span>{isPL ? 'Regulaminy' : 'Legal'}</span>
-									<svg 
-										className={`mobile-menu-legal-icon ${legalDropdownOpen ? 'rotate-180' : ''}`}
-										fill="none" 
-										stroke="currentColor" 
-										viewBox="0 0 24 24"
-									>
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-									</svg>
-								</button>
-								{legalDropdownOpen && (
-									<div className="mobile-menu-legal-items">
-										{defaultLegalItems.map((item, index) => (
-											<Link
-												key={index}
-												href={item.href}
-												onClick={handleClose}
-												className="mobile-menu-legal-item"
-											>
-												{item.label}
-											</Link>
-										))}
-									</div>
-								)}
-							</div>
-						)}
 					</nav>
 
 					{/* Action Buttons */}
@@ -194,7 +145,7 @@ export default function MobileMenu({
 							onClick={handleClose}
 							className="mobile-menu-button mobile-menu-button-login"
 							style={{
-								animationDelay: `${(defaultMenuItems.length + (defaultLegalItems.length > 0 ? 1 : 0)) * 0.05}s`
+								animationDelay: `${menuCount * 0.05}s`
 							}}
 						>
 							{isPL ? 'Logowanie' : 'Login'}
@@ -205,31 +156,23 @@ export default function MobileMenu({
 							onClick={handleClose}
 							className="mobile-menu-button mobile-menu-button-register"
 							style={{
-								animationDelay: `${(defaultMenuItems.length + (defaultLegalItems.length > 0 ? 1 : 0) + 1) * 0.05}s`
+								animationDelay: `${(menuCount + 1) * 0.05}s`
 							}}
 						>
-							{isPL ? 'Załóż darmowy zespół' : 'Create a free team'}
+							{isPL ? 'Rozpocznij 30 dni za darmo' : 'Start 30-day trial'}
 						</Link>
 					</div>
 
 					{/* Language Switcher */}
 					{languageSwitcher && (
-						<div 
+						<div
 							className="mobile-menu-language"
 							style={{
-								animationDelay: `${(defaultMenuItems.length + (defaultLegalItems.length > 0 ? 1 : 0) + 2) * 0.05}s`
+								animationDelay: `${(menuCount + 2) * 0.05}s`
 							}}
 						>
-							<Link
-								href={languageSwitcher.href}
-								onClick={handleClose}
-								className="mobile-menu-language-link"
-							>
-								<img 
-									src={languageSwitcher.flagSrc} 
-									alt={languageSwitcher.alt} 
-									className="w-6 h-6" 
-								/>
+							<Link href={languageSwitcher.href} onClick={handleClose} className="mobile-menu-language-link">
+								<img src={languageSwitcher.flagSrc} alt={languageSwitcher.alt} className="w-6 h-6" />
 							</Link>
 						</div>
 					)}
@@ -238,4 +181,3 @@ export default function MobileMenu({
 		</>
 	)
 }
-

@@ -52,7 +52,58 @@ const teamSchema = new mongoose.Schema({
 		type: String,
 		default: 'free',
 		enum: ['free', 'premium', 'enterprise']
-	}
+	},
+	/** true after at least one paid plan activation (required to apply AI add-on packs) */
+	billingHadPaidPlan: {
+		type: Boolean,
+		default: false,
+	},
+	/** null/undefined = pre-billing legacy team (app seats as stored; AI only after purchase) */
+	billingPlanKey: {
+		type: String,
+		default: null,
+	},
+	billingStatus: {
+		type: String,
+		default: null,
+	},
+	billingCycle: {
+		type: String,
+		default: null,
+	},
+	trialEndsAt: {
+		type: Date,
+		default: null,
+	},
+	billingPeriodEnd: {
+		type: Date,
+		default: null,
+	},
+	trialAiMessagesUsed: {
+		type: Number,
+		default: 0,
+		min: 0,
+	},
+	aiMessagesUsedInMonth: {
+		type: Number,
+		default: 0,
+		min: 0,
+	},
+	/** YYYY-MM — resets aiMessagesUsedInMonth when calendar month changes */
+	aiUsageMonthKey: {
+		type: String,
+		default: '',
+	},
+	aiPackBalance: {
+		type: Number,
+		default: 0,
+		min: 0,
+	},
+	aiBillingLockVersion: {
+		type: Number,
+		default: 0,
+		min: 0,
+	},
 }, {
 	collection: 'teams',
 	timestamps: true

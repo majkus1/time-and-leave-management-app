@@ -44,6 +44,8 @@ import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
 import PWANavigationBar from './components/PWANavigationBar'
 import QRScan from './components/qr/QRScan'
+import AIAssistant from './components/aiAssistant/AIAssistant'
+import PackagesPage from './components/billing/PackagesPage'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { handleAuthError } from './utils/authErrorHandler'
 import { Helmet } from 'react-helmet-async'
@@ -151,6 +153,7 @@ function AppContent() {
 					<Route path="/schedule" element={<ScheduleList />} />
 					<Route path="/schedule/:scheduleId" element={<Schedule />} />
 					<Route path="/chat" element={<Chat />} />
+					<Route path="/ai-assistant" element={<AIAssistant />} />
 					<Route path="/announcements" element={<Announcements />} />
 					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />
@@ -210,7 +213,11 @@ function AppContent() {
 								)
 							}
 						/>
-						<Route path="/helpcenter" element={isAdmin(role) ? <HelpTicket /> : <Navigate to="/" />} />
+						<Route
+							path="/helpcenter"
+							element={isAdminRole ? <HelpTicket /> : <Navigate to="/dashboard" replace />}
+						/>
+						<Route path="/packages" element={<PackagesPage />} />
 						<Route path="/leave-plans/:userId" element={<EmployeeLeaveCalendar />} />
 						<Route path="/all-leave-plans" element={<AdminAllLeaveCalendar />} />
 					</Route>

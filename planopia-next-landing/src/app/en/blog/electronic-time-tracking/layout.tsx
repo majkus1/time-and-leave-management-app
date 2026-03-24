@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	title: 'Electronic Time Tracking - Complete Guide | Planopia',
-	description: 'Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company. Planopia - free time tracking app.',
+	description: 'Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company. Planopia: 30-day trial, up to 5 users, full features.',
 	keywords: [
 		'electronic time tracking',
 		'time tracking software',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: 'Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company.',
+		description: 'Complete guide to electronic time tracking. Planopia: 30-day trial for up to 5 users, then transparent pricing.',
 		url: 'https://planopia.pl/en/blog/electronic-time-tracking',
 		siteName: 'Planopia',
 		images: [
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: 'Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company.',
+		description: 'Complete guide to electronic time tracking. Planopia: 30-day trial for up to 5 users, then transparent pricing.',
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

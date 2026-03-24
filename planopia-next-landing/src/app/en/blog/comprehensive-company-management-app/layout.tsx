@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Comprehensive Company Management App – Everything in One Place | Planopia",
-  description: "Planopia is a comprehensive company management app. Time tracking, leave management, work schedules, team chats, task boards, and flexible role configuration. Everything in one tool for your team.",
+  description: "Planopia is a comprehensive company management app. 30-day trial, up to 5 users, full features. Time tracking, leave, schedules, chats, tasks, and roles — then paid plans.",
   keywords: [
     "comprehensive company management app",
     "team management app",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Comprehensive Company Management App – Everything in One Place | Planopia',
-    description: 'Planopia combines time tracking, leave management, work schedules, team chats, task boards, and flexible role configuration. Everything in one tool for your team.',
+    description: '30-day trial, up to 5 users. Time tracking, leave, schedules, chats, and tasks in one place for your team.',
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {

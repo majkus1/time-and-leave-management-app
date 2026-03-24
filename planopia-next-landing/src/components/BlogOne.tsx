@@ -19,7 +19,7 @@ function BlogOne() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm",
-						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Pozwala prowadzić rejestrację godzin pracy, nadgodzin i urlopów w prosty sposób. Dostępna darmowa wersja do 4 użytkowników.",
+						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Rejestracja godzin, nadgodzin i urlopów. 30 dni za darmo: pełne funkcje, do 5 użytkowników.",
 						"image": "https://planopia.pl/img/desktopnew.webp",
 						"author": {
 							"@type": "Person",
@@ -82,7 +82,7 @@ function BlogOne() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/time-tracking-online" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function BlogOne() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -138,13 +133,13 @@ function BlogOne() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										<strong>Darmowa aplikacja do ewidencji czasu pracy</strong>  
-										{' '}dla zespołów do 4 użytkowników
+										{' '}— 30 dni za darmo, do 5 użytkowników
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Załóż darmowy zespół
+										Rozpocznij okres próbny
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -214,7 +209,7 @@ function BlogOne() {
 					<li>Pełną kontrolę nad ewidencją godzin pracy i nadgodzin.</li>
 					<li>Szybkie zgłaszanie i akceptowanie urlopów.</li>
 					<li>Raporty i kalendarze pracy dostępne online i w formie PDF.</li>
-					<li>Wersję darmową dla zespołów do 4 użytkowników.</li>
+					<li>30-dniowy okres próbny z pełnymi funkcjami dla do 5 użytkowników.</li>
 					<li>Możliwość rozbudowy i personalizacji dla większych firm.</li>
 				</ul>
 
@@ -222,12 +217,12 @@ function BlogOne() {
 				<p className="mb-4 text-gray-700">
 					Ewidencja czasu pracy nie musi być skomplikowana. Dzięki aplikacjom takim jak 
 					<strong> Planopia</strong>, Twoja firma oszczędza czas, unika błędów i działa zgodnie z przepisami.  
-					Niezależnie, czy masz <strong>mały zespół do 4 osób</strong>, czy dużą organizację – 
+					Niezależnie, czy masz <strong>mały zespół do 5 osób</strong>, czy dużą organizację – 
 					z Planopią wszystko masz pod kontrolą.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">załóż darmowy zespół już dziś</Link>.
+					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny już dziś</Link>.
 				</p>
 			</article>
 

@@ -22,7 +22,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia",
-  description: "Sprawdź, jak skutecznie planować urlopy pracowników w firmie. Kalendarz urlopowy online, automatyczne powiadomienia i raporty – wszystko w aplikacji Planopia.",
+  description: "Sprawdź, jak skutecznie planować urlopy pracowników w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje. Kalendarz urlopowy online, powiadomienia i raporty.",
   keywords: [
     "planowanie urlopów",
     "kalendarz urlopów online",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/planowanie-urlopow',
     siteName: 'Planopia',
     title: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia',
-    description: 'Dowiedz się, jak usprawnić planowanie urlopów i nieobecności pracowników. Zobacz, jak Planopia ułatwia zarządzanie kalendarzem urlopowym w firmie.',
+    description: 'Planowanie urlopów z Planopią: 30 dni za darmo, do 5 użytkowników. Kalendarz urlopowy online, akceptacje i raporty dla HR.',
     images: [
       {
         url: 'https://planopia.pl/img/planvacationblog.webp',
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia',
-    description: 'Zarządzaj urlopami i nieobecnościami z aplikacją Planopia. Kalendarz urlopowy online, automatyczne akceptacje i raporty dla HR.',
+    description: 'Planopia: 30 dni za darmo, do 5 użytkowników. Kalendarz urlopowy online, akceptacje wniosków i raporty dla HR.',
     images: ['https://planopia.pl/img/planvacationblog.webp'],
   },
   alternates: {

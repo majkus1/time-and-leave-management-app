@@ -5,6 +5,21 @@ import { useTranslation } from 'react-i18next'
 import { isAdmin } from '../../utils/roleHelpers'
 import { API_URL } from '../../config.js'
 import { useTickets, useTicket, useCreateTicket, useReplyToTicket, useUpdateTicketStatus } from '../../hooks/useTickets'
+import './HelpTicket.css'
+
+const uploadsBase = API_URL.replace(/\/api\/?$/, '')
+
+const MailIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+		<path
+			d="M4 6h16v12H4V6zm2 0 6 5 6-5"
+			stroke="currentColor"
+			strokeWidth="1.75"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+		/>
+	</svg>
+)
 
 const HelpTicket = () => {
 	const { username, role } = useAuth()
@@ -14,18 +29,23 @@ const HelpTicket = () => {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [replyFiles, setReplyFiles] = useState([])
+	const [mobileIntroOpen, setMobileIntroOpen] = useState(false)
 	const replyFileInputRef = useRef(null)
 	const fileInputRef = useRef(null)
 	const { t } = useTranslation()
 
-	// TanStack Query hooks
+	const canChangeTicketStatus =
+		isAdmin(role) || (username && username.trim().toLowerCase() === 'michalipka1@gmail.com')
+
 	const { data: tickets = [], isLoading: loadingTickets, error: ticketsError } = useTickets()
 	const { data: selectedTicket, isLoading: loadingTicket } = useTicket(selectedTicketId)
 	const createTicketMutation = useCreateTicket()
 	const replyToTicketMutation = useReplyToTicket()
 	const updateTicketStatusMutation = useUpdateTicketStatus()
 
-	const loading = loadingTickets || loadingTicket
+	const loadingDetail = loadingTicket
+	const creating = createTicketMutation.isPending
+	const replying = replyToTicketMutation.isPending
 
 	const handleReplyFileChange = e => {
 		setReplyFiles(Array.from(e.target.files))
@@ -59,7 +79,8 @@ const HelpTicket = () => {
 
 			await createTicketMutation.mutateAsync(formData)
 			setSuccess(t('tickets.createSuccess'))
-			setNewTicket({ topic: '', message: '', attachment: null })
+			setNewTicket({ topic: '', message: '', attachments: [] })
+			if (fileInputRef.current) fileInputRef.current.value = ''
 		} catch (err) {
 			setError(t('tickets.createError'))
 		}
@@ -77,6 +98,7 @@ const HelpTicket = () => {
 			await replyToTicketMutation.mutateAsync({ ticketId: selectedTicketId, formData })
 			setReply('')
 			setReplyFiles([])
+			if (replyFileInputRef.current) replyFileInputRef.current.value = ''
 			setSuccess(t('tickets.replySuccess'))
 		} catch (err) {
 			setError(t('tickets.replyError'))
@@ -86,6 +108,7 @@ const HelpTicket = () => {
 	const handleOpenTicket = ticket => {
 		setSelectedTicketId(ticket._id)
 		setError('')
+		setSuccess('')
 	}
 
 	const handleBackToList = () => {
@@ -99,215 +122,267 @@ const HelpTicket = () => {
 		<>
 			<Sidebar />
 
-			<div className="flex-1 max-w-3xl tickets">
-				<h2 className="text-2xl font-bold mb-4"><img src="img/technical-support.png" alt="ikonka w sidebar" /> {t('tickets.title')}</h2>
-				<hr />
-				{!selectedTicket && (
-					<div className="mb-8 border bg-white rounded-xl shadow p-4">
-						<h3 className="font-semibold text-lg mb-3">{t('tickets.new')}</h3>
-						<form className="flex flex-col gap-3" onSubmit={handleSendNewTicket}>
-							<input
-								type="text"
-								name="topic"
-								placeholder={t('tickets.topic')}
-								value={newTicket.topic}
-								onChange={handleNewTicketChange}
-								required
-								className="input input-bordered p-2 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-							<textarea
-								name="message"
-								placeholder={t('tickets.description')}
-								value={newTicket.message}
-								onChange={handleNewTicketChange}
-								required
-								className="input input-bordered min-h-[80px] p-2 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-							<div>
-								<label className="cursor-pointer flex items-center gap-2">
-									<span>{t('tickets.addAttachment')}</span>
-									<input
-										type="file"
-										accept="image/*,application/pdf"
-										className="hidden"
-										ref={fileInputRef}
-										onChange={handleFileChange}
-										multiple
-									/>
+			<div className="content p-3 flex-1 min-w-0">
+				<div className="help-center tickets">
+					<div className="help-center__shell">
+					{!(selectedTicketId && selectedTicket && !loadingDetail) && (
+						<header className="help-center__hero">
+							<div className="help-center__hero-inner">
+								<img className="help-center__hero-icon" src="img/technical-support.png" alt="" />
+								<div>
+									<h1>{t('tickets.title')}</h1>
+									<p className="help-center__subtitle">{t('tickets.subtitle')}</p>
+								</div>
+							</div>
+						</header>
+					)}
+
+					{ticketsError && (
+						<div className="help-center__alert help-center__alert--err" role="alert">
+							{ticketsError.response?.status === 503
+								? t('tickets.dbUnavailable')
+								: t('tickets.fetchError')}
+						</div>
+					)}
+
+					{!selectedTicket && (
+						<section className="help-center__intro">
+							<button
+								type="button"
+								className="help-center__intro-mobile-toggle"
+								aria-expanded={mobileIntroOpen}
+								onClick={() => setMobileIntroOpen(o => !o)}>
+								<span>{t('tickets.introMobileToggle')}</span>
+								<span className="help-center__intro-mobile-toggle-icon" aria-hidden>
+									{mobileIntroOpen ? '▲' : '▼'}
+								</span>
+							</button>
+							<div
+								className={`help-center__intro-stack ${mobileIntroOpen ? 'help-center__intro-stack--open' : ''}`}>
+								<p className="help-center__intro-lead">{t('tickets.introLead')}</p>
+								<ul className="help-center__bullets">
+									<li>{t('tickets.bulletBugs')}</li>
+									<li>{t('tickets.bulletIdeas')}</li>
+									<li>{t('tickets.bulletIntegrations')}</li>
+									<li>{t('tickets.bulletOpen')}</li>
+								</ul>
+								<div className="help-center__email-note">
+									<MailIcon />
+									<span>{t('tickets.emailNotifyHint')}</span>
+								</div>
+							</div>
+						</section>
+					)}
+
+					{!selectedTicket && (
+						<div className="help-center__grid">
+							<section className="help-center__card">
+								<h2>{t('tickets.new')}</h2>
+								<form className="help-center__form" onSubmit={handleSendNewTicket}>
+									<div className="help-center__field">
+										<label htmlFor="help-topic">{t('tickets.topicLabel')}</label>
+										<input
+											id="help-topic"
+											type="text"
+											name="topic"
+											placeholder={t('tickets.topic')}
+											value={newTicket.topic}
+											onChange={handleNewTicketChange}
+											required
+											className="help-center__input"
+										/>
+									</div>
+									<div className="help-center__field">
+										<label htmlFor="help-message">{t('tickets.messageLabel')}</label>
+										<textarea
+											id="help-message"
+											name="message"
+											placeholder={t('tickets.description')}
+											value={newTicket.message}
+											onChange={handleNewTicketChange}
+											required
+											className="help-center__textarea"
+										/>
+									</div>
+									<div className="help-center__attachments-row">
+										<input
+											type="file"
+											accept="image/*,application/pdf"
+											className="hidden"
+											ref={fileInputRef}
+											onChange={handleFileChange}
+											multiple
+										/>
+										<button
+											type="button"
+											className="help-center__btn-ghost"
+											onClick={() => fileInputRef.current?.click()}>
+											{t('tickets.chooseFile')}
+										</button>
+										<span className="text-gray-500 text-sm">{t('tickets.addAttachment')}</span>
+									</div>
 									{newTicket.attachments && newTicket.attachments.length > 0 && (
-										<ul className="ml-2 text-xs text-gray-500">
+										<ul className="text-xs text-gray-500 mt-1 mb-2 list-disc pl-4">
 											{newTicket.attachments.map((file, idx) => (
 												<li key={idx}>{file.name}</li>
 											))}
 										</ul>
 									)}
-									<button type="button" onClick={() => fileInputRef.current.click()} className="btn btn-xs ml-2">
-										{t('tickets.chooseFile')}
+									<button className="help-center__btn-primary" disabled={creating} type="submit">
+										{creating ? t('tickets.sending') : t('tickets.sendTicket')}
 									</button>
-								</label>
-							</div>
-							<button className="btn btn-primary w-full mt-2" disabled={loading} type="submit">
-								{loading ? 'Loading...' : `${t('tickets.sendTicket')}`}
-							</button>
-							{success && <div className="text-green-700">{success}</div>}
-							{error && <div className="text-red-600">{error}</div>}
-						</form>
-					</div>
-				)}
-
-				{!selectedTicket && (
-					<div>
-						<h3 className="font-semibold text-lg mb-2">{t('tickets.myTickets')}</h3>
-						<div className="overflow-x-auto">
-							<table className="table">
-								<thead>
-									<tr>
-										<th>{t('tickets.company')}</th>
-										<th>{t('tickets.topic')}</th>
-										<th>Status</th>
-										<th>{t('tickets.date')}</th>
-										<th></th>
-									</tr>
-								</thead>
-
-								<tbody>
-									{tickets.length === 0 && (
-										<tr>
-											<td colSpan={4} className="text-center text-gray-500">
-												{t('tickets.notask')}
-											</td>
-										</tr>
+									{success && (
+										<div className="help-center__alert help-center__alert--ok mt-3">{success}</div>
 									)}
-									{tickets.map(ticket => (
-										<tr key={ticket._id} onClick={() => handleOpenTicket(ticket)} style={{ cursor: 'pointer' }}>
-											<td>{ticket.company}</td>
-											<td>{ticket.topic}</td>
-											<td>
-												{ticket.status === 'Otwarte'
-													? t('tickets.status1')
-													: ticket.status === 'Zamknięte'
-													? t('tickets.status2')
-													: ticket.status}
-											</td>
+									{error && <div className="help-center__alert help-center__alert--err mt-3">{error}</div>}
+								</form>
+							</section>
 
-											<td>{new Date(ticket.createdAt).toLocaleString()}</td>
-											<td>
-												<button className="btn btn-xs btn-info" onClick={() => handleOpenTicket(ticket)}>
-													{t('tickets.details')}
-												</button>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
+							<section className="help-center__card">
+								<h2>{t('tickets.myTickets')}</h2>
+								{loadingTickets ? (
+									<p className="text-gray-500 text-sm">{t('tickets.loadingList')}</p>
+								) : tickets.length === 0 ? (
+									<p className="text-gray-500 text-sm">{t('tickets.notask')}</p>
+								) : (
+									<div className="help-center__ticket-list">
+										{tickets.map(ticket => (
+											<button
+												key={ticket._id}
+												type="button"
+												className="help-center__ticket-card"
+												onClick={() => handleOpenTicket(ticket)}>
+												<div className="help-center__ticket-card-top">
+													<span className="help-center__ticket-topic">{ticket.topic}</span>
+													<span
+														className={`help-center__badge ${
+															ticket.status === 'Zamknięte'
+																? 'help-center__badge--closed'
+																: 'help-center__badge--open'
+														}`}>
+														{ticket.status === 'Otwarte'
+															? t('tickets.status1')
+															: ticket.status === 'Zamknięte'
+																? t('tickets.status2')
+																: ticket.status}
+													</span>
+												</div>
+												<div className="help-center__ticket-meta">
+													{ticket.company} · {new Date(ticket.createdAt).toLocaleString()}
+												</div>
+											</button>
+										))}
+									</div>
+								)}
+							</section>
 						</div>
-					</div>
-				)}
+					)}
 
-				{selectedTicketId && selectedTicket && (
-					<div className="border bg-white rounded-xl shadow p-4 mt-6">
-						<button className="btn btn-sm btn-outline mb-3" onClick={handleBackToList}>
-							← {t('tickets.backToList')}
-						</button>
-						<h3 className="font-semibold text-lg mb-3">{selectedTicket.topic}</h3>
-						<p>
-							<span>{t('tickets.author')}:</span> {selectedTicket.userEmail}
-						</p>
-						{isAdmin(role) ? (
-							<div className="mb-2">
-								<label className="font-semibold mr-2">Status:</label>
-								<select
-									value={selectedTicket?.status || ''}
-									onChange={async e => {
-										const newStatus = e.target.value
-										if (!selectedTicketId) return
-										try {
-											await updateTicketStatusMutation.mutateAsync({
-												ticketId: selectedTicketId,
-												status: newStatus,
-											})
-										} catch (err) {
-											setError(t('tickets.statusUpdateError'))
-										}
-									}}
-									className="select select-sm select-bordered border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-									<option value="Otwarte">{t('tickets.status1')}</option>
-									<option value="Zamknięte">{t('tickets.status2')}</option>
-								</select>
-							</div>
-						) : (
-							<p className="mb-2">
-								<span className="font-semibold">Status:</span>{' '}
-								{selectedTicket.status === 'Otwarte'
-									? t('tickets.status1')
-									: selectedTicket.status === 'Zamknięte'
-									? t('tickets.status2')
-									: selectedTicket.status}
+					{selectedTicketId && loadingDetail && (
+						<p className="text-gray-500 text-sm">{t('tickets.loadingList')}</p>
+					)}
+
+					{selectedTicketId && selectedTicket && !loadingDetail && (
+						<div className="help-center__card help-center__detail">
+							<button type="button" className="help-center__back" onClick={handleBackToList}>
+								← {t('tickets.backToList')}
+							</button>
+							<h2 className="text-lg font-semibold text-gray-800 mb-2">{selectedTicket.topic}</h2>
+							<p className="text-sm text-gray-600 mb-3">
+								<span className="font-medium text-gray-700">{t('tickets.author')}:</span>{' '}
+								{selectedTicket.userEmail}
 							</p>
-						)}
+							{canChangeTicketStatus ? (
+								<div className="mb-3 flex flex-wrap items-center gap-2">
+									<label className="text-sm font-medium text-gray-700" htmlFor="ticket-status">
+										{t('tickets.status')}:
+									</label>
+									<select
+										id="ticket-status"
+										value={selectedTicket?.status || ''}
+										onChange={async e => {
+											const newStatus = e.target.value
+											if (!selectedTicketId) return
+											try {
+												await updateTicketStatusMutation.mutateAsync({
+													ticketId: selectedTicketId,
+													status: newStatus,
+												})
+											} catch (err) {
+												setError(t('tickets.statusUpdateError'))
+											}
+										}}
+										disabled={updateTicketStatusMutation.isPending}
+										className="help-center__input max-w-[200px] py-1 text-sm">
+										<option value="Otwarte">{t('tickets.status1')}</option>
+										<option value="Zamknięte">{t('tickets.status2')}</option>
+									</select>
+								</div>
+							) : (
+								<p className="mb-3 text-sm">
+									<span className="font-medium text-gray-700">{t('tickets.status')}:</span>{' '}
+									{selectedTicket.status === 'Otwarte'
+										? t('tickets.status1')
+										: selectedTicket.status === 'Zamknięte'
+											? t('tickets.status2')
+											: selectedTicket.status}
+								</p>
+							)}
 
-						<p className="mb-2">
-							<span className="font-semibold">{t('tickets.createdAt')}:</span>{' '}
-							{new Date(selectedTicket.createdAt).toLocaleString()}
-						</p>
-						<p className="mb-2">
-							<span className="font-semibold">{t('tickets.messageContent')}:</span>
-						</p>
-						<p className="mb-4 bg-gray-100 p-2 rounded">
-							{selectedTicket.messages && selectedTicket.messages.length > 0
-								? selectedTicket.messages[0].content
-								: `${t('tickets.nocontent')}`}
-						</p>
-
-						{selectedTicket.messages && selectedTicket.messages[0]?.files && selectedTicket.messages[0].files.length > 0 && (
-							<div className="mb-2">
-								{selectedTicket.messages[0].files.map((file, idx) => (
-									<a
-										key={idx}
-										href={`${API_URL.replace('/api', '')}/uploads/${file}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="underline text-blue-600 p-2">
-										{t('tickets.downloadAttachment')} {idx + 1}
-									</a>
-								))}
+							<p className="text-sm text-gray-600 mb-2">
+								<span className="font-medium text-gray-700">{t('tickets.createdAt')}:</span>{' '}
+								{new Date(selectedTicket.createdAt).toLocaleString()}
+							</p>
+							<p className="text-sm font-medium text-gray-700 mb-1">{t('tickets.messageContent')}</p>
+							<div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm text-gray-800 mb-4">
+								{selectedTicket.messages && selectedTicket.messages.length > 0
+									? selectedTicket.messages[0].content
+									: t('tickets.nocontent')}
 							</div>
-						)}
 
-						<hr className="my-4" />
+							{selectedTicket.messages && selectedTicket.messages[0]?.files && selectedTicket.messages[0].files.length > 0 && (
+								<div className="flex flex-wrap gap-2 mb-4">
+									{selectedTicket.messages[0].files.map((file, idx) => (
+										<a
+											key={idx}
+											href={`${uploadsBase}/uploads/${file}`}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-sm text-teal-700 underline">
+											{t('tickets.downloadAttachment')} {idx + 1}
+										</a>
+									))}
+								</div>
+							)}
 
-						<div>
-							<h4 className="font-semibold mb-2">{t('tickets.replyHistory')}</h4>
-							<div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+							<hr className="border-gray-200 my-4" />
+
+							<h3 className="text-sm font-semibold text-gray-800 mb-2">{t('tickets.replyHistory')}</h3>
+							<div className="help-center__thread">
 								{selectedTicket.messages && selectedTicket.messages.length > 1 ? (
 									selectedTicket.messages.slice(1).map((msg, idx) => (
 										<div
 											key={idx}
-											className={`rounded p-2 ${
-												msg.sender === (username === selectedTicket.userEmail ? 'user' : 'admin')
-													? 'bg-blue-50 text-right ml-20'
-													: 'bg-gray-200 mr-20'
+											className={`help-center__bubble flex flex-col gap-1 ${
+												msg.sender === 'admin' ? 'help-center__bubble--staff' : 'help-center__bubble--user'
 											}`}>
-											<div className="text-sm">{msg.content}</div>
-
+											<div className="text-sm whitespace-pre-wrap text-gray-800">{msg.content}</div>
 											{msg.files && msg.files.length > 0 && (
-												<div className="mt-1 text-xs flex flex-col gap-1">
+												<div className="flex flex-col gap-1">
 													{msg.files.map((file, fileIdx) => (
 														<a
 															key={fileIdx}
-															href={`${API_URL.replace('/api', '')}/uploads/${file}`}
+															href={`${uploadsBase}/uploads/${file}`}
 															target="_blank"
 															rel="noopener noreferrer"
-															className="text-blue-600 underline">
+															className="text-xs text-teal-700 underline">
 															{t('tickets.downloadAttachment')} {fileIdx + 1}
 														</a>
 													))}
 												</div>
 											)}
-
-											<div className="text-xs text-gray-500 mt-1">
-												{msg.author} {' — '}
-												{new Date(msg.timestamp).toLocaleString()}
+											<div className="text-xs text-gray-500">
+												{msg.author} — {new Date(msg.timestamp).toLocaleString()}
 											</div>
 										</div>
 									))
@@ -315,44 +390,56 @@ const HelpTicket = () => {
 									<div className="text-gray-400 text-sm">{t('tickets.noanswer')}</div>
 								)}
 							</div>
-						</div>
 
-						<form className="mt-4 flex flex-col gap-2" onSubmit={handleSendReply} encType="multipart/form-data">
-							<textarea
-								value={reply}
-								onChange={e => setReply(e.target.value)}
-								placeholder={t('tickets.writeReply')}
-								className="input input-bordered min-h-[60px] p-2 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-							/>
-							<label className="cursor-pointer flex items-center gap-2">
-								<span>{t('tickets.addAttachment')}</span>
-								<input
-									type="file"
-									accept="image/*,application/pdf"
-									className="hidden"
-									ref={replyFileInputRef}
-									onChange={handleReplyFileChange}
-									multiple
+							<form className="mt-4 flex flex-col gap-2" onSubmit={handleSendReply} encType="multipart/form-data">
+								<label className="text-sm font-medium text-gray-700" htmlFor="help-reply">
+									{t('tickets.writeReply')}
+								</label>
+								<textarea
+									id="help-reply"
+									value={reply}
+									onChange={e => setReply(e.target.value)}
+									placeholder={t('tickets.writeReply')}
+									className="help-center__textarea min-h-[4.5rem]"
 								/>
-								{replyFiles && replyFiles.length > 0 && (
-									<ul className="ml-2 text-xs text-gray-500">
-										{replyFiles.map((file, idx) => (
-											<li key={idx}>{file.name}</li>
-										))}
-									</ul>
-								)}
-								<button type="button" onClick={() => replyFileInputRef.current.click()} className="btn btn-xs ml-2">
-									{t('tickets.chooseFile')}
+								<div className="help-center__attachments-row">
+									<input
+										type="file"
+										accept="image/*,application/pdf"
+										className="hidden"
+										ref={replyFileInputRef}
+										onChange={handleReplyFileChange}
+										multiple
+									/>
+									<button
+										type="button"
+										className="help-center__btn-ghost"
+										onClick={() => replyFileInputRef.current?.click()}>
+										{t('tickets.chooseFile')}
+									</button>
+									{replyFiles && replyFiles.length > 0 && (
+										<ul className="text-xs text-gray-500 flex flex-wrap gap-2 list-none p-0 m-0">
+											{replyFiles.map((file, idx) => (
+												<li key={idx}>{file.name}</li>
+											))}
+										</ul>
+									)}
+								</div>
+								<button
+									className="help-center__btn-primary max-w-xs self-end"
+									type="submit"
+									disabled={replying || !reply.trim()}>
+									{replying ? t('tickets.sending') : t('tickets.sendReply')}
 								</button>
-							</label>
-							<button className="btn btn-success self-end" type="submit" disabled={loading || !reply.trim()}>
-								{loading ? 'Loading...' : `${t('tickets.sendTicket')}`}
-							</button>
-						</form>
-						{success && <div className="text-green-700">{success}</div>}
-						{error && <div className="text-red-600">{error}</div>}
+							</form>
+							{success && (
+								<div className="help-center__alert help-center__alert--ok mt-3">{success}</div>
+							)}
+							{error && <div className="help-center__alert help-center__alert--err mt-3">{error}</div>}
+						</div>
+					)}
 					</div>
-				)}
+				</div>
 			</div>
 		</>
 	)

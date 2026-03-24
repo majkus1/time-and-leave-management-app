@@ -7,7 +7,6 @@ import HamburgerButton from './HamburgerButton'
 
 function ENBlog() {
 	const [menuOpen, setMenuOpen] = useState(false)
-	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
 
 	return (
@@ -39,7 +38,7 @@ function ENBlog() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden lg:flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -60,38 +59,6 @@ function ENBlog() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
-						{/* Dropdown Legal */}
-						<div 
-							className="relative"
-							onMouseEnter={() => setLegalDropdownOpen(true)}
-							onMouseLeave={() => setLegalDropdownOpen(false)}
-						>
-							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
-								Legal
-								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
-							{legalDropdownOpen && (
-								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
-									<Link
-										href="/en/terms"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Terms of Service
-									</Link>
-									<Link
-										href="/en/privacy"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Privacy Policy
-									</Link>
-									<Link
-										href="/en/dpa"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Data Processing Agreement
-									</Link>
-								</div>
-							)}
-						</div>
 						<Link
 							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
@@ -105,7 +72,7 @@ function ENBlog() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create a free team
+							Start free trial
 						</Link>
 						<Link href="/blog" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
@@ -126,11 +93,6 @@ function ENBlog() {
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -246,7 +208,7 @@ function ENBlog() {
 							Free Time Tracking App for Work Hours and Leave Management
 							</h3>
 							<p className="text-gray-600 flex-1">
-							Discover Planopia - a complete, free time tracking app for work hours and leave management. Full functionality for teams up to 4 people without any costs.
+							30-day trial: full features, up to 5 users — then choose a plan that fits your team.
 							</p>
 							<Link
 								href="/en/blog/free-time-tracking-app"

@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-	description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Dowiedz się jak wybrać najlepszy program do ewidencji czasu pracy dla swojej firmy. Planopia - darmowa aplikacja do ewidencji czasu pracy.',
+	description:
+		'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: miesiąc próbny (30 dni), do 5 użytkowników, pełne funkcje.',
 	keywords: [
 		'elektroniczna ewidencja czasu pracy',
 		'program do ewidencji czasu pracy',
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Dowiedz się jak wybrać najlepszy program do ewidencji czasu pracy dla swojej firmy.',
+		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.',
 		url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
 		siteName: 'Planopia',
 		images: [
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Dowiedz się jak wybrać najlepszy program do ewidencji czasu pracy dla swojej firmy.',
+		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.',
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

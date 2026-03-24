@@ -82,7 +82,7 @@ function ENBlogPWA() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create a free team
+							Start free trial
 						</Link>
 						<Link href="/blog/jak-zainstalowac-planopie-jako-pwa" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function ENBlogPWA() {
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -208,7 +203,7 @@ function ENBlogPWA() {
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Start Using Planopia Today!</h3>
 					<p className="mb-4 text-gray-700">
 						Planopia is a comprehensive app for managing work time, leave, and teams. 
-						Free version for teams up to 4 users!
+						30-day trial — up to 5 users, full features!
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link
@@ -216,7 +211,7 @@ function ENBlogPWA() {
 							className="bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition whitespace-nowrap"
 							style={{ color: 'white' }}
 						>
-							Create free team
+							Start free trial
 						</Link>
 						<Link
 							href="/en/#cennik"

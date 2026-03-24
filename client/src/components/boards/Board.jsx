@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +10,7 @@ import { useBoard, useBoardTasks, useCreateTask, useUpdateTaskStatus, useDeleteT
 import { useQueryClient } from '@tanstack/react-query'
 import TaskCard from './TaskCard'
 import CreateTaskModal from './CreateTaskModal'
+import TasksBoardCalendar from './TasksBoardCalendar'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDroppable, DragOverlay } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 
@@ -103,6 +104,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} })
 function Board() {
 	const { boardId } = useParams()
 	const navigate = useNavigate()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const { t } = useTranslation()
 	const { userId, role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
@@ -136,6 +138,13 @@ function Board() {
 		markBoardViewedMutation.mutate(boardId)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [boardId])
+
+	const taskFromUrl = searchParams.get('task')
+	useEffect(() => {
+		if (taskFromUrl) {
+			setSelectedTask({ _id: taskFromUrl })
+		}
+	}, [boardId, taskFromUrl])
 
 	useEffect(() => {
 		if (!socket || !boardId) return
@@ -440,6 +449,8 @@ function Board() {
 						})() : null}
 					</DragOverlay>
 				</DndContext>
+
+				<TasksBoardCalendar boardId={boardId} />
 			</div>
 
 			{isCreateModalOpen && (
@@ -463,6 +474,16 @@ function Board() {
 							markTaskAsSeen(selectedTask._id)
 						}
 						setSelectedTask(null)
+						if (searchParams.get('task')) {
+							setSearchParams(
+								(prev) => {
+									const next = new URLSearchParams(prev)
+									next.delete('task')
+									return next
+								},
+								{ replace: true }
+							)
+						}
 					}}
 					onSeen={markTaskAsSeen}
 					onUpdate={async () => {

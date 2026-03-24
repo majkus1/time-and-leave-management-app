@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -14,6 +14,17 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 import { useAuth } from '../../context/AuthContext'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import { computeTeamTotalsForMonth, aggregateYearTeamTotals } from '../../utils/teamWorkCalendarSummary'
+
+function workdayUserIdString(day) {
+	if (!day?.userId) return ''
+	if (typeof day.userId === 'object' && day.userId !== null && day.userId._id) {
+		return day.userId._id.toString()
+	}
+	return String(day.userId)
+}
 
 function AdminUserList() {
 	const navigate = useNavigate()
@@ -29,6 +40,7 @@ function AdminUserList() {
 	const [selectedDepartments, setSelectedDepartments] = useState([])
 	const [selectedUserIds, setSelectedUserIds] = useState([])
 	const [expandedDepartments, setExpandedDepartments] = useState({})
+	const [calendarView, setCalendarView] = useState('single') // 'single' | 'all-months'
 	
 	// Sprawdź czy użytkownik ma uprawnienia (Admin lub HR)
 	const isAdmin = role && role.includes('Admin')
@@ -54,6 +66,21 @@ function AdminUserList() {
 		return numHours.toFixed(1).replace(/\.0$/, '')
 	}
 
+	const getOvertimeWord = (count) => {
+		if (i18n.language !== 'pl') {
+			return count === 1 ? t('workcalendar.overtime1') : t('workcalendar.overtime5plus')
+		}
+		const numCount = typeof count === 'number' ? count : parseFloat(count)
+		if (isNaN(numCount)) return t('workcalendar.overtime5plus')
+		if (numCount % 1 !== 0) return t('workcalendar.overtime5plus')
+		if (numCount === 1) return t('workcalendar.overtime1')
+		const lastDigit = numCount % 10
+		const lastTwoDigits = numCount % 100
+		if (lastTwoDigits >= 12 && lastTwoDigits <= 14) return t('workcalendar.overtime5plus')
+		if (lastDigit >= 2 && lastDigit <= 4) return t('workcalendar.overtime2_4')
+		return t('workcalendar.overtime5plus')
+	}
+
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
 		const day = new Date(date).getDay()
@@ -61,33 +88,36 @@ function AdminUserList() {
 	}
 
 	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
-	const generateDateRangeForCalendar = (startDate, endDate) => {
-		const dates = []
-		const start = new Date(startDate)
-		const end = new Date(endDate)
-		const current = new Date(start)
-		const workOnWeekends = settings?.workOnWeekends !== false
-		
-		while (current <= end) {
-			const currentDateStr = new Date(current).toISOString().split('T')[0]
-			const isWeekendDay = isWeekend(current)
-			const holidayInfo = isHolidayDate(current, settings)
-			const isHolidayDay = holidayInfo !== null
-			
-			if (workOnWeekends) {
-				if (!isHolidayDay) {
-					dates.push(currentDateStr)
+	const generateDateRangeForCalendar = useCallback(
+		(startDate, endDate) => {
+			const dates = []
+			const start = new Date(startDate)
+			const end = new Date(endDate)
+			const current = new Date(start)
+			const workOnWeekends = settings?.workOnWeekends !== false
+
+			while (current <= end) {
+				const currentDateStr = new Date(current).toISOString().split('T')[0]
+				const isWeekendDay = isWeekend(current)
+				const holidayInfo = isHolidayDate(current, settings)
+				const isHolidayDay = holidayInfo !== null
+
+				if (workOnWeekends) {
+					if (!isHolidayDay) {
+						dates.push(currentDateStr)
+					}
+				} else {
+					if (!isWeekendDay && !isHolidayDay) {
+						dates.push(currentDateStr)
+					}
 				}
-			} else {
-				if (!isWeekendDay && !isHolidayDay) {
-					dates.push(currentDateStr)
-				}
+				current.setDate(current.getDate() + 1)
 			}
-			current.setDate(current.getDate() + 1)
-		}
-		
-		return dates
-	}
+
+			return dates
+		},
+		[settings]
+	)
 
 	// Pobierz święta dla aktualnego miesiąca
 	const holidaysForMonth = useMemo(() => {
@@ -106,6 +136,20 @@ function AdminUserList() {
 			settings
 		)
 	}, [settings, currentMonth, currentYear])
+
+	// Święta w całym roku (widok roczny)
+	const holidaysForYear = useMemo(() => {
+		if (!settings) return []
+		const yearStart = new Date(currentYear, 0, 1)
+		const yearEnd = new Date(currentYear, 11, 31)
+		const formatDateLocal = (date) => {
+			const y = date.getFullYear()
+			const m = String(date.getMonth() + 1).padStart(2, '0')
+			const d = String(date.getDate()).padStart(2, '0')
+			return `${y}-${m}-${d}`
+		}
+		return getHolidaysInRange(formatDateLocal(yearStart), formatDateLocal(yearEnd), settings)
+	}, [settings, currentYear])
 
 	// Filtrowanie użytkowników na podstawie wybranych opcji
 	const filteredUsers = useMemo(() => {
@@ -134,6 +178,18 @@ function AdminUserList() {
 			return workday.userId && (typeof workday.userId === 'object' ? filteredUserIds.has(workday.userId._id?.toString()) : filteredUserIds.has(workday.userId.toString()))
 		})
 	}, [allTeamWorkdays, filteredUsers])
+
+	/** Zaakceptowane wnioski urlopowe tylko dla wyfiltrowanych użytkowników (do podsumowań). */
+	const filteredAcceptedRequests = useMemo(() => {
+		const filteredUserIds = new Set(filteredUsers.map((u) => u._id))
+		return allAcceptedRequests.filter((request) => {
+			if (!request.userId || !request.userId.firstName || !request.userId.lastName || !request.startDate || !request.endDate) {
+				return false
+			}
+			const uid = typeof request.userId === 'object' ? request.userId._id : request.userId
+			return filteredUserIds.has(uid?.toString())
+		})
+	}, [allAcceptedRequests, filteredUsers])
 
 	// Helper function to normalize date to YYYY-MM-DD format without timezone issues
 	const normalizeDate = (dateInput) => {
@@ -232,24 +288,17 @@ function AdminUserList() {
 		})
 	}, [filteredWorkdays])
 
-	// Filtruj zaakceptowane wnioski urlopowe dla aktualnego miesiąca (tylko wybrani użytkownicy)
-	const acceptedLeaveRequestsForMonth = useMemo(() => {
-		const filteredUserIds = new Set(filteredUsers.map(u => u._id))
-		return allAcceptedRequests
-			.filter(request => {
-				if (!request.userId || !request.userId.firstName || !request.userId.lastName || !request.startDate || !request.endDate) return false
-				const userId = typeof request.userId === 'object' ? request.userId._id : request.userId
-				return filteredUserIds.has(userId?.toString())
-			})
-			.flatMap(request => {
+	const buildLeaveEventsForMonth = useCallback(
+		(month, year) => {
+			return filteredAcceptedRequests.flatMap((request) => {
 				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
 				const employeeName = `${request.userId.firstName} ${request.userId.lastName}`
 				return dates
-					.filter(date => {
+					.filter((date) => {
 						const dateObj = new Date(date)
-						return dateObj.getMonth() === currentMonth && dateObj.getFullYear() === currentYear
+						return dateObj.getMonth() === month && dateObj.getFullYear() === year
 					})
-					.map(date => ({
+					.map((date) => ({
 						title: `${employeeName}: ${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
 						start: date,
 						allDay: true,
@@ -260,11 +309,429 @@ function AdminUserList() {
 						extendedProps: {
 							type: 'request',
 							userId: request.userId._id,
-							requestId: request._id
-						}
+							requestId: request._id,
+						},
 					}))
 			})
-	}, [allAcceptedRequests, filteredUsers, currentMonth, currentYear, settings, t, i18n.resolvedLanguage])
+		},
+		[filteredAcceptedRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage]
+	)
+
+	const acceptedLeaveRequestsForMonth = useMemo(
+		() => buildLeaveEventsForMonth(currentMonth, currentYear),
+		[buildLeaveEventsForMonth, currentMonth, currentYear]
+	)
+
+	/** Podsumowanie dla jednego miesiąca (zsynchronizowane z logiką kalendarza osoby). */
+	const teamSummaryCurrentMonth = useMemo(() => {
+		if (!settings) return null
+		return computeTeamTotalsForMonth({
+			workdays: filteredWorkdays,
+			acceptedLeaveRequests: filteredAcceptedRequests,
+			month: currentMonth,
+			year: currentYear,
+			settings,
+			t,
+			i18n,
+			generateDateRangeForCalendar,
+		})
+	}, [
+		settings,
+		filteredWorkdays,
+		filteredAcceptedRequests,
+		currentMonth,
+		currentYear,
+		t,
+		i18n,
+		generateDateRangeForCalendar,
+	])
+
+	/** 12 miesięcy + suma (widok roczny). */
+	const teamYearBreakdown = useMemo(() => {
+		if (!settings) return { months: [], yearTotals: null }
+		const months = Array.from({ length: 12 }, (_, month) =>
+			computeTeamTotalsForMonth({
+				workdays: filteredWorkdays,
+				acceptedLeaveRequests: filteredAcceptedRequests,
+				month,
+				year: currentYear,
+				settings,
+				t,
+				i18n,
+				generateDateRangeForCalendar,
+			})
+		)
+		return { months, yearTotals: aggregateYearTeamTotals(months) }
+	}, [settings, filteredWorkdays, filteredAcceptedRequests, currentYear, t, i18n, generateDateRangeForCalendar])
+
+	/** Podsumowanie skrócone per pracownik (te same filtry i okres co powyżej). */
+	const perUserSummaryRows = useMemo(() => {
+		if (!settings) return []
+		return filteredUsers.map((user) => {
+			const uid = user._id.toString()
+			const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || uid
+			const userWds = filteredWorkdays.filter((w) => workdayUserIdString(w) === uid)
+			const userLeaves = filteredAcceptedRequests.filter((r) => {
+				const rid =
+					typeof r.userId === 'object' && r.userId?._id ? r.userId._id.toString() : String(r.userId)
+				return rid === uid
+			})
+			let totals
+			if (calendarView === 'single') {
+				totals = computeTeamTotalsForMonth({
+					workdays: userWds,
+					acceptedLeaveRequests: userLeaves,
+					month: currentMonth,
+					year: currentYear,
+					settings,
+					t,
+					i18n,
+					generateDateRangeForCalendar,
+				})
+			} else {
+				const months = Array.from({ length: 12 }, (_, month) =>
+					computeTeamTotalsForMonth({
+						workdays: userWds,
+						acceptedLeaveRequests: userLeaves,
+						month,
+						year: currentYear,
+						settings,
+						t,
+						i18n,
+						generateDateRangeForCalendar,
+					})
+				)
+				totals = aggregateYearTeamTotals(months)
+			}
+			return { userId: uid, name, totals }
+		})
+	}, [
+		settings,
+		filteredUsers,
+		filteredWorkdays,
+		filteredAcceptedRequests,
+		calendarView,
+		currentMonth,
+		currentYear,
+		t,
+		i18n,
+		generateDateRangeForCalendar,
+	])
+
+	const exportPeriodLabel = useMemo(() => {
+		if (calendarView === 'single') {
+			const raw = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, {
+				month: 'long',
+				year: 'numeric',
+			})
+			return raw.charAt(0).toUpperCase() + raw.slice(1)
+		}
+		return String(currentYear)
+	}, [calendarView, currentYear, currentMonth, i18n.resolvedLanguage])
+
+	const exportFileNameBase = () => {
+		if (calendarView === 'single') {
+			return `team_timesheet_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`
+		}
+		return `team_timesheet_year_${currentYear}`
+	}
+
+	const exportFileNameBasePerUser = () => `${exportFileNameBase()}_per_user`
+
+	const handleExportSummaryExcel = () => {
+		const wb = XLSX.utils.book_new()
+		const header = [
+			t('planslist.teamExportColMetric'),
+			t('planslist.teamExportColValue'),
+		]
+		let rows = []
+
+		if (calendarView === 'single' && teamSummaryCurrentMonth) {
+			const s = teamSummaryCurrentMonth
+			rows = [
+				[t('workcalendar.allfrommonth1'), s.totalWorkDays],
+				[t('workcalendar.allfrommonth2'), `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth3'), `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`],
+				[
+					settings?.leaveCalculationMode === 'hours'
+						? t('workcalendar.allfrommonth4hours')
+						: t('workcalendar.allfrommonth4'),
+					settings?.leaveCalculationMode === 'hours'
+						? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+						: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+				],
+				[t('workcalendar.allfrommonth5'), s.otherAbsences],
+			]
+			if (s.holidaysCount > 0) {
+				rows.push([t('workcalendar.allfrommonth6'), s.holidaysCount])
+			}
+		} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
+			const y = teamYearBreakdown.yearTotals
+			rows = [
+				[t('workcalendar.allfrommonth1'), y.totalWorkDays],
+				[t('workcalendar.allfrommonth2'), `${formatHours(y.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
+				[t('workcalendar.allfrommonth3'), `${formatHours(y.overtime)} ${getOvertimeWord(y.overtime)}`],
+				[
+					settings?.leaveCalculationMode === 'hours'
+						? t('workcalendar.allfrommonth4hours')
+						: t('workcalendar.allfrommonth4'),
+					settings?.leaveCalculationMode === 'hours'
+						? `${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+						: `${y.leaveDays} (${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+				],
+				[t('workcalendar.allfrommonth5'), y.otherAbsences],
+			]
+			if (y.holidaysCount > 0) {
+				rows.push([t('workcalendar.allfrommonth6'), y.holidaysCount])
+			}
+		}
+
+		const ws1 = XLSX.utils.aoa_to_sheet([header, ...rows])
+		ws1['!cols'] = [{ wch: 40 }, { wch: 28 }]
+		XLSX.utils.book_append_sheet(wb, ws1, t('planslist.teamSummarySheetSummary') || 'Podsumowanie')
+
+		if (calendarView === 'all-months' && teamYearBreakdown.months.length) {
+			const th = [
+				t('workcalendar.monthlabel'),
+				t('workcalendar.allfrommonth1'),
+				t('workcalendar.allfrommonth2'),
+				t('workcalendar.allfrommonth3'),
+				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
+				t('workcalendar.allfrommonth5'),
+			]
+			const monthRows = teamYearBreakdown.months.map((m, idx) => {
+				const monthName = new Date(currentYear, idx)
+					.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+					.replace(/^./, (c) => c.toUpperCase())
+				return [
+					monthName,
+					m.totalWorkDays,
+					formatHours(m.totalHours),
+					formatHours(m.overtime),
+					settings?.leaveCalculationMode === 'hours'
+						? m.leaveHours.toFixed(1)
+						: `${m.leaveDays} (${m.leaveHours.toFixed(1)})`,
+					m.otherAbsences,
+				]
+			})
+			const yt = teamYearBreakdown.yearTotals
+			if (yt) {
+				monthRows.push([
+					t('planslist.teamTableTotal'),
+					yt.totalWorkDays,
+					formatHours(yt.totalHours),
+					formatHours(yt.overtime),
+					settings?.leaveCalculationMode === 'hours'
+						? yt.leaveHours.toFixed(1)
+						: `${yt.leaveDays} (${yt.leaveHours.toFixed(1)})`,
+					yt.otherAbsences,
+				])
+			}
+			const ws2 = XLSX.utils.aoa_to_sheet([th, ...monthRows])
+			ws2['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }]
+			XLSX.utils.book_append_sheet(wb, ws2, t('planslist.teamSummarySheetMonths') || 'Miesiące')
+		}
+
+		XLSX.writeFile(wb, `${exportFileNameBase()}.xlsx`)
+	}
+
+	const handleExportSummaryPdf = () => {
+		const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+		const margin = 14
+		let y = 16
+		doc.setFontSize(13)
+		doc.text(t('planslist.teamSummaryTitle'), margin, y)
+		y += 8
+		doc.setFontSize(10)
+		doc.setTextColor(80, 80, 80)
+		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y)
+		y += 10
+		doc.setTextColor(0, 0, 0)
+
+		const pushLine = (label, value) => {
+			doc.setFont('helvetica', 'bold')
+			doc.text(`${label}`, margin, y)
+			doc.setFont('helvetica', 'normal')
+			const lines = doc.splitTextToSize(String(value ?? ''), 120)
+			doc.text(lines, margin + 85, y)
+			y += Math.max(6, lines.length * 5)
+		}
+
+		if (calendarView === 'single' && teamSummaryCurrentMonth) {
+			const s = teamSummaryCurrentMonth
+			pushLine(t('workcalendar.allfrommonth1'), s.totalWorkDays)
+			pushLine(t('workcalendar.allfrommonth2'), `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`)
+			pushLine(t('workcalendar.allfrommonth3'), `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`)
+			pushLine(
+				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
+				settings?.leaveCalculationMode === 'hours'
+					? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+					: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+			)
+			pushLine(t('workcalendar.allfrommonth5'), s.otherAbsences)
+			if (s.holidaysCount > 0) pushLine(t('workcalendar.allfrommonth6'), s.holidaysCount)
+		} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
+			const ytot = teamYearBreakdown.yearTotals
+			pushLine(t('workcalendar.allfrommonth1'), ytot.totalWorkDays)
+			pushLine(t('workcalendar.allfrommonth2'), `${formatHours(ytot.totalHours)} ${t('workcalendar.allfrommonthhours')}`)
+			pushLine(t('workcalendar.allfrommonth3'), `${formatHours(ytot.overtime)} ${getOvertimeWord(ytot.overtime)}`)
+			pushLine(
+				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
+				settings?.leaveCalculationMode === 'hours'
+					? `${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+					: `${ytot.leaveDays} (${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+			)
+			pushLine(t('workcalendar.allfrommonth5'), ytot.otherAbsences)
+			if (ytot.holidaysCount > 0) pushLine(t('workcalendar.allfrommonth6'), ytot.holidaysCount)
+			y += 6
+			doc.setFontSize(11)
+			doc.text(t('planslist.teamMonthlyTableTitle'), margin, y)
+			y += 7
+			doc.setFontSize(7.5)
+			const colW = [22, 14, 14, 14, 24, 16]
+			const headers = [
+				t('workcalendar.monthlabel'),
+				t('planslist.teamColShortWorkDays'),
+				t('planslist.teamColShortHours'),
+				t('planslist.teamColShortOt'),
+				t('planslist.teamColShortLeave'),
+				t('planslist.teamColShortOther'),
+			]
+			let x = margin
+			doc.setFont('helvetica', 'bold')
+			headers.forEach((h, i) => {
+				doc.text(doc.splitTextToSize(h, colW[i] - 1), x, y)
+				x += colW[i]
+			})
+			y += 5
+			doc.setFont('helvetica', 'normal')
+			teamYearBreakdown.months.forEach((m, idx) => {
+				if (y > 270) {
+					doc.addPage()
+					y = 14
+				}
+				const monthName = new Date(currentYear, idx).toLocaleString(i18n.resolvedLanguage, { month: 'short' })
+				x = margin
+				const cells = [
+					monthName,
+					String(m.totalWorkDays),
+					formatHours(m.totalHours),
+					formatHours(m.overtime),
+					settings?.leaveCalculationMode === 'hours' ? m.leaveHours.toFixed(1) : String(m.leaveDays),
+					String(m.otherAbsences),
+				]
+				cells.forEach((c, i) => {
+					doc.text(doc.splitTextToSize(c, colW[i] - 1), x, y)
+					x += colW[i]
+				})
+				y += 5
+			})
+		}
+
+		doc.save(`${exportFileNameBase()}.pdf`)
+	}
+
+	const handleExportPerUserExcel = () => {
+		if (perUserSummaryRows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
+		}
+		const leaveHeader =
+			settings?.leaveCalculationMode === 'hours'
+				? t('workcalendar.allfrommonth4hours')
+				: t('workcalendar.allfrommonth4')
+		const th = [
+			t('planslist.columnEmployee'),
+			t('workcalendar.allfrommonth1'),
+			t('workcalendar.allfrommonth2'),
+			t('workcalendar.allfrommonth3'),
+			leaveHeader,
+			t('workcalendar.allfrommonth5'),
+		]
+		const rows = perUserSummaryRows.map(({ name, totals: s }) => [
+			name,
+			s.totalWorkDays,
+			formatHours(s.totalHours),
+			formatHours(s.overtime),
+			settings?.leaveCalculationMode === 'hours'
+				? s.leaveHours.toFixed(1)
+				: `${s.leaveDays} (${s.leaveHours.toFixed(1)})`,
+			s.otherAbsences,
+		])
+		const wb = XLSX.utils.book_new()
+		const meta = [
+			[t('planslist.teamPerUserTitle')],
+			[`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`],
+			[],
+		]
+		const ws = XLSX.utils.aoa_to_sheet([...meta, th, ...rows])
+		ws['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }]
+		XLSX.utils.book_append_sheet(wb, ws, t('planslist.teamPerUserSheetName') || 'Wg osób')
+		XLSX.writeFile(wb, `${exportFileNameBasePerUser()}.xlsx`)
+	}
+
+	const handleExportPerUserPdf = () => {
+		if (perUserSummaryRows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
+		}
+		const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+		const margin = 12
+		let y = 14
+		const pageW = doc.internal.pageSize.getWidth()
+		doc.setFontSize(12)
+		doc.text(t('planslist.teamPerUserTitle'), margin, y)
+		y += 7
+		doc.setFontSize(9)
+		doc.setTextColor(80, 80, 80)
+		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y, { maxWidth: pageW - 2 * margin })
+		y += 10
+		doc.setTextColor(0, 0, 0)
+		const colW = [52, 22, 28, 28, 40, 24]
+		const headers = [
+			t('planslist.columnEmployee'),
+			t('planslist.teamColShortWorkDays'),
+			t('planslist.teamColShortHours'),
+			t('planslist.teamColShortOt'),
+			settings?.leaveCalculationMode === 'hours'
+				? t('planslist.teamColShortLeave')
+				: t('workcalendar.allfrommonth4'),
+			t('planslist.teamColShortOther'),
+		]
+		doc.setFontSize(8)
+		doc.setFont('helvetica', 'bold')
+		let x = margin
+		headers.forEach((h, i) => {
+			doc.text(doc.splitTextToSize(h, colW[i] - 2), x, y)
+			x += colW[i]
+		})
+		y += 6
+		doc.setFont('helvetica', 'normal')
+		const lineH = 5
+		perUserSummaryRows.forEach(({ name, totals: s }) => {
+			if (y > 185) {
+				doc.addPage()
+				y = 14
+			}
+			x = margin
+			const cells = [
+				name,
+				String(s.totalWorkDays),
+				formatHours(s.totalHours),
+				formatHours(s.overtime),
+				settings?.leaveCalculationMode === 'hours'
+					? s.leaveHours.toFixed(1)
+					: String(s.leaveDays),
+				String(s.otherAbsences),
+			]
+			cells.forEach((c, i) => {
+				doc.text(doc.splitTextToSize(String(c), colW[i] - 2), x, y)
+				x += colW[i]
+			})
+			y += lineH
+		})
+		doc.save(`${exportFileNameBasePerUser()}.pdf`)
+	}
 
 	// Funkcje do obsługi filtrowania
 	const handleToggleDepartment = (departmentName) => {
@@ -378,6 +845,7 @@ function AdminUserList() {
 	}
 
 	const goToSelectedDate = (month, year) => {
+		if (!calendarRef.current) return
 		const calendarApi = calendarRef.current.getApi()
 		calendarApi.gotoDate(new Date(year, month, 1))
 	}
@@ -391,6 +859,120 @@ function AdminUserList() {
 
 	const handleUserClick = userId => {
 		navigate(`/work-calendars/${userId}`)
+	}
+
+	const renderAllMonthsCalendars = () => {
+		return Array.from({ length: 12 }, (__, month) => (
+			<div
+				key={`${currentYear}-${month}`}
+				className="month-calendar allleaveplans all-leaveplans-all-months"
+				style={{
+					margin: '10px',
+					border: '1px solid #ddd',
+					borderRadius: '8px',
+					background: '#fff',
+				}}
+			>
+				<FullCalendar
+					plugins={[dayGridPlugin]}
+					initialView="dayGridMonth"
+					initialDate={new Date(currentYear, month, 1)}
+					locale={i18n.resolvedLanguage}
+					height="auto"
+					firstDay={1}
+					showNonCurrentDates={false}
+					headerToolbar={{
+						left: '',
+						center: 'title',
+						right: '',
+					}}
+					events={[
+						...formattedWorkdayEvents.filter((ev) => {
+							const d = new Date(ev.start)
+							return d.getMonth() === month && d.getFullYear() === currentYear
+						}),
+						...buildLeaveEventsForMonth(month, currentYear),
+						...holidaysForYear
+							.filter((holiday) => {
+								const holidayDate = new Date(holiday.date)
+								return holidayDate.getMonth() === month && holidayDate.getFullYear() === currentYear
+							})
+							.map((holiday) => ({
+								title: holiday.name,
+								start: holiday.date,
+								allDay: true,
+								backgroundColor: 'green',
+								borderColor: 'darkgreen',
+								textColor: 'white',
+								classNames: 'event-absence',
+								extendedProps: {
+									type: 'holiday',
+									holidayName: holiday.name,
+								},
+							})),
+					]}
+				/>
+			</div>
+		))
+	}
+
+	const renderSummaryBlock = (totals, { showHolidayLine = true } = {}) => {
+		if (!totals) return null
+		return (
+			<div
+				style={{
+					marginTop: '4px',
+					padding: '14px 16px',
+					backgroundColor: '#f8fafb',
+					border: '1px solid #e1e8ed',
+					borderRadius: '8px',
+					fontSize: '14px',
+					color: '#2c3e50',
+					lineHeight: 1.55,
+				}}
+			>
+				<p style={{ margin: '0 0 6px 0' }}>
+					{t('workcalendar.allfrommonth1')} <strong>{totals.totalWorkDays}</strong>
+				</p>
+				<p style={{ margin: '0 0 6px 0' }}>
+					{t('workcalendar.allfrommonth2')}{' '}
+					<strong>
+						{formatHours(totals.totalHours)} {t('workcalendar.allfrommonthhours')}
+					</strong>
+				</p>
+				<p style={{ margin: '0 0 6px 0' }}>
+					{t('workcalendar.allfrommonth3')}{' '}
+					<strong>
+						{formatHours(totals.overtime)} {getOvertimeWord(totals.overtime)}
+					</strong>
+				</p>
+				<p style={{ margin: '0 0 6px 0' }}>
+					{settings?.leaveCalculationMode === 'hours' ? (
+						<>
+							{t('workcalendar.allfrommonth4hours')}:{' '}
+							<strong>
+								{totals.leaveHours.toFixed(1)} {t('workcalendar.allfrommonthhours')}
+							</strong>
+						</>
+					) : (
+						<>
+							{t('workcalendar.allfrommonth4')}{' '}
+							<strong>
+								{totals.leaveDays} ({totals.leaveHours.toFixed(1)} {t('workcalendar.allfrommonthhours')})
+							</strong>
+						</>
+					)}
+				</p>
+				{showHolidayLine && totals.holidaysCount > 0 && (
+					<p style={{ margin: '0 0 6px 0' }}>
+						{t('workcalendar.allfrommonth6')} <strong>{totals.holidaysCount}</strong>
+					</p>
+				)}
+				<p style={{ margin: 0 }}>
+					{t('workcalendar.allfrommonth5')} <strong>{totals.otherAbsences}</strong>
+				</p>
+			</div>
+		)
 	}
 
 	return (
@@ -426,24 +1008,28 @@ function AdminUserList() {
 
 					{/* Kalendarz z ewidencjami */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
-						<select
-							value={currentMonth}
-							onChange={handleMonthSelect}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-							{Array.from({ length: 12 }, (_, i) => (
-								<option key={i} value={i}>
-									{new Date(0, i)
-										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-										.replace(/^./, str => str.toUpperCase())}
-								</option>
-							))}
-						</select>
+						{calendarView === 'single' && (
+							<select
+								value={currentMonth}
+								onChange={handleMonthSelect}
+								style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+								className="focus:outline-none focus:ring-2 focus:ring-blue-500"
+							>
+								{Array.from({ length: 12 }, (_, i) => (
+									<option key={i} value={i}>
+										{new Date(0, i)
+											.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+											.replace(/^./, (str) => str.toUpperCase())}
+									</option>
+								))}
+							</select>
+						)}
 						<select
 							value={currentYear}
 							onChange={handleYearSelect}
 							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+							className="focus:outline-none focus:ring-2 focus:ring-blue-500"
+						>
 							{Array.from({ length: 20 }, (_, i) => {
 								const year = new Date().getFullYear() - 10 + i
 								return (
@@ -453,47 +1039,71 @@ function AdminUserList() {
 								)
 							})}
 						</select>
-						<button
-							type="button"
-							onClick={handlePrevMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
-							}}
-							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
-							}}
-						>
-							&lt;
-						</button>
-						<button
-							type="button"
-							onClick={handleNextMonth}
-							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-							onMouseOver={(e) => {
-								e.target.style.backgroundColor = '#f8f9fa'
-								e.target.style.borderColor = '#adb5bd'
-							}}
-							onMouseOut={(e) => {
-								e.target.style.backgroundColor = 'white'
-								e.target.style.borderColor = '#bdc3c7'
-							}}
-						>
-							&gt;
-						</button>
+						{calendarView === 'single' && (
+							<>
+								<button
+									type="button"
+									onClick={handlePrevMonth}
+									style={{
+										padding: '8px 12px',
+										border: '1px solid #bdc3c7',
+										borderRadius: '6px',
+										backgroundColor: 'white',
+										cursor: 'pointer',
+										fontSize: '18px',
+										fontWeight: '600',
+										color: '#495057',
+										transition: 'all 0.2s ease',
+									}}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&lt;
+								</button>
+								<button
+									type="button"
+									onClick={handleNextMonth}
+									style={{
+										padding: '8px 12px',
+										border: '1px solid #bdc3c7',
+										borderRadius: '6px',
+										backgroundColor: 'white',
+										cursor: 'pointer',
+										fontSize: '18px',
+										fontWeight: '600',
+										color: '#495057',
+										transition: 'all 0.2s ease',
+									}}
+									onMouseOver={(e) => {
+										e.target.style.backgroundColor = '#f8f9fa'
+										e.target.style.borderColor = '#adb5bd'
+									}}
+									onMouseOut={(e) => {
+										e.target.style.backgroundColor = 'white'
+										e.target.style.borderColor = '#bdc3c7'
+									}}
+								>
+									&gt;
+								</button>
+							</>
+						)}
 						{canFilter && (
 							<button
 								type="button"
 								onClick={() => setFilterModalOpen(true)}
-								className='filter-button'
-								style={{ 
-									padding: '8px 12px', 
-									border: '1px solid #3498db', 
-									borderRadius: '6px', 
-									backgroundColor: '#3498db', 
-									cursor: 'pointer', 
+								className="filter-button"
+								style={{
+									padding: '8px 12px',
+									border: '1px solid #3498db',
+									borderRadius: '6px',
+									backgroundColor: '#3498db',
+									cursor: 'pointer',
 									display: 'flex',
 									alignItems: 'center',
 									justifyContent: 'center',
@@ -511,43 +1121,384 @@ function AdminUserList() {
 								}}
 								title={t('planslist.filter') || 'Filtrowanie'}
 							>
-								<img src="/img/filter.png" alt="Filtrowanie" style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)', pointerEvents: 'none' }} />
+								<img
+									src="/img/filter.png"
+									alt="Filtrowanie"
+									style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)', pointerEvents: 'none' }}
+								/>
 							</button>
 						)}
 					</div>
 
-					<div>
-						<FullCalendar
-							plugins={[dayGridPlugin]}
-							initialView="dayGridMonth"
-							initialDate={new Date()}
-							locale={i18n.resolvedLanguage}
-							height="auto"
-							firstDay={1}
-							showNonCurrentDates={false}
-							events={[
-								// Ewidencje wszystkich pracowników
-								...formattedWorkdayEvents,
-								// Zaakceptowane wnioski urlopowe
-								...acceptedLeaveRequestsForMonth,
-								// Dni świąteczne
-								...holidaysForMonth.map(holiday => ({
-									title: holiday.name,
-									start: holiday.date,
-									allDay: true,
-									backgroundColor: 'green',
-									borderColor: 'darkgreen',
-									textColor: 'white',
-									classNames: 'event-absence',
-									extendedProps: {
-										type: 'holiday',
-										holidayName: holiday.name
-									}
-								}))
-							]}
-							ref={calendarRef}
-							datesSet={handleMonthChange}
-						/>
+					{/* Widok kalendarza: u przełożonych bez modala filtrowania zostaje na stronie */}
+					{!canFilter && (
+						<div
+							style={{
+								marginTop: '12px',
+								marginBottom: '8px',
+								display: 'flex',
+								flexWrap: 'wrap',
+								gap: '10px',
+								alignItems: 'center',
+							}}
+						>
+							<span style={{ fontWeight: 600, color: '#2c3e50', marginRight: '4px' }}>
+								{t('planslist.calendarView') || 'Widok kalendarza'}:
+							</span>
+							<label
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									padding: '8px 12px',
+									borderRadius: '6px',
+									backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa',
+									border: '1px solid',
+									borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef',
+								}}
+							>
+								<input
+									type="radio"
+									name="adminCalViewNoModal"
+									checked={calendarView === 'single'}
+									onChange={() => setCalendarView('single')}
+									style={{ marginRight: '8px' }}
+								/>
+								{t('planslist.singleMonth') || 'Jeden miesiąc'}
+							</label>
+							<label
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									cursor: 'pointer',
+									padding: '8px 12px',
+									borderRadius: '6px',
+									backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa',
+									border: '1px solid',
+									borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef',
+								}}
+							>
+								<input
+									type="radio"
+									name="adminCalViewNoModal"
+									checked={calendarView === 'all-months'}
+									onChange={() => setCalendarView('all-months')}
+									style={{ marginRight: '8px' }}
+								/>
+								{t('planslist.allMonths') || 'Wszystkie miesiące'}
+							</label>
+						</div>
+					)}
+
+					{calendarView === 'single' ? (
+						<div>
+							<FullCalendar
+								plugins={[dayGridPlugin]}
+								initialView="dayGridMonth"
+								initialDate={new Date()}
+								locale={i18n.resolvedLanguage}
+								height="auto"
+								firstDay={1}
+								showNonCurrentDates={false}
+								events={[
+									...formattedWorkdayEvents,
+									...acceptedLeaveRequestsForMonth,
+									...holidaysForMonth.map((holiday) => ({
+										title: holiday.name,
+										start: holiday.date,
+										allDay: true,
+										backgroundColor: 'green',
+										borderColor: 'darkgreen',
+										textColor: 'white',
+										classNames: 'event-absence',
+										extendedProps: {
+											type: 'holiday',
+											holidayName: holiday.name,
+										},
+									})),
+								]}
+								ref={calendarRef}
+								datesSet={handleMonthChange}
+							/>
+						</div>
+					) : (
+						<div
+							className="all-months-calendar-container"
+							style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}
+						>
+							{renderAllMonthsCalendars()}
+						</div>
+					)}
+
+					<div style={{ marginTop: '28px', padding: '0 4px' }}>
+						<div
+							style={{
+								display: 'flex',
+								flexWrap: 'wrap',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								gap: '10px',
+								marginBottom: '12px',
+							}}
+						>
+							<h4 style={{ color: '#2c3e50', fontSize: '18px', fontWeight: 600, margin: 0 }}>
+								{t('planslist.teamSummaryTitle')}
+							</h4>
+							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+								<button
+									type="button"
+									onClick={handleExportSummaryExcel}
+									style={{
+										padding: '8px 14px',
+										fontSize: '13px',
+										fontWeight: 600,
+										borderRadius: '8px',
+										border: '1px solid #1e7e34',
+										backgroundColor: '#28a745',
+										color: '#fff',
+										cursor: 'pointer',
+									}}
+								>
+									{t('planslist.exportExcel')}
+								</button>
+								<button
+									type="button"
+									onClick={handleExportSummaryPdf}
+									style={{
+										padding: '8px 14px',
+										fontSize: '13px',
+										fontWeight: 600,
+										borderRadius: '8px',
+										border: '1px solid #c82333',
+										backgroundColor: '#dc3545',
+										color: '#fff',
+										cursor: 'pointer',
+									}}
+								>
+									{t('planslist.exportPdf')}
+								</button>
+							</div>
+						</div>
+						<p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#6c757d' }}>
+							{t('planslist.exportPeriod')}: <strong>{exportPeriodLabel}</strong>
+						</p>
+						{calendarView === 'single' && teamSummaryCurrentMonth && renderSummaryBlock(teamSummaryCurrentMonth)}
+						{calendarView === 'all-months' && teamYearBreakdown.yearTotals && (
+							<>
+								<p style={{ margin: '0 0 10px 0', fontSize: '15px', fontWeight: 600, color: '#2c3e50' }}>
+									{t('planslist.teamYearTotalsIntro', { year: currentYear })}
+								</p>
+								{renderSummaryBlock(teamYearBreakdown.yearTotals)}
+								<h5 style={{ margin: '20px 0 10px 0', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
+									{t('planslist.teamMonthlyTableTitle')}
+								</h5>
+								<div style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }}>
+									<table
+										style={{
+											width: '100%',
+											borderCollapse: 'collapse',
+											fontSize: '13px',
+											minWidth: '640px',
+										}}
+									>
+										<thead>
+											<tr style={{ backgroundColor: '#f4f6f8', borderBottom: '2px solid #dee2e6' }}>
+												<th style={{ textAlign: 'left', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.monthlabel')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth1')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth2')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth3')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{settings?.leaveCalculationMode === 'hours'
+														? t('workcalendar.allfrommonth4hours')
+														: t('workcalendar.allfrommonth4')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth5')}
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											{teamYearBreakdown.months.map((m, idx) => (
+												<tr key={idx} style={{ borderBottom: '1px solid #eef2f5' }}>
+													<td style={{ padding: '8px 10px' }}>
+														{new Date(currentYear, idx)
+															.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+															.replace(/^./, (c) => c.toUpperCase())}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>{m.totalWorkDays}</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{formatHours(m.totalHours)} {t('workcalendar.allfrommonthhours')}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{formatHours(m.overtime)} {getOvertimeWord(m.overtime)}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{settings?.leaveCalculationMode === 'hours'
+															? `${m.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+															: `${m.leaveDays} (${m.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>{m.otherAbsences}</td>
+												</tr>
+											))}
+											{teamYearBreakdown.yearTotals && (
+												<tr style={{ backgroundColor: '#f0f4f8', fontWeight: 700, borderTop: '2px solid #dee2e6' }}>
+													<td style={{ padding: '10px' }}>{t('planslist.teamTableTotal')}</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{teamYearBreakdown.yearTotals.totalWorkDays}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{formatHours(teamYearBreakdown.yearTotals.totalHours)} {t('workcalendar.allfrommonthhours')}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{formatHours(teamYearBreakdown.yearTotals.overtime)}{' '}
+														{getOvertimeWord(teamYearBreakdown.yearTotals.overtime)}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{settings?.leaveCalculationMode === 'hours'
+															? `${teamYearBreakdown.yearTotals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+															: `${teamYearBreakdown.yearTotals.leaveDays} (${teamYearBreakdown.yearTotals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{teamYearBreakdown.yearTotals.otherAbsences}
+													</td>
+												</tr>
+											)}
+										</tbody>
+									</table>
+								</div>
+							</>
+						)}
+
+						{perUserSummaryRows.length > 0 && (
+							<>
+								<div
+									style={{
+										display: 'flex',
+										flexWrap: 'wrap',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										gap: '10px',
+										marginTop: '28px',
+										marginBottom: '12px',
+										paddingTop: '20px',
+										borderTop: '1px solid #e1e8ed',
+									}}
+								>
+									<div>
+										<h5 style={{ margin: 0, color: '#2c3e50', fontSize: '16px', fontWeight: 600 }}>
+											{t('planslist.teamPerUserTitle')}
+										</h5>
+										<p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#6c757d' }}>
+											{t('planslist.teamPerUserSubtitle')}
+										</p>
+									</div>
+									<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+										<button
+											type="button"
+											onClick={handleExportPerUserExcel}
+											style={{
+												padding: '8px 14px',
+												fontSize: '13px',
+												fontWeight: 600,
+												borderRadius: '8px',
+												border: '1px solid #117a4a',
+												backgroundColor: '#20c997',
+												color: '#fff',
+												cursor: 'pointer',
+											}}
+										>
+											{t('planslist.exportExcelPerUser')}
+										</button>
+										<button
+											type="button"
+											onClick={handleExportPerUserPdf}
+											style={{
+												padding: '8px 14px',
+												fontSize: '13px',
+												fontWeight: 600,
+												borderRadius: '8px',
+												border: '1px solid #a71d2a',
+												backgroundColor: '#e35d6a',
+												color: '#fff',
+												cursor: 'pointer',
+											}}
+										>
+											{t('planslist.exportPdfPerUser')}
+										</button>
+									</div>
+								</div>
+								<div
+									style={{
+										overflowX: 'auto',
+										border: '1px solid #e1e8ed',
+										borderRadius: '8px',
+										backgroundColor: '#fff',
+									}}
+								>
+									<table
+										style={{
+											width: '100%',
+											borderCollapse: 'collapse',
+											fontSize: '13px',
+											minWidth: '720px',
+										}}
+									>
+										<thead>
+											<tr style={{ backgroundColor: '#f4f6f8', borderBottom: '2px solid #dee2e6' }}>
+												<th style={{ textAlign: 'left', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('planslist.columnEmployee')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth1')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth2')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth3')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{settings?.leaveCalculationMode === 'hours'
+														? t('workcalendar.allfrommonth4hours')
+														: t('workcalendar.allfrommonth4')}
+												</th>
+												<th style={{ textAlign: 'right', padding: '8px 10px', color: '#2c3e50' }}>
+													{t('workcalendar.allfrommonth5')}
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											{perUserSummaryRows.map((row) => (
+												<tr key={row.userId} style={{ borderBottom: '1px solid #eef2f5' }}>
+													<td style={{ padding: '8px 10px' }}>{row.name}</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>{row.totals.totalWorkDays}</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{formatHours(row.totals.totalHours)} {t('workcalendar.allfrommonthhours')}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{formatHours(row.totals.overtime)} {getOvertimeWord(row.totals.overtime)}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
+														{settings?.leaveCalculationMode === 'hours'
+															? `${row.totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+															: `${row.totals.leaveDays} (${row.totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`}
+													</td>
+													<td style={{ padding: '8px 10px', textAlign: 'right' }}>{row.totals.otherAbsences}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</>
+						)}
 					</div>
 
 					{/* Modal filtrowania - tylko dla Admin i HR */}
@@ -606,6 +1557,58 @@ function AdminUserList() {
 									onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
 									×
 								</button>
+							</div>
+
+							<div style={{ marginBottom: '20px' }}>
+								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+									{t('planslist.calendarView') || 'Widok kalendarza'}
+								</h3>
+								<div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+									<label
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											padding: '8px 12px',
+											borderRadius: '6px',
+											backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa',
+											border: '1px solid',
+											borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef',
+										}}
+									>
+										<input
+											type="radio"
+											name="calendarView"
+											value="single"
+											checked={calendarView === 'single'}
+											onChange={(e) => setCalendarView(e.target.value)}
+											style={{ marginRight: '8px', cursor: 'pointer' }}
+										/>
+										<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
+									</label>
+									<label
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											padding: '8px 12px',
+											borderRadius: '6px',
+											backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa',
+											border: '1px solid',
+											borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef',
+										}}
+									>
+										<input
+											type="radio"
+											name="calendarView"
+											value="all-months"
+											checked={calendarView === 'all-months'}
+											onChange={(e) => setCalendarView(e.target.value)}
+											style={{ marginRight: '8px', cursor: 'pointer' }}
+										/>
+										<span>{t('planslist.allMonths') || 'Wszystkie miesiące'}</span>
+									</label>
+								</div>
 							</div>
 
 							{/* Filtrowanie użytkowników */}

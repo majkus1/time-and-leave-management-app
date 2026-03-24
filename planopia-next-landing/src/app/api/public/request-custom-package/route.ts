@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     await transporter.sendMail({
       from: `"Planopia" <${emailUser}>`,
-      to: 'michalipka1@gmail.com',
+      to: 'office@ml-devworks.com',
       subject: `Nowe zgłoszenie pakietu niestandardowego: ${data.packageType}`,
       html: htmlContent,
     })

@@ -56,10 +56,10 @@ function BlogSeven() {
 						"mainEntity": [
 							{
 								"@type": "Question",
-								"name": "Czy Planopia jest darmowa?",
+								"name": "Jak działa okres próbny w Planopii?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Tak, Planopia oferuje darmową wersję dla zespołów do 4 użytkowników. Wszystkie funkcje są dostępne bez opłat. Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników."
+									"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje aplikacji, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby wybierasz płatny plan dopasowany do wielkości zespołu."
 								}
 							},
 							{
@@ -139,7 +139,7 @@ function BlogSeven() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/comprehensive-company-management-app" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -160,11 +160,6 @@ function BlogSeven() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -195,14 +190,15 @@ function BlogSeven() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										<strong>Darmowa aplikacja</strong>  
-										{' '}dla zespołów do 4 użytkowników
+										<strong>30 dni za darmo</strong>
+										{' '}
+										— pełne funkcje, do 5 użytkowników (pierwszy miesiąc)
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Załóż darmowy zespół
+										Rozpocznij okres próbny
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -312,7 +308,7 @@ function BlogSeven() {
 					<strong>Planopia</strong> sprawdza się zarówno w małych zespołach, jak i w większych firmach:
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
-					<li><strong>Małe zespoły</strong> – darmowa wersja dla do 4 użytkowników, wszystkie funkcje dostępne</li>
+					<li><strong>Małe zespoły</strong> – okres próbny 30 dni, do 5 użytkowników, pełne funkcje</li>
 					<li><strong>Średnie firmy</strong> – nielimitowana liczba użytkowników, elastyczna konfiguracja</li>
 					<li><strong>Duże organizacje</strong> – możliwość personalizacji, integracji i dedykowanego środowiska</li>
 					<li><strong>HR i menedżerowie</strong> – kompleksowe narzędzie do zarządzania zespołem</li>
@@ -341,12 +337,12 @@ function BlogSeven() {
 					swojej firmy. Wszystko w jednym miejscu, dla całego zespołu.
 				</p>
 				<p className="mb-4 text-gray-700">
-					Wypróbuj <strong>Planopię</strong> za darmo dla zespołów do 4 użytkowników i zobacz, 
+					Wypróbuj <strong>Planopię</strong> przez pierwszy miesiąc za darmo (do 5 użytkowników) i zobacz,
 					jak kompleksowe narzędzie może usprawnić zarządzanie Twoją firmą.
 				</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">załóż darmowy zespół i zacznij zarządzać firmą w jednym miejscu</Link>.
+						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny i zacznij zarządzać firmą w jednym miejscu</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -354,10 +350,11 @@ function BlogSeven() {
 						<h2 className="text-2xl font-semibold mb-6">Najczęściej zadawane pytania</h2>
 						<div className="space-y-6">
 							<div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-2">Czy Planopia jest darmowa?</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-2">Jak działa okres próbny?</h3>
 								<p className="text-gray-700">
-									Tak, Planopia oferuje darmową wersję dla zespołów do 4 użytkowników. Wszystkie funkcje są dostępne bez opłat. 
-									Dla większych firm dostępne są plany płatne z nielimitowaną liczbą użytkowników, elastycznymi funkcjami i integracjami.
+									Przez 30 dni (pierwszy miesiąc) korzystasz z pełnych funkcji za darmo w zespole do 5 użytkowników, z limitem wiadomości Asystenta AI w tym czasie.
+									Potem wybierasz płatny plan dopasowany do wielkości zespołu — szczegóły w{' '}
+									<Link href="/#cennik" className="text-blue-600 hover:underline">cenniku</Link>.
 								</p>
 							</div>
 							<div>

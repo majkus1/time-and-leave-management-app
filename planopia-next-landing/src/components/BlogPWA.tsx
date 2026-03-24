@@ -82,7 +82,7 @@ function BlogPWA() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/how-to-install-planopia-as-pwa" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,11 +103,6 @@ function BlogPWA() {
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -209,7 +204,7 @@ function BlogPWA() {
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Zacznij korzystać z Planopii już dziś!</h3>
 					<p className="mb-4 text-gray-700">
 						Planopia to kompleksowa aplikacja do zarządzania czasem pracy, urlopami i zespołem. 
-						Darmowa wersja dla zespołów do 4 użytkowników!
+						Pierwszy miesiąc za darmo — do 5 użytkowników, pełne funkcje!
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link
@@ -217,7 +212,7 @@ function BlogPWA() {
 							className="bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition whitespace-nowrap"
 							style={{ color: 'white' }}
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link
 							href="/#cennik"

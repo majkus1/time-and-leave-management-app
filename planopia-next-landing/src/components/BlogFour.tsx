@@ -34,7 +34,7 @@ function BlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Odkryj Planopię - darmową aplikację do ewidencji czasu pracy i zarządzania urlopami dla zespołów do 4 osób. Pełna funkcjonalność bez opłat.",
+						"description": "Planopia: 30 dni za darmo — pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i urlopy; potem proste plany płatne.",
 						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
@@ -83,7 +83,7 @@ function BlogFour() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Załóż darmowy zespół
+							Rozpocznij okres próbny
 						</Link>
 						<Link href="/en/blog/free-time-tracking-app" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -104,11 +104,6 @@ function BlogFour() {
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
 				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
-				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -124,18 +119,18 @@ function BlogFour() {
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
-								Darmowa aplikacja do ewidencji czasu pracy i urlopów
+								Ewidencja czasu pracy i urlopy — pierwszy miesiąc za darmo
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
-								Odkryj Planopię - kompletną, darmową aplikację do ewidencji czasu pracy i zarządzania urlopami. 
-								Pełna funkcjonalność dla zespołów do 4 osób bez żadnych opłat.
+								30 dni za darmo: pełne funkcje aplikacji, do 5 użytkowników (limit wiadomości Asystenta AI w tym okresie).
+								Potem wybierasz plan dopasowany do zespołu — bez zobowiązań w okresie próbnym.
 							</p>
 							<div className="text-center">
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 								>
-									Załóż darmowy zespół już dziś
+									Rozpocznij okres próbny już dziś
 								</Link>
 							</div>
 						</div>
@@ -150,34 +145,35 @@ function BlogFour() {
 					{/* Introduction */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Dlaczego potrzebujesz darmowej aplikacji do ewidencji czasu pracy?
+							Dlaczego warto wybrać aplikację do ewidencji czasu pracy z okresem próbnym?
 						</h2>
 						<p className="text-lg text-gray-700 mb-4">
 							Ewidencja czasu pracy to obowiązek każdej firmy, ale tradycyjne metody często są nieefektywne i czasochłonne. 
 							Excel, papierowe listy obecności czy podstawowe systemy HR generują błędy i pochłaniają cenne godziny pracy.
 						</p>
 						<p className="text-lg text-gray-700 mb-6">
-							<strong>Planopia to darmowa aplikacja do ewidencji czasu pracy</strong>, która rozwiązuje wszystkie te problemy. 
-							Oferuje pełną funkcjonalność bez ukrytych opłat, bez ograniczeń czasowych i bez konieczności podpisywania umów.
+							<strong>Planopia</strong> rozwiązuje te problemy w modelu jasnym:{' '}
+							<strong>30 dni za darmo</strong> dla do 5 użytkowników, pełne funkcje, bez karty płatniczej w okresie próbnym.
 						</p>
 					</div>
 
 					{/* What is Planopia */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Czym jest Planopia - darmowa aplikacja do ewidencji czasu pracy?
+							Czym jest Planopia — aplikacja do ewidencji czasu pracy i urlopów?
 						</h2>
 						<p className="text-lg text-gray-700 mb-4">
-							Planopia to nowoczesna, <strong>darmowa aplikacja do ewidencji czasu pracy i urlopów</strong>, 
-							zaprojektowana z myślą o małych i średnich firmach. Aplikacja działa w przeglądarce internetowej, 
+							Planopia to nowoczesna <strong>aplikacja do ewidencji czasu pracy i urlopów</strong>,
+							zaprojektowana z myślą o małych i średnich firmach. Aplikacja działa w przeglądarce internetowej,
 							więc nie wymaga instalacji oprogramowania na komputerach pracowników.
 						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
-								✅ Darmowa aplikacja do ewidencji czasu pracy dla zespołów do 4 osób
+								✅ Pierwszy miesiąc za darmo — do 5 użytkowników, pełna funkcjonalność
 							</p>
 							<p className="text-blue-700 mt-2">
-								Bez ukrytych opłat, bez okresów próbnych, bez konieczności podawania danych karty kredytowej.
+								30 dni pełnego dostępu bez karty płatniczej i bez zobowiązania — potem wybierasz plan w{' '}
+								<Link href="/#cennik" className="underline font-medium">cenniku</Link>.
 							</p>
 						</div>
 					</div>
@@ -237,7 +233,7 @@ function BlogFour() {
 								<thead>
 									<tr className="bg-gray-100">
 										<th className="border border-gray-300 p-4 text-left">Funkcja</th>
-										<th className="border border-gray-300 p-4 text-center">Planopia (DARMOWA)</th>
+										<th className="border border-gray-300 p-4 text-center">Planopia (30 dni za darmo)</th>
 										<th className="border border-gray-300 p-4 text-center">Konkurencja</th>
 									</tr>
 								</thead>
@@ -275,14 +271,14 @@ function BlogFour() {
 					{/* How to start */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Jak zacząć korzystać z darmowej aplikacji do ewidencji czasu pracy?
+							Jak zacząć korzystać z Planopii (30 dni za darmo)?
 						</h2>
 						<div className="grid md:grid-cols-3 gap-6">
 							<div className="text-center p-6 bg-green-50 rounded-lg">
 								<div className="text-4xl font-bold text-green-600 mb-2">1</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Załóż zespół</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Rozpocznij okres próbny</h3>
 								<p className="text-gray-700">
-									Kliknij &quot;Załóż darmowy zespół&quot; i wypełnij podstawowe informacje o firmie.
+									Kliknij &quot;Rozpocznij okres próbny&quot; i wypełnij podstawowe informacje o firmie.
 								</p>
 							</div>
 							<div className="text-center p-6 bg-blue-50 rounded-lg">
@@ -310,20 +306,20 @@ function BlogFour() {
 						<div className="space-y-6">
 							<div className="bg-gray-50 p-6 rounded-lg">
 								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Czy Planopia jest naprawdę darmowa?
+									Czy jest okres próbny?
 								</h3>
 								<p className="text-gray-700">
-									Tak! Planopia oferuje pełną funkcjonalność dla zespołów do 4 osób bez żadnych opłat. 
-									Nie ma ukrytych kosztów, okresów próbnych ani konieczności podawania danych karty kredytowej.
+									Tak. Przez 30 dni masz pełne funkcje za darmo w zespole do 5 użytkowników (limit wiadomości Asystenta AI w tym czasie).
+									Bez karty płatniczej i bez zobowiązania — zobacz <Link href="/#cennik" className="text-blue-600 hover:underline">cennik</Link>.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
 								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Jak długo mogę korzystać z darmowej wersji?
+									Jak długo trwa darmowy okres?
 								</h3>
 								<p className="text-gray-700">
-									Bez ograniczeń czasowych! Darmowa aplikacja do ewidencji czasu pracy Planopia 
-									jest dostępna na zawsze dla zespołów do 4 osób.
+									<strong>30 dni</strong> — pierwszy miesiąc z pełnymi funkcjami dla do 5 użytkowników.
+									Po tym czasie przechodzisz na wybrany plan płatny lub kończysz korzystanie z usługi.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -359,7 +355,7 @@ function BlogFour() {
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Załóż darmowy zespół już dziś
+							Rozpocznij okres próbny już dziś
 						</Link>
 					</div>
 				</div>

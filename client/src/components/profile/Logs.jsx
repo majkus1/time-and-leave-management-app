@@ -87,8 +87,9 @@ function Logs() {
 	// Pobierz działy dla sekcji na górze (zawsze dla własnego zespołu)
 	const { data: globalDepartments = [], refetch: refetchGlobalDepartments } = useDepartments(teamId)
 	
-	// Pobierz nazwę zespołu - dla super admina z pierwszego użytkownika (jeśli widzi wszystkich), dla zwykłego admina z pierwszego użytkownika
-	const teamName = users.length > 0 && users[0].teamName ? users[0].teamName : null
+	// Nazwa zespołu widzącego: viewerTeamName (API) lub teamName wiersza — po zmianach API zawsze dla własnego zespołu admina
+	const displayTeamName =
+		users.length > 0 ? users[0].viewerTeamName ?? users[0].teamName ?? null : null
 	const updateUserRolesMutation = useUpdateUserRoles()
 	const deleteUserMutation = useDeleteUser()
 	const createDepartmentMutation = useCreateDepartment()
@@ -532,10 +533,12 @@ function Logs() {
 						fontWeight: '600',
 						textAlign: 'left'
 					}}>
-						<img src="img/contact-list.png" alt="ikonka w sidebar" />{t('logs.title')}{teamName ? `: ${teamName}` : ''}
+						<img src="img/contact-list.png" alt="ikonka w sidebar" />
+						{t('logs.title')}
+						{displayTeamName ? `: ${displayTeamName}` : ''}
 					</h2>
 					<hr />
-					{isSuperAdmin && !teamName && (
+					{isSuperAdmin && (
 						<p style={{ 
 							color: '#7f8c8d', 
 							fontSize: '16px',

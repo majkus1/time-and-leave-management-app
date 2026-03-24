@@ -10,16 +10,14 @@ import { registerLocale } from 'react-datepicker'
 import { pl } from 'date-fns/locale/pl'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
-import PackageRequestModal from './PackageRequestModal'
-import CustomPackageModal from './CustomPackageModal'
+import LandingPricing from './LandingPricing'
+import LandingAIHighlight from './LandingAIHighlight'
+import SellerCompanyDetails from './SellerCompanyDetails'
 
 function ProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [buttonState, setButtonState] = useState(false) // Separate state for button (changes immediately)
-	const [legalDropdownOpen, setLegalDropdownOpen] = useState(false)
-	const [packageModalOpen, setPackageModalOpen] = useState(false)
-	const [selectedPackage, setSelectedPackage] = useState<'monthly' | 'yearly'>('monthly')
-	const [customPackageModalOpen, setCustomPackageModalOpen] = useState(false)
+
 	const menuCloseHandlerRef = useRef<(() => void) | null>(null)
 	
 	const toggleMenu = () => {
@@ -118,13 +116,14 @@ function ProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Kompleksowa aplikacja do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Darmowa dla zespołów do 4 użytkowników. Plany płatne oferują nielimitowaną liczbę użytkowników, elastyczne funkcje i integracje.",
+						"description": "Planopia — ewidencja czasu pracy, urlopy, grafiki, czaty, tablice Kanban i Asystent AI. 30 dni za darmo: pełne funkcje, do 5 użytkowników, limit wiadomości AI w tym okresie. Płatne pakiety miesięczne (Starter, Pro, Business, Enterprise) z limitami użytkowników i Asystenta AI.",
 						"offers": {
-							"@type": "Offer",
-							"price": "0",
+							"@type": "AggregateOffer",
+							"offerCount": "5",
+							"lowPrice": "99",
+							"highPrice": "799",
 							"priceCurrency": "PLN",
-							"category": "Free",
-							"description": "Darmowy plan dla zespołów do 4 użytkowników"
+							"description": "30 dni za darmo na start; pakiety od 99 do 799 PLN netto miesięcznie; dodatki AI opcjonalnie po aktywnym pakiecie płatnym"
 						}
 					})
 				}}
@@ -140,11 +139,16 @@ function ProductPromotion() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
-					<nav className="hidden lg:flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<a
 							href="#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							O Aplikacji
+						</a>
+						<a
+							href="#asystent-ai"
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							Asystent AI
 						</a>
 						<a
 							href="#cennik"
@@ -161,38 +165,6 @@ function ProductPromotion() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
-						{/* Dropdown Regulaminy */}
-						<div 
-							className="relative"
-							onMouseEnter={() => setLegalDropdownOpen(true)}
-							onMouseLeave={() => setLegalDropdownOpen(false)}
-						>
-							<button className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition flex items-center">
-								Regulaminy
-								<svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-								</svg>
-							</button>
-							{legalDropdownOpen && (
-								<div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-2 z-50">
-									<Link
-										href="/terms"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Regulamin
-									</Link>
-									<Link
-										href="/privacy"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Polityka prywatności
-									</Link>
-									<Link
-										href="/dpa"
-										className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition">
-										Umowa DPA
-									</Link>
-								</div>
-							)}
-						</div>
 						<Link
   href="https://app.planopia.pl/"
   onClick={toggleMenu}
@@ -202,11 +174,11 @@ function ProductPromotion() {
 </Link>
 
 <Link
-  href="https://app.planopia.pl/team-registration" // <- tutaj raczej kierujesz na rejestrację zespołu
+  href="https://app.planopia.pl/team-registration"
   onClick={toggleMenu}
   className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 >
-  Załóż darmowy zespół
+  Rozpocznij — 30 dni za darmo
 </Link>
 
 						<Link href="/en" className="flex items-center languagechoose">
@@ -226,14 +198,10 @@ function ProductPromotion() {
 				lang="pl"
 				menuItems={[
 					{ href: '#oaplikacji', label: 'O Aplikacji' },
+					{ href: '#asystent-ai', label: 'Asystent AI' },
 					{ href: '#cennik', label: 'Cennik' },
 					{ href: '#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },
-				]}
-				legalItems={[
-					{ href: '/terms', label: 'Regulamin' },
-					{ href: '/privacy', label: 'Polityka prywatności' },
-					{ href: '/dpa', label: 'Umowa DPA' },
 				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
@@ -251,15 +219,15 @@ function ProductPromotion() {
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-							Ewidencja czasu pracy i urlopów – darmowa aplikacja do 4 użytkowników
-							</h1>{' '}
-							<h2 className="font-semibold text-gray-800" id="underheader">
-							Planopia pomaga zespołom i firmom uporządkować czas pracy i urlopy.
+								Ewidencja czasu pracy i urlopów z AI – 30 dni za darmo
+							</h1>
+							<h2 className="font-semibold text-gray-800 mt-2" id="underheader">
+								Planopia pomaga zespołom i firmom uporządkować czas pracy, urlopy i zadania.
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
 								className="bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-2">
-								Załóż darmowy zespół
+								Rozpocznij — 30 dni za darmo
 							</Link>
 						</div>
 						<img
@@ -275,7 +243,7 @@ function ProductPromotion() {
 				</div>
 			</section>
 
-			<section id="oaplikacji" className="py-16 bg-white px-4">
+			<section id="oaplikacji" className="py-12 bg-white px-4">
   <div className="max-w-7xl mx-auto">
     <div className="grid lg:grid-cols-2 gap-10 items-center">
       {/* Tekst */}
@@ -284,7 +252,7 @@ function ProductPromotion() {
           Kompleksowa aplikacja do zarządzania firmą
         </h2>
         <p className="mt-4 text-lg text-gray-600">
-          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
+          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań oraz Asystent AI — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
         </p>
 
         {/* Feature grid */}
@@ -327,7 +295,7 @@ function ProductPromotion() {
 		  <img src="/img/project.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
 			<p className="font-semibold text-gray-900">Grafik pracy</p>
-<p className="text-sm text-gray-600">Planowanie i zarządzanie grafikami pracy dla całego zespołu.</p>
+<p className="text-sm text-gray-600">Planowanie i zarządzanie grafikami pracy dla całego zespołu, z szybkim automatycznym wypełnianiem grafiku.</p>
             </div>
           </div>
           {/* 5 */}
@@ -360,7 +328,7 @@ function ProductPromotion() {
 		  <img src="/img/booking.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
               <p className="font-semibold text-gray-900">PWA i mobile</p>
-              <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak appki.</p>
+              <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak appki — z powiadomieniami push o ważnych zdarzeniach.</p>
             </div>
 
           </div>
@@ -375,18 +343,19 @@ function ProductPromotion() {
         </div>
 
         <div className="mt-8">
-          <p className="text-gray-700 text-lg mb-4">
-            Potrzebujesz więcej funkcji, własnych integracji lub osobnego środowiska dla firmy? Masz wielu pracowników?
+          <p className="text-gray-700 text-lg leading-relaxed">
+            Potrzebujesz więcej funkcji, własnych integracji lub osobnego środowiska dla firmy? Masz wielu pracowników?{' '}
+            <span className="text-gray-600">
+              Zestawienie pakietów i limitów znajdziesz w sekcji{' '}
+              <Link
+                href="#cennik"
+                className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
+              >
+                Cennik
+              </Link>{' '}
+              niżej na stronie.
+            </span>
           </p>
-          <a
-            href="#cennik"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-[1.02] pricing-button-text"
-          >
-            Zobacz cennik
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
         </div>
 
       </div>
@@ -420,13 +389,15 @@ function ProductPromotion() {
   </div>
 </section>
 
+<LandingAIHighlight locale="pl" />
 
-<section id="dlakogo" className="py-16 bg-gray-50 px-4 for">
+
+<section id="dlakogo" className="py-12 bg-gray-50 px-4 for">
   <div className="max-w-7xl mx-auto">
     <div className="mb-10">
       <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900">Dla kogo jest Planopia?</h3>
       <p className="mt-3 text-lg text-gray-600">
-        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Wybierz sposób pracy, a my uprościmy resztę.
+        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję, urlopy, grafiki i raporty, z Asystentem AI w ramach limitów wybranego pakietu.
       </p>
     </div>
 
@@ -438,7 +409,7 @@ function ProductPromotion() {
           <p className="font-semibold text-gray-900">Małe zespoły</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. <span className="font-semibold text-green-700">Do 4 użytkowników za darmo.</span>
+          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. Jasne role i uprawnienia — bez zbędnej złożoności.
         </p>
       </div>
 
@@ -460,196 +431,21 @@ function ProductPromotion() {
           <p className="font-semibold text-gray-900">HR i menedżerowie</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Sprawna obsługa wniosków, powiadomienia e-mail i komplet dokumentów do kontroli i rozliczeń.
+          Sprawna obsługa wniosków, powiadomienia e-mail i push oraz komplet dokumentów do kontroli i rozliczeń.
         </p>
       </div>
     </div>
-	
-	<Link
-								href="https://app.planopia.pl/team-registration"
-								className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition mt-4 for">
-								Załóż darmowy zespół
-							</Link>
   </div>
 </section>
 
 
-{/* CENNIK */}
-<section id="cennik" className="py-16 px-4">
-  <div className="max-w-7xl mx-auto text-center">
-    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Cennik</h2>
+<LandingPricing locale="pl" />
 
-    <p className="mt-3 text-gray-600 text-left">
-      Płatność naliczana jest za każdego użytkownika. Aplikacja do 4 użytkowników jest darmowa — powyżej tego limitu płacisz za wszystkich aktywnych użytkowników.
-    </p>
-
-    {/* Karty planów */}
-    <div className="grid gap-6 md:grid-cols-2 mt-10">
-      {/* Pakiet miesięczny */}
-      <div className="relative bg-gradient-to-br from-green-50 via-white to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300 p-8 rounded-2xl border border-green-100 overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-green-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-        <div className="relative">
-          <h3 className="text-2xl font-semibold mb-4 text-gray-900">Pakiet miesięczny</h3>
-          <div className="mb-4">
-            <p className="text-4xl font-bold text-green-600">
-              18&nbsp;zł <span className="text-lg font-normal text-gray-600">netto</span>
-            </p>
-            <p className="text-sm text-gray-600 mt-1">za użytkownika / miesiąc</p>
-            <p className="text-xs text-gray-500 mt-2">Cena za wszystkie funkcje w aplikacji</p>
-          </div>
-          <p className="text-gray-700 mb-8 leading-relaxed">Płatność co miesiąc, możesz zrezygnować w każdej chwili.</p>
-          <button
-            onClick={() => {
-              setSelectedPackage('monthly')
-              setPackageModalOpen(true)
-            }}
-            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-[1.02]"
-          >
-            Wybieram pakiet miesięczny
-          </button>
-        </div>
-      </div>
-
-      {/* Pakiet roczny */}
-      <div className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300 p-8 rounded-2xl border border-blue-100 overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-        <div className="relative">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-semibold text-gray-900">Pakiet roczny</h3>
-            <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">OSZCZĘDNOŚĆ</span>
-          </div>
-          <div className="mb-4">
-            <p className="text-4xl font-bold text-blue-600">
-              180&nbsp;zł <span className="text-lg font-normal text-gray-600">netto</span>
-            </p>
-            <p className="text-sm text-gray-600 mt-1">za użytkownika / rok</p>
-            <p className="text-xs text-gray-500 mt-2">Cena za wszystkie funkcje w aplikacji</p>
-          </div>
-          <p className="text-gray-700 mb-8 leading-relaxed">Oszczędność przy płatności rocznej — płacisz jak za 10 miesięcy.</p>
-          <button
-            onClick={() => {
-              setSelectedPackage('yearly')
-              setPackageModalOpen(true)
-            }}
-            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-[1.02]"
-          >
-            Wybieram pakiet roczny
-          </button>
-        </div>
-      </div>
-    </div>
-
-    {/* Pakiet niestandardowy */}
-    <div className="mt-8">
-      <div className="relative bg-gradient-to-br from-purple-50 via-blue-50 to-purple-50/50 rounded-2xl p-8 border border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden text-left">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-purple-200/20 rounded-full -mr-20 -mt-20 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-200/20 rounded-full -ml-16 -mb-16 blur-2xl"></div>
-        <div className="relative">
-          <div className="flex items-start gap-4 mb-4">
-            
-            <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Potrzebujesz tylko wybranych funkcji?</h3>
-              <p className="text-gray-700 mb-2 leading-relaxed">
-                Jesteśmy elastyczni! Wybierz tylko te funkcje, których potrzebujesz, a my dopasujemy cenę do Twoich potrzeb.
-              </p>
-              <p className="text-gray-600 mb-6 text-sm">
-                Minimalna cena od <span className="font-semibold text-purple-600">11 zł za użytkownika</span> przy wyborze podstawowych funkcji.
-              </p>
-              <button
-                onClick={() => setCustomPackageModalOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-[1.02]"
-              >
-                Stwórz pakiet niestandardowy
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Co zyskujesz ponad wersję FREE */}
-    <div className="mt-14">
-      <h3 className="text-2xl font-bold text-gray-900">Co zyskujesz w planach płatnych?</h3>
-      <p className="mt-2 text-gray-600">
-        Wszystkie funkcje aplikacji + elastyczność i wsparcie dopasowane do firmy.
-      </p>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8 text-left">
-        {/* Więcej użytkowników */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/add-user.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Nielimitowana liczba użytkowników</p>
-            <p className="text-sm text-gray-600">Rośniesz bez ograniczeń — dodawaj kolejne osoby.</p>
-          </div>
-        </div>
-
-        {/* Personalizacja wyglądu */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/creativity.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Wygląd dopasowany do firmy</p>
-            <p className="text-sm text-gray-600">Twoje logo, kolory i branding w całej aplikacji.</p>
-          </div>
-        </div>
-
-        {/* Funkcje na życzenie */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/settings.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Funkcje na życzenie</p>
-            <p className="text-sm text-gray-600">Dodatki i modyfikacje pod procesy w Twojej firmie.</p>
-          </div>
-        </div>
-
-        {/* Integracje */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-          <img src="/img/add.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Integracje na zamówienie</p>
-            <p className="text-sm text-gray-600">RCP, importy, automaty — łączymy Planopię z Twoimi systemami.</p>
-          </div>
-        </div>
-
-        {/* Wsparcie 24/7 */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/technical-support.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Indywidualne wsparcie 24/7</p>
-            <p className="text-sm text-gray-600">Czat i szybka pomoc, gdy czegoś potrzebujesz.</p>
-          </div>
-        </div>
-
-        {/* Dedykowane środowisko */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/database.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">Osobne środowisko</p>
-            <p className="text-sm text-gray-600">Dedykowana subdomena i odizolowana baza danych. <span className="font-semibold">+ 7 USD (ok. 25-30 zł) za osobny serwer — opcjonalne.</span></p>
-          </div>
-        </div>
-
-        {/* Mobile / PWA */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex gap-3">
-		<img src="/img/booking.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
-          <div>
-            <p className="font-semibold text-gray-900">PWA i mobile</p>
-            <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak aplikacji mobilnej.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</section>
-
-
-
-<section id="kontakt" className="py-16 px-4 bg-gray-50">
+<section id="kontakt" className="py-12 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
-    <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Kontakt</h2>
+    <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Kontakt i dane firmy</h2>
     <p className="mt-3 text-left text-gray-600">
-      Masz pytania, chcesz wdrożenie lub prezentację? Napisz, zadzwoń albo umów rozmowę online.
+      Masz pytania lub chcesz prezentację? Napisz, zadzwoń albo umów rozmowę online.
     </p>
 
     <div className="mt-10 grid gap-8 md:grid-cols-2 max-w-7xl mx-auto">
@@ -681,7 +477,7 @@ function ProductPromotion() {
 
           <div className="mt-6 space-y-4 mb-6">
             <a
-              href="mailto:michalipka1@gmail.com"
+              href="mailto:office@ml-devworks.com"
               className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
             >
               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -689,7 +485,7 @@ function ProductPromotion() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">michalipka1@gmail.com</span>
+              <span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">office@ml-devworks.com</span>
             </a>
 
             <a 
@@ -717,11 +513,7 @@ function ProductPromotion() {
             </a>
           </div>
 
-          <div className="bg-gradient-to-br from-white/80 to-blue-50/50 rounded-xl p-5 border border-blue-100 shadow-sm">
-            <p className="text-gray-700 text-sm leading-relaxed font-medium">
-              Wdrożę Planopię w Twojej firmie i pomogę dopasować funkcje do procesów. Odezwij się — odpowiem szybko.
-            </p>
-          </div>
+          <SellerCompanyDetails locale="pl" />
         </div>
       </div>
 
@@ -815,32 +607,28 @@ function ProductPromotion() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className="py-10 px-6 bg-white border-t flex flex-col items-center justify-center text-center">
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
-				{/* <a href="/blog/jak-usprawnic-firme" className="text-sm text-gray-600 hover:underline mt-2 block">
-					Aplikacja do ewidencji czasu pracy może usprawnić Twoją firmę
-				</a> */}
+				<a
+					href="https://ml-devworks.com"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="mt-3 text-sm text-gray-500 hover:text-indigo-700 transition-colors"
+				>
+					ml-devworks.com
+				</a>
 			</footer>
 
-			{/* Package Request Modal */}
-			<PackageRequestModal
-				isOpen={packageModalOpen}
-				onClose={() => setPackageModalOpen(false)}
-				packageType={selectedPackage}
-				lang="pl"
-			/>
-
-			{/* Custom Package Modal */}
-			<CustomPackageModal
-				isOpen={customPackageModalOpen}
-				onClose={() => setCustomPackageModalOpen(false)}
-				lang="pl"
-			/>
 		</>
 	)
 }
 
 export default ProductPromotion
+
+
+
+
+
 
 
 

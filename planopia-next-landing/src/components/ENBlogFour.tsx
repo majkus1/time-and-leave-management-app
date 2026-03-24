@@ -34,7 +34,7 @@ function ENBlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Discover Planopia - a free time tracking app for work hours and leave management for teams up to 4 people. Full functionality without any costs.",
+						"description": "Planopia: 30-day trial with full features for up to 5 users. Time tracking and leave management; then paid plans.",
 						"image": "https://planopia.pl/img/desktopnew.webp"
 					})
 				}}
@@ -83,7 +83,7 @@ function ENBlogFour() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Create free team
+							Start free trial
 						</Link>
 						<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -104,11 +104,6 @@ function ENBlogFour() {
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },
 				]}
-				legalItems={[
-					{ href: '/en/terms', label: 'Terms of Service' },
-					{ href: '/en/privacy', label: 'Privacy Policy' },
-					{ href: '/en/dpa', label: 'Data Processing Agreement' },
-				]}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -124,18 +119,19 @@ function ENBlogFour() {
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
-								Free Time Tracking App for Work Hours and Leave Management
+								Time tracking & leave — first month free
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
-								Discover Planopia - a complete, free time tracking app for work hours and leave management. 
-								Full functionality for teams up to 4 people without any costs.
+								30-day trial: full product access for up to 5 users (AI Assistant limits apply during the trial).
+								Then choose a plan that fits your team — see{' '}
+								<Link href="/en#prices" className="text-blue-600 hover:underline font-medium">pricing</Link>.
 							</p>
 							<div className="text-center">
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 								>
-									Create free team today
+									Start free trial today
 								</Link>
 							</div>
 						</div>
@@ -150,34 +146,35 @@ function ENBlogFour() {
 					{/* Introduction */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Why do you need a free time tracking app?
+							Why choose a time tracking app with a free trial?
 						</h2>
 						<p className="text-lg text-gray-700 mb-4">
 							Time tracking is an obligation for every company, but traditional methods are often inefficient and time-consuming. 
 							Excel, paper attendance sheets, or basic HR systems generate errors and consume valuable work hours.
 						</p>
 						<p className="text-lg text-gray-700 mb-6">
-							<strong>Planopia is a free time tracking app</strong> that solves all these problems. 
-							It offers full functionality without hidden fees, time limits, or the need to sign contracts.
+							<strong>Planopia</strong> solves these problems with a clear model:{' '}
+							<strong>30 days free</strong> for up to 5 users, then transparent paid plans.
 						</p>
 					</div>
 
 					{/* What is Planopia */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							What is Planopia - free time tracking app?
+							What is Planopia?
 						</h2>
 						<p className="text-lg text-gray-700 mb-4">
-							Planopia is a modern, <strong>free time tracking app for work hours and leave management</strong>, 
-							designed for small and medium-sized companies. The app works in a web browser, 
-							so it doesn't require software installation on employee computers.
+							Planopia is a modern <strong>time tracking and leave management app</strong>,
+							designed for small and medium-sized companies. It runs in a web browser —
+							no software installation on employee computers.
 						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
-								✅ Free time tracking app for teams up to 4 people
+								✅ First month free — up to 5 users, full functionality
 							</p>
 							<p className="text-blue-700 mt-2">
-								No hidden fees, no trial periods, no need to provide credit card information.
+								No credit card required during the trial. After 30 days, pick a plan on the{' '}
+								<Link href="/en#prices" className="underline font-medium">pricing page</Link>.
 							</p>
 						</div>
 					</div>
@@ -237,7 +234,7 @@ function ENBlogFour() {
 								<thead>
 									<tr className="bg-gray-100">
 										<th className="border border-gray-300 p-4 text-left">Feature</th>
-										<th className="border border-gray-300 p-4 text-center">Planopia (FREE)</th>
+										<th className="border border-gray-300 p-4 text-center">Planopia (30-day trial)</th>
 										<th className="border border-gray-300 p-4 text-center">Competition</th>
 									</tr>
 								</thead>
@@ -275,14 +272,14 @@ function ENBlogFour() {
 					{/* How to start */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							How to start using the free time tracking app?
+							How to get started with Planopia (30-day trial)?
 						</h2>
 						<div className="grid md:grid-cols-3 gap-6">
 							<div className="text-center p-6 bg-green-50 rounded-lg">
 								<div className="text-4xl font-bold text-green-600 mb-2">1</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Create Team</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Start free trial</h3>
 								<p className="text-gray-700">
-									Click &quot;Create free team&quot; and fill in basic company information.
+									Click &quot;Start free trial&quot; and fill in basic company information.
 								</p>
 							</div>
 							<div className="text-center p-6 bg-blue-50 rounded-lg">
@@ -310,20 +307,19 @@ function ENBlogFour() {
 						<div className="space-y-6">
 							<div className="bg-gray-50 p-6 rounded-lg">
 								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Is Planopia really free?
+									Is there a free trial?
 								</h3>
 								<p className="text-gray-700">
-									Yes! Planopia offers full functionality for teams up to 4 people without any fees. 
-									No hidden costs, trial periods, or need to provide credit card information.
+									Yes. You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
+									No credit card required. After the trial, you choose a paid plan or stop using the service.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
 								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									How long can I use the free version?
+									How long does the trial last?
 								</h3>
 								<p className="text-gray-700">
-									No time limits! The free time tracking app Planopia 
-									is available forever for teams up to 4 people.
+									<strong>30 days</strong> — one month of full access for up to 5 users. Then you move to a paid plan or end your use.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -359,7 +355,7 @@ function ENBlogFour() {
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Create free team today
+							Start free trial today
 						</Link>
 					</div>
 				</div>

@@ -4,6 +4,24 @@ import axios from 'axios'
 import { API_URL } from '../config'
 import { useSocket } from '../context/SocketContext'
 
+/**
+ * Conversational draft for schedule auto-fill (separate from global AI assistant).
+ * @param {{ scheduleId: string, year: number, month: number, messages: Array<{role:string,content:string}>, locale?: string }} body
+ */
+export async function postScheduleAiAutoDraft(body) {
+	const { data } = await axios.post(
+		`${API_URL}/api/schedules/${body.scheduleId}/entries/ai-auto-draft`,
+		{
+			year: body.year,
+			month: body.month,
+			messages: body.messages,
+			locale: body.locale || 'pl',
+		},
+		{ withCredentials: true, timeout: 120000 }
+	)
+	return data
+}
+
 const SCHEDULE_UPDATED_EVENT = 'schedule-updated'
 
 // Get all schedules for current user

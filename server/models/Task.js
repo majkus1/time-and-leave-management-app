@@ -57,7 +57,27 @@ const taskSchema = new mongoose.Schema({
 	isActive: {
 		type: Boolean,
 		default: true
-	}
+	},
+	/** Pojedynczy termin (deadline) — dzień końcowy */
+	dueDate: {
+		type: Date,
+		default: null,
+	},
+	/** Początek okresu realizacji (wraz z workPeriodEnd) */
+	workPeriodStart: {
+		type: Date,
+		default: null,
+	},
+	/** Koniec okresu realizacji */
+	workPeriodEnd: {
+		type: Date,
+		default: null,
+	},
+	/** Widoczne tylko w kalendarzu zadań, nie na tablicy Kanban */
+	calendarOnly: {
+		type: Boolean,
+		default: false,
+	},
 }, {
 	collection: 'tasks',
 	timestamps: true
@@ -67,6 +87,8 @@ const taskSchema = new mongoose.Schema({
 taskSchema.index({ boardId: 1, status: 1 });
 taskSchema.index({ boardId: 1, order: 1 });
 taskSchema.index({ assignedTo: 1 });
+taskSchema.index({ boardId: 1, dueDate: 1 });
+taskSchema.index({ boardId: 1, workPeriodStart: 1, workPeriodEnd: 1 });
 
 module.exports = conn => (conn.models.Task || conn.model('Task', taskSchema));
 

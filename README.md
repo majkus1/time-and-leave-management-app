@@ -40,7 +40,7 @@ Planopia helps teams manage work hours and leave requests. Employees log daily h
 - React Router
 
 **Backend:**
-- Node.js with Express
+- Node.js 18+ with Express (global `fetch` for OpenAI API)
 - MongoDB with Mongoose
 - JWT authentication
 - Email notifications with Nodemailer
@@ -79,6 +79,15 @@ The app includes several security measures:
     ├── routes/           # API endpoints
     └── middleware/       # Auth and validation
 ```
+
+## AI Assistant (optional)
+
+Team insights chat uses OpenAI from the server. Set in `.env`:
+
+- `OPENAI_API_KEY` — required to enable `/api/ai-assistant/chat`
+- `OPENAI_MODEL` — optional, default `gpt-4o-mini`
+
+Domain instructions for the model live in `docs/AI_ASSISTANT_CONTEXT.md`.
 
 ## License
 

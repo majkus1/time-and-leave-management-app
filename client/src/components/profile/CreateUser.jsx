@@ -249,22 +249,28 @@ function CreateUser() {
                                         </label>
                                         {departments.length > 0 && departmentMode === 'choose' ? (
                                             <>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <div className="flex flex-wrap gap-2 mt-2">
                                                     {departments.map(dep => (
-                                                        <label key={dep} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedDepartments.includes(dep)}
-                                                                onChange={() => handleDepartmentToggle(dep)}
-                                                                style={{ marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer' }}
-                                                            />
-                                                            <span>{dep}</span>
-                                                        </label>
+                                                        <div
+                                                            key={dep}
+                                                            role="button"
+                                                            tabIndex={0}
+                                                            className={`border px-3 py-1 rounded-md cursor-pointer text-sm select-none ${selectedDepartments.includes(dep) ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-800'}`}
+                                                            onClick={() => handleDepartmentToggle(dep)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                                    e.preventDefault()
+                                                                    handleDepartmentToggle(dep)
+                                                                }
+                                                            }}
+                                                        >
+                                                            {dep}
+                                                        </div>
                                                     ))}
                                                 </div>
                                                 <button
                                                     type="button"
-                                                    className="btn btn-link p-2 ms-2 to-left-max"
+                                                    className="btn btn-link p-2 ms-2 to-left-max mt-2"
                                                     onClick={() => { setNewDepartmentName(''); setDepartmentMode('new') }}
                                                 >{t('newuser.department2')}</button>
                                             </>

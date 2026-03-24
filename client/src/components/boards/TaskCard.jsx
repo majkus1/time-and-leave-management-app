@@ -24,6 +24,30 @@ const PRIORITY_META = {
 	urgent: { bg: '#f3e5f5', color: '#6a1b9a' },
 }
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
+
+function formatDateInputFromTask(value) {
+	if (!value) return ''
+	const d = new Date(value)
+	if (isNaN(d.getTime())) return ''
+	const y = d.getFullYear()
+	const m = String(d.getMonth() + 1).padStart(2, '0')
+	const day = String(d.getDate()).padStart(2, '0')
+	return `${y}-${m}-${day}`
+}
+
+function scheduleSummaryText(task, t) {
+	if (!task) return null
+	if (task.dueDate) {
+		const d = new Date(task.dueDate)
+		return `${t('boards.deadline')}: ${d.toLocaleDateString()}`
+	}
+	if (task.workPeriodStart && task.workPeriodEnd) {
+		const a = new Date(task.workPeriodStart)
+		const b = new Date(task.workPeriodEnd)
+		return `${t('boards.workPeriod')}: ${a.toLocaleDateString()} – ${b.toLocaleDateString()}`
+	}
+	return null
+}
 const ATTACH_ICON_SRC = '/img/attach-file.png'
 const ATTACH_ICON_STYLE = {
 	width: '16px',
@@ -69,6 +93,10 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 	const [editPriority, setEditPriority] = useState(currentTask?.priority || 'medium')
 	const [editAssignToAll, setEditAssignToAll] = useState(currentTask?.assignedScope === 'all-members')
 	const [editAssignees, setEditAssignees] = useState([])
+	const [editScheduleMode, setEditScheduleMode] = useState('none')
+	const [editDueDate, setEditDueDate] = useState('')
+	const [editPeriodStart, setEditPeriodStart] = useState('')
+	const [editPeriodEnd, setEditPeriodEnd] = useState('')
 	const [uploadingFile, setUploadingFile] = useState(false)
 	
 	// Update edit fields when task data changes
@@ -79,6 +107,22 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 			setEditPriority(currentTask.priority || 'medium')
 			setEditAssignToAll(currentTask.assignedScope === 'all-members')
 			setEditAssignees((currentTask.assignedTo || []).map((u) => (u?._id ? u._id : u)).filter(Boolean))
+			if (currentTask.dueDate) {
+				setEditScheduleMode('deadline')
+				setEditDueDate(formatDateInputFromTask(currentTask.dueDate))
+				setEditPeriodStart('')
+				setEditPeriodEnd('')
+			} else if (currentTask.workPeriodStart && currentTask.workPeriodEnd) {
+				setEditScheduleMode('period')
+				setEditDueDate('')
+				setEditPeriodStart(formatDateInputFromTask(currentTask.workPeriodStart))
+				setEditPeriodEnd(formatDateInputFromTask(currentTask.workPeriodEnd))
+			} else {
+				setEditScheduleMode('none')
+				setEditDueDate('')
+				setEditPeriodStart('')
+				setEditPeriodEnd('')
+			}
 		}
 	}, [currentTask])
 
@@ -134,6 +178,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 	const priorityKey = currentTask?.priority || 'medium'
 	const priorityStyle = PRIORITY_META[priorityKey] || PRIORITY_META.medium
 	const priorityLabel = t(`boards.priority.${priorityKey}`)
+	const scheduleLine = currentTask ? scheduleSummaryText(currentTask, t) : null
 	const assignedText = currentTask?.assignedScope === 'all-members'
 		? (t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy')
 		: (currentTask?.assignedTo || []).map(u => u.username).join(', ')
@@ -200,7 +245,26 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 			await showAlert(t('boards.assigneeRequired') || 'Wybierz przynajmniej jedną osobę lub przypisz do wszystkich')
 			return
 		}
+		if (editScheduleMode === 'deadline' && !editDueDate) {
+			await showAlert(t('boards.deadlineRequired') || 'Wybierz datę deadline')
+			return
+		}
+		if (editScheduleMode === 'period' && (!editPeriodStart || !editPeriodEnd)) {
+			await showAlert(t('boards.periodRequired') || 'Podaj pełny okres (od–do)')
+			return
+		}
 		try {
+			const schedulePayload =
+				editScheduleMode === 'deadline'
+					? { dueDate: editDueDate, workPeriodStart: null, workPeriodEnd: null }
+					: editScheduleMode === 'period'
+						? {
+								dueDate: null,
+								workPeriodStart: editPeriodStart,
+								workPeriodEnd: editPeriodEnd,
+						  }
+						: { dueDate: null, workPeriodStart: null, workPeriodEnd: null }
+
 			await updateTaskMutation.mutateAsync({
 				taskId: currentTask._id,
 				data: {
@@ -208,7 +272,8 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					description: editDescription.trim(),
 					priority: editPriority,
 					assignToAllMembers: editAssignToAll,
-					assignedTo: editAssignToAll ? [] : editAssignees
+					assignedTo: editAssignToAll ? [] : editAssignees,
+					...schedulePayload,
 				}
 			})
 			setIsEditing(false)
@@ -393,6 +458,68 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									)}
 								</div>
 							)}
+							<div style={{ marginTop: '14px', marginBottom: '10px' }}>
+								<label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#2c3e50' }}>
+									{t('boards.scheduleType') || 'Termin / okres'}
+								</label>
+								<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
+									<input
+										type="radio"
+										name="editSched"
+										checked={editScheduleMode === 'none'}
+										onChange={() => setEditScheduleMode('none')}
+									/>
+									<span>{t('boards.noSchedule') || 'Brak'}</span>
+								</label>
+								<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
+									<input
+										type="radio"
+										name="editSched"
+										checked={editScheduleMode === 'deadline'}
+										onChange={() => setEditScheduleMode('deadline')}
+									/>
+									<span>{t('boards.deadline') || 'Deadline'}</span>
+								</label>
+								<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+									<input
+										type="radio"
+										name="editSched"
+										checked={editScheduleMode === 'period'}
+										onChange={() => setEditScheduleMode('period')}
+									/>
+									<span>{t('boards.workPeriod') || 'Okres realizacji'}</span>
+								</label>
+								{editScheduleMode === 'deadline' && (
+									<input
+										type="date"
+										value={editDueDate}
+										onChange={(e) => setEditDueDate(e.target.value)}
+										style={{
+											width: '100%',
+											padding: '10px',
+											border: '1px solid #bdc3c7',
+											borderRadius: '6px',
+											fontSize: '16px',
+										}}
+									/>
+								)}
+								{editScheduleMode === 'period' && (
+									<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+										<input
+											type="date"
+											value={editPeriodStart}
+											onChange={(e) => setEditPeriodStart(e.target.value)}
+											style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+										/>
+										<input
+											type="date"
+											value={editPeriodEnd}
+											onChange={(e) => setEditPeriodEnd(e.target.value)}
+											style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+										/>
+									</div>
+								)}
+							</div>
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
 									onClick={handleSaveEdit}
@@ -414,6 +541,22 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 										setEditPriority(currentTask.priority || 'medium')
 										setEditAssignToAll(currentTask.assignedScope === 'all-members')
 										setEditAssignees((currentTask.assignedTo || []).map((u) => (u?._id ? u._id : u)).filter(Boolean))
+										if (currentTask.dueDate) {
+											setEditScheduleMode('deadline')
+											setEditDueDate(formatDateInputFromTask(currentTask.dueDate))
+											setEditPeriodStart('')
+											setEditPeriodEnd('')
+										} else if (currentTask.workPeriodStart && currentTask.workPeriodEnd) {
+											setEditScheduleMode('period')
+											setEditDueDate('')
+											setEditPeriodStart(formatDateInputFromTask(currentTask.workPeriodStart))
+											setEditPeriodEnd(formatDateInputFromTask(currentTask.workPeriodEnd))
+										} else {
+											setEditScheduleMode('none')
+											setEditDueDate('')
+											setEditPeriodStart('')
+											setEditPeriodEnd('')
+										}
 									}}
 									style={{
 										padding: '8px 16px',
@@ -470,6 +613,28 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								}}>
 									{currentTask.description}
 								</p>
+							)}
+							{scheduleSummaryText(currentTask, t) && (
+								<div style={{ color: '#34495e', fontSize: '15px', marginBottom: '12px', fontWeight: 500 }}>
+									📅 {scheduleSummaryText(currentTask, t)}
+								</div>
+							)}
+							{currentTask.calendarOnly && (
+								<div style={{ marginBottom: '12px' }}>
+									<span
+										style={{
+											display: 'inline-block',
+											padding: '4px 10px',
+											borderRadius: '6px',
+											backgroundColor: '#f4ecf7',
+											color: '#6c3483',
+											fontSize: '12px',
+											fontWeight: 600,
+										}}
+									>
+										{t('boards.calendarOnlyBadge') || 'Szybkie zadanie'}
+									</span>
+								</div>
 							)}
 							{canEdit && (
 								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
@@ -941,6 +1106,11 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					}}>
 						{currentTask.description}
 					</p>
+				)}
+				{scheduleLine && (
+					<div style={{ fontSize: '12px', color: '#2980b9', marginBottom: '6px', fontWeight: 600 }}>
+						📅 {scheduleLine}
+					</div>
 				)}
 				{(currentTask.assignedScope === 'all-members' || (currentTask.assignedTo && currentTask.assignedTo.length > 0)) && (
 					<div style={{ 
