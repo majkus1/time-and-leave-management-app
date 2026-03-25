@@ -477,8 +477,55 @@
 	line-height: 1.5;
 }
 
+.packages-entitlements-hint {
+	margin: 0 0 1rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.88rem;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
 .packages-legal-section {
 	margin-top: 2.75rem;
 	padding-top: 2rem;
 	border-top: 1px solid #e2e8f0;
+}
+
+/* Loader w dokumentach prawnych: globalny .loader ma position:absolute — bez relative rodzica centruje się na całym viewport */
+.packages-legal-loading {
+	position: relative;
+	min-height: 200px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.packages-legal-unavailable {
+	text-align: center;
+	padding: 1.5rem 1rem;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 10px;
+	color: #991b1b;
+	font-size: 0.9rem;
+}
+
+.packages-legal-unavailable__text {
+	margin: 0 0 0.75rem;
+}
+
+.packages-legal-unavailable__retry {
+	padding: 0.45rem 1rem;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid #991b1b;
+	background: #fff;
+	color: #991b1b;
+}
+
+.packages-legal-unavailable__retry:hover {
+	background: #fff1f2;
 }

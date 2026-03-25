@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { API_URL } from '../../config'
 import { useAuth } from '../../context/AuthContext'
@@ -16,13 +16,8 @@ export default function LegalDocumentsSection() {
 	const [acceptanceStatus, setAcceptanceStatus] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [accepting, setAccepting] = useState(false)
-	useEffect(() => {
-		if (userId && teamId) {
-			fetchLegalStatus()
-		}
-	}, [userId, teamId])
 
-	const fetchLegalStatus = async () => {
+	const fetchLegalStatus = useCallback(async () => {
 		setLoading(true)
 		try {
 			const statusRes = await axios.get(`${API_URL}/api/legal/acceptance/status`, { withCredentials: true })
@@ -33,7 +28,16 @@ export default function LegalDocumentsSection() {
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [t, showAlert])
+
+	useEffect(() => {
+		if (!userId || !teamId) {
+			setLoading(false)
+			setAcceptanceStatus(null)
+			return
+		}
+		fetchLegalStatus()
+	}, [userId, teamId, fetchLegalStatus])
 
 	const handleAcceptDocuments = async () => {
 		setAccepting(true)
@@ -79,16 +83,20 @@ export default function LegalDocumentsSection() {
 
 	if (loading) {
 		return (
-			<div
-				className="packages-legal-loading"
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					minHeight: '200px',
-				}}
-			>
+			<div className="packages-legal-loading">
 				<Loader />
+			</div>
+		)
+	}
+
+	if (!acceptanceStatus) {
+		if (!userId || !teamId) return null
+		return (
+			<div className="packages-legal-unavailable">
+				<p className="packages-legal-unavailable__text">{t('legal.errorFetching')}</p>
+				<button type="button" className="packages-legal-unavailable__retry" onClick={() => fetchLegalStatus()}>
+					{t('legal.retryLoad')}
+				</button>
 			</div>
 		)
 	}

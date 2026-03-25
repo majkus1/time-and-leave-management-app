@@ -87,7 +87,7 @@ export default function PackagesPage() {
 	const [note, setNote] = useState('')
 	const [justSent, setJustSent] = useState(false)
 
-	const loading = catLoading || entLoading
+	const loading = catLoading || !catalog
 
 	useEffect(() => {
 		if (!catalog || appliedQueryRef.current || isCheckingAuth) return
@@ -164,7 +164,7 @@ export default function PackagesPage() {
 		}
 	}
 
-	if (loading || !catalog) {
+	if (loading) {
 		return (
 			<>
 				<Sidebar />
@@ -243,6 +243,12 @@ export default function PackagesPage() {
 					<div className="packages-admin-only-banner" role="status">
 						{t('billingPackages.purchaseRequestAdminOnly')}
 					</div>
+				)}
+
+				{entLoading && ent == null && (
+					<p className="packages-entitlements-hint" role="status" aria-live="polite">
+						{t('billingPackages.loadingEntitlements')}
+					</p>
 				)}
 
 				{currentPlanBody != null && (
@@ -389,7 +395,7 @@ export default function PackagesPage() {
 						<p className="packages-addons__locked">{t('billingPackages.addonsLocked')}</p>
 					)}
 					{catalog.addons.map(a => {
-						const addonLocked = ent && !ent.ai?.unrestricted && !ent.billingHadPaidPlan
+						const addonLocked = !ent || (!ent.ai?.unrestricted && !ent.billingHadPaidPlan)
 						const orderDisabled = addonLocked || !canSubmitPurchaseRequest
 						return (
 							<div
