@@ -96,6 +96,7 @@ export default function MobileMenu({
 			? menuItems
 			: [
 					{ href: isPL ? '/#oaplikacji' : '/en#aboutapp', label: isPL ? 'O Aplikacji' : 'About the App' },
+					{ href: isPL ? '/#asystent-ai' : '/en#ai-assistant', label: isPL ? 'Asystent AI' : 'AI Assistant' },
 					{ href: isPL ? '/#cennik' : '/en#prices', label: isPL ? 'Cennik' : 'Pricing' },
 					{ href: isPL ? '/#kontakt' : '/en#contact', label: isPL ? 'Kontakt' : 'Contact' },
 					{ href: isPL ? '/blog' : '/en/blog', label: 'Blog' },

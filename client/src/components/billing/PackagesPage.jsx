@@ -132,6 +132,7 @@ export default function PackagesPage() {
 		() => ({
 			noteLabel: t('billingPackages.noteLabel'),
 			send: t('billingPackages.send'),
+			sending: t('billingPackages.sending'),
 			cancel: i18n.resolvedLanguage === 'pl' ? 'Anuluj' : 'Cancel',
 		}),
 		[t, i18n.resolvedLanguage]
@@ -178,6 +179,8 @@ export default function PackagesPage() {
 
 	let currentPlanBody = null
 	if (ent) {
+		const cycleShort =
+			ent.billingCycle === 'annual' ? t('billingPackages.billingAnnualShort') : t('billingPackages.billingMonthlyShort')
 		if (ent.ai?.unrestricted) {
 			currentPlanBody = t('billingPackages.currentPlanInternal')
 		} else if (ent.legacy && ent.legacyGrandfatheredActive) {
@@ -191,17 +194,15 @@ export default function PackagesPage() {
 				date: formatPlanDate(ent.trialEndsAt, localeTag),
 			})
 		} else if (activePaid) {
-			const cycleLabel =
-				ent.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')
 			if (ent.hideBillingPeriodEnd) {
 				currentPlanBody = t('billingPackages.currentPlanPaidNoEnd', {
 					plan: TIER_LABELS[ent.planKey] || ent.planKey,
-					cycle: cycleLabel,
+					cycle: cycleShort,
 				})
 			} else {
 				currentPlanBody = t('billingPackages.currentPlanPaid', {
 					plan: TIER_LABELS[ent.planKey] || ent.planKey,
-					cycle: cycleLabel,
+					cycle: cycleShort,
 					until: formatPlanDate(ent.billingPeriodEnd, localeTag),
 				})
 			}
@@ -255,16 +256,11 @@ export default function PackagesPage() {
 					<div className="packages-usage">
 						<h3>{t('billingPackages.usageTitle')}</h3>
 						{ent.ai?.unrestricted ? (
-							<p style={{ margin: 0, color: '#475569' }}>{t('billingPackages.internalUnlimitedAi')}</p>
+							<p className="packages-usage__text">{t('billingPackages.internalUnlimitedAi')}</p>
 						) : ent.legacy && ent.legacyGrandfatheredActive ? (
-							<>
-								<p style={{ margin: '0 0 0.75rem', color: '#475569' }}>{t('billingPackages.legacyNoAi')}</p>
-								<p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
-									{t('aiAssistant.aiQuota.sharedHint')}
-								</p>
-							</>
+							<p className="packages-usage__text">{t('billingPackages.usageLegacyGrandfathered')}</p>
 						) : ent.legacy && !ent.legacyGrandfatheredActive ? (
-							<p style={{ margin: 0, color: '#475569' }}>{t('billingPackages.legacyGraceEndedUsage')}</p>
+							<p className="packages-usage__text">{t('billingPackages.legacyGraceEndedUsage')}</p>
 						) : (
 							<dl>
 								<dt>{t('billingPackages.remaining')}</dt>
@@ -296,14 +292,24 @@ export default function PackagesPage() {
 					</div>
 				)}
 
-				<div className="packages-billing-toggle">
-					<span style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>{t('billingPackages.billingToggle')}:</span>
-					<button type="button" className={billing === 'monthly' ? 'is-on' : ''} onClick={() => setBilling('monthly')}>
-						{t('billingPackages.billingMonthly')}
-					</button>
-					<button type="button" className={billing === 'annual' ? 'is-on' : ''} onClick={() => setBilling('annual')}>
-						{t('billingPackages.billingAnnual')}
-					</button>
+				<div className="packages-billing-block">
+					<div className="packages-billing-toggle">
+						<span className="packages-billing-toggle__label">{t('billingPackages.billingToggle')}:</span>
+						<div className="packages-billing-toggle__buttons">
+							<button type="button" className={billing === 'monthly' ? 'is-on' : ''} onClick={() => setBilling('monthly')}>
+								{t('billingPackages.billingMonthly')}
+							</button>
+							<button type="button" className={billing === 'annual' ? 'is-on' : ''} onClick={() => setBilling('annual')}>
+								{t('billingPackages.billingAnnual')}
+							</button>
+						</div>
+					</div>
+					{billing === 'annual' && (
+						<div className="packages-billing-annual-note" role="status">
+							<span className="packages-billing-annual-badge">{t('billingPackages.billingYearlyBadge')}</span>
+							<p className="packages-billing-annual-hint">{t('billingPackages.billingYearlyHint')}</p>
+						</div>
+					)}
 				</div>
 
 				<div className="packages-grid">
@@ -328,9 +334,25 @@ export default function PackagesPage() {
 								<h3>{TIER_LABELS[tier.id] || tier.id}</h3>
 								<div className="packages-tier__price">{main}</div>
 								<div className="packages-tier__price-sub">{sub}</div>
-								<ul>
-									<li>{t('billingPackages.planMaxUsers', { n: tier.maxUsers })}</li>
-									<li>{t('billingPackages.planAi', { n: tier.aiMessagesPerMonth })}</li>
+								<ul className="packages-tier__features">
+									{(() => {
+										const feats = t(`billingPackages.tierFeatures.${tier.id}`, { returnObjects: true })
+										const lines =
+											Array.isArray(feats) && feats.length
+												? feats
+												: [
+														t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
+														t('billingPackages.planAi', { n: tier.aiMessagesPerMonth }),
+													]
+										return lines.map((line, i) => (
+											<li key={i} className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">{line}</span>
+											</li>
+										))
+									})()}
 								</ul>
 								<button
 									type="button"
@@ -423,8 +445,25 @@ export default function PackagesPage() {
 							<button type="button" onClick={() => setModal(null)} disabled={purchase.isPending}>
 								{modalLabels.cancel}
 							</button>
-							<button type="button" className="primary" onClick={() => submitOrder()} disabled={purchase.isPending}>
-								{purchase.isPending ? '…' : modalLabels.send}
+							<button
+								type="button"
+								className="primary"
+								onClick={() => submitOrder()}
+								disabled={purchase.isPending}
+								aria-busy={purchase.isPending}
+							>
+								{purchase.isPending ? (
+									<span className="packages-modal__submit-pending">
+										<span
+											className="spinner-border spinner-border-sm packages-modal__spinner"
+											role="status"
+											aria-hidden="true"
+										/>
+										{modalLabels.sending}
+									</span>
+								) : (
+									modalLabels.send
+								)}
 							</button>
 						</div>
 					</div>

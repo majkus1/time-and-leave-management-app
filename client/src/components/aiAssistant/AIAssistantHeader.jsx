@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next'
  */
 function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError }) {
 	const { t } = useTranslation()
+	const introBullets = t('aiAssistant.introBullets', { returnObjects: true })
+	const introList = Array.isArray(introBullets) ? introBullets : []
 
 	const showQuota =
 		!statusPending &&
@@ -86,9 +88,17 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 			<details className="ai-assistant-header__intro-details">
 				<summary className="ai-assistant-header__intro-summary">{t('aiAssistant.introToggle')}</summary>
 				<div className="ai-assistant-header__intro-panel">
-					{t('aiAssistant.intro')}{' '}
-					<strong className="ai-assistant-header__intro-browser">{t('aiAssistant.introBrowserNote')}</strong>{' '}
-					{t('aiAssistant.introLegalNote')}
+					{introList.length > 0 && (
+						<ul className="ai-assistant-header__intro-list">
+							{introList.map((line, idx) => (
+								<li key={idx}>
+									<span className="ai-assistant-header__intro-list-text">{line}</span>
+								</li>
+							))}
+						</ul>
+					)}
+					<strong className="ai-assistant-header__intro-browser">{t('aiAssistant.introBrowserNote')}</strong>
+					<p className="ai-assistant-header__intro-legal">{t('aiAssistant.introLegalNote')}</p>
 				</div>
 			</details>
 		</div>

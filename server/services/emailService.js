@@ -6,6 +6,23 @@ const { appUrl } = require('../config')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 
+/** Powiadomienia wewnętrzne: nowe zgłoszenia / aktywność w dyskusji Help Center */
+const HELP_CENTER_STAFF_EMAILS = ['planopiaapp@gmail.com', 'michalipka1@gmail.com']
+
+function normalizeEmailRecipients(to) {
+	if (to == null || to === '') return []
+	const raw = Array.isArray(to) ? to : String(to).split(/[,;]/).map((s) => s.trim()).filter(Boolean)
+	const seen = new Set()
+	const out = []
+	for (const e of raw) {
+		const k = e.toLowerCase()
+		if (seen.has(k)) continue
+		seen.add(k)
+		out.push(e)
+	}
+	return out
+}
+
 // Funkcja escapująca HTML dla bezpieczeństwa (ochrona przed XSS)
 const escapeHtml = (text) => {
 	if (!text) return ''
@@ -80,6 +97,9 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, 
 }
 
 const sendEmail = async (to, link, subject, html) => {
+	const recipients = normalizeEmailRecipients(to)
+	if (recipients.length === 0) return
+
 	const transporter = nodemailer.createTransport({
 		host: 'smtp.gmail.com',
 		port: 465,
@@ -90,9 +110,10 @@ const sendEmail = async (to, link, subject, html) => {
 		},
 	})
 
+	const fromEmail = (process.env.EMAIL_USER || 'michalipka1@gmail.com').trim()
 	await transporter.sendMail({
-		from: '"Planopia" <michalipka1@gmail.com>',
-		to,
+		from: `"Planopia" <${fromEmail}>`,
+		to: recipients.length === 1 ? recipients[0] : recipients,
 		subject,
 		html,
 	})
@@ -393,11 +414,67 @@ async function notifyTicketReporter({ recipientEmail, kind, topic, extra }) {
 	}
 }
 
+/**
+ * Powiadomienie na skrzynki zespołu Planopia: nowe zgłoszenie lub każda nowa wiadomość w dyskusji (Help Center).
+ */
+async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail, isStaffMessage }) {
+	try {
+		if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+			console.warn('[notifyHelpCenterStaff] Brak EMAIL_USER / EMAIL_PASS — pomijam')
+			return
+		}
+		if (!ticket) return
+
+		const helpUrl = `${appUrl}/helpcenter`
+		const safeTopic = escapeHtml(String(ticket.topic || 'Zgłoszenie').slice(0, 140))
+		const company = escapeHtml(String(ticket.company || '—'))
+		const reporter = escapeHtml(String(ticket.userEmail || '—'))
+		const preview = escapeHtml(String(messagePreview || '').slice(0, 800))
+		const author = escapeHtml(String(authorEmail || '—'))
+		const ticketId = ticket._id ? String(ticket._id) : '—'
+
+		let subject
+		let title
+		let content
+
+		if (kind === 'new_ticket') {
+			subject = `[Planopia] Nowe zgłoszenie: ${String(ticket.topic || '').slice(0, 72)}`
+			title = 'Nowe zgłoszenie w Centrum pomocy'
+			content = `
+				<p style="margin:0 0 12px 0;">Pojawiło się nowe zgłoszenie: <strong>${safeTopic}</strong></p>
+				<p style="margin:0 0 8px 0;"><strong>Firma / instancja:</strong> ${company}</p>
+				<p style="margin:0 0 8px 0;"><strong>Autor zgłoszenia:</strong> ${reporter}</p>
+				<p style="margin:0 0 8px 0;"><strong>ID zgłoszenia:</strong> ${escapeHtml(ticketId)}</p>
+				<div style="margin:16px 0;padding:14px 16px;background:#f0f9ff;border-radius:8px;border-left:4px solid #0ea5e9;">
+					<p style="margin:0;font-size:14px;color:#374151;white-space:pre-wrap;">${preview || '(brak treści — sprawdź załączniki w aplikacji)'}</p>
+				</div>`
+		} else {
+			subject = `[Planopia] Nowa wiadomość w zgłoszeniu: ${String(ticket.topic || '').slice(0, 64)}`
+			title = 'Nowa wiadomość w dyskusji (Help Center)'
+			const who = isStaffMessage ? 'Obsługa / staff' : 'Użytkownik (klient)'
+			content = `
+				<p style="margin:0 0 12px 0;">W zgłoszeniu <strong>${safeTopic}</strong> pojawiła się nowa wiadomość.</p>
+				<p style="margin:0 0 8px 0;"><strong>Nadawca:</strong> ${who} (${author})</p>
+				<p style="margin:0 0 8px 0;"><strong>Firma / instancja:</strong> ${company} · <strong>Autor zgłoszenia:</strong> ${reporter}</p>
+				<p style="margin:0 0 8px 0;"><strong>ID zgłoszenia:</strong> ${escapeHtml(ticketId)}</p>
+				<div style="margin:16px 0;padding:14px 16px;background:#f0fdf4;border-radius:8px;border-left:4px solid #10b981;">
+					<p style="margin:0;font-size:14px;color:#374151;white-space:pre-wrap;">${preview || '(załączniki — zobacz w aplikacji)'}</p>
+				</div>`
+		}
+
+		const html = getEmailTemplate(title, content, 'Otwórz Help Center', helpUrl, null)
+		await sendEmail(HELP_CENTER_STAFF_EMAILS, helpUrl, subject, html)
+	} catch (err) {
+		console.error('[notifyHelpCenterStaff]', err.message || err)
+	}
+}
+
 module.exports = {
 	sendEmail,
 	sendEmailToHR,
 	sendTaskNotification,
 	notifyTicketReporter,
+	notifyHelpCenterStaff,
 	escapeHtml,
 	getEmailTemplate,
 }

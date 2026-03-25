@@ -272,19 +272,6 @@ function AdminAllLeaveCalendar() {
 		return filteredUsers[0]
 	}, [filteredUsers])
 
-	const selectedUserAcceptedLeaveRequests = useMemo(() => {
-		if (!singleFilteredUser) return []
-		const selectedUserId = singleFilteredUser._id?.toString()
-		if (!selectedUserId) return []
-		return acceptedLeaveRequests.filter((request) => {
-			if (!request?.userId) return false
-			if (typeof request.userId === 'object' && request.userId._id) {
-				return request.userId._id.toString() === selectedUserId
-			}
-			return request.userId.toString() === selectedUserId
-		})
-	}, [acceptedLeaveRequests, singleFilteredUser])
-
 	// Generate stable color based on user name (deterministic) - same as in Schedule
 	const getColorForUser = useCallback((userIdentifier) => {
 		if (!userIdentifier) return '#3498db'
@@ -543,40 +530,6 @@ function AdminAllLeaveCalendar() {
 						</li>
 					))}
 				</ul>
-				{singleFilteredUser && selectedUserAcceptedLeaveRequests.length > 0 && (
-					<div style={{ padding: '10px 0 20px 0' }}>
-						<h4 style={{ color: 'green', marginBottom: '15px', fontSize: '18px' }}>
-							{t('leaveplanner.acceptedAndAutoSentRequests') || 'Zaakceptowane i zgłoszone (bez akceptacji) wnioski:'}
-						</h4>
-						<div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-							{selectedUserAcceptedLeaveRequests.map((request) => (
-								<div
-									key={request._id}
-									style={{
-										padding: '10px 15px',
-										border: '2px solid #4ade80',
-										backgroundColor: '#f0fdf4',
-										borderRadius: '8px',
-										minWidth: '250px',
-										boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-									}}
-								>
-									<div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#059669' }}>
-										{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
-									</div>
-									<div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
-										{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-									</div>
-									<div style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
-										{settings?.leaveCalculationMode === 'hours'
-											? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
-											: `${request.daysRequested} ${t('leaveplanner.days')}`}
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
 				<LeaveAvailabilityChecker
 					requests={acceptedLeaveRequests}
 					settings={settings}

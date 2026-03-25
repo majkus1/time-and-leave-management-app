@@ -4,6 +4,7 @@ const {
 	SPECIAL_TEAM_NAMES,
 	SPECIAL_UNLIMITED_AI_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
+	FORCE_LEGACY_PRE_BILLING_TEAM_NAMES,
 } = require('../constants/specialTeams')
 const { TRIAL, PAID_PLANS, LEGACY_PRE_BILLING_GRACE_UNTIL } = require('../constants/planCatalog')
 
@@ -23,9 +24,17 @@ function hasManualBillingPeriodHidden(team) {
 
 /**
  * Dokument Team bez pól billing (przed cennikiem). Nie obejmuje zespołów specjalnych (np. OficjalnyAdminowy).
+ * FORCE_LEGACY_PRE_BILLING_TEAM_NAMES: jak legacy bez czyszczenia Mongo, dopóki nie ma aktywnej płatnej subskrypcji.
  */
-function isStructuralLegacyPreBillingTeam(team) {
+function isStructuralLegacyPreBillingTeam(team, now = new Date()) {
 	if (!team || isSpecialNamedTeam(team)) return false
+	if (
+		team.name &&
+		FORCE_LEGACY_PRE_BILLING_TEAM_NAMES.includes(team.name) &&
+		!isPaidSubscriptionActive(team, now)
+	) {
+		return true
+	}
 	if (team.billingPlanKey) return false
 	if (team.billingStatus) return false
 	if (team.trialEndsAt) return false
@@ -34,20 +43,21 @@ function isStructuralLegacyPreBillingTeam(team) {
 
 /** Po tej dacie structural legacy podlega temu samemu „murze” co wygasły trial bez płatności. */
 function isLegacyPreBillingGraceExpired(team, now = new Date()) {
-	return isStructuralLegacyPreBillingTeam(team) && now >= LEGACY_PRE_BILLING_GRACE_UNTIL
+	return isStructuralLegacyPreBillingTeam(team, now) && now >= LEGACY_PRE_BILLING_GRACE_UNTIL
 }
 
 /**
  * Trwa okres przejściowy dla kont sprzed billing — pełna apka bez subskrypcji; AI nadal po wykupieniu planu.
  */
 function isLegacyPreBillingTeam(team, now = new Date()) {
-	return isStructuralLegacyPreBillingTeam(team) && now < LEGACY_PRE_BILLING_GRACE_UNTIL
+	return isStructuralLegacyPreBillingTeam(team, now) && now < LEGACY_PRE_BILLING_GRACE_UNTIL
 }
 
 /** Mur API / socket: wygasły trial bez opłacenia, wygaśnięty opłacony okres, albo minął okres przejściowy legacy. */
 function requiresFullAppSubscriptionWall(team, now = new Date()) {
 	if (!team || team.isActive === false) return false
 	if (isSpecialNamedTeam(team)) return false
+	if (isLegacyPreBillingTeam(team, now)) return false
 	if (isTrialExpiredUnpaid(team, now)) return true
 	if (isPaidPlanPeriodLapsed(team, now)) return true
 	if (isLegacyPreBillingGraceExpired(team, now)) return true
@@ -102,6 +112,7 @@ function ensureMonthRolloverInMemory(team) {
 
 function effectiveMaxUsers(team, now = new Date()) {
 	if (isSpecialNamedTeam(team)) return team.maxUsers
+	if (isLegacyPreBillingTeam(team, now)) return team.maxUsers
 	if (isPaidSubscriptionActive(team, now) && PAID_PLANS[team.billingPlanKey]) {
 		return PAID_PLANS[team.billingPlanKey].maxUsers
 	}
@@ -109,7 +120,6 @@ function effectiveMaxUsers(team, now = new Date()) {
 	if (isTrialExpiredUnpaid(team, now)) return Math.min(team.maxUsers, TRIAL.maxUsers)
 	if (isPaidPlanPeriodLapsed(team, now)) return Math.min(team.maxUsers, TRIAL.maxUsers)
 	if (isLegacyPreBillingGraceExpired(team, now)) return Math.min(team.maxUsers, TRIAL.maxUsers)
-	if (isLegacyPreBillingTeam(team, now)) return team.maxUsers
 	return team.maxUsers
 }
 
@@ -235,7 +245,7 @@ function pickConsumeBucket(team, now = new Date()) {
 
 function buildClientEntitlements(team) {
 	const now = new Date()
-	const structuralLegacy = isStructuralLegacyPreBillingTeam(team)
+	const structuralLegacy = isStructuralLegacyPreBillingTeam(team, now)
 	const legacyGrandfatheredActive = isLegacyPreBillingTeam(team, now)
 	const unrestricted = hasUnrestrictedAi(team)
 	const buckets = computeAiBuckets(team, now)

@@ -5,6 +5,12 @@ const { buildAiIntentExportBuffer } = require('../services/aiExportFileService')
 const { runLeaveDraftTurn } = require('../services/aiLeaveDraftService')
 const { runWorkdayDraftTurn } = require('../services/aiWorkdayDraftService')
 const entitlementsService = require('../services/entitlementsService')
+const { createLog } = require('../services/logService')
+
+const logAiUse = (req, action, details) => {
+	const who = req.user?.username || '—'
+	createLog(req.user.userId, action, `${details} · ${who}`, req.user.userId)
+}
 
 exports.getStatus = async (req, res) => {
 	try {
@@ -33,6 +39,7 @@ exports.chat = async (req, res) => {
 			locale,
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		logAiUse(req, 'AI_ASSISTANT_CHAT', 'Asystent AI — rozmowa (czat)')
 
 		res.json({
 			reply: result.reply,
@@ -98,6 +105,7 @@ exports.chatStream = async (req, res) => {
 		}
 		try {
 			await entitlementsService.consumeAiMessageForUser(req.user.userId)
+			logAiUse(req, 'AI_ASSISTANT_CHAT', 'Asystent AI — rozmowa (czat, strumień)')
 		} catch (consumeErr) {
 			writeSse({
 				type: 'error',
@@ -161,6 +169,7 @@ exports.leaveDraft = async (req, res) => {
 			locale,
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		logAiUse(req, 'AI_ASSISTANT_LEAVE_DRAFT', 'Asystent AI — szkic wniosku urlopowego')
 		res.json({
 			reply: result.reply,
 			draft: result.draft,
@@ -206,6 +215,7 @@ exports.workdayDraft = async (req, res) => {
 			locale,
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		logAiUse(req, 'AI_ASSISTANT_WORKDAY_DRAFT', 'Asystent AI — szkic wpisu ewidencji czasu')
 		res.json({
 			reply: result.reply,
 			draft: result.draft,

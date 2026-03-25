@@ -53,6 +53,11 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 							{isPL ? 'O Aplikacji' : 'About the App'}
 						</Link>
 						<Link
+							href={isPL ? '/#asystent-ai' : '/en#ai-assistant'}
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							{isPL ? 'Asystent AI' : 'AI Assistant'}
+						</Link>
+						<Link
 							href={isPL ? "/#cennik" : "/en#prices"}
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							{isPL ? 'Cennik' : 'Pricing'}
@@ -99,6 +104,7 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 				lang={lang}
 				menuItems={[
 					{ href: isPL ? "/#oaplikacji" : "/en#aboutapp", label: isPL ? 'O Aplikacji' : 'About the App' },
+					{ href: isPL ? '/#asystent-ai' : '/en#ai-assistant', label: isPL ? 'Asystent AI' : 'AI Assistant' },
 					{ href: isPL ? "/#cennik" : "/en#prices", label: isPL ? 'Cennik' : 'Pricing' },
 					{ href: isPL ? "/#kontakt" : "/en#contact", label: isPL ? 'Kontakt' : 'Contact' },
 					{ href: isPL ? "/blog" : "/en/blog", label: 'Blog' },

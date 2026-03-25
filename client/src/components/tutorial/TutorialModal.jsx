@@ -37,8 +37,21 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			.map((paragraph) => paragraph.trim())
 			.filter(Boolean)
 
-		return paragraphs.map((paragraph) => {
-			// For longer blocks, split into readable bullet points without changing wording.
+		const blocks = []
+		let i = 0
+		const bulletPrefix = /^[–\-]\s+/
+
+		while (i < paragraphs.length) {
+			const paragraph = paragraphs[i]
+			if (bulletPrefix.test(paragraph)) {
+				const items = []
+				while (i < paragraphs.length && bulletPrefix.test(paragraphs[i])) {
+					items.push(paragraphs[i].replace(bulletPrefix, ''))
+					i++
+				}
+				blocks.push({ type: 'list', items })
+				continue
+			}
 			if (paragraph.length > 220) {
 				const protectedParagraph = paragraph
 					.replace(/\bm\.in\./gi, 'm§in§')
@@ -46,9 +59,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 					.replace(/\bitp\./gi, 'itp§')
 					.replace(/\bitd\./gi, 'itd§')
 					.replace(/\be\.g\./gi, 'e§g§')
-					// ".txt" must not split sentences (e.g. "pliku .txt")
 					.replace(/\.txt\b/gi, '§TXT§')
-					// Protect ordinal numbers like "8. dnia", "1. sekcja"
 					.replace(/\b(\d+)\.\s+(?=[a-ząćęłńóśźż])/gi, '$1§ ')
 
 				const sentences = (protectedParagraph.match(/[^.!?]+[.!?]?/g) || [protectedParagraph])
@@ -64,11 +75,14 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 							.replace(/(\d+)§\s/g, '$1. ')
 					)
 					.filter(Boolean)
-				return { type: 'list', items: sentences }
+				blocks.push({ type: 'list', items: sentences })
+				i++
+				continue
 			}
-
-			return { type: 'text', text: paragraph }
-		})
+			blocks.push({ type: 'text', text: paragraph })
+			i++
+		}
+		return blocks
 	}
 
 	// Podstawowe sekcje dla wszystkich użytkowników
@@ -201,8 +215,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			path: '/ai-assistant',
 			content:
 				i18n.resolvedLanguage === 'pl'
-					? 'Pytaj o czas pracy, urlopy, zadania, grafiki, tablice i ustawienia zespołu. Odpowiedzi pochodzą tylko z danych Planopii, do których masz dostęp w aplikacji.\n\nPlanopia ma też **osobny moduł AI w widoku grafiku** (na stronie konkretnego harmonogramu): tam możesz przygotować **szkic miesiąca** z opisu — to uzupełnia klasyczne auto-uzupełnianie grafiku przez system, ale działa w innym panelu niż ten czat.\n\nWybierasz okres (np. miesiąc) i możesz poprosić o podsumowanie. Gdy w pytaniu poprosisz o Excel lub PDF, pod odpowiedzią pojawią się przyciski z bazy (jak w czacie). Nad czatem zapiszesz rozmowę do pliku TXT.\n\nHistoria czatu jest tylko w tej przeglądarce. To nie jest porada prawna; odpowiedzi nie zastępują decyzji HR ani procedur w firmie.'
-					: 'Ask about work time, leave, tasks, schedules, boards and team settings. Answers use only Planopia data you are allowed to see.\n\nPlanopia also has a **separate AI schedule module** on the **schedule detail page**: you can generate a **month draft** from a description — it complements rule-based auto-fill but lives outside this chat.\n\nPick a period (e.g. this month). Ask for a summary — if you request Excel or PDF in your message, buttons appear under the reply to download from the database (same scope as the chat). From the toolbar you can export the conversation as a TXT file.\n\nChats stay in this browser only. Not legal advice; answers do not replace HR decisions or company procedures.'
+					? '– Odpowiedzi tylko z danych Planopii widocznych dla Twojego konta.\n– Pytania: czas pracy, urlopy, zadania, grafiki, tablice, zespół.\n– Okres wybierasz u góry; możesz poprosić o podsumowanie. W treści pytania o Excel lub PDF pod odpowiedzią pojawią się przyciski z bazy.\n– Rozmowę zapiszesz do pliku TXT z paska nad czatem.\n– Szkic miesiąca z opisu jest w osobnym module AI na stronie harmonogramu, nie w tym czacie.\n– Historia czatu tylko w tej przeglądarce.\n– To nie porada prawna; odpowiedzi nie zastępują decyzji HR ani procedur w firmie.'
+					: '– Answers use only Planopia data visible for your account.\n– Ask about time tracking, leave, tasks, schedules, boards, team settings.\n– Pick the period above; you can ask for a summary. Request Excel or PDF in your message — download buttons from the database appear under the reply.\n– Export the chat as TXT from the toolbar above.\n– Month draft from a description uses a separate AI module on the schedule page, not this chat.\n– Chat history stays in this browser only.\n– Not legal advice; answers do not replace HR decisions or company procedures.'
 		},
 		{
 			id: 'announcements',
@@ -659,8 +673,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 															marginBottom: '6px'
 														}}
 													>
-														<span style={{ color: '#4b5563', fontWeight: '600' }}>-</span>
-														<span>{item}</span>
+														<span style={{ color: '#4b5563', fontWeight: '600', flexShrink: 0 }}>–</span>
+														<span style={{ minWidth: 0, flex: 1, overflowWrap: 'anywhere' }}>{item}</span>
 													</li>
 												))}
 											</ul>

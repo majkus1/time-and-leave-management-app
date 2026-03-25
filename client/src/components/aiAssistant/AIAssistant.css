@@ -239,6 +239,41 @@
 	border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
+.ai-assistant-header__intro-list {
+	margin: 0.35rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ai-assistant-header__intro-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.45rem;
+	margin: 0 0 0.45rem;
+}
+
+.ai-assistant-header__intro-list li::before {
+	content: '–';
+	flex-shrink: 0;
+	font-weight: 600;
+	color: #64748b;
+	line-height: inherit;
+}
+
+.ai-assistant-header__intro-list-text {
+	min-width: 0;
+	flex: 1;
+	overflow-wrap: anywhere;
+	word-wrap: break-word;
+}
+
+.ai-assistant-header__intro-legal {
+	margin: 0.5rem 0 0;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	color: #64748b;
+}
+
 /* Wyraźne przypomnienie: zapis rozmowy tylko lokalnie (dobry kontrast na jasnym tle) */
 .ai-assistant-header__intro-browser {
 	display: block;
@@ -367,7 +402,8 @@
 	border: 1px solid rgba(15, 23, 42, 0.12);
 	border-radius: 8px;
 	padding: 0.35rem 0.5rem;
-	font-size: 0.9rem;
+	font-size: 1rem;
+	min-height: 2.25rem;
 }
 
 .ai-assistant-toolbar {
@@ -649,7 +685,7 @@
 	border: 1px solid rgba(15, 23, 42, 0.12);
 	border-radius: 12px;
 	padding: 0.65rem 0.85rem;
-	font-size: 0.95rem;
+	font-size: 1rem;
 	resize: vertical;
 	min-height: 72px;
 	font-family: inherit;

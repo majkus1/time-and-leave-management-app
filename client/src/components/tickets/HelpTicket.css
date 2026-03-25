@@ -349,6 +349,193 @@
 	margin-top: 0.5rem;
 }
 
+@media (max-width: 768px) {
+	.help-center__card.help-center__detail {
+		padding: 1.1rem 1rem 1.25rem;
+	}
+}
+
+.help-center__detail-title {
+	margin: 0 0 1rem 0;
+	font-size: 1.2rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: var(--hc-text);
+	letter-spacing: -0.02em;
+}
+
+.help-center__detail-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+	padding: 1rem 1.1rem;
+	margin: 0 0 1.35rem 0;
+	background: #f9fafb;
+	border: 1px solid var(--hc-border);
+	border-radius: 0.65rem;
+}
+
+.help-center__detail-summary-row {
+	display: grid;
+	grid-template-columns: minmax(5.5rem, auto) 1fr;
+	gap: 0.25rem 0.85rem;
+	align-items: baseline;
+	font-size: 0.875rem;
+	line-height: 1.45;
+}
+
+.help-center__detail-summary-row--status {
+	grid-template-columns: minmax(5.5rem, auto) 1fr;
+	align-items: center;
+}
+
+.help-center__detail-label {
+	font-weight: 600;
+	color: var(--hc-muted);
+}
+
+.help-center__detail-value {
+	color: var(--hc-text);
+	word-break: break-word;
+}
+
+.help-center__detail-status-select {
+	max-width: 14rem;
+	width: 100%;
+	padding: 0.45rem 0.6rem;
+	font-size: 0.875rem;
+}
+
+.help-center__detail-section {
+	margin: 0 0 1.25rem 0;
+}
+
+/* Globalne h3 w style.css (18px !important) — tu musi być mniejsza etykieta sekcji */
+.help-center__detail-section-title {
+	display: block !important;
+	margin: 0 0 0.45rem 0 !important;
+	font-size: 0.6875rem !important;
+	font-weight: 600 !important;
+	text-transform: none !important;
+	letter-spacing: 0.02em !important;
+	color: var(--hc-muted) !important;
+	line-height: 1.3 !important;
+	font-family: 'Titillium Web', serif !important;
+}
+
+/* Pierwsza wiadomość — zawsze padding (także mobile); bez polegania na klasach utility */
+.help-center__first-message-body {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 1rem 1.15rem;
+	min-height: 3rem;
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.65rem;
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	color: var(--hc-text);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+@media (max-width: 480px) {
+	.help-center__first-message-body {
+		padding: 1rem 1rem;
+	}
+}
+
+.help-center__detail-attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	margin: -0.35rem 0 1.15rem 0;
+}
+
+.help-center__detail-attachment-link {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #0f766e;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.help-center__detail-attachment-link:hover {
+	color: #115e59;
+}
+
+.help-center__detail-divider {
+	border: none;
+	border-top: 1px solid var(--hc-border);
+	margin: 0 0 1.15rem 0;
+}
+
+.help-center__bubble {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.help-center__bubble-text {
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--hc-text);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.help-center__bubble-files {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.help-center__bubble-file-link {
+	font-size: 0.75rem;
+	color: #0f766e;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.help-center__bubble-meta {
+	font-size: 0.75rem;
+	color: var(--hc-muted);
+}
+
+.help-center__thread-empty {
+	font-size: 0.875rem;
+	color: #9ca3af;
+	padding: 0.35rem 0;
+}
+
+.help-center__reply-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	margin-top: 0.25rem;
+}
+
+.help-center__reply-label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--hc-text);
+}
+
+.help-center__reply-textarea {
+	min-height: 4.75rem;
+}
+
+.help-center__reply-submit.help-center__btn-primary {
+	margin-top: 0.5rem;
+	align-self: flex-end;
+	max-width: 16rem;
+	width: 100%;
+}
+
+.help-center__detail-foot-alert {
+	margin-top: 0.85rem;
+}
+
 .help-center__back {
 	display: inline-flex;
 	align-items: center;

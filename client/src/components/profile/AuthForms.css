@@ -86,10 +86,6 @@
 	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
-.auth-input--with-icon-left {
-	padding-left: 2.65rem;
-}
-
 .auth-input--with-toggle {
 	padding-right: 2.75rem;
 }

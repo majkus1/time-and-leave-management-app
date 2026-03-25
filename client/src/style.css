@@ -14,6 +14,14 @@ html {
 
 @import 'tailwindcss';
 
+/* Pola do wpisywania: min. 16px (!important pokonuje klasy/inline z mniejszym fontem — iOS, czytelność). */
+textarea,
+select,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='hidden']):not([type='image']):not([type='button']):not([type='submit']):not([type='reset']):not([type='color']),
+[contenteditable='true'] {
+	font-size: max(16px, 1em) !important;
+}
+
 @keyframes fadeInUp {
 	0% {
 		opacity: 0;

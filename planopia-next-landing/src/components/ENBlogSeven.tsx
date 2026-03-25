@@ -114,6 +114,11 @@ function ENBlogSeven() {
 							About the App
 						</Link>
 						<Link
+							href="/en#ai-assistant"
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							AI Assistant
+						</Link>
+						<Link
 							href="/en#prices"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
@@ -160,6 +165,7 @@ function ENBlogSeven() {
 				lang="en"
 				menuItems={[
 					{ href: '/en#aboutapp', label: 'About the App' },
+					{ href: '/en#ai-assistant', label: 'AI Assistant' },
 					{ href: '/en#prices', label: 'Pricing' },
 					{ href: '/en#contact', label: 'Contact' },
 					{ href: '/en/blog', label: 'Blog' },

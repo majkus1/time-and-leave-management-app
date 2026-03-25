@@ -315,7 +315,10 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 							onChange={(e) => setDueDate(e.target.value)}
 							style={{
 								marginTop: '10px',
+								display: 'block',
 								width: '100%',
+								maxWidth: '250px',
+								boxSizing: 'border-box',
 								padding: '10px',
 								border: '1px solid #bdc3c7',
 								borderRadius: '6px',
@@ -324,19 +327,47 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 						/>
 					)}
 					{scheduleMode === 'period' && (
-						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-							<input
-								type="date"
-								value={periodStart}
-								onChange={(e) => setPeriodStart(e.target.value)}
-								style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							/>
-							<input
-								type="date"
-								value={periodEnd}
-								onChange={(e) => setPeriodEnd(e.target.value)}
-								style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-							/>
+						<div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+							<div>
+								<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
+									{t('boards.periodFrom') || 'Od'}
+								</label>
+								<input
+									type="date"
+									value={periodStart}
+									onChange={(e) => setPeriodStart(e.target.value)}
+									style={{
+										display: 'block',
+										width: '100%',
+										maxWidth: '250px',
+										boxSizing: 'border-box',
+										padding: '10px',
+										border: '1px solid #bdc3c7',
+										borderRadius: '6px',
+										fontSize: '16px'
+									}}
+								/>
+							</div>
+							<div>
+								<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
+									{t('boards.periodTo') || 'Do'}
+								</label>
+								<input
+									type="date"
+									value={periodEnd}
+									onChange={(e) => setPeriodEnd(e.target.value)}
+									style={{
+										display: 'block',
+										width: '100%',
+										maxWidth: '250px',
+										boxSizing: 'border-box',
+										padding: '10px',
+										border: '1px solid #bdc3c7',
+										borderRadius: '6px',
+										fontSize: '16px'
+									}}
+								/>
+							</div>
 						</div>
 					)}
 				</div>

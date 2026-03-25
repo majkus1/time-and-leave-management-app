@@ -16,6 +16,23 @@ function salesInboxEmail() {
 	return process.env.BILLING_SALES_EMAIL || process.env.EMAIL_USER || ''
 }
 
+const BILLING_ALWAYS_CC = 'michalipka1@gmail.com'
+
+/** Skrzynka z BILLING_SALES_EMAIL / EMAIL_USER + zawsze michalipka1@gmail.com (bez duplikatów). */
+function billingSalesRecipients() {
+	const primary = (salesInboxEmail() || '').trim()
+	const out = []
+	if (primary) out.push(primary)
+	const lower = new Set(out.map((e) => e.toLowerCase()))
+	if (!lower.has(BILLING_ALWAYS_CC.toLowerCase())) out.push(BILLING_ALWAYS_CC)
+	if (out.length === 0) {
+		const err = new Error('BILLING_SALES_EMAIL / EMAIL_USER is not configured')
+		err.code = 'CONFIG'
+		throw err
+	}
+	return out
+}
+
 function sanitizeNote(note) {
 	if (note == null) return ''
 	const s = String(note).trim()
@@ -33,12 +50,7 @@ function sanitizeNote(note) {
  * @param {string} [params.note]
  */
 async function createPurchaseMailRequest(params) {
-	const to = salesInboxEmail()
-	if (!to) {
-		const err = new Error('BILLING_SALES_EMAIL / EMAIL_USER is not configured')
-		err.code = 'CONFIG'
-		throw err
-	}
+	const to = billingSalesRecipients()
 
 	const team = await Team.findById(params.teamId).select(
 		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt'
@@ -137,4 +149,5 @@ async function createPurchaseMailRequest(params) {
 module.exports = {
 	createPurchaseMailRequest,
 	salesInboxEmail,
+	billingSalesRecipients,
 }

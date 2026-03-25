@@ -1408,14 +1408,6 @@ function MonthlyCalendar() {
 									borderRadius: '8px',
 									border: '1px solid #dee2e6'
 								}}>
-									<h3 style={{
-										marginBottom: '15px',
-										color: '#2c3e50',
-										fontSize: '18px',
-										fontWeight: '600'
-									}}>
-										{t('workcalendar.addNotes') || 'Dodaj uwagi'}
-									</h3>
 									<form onSubmit={handleSubmit} className="space-y-4">
 										<div>
 											<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
@@ -1709,16 +1701,6 @@ function MonthlyCalendar() {
 										}}>
 											{t('workcalendar.canAddHoursOrAbsence') || 'W tym dniu są tylko uwagi. Możesz dodać godziny pracy lub nieobecność.'}
 										</div>
-									)}
-									{!hasOnlyNotesInExisting && (
-										<h3 style={{
-											marginBottom: '15px',
-											color: '#2c3e50',
-											fontSize: '18px',
-											fontWeight: '600'
-										}}>
-											{t('workcalendar.addNotes') || 'Dodaj uwagi'}
-										</h3>
 									)}
 									{!hasOnlyNotesInExisting && hasAcceptedRequest && (
 										<div style={{

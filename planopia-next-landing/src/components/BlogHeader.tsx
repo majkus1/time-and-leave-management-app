@@ -65,6 +65,11 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 							{isPolish ? "O Aplikacji" : "About the App"}
 						</Link>
 						<Link
+							href={isPolish ? '/#asystent-ai' : '/en#ai-assistant'}
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							{isPolish ? 'Asystent AI' : 'AI Assistant'}
+						</Link>
+						<Link
 							href={isPolish ? "/#cennik" : "/en#prices"}
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							{isPolish ? "Cennik" : "Pricing"}
@@ -117,6 +122,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 				lang={lang}
 				menuItems={[
 					{ href: isPolish ? "/#oaplikacji" : "/en#aboutapp", label: isPolish ? "O Aplikacji" : "About the App" },
+					{ href: isPolish ? '/#asystent-ai' : '/en#ai-assistant', label: isPolish ? 'Asystent AI' : 'AI Assistant' },
 					{ href: isPolish ? "/#cennik" : "/en#prices", label: isPolish ? "Cennik" : "Pricing" },
 					{ href: isPolish ? "/#kontakt" : "/en#contact", label: isPolish ? "Kontakt" : "Contact" },
 					{ href: isPolish ? "/blog" : "/en/blog", label: 'Blog' },

@@ -332,6 +332,64 @@ export default function ScheduleAutoAiPanel({
 					.schedule-ai-dot:nth-child(1) { animation-delay: 0s; }
 					.schedule-ai-dot:nth-child(2) { animation-delay: 0.15s; }
 					.schedule-ai-dot:nth-child(3) { animation-delay: 0.3s; }
+					.schedule-auto-ai-composer {
+						display: flex;
+						gap: 10px;
+						margin-bottom: 14px;
+						flex-wrap: wrap;
+						align-items: stretch;
+					}
+					.schedule-auto-ai-composer .schedule-auto-ai-input {
+						flex: 1 1 200px;
+						min-width: 180px;
+						min-height: 52px;
+						padding: 12px 14px;
+						border: 1px solid #cbd5e1;
+						border-radius: 12px;
+						font-size: 14px;
+						line-height: 1.45;
+						resize: vertical;
+						background: #fff;
+						outline: none;
+						box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+						font-family: inherit;
+						color: #0f172a;
+					}
+					.schedule-auto-ai-composer .schedule-auto-ai-input:disabled {
+						opacity: 0.65;
+						cursor: not-allowed;
+					}
+					.schedule-auto-ai-composer .schedule-auto-ai-send {
+						padding: 12px 20px;
+						align-self: flex-end;
+						border: none;
+						background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+						color: #fff;
+						border-radius: 12px;
+						font-weight: 700;
+						font-size: 14px;
+						cursor: pointer;
+						box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+					}
+					.schedule-auto-ai-composer .schedule-auto-ai-send:disabled {
+						cursor: not-allowed;
+						opacity: 0.55;
+					}
+					@media (max-width: 767px) {
+						.schedule-auto-ai-composer {
+							flex-direction: column;
+							flex-wrap: nowrap;
+						}
+						.schedule-auto-ai-composer .schedule-auto-ai-input {
+							flex: none;
+							width: 100%;
+							min-width: 0;
+						}
+						.schedule-auto-ai-composer .schedule-auto-ai-send {
+							align-self: stretch;
+							width: 100%;
+						}
+					}
 				`}
 			</style>
 
@@ -342,6 +400,7 @@ export default function ScheduleAutoAiPanel({
 					color: '#475569',
 					lineHeight: 1.55,
 					maxWidth: '52em',
+					overflowWrap: 'break-word',
 				}}
 			>
 				{t('schedule.auto.ai.intro')}
@@ -513,8 +572,9 @@ export default function ScheduleAutoAiPanel({
 				<div ref={bottomRef} />
 			</div>
 
-			<div style={{ display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+			<div className="schedule-auto-ai-composer">
 				<textarea
+					className="schedule-auto-ai-input"
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
 					placeholder={t('schedule.auto.ai.placeholder')}
@@ -526,37 +586,12 @@ export default function ScheduleAutoAiPanel({
 							send()
 						}
 					}}
-					style={{
-						flex: '1 1 200px',
-						minWidth: '180px',
-						minHeight: '52px',
-						padding: '12px 14px',
-						border: '1px solid #cbd5e1',
-						borderRadius: '12px',
-						fontSize: '14px',
-						resize: 'vertical',
-						background: '#fff',
-						outline: 'none',
-						boxShadow: 'inset 0 1px 2px rgba(15,23,42,0.04)',
-					}}
 				/>
 				<button
 					type="button"
+					className="schedule-auto-ai-send"
 					onClick={send}
 					disabled={streaming || busy || !input.trim() || !aiEnabled || blockScheduleAi}
-					style={{
-						padding: '12px 20px',
-						alignSelf: 'flex-end',
-						border: 'none',
-						background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-						color: '#fff',
-						borderRadius: '12px',
-						fontWeight: 700,
-						fontSize: '14px',
-						cursor: streaming || busy || !input.trim() ? 'not-allowed' : 'pointer',
-						opacity: streaming || busy || !input.trim() ? 0.55 : 1,
-						boxShadow: '0 4px 14px rgba(14, 165, 233, 0.35)',
-					}}
 				>
 					{t('schedule.auto.ai.send')}
 				</button>

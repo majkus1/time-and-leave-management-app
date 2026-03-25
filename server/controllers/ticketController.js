@@ -2,7 +2,7 @@
 const { centralTicketConnection, firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
 const Ticket = centralTicketConnection ? require('../models/Ticket')(centralTicketConnection) : null
-const { notifyTicketReporter } = require('../services/emailService')
+const { notifyTicketReporter, notifyHelpCenterStaff } = require('../services/emailService')
 
 function ticketsDisabled(res) {
 	res.status(503).json({ error: 'Baza zgłoszeń jest niedostępna' })
@@ -88,7 +88,14 @@ exports.createTicket = async (req, res) => {
 			status: 'Otwarte',
 			messages: [{ sender: 'user', author: userEmail, content: message, files: attachments }],
 		})
-		
+
+		void notifyHelpCenterStaff({
+			kind: 'new_ticket',
+			ticket,
+			messagePreview: message,
+			authorEmail: userEmail,
+		})
+
 		res.status(201).json({ message: 'Ticket created', ticket })
 	} catch (err) {
 		res.status(500).json({ error: 'Nie udało się utworzyć zgłoszenia' })
@@ -176,6 +183,14 @@ exports.replyToTicket = async (req, res) => {
 		files: attachments,
 	})
 	await ticket.save()
+
+	void notifyHelpCenterStaff({
+		kind: 'reply',
+		ticket,
+		messagePreview: message,
+		authorEmail: userEmail,
+		isStaffMessage: isStaffSender,
+	})
 
 	if (isStaffSender && !emailsEqual(ticket.userEmail, userEmail)) {
 		void notifyTicketReporter({

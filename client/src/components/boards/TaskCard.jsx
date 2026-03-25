@@ -495,7 +495,10 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 										value={editDueDate}
 										onChange={(e) => setEditDueDate(e.target.value)}
 										style={{
+											display: 'block',
 											width: '100%',
+											maxWidth: '250px',
+											boxSizing: 'border-box',
 											padding: '10px',
 											border: '1px solid #bdc3c7',
 											borderRadius: '6px',
@@ -504,19 +507,47 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									/>
 								)}
 								{editScheduleMode === 'period' && (
-									<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-										<input
-											type="date"
-											value={editPeriodStart}
-											onChange={(e) => setEditPeriodStart(e.target.value)}
-											style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-										/>
-										<input
-											type="date"
-											value={editPeriodEnd}
-											onChange={(e) => setEditPeriodEnd(e.target.value)}
-											style={{ padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-										/>
+									<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+										<div>
+											<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
+												{t('boards.periodFrom') || 'Od'}
+											</label>
+											<input
+												type="date"
+												value={editPeriodStart}
+												onChange={(e) => setEditPeriodStart(e.target.value)}
+												style={{
+													display: 'block',
+													width: '100%',
+													maxWidth: '250px',
+													boxSizing: 'border-box',
+													padding: '10px',
+													border: '1px solid #bdc3c7',
+													borderRadius: '6px',
+													fontSize: '16px',
+												}}
+											/>
+										</div>
+										<div>
+											<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
+												{t('boards.periodTo') || 'Do'}
+											</label>
+											<input
+												type="date"
+												value={editPeriodEnd}
+												onChange={(e) => setEditPeriodEnd(e.target.value)}
+												style={{
+													display: 'block',
+													width: '100%',
+													maxWidth: '250px',
+													boxSizing: 'border-box',
+													padding: '10px',
+													border: '1px solid #bdc3c7',
+													borderRadius: '6px',
+													fontSize: '16px',
+												}}
+											/>
+										</div>
 									</div>
 								)}
 							</div>

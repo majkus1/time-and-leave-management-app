@@ -21,8 +21,15 @@
 .packages-current-plan__body {
 	margin: 0;
 	font-size: 0.92rem;
-	line-height: 1.55;
+	line-height: 1.45;
 	color: #334155;
+}
+
+.packages-usage__text {
+	margin: 0;
+	color: #475569;
+	font-size: 0.9rem;
+	line-height: 1.45;
 }
 
 .packages-usage {
@@ -57,29 +64,105 @@
 	color: #1e293b;
 }
 
+.packages-billing-block {
+	margin-bottom: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+
 .packages-billing-toggle {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 1.25rem;
+	gap: 0.5rem 0.75rem;
+	margin-bottom: 15px;
 }
 
-.packages-billing-toggle button {
+.packages-billing-toggle__label {
+	font-weight: 600;
+	color: #334155;
+	font-size: 0.9rem;
+	flex: 0 0 auto;
+}
+
+/* Przyciski miesięcznie / rocznie zawsze w jednym rzędzie obok siebie */
+.packages-billing-toggle__buttons {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: 0.45rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.packages-billing-toggle__buttons button {
+	flex: 1 1 0;
+	min-width: 0;
 	border: 1px solid #cbd5e1;
 	background: #fff;
-	padding: 0.45rem 0.9rem;
+	padding: 0.45rem 0.5rem;
 	border-radius: 8px;
 	cursor: pointer;
 	font-weight: 600;
-	font-size: 0.85rem;
+	font-size: 0.8rem;
 	color: #475569;
+	line-height: 1.25;
+	text-align: center;
+	hyphens: auto;
+	-webkit-hyphens: auto;
 }
 
-.packages-billing-toggle button.is-on {
+.packages-billing-toggle__buttons button.is-on {
 	background: #0f172a;
 	color: #fff;
 	border-color: #0f172a;
+}
+
+@media (min-width: 480px) {
+	.packages-billing-toggle__buttons button {
+		font-size: 0.85rem;
+		padding: 0.45rem 0.75rem;
+	}
+}
+
+/* Jak landing: przy rozliczeniu rocznym — odznaka + wyjaśnienie 10→12 mies. */
+.packages-billing-annual-note {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.5rem 0.75rem;
+	padding: 0.15rem 0 0;
+	margin-bottom: 10px;
+}
+
+.packages-billing-annual-badge {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 999px;
+	background: #d1fae5;
+	color: #065f46;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	padding: 0.3rem 0.7rem;
+	flex-shrink: 0;
+	line-height: 1.2;
+}
+
+.packages-billing-annual-hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: #475569;
+	line-height: 1.45;
+	flex: 1 1 12rem;
+	min-width: 0;
+}
+
+@media (min-width: 640px) {
+	.packages-billing-annual-hint {
+		font-size: 0.875rem;
+	}
 }
 
 .packages-grid {
@@ -157,13 +240,46 @@
 	min-height: 2.2em;
 }
 
-.packages-tier ul {
+/* Lista korzyści — jak landing (zielony ✓) */
+.packages-tier__features {
+	list-style: none;
 	margin: 0 0 1rem;
-	padding-left: 1.1rem;
-	font-size: 0.88rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	font-size: 0.875rem;
 	color: #334155;
 	line-height: 1.45;
 	flex: 1;
+}
+
+.packages-tier__feature {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.65rem;
+}
+
+.packages-tier__feature-check {
+	color: #059669;
+	font-size: 1rem;
+	line-height: 1.25;
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+	user-select: none;
+}
+
+.packages-tier__feature-text {
+	flex: 1;
+	min-width: 0;
+	color: #374151;
+}
+
+@media (min-width: 768px) {
+	.packages-tier__features {
+		font-size: 0.9rem;
+		gap: 0.7rem;
+	}
 }
 
 .packages-tier button {
@@ -310,8 +426,34 @@
 
 .packages-modal__actions button.primary {
 	background: #0f172a;
-	color: #fff;
+	color: #ffffff;
 	border-color: #0f172a;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	min-width: 8.5rem;
+}
+
+/* Tekst „Wysyłanie…” + spinner: globalne / Bootstrap potrafią nadpisać kolor — wymuszamy biel */
+.packages-modal__actions button.primary .packages-modal__submit-pending {
+	color: #ffffff !important;
+}
+
+.packages-modal__submit-pending {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.packages-modal__actions button.primary .packages-modal__spinner {
+	width: 0.95rem;
+	height: 0.95rem;
+	border-width: 0.15em !important;
+	/* spinner-border opiera się na border-color; currentColor bywa nadpisywane */
+	color: #ffffff !important;
+	border-color: #ffffff !important;
+	border-right-color: transparent !important;
 }
 
 .packages-sent-banner {

@@ -287,112 +287,130 @@ const HelpTicket = () => {
 							<button type="button" className="help-center__back" onClick={handleBackToList}>
 								← {t('tickets.backToList')}
 							</button>
-							<h2 className="text-lg font-semibold text-gray-800 mb-2">{selectedTicket.topic}</h2>
-							<p className="text-sm text-gray-600 mb-3">
-								<span className="font-medium text-gray-700">{t('tickets.author')}:</span>{' '}
-								{selectedTicket.userEmail}
-							</p>
-							{canChangeTicketStatus ? (
-								<div className="mb-3 flex flex-wrap items-center gap-2">
-									<label className="text-sm font-medium text-gray-700" htmlFor="ticket-status">
-										{t('tickets.status')}:
-									</label>
-									<select
-										id="ticket-status"
-										value={selectedTicket?.status || ''}
-										onChange={async e => {
-											const newStatus = e.target.value
-											if (!selectedTicketId) return
-											try {
-												await updateTicketStatusMutation.mutateAsync({
-													ticketId: selectedTicketId,
-													status: newStatus,
-												})
-											} catch (err) {
-												setError(t('tickets.statusUpdateError'))
-											}
-										}}
-										disabled={updateTicketStatusMutation.isPending}
-										className="help-center__input max-w-[200px] py-1 text-sm">
-										<option value="Otwarte">{t('tickets.status1')}</option>
-										<option value="Zamknięte">{t('tickets.status2')}</option>
-									</select>
-								</div>
-							) : (
-								<p className="mb-3 text-sm">
-									<span className="font-medium text-gray-700">{t('tickets.status')}:</span>{' '}
-									{selectedTicket.status === 'Otwarte'
-										? t('tickets.status1')
-										: selectedTicket.status === 'Zamknięte'
-											? t('tickets.status2')
-											: selectedTicket.status}
-								</p>
-							)}
 
-							<p className="text-sm text-gray-600 mb-2">
-								<span className="font-medium text-gray-700">{t('tickets.createdAt')}:</span>{' '}
-								{new Date(selectedTicket.createdAt).toLocaleString()}
-							</p>
-							<p className="text-sm font-medium text-gray-700 mb-1">{t('tickets.messageContent')}</p>
-							<div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm text-gray-800 mb-4">
-								{selectedTicket.messages && selectedTicket.messages.length > 0
-									? selectedTicket.messages[0].content
-									: t('tickets.nocontent')}
+							<h2 className="help-center__detail-title">{selectedTicket.topic}</h2>
+
+							<div className="help-center__detail-summary" aria-label={t('tickets.title')}>
+								<div className="help-center__detail-summary-row">
+									<span className="help-center__detail-label">{t('tickets.author')}</span>
+									<span className="help-center__detail-value">{selectedTicket.userEmail}</span>
+								</div>
+
+								{canChangeTicketStatus ? (
+									<div className="help-center__detail-summary-row help-center__detail-summary-row--status">
+										<label className="help-center__detail-label" htmlFor="ticket-status">
+											{t('tickets.status')}
+										</label>
+										<select
+											id="ticket-status"
+											value={selectedTicket?.status || ''}
+											onChange={async e => {
+												const newStatus = e.target.value
+												if (!selectedTicketId) return
+												try {
+													await updateTicketStatusMutation.mutateAsync({
+														ticketId: selectedTicketId,
+														status: newStatus,
+													})
+												} catch (err) {
+													setError(t('tickets.statusUpdateError'))
+												}
+											}}
+											disabled={updateTicketStatusMutation.isPending}
+											className="help-center__input help-center__detail-status-select">
+											<option value="Otwarte">{t('tickets.status1')}</option>
+											<option value="Zamknięte">{t('tickets.status2')}</option>
+										</select>
+									</div>
+								) : (
+									<div className="help-center__detail-summary-row">
+										<span className="help-center__detail-label">{t('tickets.status')}</span>
+										<span className="help-center__detail-value">
+											{selectedTicket.status === 'Otwarte'
+												? t('tickets.status1')
+												: selectedTicket.status === 'Zamknięte'
+													? t('tickets.status2')
+													: selectedTicket.status}
+										</span>
+									</div>
+								)}
+
+								<div className="help-center__detail-summary-row">
+									<span className="help-center__detail-label">{t('tickets.createdAt')}</span>
+									<span className="help-center__detail-value">
+										{new Date(selectedTicket.createdAt).toLocaleString()}
+									</span>
+								</div>
 							</div>
 
+							<section className="help-center__detail-section" aria-labelledby="help-first-message-heading">
+								<h3 id="help-first-message-heading" className="help-center__detail-section-title">
+									{t('tickets.messageContent')}
+								</h3>
+								<div className="help-center__first-message-body">
+									{selectedTicket.messages && selectedTicket.messages.length > 0
+										? selectedTicket.messages[0].content
+										: t('tickets.nocontent')}
+								</div>
+							</section>
+
 							{selectedTicket.messages && selectedTicket.messages[0]?.files && selectedTicket.messages[0].files.length > 0 && (
-								<div className="flex flex-wrap gap-2 mb-4">
+								<div className="help-center__detail-attachments">
 									{selectedTicket.messages[0].files.map((file, idx) => (
 										<a
 											key={idx}
 											href={`${uploadsBase}/uploads/${file}`}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="text-sm text-teal-700 underline">
+											className="help-center__detail-attachment-link">
 											{t('tickets.downloadAttachment')} {idx + 1}
 										</a>
 									))}
 								</div>
 							)}
 
-							<hr className="border-gray-200 my-4" />
+							<hr className="help-center__detail-divider" />
 
-							<h3 className="text-sm font-semibold text-gray-800 mb-2">{t('tickets.replyHistory')}</h3>
-							<div className="help-center__thread">
-								{selectedTicket.messages && selectedTicket.messages.length > 1 ? (
-									selectedTicket.messages.slice(1).map((msg, idx) => (
-										<div
-											key={idx}
-											className={`help-center__bubble flex flex-col gap-1 ${
-												msg.sender === 'admin' ? 'help-center__bubble--staff' : 'help-center__bubble--user'
-											}`}>
-											<div className="text-sm whitespace-pre-wrap text-gray-800">{msg.content}</div>
-											{msg.files && msg.files.length > 0 && (
-												<div className="flex flex-col gap-1">
-													{msg.files.map((file, fileIdx) => (
-														<a
-															key={fileIdx}
-															href={`${uploadsBase}/uploads/${file}`}
-															target="_blank"
-															rel="noopener noreferrer"
-															className="text-xs text-teal-700 underline">
-															{t('tickets.downloadAttachment')} {fileIdx + 1}
-														</a>
-													))}
+							<section className="help-center__detail-section" aria-labelledby="help-reply-history-heading">
+								<h3 id="help-reply-history-heading" className="help-center__detail-section-title">
+									{t('tickets.replyHistory')}
+								</h3>
+								<div className="help-center__thread">
+									{selectedTicket.messages && selectedTicket.messages.length > 1 ? (
+										selectedTicket.messages.slice(1).map((msg, idx) => (
+											<div
+												key={idx}
+												className={`help-center__bubble ${
+													msg.sender === 'admin' ? 'help-center__bubble--staff' : 'help-center__bubble--user'
+												}`}>
+												<div className="help-center__bubble-text">{msg.content}</div>
+												{msg.files && msg.files.length > 0 && (
+													<div className="help-center__bubble-files">
+														{msg.files.map((file, fileIdx) => (
+															<a
+																key={fileIdx}
+																href={`${uploadsBase}/uploads/${file}`}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="help-center__bubble-file-link">
+																{t('tickets.downloadAttachment')} {fileIdx + 1}
+															</a>
+														))}
+													</div>
+												)}
+												<div className="help-center__bubble-meta">
+													{msg.author} — {new Date(msg.timestamp).toLocaleString()}
 												</div>
-											)}
-											<div className="text-xs text-gray-500">
-												{msg.author} — {new Date(msg.timestamp).toLocaleString()}
 											</div>
-										</div>
-									))
-								) : (
-									<div className="text-gray-400 text-sm">{t('tickets.noanswer')}</div>
-								)}
-							</div>
+										))
+									) : (
+										<div className="help-center__thread-empty">{t('tickets.noanswer')}</div>
+									)}
+								</div>
+							</section>
 
-							<form className="mt-4 flex flex-col gap-2" onSubmit={handleSendReply} encType="multipart/form-data">
-								<label className="text-sm font-medium text-gray-700" htmlFor="help-reply">
+							<form className="help-center__reply-form" onSubmit={handleSendReply} encType="multipart/form-data">
+								<label className="help-center__reply-label" htmlFor="help-reply">
 									{t('tickets.writeReply')}
 								</label>
 								<textarea
@@ -400,7 +418,7 @@ const HelpTicket = () => {
 									value={reply}
 									onChange={e => setReply(e.target.value)}
 									placeholder={t('tickets.writeReply')}
-									className="help-center__textarea min-h-[4.5rem]"
+									className="help-center__textarea help-center__reply-textarea"
 								/>
 								<div className="help-center__attachments-row">
 									<input
@@ -426,16 +444,18 @@ const HelpTicket = () => {
 									)}
 								</div>
 								<button
-									className="help-center__btn-primary max-w-xs self-end"
+									className="help-center__btn-primary help-center__reply-submit"
 									type="submit"
 									disabled={replying || !reply.trim()}>
 									{replying ? t('tickets.sending') : t('tickets.sendReply')}
 								</button>
 							</form>
 							{success && (
-								<div className="help-center__alert help-center__alert--ok mt-3">{success}</div>
+								<div className="help-center__alert help-center__alert--ok help-center__detail-foot-alert">{success}</div>
 							)}
-							{error && <div className="help-center__alert help-center__alert--err mt-3">{error}</div>}
+							{error && (
+								<div className="help-center__alert help-center__alert--err help-center__detail-foot-alert">{error}</div>
+							)}
 						</div>
 					)}
 					</div>

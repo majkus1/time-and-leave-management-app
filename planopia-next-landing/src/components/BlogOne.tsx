@@ -54,6 +54,11 @@ function BlogOne() {
 							O Aplikacji
 						</Link>
 						<Link
+							href="/#asystent-ai"
+							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							Asystent AI
+						</Link>
+						<Link
 							href="/#cennik"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
@@ -100,6 +105,7 @@ function BlogOne() {
 				lang="pl"
 				menuItems={[
 					{ href: '/#oaplikacji', label: 'O Aplikacji' },
+					{ href: '/#asystent-ai', label: 'Asystent AI' },
 					{ href: '/#cennik', label: 'Cennik' },
 					{ href: '/#kontakt', label: 'Kontakt' },
 					{ href: '/blog', label: 'Blog' },

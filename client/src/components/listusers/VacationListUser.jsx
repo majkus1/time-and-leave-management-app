@@ -924,7 +924,7 @@ function VacationListUser() {
 						</div>
 					)}
 
-					<div style={{ marginTop: '28px', padding: '0 4px' }}>
+					<div style={{ marginTop: '28px', padding: '0 4px', marginRight: '5px' }}>
 						<div
 							style={{
 								display: 'flex',

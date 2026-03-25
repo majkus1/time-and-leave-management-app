@@ -134,7 +134,7 @@ function Login() {
 										value={usernameInput}
 										onChange={e => setUsernameInput(e.target.value.toLowerCase())}
 										required
-										className="auth-input auth-input--with-icon-left"
+										className="auth-input"
 									/>
 								</div>
 							</div>
@@ -151,7 +151,7 @@ function Login() {
 										value={password}
 										onChange={e => setPassword(e.target.value)}
 										required
-										className="auth-input auth-input--with-icon-left auth-input--with-toggle"
+										className="auth-input auth-input--with-toggle"
 									/>
 									<button
 										type="button"

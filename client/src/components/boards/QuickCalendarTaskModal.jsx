@@ -263,20 +263,36 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 							type="date"
 							value={dueDate}
 							onChange={(e) => setDueDate(e.target.value)}
-							style={{ width: '100%', padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px' }}
+							style={{
+								display: 'block',
+								width: '100%',
+								maxWidth: '250px',
+								boxSizing: 'border-box',
+								padding: '10px',
+								border: '1px solid #bdc3c7',
+								borderRadius: '6px',
+							}}
 						/>
 					</div>
 				)}
 
 				{scheduleMode === SCHEDULE_PERIOD && (
-					<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
 						<div>
 							<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>{t('boards.periodFrom') || 'Od'}</label>
 							<input
 								type="date"
 								value={periodStart}
 								onChange={(e) => setPeriodStart(e.target.value)}
-								style={{ width: '100%', padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px' }}
+								style={{
+									display: 'block',
+									width: '100%',
+									maxWidth: '250px',
+									boxSizing: 'border-box',
+									padding: '10px',
+									border: '1px solid #bdc3c7',
+									borderRadius: '6px',
+								}}
 							/>
 						</div>
 						<div>
@@ -285,7 +301,15 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 								type="date"
 								value={periodEnd}
 								onChange={(e) => setPeriodEnd(e.target.value)}
-								style={{ width: '100%', padding: '10px', border: '1px solid #bdc3c7', borderRadius: '6px' }}
+								style={{
+									display: 'block',
+									width: '100%',
+									maxWidth: '250px',
+									boxSizing: 'border-box',
+									padding: '10px',
+									border: '1px solid #bdc3c7',
+									borderRadius: '6px',
+								}}
 							/>
 						</div>
 					</div>

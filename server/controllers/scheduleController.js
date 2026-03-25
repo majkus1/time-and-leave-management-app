@@ -8,6 +8,7 @@ const { canSupervisorManageSchedule } = require('../services/roleService')
 const { autoGenerateScheduleMonth } = require('../services/scheduleAutoPlannerService')
 const { runScheduleAutoDraftTurn } = require('../services/aiScheduleAutoDraftService')
 const entitlementsService = require('../services/entitlementsService')
+const { createLog } = require('../services/logService')
 const { isHoliday } = require('../utils/holidays')
 
 const normalizeDepartments = (departmentValue) =>
@@ -1325,6 +1326,15 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 			locale,
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		const schedDoc = await Schedule.findById(scheduleId).select('name').lean()
+		const schedLabel = schedDoc?.name || String(scheduleId)
+		const who = req.user?.username || '—'
+		await createLog(
+			req.user.userId,
+			'AI_SCHEDULE_AUTO_DRAFT',
+			`Asystent AI — szkic grafiku „${schedLabel}” · ${who}`,
+			req.user.userId
+		)
 		res.json({
 			reply: result.reply,
 			draft: result.draft,

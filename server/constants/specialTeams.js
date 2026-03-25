@@ -15,6 +15,12 @@ const SPECIAL_UNLIMITED_AI_TEAM_NAMES = ['OficjalnyAdminowy']
  */
 const SPECIAL_MANUAL_BILLING_TEAM_NAMES = ['Halo Rental System', 'testokresprobny']
 
+/**
+ * Zespoły wymuszające tryb „structural legacy” (jak konta sprzed billing w Mongo),
+ * mimo że mają zapisane trial/billing — do czasu aktywnej płatnej subskrypcji.
+ */
+const FORCE_LEGACY_PRE_BILLING_TEAM_NAMES = ['testnewversion', 'legacy']
+
 /** @deprecated alias — użyj SPECIAL_ELEVATED_SEAT_TEAM_NAMES; zachowane dla istniejących importów */
 const SPECIAL_TEAM_NAMES = SPECIAL_ELEVATED_SEAT_TEAM_NAMES
 
@@ -23,4 +29,5 @@ module.exports = {
 	SPECIAL_ELEVATED_SEAT_TEAM_NAMES,
 	SPECIAL_UNLIMITED_AI_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
+	FORCE_LEGACY_PRE_BILLING_TEAM_NAMES,
 }
