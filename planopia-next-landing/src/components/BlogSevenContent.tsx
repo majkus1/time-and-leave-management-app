@@ -143,7 +143,7 @@ export default function BlogSevenContent() {
 
 						<figure>
 							<img
-								src="/img/desktopnew.webp"
+								src="/img/desktopnews.webp"
 								alt="Kompleksowa aplikacja do zarządzania firmą – Planopia"
 								className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 							/>
@@ -151,7 +151,7 @@ export default function BlogSevenContent() {
 						</figure>
 						<figure>
 							<img
-								src="/img/mobilenew.webp"
+								src="/img/mobilenews.webp"
 								alt="Kompleksowa aplikacja do zarządzania firmą – Planopia"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 							/>

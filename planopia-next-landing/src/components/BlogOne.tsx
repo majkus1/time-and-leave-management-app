@@ -20,7 +20,7 @@ function BlogOne() {
 						"@type": "BlogPosting",
 						"headline": "Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm",
 						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Rejestracja godzin, nadgodzin i urlopów. 30 dni za darmo: pełne funkcje, do 5 użytkowników.",
-						"image": "https://planopia.pl/img/desktopnew.webp",
+						"image": "https://planopia.pl/img/desktopnews.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -164,12 +164,12 @@ function BlogOne() {
 						</div>
 
 						<img
-							src="/img/desktopnew.webp"
+							src="/img/desktopnews.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 						/>
 						<img
-							src="/img/mobilenew.webp"
+							src="/img/mobilenews.webp"
 							alt="Program do planowania urlopów – Planopia"
 							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 						/>

@@ -357,7 +357,7 @@ function ENProductPromotion() {
 						<div className="relative flex justify-center items-center mockup-rotator">
 						<div className='desktop-mockup'> 
   <img
-    src="/img/desktop-ennew.webp"
+    src="/img/desktop-ennews.webp"
     alt="Planopia – widok desktop"
     className="rounded-xl shadow-xl ring-1 ring-black/5"
     loading="eager"
@@ -371,7 +371,7 @@ function ENProductPromotion() {
   />
   </div>
 							<img
-								src="/img/mobile-ennew.webp"
+								src="/img/mobile-ennews.webp"
 								alt="Planopia – mobile view"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
 								loading="eager"

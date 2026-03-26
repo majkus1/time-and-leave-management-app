@@ -35,7 +35,7 @@ function ENBlogSix() {
 							}
 						},
 						"description": "Complete guide to leave management in a company. Learn how to effectively plan, track, and approve leave requests. Planopia - free leave management software.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>

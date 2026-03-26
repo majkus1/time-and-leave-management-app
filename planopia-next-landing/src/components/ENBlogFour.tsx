@@ -35,7 +35,7 @@ function ENBlogFour() {
 							}
 						},
 						"description": "Planopia: 30-day trial with full features for up to 5 users. Time tracking and leave management; then paid plans.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>

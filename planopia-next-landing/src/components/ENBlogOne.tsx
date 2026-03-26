@@ -20,7 +20,7 @@ function ENBlogOne() {
 						"@type": "BlogPosting",
 						"headline": "Online Time Tracking – modern solutions for businesses",
 						"description": "Planopia is a modern online time tracking app. 30-day trial with full features for up to 5 users; then paid plans.",
-						"image": "https://planopia.pl/img/desktopnew.webp",
+						"image": "https://planopia.pl/img/desktopnews.webp",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -164,12 +164,12 @@ function ENBlogOne() {
 					</div>
 
 					<img
-						src="/img/desktop-ennew.webp"
+						src="/img/desktop-ennews.webp"
 						alt="Program do planowania urlopów – Planopia"
 						className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 					/>
 					<img
-						src="/img/mobile-ennew.webp"
+						src="/img/mobile-ennews.webp"
 						alt="Program do planowania urlopów – Planopia"
 						className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 					/>

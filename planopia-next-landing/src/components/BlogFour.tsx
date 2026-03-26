@@ -35,7 +35,7 @@ function BlogFour() {
 							}
 						},
 						"description": "Planopia: 30 dni za darmo — pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i urlopy; potem proste plany płatne.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>

@@ -232,7 +232,9 @@ i18n
 						recommended: 'Recommended',
 						billingToggle: 'Billing',
 						netPerMonthShort: 'net / month',
-						annualSummary: 'Upfront: {{total}} PLN net / year (monthly figure is equivalent)',
+						usdIndicativeNote:
+							'Prices in USD are indicative (1 USD ≈ 3.69 PLN). Settlement and invoices are in PLN.',
+						annualSummary: 'Upfront: {{total}} net / year (monthly figure is equivalent; settlement in PLN)',
 						currentPlanTitle: 'Your team subscription',
 						currentPlanInternal: 'Internal account — unmetered AI. Contact us to change billing.',
 						currentPlanLegacy: 'Pre-billing — pick a plan below (AI + billing).',

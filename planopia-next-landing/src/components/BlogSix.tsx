@@ -35,7 +35,7 @@ function BlogSix() {
 							}
 						},
 						"description": "Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>

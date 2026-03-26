@@ -227,7 +227,7 @@ function ENBlogSeven() {
 
 						<figure>
 							<img
-								src="/img/desktop-ennew.webp"
+								src="/img/desktop-ennews.webp"
 								alt="Comprehensive Company Management App – Planopia"
 								className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
 							/>
@@ -235,7 +235,7 @@ function ENBlogSeven() {
 						</figure>
 						<figure>
 							<img
-								src="/img/mobile-ennew.webp"
+								src="/img/mobile-ennews.webp"
 								alt="Comprehensive Company Management App – Planopia"
 								className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
 							/>

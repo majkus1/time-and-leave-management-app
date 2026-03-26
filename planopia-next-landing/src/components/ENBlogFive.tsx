@@ -35,7 +35,7 @@ function ENBlogFive() {
 							}
 						},
 						"description": "Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>

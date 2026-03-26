@@ -16,6 +16,30 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import TimerPanel from './TimerPanel'
 import WorkSessionList from './WorkSessionList'
 
+/** Zgodne z media query w style.css (szeroki miesięczny grid ~800px). */
+const MOBILE_CALENDAR_MAX_WIDTH = 900
+
+/**
+ * Na mobile przewija poziomo .fc-dayGridMonth-view tak, by komórka „dziś” była w widoku.
+ */
+function scrollMonthlyCalendarToTodayInView() {
+	if (typeof window === 'undefined' || window.innerWidth > MOBILE_CALENDAR_MAX_WIDTH) return
+	const root = document.querySelector('.calendar-my-work')
+	if (!root) return
+	/* Poziomy scroll jest na .monthly-calendar-fc-wrap (dashboard), nie na .fc-dayGridMonth-view */
+	const scrollHost =
+		root.querySelector('.monthly-calendar-fc-wrap') || root.querySelector('.fc-dayGridMonth-view')
+	if (!scrollHost) return
+	const todayTd = root.querySelector('td.fc-day-today')
+	if (!todayTd) return
+	const cellRect = todayTd.getBoundingClientRect()
+	const hostRect = scrollHost.getBoundingClientRect()
+	const delta =
+		cellRect.left - hostRect.left - (hostRect.width / 2 - cellRect.width / 2)
+	const nextLeft = scrollHost.scrollLeft + delta
+	scrollHost.scrollLeft = Math.max(0, Math.min(nextLeft, scrollHost.scrollWidth - scrollHost.clientWidth))
+}
+
 function MonthlyCalendar() {
 	const [modalIsOpen, setModalIsOpen] = useState(false)
 	const [selectedDate, setSelectedDate] = useState(null)
@@ -80,7 +104,7 @@ function MonthlyCalendar() {
 	}, [])
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
-	
+
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
 		if (i18n.language !== 'pl') {
@@ -190,6 +214,15 @@ function MonthlyCalendar() {
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
 	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+
+	// Mobile: po załadowaniu / zmianie miesiąca — pokaż w poziomie dzisiejszy dzień (odświeżenie strony)
+	useEffect(() => {
+		if (loading) return
+		const now = new Date()
+		if (currentMonth !== now.getMonth() || currentYear !== now.getFullYear()) return
+		const id = window.setTimeout(() => scrollMonthlyCalendarToTodayInView(), 180)
+		return () => window.clearTimeout(id)
+	}, [loading, currentMonth, currentYear])
 
 	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
 	const holidaysForMonth = React.useMemo(() => {
@@ -490,6 +523,12 @@ function MonthlyCalendar() {
 		setCurrentMonth(newMonth)
 		setCurrentYear(newYear)
 		calculateTotals(workdays, acceptedLeaveRequests, newMonth, newYear)
+		const now = new Date()
+		if (newMonth === now.getMonth() && newYear === now.getFullYear()) {
+			window.requestAnimationFrame(() => {
+				window.requestAnimationFrame(() => scrollMonthlyCalendarToTodayInView())
+			})
+		}
 	}
 
 	const handleMonthSelect = event => {
@@ -934,7 +973,7 @@ function MonthlyCalendar() {
 					</button>
 				</div>
 
-				<div className="rounded-2xl overflow-hidden shadow-md">
+				<div className="rounded-2xl shadow-md monthly-calendar-fc-wrap">
 				<FullCalendar
 					plugins={[dayGridPlugin, interactionPlugin]}
 					initialView="dayGridMonth"

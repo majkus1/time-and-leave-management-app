@@ -52,14 +52,55 @@ function formatLegacyGraceLastInclusiveDay(iso, localeTag) {
 	}
 }
 
-function formatPln(n) {
+/** Zgodnie z planopia-next-landing (LandingPricing). */
+const PLN_PER_USD = 3.69
+
+function plnToUsd(pln) {
+	return pln / PLN_PER_USD
+}
+
+function formatMoneyUsd(amount) {
+	return amount.toLocaleString('en-US', {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	})
+}
+
+function isEnglishResolved(resolved) {
+	return typeof resolved === 'string' && resolved.toLowerCase().startsWith('en')
+}
+
+function formatCatalogPln(n) {
 	if (n == null) return '—'
 	return `${n} PLN`
 }
 
-function priceBlock(monthlyNet, billing, t) {
+/** Cena katalogowa (np. pakiet AI): PLN lub USD w zależności od języka. */
+function formatCatalogPrice(n, resolvedLang) {
+	if (n == null) return '—'
+	if (isEnglishResolved(resolvedLang)) return `$${formatMoneyUsd(plnToUsd(n))}`
+	return formatCatalogPln(n)
+}
+
+function priceBlock(monthlyNet, billing, t, resolvedLang) {
+	if (isEnglishResolved(resolvedLang)) {
+		if (billing === 'monthly') {
+			return {
+				main: `$${formatMoneyUsd(plnToUsd(monthlyNet))}`,
+				sub: t('billingPackages.netPerMonthShort'),
+			}
+		}
+		const annualTotalPln = monthlyNet * 10
+		const eqPln = annualTotalPln / 12
+		return {
+			main: `$${formatMoneyUsd(plnToUsd(eqPln))}`,
+			sub: t('billingPackages.annualSummary', {
+				total: `$${formatMoneyUsd(plnToUsd(annualTotalPln))}`,
+			}),
+		}
+	}
 	if (billing === 'monthly') {
-		return { main: formatPln(monthlyNet), sub: t('billingPackages.netPerMonthShort') }
+		return { main: formatCatalogPln(monthlyNet), sub: t('billingPackages.netPerMonthShort') }
 	}
 	const annualTotal = monthlyNet * 10
 	const eq = annualTotal / 12
@@ -237,6 +278,12 @@ export default function PackagesPage() {
 					<hr />
 				</div>
 
+				{isEnglishResolved(i18n.resolvedLanguage) && (
+					<p className="packages-usd-hint" role="note">
+						{t('billingPackages.usdIndicativeNote')}
+					</p>
+				)}
+
 				{justSent && <div className="packages-sent-banner">{t('billingPackages.sent')}</div>}
 
 				{!canSubmitPurchaseRequest && (
@@ -322,7 +369,7 @@ export default function PackagesPage() {
 					{catalog.tiers.map(tier => {
 						const isPro = tier.id === 'pro'
 						const isCurrentPlan = Boolean(ent && activePaid && ent.planKey === tier.id)
-						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t)
+						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t, i18n.resolvedLanguage)
 						const cycle = billing === 'monthly' ? 'monthly' : 'annual'
 						return (
 							<div
@@ -404,7 +451,9 @@ export default function PackagesPage() {
 							>
 								<div>
 									<strong>+{a.messages}</strong>
-									<span style={{ color: '#64748b', marginLeft: '0.5rem' }}>{formatPln(a.pricePlnNet)}</span>
+									<span style={{ color: '#64748b', marginLeft: '0.5rem' }}>
+										{formatCatalogPrice(a.pricePlnNet, i18n.resolvedLanguage)}
+									</span>
 								</div>
 								<button
 									type="button"

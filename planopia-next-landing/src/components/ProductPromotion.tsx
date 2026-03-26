@@ -363,14 +363,14 @@ function ProductPromotion() {
 <div className="relative flex justify-center items-center mockup-rotator">
  <div className='desktop-mockup'> 
   <img
-    src="/img/desktopnew.webp"
+    src="/img/desktopnews.webp"
     alt="Planopia – widok desktop"
     className="rounded-xl shadow-xl ring-1 ring-black/5"
     loading="eager"
   />
   
   <img
-    src="/img/planopia-leave.webp"
+    src="/img/planopia-leaves.webp"
     alt="Planopia – widok desktop"
     className="rounded-xl shadow-xl ring-1 ring-black/5"
     loading="eager"
@@ -378,7 +378,7 @@ function ProductPromotion() {
   </div>
   
   <img
-    src="/img/mobilenew.webp"
+    src="/img/mobilenews.webp"
     alt="Planopia – widok mobile"
     className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
     loading="eager"

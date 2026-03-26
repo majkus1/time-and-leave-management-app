@@ -1665,16 +1665,48 @@ textarea {
 }
 
 @media (max-width: 900px) {
-	.calendar-my-work .fc-dayGridMonth-view {
-		overflow: scroll !important;
+	/*
+	 * Poziomo: przewijanie szerokiej siatki (~800px).
+	 * Pionowo: NIE tworzymy scrollportu na widoku miesiąca — inaczej sticky na thead
+	 * odnosi się tylko do tego boxa i znika przy przewijaniu strony (mobile).
+	 * overflow-y: clip nie tworzy kontenera przewijania (w przeciwieństwie do scroll/auto).
+	 */
+	/*
+	 * Dashboard (MonthlyCalendar): poziomy scroll na zewnętrznym wrapie (.monthly-calendar-fc-wrap),
+	 * a wewnątrz FC — overflow visible (bez zagnieżdżonego scrollportu w pionie).
+	 * Sticky nagłówka Pn–Nd na dashboardzie włączony tylko od 901px (style.css).
+	 */
+	/* Flex: domyślne min-width:auto blokuje przewijanie poziome w kolumnie */
+	.calendar-my-work .col-xl-9 {
+		min-width: 0;
+	}
+
+	.calendar-my-work .monthly-calendar-fc-wrap {
+		width: 100%;
+		max-width: 100%;
+		overflow-x: auto !important;
+		overflow-y: clip !important;
+		-webkit-overflow-scrolling: touch;
 		scrollbar-width: thin;
 		scrollbar-color: #2169dc #f1f1f1;
 	}
 
+	.calendar-my-work .monthly-calendar-fc-wrap .fc-dayGridMonth-view,
+	.calendar-my-work .monthly-calendar-fc-wrap .fc .fc-view-harness {
+		overflow: visible !important;
+	}
+
 	#calendars-works-review .fc-dayGridMonth-view {
-		overflow: scroll !important;
+		overflow-x: auto !important;
+		overflow-y: clip !important;
+		-webkit-overflow-scrolling: touch;
 		scrollbar-width: thin;
 		scrollbar-color: #2169dc #f1f1f1;
+	}
+
+	#calendars-works-review .fc .fc-view-harness {
+		overflow-x: auto !important;
+		overflow-y: clip !important;
 	}
 
 	#leave-planner .fc-dayGridMonth-view {
@@ -1714,6 +1746,74 @@ textarea {
 	#all-leaveplans .fc-scrollgrid {
 		width: 800px;
 	}
+}
+
+/* Nagłówek dni tygodnia (Pn–Nd) przy przewijaniu — /work-calendars (wszystkie szerokości) */
+#calendars-works-review .fc-scrollgrid-section-header {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	z-index: 6;
+	background-color: var(--fc-page-bg-color, #fff);
+	box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+#calendars-works-review .fc-scrollgrid-section-header th {
+	background-color: var(--fc-page-bg-color, #fff);
+}
+
+#calendars-works-review .fc-scrollgrid-section-header .fc-scroller {
+	overflow: visible !important;
+}
+
+/* Fallback gdy struktura tabeli nie używa tej klasy (starsze / inne widoki FC) */
+#calendars-works-review .fc-scrollgrid-sync-table > thead {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	background-color: var(--fc-page-bg-color, #fff);
+}
+
+#calendars-works-review .fc-scrollgrid-sync-table > thead th {
+	background-color: var(--fc-page-bg-color, #fff);
+}
+
+/* Dashboard (MonthlyCalendar): sticky Pn–Nd tylko od desktopu — na mobile bez pinu i bez sticky */
+@media (min-width: 901px) {
+	.calendar-my-work .fc-scrollgrid-section-header {
+		position: -webkit-sticky;
+		position: sticky;
+		top: 0;
+		z-index: 6;
+		background-color: var(--fc-page-bg-color, #fff);
+		box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+	}
+
+	.calendar-my-work .fc-scrollgrid-section-header th {
+		background-color: var(--fc-page-bg-color, #fff);
+	}
+
+	.calendar-my-work .fc-scrollgrid-section-header .fc-scroller {
+		overflow: visible !important;
+	}
+
+	.calendar-my-work .fc-scrollgrid-sync-table > thead {
+		position: -webkit-sticky;
+		position: sticky;
+		top: 0;
+		z-index: 5;
+		background-color: var(--fc-page-bg-color, #fff);
+	}
+
+	.calendar-my-work .fc-scrollgrid-sync-table > thead th {
+		background-color: var(--fc-page-bg-color, #fff);
+	}
+}
+
+/* Zaokrąglenie karty kalendarza na dashboardzie bez overflow:hidden na rodzicu (blokuje sticky) */
+.monthly-calendar-fc-wrap .fc {
+	border-radius: 1rem;
 }
 
 @media (min-width: 900px) {

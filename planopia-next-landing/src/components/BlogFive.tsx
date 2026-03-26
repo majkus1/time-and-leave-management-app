@@ -35,7 +35,7 @@ function BlogFive() {
 							}
 						},
 						"description": "Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Dowiedz się jak wybrać najlepszy program do ewidencji czasu pracy dla swojej firmy.",
-						"image": "https://planopia.pl/img/desktopnew.webp"
+						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
 			/>
