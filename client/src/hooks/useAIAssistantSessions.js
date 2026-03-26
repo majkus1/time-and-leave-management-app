@@ -47,7 +47,21 @@ export function useAIAssistantSessions() {
 
 	useEffect(() => {
 		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+			const sanitized = {
+				...data,
+				sessions: data.sessions.map(s => ({
+					...s,
+					messages: (s.messages || []).map(m => {
+						if (m.role === 'user' && m.promptForApi != null) {
+							return Object.fromEntries(
+								Object.entries(m).filter(([k]) => k !== 'promptForApi')
+							)
+						}
+						return m
+					}),
+				})),
+			}
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized))
 		} catch {
 			/* quota */
 		}

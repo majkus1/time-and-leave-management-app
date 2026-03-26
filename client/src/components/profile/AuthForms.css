@@ -276,3 +276,21 @@
 		0 4px 6px rgba(15, 23, 42, 0.04),
 		0 12px 40px rgba(15, 23, 42, 0.08);
 }
+
+/* Checkbox + akapit regulaminu: stały odstęp (nie polega wyłącznie na Tailwind gap). */
+label.auth-team-accept-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	cursor: pointer;
+}
+
+label.auth-team-accept-row > input[type='checkbox'] {
+	margin: 0.125rem 0 0;
+	flex-shrink: 0;
+}
+
+label.auth-team-accept-row > span {
+	min-width: 0;
+	line-height: 1.45;
+}

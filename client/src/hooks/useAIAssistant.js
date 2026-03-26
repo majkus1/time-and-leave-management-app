@@ -243,6 +243,15 @@ export function buildExportText(messages, meta) {
 	return lines.join('\n')
 }
 
+/** User bubble may show short `content` while `promptForApi` is sent to the assistant API. */
+export function messagesForApi(messages) {
+	return messages.map(m =>
+		m.role === 'user' && m.promptForApi != null
+			? { role: m.role, content: m.promptForApi }
+			: { role: m.role, content: m.content }
+	)
+}
+
 /**
  * Draft leave request from natural language (server validates; user confirms before real POST).
  * @param {{ messages: Array<{role:string,content:string}>, locale?: string }} body

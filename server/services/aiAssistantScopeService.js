@@ -50,6 +50,11 @@ exports.resolveDetailedDataScope = async function resolveDetailedDataScope(reque
 			const okLeave = await canSupervisorApproveLeaves(requestingUser, u)
 			if (okTs || okLeave) allowed.push(u._id)
 		}
+		// Zawsze uwzględnij własne konto przełożonego w AI (raport „ja + podlegli”).
+		const selfStr = selfId.toString()
+		if (!allowed.some(id => id.toString() === selfStr)) {
+			allowed.push(selfId)
+		}
 		return { scope: 'supervised', detailedUserIds: allowed }
 	}
 

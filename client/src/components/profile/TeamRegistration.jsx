@@ -17,6 +17,7 @@ const TeamRegistration = () => {
 		adminLastName: '',
 		position: ''
 	})
+	const [acceptTermsPrivacy, setAcceptTermsPrivacy] = useState(false)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 	const [showRetentionModal, setShowRetentionModal] = useState(false)
@@ -60,6 +61,11 @@ const TeamRegistration = () => {
 		// Validate password before submission
 		if (!isPasswordValid(formData.adminPassword)) {
 			setError(t('newpass.invalidPassword') || 'Hasło nie spełnia wymagań bezpieczeństwa')
+			setLoading(false)
+			return
+		}
+		if (!acceptTermsPrivacy) {
+			setError(t('newteam.mustAcceptTerms'))
 			setLoading(false)
 			return
 		}
@@ -330,27 +336,41 @@ const TeamRegistration = () => {
       </div>
 
       <div className="pt-4 border-t border-gray-200">
-        <div className="text-sm text-gray-700">
-          {t('newteam.acceptTermsPrefix')}{' '}
-          <a
-            href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/terms`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            {t('newteam.termsLink')}
-          </a>{' '}
-          {t('newteam.acceptTermsConjunction')}{' '}
-          <a
-            href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/privacy`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            {t('newteam.privacyLink')}
-          </a>
-          .
-        </div>
+        <label htmlFor="accept-terms-newteam" className="auth-team-accept-row text-sm text-gray-700">
+          <input
+            id="accept-terms-newteam"
+            name="acceptTermsPrivacy"
+            type="checkbox"
+            checked={acceptTermsPrivacy}
+            onChange={e => setAcceptTermsPrivacy(e.target.checked)}
+            className="auth-checkbox-newteam h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            required
+          />
+          <span>
+            {t('newteam.acceptCheckboxPrefix')}{' '}
+            <a
+              href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/terms`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+              onClick={e => e.stopPropagation()}
+            >
+              {t('newteam.termsLink')}
+            </a>
+            {' '}
+            {t('newteam.acceptTermsAnd')}{' '}
+            <a
+              href={`https://planopia.pl${i18n.resolvedLanguage === 'en' ? '/en' : ''}/privacy`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+              onClick={e => e.stopPropagation()}
+            >
+              {t('newteam.privacyLink')}
+            </a>
+            .
+          </span>
+        </label>
       </div>
 
       <div>

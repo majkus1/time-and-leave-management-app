@@ -31,11 +31,104 @@ const MAX_ANNOUNCEMENTS = 40
 const MAX_ANNOUNCEMENTS_ALL = 80
 const MAX_LEAVE_LINES = 220
 const MAX_LEAVE_LINES_COMPACT = 90
+/** Workday docs scanned for timer description aggregates (separate from detailed JSON cap). */
+const MAX_WORKDAYS_FOR_TIMER_AGG = 10000
+const TIMER_AGG_TOP_DESCRIPTIONS_PER_USER = 12
 
 function formatDate(d) {
 	if (!d) return null
 	const x = new Date(d)
 	return x.toISOString().slice(0, 10)
+}
+
+/**
+ * Human-readable leave status for AI context (avoid raw codes like status.pending in assistant answers).
+ * @param {string} [status]
+ * @param {string} [locale]
+ */
+function formatLeaveStatusForContext(status, locale) {
+	const raw = String(status || '').trim()
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const norm =
+		raw === 'pending'
+			? 'status.pending'
+			: raw === 'accepted'
+				? 'status.accepted'
+				: raw === 'rejected'
+					? 'status.rejected'
+					: raw === 'sent'
+						? 'status.sent'
+						: raw
+
+	const PL = {
+		'status.pending': 'Oczekuje na akceptację',
+		'status.accepted': 'Zaakceptowany',
+		'status.rejected': 'Odrzucony',
+		'status.sent': 'Zapisany (np. zwolnienie / bez akceptacji)',
+	}
+	const EN = {
+		'status.pending': 'Pending approval',
+		'status.accepted': 'Accepted',
+		'status.rejected': 'Rejected',
+		'status.sent': 'Recorded (e.g. sick leave / no approval)',
+	}
+	const map = isEn ? EN : PL
+	return map[norm] || raw || (isEn ? 'Unknown' : 'Nieznany')
+}
+
+function timerAggregatesSectionHeader(locale) {
+	return String(locale || '').toLowerCase().startsWith('en')
+		? '--- Time clock: read plain-text breakdown first, then JSON ---'
+		: '--- Licznik czasu: najpierw podział tekstowy, potem JSON ---'
+}
+
+/**
+ * Short plain-text lines so the model copies per-description rows instead of collapsing to one total per user.
+ * @param {Array<{ name: string, totalTimerSessionHours: number, byDescription: Array<{ description: string, totalHours: number, percentOfUserTimer: number, sessions?: number }> }>} byUser
+ */
+function formatTimerAggregatesPlainText(byUser, hitDocLimit, locale) {
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const lines = []
+	lines.push(
+		isEn
+			? 'READ THIS BLOCK FIRST. In "## Time clock breakdown", for each person output a markdown table: Description | Hours | %. You MUST list every bullet line below — do NOT replace with a single row "total hours / 100%" per person when multiple breakdown lines exist.'
+			: 'CZYTAJ TEN BLOK NAJPIERW. W „## Praca wg licznika” dla każdej osoby wstaw tabelę markdown: Opis | Godziny | %. MUSISZ wypisać **każdą** linię z „•” poniżej — **zabronione** jest zastąpienie tego jednym wierszem „suma godzin / 100%” na osobę, gdy jest kilka wierszy podziału.'
+	)
+	if (hitDocLimit) {
+		lines.push(
+			isEn
+				? 'Warning: workday scan limit reached — breakdown may be incomplete.'
+				: 'Uwaga: osiągnięto limit skanowanych dni roboczych — podział może być niepełny.'
+		)
+	}
+	if (!byUser.length) {
+		lines.push(
+			isEn
+				? '(No timer breakdown rows in aggregated data for this period.)'
+				: '(Brak wierszy podziału licznika w agregacie dla tego okresu.)'
+		)
+		return lines.join('\n')
+	}
+	for (const u of byUser) {
+		lines.push('')
+		lines.push(
+			isEn
+				? `Person: ${u.name} | period total: ${u.totalTimerSessionHours} h`
+				: `Osoba: ${u.name} | suma w okresie: ${u.totalTimerSessionHours} h`
+		)
+		for (const row of u.byDescription || []) {
+			const extra =
+				row.sessions != null && row.sessions > 0
+					? isEn
+						? ` (${row.sessions} sessions or day-rows)`
+						: ` (${row.sessions} sesji lub wierszy-dni)`
+					: ''
+			lines.push(
+				`  • ${row.description} — ${row.totalHours} h — ${row.percentOfUserTimer}%${extra}`
+			)
+		}
+	}
+	return lines.join('\n')
 }
 
 function daysBetween(start, end) {
@@ -96,6 +189,127 @@ function announcementVisibleToUser(ann, userId, userDepartments) {
 		return ann.targetUsers.some(id => id.toString() === userId.toString())
 	}
 	return false
+}
+
+/**
+ * Groups timer sessions (timeEntries) by user and work description for AI monthly / period reports.
+ * Hours match server logic for sessions: wall-clock (endTime − startTime), same as hoursWorked per session.
+ * Skips break-flagged entries and open sessions without endTime.
+ *
+ * @param {Array<{ userId: unknown, timeEntries?: Array }>} workdaysLean
+ * @param {Array<{ _id: unknown, firstName?: string, lastName?: string }>} usersLean
+ * @param {number} docLimit
+ * @param {string} locale
+ * @returns {{ jsonString: string, plainText: string }}
+ */
+function buildTimerSessionAggregatesPack(workdaysLean, usersLean, docLimit, locale) {
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const nameById = Object.fromEntries(
+		(usersLean || []).map(u => {
+			const id = u._id?.toString?.() || String(u._id)
+			const n = `${u.firstName || ''} ${u.lastName || ''}`.trim()
+			return [id, n || id]
+		})
+	)
+	const emptyLabel = isEn ? '(no description)' : '(brak opisu)'
+	const otherLabel = isEn
+		? count => `(other descriptions, ${count} variants)`
+		: count => `(inne opisy, ${count} wariantów)`
+	/** Hours on days where hoursWorked exceeds sum of closed sessions (manual entry, legacy rows, or sessions without endTime). */
+	const unallocatedLabel = isEn
+		? '(day book hours not covered by closed timer sessions in stored data)'
+		: '(godziny z ewidencji dnia — bez zamkniętych sesji timera w zapisanych danych)'
+
+	const byUserMap = new Map() // userId -> Map description -> { hours, count }
+
+	for (const wd of workdaysLean || []) {
+		const uid = wd.userId?.toString?.() || String(wd.userId)
+		if (!byUserMap.has(uid)) byUserMap.set(uid, new Map())
+		const dm = byUserMap.get(uid)
+
+		let daySessionSum = 0
+		for (const te of wd.timeEntries || []) {
+			if (te.isBreak) continue
+			if (!te.startTime || !te.endTime) continue
+			const ms = new Date(te.endTime).getTime() - new Date(te.startTime).getTime()
+			if (ms <= 0) continue
+			const h = ms / 3600000
+			daySessionSum += h
+			const raw = (te.workDescription || '').replace(/\s+/g, ' ').trim()
+			const key = raw.slice(0, 200) || emptyLabel
+			if (!dm.has(key)) dm.set(key, { hours: 0, count: 0 })
+			const cell = dm.get(key)
+			cell.hours += h
+			cell.count += 1
+		}
+
+		const hw = wd.hoursWorked != null ? Number(wd.hoursWorked) : 0
+		const gap = Math.max(0, hw - daySessionSum)
+		if (gap > 0.02) {
+			if (!dm.has(unallocatedLabel)) dm.set(unallocatedLabel, { hours: 0, count: 0 })
+			const u = dm.get(unallocatedLabel)
+			u.hours += gap
+			u.count += 1
+		}
+	}
+
+	const byUser = []
+	for (const [uid, dm] of byUserMap) {
+		let totalUserHoursRaw = 0
+		for (const v of dm.values()) totalUserHoursRaw += v.hours
+		const totalUserHours = Math.round(totalUserHoursRaw * 100) / 100
+
+		const arr = [...dm.entries()].map(([description, v]) => ({
+			description,
+			totalHours: Math.round(v.hours * 100) / 100,
+			hoursRaw: v.hours,
+			sessions: v.count,
+		}))
+		arr.sort((a, b) => b.hoursRaw - a.hoursRaw)
+		const top = arr.slice(0, TIMER_AGG_TOP_DESCRIPTIONS_PER_USER)
+		const rest = arr.slice(TIMER_AGG_TOP_DESCRIPTIONS_PER_USER)
+		const restHoursRaw = rest.reduce((s, x) => s + x.hoursRaw, 0)
+		const restCount = rest.reduce((s, x) => s + x.sessions, 0)
+		if (rest.length > 0 && (restHoursRaw > 0 || restCount > 0)) {
+			top.push({
+				description: otherLabel(rest.length),
+				totalHours: Math.round(restHoursRaw * 100) / 100,
+				hoursRaw: restHoursRaw,
+				sessions: restCount,
+			})
+		}
+		if (top.length === 0) continue
+
+		const pct = h =>
+			totalUserHoursRaw > 0
+				? Math.round((h / totalUserHoursRaw) * 1000) / 10
+				: 0
+		const byDescription = top.map(({ hoursRaw, ...row }) => ({
+			...row,
+			percentOfUserTimer: pct(hoursRaw),
+		}))
+
+		byUser.push({
+			userId: uid,
+			name: nameById[uid] || uid,
+			totalTimerSessionHours: totalUserHours,
+			byDescription,
+		})
+	}
+	byUser.sort((a, b) => a.name.localeCompare(b.name, isEn ? 'en' : 'pl'))
+
+	const note = isEn
+		? 'Rows from closed timer entries use (endTime−startTime) in hours; isBreak skipped; sessions without endTime do not add to session sum. If a workday’s hoursWorked is higher than the sum of closed sessions that day, the difference is added once under the “day book hours not covered…” row (manual entry, legacy data, or missing endTime). totalTimerSessionHours = sum of all byDescription rows for that user (basis for percentOfUserTimer). If hitDocLimit is true, scanning may be incomplete. Prefer the plain-text bullets above in your answer when listing breakdowns.'
+		: 'Wiersze z zamkniętych sesji: (endTime−startTime); pominięto isBreak; sesje bez endTime nie wchodzą w sumę sesji. Różnica hoursWorked minus sesje trafia do wiersza o ewidencji dnia bez zamkniętych sesji. totalTimerSessionHours = suma wierszy byDescription (podstawa percentOfUserTimer). Preferuj powyższe linie z „•” przy wypisywaniu podziału w raporcie. Przy hitDocLimit=true skan może być niepełny.'
+
+	const hitDocLimit = (workdaysLean || []).length >= docLimit
+	const plainText = formatTimerAggregatesPlainText(byUser, hitDocLimit, locale)
+	const jsonString = JSON.stringify({
+		note,
+		hitDocLimit,
+		byUser,
+	})
+	return { jsonString, plainText }
 }
 
 /**
@@ -337,6 +551,23 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		}
 	}
 
+	const workdaysForTimerAgg = await Workday.find({
+		userId: { $in: detailedUserIds },
+		date: { $gte: start, $lte: end },
+	})
+		.select('userId date timeEntries hoursWorked')
+		.sort({ date: 1 })
+		.limit(MAX_WORKDAYS_FOR_TIMER_AGG)
+		.lean()
+
+	const timerPack = buildTimerSessionAggregatesPack(
+		workdaysForTimerAgg,
+		users,
+		MAX_WORKDAYS_FOR_TIMER_AGG,
+		locale
+	)
+	const timerSessionAggregatesHitDocLimit = workdaysForTimerAgg.length >= MAX_WORKDAYS_FOR_TIMER_AGG
+
 	const leavesDetailed = await LeaveRequest.find({
 		userId: { $in: detailedUserIds },
 		startDate: { $lte: end },
@@ -347,7 +578,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 
 	let leaveLines = leavesDetailed.map(lr => {
 		const uid = lr.userId?.toString?.() || String(lr.userId)
-		return `- userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${lr.status}`
+		const st = formatLeaveStatusForContext(lr.status, locale)
+		return `- userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
 	})
 
 	let leaveExtra = ''
@@ -356,7 +588,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		const byStatus = {}
 		const byType = {}
 		for (const lr of leavesDetailed) {
-			byStatus[lr.status] = (byStatus[lr.status] || 0) + 1
+			const stLabel = formatLeaveStatusForContext(lr.status, locale)
+			byStatus[stLabel] = (byStatus[stLabel] || 0) + 1
 			byType[lr.type] = (byType[lr.type] || 0) + 1
 		}
 		leaveExtra = `\nLeave summary in range: byStatus=${JSON.stringify(byStatus)} byTypeId=${JSON.stringify(byType)}`
@@ -472,6 +705,7 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		allTime: !!isAllTime,
 		dataMode: useCompact ? 'compact' : 'detailed',
 		workdaysTruncated,
+		timerSessionAggregatesHitDocLimit,
 		generatedAt: new Date().toISOString(),
 		yearMessageOverride: yearMessageOverride || null,
 	}
@@ -490,6 +724,11 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push('')
 	parts.push('--- Workdays & timer sessions ---')
 	parts.push(workdayJson.slice(0, 120000))
+	parts.push('')
+	parts.push(timerAggregatesSectionHeader(locale))
+	parts.push(timerPack.plainText)
+	parts.push('')
+	parts.push(timerPack.jsonString.slice(0, 80000))
 	parts.push('')
 	parts.push('--- Leave requests (in period) ---')
 	parts.push((leaveLines.length ? leaveLines.join('\n') : '(none)') + leaveExtra)

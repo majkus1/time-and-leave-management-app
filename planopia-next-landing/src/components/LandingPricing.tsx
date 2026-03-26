@@ -95,9 +95,6 @@ const copy = {
 		],
 		tiersFootnote:
 			'* Płatny pakiet możesz anulować w dowolnym momencie — bez długoterminowego zobowiązania.',
-		purchaseInfo:
-			'Zakup subskrypcji Planopia odbywa się w aplikacji po zalogowaniu (sekcja Pakiety i rozliczenia): wybierz plan i wyślij zgłoszenie mailem — po weryfikacji aktywujemy subskrypcję. Wkrótce dołożymy płatność online.\nMożesz też najpierw założyć konto i rozpocząć 30-dniowy okres próbny.',
-		purchaseInfoSummary: 'Jak działa zakup i płatność',
 		legalTitle: 'Regulaminy',
 		legalLinks: [
 			{ href: '/terms', label: 'Regulamin' },
@@ -187,9 +184,6 @@ const copy = {
 		],
 		tiersFootnote:
 			'* You can cancel your paid plan at any time — no long-term commitment. Settlement is in PLN; USD amounts are indicative (1 USD ≈ 3.69 PLN).',
-		purchaseInfo:
-			'Subscriptions are purchased in the Planopia app after sign-in (Packages & billing): pick a plan and send a purchase request by email — we activate after verification. Online checkout will be added here soon.\nYou can also start with the 30-day free trial first.',
-		purchaseInfoSummary: 'How purchase & payment work',
 		legalTitle: 'Legal',
 		legalLinks: [
 			{ href: '/en/terms', label: 'Terms of Service' },
@@ -288,64 +282,46 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 				<div className="mb-10 text-left w-full">
 					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">{t.title}</h2>
 					<p className="mt-3 text-gray-600 text-base md:text-lg">{t.subtitle}</p>
-					<p className="mt-4 hidden md:block rounded-xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-						{t.purchaseInfo}
-					</p>
-					<details className="md:hidden mt-4 rounded-xl border border-emerald-100 bg-emerald-50/80 group">
-						<summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-gray-800 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-							<span>{t.purchaseInfoSummary}</span>
-							<span className="text-emerald-700 text-xs shrink-0 transition-transform group-open:rotate-180" aria-hidden>
-								▼
-							</span>
-						</summary>
-						<p className="px-4 pb-4 pt-0 text-sm text-gray-700 leading-relaxed border-t border-emerald-100/80 whitespace-pre-line">
-							{t.purchaseInfo}
-						</p>
-					</details>
 				</div>
 				<TrialCard locale={locale} />
 
-				<div
-					className="mb-8 flex flex-col gap-3 items-start sm:flex-row sm:flex-wrap sm:items-center"
-					role="group"
-					aria-label={t.billingLabel}
-				>
-					<span className="text-sm font-semibold text-gray-800">{t.billingLabel}</span>
-					<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
-						<button
-							type="button"
-							className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-								billing === 'monthly'
-									? 'bg-slate-900 text-white shadow'
-									: 'text-gray-600 hover:text-gray-900'
-							}`}
-							onClick={() => setBilling('monthly')}
-							aria-pressed={billing === 'monthly'}
-						>
-							{t.billingMonthly}
-						</button>
-						<button
-							type="button"
-							className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-								billing === 'yearly'
-									? 'bg-slate-900 text-white shadow'
-									: 'text-gray-600 hover:text-gray-900'
-							}`}
-							onClick={() => setBilling('yearly')}
-							aria-pressed={billing === 'yearly'}
-						>
-							{t.billingYearly}
-						</button>
+				<div className="mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
+					<div className="flex flex-col gap-3 items-start sm:flex-row sm:flex-wrap sm:items-center">
+						<span className="text-sm font-semibold text-gray-800">{t.billingLabel}</span>
+						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+							<button
+								type="button"
+								className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+									billing === 'monthly'
+										? 'bg-slate-900 text-white shadow'
+										: 'text-gray-600 hover:text-gray-900'
+								}`}
+								onClick={() => setBilling('monthly')}
+								aria-pressed={billing === 'monthly'}
+							>
+								{t.billingMonthly}
+							</button>
+							<button
+								type="button"
+								className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+									billing === 'yearly'
+										? 'bg-slate-900 text-white shadow'
+										: 'text-gray-600 hover:text-gray-900'
+								}`}
+								onClick={() => setBilling('yearly')}
+								aria-pressed={billing === 'yearly'}
+							>
+								{t.billingYearly}
+							</button>
+						</div>
 					</div>
 					{billing === 'yearly' && (
-						<span className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-							{t.billingYearlyBadge}
-						</span>
-					)}
-					{billing === 'yearly' && (
-						<p className="w-full text-sm text-gray-600 sm:w-auto sm:flex-1 sm:min-w-[12rem]">
-							{t.billingYearlyHint}
-						</p>
+						<div className="flex flex-col gap-2.5 items-start max-w-xl rounded-xl border border-emerald-100/80 bg-emerald-50/50 px-4 py-3">
+							<span className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">
+								{t.billingYearlyBadge}
+							</span>
+							<p className="text-sm text-gray-600 leading-relaxed m-0">{t.billingYearlyHint}</p>
+						</div>
 					)}
 				</div>
 

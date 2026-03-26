@@ -1,11 +1,17 @@
 'use client'
 
+import { useId, useState } from 'react'
+
 type Locale = 'pl' | 'en'
 
 const strings = {
 	pl: {
 		eyebrow: 'Nowość w Planopii',
 		title: 'Asystent AI — mniej ręcznej pracy, więcej gotowych wniosków',
+		leadTeaserMobile:
+			'Asystent AI w Planopii korzysta z danych zespołu (zgodnie z uprawnieniami), by przygotować podsumowania i rekomendacje dla HR oraz ułatwić pracownikom dostęp do urlopów, czasu pracy i zadań.',
+		readMore: 'Czytaj więcej',
+		showLess: 'Zwiń',
 		leadParagraphs: [
 			'Planujesz zespół, pilnujesz terminów i raportów? Asystent AI w Planopii korzysta z danych firmy (zgodnie z uprawnieniami) i na ich podstawie tworzy konkretne podsumowania, rekomendacje i działania. Wspiera codzienną pracę HR i managerów — od planowania urlopów po analizę czasu pracy i przygotowanie raportów.',
 			'Dla pracowników to szybki dostęp do własnych danych — czas pracy, urlopy i zadania bez zbędnego klikania. AI może także automatycznie przygotować wniosek urlopowy lub uzupełnić ewidencję czasu pracy na podstawie przekazanych informacji.',
@@ -26,6 +32,10 @@ const strings = {
 	en: {
 		eyebrow: 'New in Planopia',
 		title: 'AI Assistant — less manual work, more ready-made insights',
+		leadTeaserMobile:
+			'The AI Assistant uses your team’s data (within permissions) to deliver summaries and recommendations for HR and quick access to leave, hours, and tasks for employees.',
+		readMore: 'Read more',
+		showLess: 'Show less',
 		leadParagraphs: [
 			'Planning the team, deadlines, and reports? The AI Assistant in Planopia uses your company data (within permissions) to produce concrete summaries, recommendations, and actions. It supports HR and managers every day — from leave planning to attendance analysis and reporting.',
 			'For employees, it’s fast access to your own data — hours, leave, and tasks without extra clicking. AI can also draft a leave request or fill in your time log from the information you provide.',
@@ -47,6 +57,8 @@ const strings = {
 
 export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 	const t = strings[locale]
+	const [leadExpanded, setLeadExpanded] = useState(false)
+	const leadRegionId = useId()
 	return (
 		<section
 			id={locale === 'pl' ? 'asystent-ai' : 'ai-assistant'}
@@ -67,12 +79,38 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 						<div className="relative">
 							<p className="ai-highlight-eyebrow mb-3">{t.eyebrow}</p>
 							<h2 id="ai-heading">{t.title}</h2>
-							<div className="ai-highlight-lead mt-5 max-w-3xl space-y-4">
-								{t.leadParagraphs.map((p, i) => (
-									<p key={i} className="m-0">
-										{p}
-									</p>
-								))}
+							<div className="ai-highlight-lead mt-5 max-w-3xl">
+								<div className="hidden md:block space-y-4">
+									{t.leadParagraphs.map((p, i) => (
+										<p key={i} className="m-0">
+											{p}
+										</p>
+									))}
+								</div>
+								<div className="md:hidden space-y-3">
+									<div id={leadRegionId}>
+										{leadExpanded ? (
+											<div className="space-y-4">
+												{t.leadParagraphs.map((p, i) => (
+													<p key={i} className="m-0">
+														{p}
+													</p>
+												))}
+											</div>
+										) : (
+											<p className="m-0">{t.leadTeaserMobile}</p>
+										)}
+									</div>
+									<button
+										type="button"
+										className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-sm"
+										onClick={() => setLeadExpanded(v => !v)}
+										aria-expanded={leadExpanded}
+										aria-controls={leadRegionId}
+									>
+										{leadExpanded ? t.showLess : t.readMore}
+									</button>
+								</div>
 							</div>
 							<h3 id="ai-features-heading" className="ai-highlight-features mb-5">
 								{t.featuresHeading}

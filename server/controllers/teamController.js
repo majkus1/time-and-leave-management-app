@@ -46,6 +46,14 @@ exports.registerTeam = async (req, res) => {
 			});
 		}
 
+		const acceptedDocuments = Array.isArray(req.body.acceptedDocuments) ? req.body.acceptedDocuments : [];
+		if (!acceptedDocuments.includes('TERMS') || !acceptedDocuments.includes('PRIVACY')) {
+			return res.status(400).json({
+				success: false,
+				message: 'Wymagana akceptacja regulaminu oraz polityki prywatności.',
+			});
+		}
+
 		// Validate password using password validation service
 		const passwordValidator = require('../services/passwordValidator')
 		const passwordValidation = passwordValidator.validatePassword(adminPassword)
@@ -165,10 +173,9 @@ exports.registerTeam = async (req, res) => {
 
 		await teamAdmin.save();
 
-		// Record legal document acceptances (TERMS and PRIVACY) if provided
+		// Record legal document acceptances (TERMS and PRIVACY) — wymagane wyżej
 		// Note: DPA is automatically accepted when first employee is added
-		const acceptedDocuments = req.body.acceptedDocuments || [];
-		if (Array.isArray(acceptedDocuments) && acceptedDocuments.length > 0) {
+		if (acceptedDocuments.length > 0) {
 			try {
 				const LegalDocument = require('../models/LegalDocument')(firmDb);
 				const LegalAcceptance = require('../models/LegalAcceptance')(firmDb);

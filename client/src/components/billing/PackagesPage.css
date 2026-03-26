@@ -126,12 +126,12 @@
 	}
 }
 
-/* Jak landing: przy rozliczeniu rocznym — odznaka + wyjaśnienie 10→12 mies. */
+/* Jak landing: przy rozliczeniu rocznym — odznaka nad wyjaśnieniem 10→12 mies. */
 .packages-billing-annual-note {
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
 	align-items: flex-start;
-	gap: 0.5rem 0.75rem;
+	gap: 0.5rem;
 	padding: 0.15rem 0 0;
 	margin-bottom: 10px;
 }
@@ -155,8 +155,7 @@
 	font-size: 0.8125rem;
 	color: #475569;
 	line-height: 1.45;
-	flex: 1 1 12rem;
-	min-width: 0;
+	max-width: 36rem;
 }
 
 @media (min-width: 640px) {

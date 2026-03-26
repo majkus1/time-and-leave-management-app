@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react'
+import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -14,6 +14,7 @@ import {
 	streamAIAssistantChat,
 	downloadAiIntentExport,
 	buildExportText,
+	messagesForApi,
 	postAiLeaveDraft,
 	postAiWorkdayDraft,
 } from '../../hooks/useAIAssistant'
@@ -21,6 +22,8 @@ import { BILLING_ENTITLEMENTS_QUERY_KEY } from '../../hooks/useBilling'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequests'
 import { useCreateWorkday } from '../../hooks/useWorkdays'
 import { useAlert } from '../../context/AlertContext'
+import { useAuth } from '../../context/AuthContext'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { useAIAssistantSessions } from '../../hooks/useAIAssistantSessions'
 import AIAssistantLeaveDraftPanel from './AIAssistantLeaveDraftPanel'
 import AIAssistantWorkdayDraftPanel from './AIAssistantWorkdayDraftPanel'
@@ -75,6 +78,19 @@ function AIAssistant() {
 	const createLeaveMutation = useCreateLeaveRequest()
 	const createWorkdayMutation = useCreateWorkday()
 	const { showAlert } = useAlert()
+	const { role } = useAuth()
+
+	const monthlyReportPromptKey = useMemo(() => {
+		if (isAdmin(role) || isHR(role)) return 'aiAssistant.quick.monthlyReportAdminHr'
+		if (isSupervisor(role)) return 'aiAssistant.quick.monthlyReportSupervisor'
+		return 'aiAssistant.quick.monthlyReport'
+	}, [role])
+
+	const monthlyReportHintKey = useMemo(() => {
+		if (isAdmin(role) || isHR(role)) return 'aiAssistant.monthlyReportHintAdminHr'
+		if (isSupervisor(role)) return 'aiAssistant.monthlyReportHintSupervisor'
+		return 'aiAssistant.monthlyReportHint'
+	}, [role])
 
 	const enabled = status?.enabled === true
 	const ent = status?.aiEntitlements
@@ -94,16 +110,29 @@ function AIAssistant() {
 	}, [activeId])
 
 	const sendUserMessage = useCallback(
-		async text => {
+		async (text, opts = {}) => {
+			const { periodPresetOverride, chatTitle, userVisibleContent } = opts
+			const displayContent = userVisibleContent != null ? userVisibleContent : text
+			const userMsg =
+				userVisibleContent != null
+					? { role: 'user', content: displayContent, promptForApi: text }
+					: { role: 'user', content: text }
+			if (periodPresetOverride) {
+				setPeriodPreset(periodPresetOverride)
+			}
 			setError(null)
 			setQuotaBlocked(false)
 			const prev = messagesRef.current
-			const withUser = [...prev, { role: 'user', content: text }]
+			const withUser = [...prev, userMsg]
 			messagesRef.current = withUser
 			setMessages(withUser)
 
 			if (prev.length === 0) {
-				setSessionTitle(activeId, text.slice(0, 56) + (text.length > 56 ? '…' : ''))
+				setSessionTitle(
+					activeId,
+					chatTitle ||
+						displayContent.slice(0, 56) + (displayContent.length > 56 ? '…' : '')
+				)
 			}
 
 			setStreaming(true)
@@ -117,7 +146,7 @@ function AIAssistant() {
 				if (assistantMode === 'leave') {
 					setLastMeta(null)
 					const data = await postAiLeaveDraft({
-						messages: withUser.map(m => ({ role: m.role, content: m.content })),
+						messages: messagesForApi(withUser),
 						locale: i18n.resolvedLanguage === 'en' ? 'en' : 'pl',
 					})
 					setMessages(prev => {
@@ -138,7 +167,7 @@ function AIAssistant() {
 				} else if (assistantMode === 'workday') {
 					setLastMeta(null)
 					const data = await postAiWorkdayDraft({
-						messages: withUser.map(m => ({ role: m.role, content: m.content })),
+						messages: messagesForApi(withUser),
 						locale: i18n.resolvedLanguage === 'en' ? 'en' : 'pl',
 					})
 					setMessages(prev => {
@@ -157,10 +186,11 @@ function AIAssistant() {
 						setPendingWorkdayDraft(data.draft)
 					}
 				} else {
-					const preset = periodPreset === 'default' ? 'month' : periodPreset
+					const preset =
+						periodPresetOverride != null ? periodPresetOverride : periodPreset === 'default' ? 'month' : periodPreset
 					await streamAIAssistantChat(
 						{
-							messages: withUser.map(m => ({ role: m.role, content: m.content })),
+							messages: messagesForApi(withUser),
 							periodPreset: preset === 'custom' ? 'custom' : preset,
 							dateFrom: preset === 'custom' ? dateFrom : undefined,
 							dateTo: preset === 'custom' ? dateTo : undefined,
@@ -221,6 +251,7 @@ function AIAssistant() {
 			activeId,
 			setSessionTitle,
 			queryClient,
+			setPeriodPreset,
 		]
 	)
 
@@ -408,6 +439,14 @@ function AIAssistant() {
 						<AIAssistantMessageList messages={messages} onIntentExport={handleIntentExport} busy={busy} />
 						<AIAssistantComposer
 							onSend={sendUserMessage}
+							monthlyReportHint={t(monthlyReportHintKey)}
+							onMonthlyReport={() =>
+								sendUserMessage(t(monthlyReportPromptKey), {
+									periodPresetOverride: 'month',
+									chatTitle: t('aiAssistant.monthlyReportButton'),
+									userVisibleContent: t('aiAssistant.monthlyReportUserBubble'),
+								})
+							}
 							disabled={disabled}
 							busy={busy}
 							placeholder={

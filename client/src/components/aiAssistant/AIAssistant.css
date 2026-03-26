@@ -367,7 +367,8 @@
 	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.ai-assistant-chip:hover:not(:disabled) {
+/* Hover tylko dla nieaktywnych — inaczej jasne tło + biały tekst z --active = niewidoczna etykieta */
+.ai-assistant-chip:hover:not(:disabled):not(.ai-assistant-chip--active) {
 	background: rgba(102, 126, 234, 0.08);
 	border-color: rgba(102, 126, 234, 0.55);
 }
@@ -381,6 +382,13 @@
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 	color: #fff;
 	border-color: transparent;
+}
+
+.ai-assistant-chip--active:hover:not(:disabled) {
+	background: linear-gradient(135deg, #5a6fd6 0%, #6b3f96 100%);
+	color: #fff;
+	border-color: transparent;
+	box-shadow: 0 2px 10px rgba(102, 126, 234, 0.35);
 }
 
 .ai-assistant-period__dates {
@@ -618,6 +626,122 @@
 	border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
+/* Obudowa: zwiń / rozwiń cały blok szybkich akcji nad polem (miesiąc + skróty) — toolbar zawsze po lewej */
+.ai-assistant-quick-actions-shell {
+	margin-bottom: 0.85rem;
+}
+
+.ai-assistant-quick-actions-shell__toolbar {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	margin-bottom: 0.45rem;
+}
+
+.ai-assistant-quick-actions-shell--collapsed .ai-assistant-quick-actions-shell__toolbar {
+	margin-bottom: 0;
+}
+
+.ai-assistant-quick-actions-shell__body .ai-assistant-quick {
+	margin-bottom: 0;
+}
+
+/* „Podsumuj miesiąc” — wyróżniony CTA (raport + eksport PDF/Excel z bazy) */
+.ai-assistant-monthly-killer {
+	margin-bottom: 0.85rem;
+	padding: 0.65rem 0.75rem;
+	border-radius: 12px;
+	background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.06));
+	border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.ai-assistant-monthly-killer--embedded {
+	margin-bottom: 0.75rem;
+}
+
+.ai-assistant-monthly-killer__btn {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.65rem 1rem;
+	border-radius: 10px;
+	border: 1px solid #059669;
+	background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+	color: #fff;
+	font-size: 0.9rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	cursor: pointer;
+	text-align: center;
+	line-height: 1.35;
+	box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+	transition: filter 0.15s ease, transform 0.12s ease;
+}
+
+.ai-assistant-monthly-killer__btn:hover:not(:disabled) {
+	filter: brightness(1.06);
+	transform: translateY(-1px);
+}
+
+.ai-assistant-monthly-killer__btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none;
+	filter: none;
+}
+
+.ai-assistant-monthly-killer__hint {
+	margin: 0.5rem 0 0;
+	font-size: 0.78rem;
+	line-height: 1.4;
+	color: #047857;
+	text-align: center;
+}
+
+.ai-assistant-monthly-killer__toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.2rem 0.35rem;
+	margin: 0;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: #047857;
+	font-size: 0.78rem;
+	font-weight: 600;
+	cursor: pointer;
+	line-height: 1.2;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ai-assistant-monthly-killer__toggle:hover {
+	background: rgba(16, 185, 129, 0.12);
+	color: #065f46;
+}
+
+.ai-assistant-monthly-killer__toggle:focus-visible {
+	outline: 2px solid #10b981;
+	outline-offset: 2px;
+}
+
+.ai-assistant-monthly-killer__chev {
+	display: inline-block;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+	opacity: 0.9;
+	transition: transform 0.2s ease, margin 0.2s ease;
+}
+
+/* Rozwinięte: strzałka w górę („zwiń”) */
+.ai-assistant-monthly-killer__chev--open {
+	transform: rotate(-135deg);
+	margin-top: 0.18rem;
+}
+
 .ai-assistant-quick {
 	display: flex;
 	flex-direction: column;
@@ -682,19 +806,40 @@
 	flex: 1;
 	width: 100%;
 	box-sizing: border-box;
-	border: 1px solid rgba(15, 23, 42, 0.12);
+	border: 1.5px solid #94a3b8;
 	border-radius: 12px;
 	padding: 0.65rem 0.85rem;
 	font-size: 1rem;
 	resize: vertical;
 	min-height: 72px;
 	font-family: inherit;
+	background: #ffffff;
+	color: #0f172a;
+	box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ai-assistant-composer__input:hover:not(:disabled) {
+	border-color: #64748b;
 }
 
 .ai-assistant-composer__input:focus {
 	outline: none;
-	border-color: rgba(102, 126, 234, 0.55);
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+	border-color: #6366f1;
+	box-shadow:
+		inset 0 1px 2px rgba(15, 23, 42, 0.04),
+		0 0 0 3px rgba(99, 102, 241, 0.22);
+}
+
+.ai-assistant-composer__input:disabled {
+	border-color: #e2e8f0;
+	background: #f8fafc;
+	color: #94a3b8;
+}
+
+.ai-assistant-composer__input::placeholder {
+	color: #64748b;
+	opacity: 1;
 }
 
 .ai-assistant-composer__send {

@@ -43,6 +43,7 @@ i18n
 							'Answers use only Planopia data visible for your account.',
 							'Scope: time tracking, leave, tasks, schedules, boards, team settings.',
 							'Pick the period above; ask for a summary. Request Excel or PDF in your message — download buttons from the database appear under the reply.',
+							'Green Summarize month: written monthly report; prompt targets your role (team for Admin/HR, your reports + you for supervisors, yourself for others). PDF/Excel from the database can appear under the reply.',
 							'Export the chat as TXT from the toolbar above.',
 							'Month draft from a description uses a separate AI module on the schedule page, not this chat.',
 						],
@@ -91,12 +92,28 @@ i18n
 							delete: 'Delete chat',
 							untitled: 'New chat',
 						},
+						monthlyReportButton: 'Summarize month',
+						monthlyReportSectionCollapse: 'Hide section',
+						monthlyReportSectionExpand: 'Show section',
+						monthlyReportUserBubble: 'Please prepare a monthly summary for the current calendar period.',
+						monthlyReportHint:
+							'Written monthly report for your own data (DATA CONTEXT scope); you can download PDF/Excel from the database under the reply.',
+						monthlyReportHintAdminHr:
+							'Team-wide monthly summary for everyone you may see as Admin/HR; PDF/Excel from the database under the reply.',
+						monthlyReportHintSupervisor:
+							'Monthly summary for employees you supervise plus your own hours and leave; PDF/Excel under the reply.',
 						quick: {
 							summary: 'Summarize this period for my scope',
 							leaves: 'Leave requests overview (counts & statuses)',
 							tasks: 'Tasks touched in this period',
 							exportFile:
 								'Summarize this period and prepare a PDF or Excel from the database',
+							monthlyReport:
+								'Monthly summary for the current calendar month (1st → today), only my own scope in DATA CONTEXT (my hours, my leave, my absences). Written report in Markdown (## headings): use VERIFIED STATS for me, overtime if present, absences from context, my leave requests (type, dates, status — copy status wording from context, e.g. “Pending approval”, not bare `pending`). Always include **## Tasks**: summarize tasks from the “Tasks (boards / kanban, in period)” lines (title, board, status, due date / work period when present, calendar-only vs board if shown). If there are no task lines for my scope, say so in one short sentence. Timer: under “Time clock: read plain-text…” use the **bullet lines “•”** first — reproduce each in a table (Description | Hours | %); **do not** collapse to one total row per person if several bullets exist. Heading **## Time clock breakdown**. Explain “day book hours not covered…” if it appears. If no bullets / empty `byUser`, skip timer subsection. Short takeaways only if data supports it. No invented facts.\n\nAlso export from database: PDF and Excel for the same period — full combined period report (time + leave + tasks). Mention that the real download buttons appear below your reply.',
+							monthlyReportAdminHr:
+								'Monthly team summary for the current calendar month (1st → today). I am Admin or HR: cover the whole team (and departments) visible in DATA CONTEXT only — do not go beyond that scope. Markdown (## headings): team aggregates and per person in scope, VERIFIED STATS, overtime, absences, leave requests (type, dates, status — use the human status text from each leave line, not raw `pending`). Always include **## Tasks**: team-level summary from the Tasks block (counts by board/status if useful, notable deadlines, calendar-only vs kanban; stay within scope). If no tasks in context, one short sentence. Timer: DATA CONTEXT has a **plain-text block with “•” lines** under “Time clock: read plain-text…” — copy **every** bullet into a **per-person** markdown table (Description | Hours | %); **forbidden** to output only one “total hours / 100%” row per person when multiple bullets exist. Heading **## Time clock breakdown**. JSON below is supplementary. Explain “day book hours not covered…” if needed. If `byUser` empty, say breakdown is not in stored data. Short takeaways / risks only from data. No invented facts.\n\nAlso export from database: PDF and Excel for the same period — full combined period report (time + leave + tasks). Mention that the real download buttons appear below your reply.',
+							monthlyReportSupervisor:
+								'Monthly summary for the current calendar month (1st → today). I am a supervisor: first cover employees I supervise (people in my DATA CONTEXT scope from supervisor permissions). Then add a separate subsection for myself (e.g. Me — supervisor) with my hours, leave, and absences if my data appears in context. Markdown (## headings): VERIFIED STATS, overtime, leave requests (human status text from context, not `pending`). Always include **## Tasks** from the Tasks block for the same scope (summarize relevant tasks; if none, one sentence). Timer: use **“•” bullet lines** under “Time clock: read plain-text…” in a per-person table (Description | Hours | %); do not collapse to one total row per person when several bullets exist. Heading **## Time clock breakdown**. If empty, skip timer subsection. Short takeaways only if data supports it. No invented facts.\n\nAlso export from database: PDF and Excel for the same period — full combined period report (time + leave + tasks). Mention that the real download buttons appear below your reply.',
 						},
 						leave: {
 							modeOn: 'Leave request (AI)',
@@ -1495,18 +1512,15 @@ i18n
 	"successMessageWithSettings": "🎉 Team created successfully! You can now configure your team settings in the Settings section.",
 	"settingsLink": "Go to Settings",
     "errorGeneric": "Error creating team",
-    "acceptTermsPrefix": "By creating an account, you accept the",
-    "termsLink": "Planopia Terms and Conditions",
-    "acceptTermsConjunction": "and",
-    "privacyLink": "data processing policy",
+    "acceptCheckboxPrefix": "I accept the",
+    "termsLink": "Terms of Service",
+    "acceptTermsAnd": "and",
+    "privacyLink": "Privacy Policy",
+    "mustAcceptTerms": "Please accept the Terms of Service and Privacy Policy to create a team.",
     "errorTeamExists": "Team with this name already exists",
     "errorEmailExists": "User with this email already exists",
     "errorValidation": "All fields are required",
     "backToLogin": "Back to login",
-    "acceptTermsPrefix": "By creating an account, you accept the",
-    "termsLink": "Planopia Terms and Conditions",
-    "acceptTermsConjunction": "and",
-    "privacyLink": "data processing policy",
     "retentionModalTitle": "Team was previously deleted",
     "retentionModalInfo": "Retention period:",
     "retentionModalRemaining": "A team with this email address was deleted. Data is stored during the retention period ({{days}} of {{total}} days remaining). After the retention period expires, data will be permanently deleted and registration of a new team will be possible.",
@@ -1545,6 +1559,7 @@ i18n
 							'Odpowiedzi tylko z danych Planopii widocznych dla Twojego konta.',
 							'Zakres: czas pracy, urlopy, zadania, grafiki, tablice, zespół.',
 							'Okres wybierasz u góry; możesz poprosić o podsumowanie. W treści pytania o Excel lub PDF pod odpowiedzią pojawią się przyciski z bazy.',
+							'Zielony „Podsumuj miesiąc”: raport dopasowany do roli (zespół — Admin/HR, podlegli + Ty — przełożony, tylko Ty — pozostali); PDF/Excel z bazy pod odpowiedzią.',
 							'Rozmowę wyeksportujesz do pliku TXT z paska nad czatem.',
 							'Szkic miesiąca z opisu — osobny moduł AI w widoku harmonogramu, nie ten czat.',
 						],
@@ -1594,11 +1609,27 @@ i18n
 							delete: 'Usuń rozmowę',
 							untitled: 'Nowa rozmowa',
 						},
+						monthlyReportButton: 'Podsumuj miesiąc',
+						monthlyReportSectionCollapse: 'Zwiń sekcję',
+						monthlyReportSectionExpand: 'Rozwiń sekcję',
+						monthlyReportUserBubble: 'Proszę o podsumowanie bieżącego miesiąca kalendarzowego.',
+						monthlyReportHint:
+							'Raport za bieżący miesiąc tylko dla Twoich danych (zakres DATA CONTEXT); PDF/Excel z bazy pod odpowiedzią.',
+						monthlyReportHintAdminHr:
+							'Podsumowanie całego zespołu (lub działów), które widzisz jako Admin/HR; PDF/Excel z bazy pod odpowiedzią.',
+						monthlyReportHintSupervisor:
+							'Podsumowanie podległych pracowników oraz Twoich godzin i urlopów; PDF/Excel z bazy pod odpowiedzią.',
 						quick: {
 							summary: 'Podsumuj ten okres dla mojego zakresu',
 							leaves: 'Przegląd urlopów (liczby i statusy)',
 							tasks: 'Zadania aktywne w tym okresie',
 							exportFile: 'Podsumuj ten okres i przygotuj PDF lub Excel z bazy',
+							monthlyReport:
+								'Podsumowanie miesiąca — bieżący miesiąc kalendarzowy (od 1. do dziś), wyłącznie moje dane w DATA CONTEXT (moje godziny, moje urlopy, moje nieobecności). Raport w Markdown (nagłówki ##): VERIFIED STATS dla mnie, nadgodziny jeśli są, nieobecności, wnioski urlopowe (typ, daty, status — kopiuj dokładnie tekst statusu z linii wniosku, np. „Oczekuje na akceptację”, nie samo „pending”). Zawsze dodaj **## Zadania** — podsumuj zadania z sekcji „Tasks (boards / kanban, in period)” (tytuł, tablica, status, termin / okres realizacji jeśli jest, calendar-only vs kanban jeśli widać). Gdy w zakresie nie ma linii zadań — jedna krótka informacja. Timer: pod „Licznik czasu: najpierw podział tekstowy…” użyj linii **„•”** — każdą przenieś do tabeli (Opis | Godziny | %); **zakaz** jednego wiersza sumy/100% przy wielu „•”. Nagłówek **## Praca wg licznika**. Wiersz o ewidencji bez zamkniętych sesji — wyjaśnij; **nie** pisz że nie było timera. Gdy brak „•” / pusto — pomiń podsekcję timera. Krótka sekcja wniosków/ryzyk tylko z danych. Bez wymyślania faktów.\n\nProszę też o eksport z bazy: PDF i Excel za ten sam okres — pełny raport łączony (ewidencja + urlopy + zadania). Wspomnij, że prawdziwe przyciski pobrania pojawią się pod odpowiedzią.',
+							monthlyReportAdminHr:
+								'Podsumowanie miesiąca dla zespołu — bieżący miesiąc kalendarzowy (od 1. do dziś). Jestem administratorem lub HR: raport ma obejmować cały zespół i działy widoczne w DATA CONTEXT, bez wykraczania poza ten zakres. Markdown (nagłówki ##): sumy zespołu i per osoba w zakresie, VERIFIED STATS, nadgodziny, nieobecności, wnioski urlopowe (typ, daty, status — tekst statusu jak w kontekście, np. „Oczekuje na akceptację”, nie „pending”). Zawsze **## Zadania** — podsumowanie z bloku Tasks (np. liczby wg tablic/statusu, ważne terminy; tylko zakres kontekstu). Gdy brak zadań — jedna informacja. Timer: w DATA CONTEXT **najpierw** jest podział tekstowy z „•” (opis — godz. — %); **w raporcie odtwórz każdą linię** w tabeli per osoba — **zakaz** jednego wiersza „suma / 100%” na osobę przy wielu „•”. Nagłówek **## Praca wg licznika**. JSON poniżej tylko pomocniczy. Wiersz o ewidencji bez zamkniętych sesji **nie** oznacza „nie było timera”. Gdy `byUser` puste — napisz, że w danych nie ma podziału na sesje licznika (bez oceniania użytkownika). Krótka sekcja wniosków/ryzyk tylko z danych. Bez wymyślania faktów.\n\nProszę też o eksport z bazy: PDF i Excel za ten sam okres — pełny raport łączony (ewidencja + urlopy + zadania). Wspomnij, że prawdziwe przyciski pobrania pojawią się pod odpowiedzią.',
+							monthlyReportSupervisor:
+								'Podsumowanie miesiąca — bieżący miesiąc kalendarzowy (od 1. do dziś). Jestem przełożonym: najpierw osoby podległe w DATA CONTEXT, potem podsekcja „Ja (przełożony)” jeśli moje dane są w kontekście. Markdown (nagłówki ##): VERIFIED STATS, nadgodziny, wnioski urlopowe (status jak w kontekście, nie „pending”). Zawsze **## Zadania** z bloku Tasks dla tego samego zakresu (jeśli brak — jedna informacja). Timer: linie **„•”** pod „Licznik czasu: najpierw podział tekstowy…” — tabela per osoba (Opis | Godziny | %); **zakaz** jednego wiersza sumy/100% przy wielu „•”. Nagłówek **## Praca wg licznika**. Wyjaśnij wiersz o ewidencji bez zamkniętych sesji jeśli wystąpi. Gdy brak „•” — pomiń podsekcję timera. Wnioski/ryzyka tylko z danych. Bez wymyślania faktów.\n\nProszę też o eksport z bazy: PDF i Excel za ten sam okres — pełny raport łączony (ewidencja + urlopy + zadania). Wspomnij, że prawdziwe przyciski pobrania pojawią się pod odpowiedzią.',
 						},
 						leave: {
 							modeOn: 'Wniosek urlopowy (AI)',
@@ -2990,10 +3021,11 @@ i18n
     "errorEmailExists": "Użytkownik o tym emailu już istnieje",
     "errorValidation": "Wszystkie pola są wymagane",
     "backToLogin": "Wróć do logowania",
-    "acceptTermsPrefix": "Zakładając konto, akceptujesz",
+    "acceptCheckboxPrefix": "Akceptuję",
     "termsLink": "Regulamin Planopia",
-    "acceptTermsConjunction": "oraz",
-    "privacyLink": "zasady przetwarzania danych",
+    "acceptTermsAnd": "oraz",
+    "privacyLink": "Politykę prywatności",
+    "mustAcceptTerms": "Aby utworzyć zespół, zaznacz akceptację regulaminu i polityki prywatności.",
     "retentionModalTitle": "Zespół został wcześniej usunięty",
     "retentionModalInfo": "Okres karencji:",
     "retentionModalRemaining": "Zespół z tym adresem email został usunięty. Dane są przechowywane przez okres karencji ({{days}} z {{total}} dni pozostało). Po upływie karencji dane zostaną trwale usunięte i będzie możliwa rejestracja nowego zespołu.",
