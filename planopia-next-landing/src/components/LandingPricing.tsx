@@ -91,7 +91,7 @@ const copy = {
 					'Wszystkie funkcje',
 					'Asystent AI: 1000+ wiadomości miesięcznie (lub fair use)',
 					'Priorytetowe wsparcie',
-					'Funkcje na życzenie pod Twój proces',
+					'Funkcje na życzenie pod Twój biznes',
 				],
 				cta: 'Wybierz Enterprise',
 			},
@@ -104,7 +104,7 @@ const copy = {
 			{ id: 'ai500', label: '+500 wiadomości', pricePln: 99, cta: 'Dokup pakiet' },
 		],
 		tiersFootnote:
-			'* Płatny pakiet możesz anulować w dowolnym momencie — bez długoterminowego zobowiązania.',
+			'* Płatny pakiet możesz anulować w dowolnym momencie — bez długoterminowego zobowiązania. Przyciski pakietów otwierają aplikację: po zalogowaniu jako administrator lub HR uruchamiana jest płatność online (Przelewy24).',
 		legalTitle: 'Regulaminy',
 		legalLinks: [
 			{ href: '/terms', label: 'Regulamin' },
@@ -186,7 +186,7 @@ const copy = {
 					'All features',
 					'AI Assistant: 1000+ messages / month (or fair use)',
 					'Priority support',
-					'Custom features for your workflows',
+					'Custom features for your business',
 				],
 				cta: 'Choose Enterprise',
 			},
@@ -199,7 +199,7 @@ const copy = {
 			{ id: 'ai500', label: '+500 messages', pricePln: 99, cta: 'Add pack' },
 		],
 		tiersFootnote:
-			'* You can cancel your paid plan at any time — no long-term commitment. Settlement is in PLN; USD amounts are indicative (1 USD ≈ 3.69 PLN).',
+			'* You can cancel your paid plan at any time — no long-term commitment. Plan buttons open the app: after you sign in as Admin or HR, checkout starts online (Przelewy24). Settlement is in PLN; USD amounts are indicative (1 USD ≈ 3.69 PLN).',
 		legalTitle: 'Legal',
 		legalLinks: [
 			{ href: '/en/terms', label: 'Terms of Service' },

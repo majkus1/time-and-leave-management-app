@@ -7,8 +7,8 @@ type Props = {
 	imgClassName?: string
 }
 
-const VIDEO_DESKTOP = '/img/1.mp4'
-const VIDEO_MOBILE = '/img/1-mobile.mp4'
+const VIDEO_DESKTOP = '/img/aias.mp4'
+const VIDEO_MOBILE = '/img/aias-mob.mp4'
 
 export default function ConstructionAiAssistantScreenshot({
 	locale,

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -142,7 +142,7 @@ export default function PackagesPage() {
 	const { data: catalog, isLoading: catLoading } = useBillingCatalog()
 	const { data: ent, isLoading: entLoading } = useBillingEntitlements()
 	const purchase = useBillingPurchaseRequest()
-	const { data: p24Status } = useBillingP24Status()
+	const { data: p24Status, isPending: p24StatusLoading } = useBillingP24Status()
 	const p24Checkout = useBillingP24Checkout()
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
@@ -158,6 +158,36 @@ export default function PackagesPage() {
 	const [justSent, setJustSent] = useState(false)
 
 	const loading = catLoading || !catalog
+	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
+
+	const startP24Checkout = useCallback(
+		async body => {
+			if (!canSubmitPurchaseRequest) return
+			if (body.kind === 'plan' && catalog && teamSeats != null) {
+				const tier = catalog.tiers.find(t => t.id === body.planKey)
+				if (tier && teamSeats > tier.maxUsers) {
+					await showAlert(
+						t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers })
+					)
+					return
+				}
+			}
+			try {
+				const data = await p24Checkout.mutateAsync(body)
+				if (data.redirectUrl) {
+					window.location.assign(data.redirectUrl)
+				}
+			} catch (e) {
+				await showAlert(
+					billingAxiosErrorMessage(e, t) ||
+						e.response?.data?.message ||
+						e.message ||
+						t('billingPackages.p24PayError')
+				)
+			}
+		},
+		[canSubmitPurchaseRequest, catalog, teamSeats, p24Checkout, t, showAlert]
+	)
 
 	useEffect(() => {
 		if (p24ReturnHandledRef.current) return
@@ -169,7 +199,7 @@ export default function PackagesPage() {
 	}, [searchParams, navigate, queryClient, showAlert, t])
 
 	useEffect(() => {
-		if (!catalog || appliedQueryRef.current || isCheckingAuth) return
+		if (!catalog || appliedQueryRef.current || isCheckingAuth || p24StatusLoading) return
 		if (!canSubmitPurchaseRequest) {
 			if (searchParams.get('plan')) appliedQueryRef.current = true
 			return
@@ -181,7 +211,11 @@ export default function PackagesPage() {
 			if (addonId && catalog.addons?.some(a => a.id === addonId)) {
 				appliedQueryRef.current = true
 				setNote('')
-				setModal({ kind: 'addon', addonId })
+				if (p24Status?.ready) {
+					void startP24Checkout({ kind: 'addon', addonId })
+				} else {
+					setModal({ kind: 'addon', addonId })
+				}
 			}
 			return
 		}
@@ -200,9 +234,22 @@ export default function PackagesPage() {
 			appliedQueryRef.current = true
 			setBilling(bill)
 			setNote('')
-			setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
+			if (p24Status?.ready) {
+				void startP24Checkout({ kind: 'plan', planKey: plan, billingCycle: bill })
+			} else {
+				setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
+			}
 		}
-	}, [catalog, ent, searchParams, canSubmitPurchaseRequest, isCheckingAuth])
+	}, [
+		catalog,
+		ent,
+		searchParams,
+		canSubmitPurchaseRequest,
+		isCheckingAuth,
+		p24Status,
+		p24StatusLoading,
+		startP24Checkout,
+	])
 
 	useEffect(() => {
 		if (loading || !catalog) return
@@ -222,8 +269,6 @@ export default function PackagesPage() {
 		}),
 		[t, i18n.resolvedLanguage]
 	)
-
-	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
 
 	const submitOrder = async () => {
 		if (!modal || !canSubmitPurchaseRequest) return
@@ -257,36 +302,6 @@ export default function PackagesPage() {
 			await showAlert(t('billingPackages.sent'))
 		} catch (e) {
 			await showAlert(billingAxiosErrorMessage(e, t) || e.message || 'Error')
-		}
-	}
-
-	const payWithP24 = async () => {
-		if (!modal || !canSubmitPurchaseRequest) return
-		if (modal.kind === 'plan' && catalog && teamSeats != null) {
-			const tier = catalog.tiers.find(t => t.id === modal.planKey)
-			if (tier && teamSeats > tier.maxUsers) {
-				await showAlert(
-					t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers })
-				)
-				return
-			}
-		}
-		try {
-			const body =
-				modal.kind === 'plan'
-					? { kind: 'plan', planKey: modal.planKey, billingCycle: modal.billingCycle, note }
-					: { kind: 'addon', addonId: modal.addonId, note }
-			const data = await p24Checkout.mutateAsync(body)
-			if (data.redirectUrl) {
-				window.location.assign(data.redirectUrl)
-			}
-		} catch (e) {
-			await showAlert(
-				billingAxiosErrorMessage(e, t) ||
-					e.response?.data?.message ||
-					e.message ||
-					t('billingPackages.p24PayError')
-			)
 		}
 	}
 
@@ -511,7 +526,13 @@ export default function PackagesPage() {
 								</ul>
 								<button
 									type="button"
-									disabled={isCurrentPlan || !canSubmitPurchaseRequest || planSeatsBlocked}
+									disabled={
+										isCurrentPlan ||
+										!canSubmitPurchaseRequest ||
+										planSeatsBlocked ||
+										p24StatusLoading ||
+										p24Checkout.isPending
+									}
 									title={
 										isCurrentPlan
 											? t('billingPackages.planOrderDisabledOwn')
@@ -528,16 +549,39 @@ export default function PackagesPage() {
 										if (isCurrentPlan || !canSubmitPurchaseRequest || planSeatsBlocked) return
 										setJustSent(false)
 										setNote('')
-										setModal({ kind: 'plan', planKey: tier.id, billingCycle: cycle })
+										if (p24Status?.ready) {
+											void startP24Checkout({
+												kind: 'plan',
+												planKey: tier.id,
+												billingCycle: cycle,
+											})
+										} else {
+											setModal({ kind: 'plan', planKey: tier.id, billingCycle: cycle })
+										}
 									}}
 								>
-									{isCurrentPlan
-										? t('billingPackages.planAlreadyActive')
-										: planSeatsBlocked
-											? t('billingPackages.planSeatsExceededShort')
-											: !canSubmitPurchaseRequest
-												? t('billingPackages.orderEmailAdminOnlyShort')
-												: t('billingPackages.orderEmail')}
+									{p24Checkout.isPending ? (
+										<span className="packages-modal__submit-pending">
+											<span
+												className="spinner-border spinner-border-sm packages-modal__spinner"
+												role="status"
+												aria-hidden="true"
+											/>
+											{t('billingPackages.p24Redirecting')}
+										</span>
+									) : isCurrentPlan ? (
+										t('billingPackages.planAlreadyActive')
+									) : planSeatsBlocked ? (
+										t('billingPackages.planSeatsExceededShort')
+									) : !canSubmitPurchaseRequest ? (
+										t('billingPackages.orderEmailAdminOnlyShort')
+									) : p24StatusLoading ? (
+										t('billingPackages.checkingPaymentOptions')
+									) : p24Status?.ready ? (
+										t('billingPackages.payOnlineCta')
+									) : (
+										t('billingPackages.orderEmail')
+									)}
 								</button>
 							</div>
 						)
@@ -552,7 +596,8 @@ export default function PackagesPage() {
 					)}
 					{catalog.addons.map(a => {
 						const addonLocked = !ent || (!ent.ai?.unrestricted && !ent.billingHadPaidPlan)
-						const orderDisabled = addonLocked || !canSubmitPurchaseRequest
+						const orderDisabled =
+							addonLocked || !canSubmitPurchaseRequest || p24StatusLoading || p24Checkout.isPending
 						return (
 							<div
 								key={a.id}
@@ -569,13 +614,34 @@ export default function PackagesPage() {
 									disabled={orderDisabled}
 									title={!canSubmitPurchaseRequest && !addonLocked ? t('billingPackages.orderEmailAdminOnlyHint') : undefined}
 									onClick={() => {
-										if (orderDisabled) return
+										if (addonLocked || !canSubmitPurchaseRequest) return
 										setJustSent(false)
 										setNote('')
-										setModal({ kind: 'addon', addonId: a.id })
+										if (p24Status?.ready) {
+											void startP24Checkout({ kind: 'addon', addonId: a.id })
+										} else {
+											setModal({ kind: 'addon', addonId: a.id })
+										}
 									}}
 								>
-									{!canSubmitPurchaseRequest ? t('billingPackages.orderEmailAdminOnlyShort') : t('billingPackages.orderEmail')}
+									{p24Checkout.isPending ? (
+										<span className="packages-modal__submit-pending">
+											<span
+												className="spinner-border spinner-border-sm packages-modal__spinner"
+												role="status"
+												aria-hidden="true"
+											/>
+											{t('billingPackages.p24Redirecting')}
+										</span>
+									) : !canSubmitPurchaseRequest ? (
+										t('billingPackages.orderEmailAdminOnlyShort')
+									) : p24StatusLoading ? (
+										t('billingPackages.checkingPaymentOptions')
+									) : p24Status?.ready ? (
+										t('billingPackages.payOnlineCta')
+									) : (
+										t('billingPackages.orderEmail')
+									)}
 								</button>
 							</div>
 						)
@@ -592,7 +658,7 @@ export default function PackagesPage() {
 					className="packages-modal-overlay"
 					role="dialog"
 					aria-modal="true"
-					onClick={() => !purchase.isPending && !p24Checkout.isPending && setModal(null)}
+					onClick={() => !purchase.isPending && setModal(null)}
 				>
 					<div className="packages-modal" onClick={e => e.stopPropagation()}>
 						<h4>
@@ -600,6 +666,9 @@ export default function PackagesPage() {
 								? `${TIER_LABELS[modal.planKey] || modal.planKey} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
 								: `AI +${catalog.addons.find(x => x.id === modal.addonId)?.messages ?? modal.addonId}`}
 						</h4>
+						<p className="packages-modal__fallback-intro" style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.75rem' }}>
+							{t('billingPackages.emailOrderFallbackIntro')}
+						</p>
 						<label htmlFor="pkg-note" style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.35rem' }}>
 							{modalLabels.noteLabel}
 						</label>
@@ -616,35 +685,11 @@ export default function PackagesPage() {
 							</p>
 						)}
 						<div className="packages-modal__actions packages-modal__actions--stack">
-							{p24Status?.ready && (
-								<button
-									type="button"
-									className="primary"
-									onClick={() => payWithP24()}
-									disabled={p24Checkout.isPending || purchase.isPending}
-									aria-busy={p24Checkout.isPending}
-								>
-									{p24Checkout.isPending ? (
-										<span className="packages-modal__submit-pending">
-											<span
-												className="spinner-border spinner-border-sm packages-modal__spinner"
-												role="status"
-												aria-hidden="true"
-											/>
-											{t('billingPackages.p24Redirecting')}
-										</span>
-									) : p24Status.sandbox ? (
-										t('billingPackages.payWithP24Sandbox')
-									) : (
-										t('billingPackages.payWithP24')
-									)}
-								</button>
-							)}
 							<button
 								type="button"
-								className={p24Status?.ready ? '' : 'primary'}
+								className="primary"
 								onClick={() => submitOrder()}
-								disabled={purchase.isPending || p24Checkout.isPending}
+								disabled={purchase.isPending}
 								aria-busy={purchase.isPending}
 							>
 								{purchase.isPending ? (
@@ -660,7 +705,7 @@ export default function PackagesPage() {
 									modalLabels.send
 								)}
 							</button>
-							<button type="button" onClick={() => setModal(null)} disabled={purchase.isPending || p24Checkout.isPending}>
+							<button type="button" onClick={() => setModal(null)} disabled={purchase.isPending}>
 								{modalLabels.cancel}
 							</button>
 						</div>

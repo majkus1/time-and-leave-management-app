@@ -1,6 +1,5 @@
-/** Future checkout in the app - landing CTAs point here with ?plan=... */
+/** Logged-in admins: opens /packages with ?plan=… — starts Przelewy24 checkout when configured, else mail request. */
 
-/** In-app pricing & mail-order flow (replaces placeholder /payment query route). */
 export const PAYMENT_BASE_URL = 'https://app.planopia.pl/packages'
 
 export function paymentHref(

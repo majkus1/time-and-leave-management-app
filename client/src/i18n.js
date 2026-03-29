@@ -224,9 +224,13 @@ i18n
 								'All features',
 								'AI Assistant: 1000+ messages / month (or fair use)',
 								'Priority support',
-								'Custom features for your workflows',
+								'Custom features for your business',
 							],
 						},
+						payOnlineCta: 'Pay online',
+						checkingPaymentOptions: 'Checking payment options…',
+						emailOrderFallbackIntro:
+							'Online payment is not available (Przelewy24 not fully configured). Send a request by email — we will follow up with next steps.',
 						orderEmail: 'Request by email',
 						purchaseRequestAdminOnly:
 							'Only team administrators and HR can send purchase requests by email. Ask your admin or HR to order a plan or contact us.',
@@ -1783,9 +1787,13 @@ i18n
 								'Wszystkie funkcje',
 								'Asystent AI: 1000+ wiadomości miesięcznie (lub fair use)',
 								'Priorytetowe wsparcie',
-								'Funkcje na życzenie pod Twój proces',
+								'Funkcje na życzenie pod Twój biznes',
 							],
 						},
+						payOnlineCta: 'Zapłać online',
+						checkingPaymentOptions: 'Sprawdzanie płatności…',
+						emailOrderFallbackIntro:
+							'Płatność online jest niedostępna (Przelewy24 nie jest w pełni skonfigurowane). Wyślij zgłoszenie mailem — odezwiemy się z kolejnymi krokami.',
 						orderEmail: 'Zamów mailem',
 						purchaseRequestAdminOnly:
 							'Zamówienia mailowe z tej strony mogą wysłać tylko administratorzy zespołu oraz HR. Poproś administratora lub HR o złożenie zamówienia lub kontakt z nami.',
