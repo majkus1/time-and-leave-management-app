@@ -469,12 +469,28 @@ async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail
 	}
 }
 
+/** Podziękowanie po zakupie pakietu — odbiorca może odpowiedzieć mailem z danymi do faktury. */
+async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
+	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
+	const subject = 'Dziękujemy za zakup Planopia'
+	const title = 'Dziękujemy za zaufanie'
+	const content = `
+		<p style="margin:0 0 14px 0;">Dzień dobry,</p>
+		<p style="margin:0 0 14px 0;">Dziękujemy za wykup pakietu Planopia dla zespołu <strong>${safeTeam}</strong>. Cieszymy się, że jesteście z nami.</p>
+		<p style="margin:0 0 14px 0;">Jeśli potrzebujecie faktury, odpowiedzcie proszę bezpośrednio na tego maila i podajcie dane do faktury: pełną nazwę firmy lub imię i nazwisko, adres oraz NIP (jeśli dotyczy). Wystawimy dokument na podstawie tych informacji.</p>
+		<p style="margin:0;">Z pozdrowieniami,<br>Zespół Planopia</p>
+	`
+	const html = getEmailTemplate(title, content, null, null, null)
+	await sendEmail(toEmail, null, subject, html)
+}
+
 module.exports = {
 	sendEmail,
 	sendEmailToHR,
 	sendTaskNotification,
 	notifyTicketReporter,
 	notifyHelpCenterStaff,
+	sendBillingPurchaseThankYouEmail,
 	escapeHtml,
 	getEmailTemplate,
 }

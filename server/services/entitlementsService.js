@@ -294,6 +294,11 @@ function buildClientEntitlements(team, options = {}) {
 		freemiumTier,
 		freemiumMaxSeats,
 		freemiumSeatBlocked,
+		billingInvoice: {
+			companyName: team.billingInvoiceCompanyName || '',
+			address: team.billingInvoiceAddress || '',
+			nip: team.billingInvoiceNip || '',
+		},
 		ai: {
 			unrestricted,
 			/** Wspólny licznik: czat AI + AI grafiku + drafty w asystencie */

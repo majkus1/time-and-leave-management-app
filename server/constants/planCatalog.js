@@ -43,11 +43,10 @@ const AI_ADDON_PACKS = {
 
 const PAID_PLAN_KEYS = Object.keys(PAID_PLANS)
 
-// PROD TEST — prawdziwe P24: Starter 1 zł, Business 2 zł (mies.). Po testach przywróć: starter 99, business 399.
 const MONTHLY_NET_PRICES_PLN = {
-	starter: 1,
+	starter: 99,
 	pro: 199,
-	business: 2,
+	business: 399,
 	enterprise: 799,
 }
 

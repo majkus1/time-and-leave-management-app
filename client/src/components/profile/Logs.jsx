@@ -9,9 +9,20 @@ import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, use
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs, useAllLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
+import {
+	useBillingSuperPaidPlanTeams,
+	useBillingSuperThankPurchaseEmail,
+} from '../../hooks/useBilling'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
+
+const PAID_PLAN_LABELS = {
+	starter: 'Starter',
+	pro: 'Pro',
+	business: 'Business',
+	enterprise: 'Enterprise',
+}
 
 function Logs() {
 	const [expandedLogs, setExpandedLogs] = useState([])
@@ -49,6 +60,10 @@ function Logs() {
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
 	const isEnglish = i18n.language === 'en'
+
+	const { data: paidPlanTeams = [], isLoading: loadingPaidPlanTeams } = useBillingSuperPaidPlanTeams(isSuperAdmin)
+	const thankPurchaseMutation = useBillingSuperThankPurchaseEmail()
+	const [thankEmailBusy, setThankEmailBusy] = useState(null)
 
 	const availableRoles = [
 		'Admin',
@@ -3108,6 +3123,154 @@ function Logs() {
 					</div>
 				</div>
 			)}
+
+			{isSuperAdmin && (
+				<section
+					style={{
+						marginTop: '3rem',
+						paddingTop: '2rem',
+						borderTop: '2px solid #e5e7eb',
+					}}
+					aria-labelledby="paid-plan-purchases-heading"
+				>
+					<h2
+						id="paid-plan-purchases-heading"
+						style={{
+							margin: '0 0 0.5rem',
+							fontSize: '1.35rem',
+							fontWeight: 700,
+							color: '#111827',
+						}}
+					>
+						{t('logs.paidPlanPurchasesTitle')}
+					</h2>
+					<p style={{ margin: '0 0 1.25rem', color: '#6b7280', fontSize: '0.95rem', maxWidth: '52rem' }}>
+						{t('logs.paidPlanPurchasesSub')}
+					</p>
+					{loadingPaidPlanTeams ? (
+						<p style={{ color: '#6b7280' }}>{t('logs.paidPlanPurchasesLoading')}</p>
+					) : paidPlanTeams.length === 0 ? (
+						<p style={{ color: '#6b7280' }}>{t('logs.paidPlanPurchasesEmpty')}</p>
+					) : (
+						<div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+							<table
+								style={{
+									width: '100%',
+									borderCollapse: 'collapse',
+									fontSize: '0.9rem',
+									backgroundColor: '#fff',
+								}}
+							>
+								<thead>
+									<tr style={{ backgroundColor: '#f9fafb', textAlign: 'left' }}>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesTeam')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPayer')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesAdmin')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPlan')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPaidAt')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb', width: '1%' }} />
+									</tr>
+								</thead>
+								<tbody>
+									{paidPlanTeams.map(row => {
+										const planLabel = PAID_PLAN_LABELS[row.planKey] || row.planKey || '—'
+										const cycle =
+											row.billingCycle === 'annual'
+												? ' — ' + (isEnglish ? 'annual' : 'rocznie')
+												: row.billingCycle === 'monthly'
+													? ' — ' + (isEnglish ? 'monthly' : 'mies.')
+													: ''
+										const paidStr = row.paidAt
+											? new Date(row.paidAt).toLocaleString(isEnglish ? 'en-GB' : 'pl-PL', {
+													dateStyle: 'short',
+													timeStyle: 'short',
+												})
+											: '—'
+										const payer = row.payerEmail || ''
+										return (
+											<tr key={row.teamId}>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													<strong>{row.teamName}</strong>
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{payer || '—'}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{row.teamAdminEmail || '—'}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{planLabel}
+													{cycle}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{paidStr}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													<button
+														type="button"
+														disabled={!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending}
+														onClick={async () => {
+															if (!payer) {
+																await showAlert(t('logs.purchaseThankError'))
+																return
+															}
+															setThankEmailBusy(payer)
+															try {
+																await thankPurchaseMutation.mutateAsync({
+																	toEmail: payer,
+																	teamName: row.teamName,
+																})
+																await showAlert(t('logs.purchaseThankSent'))
+															} catch {
+																await showAlert(t('logs.purchaseThankError'))
+															} finally {
+																setThankEmailBusy(null)
+															}
+														}}
+														style={{
+															padding: '8px 14px',
+															borderRadius: '6px',
+															border: 'none',
+															background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+															color: '#fff',
+															fontWeight: 600,
+															fontSize: '0.85rem',
+															cursor:
+																!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending
+																	? 'not-allowed'
+																	: 'pointer',
+															opacity:
+																!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending
+																	? 0.55
+																	: 1,
+															whiteSpace: 'nowrap',
+														}}
+													>
+														{thankEmailBusy === payer
+															? t('logs.paidPlanPurchasesThankSending')
+															: t('logs.paidPlanPurchasesThank')}
+													</button>
+												</td>
+											</tr>
+										)
+									})}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</section>
+			)}
+
 			</div> {/* logs-container */}
 		</>
 	)

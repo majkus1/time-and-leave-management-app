@@ -12,6 +12,7 @@ import {
 	useBillingPurchaseRequest,
 	useBillingP24Status,
 	useBillingP24Checkout,
+	useBillingPatchTeamInvoice,
 	BILLING_ENTITLEMENTS_QUERY_KEY,
 } from '../../hooks/useBilling'
 import LegalDocumentsSection from '../legal/LegalDocumentsSection'
@@ -150,6 +151,7 @@ export default function PackagesPage() {
 	const purchase = useBillingPurchaseRequest()
 	const { data: p24Status, isPending: p24StatusLoading } = useBillingP24Status()
 	const p24Checkout = useBillingP24Checkout()
+	const patchTeamInvoice = useBillingPatchTeamInvoice()
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
 
@@ -163,9 +165,20 @@ export default function PackagesPage() {
 	const [note, setNote] = useState('')
 	const [justSent, setJustSent] = useState(false)
 	const [p24BusyKey, setP24BusyKey] = useState(null)
+	const [invCompany, setInvCompany] = useState('')
+	const [invAddress, setInvAddress] = useState('')
+	const [invNip, setInvNip] = useState('')
 
 	const loading = catLoading || !catalog
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
+
+	useEffect(() => {
+		const bi = ent?.billingInvoice
+		if (!bi) return
+		setInvCompany(bi.companyName ?? '')
+		setInvAddress(bi.address ?? '')
+		setInvNip(bi.nip ?? '')
+	}, [ent?.billingInvoice?.companyName, ent?.billingInvoice?.address, ent?.billingInvoice?.nip])
 
 	const startP24Checkout = useCallback(
 		async body => {
@@ -658,6 +671,67 @@ export default function PackagesPage() {
 						)
 					})}
 				</div>
+
+				{canSubmitPurchaseRequest && (
+					<section className="packages-invoice-section" aria-labelledby="packages-invoice-heading">
+						<h3 id="packages-invoice-heading" className="packages-invoice-section__title">
+							{t('billingPackages.invoiceSectionTitle')}
+						</h3>
+						<p className="packages-invoice-section__hint">{t('billingPackages.invoiceSectionHint')}</p>
+						<div className="packages-invoice-section__grid">
+							<label className="packages-invoice-section__field">
+								<span className="packages-invoice-section__label">{t('billingPackages.invoiceCompany')}</span>
+								<input
+									type="text"
+									value={invCompany}
+									onChange={e => setInvCompany(e.target.value)}
+									autoComplete="organization"
+									disabled={patchTeamInvoice.isPending}
+								/>
+							</label>
+							<label className="packages-invoice-section__field packages-invoice-section__field--wide">
+								<span className="packages-invoice-section__label">{t('billingPackages.invoiceAddress')}</span>
+								<textarea
+									rows={3}
+									value={invAddress}
+									onChange={e => setInvAddress(e.target.value)}
+									disabled={patchTeamInvoice.isPending}
+								/>
+							</label>
+							<label className="packages-invoice-section__field">
+								<span className="packages-invoice-section__label">{t('billingPackages.invoiceNip')}</span>
+								<input
+									type="text"
+									value={invNip}
+									onChange={e => setInvNip(e.target.value)}
+									autoComplete="off"
+									disabled={patchTeamInvoice.isPending}
+								/>
+							</label>
+						</div>
+						<button
+							type="button"
+							className="packages-invoice-section__save"
+							disabled={patchTeamInvoice.isPending}
+							onClick={async () => {
+								try {
+									await patchTeamInvoice.mutateAsync({
+										companyName: invCompany,
+										address: invAddress,
+										nip: invNip,
+									})
+									await showAlert(t('billingPackages.invoiceSaved'))
+								} catch (e) {
+									await showAlert(
+										e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
+									)
+								}
+							}}
+						>
+							{patchTeamInvoice.isPending ? t('billingPackages.invoiceSaving') : t('billingPackages.invoiceSave')}
+						</button>
+					</section>
+				)}
 
 				<section id="legal-documents" className="packages-legal-section" aria-label={t('legal.title')}>
 					<LegalDocumentsSection />

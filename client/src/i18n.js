@@ -289,6 +289,15 @@ i18n
 						planSeatsExceededShort: 'Too many users for this plan',
 						planSeatsExceededHint:
 							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
+						invoiceSectionTitle: 'Invoice details for your team',
+						invoiceSectionHint:
+							'Optional. If you need an invoice, save your company details here — we can also ask for them by email after purchase.',
+						invoiceCompany: 'Company / organization name',
+						invoiceAddress: 'Address (street, postal code, city)',
+						invoiceNip: 'Tax ID (NIP)',
+						invoiceSave: 'Save invoice details',
+						invoiceSaving: 'Saving…',
+						invoiceSaved: 'Invoice details saved.',
 					},
 					usersInfo: {
 						title: 'User List',
@@ -1202,6 +1211,20 @@ i18n
 						permanentDeleteConfirm: 'Are you sure you want to permanently delete user {{username}}? This operation is irreversible.',
 						permanentDeleteSuccess: 'User has been permanently deleted',
 						permanentDeleteError: 'Error permanently deleting user',
+						paidPlanPurchasesTitle: 'Teams with completed plan payments',
+						paidPlanPurchasesSub:
+							'Each row is the latest successful plan payment (Przelewy24). Payer email is the one used at checkout.',
+						paidPlanPurchasesTeam: 'Team',
+						paidPlanPurchasesPayer: 'Payer email',
+						paidPlanPurchasesAdmin: 'Team admin (registration)',
+						paidPlanPurchasesPlan: 'Plan',
+						paidPlanPurchasesPaidAt: 'Paid',
+						paidPlanPurchasesThank: 'Send thank-you email',
+						paidPlanPurchasesThankSending: 'Sending…',
+						purchaseThankSent: 'Thank-you email has been sent.',
+						purchaseThankError: 'Could not send the email.',
+						paidPlanPurchasesEmpty: 'No completed plan payments in the database yet.',
+						paidPlanPurchasesLoading: 'Loading…',
 						close: 'Close'
 					},
 					common: {
@@ -1856,6 +1879,15 @@ i18n
 						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
 						planSeatsExceededHint:
 							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',
+						invoiceSectionTitle: 'Dane do faktury zespołu',
+						invoiceSectionHint:
+							'Opcjonalnie. Jeśli potrzebujecie faktury, zapiszcie tutaj dane firmy — możemy też poprosić o nie mailem po zakupie.',
+						invoiceCompany: 'Nazwa firmy / organizacji',
+						invoiceAddress: 'Adres (ulica, kod, miejscowość)',
+						invoiceNip: 'NIP',
+						invoiceSave: 'Zapisz dane do faktury',
+						invoiceSaving: 'Zapisywanie…',
+						invoiceSaved: 'Zapisano dane do faktury.',
 					},
 					usersInfo: {
 						title: 'Lista użytkowników',
@@ -2768,6 +2800,20 @@ i18n
 						permanentDeleteConfirm: 'Czy na pewno chcesz trwale usunąć użytkownika {{username}}? Ta operacja jest nieodwracalna.',
 						permanentDeleteSuccess: 'Użytkownik został trwale usunięty',
 						permanentDeleteError: 'Błąd podczas trwałego usuwania użytkownika',
+						paidPlanPurchasesTitle: 'Zespoły po opłaceniu pakietu',
+						paidPlanPurchasesSub:
+							'Każdy wiersz to ostatnia zakończona płatność za pakiet (Przelewy24). E-mail płatnika to adres podany przy płatności.',
+						paidPlanPurchasesTeam: 'Zespół',
+						paidPlanPurchasesPayer: 'E-mail płatnika',
+						paidPlanPurchasesAdmin: 'E-mail admina zespołu (rejestracja)',
+						paidPlanPurchasesPlan: 'Pakiet',
+						paidPlanPurchasesPaidAt: 'Data płatności',
+						paidPlanPurchasesThank: 'Wyślij mail z podziękowaniem',
+						paidPlanPurchasesThankSending: 'Wysyłanie…',
+						purchaseThankSent: 'Wysłano wiadomość z podziękowaniem.',
+						purchaseThankError: 'Nie udało się wysłać wiadomości.',
+						paidPlanPurchasesEmpty: 'Brak zapisanych opłaconych pakietów w bazie.',
+						paidPlanPurchasesLoading: 'Ładowanie…',
 						close: 'Zamknij'
 					},
 					common: {

@@ -104,6 +104,25 @@ const teamSchema = new mongoose.Schema({
 		default: 0,
 		min: 0,
 	},
+	/** Dane do faktury (opcjonalnie, uzupełnia Admin/HR w Pakietach) */
+	billingInvoiceCompanyName: {
+		type: String,
+		default: '',
+		trim: true,
+		maxlength: 200,
+	},
+	billingInvoiceAddress: {
+		type: String,
+		default: '',
+		trim: true,
+		maxlength: 500,
+	},
+	billingInvoiceNip: {
+		type: String,
+		default: '',
+		trim: true,
+		maxlength: 32,
+	},
 }, {
 	collection: 'teams',
 	timestamps: true

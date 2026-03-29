@@ -71,3 +71,43 @@ export function useBillingP24Checkout() {
 		},
 	})
 }
+
+export function useBillingPatchTeamInvoice() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async body => {
+			const { data } = await axios.patch(`${API_URL}/api/billing/team-invoice`, body, {
+				withCredentials: true,
+			})
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
+export function useBillingSuperPaidPlanTeams(enabled) {
+	return useQuery({
+		queryKey: ['billing-super-paid-plan-teams'],
+		enabled: Boolean(enabled),
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/billing/super/paid-plan-teams`, {
+				withCredentials: true,
+			})
+			return data.rows || []
+		},
+		staleTime: 30 * 1000,
+	})
+}
+
+export function useBillingSuperThankPurchaseEmail() {
+	return useMutation({
+		mutationFn: async body => {
+			const { data } = await axios.post(`${API_URL}/api/billing/super/thank-purchase-email`, body, {
+				withCredentials: true,
+			})
+			return data
+		},
+	})
+}

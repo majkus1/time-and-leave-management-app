@@ -7,6 +7,9 @@ const { billingPurchaseRequestLimiter, billingP24CheckoutLimiter } = require('..
 
 router.get('/catalog', authenticateToken, billingController.getCatalog)
 router.get('/entitlements', authenticateToken, billingController.getEntitlements)
+router.patch('/team-invoice', authenticateToken, requireBillingStaffRole, billingController.patchTeamInvoice)
+router.get('/super/paid-plan-teams', authenticateToken, billingController.getSuperPaidPlanTeams)
+router.post('/super/thank-purchase-email', authenticateToken, billingController.postSuperThankPurchaseEmail)
 router.get('/p24/status', authenticateToken, billingController.getP24Status)
 router.post(
 	'/purchase-request',
