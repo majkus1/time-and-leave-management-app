@@ -282,8 +282,8 @@ i18n
 							'If you finished paying, your subscription will update in a moment. Refresh the page if limits have not changed yet.',
 						p24WebhookHint:
 							'Online payments need a public HTTPS webhook URL on the API server (P24_WEBHOOK_URL or API_PUBLIC_URL). Until then, use “Send request”.',
-						teamSeatsInTeam:
-							'{{count}} user accounts in this team (counts toward plan limits).',
+						teamSeatsInTeam_one: '{{count}} user account in this team (counts toward plan limits).',
+						teamSeatsInTeam_other: '{{count}} user accounts in this team (counts toward plan limits).',
 						planSeatLimitExceeded:
 							'Your team has {{used}} user accounts; this plan allows {{maxUsers}}. Remove or deactivate users in Team settings until you are within the limit, then try again.',
 						planSeatsExceededShort: 'Too many users for this plan',
@@ -1847,7 +1847,10 @@ i18n
 							'Jeśli dokończyłeś płatność, subskrypcja zaktualizuje się za chwilę. Odśwież stronę, jeśli limity się nie zmieniły.',
 						p24WebhookHint:
 							'Do automatycznej aktywacji po płatności potrzebny jest publiczny adres webhooka na API (HTTPS): P24_WEBHOOK_URL lub API_PUBLIC_URL. Do tego czasu użyj „Wyślij zgłoszenie”.',
-						teamSeatsInTeam: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
+						teamSeatsInTeam_one: '{{count}} konto użytkownika w zespole (liczy się do limitu planu).',
+						teamSeatsInTeam_few: '{{count}} konta użytkowników w zespole (liczy się do limitu planu).',
+						teamSeatsInTeam_many: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
+						teamSeatsInTeam_other: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
 						planSeatLimitExceeded:
 							'W zespole jest {{used}} użytkowników, a ten plan dopuszcza {{maxUsers}}. Usuń lub dezaktywuj konta w ustawieniach zespołu, a następnie spróbuj ponownie.',
 						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
