@@ -106,6 +106,12 @@ function formatCatalogPrice(n, resolvedLang) {
 	return formatCatalogPln(n)
 }
 
+function p24BusyKeyForBody(body) {
+	if (body?.kind === 'plan' && body.planKey) return `plan:${body.planKey}`
+	if (body?.kind === 'addon' && body.addonId) return `addon:${body.addonId}`
+	return null
+}
+
 function priceBlock(monthlyNet, billing, t, resolvedLang) {
 	if (isEnglishResolved(resolvedLang)) {
 		if (billing === 'monthly') {
@@ -156,6 +162,7 @@ export default function PackagesPage() {
 	const [modal, setModal] = useState(null)
 	const [note, setNote] = useState('')
 	const [justSent, setJustSent] = useState(false)
+	const [p24BusyKey, setP24BusyKey] = useState(null)
 
 	const loading = catLoading || !catalog
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
@@ -172,6 +179,8 @@ export default function PackagesPage() {
 					return
 				}
 			}
+			const busyKey = p24BusyKeyForBody(body)
+			if (busyKey) setP24BusyKey(busyKey)
 			try {
 				const data = await p24Checkout.mutateAsync(body)
 				if (data.redirectUrl) {
@@ -184,6 +193,8 @@ export default function PackagesPage() {
 						e.message ||
 						t('billingPackages.p24PayError')
 				)
+			} finally {
+				setP24BusyKey(null)
 			}
 		},
 		[canSubmitPurchaseRequest, catalog, teamSeats, p24Checkout, t, showAlert]
@@ -531,7 +542,7 @@ export default function PackagesPage() {
 										!canSubmitPurchaseRequest ||
 										planSeatsBlocked ||
 										p24StatusLoading ||
-										p24Checkout.isPending
+										p24BusyKey !== null
 									}
 									title={
 										isCurrentPlan
@@ -560,7 +571,7 @@ export default function PackagesPage() {
 										}
 									}}
 								>
-									{p24Checkout.isPending ? (
+									{p24BusyKey === `plan:${tier.id}` ? (
 										<span className="packages-modal__submit-pending">
 											<span
 												className="spinner-border spinner-border-sm packages-modal__spinner"
@@ -597,7 +608,7 @@ export default function PackagesPage() {
 					{catalog.addons.map(a => {
 						const addonLocked = !ent || (!ent.ai?.unrestricted && !ent.billingHadPaidPlan)
 						const orderDisabled =
-							addonLocked || !canSubmitPurchaseRequest || p24StatusLoading || p24Checkout.isPending
+							addonLocked || !canSubmitPurchaseRequest || p24StatusLoading || p24BusyKey !== null
 						return (
 							<div
 								key={a.id}
@@ -624,7 +635,7 @@ export default function PackagesPage() {
 										}
 									}}
 								>
-									{p24Checkout.isPending ? (
+									{p24BusyKey === `addon:${a.id}` ? (
 										<span className="packages-modal__submit-pending">
 											<span
 												className="spinner-border spinner-border-sm packages-modal__spinner"
