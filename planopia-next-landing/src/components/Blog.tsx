@@ -4,6 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
+import { planOfferingCopy } from '@/data/planOfferingCopy'
 
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -20,7 +27,7 @@ function Blog() {
 						"@type": "Blog",
 						"name": "Blog Planopii",
 						"url": "https://planopia.pl/blog",
-						"description": "Oficjalny blog aplikacji Planopia – artykuły o ewidencji czasu pracy, zarządzaniu urlopami i organizacji pracy w firmie.",
+						"description": `Oficjalny blog Planopii — ewidencja czasu pracy online, urlopy, HR, produktywność.${planOfferingCopy.pl.blogJsonLdExtra}`,
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -54,15 +61,16 @@ function Blog() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -77,7 +85,7 @@ function Blog() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -93,13 +101,9 @@ function Blog() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -110,7 +114,7 @@ function Blog() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
@@ -126,14 +130,59 @@ function Blog() {
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
-						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="Instalacja Planopii jako PWA na iPhone" className="rounded-md mb-4 h-48 object-cover" />
+						{/* Karta — ewidencja na budowie */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-amber-100/80">
+							<img
+								src="/img/worktimeblog.webp"
+								alt="Ewidencja czasu pracy na budowie — firma budowlana"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Jak zainstalować Planopię jako aplikację PWA na iPhone? Instrukcja krok po kroku
+								Jak prowadzić ewidencję czasu pracy na budowie (prosto i bez Excela)
 							</h3>
 							<p className="text-gray-600 flex-1">
-							Dowiedz się, jak zainstalować Planopię jako aplikację PWA na iPhone. Prosta instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami bezpośrednio na ekranie głównym telefonu. Zobacz, jak szybko i łatwo dodać Planopię do ekranu głównego.
+								Poradnik dla firm budowlanych: jeden system zamiast kartek i arkuszy, nadgodziny, grafiki brygad — oraz tablice zadań i czaty, żeby zespół miał narzędzie na co dzień, nie tylko przy urlopach.
+							</p>
+							<Link
+								href="/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
+						{/* Karta wpisu — instrukcja wideo */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
+							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
+								<img
+									src="/img/worktimeblog.webp"
+									alt="Instrukcja wideo Planopia — poradniki z aplikacji"
+									className="h-full w-full object-cover opacity-90"
+								/>
+								<span className="boxvideo absolute bottom-3 left-3 inline-flex items-center rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow">
+									Wideo
+								</span>
+							</div>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Instrukcja wideo — jak korzystać z Planopii
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Krótkie nagrania z aplikacji: m.in. jak ręcznie dodać godziny czasu pracy w ewidencji. Oglądaj na telefonie lub komputerze — kolejne filmy będziemy dodawać na bieżąco.
+							</p>
+							<Link
+								href="/blog/instrukcja-wideo-planopia"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
+						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
+							<img src="/img/worktimeblog.webp" alt="Instalacja Planopii jako aplikacji PWA na telefonie i komputerze" className="rounded-md mb-4 h-48 object-cover" />
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+							Jak zainstalować Planopię jako aplikację PWA? Instrukcja krok po kroku
+							</h3>
+							<p className="text-gray-600 flex-1">
+							Dowiedz się, jak dodać Planopię jako aplikację PWA na iPhonie, iPadzie, telefonie z Androidem oraz w przeglądarce na komputerze (np. Chrome). Krótka instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami na ekranie głównym, w menu aplikacji lub na pulpicie.
 							</p>
 							<Link
 								href="/blog/jak-zainstalowac-planopie-jako-pwa"
@@ -209,10 +258,10 @@ function Blog() {
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/worktimeblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Ewidencja czasu pracy i urlopy — 30 dni za darmo
+							Ewidencja czasu pracy — także darmowy plan po próbie
 							</h3>
 							<p className="text-gray-600 flex-1">
-							30 dni za darmo: pełne funkcje, do 5 użytkowników — potem wybierasz plan dopasowany do zespołu.
+							30 dni pełnej aplikacji za darmo (do 5 osób); potem bezpłatna ewidencja czasu pracy do 5 aktywnych kont lub pakiety płatne z urlopami, grafikami, czatem i AI.
 							</p>
 							<Link
 								href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy"

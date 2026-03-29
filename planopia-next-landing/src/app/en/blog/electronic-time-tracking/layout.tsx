@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
 	title: 'Electronic Time Tracking - Complete Guide | Planopia',
-	description: 'Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company. Planopia: 30-day trial, up to 5 users, full features.',
+	description: `Complete guide to electronic time tracking and choosing software. ${blogArticleOfferLine.en}`,
 	keywords: [
 		'electronic time tracking',
 		'time tracking software',
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: 'Complete guide to electronic time tracking. Planopia: 30-day trial for up to 5 users, then transparent pricing.',
+		description: `Electronic attendance records for teams. ${blogArticleOfferLine.en}`,
 		url: 'https://planopia.pl/en/blog/electronic-time-tracking',
 		siteName: 'Planopia',
 		images: [
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: 'Complete guide to electronic time tracking. Planopia: 30-day trial for up to 5 users, then transparent pricing.',
+		description: `Electronic attendance records for teams. ${blogArticleOfferLine.en}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

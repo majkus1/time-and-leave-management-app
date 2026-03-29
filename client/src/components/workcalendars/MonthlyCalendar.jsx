@@ -15,6 +15,7 @@ import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import TimerPanel from './TimerPanel'
 import WorkSessionList from './WorkSessionList'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 
 /** Zgodne z media query w style.css (szeroki miesięczny grid ~800px). */
 const MOBILE_CALENDAR_MAX_WIDTH = 900
@@ -104,6 +105,8 @@ function MonthlyCalendar() {
 	}, [])
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
+	const { isLoading: freemiumEntLoading, freemiumTier } = useFreemiumAccess({ enabled: true })
+	const allowTimerLeaveApis = !freemiumEntLoading && !freemiumTier
 
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
@@ -205,9 +208,11 @@ function MonthlyCalendar() {
 		currentMonth,
 		currentYear
 	)
-	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests()
+	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests({
+		enabled: allowTimerLeaveApis,
+	})
 	const { data: settings } = useSettings()
-	const { data: activeTimer } = useActiveTimer()
+	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
 	const createWorkdayMutation = useCreateWorkday()
 	const deleteWorkdayMutation = useDeleteWorkday()
 	const updateWorkdayMutation = useUpdateWorkday()
@@ -910,7 +915,7 @@ function MonthlyCalendar() {
 				<hr />
 				
 				{/* Timer Panel */}
-			{settings?.timerEnabled !== false && <TimerPanel />}
+			{settings?.timerEnabled !== false && allowTimerLeaveApis && <TimerPanel />}
 
 			<div className="calendar-controls flex flex-wrap items-center" style={{ gap: '5px' }}>
 					<select
@@ -1133,7 +1138,9 @@ function MonthlyCalendar() {
 				
 				
 			</div>
-			<div className={`col-xl-3 resume-month-work ${settings?.timerEnabled !== false ? 'resume-month-work--with-timer' : ''} ${activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}>
+			<div
+				className={`col-xl-3 resume-month-work ${settings?.timerEnabled !== false && allowTimerLeaveApis ? 'resume-month-work--with-timer' : ''} ${allowTimerLeaveApis && activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}
+			>
 				<h3 className="resumecales h3resume" style={{ marginTop: '20px' }}>
 					{t('workcalendar.allfrommonth')} {new Date(currentYear, currentMonth)
 						.toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })
@@ -1256,7 +1263,9 @@ function MonthlyCalendar() {
 
 			{/* Work Session List */}
 			<div className="work-session-list-mobile col-xl-9">
-				{settings?.timerEnabled !== false && <WorkSessionList month={currentMonth} year={currentYear} />}
+				{settings?.timerEnabled !== false && allowTimerLeaveApis && (
+					<WorkSessionList month={currentMonth} year={currentYear} timerQueriesEnabled={allowTimerLeaveApis} />
+				)}
 			</div>
 
 			<Modal

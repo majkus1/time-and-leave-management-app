@@ -4,6 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
+import { planOfferingCopy } from '@/data/planOfferingCopy'
 
 function ENBlog() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -20,7 +27,7 @@ function ENBlog() {
 						"@type": "Blog",
 						"name": "Planopia Blog",
 						"url": "https://planopia.pl/en/blog",
-						"description": "The official Planopia blog – articles on work time tracking, leave management, and improving HR workflows.",
+						"description": `The official Planopia blog — time tracking, leave management, and HR productivity.${planOfferingCopy.en.blogJsonLdExtra}`,
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -54,15 +61,16 @@ function ENBlog() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -77,7 +85,7 @@ function ENBlog() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
@@ -93,13 +101,9 @@ function ENBlog() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -110,7 +114,7 @@ function ENBlog() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
@@ -125,18 +129,63 @@ function ENBlog() {
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Article — construction time tracking */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-amber-100/80">
+							<img
+								src="/img/worktimeblog.webp"
+								alt="Time tracking on construction sites — building companies"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								How to track time on construction sites (simply, without spreadsheets)
+							</h3>
+							<p className="text-gray-600 flex-1">
+								A practical guide for building companies: one system instead of paper and spreadsheets, overtime and crew schedules — plus Kanban boards and chat so the team gets an everyday tool, not “only leave management.”
+							</p>
+							<Link
+								href="/en/blog/time-tracking-on-construction-sites"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
+
+						{/* Article card — video tutorials */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
+							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
+								<img
+									src="/img/worktimeblog.webp"
+									alt="Planopia video tutorials from the app"
+									className="h-full w-full object-cover opacity-90"
+								/>
+								<span className="boxvideo absolute bottom-3 left-3 inline-flex items-center rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow">
+									Video
+								</span>
+							</div>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Video tutorials — how to use Planopia
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Short screen recordings from the app — for example, how to manually add work hours in the time log. Watch on your phone or desktop; we will keep adding new clips over time.
+							</p>
+							<Link
+								href="/en/blog/video-tutorials"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
+
 						{/* Article card - How to Install Planopia as PWA */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
 								src="/img/worktimeblog.webp"
-								alt="Installing Planopia as PWA on iPhone"
+								alt="Installing Planopia as a PWA on phone and desktop"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							How to Install Planopia as a PWA App on iPhone? Step-by-Step Guide
+							How to Install Planopia as a PWA App? Step-by-Step Guide
 							</h3>
 							<p className="text-gray-600 flex-1">
-							Learn how to install Planopia as a PWA app on iPhone. Simple installation guide for time tracking and leave management app directly on your phone's home screen. See how quick and easy it is to add Planopia to your home screen.
+							Learn how to add Planopia as a PWA on iPhone, iPad, Android phones, and in desktop browsers such as Chrome. A short guide to installing the time tracking and leave management app on your home screen, app menu, or desktop.
 							</p>
 							<Link
 								href="/en/blog/how-to-install-planopia-as-pwa"
@@ -214,7 +263,7 @@ function ENBlog() {
 							Free Time Tracking App for Work Hours and Leave Management
 							</h3>
 							<p className="text-gray-600 flex-1">
-							30-day trial: full features, up to 5 users — then choose a plan that fits your team.
+							30-day full trial, then free time tracking for up to 5 active accounts — or paid plans with every module.
 							</p>
 							<Link
 								href="/en/blog/free-time-tracking-app"

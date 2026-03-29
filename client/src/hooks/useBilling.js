@@ -16,15 +16,17 @@ export function useBillingCatalog() {
 	})
 }
 
-export function useBillingEntitlements() {
+export function useBillingEntitlements(options = {}) {
+	const { enabled = true } = options
 	return useQuery({
 		queryKey: BILLING_ENTITLEMENTS_QUERY_KEY,
+		enabled,
 		queryFn: async () => {
 			const { data } = await axios.get(`${API_URL}/api/billing/entitlements`, { withCredentials: true })
 			return data.entitlements
 		},
 		staleTime: 15 * 1000,
-		refetchInterval: 30 * 1000,
+		refetchInterval: enabled ? 30 * 1000 : false,
 		refetchOnWindowFocus: true,
 	})
 }
@@ -34,6 +36,32 @@ export function useBillingPurchaseRequest() {
 	return useMutation({
 		mutationFn: async body => {
 			const { data } = await axios.post(`${API_URL}/api/billing/purchase-request`, body, {
+				withCredentials: true,
+			})
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
+export function useBillingP24Status() {
+	return useQuery({
+		queryKey: ['billing-p24-status'],
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/billing/p24/status`, { withCredentials: true })
+			return data.p24
+		},
+		staleTime: 60 * 1000,
+	})
+}
+
+export function useBillingP24Checkout() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async body => {
+			const { data } = await axios.post(`${API_URL}/api/billing/p24/checkout`, body, {
 				withCredentials: true,
 			})
 			return data

@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogSix() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +40,7 @@ function BlogSix() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.",
+						"description": "Zarządzanie urlopami w firmie: przewodnik. Planopia: 30 dni z modułem urlopów (do 5 osób); potem darmowa ewidencja czasu do 5 kont lub pakiety z pełnym HR.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -49,7 +55,7 @@ function BlogSix() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -65,16 +71,17 @@ function BlogSix() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl"
@@ -88,7 +95,7 @@ function BlogSix() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/leave-management" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function BlogSix() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -120,7 +123,7 @@ function BlogSix() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
@@ -292,7 +295,7 @@ function BlogSix() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">💰 Darmowa dla małych firm</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• 30 dni za darmo, do 5 użytkowników (pełne funkcje)</li>
+										<li>• 30 dni pełnej aplikacji; potem darmowa ewidencja lub pakiet z urlopami</li>
 										<li>• Pełna funkcjonalność</li>
 										<li>• Bez ukrytych kosztów</li>
 										<li>• Wsparcie techniczne</li>

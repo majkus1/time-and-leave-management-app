@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia",
   description:
-    "Planopia: 30 dni za darmo — pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i zarządzanie urlopami w jednej aplikacji. Potem proste plany płatne.",
+    "Darmowa ewidencja czasu pracy online w Planopii: 30 dni pełnej aplikacji na start, potem bezpłatny plan skupiony na rejestracji czasu pracy dla zespołów do 5 aktywnych kont — bez abonamentu. Urlopy, grafiki pracy, czat zespołowy, tablice Kanban i Asystent AI w pakietach płatnych od Starter.",
   keywords: [
     "darmowa aplikacja do ewidencji czasu pracy",
     "darmowa ewidencja czasu pracy online",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     siteName: 'Planopia',
     title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia',
     description:
-      'Planopia: 30 dni za darmo, pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i urlopy — potem wybierasz plan dopasowany do zespołu.',
+      'Darmowa ewidencja czasu pracy do 5 osób po okresie próbnym; 30 dni wcześniej z pełnymi modułami Planopii.',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia',
     description:
-      'Planopia: miesiąc za darmo (30 dni), do 5 użytkowników, pełna funkcjonalność. Ewidencja czasu pracy i urlopy w jednym miejscu.',
+      'Planopia: darmowy plan ewidencji czasu pracy po trialu lub rozszerzenie o urlopy, grafiki i AI w cenniku.',
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

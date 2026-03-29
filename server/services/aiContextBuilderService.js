@@ -408,6 +408,8 @@ async function buildStaticTeamSnapshot(teamId, locale) {
  * @param {string} [params.locale]
  * @param {boolean} [params.isAllTime]
  * @param {number|null} [params.yearMessageOverride] - calendar year if message forced range (e.g. 2025)
+ * @param {string|null} [params.monthFromMessageCaption] - human label e.g. "luty 2026" for UI hint
+ * @param {string|null} [params.monthFromMessageKey] - YYYY-MM when message pinned a calendar month
  */
 exports.buildTeamDataContext = async function buildTeamDataContext({
 	requestingUser,
@@ -415,6 +417,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	locale = 'pl',
 	isAllTime = false,
 	yearMessageOverride = null,
+	monthFromMessageCaption = null,
+	monthFromMessageKey = null,
 }) {
 	const { start, end, clamped } = validateAndClampRange(range, { isAllTime })
 	const spanDays = daysBetween(start.getTime(), end.getTime())
@@ -432,6 +436,7 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		detailedUserIds,
 		scope,
 		yearMessageOverride,
+		monthMessageOverride: monthFromMessageKey,
 	})
 
 	const staticSnapshot = await buildStaticTeamSnapshot(teamId, locale)
@@ -444,6 +449,14 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		const depts = Array.isArray(u.department) ? u.department.join(', ') : u.department || ''
 		return `- id:${u._id} | ${u.firstName} ${u.lastName} | departments:[${depts}] | roles:${(u.roles || []).join(',')}`
 	})
+
+	const displayNameByUserId = new Map(
+		users.map(u => {
+			const id = u._id?.toString?.() || String(u._id)
+			const n = `${u.firstName || ''} ${u.lastName || ''}`.trim()
+			return [id, n]
+		})
+	)
 
 	let workdaysTruncated = false
 	let workdayJson = '[]'
@@ -579,7 +592,9 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	let leaveLines = leavesDetailed.map(lr => {
 		const uid = lr.userId?.toString?.() || String(lr.userId)
 		const st = formatLeaveStatusForContext(lr.status, locale)
-		return `- userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
+		const person = (displayNameByUserId.get(uid) || '').trim()
+		const nameSeg = person ? `name:${person} | ` : ''
+		return `- ${nameSeg}userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
 	})
 
 	let leaveExtra = ''
@@ -708,6 +723,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		timerSessionAggregatesHitDocLimit,
 		generatedAt: new Date().toISOString(),
 		yearMessageOverride: yearMessageOverride || null,
+		monthFromMessageCaption: monthFromMessageCaption || null,
+		monthFromMessageKey: monthFromMessageKey || null,
 	}
 
 	const parts = []
@@ -731,6 +748,11 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push(timerPack.jsonString.slice(0, 80000))
 	parts.push('')
 	parts.push('--- Leave requests (in period) ---')
+	parts.push(
+		String(locale || '').toLowerCase().startsWith('en')
+			? 'Each row includes `name:` (when known) before `userId:` — use the name in markdown tables for team/supervisor summaries so the answer matches exports.'
+			: 'Każdy wiersz zawiera `name:` (gdy znane) przed `userId:` — w tabelach markdown (raport zespołu / przełożonego) podawaj imię i nazwisko jak w eksporcie PDF/Excel.'
+	)
 	parts.push((leaveLines.length ? leaveLines.join('\n') : '(none)') + leaveExtra)
 	parts.push('')
 	if (scope === 'self') {

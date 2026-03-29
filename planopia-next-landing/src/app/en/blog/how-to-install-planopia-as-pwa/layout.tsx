@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../../globals.css";
 
@@ -22,7 +23,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "How to Install Planopia as a PWA App? Installation Guide | Planopia",
-  description: "Learn how to install Planopia as a PWA app on your mobile device. Simple installation guide for time tracking and leave management app directly on your phone's home screen.",
+  description: `Learn how to install Planopia as a PWA on iPhone, iPad, Android, and desktop browsers such as Chrome. Add time tracking and leave tools to your home screen or desktop. ${blogArticleOfferLine.en}`,
   keywords: [
     "PWA installation",
     "how to install PWA",
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/how-to-install-planopia-as-pwa',
     siteName: 'Planopia',
     title: 'How to Install Planopia as a PWA App? Installation Guide | Planopia',
-    description: 'Simple guide to installing Planopia as a PWA app on your mobile device. Learn how to add the time tracking app directly to your phone\'s home screen.',
+    description: `Planopia PWA on phone and desktop. ${blogArticleOfferLine.en}`,
     images: [
       {
         url: 'https://planopia.pl/img/pwa1.png',
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'How to Install Planopia as a PWA App? Installation Guide | Planopia',
-    description: 'Simple guide to installing Planopia as a PWA app on your mobile device. Learn how to add the time tracking app directly to your phone\'s home screen.',
+    description: `Planopia PWA on phone and desktop. ${blogArticleOfferLine.en}`,
     images: ['https://planopia.pl/img/pwa1.png'],
   },
   alternates: {

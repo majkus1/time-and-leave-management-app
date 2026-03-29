@@ -13,6 +13,228 @@ const {
 	extractYearsFromText,
 } = require('../utils/polishPublicHolidays')
 
+/** User message sounds like work / summary / period question — safe to apply date overrides from text. */
+function isAssistantRangeIntentText(t) {
+	if (!t || typeof t !== 'string') return false
+	return /prac|godzin|godz|dni|ewidenc|urlop|nadgodzin|czas|kalendarz|podsumu|podsumow|przeprac|byłem|byłam|\bbył\b|rok|roku|miesiąc|miesiąca|miesiącu|tygod|year|work|hours|days|time|leave|overtime|dane|statyst|filtr|okres|raport|sesji|summar|timer|schedule/i.test(
+		t
+	)
+}
+
+const PL_MONTH_NAMES = [
+	'styczeń',
+	'luty',
+	'marzec',
+	'kwiecień',
+	'maj',
+	'czerwiec',
+	'lipiec',
+	'sierpień',
+	'wrzesień',
+	'październik',
+	'listopad',
+	'grudzień',
+]
+const EN_MONTH_NAMES = [
+	'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December',
+]
+
+/** Polish / English month word groups for regex (inflected PL + EN full + abbrev). */
+const MONTH_NAME_REGEX_ALTS = [
+	'(?:styczeń|stycznia|styczniu|stycz\\.?|january|jan\\.?)',
+	'(?:luty|lutego|lutym|february|feb\\.?)',
+	'(?:marzec|marca|marcu|march|mar\\.?)',
+	'(?:kwiecień|kwietnia|kwietniu|april|apr\\.?)',
+	'(?:maj|maja|maju|may)',
+	'(?:czerwiec|czerwca|czerwcu|june|jun\\.?)',
+	'(?:lipiec|lipca|lipcu|july|jul\\.?)',
+	'(?:sierpień|sierpnia|sierpniu|august|aug\\.?)',
+	'(?:wrzesień|września|wrześniu|wrzesnia|wrzesniu|september|sep\\.?|sept\\.?)',
+	'(?:październik|października|październiku|pazdziernik|pazdziernika|pazdzierniku|october|oct\\.?)',
+	'(?:listopad|listopada|listopadu|november|nov\\.?)',
+	'(?:grudzień|grudnia|grudniu|grudzien|december|dec\\.?)',
+]
+
+function monthCalendarRange(year, monthIndex) {
+	const start = new Date(year, monthIndex, 1, 0, 0, 0, 0)
+	const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999)
+	return { start, end }
+}
+
+function monthLabelKey(year, monthIndex) {
+	return `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+}
+
+/**
+ * If the message names a calendar month (PL/EN), optional year, or "last/this month",
+ * use that full calendar month for DATA CONTEXT (overrides UI period chip).
+ * @returns {null | { range: {start:Date,end:Date}, label: string, captionPl: string, captionEn: string }}
+ */
+function tryCalendarMonthOverrideFromMessage(lastUserText, now = new Date()) {
+	if (!lastUserText || typeof lastUserText !== 'string' || !isAssistantRangeIntentText(lastUserText)) {
+		return null
+	}
+	const t = lastUserText
+
+	const relPrev =
+		/(?:^|[^\p{L}])(?:wcześniejszy|wczesniejszy|poprzedni|zeszły|zeszly|ubiegły|ubiegly|ostatni)[^\s]*\s+miesi[aąęćłńóśźż]*|(?:^|\s)(?:previous|last)\s+month(?:\s|$|[,.!?])/iu.test(
+			t
+		)
+	const relThis =
+		/(?:^|[^\p{L}])(?:ten|bieżący|biezacy|aktualny|obecny)[^\s]*\s+miesi[aąęćłńóśźż]*|(?:^|\s)(?:this|current)\s+month(?:\s|$|[,.!?])/iu.test(t)
+
+	if (relPrev) {
+		const anchor = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+		const y = anchor.getFullYear()
+		const mi = anchor.getMonth()
+		const { start, end } = monthCalendarRange(y, mi)
+		return {
+			range: { start, end },
+			label: monthLabelKey(y, mi),
+			captionPl: `${PL_MONTH_NAMES[mi]} ${y}`,
+			captionEn: `${EN_MONTH_NAMES[mi]} ${y}`,
+		}
+	}
+	if (relThis) {
+		const y = now.getFullYear()
+		const mi = now.getMonth()
+		const { start, end } = monthCalendarRange(y, mi)
+		return {
+			range: { start, end },
+			label: monthLabelKey(y, mi),
+			captionPl: `${PL_MONTH_NAMES[mi]} ${y}`,
+			captionEn: `${EN_MONTH_NAMES[mi]} ${y}`,
+		}
+	}
+
+	const numMY = t.match(/\b(0?[1-9]|1[0-2])[./](19\d{2}|20\d{2})\b/)
+	if (numMY) {
+		const mi = parseInt(numMY[1], 10) - 1
+		const y = parseInt(numMY[2], 10)
+		if (y >= 1990 && y <= 2100 && mi >= 0 && mi <= 11) {
+			const { start, end } = monthCalendarRange(y, mi)
+			return {
+				range: { start, end },
+				label: monthLabelKey(y, mi),
+				captionPl: `${PL_MONTH_NAMES[mi]} ${y}`,
+				captionEn: `${EN_MONTH_NAMES[mi]} ${y}`,
+			}
+		}
+	}
+	const numYM = t.match(/\b(19\d{2}|20\d{2})[./-](0?[1-9]|1[0-2])\b/)
+	if (numYM) {
+		const y = parseInt(numYM[1], 10)
+		const mi = parseInt(numYM[2], 10) - 1
+		if (y >= 1990 && y <= 2100 && mi >= 0 && mi <= 11) {
+			const { start, end } = monthCalendarRange(y, mi)
+			return {
+				range: { start, end },
+				label: monthLabelKey(y, mi),
+				captionPl: `${PL_MONTH_NAMES[mi]} ${y}`,
+				captionEn: `${EN_MONTH_NAMES[mi]} ${y}`,
+			}
+		}
+	}
+
+	for (let mi = 0; mi < 12; mi++) {
+		const alt = MONTH_NAME_REGEX_ALTS[mi]
+		const reAfter = new RegExp(`\\b(?:${alt})\\s+((?:19|20)\\d{2})\\b`, 'iu')
+		const reBefore = new RegExp(`\\b((?:19|20)\\d{2})\\s+(?:${alt})\\b`, 'iu')
+		let m = t.match(reAfter) || t.match(reBefore)
+		if (m) {
+			const y = parseInt(m[1], 10)
+			if (y >= 1990 && y <= 2100) {
+				const { start, end } = monthCalendarRange(y, mi)
+				return {
+					range: { start, end },
+					label: monthLabelKey(y, mi),
+					captionPl: `${PL_MONTH_NAMES[mi]} ${y}`,
+					captionEn: `${EN_MONTH_NAMES[mi]} ${y}`,
+				}
+			}
+		}
+	}
+
+	let foundMi = -1
+	let foundPos = Infinity
+	for (let mi = 0; mi < 12; mi++) {
+		const re = new RegExp(`\\b(?:${MONTH_NAME_REGEX_ALTS[mi]})\\b`, 'iu')
+		const m = t.match(re)
+		if (m && m.index !== undefined && m.index < foundPos) {
+			foundPos = m.index
+			foundMi = mi
+		}
+	}
+	if (foundMi >= 0) {
+		const nowM = now.getMonth()
+		const nowY = now.getFullYear()
+		const y = foundMi <= nowM ? nowY : nowY - 1
+		const { start, end } = monthCalendarRange(y, foundMi)
+		return {
+			range: { start, end },
+			label: monthLabelKey(y, foundMi),
+			captionPl: `${PL_MONTH_NAMES[foundMi]} ${y}`,
+			captionEn: `${EN_MONTH_NAMES[foundMi]} ${y}`,
+		}
+	}
+
+	return null
+}
+
+/**
+ * Effective date range for assistant context + exports: UI preset, then explicit calendar month in message, then calendar year in message.
+ */
+function resolveAssistantRangeWithMessage({ periodPreset, dateFrom, dateTo, lastUserMessage }) {
+	const baseRange = resolveDateRange(periodPreset, dateFrom, dateTo)
+	const text = (lastUserMessage && String(lastUserMessage).trim()) || ''
+	if (!text) {
+		return {
+			range: baseRange,
+			yearMessageOverride: null,
+			monthFromMessageKey: null,
+			monthFromMessageCaptionPl: null,
+			monthFromMessageCaptionEn: null,
+		}
+	}
+	const monthRes = tryCalendarMonthOverrideFromMessage(text, new Date())
+	if (monthRes) {
+		return {
+			range: monthRes.range,
+			yearMessageOverride: null,
+			monthFromMessageKey: monthRes.label,
+			monthFromMessageCaptionPl: monthRes.captionPl,
+			monthFromMessageCaptionEn: monthRes.captionEn,
+		}
+	}
+	const yRes = tryCalendarYearOverrideFromMessage(text, baseRange)
+	return {
+		range: yRes.range,
+		yearMessageOverride: yRes.overrideYear,
+		monthFromMessageKey: null,
+		monthFromMessageCaptionPl: null,
+		monthFromMessageCaptionEn: null,
+	}
+}
+
+function formatLocalYmd(d) {
+	const x = new Date(d)
+	const y = x.getFullYear()
+	const mo = String(x.getMonth() + 1).padStart(2, '0')
+	const day = String(x.getDate()).padStart(2, '0')
+	return `${y}-${mo}-${day}`
+}
+
 /**
  * If the user clearly asks about a calendar year (e.g. "w 2025 roku"), use that full year
  * for DATA CONTEXT even when the UI preset is "month" / "week".
@@ -22,11 +244,7 @@ function tryCalendarYearOverrideFromMessage(lastUserText, baseRange) {
 		return { range: baseRange, overrideYear: null }
 	}
 	const t = lastUserText
-	const workish =
-		/prac|godzin|godz|dni|ewidenc|urlop|nadgodzin|czas|kalendarz|podsumow|przeprac|byłem|byłam|\bbył\b|rok|roku|miesiąc|tygod|year|work|hours|days|time|leave|overtime|dane|statyst|filtr|okres|raport|sesji/i.test(
-			t
-		)
-	if (!workish) {
+	if (!isAssistantRangeIntentText(t)) {
 		return { range: baseRange, overrideYear: null }
 	}
 
@@ -159,18 +377,30 @@ async function prepareAssistantTurn(input) {
 		throw err
 	}
 
-	const baseRange = resolveDateRange(input.periodPreset, input.dateFrom, input.dateTo)
 	const lastUserForRange = [...messages].reverse().find(m => m.role === 'user')
-	const { range, overrideYear } = tryCalendarYearOverrideFromMessage(lastUserForRange?.content || '', baseRange)
 	const locale = input.locale === 'en' ? 'en' : 'pl'
-	const isAllTime = input.periodPreset === 'all' && !overrideYear
+	const eff = resolveAssistantRangeWithMessage({
+		periodPreset: input.periodPreset,
+		dateFrom: input.dateFrom,
+		dateTo: input.dateTo,
+		lastUserMessage: lastUserForRange?.content || '',
+	})
+	const { range, yearMessageOverride, monthFromMessageKey, monthFromMessageCaptionPl, monthFromMessageCaptionEn } = eff
+	const isAllTime = input.periodPreset === 'all' && !yearMessageOverride && !monthFromMessageKey
+	const monthFromMessageCaption = monthFromMessageKey
+		? locale === 'en'
+			? monthFromMessageCaptionEn
+			: monthFromMessageCaptionPl
+		: null
 
 	const { contextText, meta } = await buildTeamDataContext({
 		requestingUser,
 		range,
 		locale,
 		isAllTime,
-		yearMessageOverride: overrideYear,
+		yearMessageOverride,
+		monthFromMessageCaption,
+		monthFromMessageKey,
 	})
 
 	const domainDoc = loadDomainInstructions()
@@ -203,11 +433,17 @@ async function prepareAssistantTurn(input) {
 			? '**VERIFIED STATS (JSON in DATA CONTEXT):** Ground truth for numeric answers. For anything about **this user** (I/me/my/how much did I work): use **only** `workStatsForRequestingUser`. For **team size / active accounts**: use **only** `teamRoster`. For **total hours of everyone in scope** (whole team): use `teamWorkAggregateForUsersInAiScope`. Do **not** manually sum `perUserTotals` / all users in the raw workday JSON when the question is about one person. If any other line in DATA CONTEXT disagrees with VERIFIED STATS, **VERIFIED STATS wins**.'
 			: '**VERIFIED STATS (JSON w DATA CONTEXT):** Obowiązujące liczby. Pytania o **Ciebie** (ja/mnie/ile przepracowałem): wyłącznie `workStatsForRequestingUser`. Pytania o **liczbę osób w zespole / konta aktywne**: wyłącznie `teamRoster`. Pytania o **sumę całej grupy w zakresie**: `teamWorkAggregateForUsersInAiScope`. Nie sumuj ręcznie `perUserTotals` po wszystkich użytkownikach, gdy pytanie dotyczy jednej osoby. Gdy coś innego w kontekście się nie zgadza z VERIFIED STATS — **obowiązuje VERIFIED STATS**.'
 
+	const periodFromMessageRule =
+		locale === 'en'
+			? '**Period from the user’s wording:** If JSON Meta includes `monthFromMessageKey` (YYYY-MM) or numeric `yearMessageOverride`, the DATA CONTEXT range already matches the calendar month/year named in the question — trust `Meta.periodFrom` / `Meta.periodTo`; ignore a mismatch with the period selector above the chat.'
+			: '**Okres z treści pytania:** Gdy w JSON Meta jest `monthFromMessageKey` (YYYY-MM) lub liczbowy `yearMessageOverride`, zakres DATA CONTEXT jest już ustawiony na ten miesiąc lub rok — ufaj `Meta.periodFrom` / `Meta.periodTo`; nie „poprawiaj” pod przełącznik okresu nad czatem.'
+
 	const systemParts = [
 		'You are AI Asystent — a helpful, precise analyst for team/work data in Planopia.',
 		`Reply in ${locale === 'en' ? 'English' : 'Polish'} unless the user clearly uses another language.`,
 		productVsDataRule,
 		verifiedStatsRule,
+		periodFromMessageRule,
 		'Do not invent employees, hours, or leave requests when answering from DATA CONTEXT.',
 		'Polish calendar / public holidays: NEVER invent dates, weekdays, or Easter from memory. In Poland Labour Day (Święto Pracy) is **1 May** (1 maja), not 1 April. Easter and Corpus Christi are movable — only use dates from the POLISH PUBLIC HOLIDAYS block when it is present below. When that block lists **24 December (Christmas Eve / Wigilia)**, treat it as a non-working day in Planopia’s Polish-holiday calendar — do not advise taking annual leave on 24 Dec solely “to get the day off” unless DATA CONTEXT shows Polish holidays are disabled for the team.',
 		'Format answers with GitHub-flavored Markdown: use ##/### headings, **bold**, bullet lists, and tables when they improve clarity.',
@@ -284,6 +520,9 @@ exports.iterateAssistantTurnStream = async function* iterateAssistantTurnStream(
 				userId: input.userId,
 				lastUserMessage: lastUser.content,
 				locale,
+				periodPreset: input.periodPreset,
+				dateFrom: input.dateFrom,
+				dateTo: input.dateTo,
 			})
 			if (offer) {
 				yield { type: 'exportOffer', offer }
@@ -297,3 +536,5 @@ exports.iterateAssistantTurnStream = async function* iterateAssistantTurnStream(
 exports.isOpenAIConfigured = isOpenAIConfigured
 /** Date range for AI chat and export (shared rules). */
 exports.resolveAssistantDateRange = resolveDateRange
+exports.resolveAssistantRangeWithMessage = resolveAssistantRangeWithMessage
+exports.formatLocalYmd = formatLocalYmd

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../../globals.css";
 
@@ -23,7 +24,7 @@ const titilliumWeb = Titillium_Web({
 export const metadata: Metadata = {
   title: "Employee Leave Planning – Best Tools and Practices | Planopia",
   description:
-    "Plan employee leave with an online calendar. Planopia simplifies leave management — 30-day trial, up to 5 users, full features.",
+    `Employee leave planning with an online calendar and approvals. ${blogArticleOfferLine.en}`,
   keywords: [
     "leave planning",
     "employee leave management",
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/leave-planning',
     siteName: 'Planopia',
     title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
-    description: 'Learn how to improve employee leave planning with Planopia – online leave calendar, approval workflow, and absence management. 30-day trial, up to 5 users, full features.',
+    description: `Online leave calendar, approvals, and absence management. ${blogArticleOfferLine.en}`,
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
     description:
-      'Planopia: leave calendar, notifications, and reports. 30-day trial for teams up to 5 users.',
+      `PTO calendar and HR reports. ${blogArticleOfferLine.en}`,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

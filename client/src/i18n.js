@@ -36,6 +36,19 @@ i18n
 						btnPackages: 'Packages & billing',
 						pendingLeaveRequests: 'Pending leave requests',
 					},
+					teamAccessNotice: {
+						title: 'Limited access',
+						seatsBody:
+							'Your team is on the free tier with a limit of {{max}} user accounts. There are currently too many active accounts — an administrator must remove users in Team management (or upgrade the plan) before the full app is available again. If you are not an administrator, please contact your team admin.',
+						billingBody:
+							'Packages and billing are available only to users with the Administrator or HR role. Ask your team administrator if you need to change the plan or resolve billing.',
+						settingsBody:
+							'Team settings are only available to users with the Administrator or HR role. On the free plan they can configure weekend work and holidays there. If you need a change, contact your team admin or HR.',
+						genericBody:
+							'You do not have access to this part of the application. If you believe this is a mistake, contact your team administrator.',
+						backDashboard: 'Back to dashboard',
+						logout: 'Log out',
+					},
 					aiAssistant: {
 						pageTitle: 'AI Asystent',
 						title: 'AI Asystent',
@@ -80,6 +93,8 @@ i18n
 						contextNote: 'Last reply used data from {{from}} to {{to}} (scope: {{scope}}).',
 						contextNoteYearFromMessage:
 							' The period was set to the full calendar year {{year}} based on your message (not only the chip above).',
+						contextNoteMonthFromMessage:
+							' The period was set to {{period}} based on your message (not only the period selector above).',
 						contextNoteAllTime: 'Last reply used all-history mode (aggregated / sampled; scope: {{scope}}).',
 						errorGeneric: 'Something went wrong. Please try again.',
 						sessions: {
@@ -214,9 +229,9 @@ i18n
 						},
 						orderEmail: 'Request by email',
 						purchaseRequestAdminOnly:
-							'Only team administrators can send purchase requests by email. Ask your admin to order a plan or contact us.',
-						orderEmailAdminOnlyShort: 'Admin only',
-						orderEmailAdminOnlyHint: 'Only a user with the Admin role can submit this request.',
+							'Only team administrators and HR can send purchase requests by email. Ask your admin or HR to order a plan or contact us.',
+						orderEmailAdminOnlyShort: 'Admin / HR only',
+						orderEmailAdminOnlyHint: 'Only a user with the Administrator or HR role can submit this request.',
 						noteLabel: 'Note for sales (optional)',
 						notePlaceholder: 'Invoice details, questions…',
 						send: 'Send request',
@@ -247,10 +262,29 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · paid through {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · manual billing (no renewal date here).',
 						currentPlanLapsed: '{{plan}} lapsed — order a plan below or email us.',
+						freemiumSeatBlockedAdmin:
+							'Your team has {{count}} active users; the free tier allows {{max}}. Remove extra accounts in Team management to unlock the app, or upgrade below.',
+						freemiumSeatBlockedWorker:
+							'Your team has too many users for the free tier (max. {{max}}). Ask a team administrator to remove accounts in Team management or upgrade the plan.',
 						currentPlanNoSubscription: 'No plan — pick one below.',
 						planCurrentBadge: 'Your plan',
 						planAlreadyActive: 'Your current plan',
 						planOrderDisabledOwn: 'You already have this tier active. Email us to switch billing cycle or upgrade.',
+						payWithP24: 'Pay online (Przelewy24)',
+						payWithP24Sandbox: 'Pay online — Przelewy24 (sandbox test)',
+						p24Redirecting: 'Redirecting to payment…',
+						p24PayError: 'Could not start online payment. Try again or send a request by email.',
+						p24ReturnHint:
+							'If you finished paying, your subscription will update in a moment. Refresh the page if limits have not changed yet.',
+						p24WebhookHint:
+							'Online payments need a public HTTPS webhook URL on the API server (P24_WEBHOOK_URL or API_PUBLIC_URL). Until then, use “Send request”.',
+						teamSeatsInTeam:
+							'{{count}} user accounts in this team (counts toward plan limits).',
+						planSeatLimitExceeded:
+							'Your team has {{used}} user accounts; this plan allows {{maxUsers}}. Remove or deactivate users in Team settings until you are within the limit, then try again.',
+						planSeatsExceededShort: 'Too many users for this plan',
+						planSeatsExceededHint:
+							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
 					},
 					usersInfo: {
 						title: 'User List',
@@ -572,7 +606,7 @@ i18n
 						forgotpass: 'I dont remember my password',
 						failed: 'Login failed',
 						alerttoomanyreq: 'Too many login attempts. Please try again in 15 minutes.',
-						createTeam: 'Create new team',
+						createTeam: 'Create your free team',
 						trialCtaSub: '30-day trial · up to 5 users',
 						orDivider: 'or',
 					},
@@ -1276,6 +1310,12 @@ i18n
 						saving: 'Saving...',
 						saveSuccess: 'Settings have been saved successfully',
 						saveError: 'Error saving settings',
+						freemiumSlimNotice:
+							'On the free plan, this page only includes weekend work and holiday settings. Save your changes with the button at the bottom. Full team settings are available after you upgrade your plan.',
+						freemiumPushBrief:
+							'Push notifications are not used on the free plan: in the app they are tied to modules such as chat, tasks, leave and announcements, which are not available in this tier.',
+						freemiumPushUnavailable:
+							'On the free plan we do not offer push notifications. They are only relevant for modules that are not included in this plan (e.g. chat, tasks, leave). Here you only have timesheet-related features.',
 						noAccess: 'At the moment, your permissions do not allow for any configurations.',
 						viewPolishHolidays: 'View list of Polish holidays',
 						polishHolidaysModalTitle: 'Polish Holidays',
@@ -1356,6 +1396,8 @@ i18n
 						pushNotificationsTitle: 'Push Notifications',
 						pushNotificationsDescription: 'Enable push notifications to receive notifications about new messages, tasks, and leave requests, even when the app is closed.',
 						pushNotificationsPWAInfo: '💡 Tip: Install Planopia as an app on your phone or tablet to receive notifications even when the app is closed. On your computer, notifications will also work in your browser. Learn more:',
+						pushNotificationsPWATipShow: 'Show tip: install as app (PWA)',
+						pushNotificationsPWATipHide: 'Hide tip',
 						pushNotificationsPWALink: 'How to install Planopia as an app',
 						pushNotificationsEnabled: 'Push notifications are enabled',
 						pushNotificationsEnable: 'Enable push notifications',
@@ -1492,7 +1534,7 @@ i18n
 						deleteError: 'Error deleting session'
 					},
 					"newteam": {
-    "h2": "Create a new team",
+    "h2": "Create your free team",
     "subtitle": "You activate a 30-day trial.",
     "teamName": "Team name",
     "teamNamePlaceholder": "Your team name",
@@ -1554,6 +1596,19 @@ i18n
 						btnPackages: 'Pakiety i rozliczenia',
 						pendingLeaveRequests: 'Oczekujące wnioski urlopowe',
 					},
+					teamAccessNotice: {
+						title: 'Ograniczony dostęp',
+						seatsBody:
+							'Zespół jest w trybie darmowym z limitem {{max}} kont użytkowników. Obecnie jest ich za dużo — administrator musi usunąć konta w Zarządzaniu zespołem (lub wykupić plan), zanim aplikacja znów będzie w pełni dostępna. Jeśli nie jesteś administratorem, skontaktuj się z administratorem zespołu.',
+						billingBody:
+							'Sekcja Pakiety i rozliczenia jest dostępna tylko dla ról Administrator i HR. Zmiany planu lub rozliczenia załatwia administrator zespołu.',
+						settingsBody:
+							'Ustawienia zespołu mogą otworzyć wyłącznie role Administrator i HR. W planie darmowym mogą tam ustawić pracę w weekendy oraz dni świąteczne. W razie potrzeby skontaktuj się z administratorem lub HR.',
+						genericBody:
+							'Nie masz dostępu do tej części aplikacji. Jeśli uważasz, że to pomyłka, napisz do administratora zespołu.',
+						backDashboard: 'Wróć do ewidencji',
+						logout: 'Wyloguj się',
+					},
 					aiAssistant: {
 						pageTitle: 'AI Asystent',
 						title: 'AI Asystent',
@@ -1599,6 +1654,8 @@ i18n
 						contextNote: 'Ostatnia odpowiedź bazowała na danych od {{from}} do {{to}} (zakres: {{scope}}).',
 						contextNoteYearFromMessage:
 							' Okres ustawiono na pełny rok kalendarzowy {{year}} na podstawie treści pytania (nie tylko wg przełącznika okresu powyżej).',
+						contextNoteMonthFromMessage:
+							' Okres ustawiono na {{period}} na podstawie treści pytania (nie tylko wg przełącznika okresu powyżej).',
 						contextNoteAllTime: 'Ostatnia odpowiedź: tryb „cała historia” (dane zagregowane / próbkowane; zakres: {{scope}}).',
 						errorGeneric: 'Wystąpił błąd. Spróbuj ponownie.',
 						sessions: {
@@ -1731,9 +1788,9 @@ i18n
 						},
 						orderEmail: 'Zamów mailem',
 						purchaseRequestAdminOnly:
-							'Zamówienia mailowe z tej strony mogą wysłać tylko administratorzy zespołu. Poproś administratora o złożenie zamówienia lub kontakt z nami.',
-						orderEmailAdminOnlyShort: 'Tylko administrator',
-						orderEmailAdminOnlyHint: 'Tylko użytkownik z rolą Administrator może wysłać to zgłoszenie.',
+							'Zamówienia mailowe z tej strony mogą wysłać tylko administratorzy zespołu oraz HR. Poproś administratora lub HR o złożenie zamówienia lub kontakt z nami.',
+						orderEmailAdminOnlyShort: 'Tylko Admin / HR',
+						orderEmailAdminOnlyHint: 'Tylko użytkownik z rolą Administrator lub HR może wysłać to zgłoszenie.',
 						noteLabel: 'Uwagi do sprzedaży (opcjonalnie)',
 						notePlaceholder: 'Dane do faktury, pytania…',
 						send: 'Wyślij zgłoszenie',
@@ -1765,11 +1822,29 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · do {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · rozliczenia ręczne (bez daty odnowienia).',
 						currentPlanLapsed: '{{plan}} nieaktywny — zamów plan poniżej.',
+						freemiumSeatBlockedAdmin:
+							'W zespole jest {{count}} aktywnych użytkowników, a w trybie darmowym dozwolone jest {{max}}. Usuń nadmiarowe konta w Zarządzaniu zespołem, aby odblokować aplikację, lub wykup plan poniżej.',
+						freemiumSeatBlockedWorker:
+							'Zespół ma za dużo użytkowników na tryb darmowy (maks. {{max}}). Poproś administratora o usunięcie kont w Zarządzaniu zespołem lub o wykup planu.',
 						currentPlanNoSubscription: 'Brak planu — wybierz poniżej.',
 						planCurrentBadge: 'Twój pakiet',
 						planAlreadyActive: 'Masz ten pakiet',
 						planOrderDisabledOwn:
 							'Ten pakiet jest już aktywny. Zmianę rozliczenia (np. na roczne) lub upgrade ustalisz mailem ze sprzedażą.',
+						payWithP24: 'Zapłać online (Przelewy24)',
+						payWithP24Sandbox: 'Zapłać online — Przelewy24 (test sandbox)',
+						p24Redirecting: 'Przekierowanie do płatności…',
+						p24PayError: 'Nie udało się rozpocząć płatności. Spróbuj ponownie lub wyślij zgłoszenie mailem.',
+						p24ReturnHint:
+							'Jeśli dokończyłeś płatność, subskrypcja zaktualizuje się za chwilę. Odśwież stronę, jeśli limity się nie zmieniły.',
+						p24WebhookHint:
+							'Do automatycznej aktywacji po płatności potrzebny jest publiczny adres webhooka na API (HTTPS): P24_WEBHOOK_URL lub API_PUBLIC_URL. Do tego czasu użyj „Wyślij zgłoszenie”.',
+						teamSeatsInTeam: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
+						planSeatLimitExceeded:
+							'W zespole jest {{used}} użytkowników, a ten plan dopuszcza {{maxUsers}}. Usuń lub dezaktywuj konta w ustawieniach zespołu, a następnie spróbuj ponownie.',
+						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
+						planSeatsExceededHint:
+							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',
 					},
 					usersInfo: {
 						title: 'Lista użytkowników',
@@ -2091,7 +2166,7 @@ i18n
 						forgotpass: 'Nie pamiętam hasła',
 						failed: 'Logowanie nie powiodło się',
 						alerttoomanyreq: 'Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut.',
-						createTeam: 'Utwórz nowy zespół',
+						createTeam: 'Załóż darmowy zespół',
 						trialCtaSub: '30 dni na start · do 5 osób',
 						orDivider: 'lub',
 					},
@@ -2758,6 +2833,12 @@ i18n
 						saving: 'Zapisuję',
 						saveSuccess: 'Ustawienia zostały zapisane pomyślnie',
 						saveError: 'Błąd podczas zapisywania ustawień',
+						freemiumSlimNotice:
+							'W planie darmowym na tej stronie są dostępne wyłącznie ustawienia pracy w weekendy oraz dni świąteczne. Zapisz zmiany przyciskiem na dole. Pełna konfiguracja zespołu jest dostępna po rozszerzeniu planu.',
+						freemiumPushBrief:
+							'Powiadomienia push w planie darmowym nie są używane — w aplikacji wiążą się z modułami takimi jak czat, zadania, urlopy czy komunikaty, których w tym planie nie ma.',
+						freemiumPushUnavailable:
+							'W planie darmowym nie udostępniamy powiadomień push. Dotyczą one modułów niedostępnych w tym planie (np. czat, zadania, urlopy). Przy planie darmowym masz głównie ewidencję czasu pracy.',
 						noAccess: 'Na tę chwilę twoje uprawnienia nie pozwalają na żadne konfiguracje.',
 						viewPolishHolidays: 'Zobacz listę polskich dni świątecznych',
 						polishHolidaysModalTitle: 'Polskie dni świąteczne',
@@ -2838,6 +2919,8 @@ i18n
 						pushNotificationsTitle: 'Powiadomienia Push',
 						pushNotificationsDescription: 'Włącz powiadomienia push, aby otrzymywać powiadomienia o nowych wiadomościach, zadaniach i wnioskach urlopowych, nawet gdy aplikacja jest zamknięta.',
 						pushNotificationsPWAInfo: '💡 Wskazówka: Zainstaluj Planopię jako aplikację na swoim telefonie lub tablecie, aby otrzymywać powiadomienia nawet gdy aplikacja jest zamknięta. Na komputerze powiadomienia będą działać również w przeglądarce. Dowiedz się więcej:',
+						pushNotificationsPWATipShow: 'Pokaż wskazówkę: instalacja jako aplikacja (PWA)',
+						pushNotificationsPWATipHide: 'Ukryj wskazówkę',
 						pushNotificationsPWALink: 'Jak zainstalować Planopię jako aplikację',
 						pushNotificationsEnabled: 'Powiadomienia push są włączone',
 						pushNotificationsEnable: 'Włącz powiadomienia push',
@@ -2997,7 +3080,7 @@ i18n
 						dpaTitle: 'Umowa powierzenia przetwarzania danych (DPA)',
 					},
 					"newteam": {
-    "h2": "Utwórz nowy zespół",
+    "h2": "Załóż darmowy zespół",
     "subtitle": "Aktywujesz 30-dniowy okres próbny.",
     "teamName": "Nazwa zespołu",
     "teamNamePlaceholder": "Nazwa Twojego zespołu",

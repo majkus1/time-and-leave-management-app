@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { planOfferingCopy } from "@/data/planOfferingCopy";
 
 export const metadata: Metadata = {
   title: {
     default: "Blog – Planopia | Tips on Work Time Tracking and HR Management",
     template: "%s | Planopia Blog"
   },
-  description: "Get insights into work time tracking, leave management, and modern HR solutions with articles from the official Planopia blog.",
+  description: `Planopia blog: time tracking, leave, HR, productivity. ${planOfferingCopy.en.metaShort}`,
   keywords: [
     "Planopia blog",
+    "free time tracking app",
     "work time tracking",
     "leave management",
     "HR software",
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia Blog – Tips on Work Time Tracking and HR',
-    description: 'Read helpful content about managing work hours, leave requests, and employee productivity with Planopia.',
+    description: `Work hours, leave, and team productivity — Planopia blog. ${planOfferingCopy.en.metaShort}`,
     images: ['https://planopia.pl/img/blog.webp'],
   },
   alternates: {

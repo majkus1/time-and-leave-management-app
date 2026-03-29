@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db');
 const User = require('../models/user')(firmDb);
 const { updateSpecialTeamLimit } = require('../controllers/teamController');
+const entitlementsService = require('../services/entitlementsService');
 
 
 const checkTeamAccess = async (req, res, next) => {
@@ -73,8 +74,10 @@ const checkUserLimit = async (req, res, next) => {
 		// Update maxUsers for special teams if needed
 		await updateSpecialTeamLimit(team)
 
-		// Policz rzeczywistą liczbę użytkowników w zespole
-		const actualUserCount = await User.countDocuments({ teamId: req.user.teamId });
+		const actualUserCount = await User.countDocuments({
+			teamId: req.user.teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		});
 		
 		// Zaktualizuj currentUserCount jeśli jest nieaktualne
 		if (team.currentUserCount !== actualUserCount) {
@@ -82,10 +85,11 @@ const checkUserLimit = async (req, res, next) => {
 			await team.save();
 		}
 
-		if (actualUserCount >= team.maxUsers) {
+		const effectiveMax = entitlementsService.effectiveMaxUsers(team);
+		if (actualUserCount >= effectiveMax) {
 			return res.status(400).json({
 				success: false,
-				message: `Osiągnięto limit użytkowników (${team.maxUsers}). Nie można dodać więcej użytkowników.`
+				message: `Osiągnięto limit użytkowników (${effectiveMax}). Nie można dodać więcej użytkowników.`
 			});
 		}
 

@@ -3,7 +3,8 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 
 // Query hook - pobieranie typów wniosków
-export const useLeaveRequestTypes = () => {
+export const useLeaveRequestTypes = (options = {}) => {
+	const { enabled = true } = options
 	return useQuery({
 		queryKey: ['leaveRequestTypes'],
 		queryFn: async () => {
@@ -12,6 +13,7 @@ export const useLeaveRequestTypes = () => {
 			})
 			return response.data
 		},
+		enabled,
 		staleTime: 5 * 60 * 1000, // 5 minut
 		cacheTime: 10 * 60 * 1000, // 10 minut
 	})

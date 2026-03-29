@@ -3,7 +3,7 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 
 // Get active timer status
-export const useActiveTimer = () => {
+export const useActiveTimer = ({ enabled = true } = {}) => {
 	return useQuery({
 		queryKey: ['timer', 'active'],
 		queryFn: async () => {
@@ -12,7 +12,8 @@ export const useActiveTimer = () => {
 			})
 			return response.data
 		},
-		refetchInterval: 1000, // Refetch every second for real-time updates
+		enabled,
+		refetchInterval: enabled ? 1000 : false,
 		staleTime: 0,
 	})
 }
@@ -118,7 +119,7 @@ export const useSplitSession = () => {
 }
 
 // Get sessions for a specific month (or today if no month/year provided)
-export const useTodaySessions = (month, year) => {
+export const useTodaySessions = (month, year, { enabled: queryEnabled = true } = {}) => {
 	return useQuery({
 		queryKey: ['timer', 'sessions', month, year],
 		queryFn: async () => {
@@ -135,7 +136,7 @@ export const useTodaySessions = (month, year) => {
 			})
 			return response.data
 		},
-		enabled: month !== undefined && year !== undefined,
+		enabled: queryEnabled && month !== undefined && year !== undefined,
 		staleTime: 30 * 1000, // 30 seconds
 	})
 }

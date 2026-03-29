@@ -19,6 +19,7 @@ import { useActiveTimer } from '../../hooks/useTimer'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import WorkSessionList from './WorkSessionList'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -35,7 +36,9 @@ function UserCalendar() {
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
-	
+	const { isLoading: freemiumEntLoading, freemiumTier } = useFreemiumAccess({ enabled: true })
+	const allowTimerLeaveApis = !freemiumEntLoading && !freemiumTier
+
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
 		if (i18n.language !== 'pl') {
@@ -149,9 +152,12 @@ function UserCalendar() {
 		currentYear,
 		userId
 	)
-	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(userId)
+	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(
+		userId,
+		{ enabled: allowTimerLeaveApis }
+	)
 	const { data: settings } = useSettings()
-	const { data: activeTimer } = useActiveTimer()
+	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
 
 	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
@@ -980,7 +986,9 @@ function UserCalendar() {
 								height="auto"
 							/>
 						</div>
-						<div className={`col-xl-3 resume-month-work small-mt ${settings?.timerEnabled !== false ? 'resume-month-work--with-timer' : ''} ${activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}>
+						<div
+							className={`col-xl-3 resume-month-work small-mt ${settings?.timerEnabled !== false && allowTimerLeaveApis ? 'resume-month-work--with-timer' : ''} ${allowTimerLeaveApis && activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}
+						>
 				<h3 className="resumecales h3resume">{t('workcalendar.allfrommonth')}</h3>
 				<p>
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
@@ -1012,7 +1020,14 @@ function UserCalendar() {
 
 			{/* Work Session List */}
 			<div className="work-session-list-mobile col-xl-9">
-				{settings?.timerEnabled !== false && <WorkSessionList month={currentMonth} year={currentYear} userId={userId} />}
+				{settings?.timerEnabled !== false && allowTimerLeaveApis && (
+					<WorkSessionList
+						month={currentMonth}
+						year={currentYear}
+						userId={userId}
+						timerQueriesEnabled={allowTimerLeaveApis}
+					/>
+				)}
 			</div>
 			</div>
 					)}

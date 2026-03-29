@@ -1,14 +1,9 @@
-const { firmDb } = require('../db/db')
-const Team = require('../models/Team')(firmDb)
-const User = require('../models/user')(firmDb)
 const { escapeHtml, getEmailTemplate, sendEmail } = require('./emailService')
 const {
-	isPaidPlanKey,
-	isAddonId,
 	MONTHLY_NET_PRICES_PLN,
 	AI_ADDON_PACKS,
 } = require('../constants/planCatalog')
-const entitlementsService = require('./entitlementsService')
+const { validateBillingPurchaseIntent } = require('./billingPurchaseIntentValidator')
 
 const MAX_NOTE_LEN = 2000
 
@@ -52,60 +47,16 @@ function sanitizeNote(note) {
 async function createPurchaseMailRequest(params) {
 	const to = billingSalesRecipients()
 
-	const team = await Team.findById(params.teamId).select(
-		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt'
-	)
-	if (!team) {
-		const err = new Error('Team not found')
-		err.code = 'NOT_FOUND'
-		throw err
-	}
-
-	const requester = await User.findById(params.requestingUserId).select('username firstName lastName')
-	if (!requester) {
-		const err = new Error('User not found')
-		err.code = 'NOT_FOUND'
-		throw err
-	}
+	const { team, requester } = await validateBillingPurchaseIntent({
+		teamId: params.teamId,
+		requestingUserId: params.requestingUserId,
+		kind: params.kind,
+		planKey: params.planKey,
+		addonId: params.addonId,
+		billingCycle: params.billingCycle,
+	})
 
 	const kind = params.kind
-	if (kind === 'plan') {
-		if (!isPaidPlanKey(params.planKey)) {
-			const err = new Error('Invalid plan')
-			err.code = 'VALIDATION'
-			throw err
-		}
-		if (params.billingCycle !== 'monthly' && params.billingCycle !== 'annual') {
-			const err = new Error('Invalid billing cycle')
-			err.code = 'VALIDATION'
-			throw err
-		}
-		if (entitlementsService.isPaidSubscriptionActive(team) && team.billingPlanKey === params.planKey) {
-			const err = new Error(
-				'Ten pakiet jest już aktywny dla zespołu. Napisz do nas, jeśli chcesz zmienić rozliczenie (np. na roczne) lub przejść na wyższy plan.'
-			)
-			err.code = 'VALIDATION'
-			throw err
-		}
-	} else if (kind === 'addon') {
-		if (!isAddonId(params.addonId)) {
-			const err = new Error('Invalid addon')
-			err.code = 'VALIDATION'
-			throw err
-		}
-		if (!team.billingHadPaidPlan) {
-			const err = new Error(
-				'Pakietów wiadomości AI można dokupić dopiero po pierwszej aktywacji płatnego planu dla zespołu.'
-			)
-			err.code = 'ADDON_REQUIRES_PAID_PLAN'
-			throw err
-		}
-	} else {
-		const err = new Error('Invalid kind')
-		err.code = 'VALIDATION'
-		throw err
-	}
-
 	const note = sanitizeNote(params.note)
 	let subject
 	let lines

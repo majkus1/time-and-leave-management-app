@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function ENBlogSeven() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -59,7 +65,7 @@ function ENBlogSeven() {
 								"name": "How does the Planopia trial work?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you choose a paid plan that fits your team size."
+									"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you can stay on a free time tracking plan (up to 5 active accounts) or upgrade to a paid plan with every module."
 								}
 							},
 							{
@@ -107,7 +113,7 @@ function ENBlogSeven() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -123,16 +129,17 @@ function ENBlogSeven() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -147,7 +154,7 @@ function ENBlogSeven() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog/kompleksowa-aplikacja-do-zarzadzania-firma" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -163,13 +170,9 @@ function ENBlogSeven() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -207,7 +210,7 @@ function ENBlogSeven() {
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Start free trial
+										Create your free team
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -317,7 +320,7 @@ function ENBlogSeven() {
 					<strong>Planopia</strong> works well for both small teams and larger companies:
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
-					<li><strong>Small teams</strong> – 30-day trial, up to 5 users, full features</li>
+					<li><strong>Small teams</strong> – 30-day full trial; then free time tracking (5 active accounts) or a paid plan</li>
 					<li><strong>Medium companies</strong> – unlimited number of users, flexible configuration</li>
 					<li><strong>Large organizations</strong> – possibility of personalization, integrations, and dedicated environment</li>
 					<li><strong>HR and managers</strong> – comprehensive tool for team management</li>
@@ -351,7 +354,7 @@ function ENBlogSeven() {
 				</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial and begin managing your company in one place</Link>.
+						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">create your free team and begin managing your company in one place</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -362,7 +365,7 @@ function ENBlogSeven() {
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">How does the trial work?</h3>
 								<p className="text-gray-700">
 									You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
-									No credit card required. After the trial, choose a paid plan — see{' '}
+									No credit card required. After the trial, use free time tracking or choose a paid plan — see{' '}
 									<Link href="/en#prices" className="text-blue-600 hover:underline">pricing</Link>.
 								</p>
 							</div>

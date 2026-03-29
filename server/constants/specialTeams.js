@@ -19,7 +19,13 @@ const SPECIAL_MANUAL_BILLING_TEAM_NAMES = ['Halo Rental System', 'testokresprobn
  * Zespoły wymuszające tryb „structural legacy” (jak konta sprzed billing w Mongo),
  * mimo że mają zapisane trial/billing — do czasu aktywnej płatnej subskrypcji.
  */
-const FORCE_LEGACY_PRE_BILLING_TEAM_NAMES = ['testnewversion', 'legacy']
+const FORCE_LEGACY_PRE_BILLING_TEAM_NAMES = ['testnewversion', 'legacy', 'testleeegacy']
+
+/**
+ * Testowe wymuszenie freemium (freemiumApiGuard + entitlementy) dopóki **brak aktywnej płatnej subskrypcji**
+ * (isPaidSubscriptionActive). Po wykupieniu planu zespół zachowuje się jak zwykły płatny.
+ */
+const FORCE_FREEMIUM_TEST_TEAM_NAMES = ['testleeegacy']
 
 /** @deprecated alias — użyj SPECIAL_ELEVATED_SEAT_TEAM_NAMES; zachowane dla istniejących importów */
 const SPECIAL_TEAM_NAMES = SPECIAL_ELEVATED_SEAT_TEAM_NAMES
@@ -30,4 +36,5 @@ module.exports = {
 	SPECIAL_UNLIMITED_AI_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
 	FORCE_LEGACY_PRE_BILLING_TEAM_NAMES,
+	FORCE_FREEMIUM_TEST_TEAM_NAMES,
 }

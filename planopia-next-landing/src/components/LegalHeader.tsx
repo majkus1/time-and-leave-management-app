@@ -5,6 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 interface LegalHeaderProps {
 	lang?: 'pl' | 'en';
@@ -62,15 +69,16 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							{isPL ? 'Cennik' : 'Pricing'}
 						</Link>
-						<Link
-							href={isPL ? "/#kontakt" : "/en#contact"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							{isPL ? 'Kontakt' : 'Contact'}
-						</Link>
+						<LandingIndustriesDropdown locale={isPL ? 'pl' : 'en'} />
 						<Link
 							href={isPL ? "/blog" : "/en/blog"}
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
+						</Link>
+						<Link
+							href={isPL ? "/#kontakt" : "/en#contact"}
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							{isPL ? 'Kontakt' : 'Contact'}
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -80,7 +88,7 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 						<Link
 							href="https://app.planopia.pl/team-registration"
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu">
-							{isPL ? 'Rozpocznij okres próbny' : 'Start free trial'}
+							{isPL ? 'Załóż darmowy zespół' : 'Create your free team'}
 						</Link>
 						<Link 
 							href={getAlternateLanguageUrl()} 
@@ -102,13 +110,9 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang={lang}
-				menuItems={[
-					{ href: isPL ? "/#oaplikacji" : "/en#aboutapp", label: isPL ? 'O Aplikacji' : 'About the App' },
-					{ href: isPL ? '/#asystent-ai' : '/en#ai-assistant', label: isPL ? 'Asystent AI' : 'AI Assistant' },
-					{ href: isPL ? "/#cennik" : "/en#prices", label: isPL ? 'Cennik' : 'Pricing' },
-					{ href: isPL ? "/#kontakt" : "/en#contact", label: isPL ? 'Kontakt' : 'Contact' },
-					{ href: isPL ? "/blog" : "/en/blog", label: 'Blog' },
-				]}
+				menuItems={isPL ? landingMobileNavItemsPl() : landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig(isPL ? 'pl' : 'en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{

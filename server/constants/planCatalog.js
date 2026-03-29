@@ -66,6 +66,30 @@ function isAddonId(id) {
 	return Object.prototype.hasOwnProperty.call(AI_ADDON_PACKS, id)
 }
 
+/** Zgodnie z UI (PackagesPage): rocznie = 10× cena miesięczna netto, dostęp 12 mies. */
+const ANNUAL_NET_MONTHS_CHARGED = 10
+
+/**
+ * Kwota do pobrania przez P24 (grosze). Ceny katalogowe to PLN netto; przy zwolnieniu z VAT = kwota końcowa.
+ * @param {'monthly'|'annual'} billingCycle
+ */
+function checkoutAmountGroszeForPlan(planKey, billingCycle) {
+	if (!isPaidPlanKey(planKey)) {
+		throw new Error('Invalid plan key')
+	}
+	const monthlyNet = MONTHLY_NET_PRICES_PLN[planKey]
+	const netPln =
+		billingCycle === 'annual' ? monthlyNet * ANNUAL_NET_MONTHS_CHARGED : monthlyNet
+	return Math.round(netPln * 100)
+}
+
+function checkoutAmountGroszeForAddon(addonId) {
+	if (!isAddonId(addonId)) {
+		throw new Error('Invalid addon id')
+	}
+	return Math.round(AI_ADDON_PACKS[addonId].pricePlnNet * 100)
+}
+
 module.exports = {
 	TRIAL,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
@@ -77,4 +101,7 @@ module.exports = {
 	listPaidPlanKeys,
 	isPaidPlanKey,
 	isAddonId,
+	ANNUAL_NET_MONTHS_CHARGED,
+	checkoutAmountGroszeForPlan,
+	checkoutAmountGroszeForAddon,
 }

@@ -10,6 +10,7 @@ const {
 	isAddonId,
 } = require('../constants/planCatalog')
 const entitlementsService = require('./entitlementsService')
+const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const User = require('../models/user')(firmDb)
 
 async function resolveLogUserId(teamId) {
@@ -76,6 +77,8 @@ async function activatePaidPlan({
 		err.code = 'NOT_FOUND'
 		throw err
 	}
+
+	await assertPaidPlanSeatLimit(teamId, planKey)
 
 	team.billingPlanKey = planKey
 	team.billingStatus = 'active'

@@ -103,12 +103,12 @@ export const useUserLeaveRequests = (userId) => {
 }
 
 // Query hook - pobieranie zaakceptowanych wniosków
-export const useAcceptedLeaveRequests = () => {
+export const useAcceptedLeaveRequests = ({ enabled = true } = {}) => {
 	const queryClient = useQueryClient()
 	const { socket } = useSocket()
 
 	useEffect(() => {
-		if (!socket) return
+		if (!enabled || !socket) return
 
 		const handleLeaveRequestsUpdated = () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted'] })
@@ -118,7 +118,7 @@ export const useAcceptedLeaveRequests = () => {
 		return () => {
 			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
 		}
-	}, [socket, queryClient])
+	}, [enabled, socket, queryClient])
 
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted'],
@@ -130,6 +130,7 @@ export const useAcceptedLeaveRequests = () => {
 				(request) => request.startDate && request.endDate && request.userId
 			)
 		},
+		enabled,
 		staleTime: 1 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
@@ -241,12 +242,13 @@ export const usePendingLeaveRequestsSummary = ({ enabled = true } = {}) => {
 }
 
 // Query hook - pobieranie zaakceptowanych wniosków konkretnego użytkownika
-export const useUserAcceptedLeaveRequests = (userId) => {
+export const useUserAcceptedLeaveRequests = (userId, { enabled: queryEnabled = true } = {}) => {
 	const queryClient = useQueryClient()
 	const { socket } = useSocket()
+	const enabled = queryEnabled && !!userId
 
 	useEffect(() => {
-		if (!socket || !userId) return
+		if (!enabled || !socket || !userId) return
 
 		const normalizedUserId = String(userId)
 		const handleLeaveRequestsUpdated = (payload) => {
@@ -260,7 +262,7 @@ export const useUserAcceptedLeaveRequests = (userId) => {
 		return () => {
 			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
 		}
-	}, [socket, queryClient, userId])
+	}, [enabled, socket, queryClient, userId])
 
 	return useQuery({
 		queryKey: ['leaveRequests', 'accepted', 'user', userId],
@@ -272,7 +274,7 @@ export const useUserAcceptedLeaveRequests = (userId) => {
 				(request) => request.startDate && request.endDate && request.userId
 			)
 		},
-		enabled: !!userId,
+		enabled,
 		staleTime: 1 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})

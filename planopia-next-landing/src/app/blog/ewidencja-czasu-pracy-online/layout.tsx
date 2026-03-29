@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -23,7 +24,7 @@ const titilliumWeb = Titillium_Web({
 export const metadata: Metadata = {
   title: "Ewidencja czasu pracy online – najlepsze programy i aplikacje | Planopia",
   description:
-    "Dowiedz się, jak prowadzić ewidencję czasu pracy online. Planopia automatyzuje godziny, nadgodziny i urlopy. 30 dni za darmo: pełne funkcje, do 5 użytkowników.",
+    `Dowiedz się, jak prowadzić ewidencję czasu pracy online. Planopia automatyzuje godziny i nadgodziny; urlopy w pełnej aplikacji (trial i pakiety płatne). ${blogArticleOfferLine.pl}`,
   keywords: [
     "ewidencja czasu pracy online",
     "program do ewidencji czasu pracy",
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',
     siteName: 'Planopia',
     title: 'Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm | Planopia',
-    description: 'Jak skutecznie ewidencjonować czas pracy? Poznaj aplikację Planopia – prostą i nowoczesną alternatywę dla Excela i papierowych list. 30 dni za darmo, do 5 użytkowników, pełne funkcje.',
+    description: `Nowoczesna ewidencja czasu pracy zamiast Excela. ${blogArticleOfferLine.pl}`,
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm | Planopia',
     description:
-      'Planopia: ewidencja czasu pracy i urlopy, raporty PDF/XLSX. 30 dni za darmo dla zespołów do 5 użytkowników.',
+      `Ewidencja czasu pracy i eksport PDF/XLSX. ${blogArticleOfferLine.pl}`,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

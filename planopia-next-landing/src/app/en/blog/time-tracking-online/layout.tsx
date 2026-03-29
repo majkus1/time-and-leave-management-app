@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../../globals.css";
 
@@ -23,7 +24,7 @@ const titilliumWeb = Titillium_Web({
 export const metadata: Metadata = {
   title: "Online Time Tracking – best apps and software for companies | Planopia",
   description:
-    "How to track working hours online. Planopia automates attendance, overtime, and leave. 30-day trial: full features, up to 5 users.",
+    `Online time tracking for companies — attendance, overtime, exports. ${blogArticleOfferLine.en}`,
   keywords: [
     "online time tracking",
     "time tracking app",
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/time-tracking-online',
     siteName: 'Planopia',
     title: 'Online Time Tracking – modern solutions for businesses | Planopia',
-    description: 'Planopia is a modern online time tracking app for businesses. Automate working hours, overtime, and leave management. 30-day trial — up to 5 users, full features.',
+    description: `Modern online time tracking: hours, overtime, exports. ${blogArticleOfferLine.en}`,
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Online Time Tracking – modern solutions for businesses | Planopia',
     description:
-      'Planopia: time tracking, attendance, and leave. Start a 30-day trial — up to 5 users.',
+      `Attendance and hours in one app. ${blogArticleOfferLine.en}`,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

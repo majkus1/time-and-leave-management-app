@@ -90,31 +90,31 @@ function AdminUserList() {
 	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
 	const generateDateRangeForCalendar = useCallback(
 		(startDate, endDate) => {
-			const dates = []
-			const start = new Date(startDate)
-			const end = new Date(endDate)
-			const current = new Date(start)
-			const workOnWeekends = settings?.workOnWeekends !== false
-
-			while (current <= end) {
-				const currentDateStr = new Date(current).toISOString().split('T')[0]
-				const isWeekendDay = isWeekend(current)
-				const holidayInfo = isHolidayDate(current, settings)
-				const isHolidayDay = holidayInfo !== null
-
-				if (workOnWeekends) {
-					if (!isHolidayDay) {
-						dates.push(currentDateStr)
-					}
-				} else {
-					if (!isWeekendDay && !isHolidayDay) {
-						dates.push(currentDateStr)
-					}
+		const dates = []
+		const start = new Date(startDate)
+		const end = new Date(endDate)
+		const current = new Date(start)
+		const workOnWeekends = settings?.workOnWeekends !== false
+		
+		while (current <= end) {
+			const currentDateStr = new Date(current).toISOString().split('T')[0]
+			const isWeekendDay = isWeekend(current)
+			const holidayInfo = isHolidayDate(current, settings)
+			const isHolidayDay = holidayInfo !== null
+			
+			if (workOnWeekends) {
+				if (!isHolidayDay) {
+					dates.push(currentDateStr)
 				}
-				current.setDate(current.getDate() + 1)
+			} else {
+				if (!isWeekendDay && !isHolidayDay) {
+					dates.push(currentDateStr)
+				}
 			}
-
-			return dates
+			current.setDate(current.getDate() + 1)
+		}
+		
+		return dates
 		},
 		[settings]
 	)
@@ -1009,20 +1009,20 @@ function AdminUserList() {
 					{/* Kalendarz z ewidencjami */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
 						{calendarView === 'single' && (
-							<select
-								value={currentMonth}
-								onChange={handleMonthSelect}
-								style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
+						<select
+							value={currentMonth}
+							onChange={handleMonthSelect}
+							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
 								className="focus:outline-none focus:ring-2 focus:ring-blue-500"
 							>
-								{Array.from({ length: 12 }, (_, i) => (
-									<option key={i} value={i}>
-										{new Date(0, i)
-											.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+							{Array.from({ length: 12 }, (_, i) => (
+								<option key={i} value={i}>
+									{new Date(0, i)
+										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
 											.replace(/^./, (str) => str.toUpperCase())}
-									</option>
-								))}
-							</select>
+								</option>
+							))}
+						</select>
 						)}
 						<select
 							value={currentYear}
@@ -1041,9 +1041,9 @@ function AdminUserList() {
 						</select>
 						{calendarView === 'single' && (
 							<>
-								<button
-									type="button"
-									onClick={handlePrevMonth}
+						<button
+							type="button"
+							onClick={handlePrevMonth}
 									style={{
 										padding: '8px 12px',
 										border: '1px solid #bdc3c7',
@@ -1055,20 +1055,20 @@ function AdminUserList() {
 										color: '#495057',
 										transition: 'all 0.2s ease',
 									}}
-									onMouseOver={(e) => {
-										e.target.style.backgroundColor = '#f8f9fa'
-										e.target.style.borderColor = '#adb5bd'
-									}}
-									onMouseOut={(e) => {
-										e.target.style.backgroundColor = 'white'
-										e.target.style.borderColor = '#bdc3c7'
-									}}
-								>
-									&lt;
-								</button>
-								<button
-									type="button"
-									onClick={handleNextMonth}
+							onMouseOver={(e) => {
+								e.target.style.backgroundColor = '#f8f9fa'
+								e.target.style.borderColor = '#adb5bd'
+							}}
+							onMouseOut={(e) => {
+								e.target.style.backgroundColor = 'white'
+								e.target.style.borderColor = '#bdc3c7'
+							}}
+						>
+							&lt;
+						</button>
+						<button
+							type="button"
+							onClick={handleNextMonth}
 									style={{
 										padding: '8px 12px',
 										border: '1px solid #bdc3c7',
@@ -1080,17 +1080,17 @@ function AdminUserList() {
 										color: '#495057',
 										transition: 'all 0.2s ease',
 									}}
-									onMouseOver={(e) => {
-										e.target.style.backgroundColor = '#f8f9fa'
-										e.target.style.borderColor = '#adb5bd'
-									}}
-									onMouseOut={(e) => {
-										e.target.style.backgroundColor = 'white'
-										e.target.style.borderColor = '#bdc3c7'
-									}}
-								>
-									&gt;
-								</button>
+							onMouseOver={(e) => {
+								e.target.style.backgroundColor = '#f8f9fa'
+								e.target.style.borderColor = '#adb5bd'
+							}}
+							onMouseOut={(e) => {
+								e.target.style.backgroundColor = 'white'
+								e.target.style.borderColor = '#bdc3c7'
+							}}
+						>
+							&gt;
+						</button>
 							</>
 						)}
 						{canFilter && (
@@ -1098,12 +1098,12 @@ function AdminUserList() {
 								type="button"
 								onClick={() => setFilterModalOpen(true)}
 								className="filter-button"
-								style={{
-									padding: '8px 12px',
-									border: '1px solid #3498db',
-									borderRadius: '6px',
-									backgroundColor: '#3498db',
-									cursor: 'pointer',
+								style={{ 
+									padding: '8px 12px', 
+									border: '1px solid #3498db', 
+									borderRadius: '6px', 
+									backgroundColor: '#3498db', 
+									cursor: 'pointer', 
 									display: 'flex',
 									alignItems: 'center',
 									justifyContent: 'center',
@@ -1191,35 +1191,35 @@ function AdminUserList() {
 					)}
 
 					{calendarView === 'single' ? (
-						<div>
-							<FullCalendar
-								plugins={[dayGridPlugin]}
-								initialView="dayGridMonth"
-								initialDate={new Date()}
-								locale={i18n.resolvedLanguage}
-								height="auto"
-								firstDay={1}
-								showNonCurrentDates={false}
-								events={[
-									...formattedWorkdayEvents,
-									...acceptedLeaveRequestsForMonth,
+					<div>
+						<FullCalendar
+							plugins={[dayGridPlugin]}
+							initialView="dayGridMonth"
+							initialDate={new Date()}
+							locale={i18n.resolvedLanguage}
+							height="auto"
+							firstDay={1}
+							showNonCurrentDates={false}
+							events={[
+								...formattedWorkdayEvents,
+								...acceptedLeaveRequestsForMonth,
 									...holidaysForMonth.map((holiday) => ({
-										title: holiday.name,
-										start: holiday.date,
-										allDay: true,
-										backgroundColor: 'green',
-										borderColor: 'darkgreen',
-										textColor: 'white',
-										classNames: 'event-absence',
-										extendedProps: {
-											type: 'holiday',
+									title: holiday.name,
+									start: holiday.date,
+									allDay: true,
+									backgroundColor: 'green',
+									borderColor: 'darkgreen',
+									textColor: 'white',
+									classNames: 'event-absence',
+									extendedProps: {
+										type: 'holiday',
 											holidayName: holiday.name,
 										},
 									})),
-								]}
-								ref={calendarRef}
-								datesSet={handleMonthChange}
-							/>
+							]}
+							ref={calendarRef}
+							datesSet={handleMonthChange}
+						/>
 						</div>
 					) : (
 						<div

@@ -272,7 +272,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 	)
 }
 
-function WorkSessionList({ month, year, userId }) {
+function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
 	
@@ -294,10 +294,10 @@ function WorkSessionList({ month, year, userId }) {
 				})
 				return response.data
 			},
-			enabled: month !== undefined && year !== undefined && userId !== undefined,
+			enabled: timerQueriesEnabled && month !== undefined && year !== undefined && userId !== undefined,
 			staleTime: 30 * 1000,
 		})
-		: useTodaySessions(month, year)
+		: useTodaySessions(month, year, { enabled: timerQueriesEnabled })
 	
 	const deleteSession = useDeleteSession()
 	const [selectedDate, setSelectedDate] = useState(null)

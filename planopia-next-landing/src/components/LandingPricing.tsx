@@ -18,21 +18,31 @@ const copy = {
 	pl: {
 		title: 'Cennik Planopia',
 		subtitle:
-			'Przejrzyste pakiety (ceny netto). Wybierz rozmiar zespołu i limity Asystenta AI — bez ukrytych opłat.',
+			'Najpierw 30 dni pełnej aplikacji za darmo. Potem: bezpłatny plan z ewidencją czasu pracy (do 5 aktywnych kont) albo pakiety płatne z pełnymi funkcjami — ceny netto, bez ukrytych opłat.',
+		paidPlansIntro: 'Pakiety płatne (subskrypcja)',
 		billingLabel: 'Rozliczenie',
 		billingMonthly: 'Miesięcznie',
 		billingYearly: 'Rocznie',
 		billingYearlyBadge: '2 miesiące w cenie',
 		billingYearlyHint: 'Płacisz z góry za 10 miesięcy — korzystasz przez pełne 12 miesięcy.',
-		trialTitle: '30 dni za darmo',
-		trialBadge: 'pełny dostęp',
+		trialTitle: '30 dni — pełna aplikacja',
+		trialBadge: 'bez karty',
 		trialFeatures: [
-			'Wszystkie funkcje aplikacji',
-			'Asystent AI: 10 wiadomości (jednorazowo w okresie próbnym)',
-			'Do 5 użytkowników',
-			'Bez podawania karty płatniczej i bez zobowiązania',
+			'Wszystkie funkcje: ewidencja, urlopy, grafiki, czat, tablice, Asystent AI (w limitach próby)',
+			'Asystent AI: 10 wiadomości jednorazowo w okresie próbnym',
+			'Do 5 użytkowników w zespole',
+			'Bez karty płatniczej i bez zobowiązania',
 		],
-		trialCta: 'Rozpocznij — 30 dni za darmo',
+		trialCta: 'Załóż darmowy zespół',
+		freeTitle: 'Darmowa ewidencja czasu pracy — po okresie próbnym',
+		freeBadge: '0 zł',
+		freeIntro:
+			'Bez abonamentu: ewidencja czasu pracy online dla małych zespołów (po okresie próbnym, jeśli nie wykupisz pakietu).',
+		freeFeatures: [
+			'Do 5 aktywnych kont w zespole',
+			'Kalendarze i rejestracja czasu pracy',
+		],
+		freeCta: 'Zacznij od rejestracji zespołu',
 		tiers: [
 			{
 				id: 'starter',
@@ -106,22 +116,28 @@ const copy = {
 	en: {
 		title: 'Planopia pricing',
 		subtitle:
-			'Simple plans (net). Prices below in USD are indicative (1 USD ≈ 3.69 PLN). Pick team size and AI assistant limits — no hidden fees.',
+			'Start with a 30-day full-product trial. Then use free time tracking for up to 5 active accounts, or upgrade to paid plans with every feature — net prices, no hidden fees. USD amounts are indicative (1 USD ≈ 3.69 PLN).',
+		paidPlansIntro: 'Paid plans (subscription)',
 		billingLabel: 'Billing',
 		billingMonthly: 'Monthly',
 		billingYearly: 'Yearly',
 		billingYearlyBadge: '2 months on us',
 		billingYearlyHint: 'Pay upfront for 10 months of list price — full 12 months of access.',
-		trialTitle: 'Free trial',
-		trialBadge: '30 days',
+		trialTitle: '30 days — full product',
+		trialBadge: 'no card',
 		trialFeatures: [
-			'30 days free',
-			'Full product features',
-			'AI Assistant: 10 messages (one-off during trial)',
-			'Up to 5 users',
-			'No credit card required, no commitment',
+			'All features: time tracking, leave, schedules, chat, boards, AI Assistant (trial limits)',
+			'AI Assistant: 10 messages one-off during the trial',
+			'Up to 5 users in the team',
+			'No credit card and no commitment',
 		],
-		trialCta: 'Start free trial',
+		trialCta: 'Create your free team',
+		freeTitle: 'Free time tracking — after the trial',
+		freeBadge: 'Free',
+		freeIntro:
+			'No subscription: online time tracking for small teams (after the trial, if you do not buy a paid plan).',
+		freeFeatures: ['Up to 5 active accounts', 'Calendars and time records'],
+		freeCta: 'Register your team to begin',
 		tiers: [
 			{
 				id: 'starter',
@@ -242,17 +258,48 @@ function tierPriceDisplay(
 	return { main, period, subline, strike }
 }
 
+function FreeTierCard({ locale }: { locale: Locale }) {
+	const t = copy[locale] as typeof copy.pl
+	return (
+		<div className="pricing-free-card h-full flex flex-col text-left rounded-2xl p-5 md:p-6 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40 border border-slate-200 shadow-sm w-full">
+			<div className="flex flex-wrap items-center gap-2 mb-2">
+				<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
+				<span className="pricing-badge-pill text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
+					{t.freeBadge}
+				</span>
+			</div>
+			<p className="text-gray-600 text-sm mb-3 leading-snug">{t.freeIntro}</p>
+			<ul className="grid grid-cols-1 gap-1.5 text-gray-700 text-base shrink-0">
+				{t.freeFeatures.map(line => (
+					<li key={line} className="flex gap-2 items-start">
+						<span className="pricing-feature-check mt-0.5 shrink-0">✓</span>
+						<span>{line}</span>
+					</li>
+				))}
+			</ul>
+			<div className="mt-auto pt-4 shrink-0">
+				<Link
+					href="https://app.planopia.pl/team-registration"
+					className="pricing-cta pricing-free-team-register-cta inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-md transition"
+				>
+					{t.freeCta}
+				</Link>
+			</div>
+		</div>
+	)
+}
+
 function TrialCard({ locale }: { locale: Locale }) {
 	const t = copy[locale]
 	return (
-		<div className="pricing-trial-card mb-10 text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm">
-			<div className="flex flex-wrap items-center gap-3 mb-4">
+		<div className="pricing-trial-card h-full flex flex-col text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm w-full">
+			<div className="flex flex-wrap items-center gap-3 mb-4 shrink-0">
 				<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
 				<span className="pricing-badge-pill text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
 					{t.trialBadge}
 				</span>
 			</div>
-			<ul className="grid grid-cols-1 gap-2 text-gray-700 text-sm md:text-base max-w-3xl">
+			<ul className="grid grid-cols-1 gap-2 text-gray-700 text-base shrink-0">
 				{t.trialFeatures.map(line => (
 					<li key={line} className="flex gap-2 items-start">
 						<span className="pricing-feature-check mt-0.5">✓</span>
@@ -260,7 +307,7 @@ function TrialCard({ locale }: { locale: Locale }) {
 					</li>
 				))}
 			</ul>
-			<div className="mt-6">
+			<div className="mt-auto pt-6 shrink-0">
 				<Link
 					href="https://app.planopia.pl/team-registration"
 					className="pricing-cta pricing-cta--trial inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md transition"
@@ -280,15 +327,19 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 		<section id={locale === 'pl' ? 'cennik' : 'prices'} className="landing-pricing py-12 px-4 bg-slate-50/80">
 			<div className="max-w-7xl mx-auto">
 				<div className="mb-10 text-left w-full">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">{t.title}</h2>
+					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">{t.title}</h2>
 					<p className="mt-3 text-gray-600 text-base md:text-lg">{t.subtitle}</p>
 				</div>
-				<TrialCard locale={locale} />
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-10 items-stretch">
+					<TrialCard locale={locale} />
+					<FreeTierCard locale={locale} />
+				</div>
 
 				<div className="mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
-					<div className="flex flex-col gap-3 items-start sm:flex-row sm:flex-wrap sm:items-center">
-						<span className="text-sm font-semibold text-gray-800">{t.billingLabel}</span>
-						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+					<p className="pricing-paid-plans-intro font-semibold text-gray-700 m-0 leading-snug">{t.paidPlansIntro}</p>
+					<div className="flex flex-row flex-wrap items-center gap-3">
+						<span className="text-sm font-semibold text-gray-800 shrink-0">{t.billingLabel}</span>
+						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm shrink-0">
 							<button
 								type="button"
 								className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
@@ -352,7 +403,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 										</p>
 									)}
 									<div className="flex flex-wrap items-baseline gap-x-1 gap-y-0">
-										<span className="text-3xl md:text-[2rem] font-light tabular-nums tracking-tight text-slate-800">
+										<span className="text-3xl md:text-[2rem] font-light tabular-nums text-slate-800">
 											{display.main}
 										</span>
 										<span className="text-gray-600 text-sm font-normal">{display.period}</span>

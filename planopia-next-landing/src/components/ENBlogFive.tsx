@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function ENBlogFive() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +40,7 @@ function ENBlogFive() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Complete guide to electronic time tracking. Learn how to choose the best time tracking software for your company.",
+						"description": "Electronic time tracking guide: how to choose software for your company. Planopia offers a 30-day full trial, then free time tracking for up to 5 active accounts or paid plans with leave, chat, and AI.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -49,7 +55,7 @@ function ENBlogFive() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -65,16 +71,17 @@ function ENBlogFive() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl"
@@ -88,7 +95,7 @@ function ENBlogFive() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog/elektroniczna-ewidencja-czasu-pracy" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function ENBlogFive() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -120,7 +123,7 @@ function ENBlogFive() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
@@ -264,7 +267,7 @@ function ENBlogFive() {
 								<div>
 									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Free for Small Companies</h4>
 									<ul className="text-gray-700 space-y-2">
-										<li>• 30-day trial, up to 5 users</li>
+										<li>• 30-day full trial; then free time tracking (5 accounts) or paid plans</li>
 										<li>• Full functionality</li>
 										<li>• No hidden costs</li>
 										<li>• Technical support</li>
@@ -325,7 +328,7 @@ function ENBlogFive() {
 							Ready for Electronic Time Tracking?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							Start managing leave today and streamline planning in your company!
+							30-day full trial, then free time tracking for up to 5 active accounts — or upgrade for every HR module.
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"

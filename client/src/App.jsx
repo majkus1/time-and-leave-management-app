@@ -39,6 +39,9 @@ import { useSupervisorConfig } from './hooks/useSupervisor'
 // import BlogThree from './components/BlogThree.jsx'
 // import ENBlogThree from './components/ENBlogThree.jsx'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
+import FreemiumRouteSync from './components/route/FreemiumRouteSync.jsx'
+import TeamAccessNoticePage from './components/route/TeamAccessNoticePage.jsx'
+import SettingsRouteGate from './components/route/SettingsRouteGate.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
@@ -125,6 +128,7 @@ function AppContent() {
 		<div>
 			<ScrollToHashElement />
 			<ScrollToTop />
+			<FreemiumRouteSync />
 			<PWANavigationBar />
 			{isCheckingAuth ? (
 				<div className="content-with-loader">
@@ -191,7 +195,8 @@ function AppContent() {
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
 						<Route path="/team-management" element={(isAdmin(role) || username === 'michalipka1@gmail.com') ? <Logs /> : <Navigate to="/" />} />
-						<Route path="/settings" element={<Settings />} />
+						<Route path="/settings" element={<SettingsRouteGate />} />
+						<Route path="/team-access-notice" element={<TeamAccessNoticePage />} />
 					<Route
 						path="/work-calendars/:userId"
 						element={
@@ -217,7 +222,16 @@ function AppContent() {
 							path="/helpcenter"
 							element={isAdminRole ? <HelpTicket /> : <Navigate to="/dashboard" replace />}
 						/>
-						<Route path="/packages" element={<PackagesPage />} />
+						<Route
+							path="/packages"
+							element={
+								isAdminRole || isHRRole ? (
+									<PackagesPage />
+								) : (
+									<Navigate to="/team-access-notice?reason=billing" replace />
+								)
+							}
+						/>
 						<Route path="/leave-plans/:userId" element={<EmployeeLeaveCalendar />} />
 						<Route path="/all-leave-plans" element={<AdminAllLeaveCalendar />} />
 					</Route>

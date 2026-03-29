@@ -143,7 +143,7 @@ export const useUnreadCount = ({ enabled = true } = {}) => {
 		},
 		enabled,
 		staleTime: 10 * 1000, // 10 seconds
-		refetchInterval: 30 * 1000 // Refetch every 30 seconds
+		refetchInterval: enabled ? 30 * 1000 : false,
 	})
 }
 

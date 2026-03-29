@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +25,7 @@ function BlogPWA() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji",
-						"description": "Dowiedz się, jak zainstalować Planopię jako aplikację PWA na urządzeniu mobilnym. Prosta instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami bezpośrednio na ekranie głównym telefonu.",
+						"description": "Instrukcja PWA Planopii: iPhone, Android, desktop. Po instalacji masz szybki dostęp do ewidencji czasu pracy; 30 dni pełnej aplikacji, potem darmowy plan ewidencji do 5 kont lub pakiety z urlopami i AI.",
 						"image": "https://planopia.pl/img/pwa1.png",
 						"author": {
 							"@type": "Person",
@@ -47,7 +53,7 @@ function BlogPWA() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -63,16 +69,17 @@ function BlogPWA() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -87,7 +94,7 @@ function BlogPWA() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/how-to-install-planopia-as-pwa" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function BlogPWA() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -200,7 +203,7 @@ function BlogPWA() {
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Pełnoekranowy interfejs</strong> – bez pasków przeglądarki</li>
 					<li><strong>Szybkie ładowanie</strong> – aplikacja ładuje się szybciej niż w przeglądarce</li>
-					<li><strong>Wszystkie funkcje dostępne</strong> – ewidencja czasu pracy, urlopy, grafiki, czat i wiele więcej</li>
+					<li><strong>Funkcje zależnie od planu</strong> – w trialu i pakietach płatnych pełny zestaw; po próbie bez pakietu skupiamy się na ewidencji czasu pracy</li>
 					<li><strong>Automatyczne aktualizacje</strong> – zawsze masz najnowszą wersję</li>
 				</ul>
 
@@ -209,8 +212,8 @@ function BlogPWA() {
 				<div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-8 text-center max-w-3xl mx-auto">
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Zacznij korzystać z Planopii już dziś!</h3>
 					<p className="mb-4 text-gray-700">
-						Planopia to kompleksowa aplikacja do zarządzania czasem pracy, urlopami i zespołem. 
-						Pierwszy miesiąc za darmo — do 5 użytkowników, pełne funkcje!
+						Planopia to aplikacja do ewidencji czasu pracy i — w trialu oraz pakietach płatnych — urlopów, grafików i zespołu. 
+						30 dni pełnej aplikacji; potem darmowa ewidencja do 5 aktywnych kont lub pakiet płatny.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link
@@ -218,7 +221,7 @@ function BlogPWA() {
 							className="bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition whitespace-nowrap"
 							style={{ color: 'white' }}
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link
 							href="/#cennik"

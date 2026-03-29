@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogSeven() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -59,7 +65,7 @@ function BlogSeven() {
 								"name": "Jak działa okres próbny w Planopii?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje aplikacji, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby wybierasz płatny plan dopasowany do wielkości zespołu."
+									"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby możesz zostać na bezpłatnym planie ewidencji czasu pracy (do 5 aktywnych kont) albo wykupić pakiet z pełnymi modułami."
 								}
 							},
 							{
@@ -104,7 +110,7 @@ function BlogSeven() {
 					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -120,16 +126,17 @@ function BlogSeven() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -144,7 +151,7 @@ function BlogSeven() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/comprehensive-company-management-app" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -160,13 +167,9 @@ function BlogSeven() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -204,7 +207,7 @@ function BlogSeven() {
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Rozpocznij okres próbny
+										Załóż darmowy zespół
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -314,7 +317,7 @@ function BlogSeven() {
 					<strong>Planopia</strong> sprawdza się zarówno w małych zespołach, jak i w większych firmach:
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
-					<li><strong>Małe zespoły</strong> – okres próbny 30 dni, do 5 użytkowników, pełne funkcje</li>
+					<li><strong>Małe zespoły</strong> – 30 dni pełnej aplikacji; potem darmowa ewidencja do 5 aktywnych kont lub pakiet płatny</li>
 					<li><strong>Średnie firmy</strong> – nielimitowana liczba użytkowników, elastyczna konfiguracja</li>
 					<li><strong>Duże organizacje</strong> – możliwość personalizacji, integracji i dedykowanego środowiska</li>
 					<li><strong>HR i menedżerowie</strong> – kompleksowe narzędzie do zarządzania zespołem</li>
@@ -348,7 +351,7 @@ function BlogSeven() {
 				</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny i zacznij zarządzać firmą w jednym miejscu</Link>.
+						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij zarządzać firmą w jednym miejscu</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -359,7 +362,7 @@ function BlogSeven() {
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">Jak działa okres próbny?</h3>
 								<p className="text-gray-700">
 									Przez 30 dni (pierwszy miesiąc) korzystasz z pełnych funkcji za darmo w zespole do 5 użytkowników, z limitem wiadomości Asystenta AI w tym czasie.
-									Potem wybierasz płatny plan dopasowany do wielkości zespołu — szczegóły w{' '}
+									Potem darmowy plan ewidencji lub pakiet płatny — szczegóły w{' '}
 									<Link href="/#cennik" className="text-blue-600 hover:underline">cenniku</Link>.
 								</p>
 							</div>

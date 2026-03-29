@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
+import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
 	title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-	description:
-		'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje — potem plany płatne.',
+	description: `Kompletny przewodnik po zarządzaniu urlopami w firmie. ${blogArticleOfferLine.pl}`,
 	keywords: [
 		'zarządzanie urlopami',
 		'aplikacja do urlopów',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników — potem plany płatne.',
+		description: `Zarządzanie urlopami w praktyce. ${blogArticleOfferLine.pl}`,
 		url: 'https://planopia.pl/blog/zarzadzanie-urlopami',
 		siteName: 'Planopia',
 		images: [
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po zarządzaniu urlopami w firmie. Planopia: 30 dni za darmo, do 5 użytkowników — potem plany płatne.',
+		description: `Zarządzanie urlopami w praktyce. ${blogArticleOfferLine.pl}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

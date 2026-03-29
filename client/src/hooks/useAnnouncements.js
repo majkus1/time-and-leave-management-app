@@ -65,7 +65,7 @@ export const useAnnouncementsUnreadCount = ({ enabled = true } = {}) => {
 		},
 		enabled,
 		staleTime: 10 * 1000,
-		refetchInterval: 30 * 1000,
+		refetchInterval: enabled ? 30 * 1000 : false,
 	})
 }
 

@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogOne() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +25,7 @@ function BlogOne() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm",
-						"description": "Planopia to nowoczesna aplikacja do ewidencji czasu pracy online. Rejestracja godzin, nadgodzin i urlopów. 30 dni za darmo: pełne funkcje, do 5 użytkowników.",
+						"description": "Planopia — ewidencja czasu pracy online: 30 dni pełnej aplikacji za darmo (do 5 osób), potem darmowy plan ewidencji do 5 aktywnych kont lub pakiety płatne z urlopami i AI.",
 						"image": "https://planopia.pl/img/desktopnews.webp",
 						"author": {
 							"@type": "Person",
@@ -47,7 +53,7 @@ function BlogOne() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -63,16 +69,17 @@ function BlogOne() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -87,7 +94,7 @@ function BlogOne() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/time-tracking-online" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function BlogOne() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -139,13 +142,13 @@ function BlogOne() {
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
 										<strong>Darmowa aplikacja do ewidencji czasu pracy</strong>  
-										{' '}— 30 dni za darmo, do 5 użytkowników
+										{' '}— 30 dni pełnej aplikacji; potem bezpłatna ewidencja do 5 aktywnych kont
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Rozpocznij okres próbny
+										Załóż darmowy zespół
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -215,7 +218,7 @@ function BlogOne() {
 					<li>Pełną kontrolę nad ewidencją godzin pracy i nadgodzin.</li>
 					<li>Szybkie zgłaszanie i akceptowanie urlopów.</li>
 					<li>Raporty i kalendarze pracy dostępne online i w formie PDF.</li>
-					<li>30-dniowy okres próbny z pełnymi funkcjami dla do 5 użytkowników.</li>
+					<li>30 dni pełnej aplikacji dla do 5 użytkowników; potem bezpłatny plan ewidencji (do 5 aktywnych kont) lub pakiety płatne.</li>
 					<li>Możliwość rozbudowy i personalizacji dla większych firm.</li>
 				</ul>
 
@@ -228,7 +231,7 @@ function BlogOne() {
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny już dziś</Link>.
+					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół</Link>.
 				</p>
 			</article>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { planOfferingCopy } from "@/data/planOfferingCopy";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "./globals.css";
@@ -35,15 +36,18 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: {
-    default: "Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo",
+    default: "Planopia — darmowa ewidencja czasu pracy online | 30 dni pełnej aplikacji",
     template: "%s | Planopia"
   },
-  description: "Planopia: ewidencja czasu pracy, urlopy, grafiki, czaty, tablice zadań i Asystent AI. 30 dni za darmo — pełne funkcje, do 5 użytkowników, limit wiadomości AI w tym okresie. Potem proste plany od 99 zł miesięcznie (Starter–Enterprise); dodatkowe pakiety wiadomości AI — w aplikacji po aktywnym pakiecie płatnym.",
+  description: planOfferingCopy.pl.metaLong,
   keywords: [
     "ewidencja czasu pracy",
+    "darmowa aplikacja ewidencja czasu pracy",
     "aplikacja do urlopów", 
     "asystent AI HR",
     "30 dni za darmo",
+    "darmowa ewidencja czasu pracy po próbie",
+    "darmowy program do ewidencji czasu pracy",
     "cennik ewidencja czasu pracy",
     "kalendarz urlopów online",
     "program HR",
@@ -70,8 +74,8 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl',
     siteName: 'Planopia',
-    title: 'Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo',
-    description: '30 dni za darmo: pełne funkcje, do 5 osób, Asystent AI w limitach na start. Potem plany od 99 zł miesięcznie z limitami użytkowników i AI.',
+    title: 'Planopia — darmowa ewidencja czasu pracy | 30 dni pełnej aplikacji',
+    description: planOfferingCopy.pl.metaShort,
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
@@ -83,8 +87,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planopia - ewidencja czasu pracy, urlopy i Asystent AI | 30 dni za darmo',
-    description: '30 dni za darmo, pełne funkcje, do 5 użytkowników. Asystent AI, ewidencja czasu pracy, urlopy — później plany od 99 zł miesięcznie.',
+    title: 'Planopia — darmowa ewidencja czasu pracy | trial 30 dni',
+    description: planOfferingCopy.pl.metaShort,
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

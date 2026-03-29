@@ -1,11 +1,11 @@
 import { MetadataRoute } from 'next'
+import { planOfferingCopy } from '@/data/planOfferingCopy'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Planopia - ewidencja czasu pracy i urlopy',
     short_name: 'Planopia',
-    description:
-      '30 dni za darmo: pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i zarządzanie urlopami w jednej aplikacji.',
+    description: planOfferingCopy.pl.metaShort,
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

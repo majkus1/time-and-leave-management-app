@@ -1,16 +1,11 @@
 const express = require('express')
 const router = express.Router()
+const p24WebhookController = require('../controllers/p24WebhookController')
 
 /**
- * Placeholder for Przelewy24 (or other PSP) — verify signature here, then call billingActivationService.
- * Registered before CSRF middleware in index.js.
+ * Przelewy24: notyfikacja JSON na urlStatus — weryfikacja sign, PUT verify, aktywacja subskrypcji / pakietu.
+ * Zarejestrowane przed CSRF w index.js.
  */
-router.post('/przelewy24', (req, res) => {
-	res.status(501).json({
-		success: false,
-		code: 'WEBHOOK_NOT_IMPLEMENTED',
-		message: 'Payment webhook will call the same activation services as manual fulfilment.',
-	})
-})
+router.post('/przelewy24', p24WebhookController.postPrzelewy24)
 
 module.exports = router

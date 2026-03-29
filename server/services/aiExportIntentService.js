@@ -6,11 +6,19 @@ const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const { resolveDetailedDataScope } = require('./aiAssistantScopeService')
 const { createChatCompletionJson } = require('./openaiService')
-const { resolveAssistantDateRange } = require('./aiAssistantService')
+const {
+	resolveAssistantDateRange,
+	resolveAssistantRangeWithMessage,
+	formatLocalYmd,
+} = require('./aiAssistantService')
 
 const LEAVE_STATUSES = ['status.pending', 'status.accepted', 'status.rejected', 'status.sent']
 
-function prefilterExportQuestion(text) {
+/**
+ * Heuristic: user likely wants a DB-backed export for the selected chat period.
+ * Period summaries (e.g. „Podsumuj luty 2026…”) often omit the words pdf/excel; we still attach export buttons so assistant text about downloads stays truthful.
+ */
+function messageSuggestsDatabaseExport(text) {
 	if (!text || text.length < 6) return false
 	const wantsFile = /(eksport|export|excel|xlsx|pdf|raport|report|pobierz|download|wygeneruj|generate|plik|file|csv)/i.test(
 		text
@@ -22,7 +30,15 @@ function prefilterExportQuestion(text) {
 		/(urlop|leave|wniosk|nieobec|ewidencj|work\s*day|czas\w*\s+pracy|time\s*sheet|godzin|hours|zadani|task|kanban|tablic|board|podsumu|okres|timer|sesj|raport|dane|summar|period|database|overview)/i.test(
 			text
 		)
-	return wantsFile && wantsData
+	const periodSummary =
+		/(podsumu|podsumow|ten\s+okres|z\s+okresu|pełny\s+raport|pelny\s+raport|wszystko\s+z|cały\s+okres|caly\s+okres|summar|overview|combined|\bfull\s+report|period\s+summary)/i.test(
+			text
+		)
+	return wantsData && (wantsFile || periodSummary)
+}
+
+function prefilterExportQuestion(text) {
+	return messageSuggestsDatabaseExport(text)
 }
 
 /**
@@ -151,7 +167,14 @@ function clampOffer(raw, dataScope, requestingUser) {
 /**
  * After AI reply: if last user message asks for export, return a safe offer for the client (re-validated on download).
  */
-exports.buildExportOfferAfterChat = async function buildExportOfferAfterChat({ userId, lastUserMessage, locale }) {
+exports.buildExportOfferAfterChat = async function buildExportOfferAfterChat({
+	userId,
+	lastUserMessage,
+	locale,
+	periodPreset,
+	dateFrom,
+	dateTo,
+}) {
 	if (!lastUserMessage || !prefilterExportQuestion(lastUserMessage)) {
 		return null
 	}
@@ -170,7 +193,12 @@ exports.buildExportOfferAfterChat = async function buildExportOfferAfterChat({ u
 	if (!raw) {
 		raw = buildFallbackExportIntent(lastUserMessage)
 	} else if (raw.wantsExport === false) {
-		return null
+		// Klasyfikator często zwraca false dla podsumowań okresu bez słów „pdf/excel”.
+		if (messageSuggestsDatabaseExport(lastUserMessage)) {
+			raw = buildFallbackExportIntent(lastUserMessage)
+		} else {
+			return null
+		}
 	} else {
 		if (!raw.reportType) {
 			raw.reportType = buildFallbackExportIntent(lastUserMessage).reportType
@@ -193,6 +221,20 @@ exports.buildExportOfferAfterChat = async function buildExportOfferAfterChat({ u
 			dataScope,
 			requestingUser
 		)
+	}
+
+	const eff = resolveAssistantRangeWithMessage({
+		periodPreset: periodPreset || 'month',
+		dateFrom,
+		dateTo,
+		lastUserMessage,
+	})
+	if (eff.monthFromMessageKey || eff.yearMessageOverride) {
+		offer = {
+			...offer,
+			dateFrom: formatLocalYmd(eff.range.start),
+			dateTo: formatLocalYmd(eff.range.end),
+		}
 	}
 
 	return offer

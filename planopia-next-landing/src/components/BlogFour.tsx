@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogFour() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +40,7 @@ function BlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Planopia: 30 dni za darmo — pełne funkcje, do 5 użytkowników. Ewidencja czasu pracy i urlopy; potem proste plany płatne.",
+						"description": "Planopia: darmowa ewidencja czasu pracy online po okresie próbnym (do 5 aktywnych kont). 30 dni z pełnymi modułami na start; urlopy i AI w pakietach płatnych.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -49,7 +55,7 @@ function BlogFour() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -65,16 +71,17 @@ function BlogFour() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -88,7 +95,7 @@ function BlogFour() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/free-time-tracking-app" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function BlogFour() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -120,7 +123,7 @@ function BlogFour() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
@@ -129,14 +132,14 @@ function BlogFour() {
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
 								30 dni za darmo: pełne funkcje aplikacji, do 5 użytkowników (limit wiadomości Asystenta AI w tym okresie).
-								Potem wybierasz plan dopasowany do zespołu — bez zobowiązań w okresie próbnym.
+								Po próbie: darmowy plan ewidencji do 5 kont lub pakiet z urlopami i pozostałymi modułami — bez karty w okresie próbnym.
 							</p>
 							<div className="text-center">
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 								>
-									Rozpocznij okres próbny już dziś
+									Załóż darmowy zespół
 								</Link>
 							</div>
 						</div>
@@ -178,7 +181,7 @@ function BlogFour() {
 								✅ Pierwszy miesiąc za darmo — do 5 użytkowników, pełna funkcjonalność
 							</p>
 							<p className="text-blue-700 mt-2">
-								30 dni pełnego dostępu bez karty płatniczej i bez zobowiązania — potem wybierasz plan w{' '}
+								30 dni pełnego dostępu bez karty — potem darmowa ewidencja lub plan w{' '}
 								<Link href="/#cennik" className="underline font-medium">cenniku</Link>.
 							</p>
 						</div>
@@ -239,7 +242,7 @@ function BlogFour() {
 								<thead>
 									<tr className="bg-gray-100">
 										<th className="border border-gray-300 p-4 text-left">Funkcja</th>
-										<th className="border border-gray-300 p-4 text-center">Planopia (30 dni za darmo)</th>
+										<th className="border border-gray-300 p-4 text-center">Planopia (próba + darmowy plan ewidencji)</th>
 										<th className="border border-gray-300 p-4 text-center">Konkurencja</th>
 									</tr>
 								</thead>
@@ -277,14 +280,14 @@ function BlogFour() {
 					{/* How to start */}
 					<div className="mb-12">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Jak zacząć korzystać z Planopii (30 dni za darmo)?
+							Jak zacząć korzystać z Planopii (próba i darmowa ewidencja)?
 						</h2>
 						<div className="grid md:grid-cols-3 gap-6">
 							<div className="text-center p-6 bg-green-50 rounded-lg">
 								<div className="text-4xl font-bold text-green-600 mb-2">1</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Rozpocznij okres próbny</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Załóż darmowy zespół</h3>
 								<p className="text-gray-700">
-									Kliknij &quot;Rozpocznij okres próbny&quot; i wypełnij podstawowe informacje o firmie.
+									Kliknij &quot;Załóż darmowy zespół&quot; i wypełnij podstawowe informacje o firmie.
 								</p>
 							</div>
 							<div className="text-center p-6 bg-blue-50 rounded-lg">
@@ -325,7 +328,7 @@ function BlogFour() {
 								</h3>
 								<p className="text-gray-700">
 									<strong>30 dni</strong> — pierwszy miesiąc z pełnymi funkcjami dla do 5 użytkowników.
-									Po tym czasie przechodzisz na wybrany plan płatny lub kończysz korzystanie z usługi.
+									Potem możesz zostać na <strong>bezpłatnym planie ewidencji czasu pracy</strong> (do 5 aktywnych kont) albo wykupić pakiet z urlopami i pozostałymi modułami — szczegóły w <Link href="/#cennik" className="text-blue-600 hover:underline">cenniku</Link>.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -361,7 +364,7 @@ function BlogFour() {
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Rozpocznij okres próbny już dziś
+							Załóż darmowy zespół
 						</Link>
 					</div>
 				</div>

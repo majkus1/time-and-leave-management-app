@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -22,7 +23,7 @@ const titilliumWeb = Titillium_Web({
 
 export const metadata: Metadata = {
   title: "Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia",
-  description: "Dowiedz się, jak zainstalować Planopię jako aplikację PWA na urządzeniu mobilnym. Prosta instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami bezpośrednio na ekranie głównym telefonu.",
+  description: `Instrukcja instalacji Planopii jako PWA na iPhonie, iPadzie, Androidzie oraz w przeglądarce na komputerze (np. Chrome). Dodaj apkę do ewidencji czasu pracy i urlopów na ekran główny, do menu lub na pulpit. ${blogArticleOfferLine.pl}`,
   keywords: [
     "PWA instalacja",
     "jak zainstalować PWA",
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa',
     siteName: 'Planopia',
     title: 'Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia',
-    description: 'Prosta instrukcja instalacji Planopii jako aplikacji PWA na urządzeniu mobilnym. Dowiedz się, jak dodać aplikację do ewidencji czasu pracy bezpośrednio na ekran główny telefonu.',
+    description: `PWA Planopii na telefon i komputer. ${blogArticleOfferLine.pl}`,
     images: [
       {
         url: 'https://planopia.pl/img/pwa1.png',
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia',
-    description: 'Prosta instrukcja instalacji Planopii jako aplikacji PWA na urządzeniu mobilnym. Dowiedz się, jak dodać aplikację do ewidencji czasu pracy bezpośrednio na ekran główny telefonu.',
+    description: `PWA Planopii na telefon i komputer. ${blogArticleOfferLine.pl}`,
     images: ['https://planopia.pl/img/pwa1.png'],
   },
   alternates: {

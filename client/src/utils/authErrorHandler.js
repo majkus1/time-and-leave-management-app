@@ -3,16 +3,36 @@ export const CSRF_ERROR_CODES = ['CSRF_SECRET_MISSING', 'CSRF_TOKEN_MISSING', 'C
 export const handleAuthError = async ({ err, axiosInstance, apiUrl, loggedIn, logout }) => {
 	const originalRequest = err?.config || {}
 
-	if (
-		err?.response?.status === 403 &&
-		err?.response?.data?.code === 'TRIAL_LAPSED' &&
-		typeof window !== 'undefined'
-	) {
-		const path = window.location.pathname || ''
-		if (!path.startsWith('/packages')) {
-			window.location.assign('/packages')
+	const code = err?.response?.data?.code
+	if (err?.response?.status === 403 && typeof window !== 'undefined') {
+		if (code === 'TRIAL_LAPSED') {
+			const path = window.location.pathname || ''
+			if (!path.startsWith('/team-access-notice')) {
+				window.location.assign('/team-access-notice?reason=billing')
+			}
+			throw err
 		}
-		throw err
+		if (code === 'FREEMIUM_SEAT_OVER_CAPACITY') {
+			const path = window.location.pathname || ''
+			if (!path.startsWith('/team-access-notice')) {
+				window.location.assign('/team-access-notice?reason=seats')
+			}
+			throw err
+		}
+		if (code === 'FREEMIUM_MODULE_DISABLED') {
+			const path = window.location.pathname || ''
+			if (path !== '/dashboard' && !path.startsWith('/packages')) {
+				window.location.assign('/dashboard')
+			}
+			throw err
+		}
+		if (code === 'BILLING_ROLE_REQUIRED') {
+			const path = window.location.pathname || ''
+			if (!path.startsWith('/team-access-notice')) {
+				window.location.assign('/team-access-notice?reason=billing')
+			}
+			throw err
+		}
 	}
 
 	// Skip error handling for expected 403/404 flows

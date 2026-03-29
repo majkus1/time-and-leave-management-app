@@ -9,6 +9,7 @@ import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import TutorialModal from '../tutorial/TutorialModal'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -21,9 +22,20 @@ function Sidebar() {
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
 	const { role, logout, username, loggedIn, userId } = useAuth()
-	const { data: unreadCount = 0 } = useUnreadCount({ enabled: !!loggedIn })
-	const { data: unreadAnnouncementsCount = 0 } = useAnnouncementsUnreadCount({ enabled: !!loggedIn })
-	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: !!loggedIn })
+	const {
+		isLoading: billingEntLoading,
+		freemiumTier,
+		freemiumSeatBlocked,
+		freemiumAppRestricted,
+	} = useFreemiumAccess({ enabled: !!loggedIn })
+	/** Freemium: bez zapytań do czatu/tablic/ogłoszeń/urlopów (403 z freemiumApiGuard). */
+	const premiumSidebarQueriesEnabled = !!loggedIn && !billingEntLoading && !freemiumTier
+
+	const { data: unreadCount = 0 } = useUnreadCount({ enabled: premiumSidebarQueriesEnabled })
+	const { data: unreadAnnouncementsCount = 0 } = useAnnouncementsUnreadCount({
+		enabled: premiumSidebarQueriesEnabled,
+	})
+	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: premiumSidebarQueriesEnabled })
 	const unreadBoardsTotal = boardsUnreadSummary?.totalUnread || 0
 	
 	// HIERARCHIA RÓL: Admin > HR > Przełożony
@@ -46,9 +58,20 @@ function Sidebar() {
 		: (isSupervisorRole && (supervisorConfig?.permissions?.canManageSchedule !== false)) // Przełożony - sprawdź konfigurację
 	const canOpenLeaveList = isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves)
 	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
-		enabled: !!loggedIn && canOpenLeaveList,
+		enabled: premiumSidebarQueriesEnabled && canOpenLeaveList,
 	})
 	const pendingLeaveCount = pendingSummary?.totalPending || 0
+
+	const compactFreemiumNav = freemiumSeatBlocked
+	const narrowFreemiumNav = freemiumAppRestricted
+	const showPremiumModules = !compactFreemiumNav && !narrowFreemiumNav
+	/** Kalendarze / ewidencje zespołu — także freemium i przy blokadzie miejsc (Admin / HR / przełożony z uprawnieniem). */
+	const showAdminCalendars =
+		isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets)
+	const showAdminLeaveList =
+		!compactFreemiumNav &&
+		showPremiumModules &&
+		(isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves))
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -283,6 +306,7 @@ function Sidebar() {
 						<span className="nav-text">{t('sidebar.btn1')}</span>
 					</NavLink>
 
+					{!compactFreemiumNav && (
 					<NavLink
 						to="/dashboard"
 						style={{ marginTop: '20px'}}
@@ -292,7 +316,9 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn2')}</span>
 					</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 						to="/schedule"
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -301,7 +327,9 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btnSchedule')}</span>
 					</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 						to="/leave-request"
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -310,7 +338,9 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn3')}</span>
 					</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 						to="/leave-planner"
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -319,7 +349,9 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn4')}</span>
 					</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 						to="/all-leave-plans"
 						className={({ isActive }) => `nav-link ${isLeavePlans ? 'active' : ''}`}>
@@ -328,7 +360,9 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn5')}</span>
 					</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 								to="/boards"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -345,7 +379,9 @@ function Sidebar() {
 									</span>
 								)}
 							</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 								to="/chat"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -362,7 +398,9 @@ function Sidebar() {
 									</span>
 								)}
 							</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 								to="/announcements"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -379,7 +417,9 @@ function Sidebar() {
 									</span>
 								)}
 							</NavLink>
+					)}
 
+					{showPremiumModules && (
 					<NavLink
 						to="/ai-assistant"
 						className={({ isActive }) => `nav-link nav-link--ai ${isActive ? 'active' : ''}`}>
@@ -388,12 +428,12 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btnAssistant')}</span>
 					</NavLink>
+					)}
 
 					{/* Admin Links - calendars-list i leave-list w jednym div */}
-					{((isAdmin(role) || isHR(role) || (isSupervisor(role) && (canApproveLeaves || canViewTimesheets)))) && (
+					{(showAdminCalendars || showAdminLeaveList) && (
 						<div className="admin-section">
-							{/* calendars-list - dla Admin, HR, Supervisor z uprawnieniami do ewidencji */}
-							{(isAdmin(role) || isHR(role) || (isSupervisor(role) && canViewTimesheets)) && (
+							{showAdminCalendars && (
 								<NavLink
 									to="/calendars-list"
 									className={({ isActive }) => `nav-link ${isListOrCalendarActive || isActive ? 'active' : ''}`}>
@@ -404,8 +444,7 @@ function Sidebar() {
 								</NavLink>
 							)}
 
-							{/* leave-list - dla Admin, HR, Supervisor z uprawnieniami do zatwierdzania urlopów */}
-							{(isAdmin(role) || isHR(role) || (isSupervisor(role) && canApproveLeaves)) && (
+							{showAdminLeaveList && (
 								<NavLink
 									to="/leave-list"
 									className={({ isActive }) => `nav-link ${isListOrLeavereqActive || isActive ? 'active' : ''}`}
@@ -429,7 +468,7 @@ function Sidebar() {
 						</div>
 					)}
                         <div className="admin-section">
-                            <NavLink
+							<NavLink
 								to="/settings"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 								<div className="nav-icon">
@@ -438,8 +477,9 @@ function Sidebar() {
 								<span className="nav-text">{t('sidebar.btnSettings')}</span>
 							</NavLink>
 							
-							{/* Przycisk "Jak korzystać" */}
+							{/* Przycisk "Jak korzystać" — widoczny dla wszystkich (także freemium) */}
 							<button
+								type="button"
 								onClick={() => setShowTutorialModal(true)}
 								className="nav-link"
 								style={{
@@ -470,9 +510,10 @@ function Sidebar() {
 							</button>
 						</div>
 
-					{/* Admin Links */}
-					{(isAdmin(role) || username === 'michalipka1@gmail.com') && (
+					{/* Admin / HR (pakiety); tworzenie użytk. i logi — jak wcześniej. Centrum pomocy nad Pakietami (jeden link Pakiety). */}
+					{(isAdmin(role) || isHRRole || username === 'michalipka1@gmail.com') && (
 						<div className="admin-section">
+							{(isAdmin(role) || username === 'michalipka1@gmail.com') && !compactFreemiumNav && (
 							<NavLink
 								to="/create-user"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -481,7 +522,9 @@ function Sidebar() {
 								</div>
 								<span className="nav-text">{t('sidebar.btn8')}</span>
 							</NavLink>
+							)}
 
+							{(isAdmin(role) || username === 'michalipka1@gmail.com') && (
 							<NavLink
 								to="/team-management"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -490,19 +533,9 @@ function Sidebar() {
 								</div>
 								<span className="nav-text">{t('sidebar.btn9')}</span>
 							</NavLink>
-
-							{isAdmin(role) && (
-								<NavLink
-									to="/packages"
-									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-									<div className="nav-icon">
-										<img src="/img/wallet.png" alt="" />
-									</div>
-									<span className="nav-text">{t('sidebar.btnPackages')}</span>
-								</NavLink>
 							)}
 
-							{isAdmin(role) && (
+							{isAdmin(role) && showPremiumModules && (
 								<NavLink
 									to="/helpcenter"
 									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -510,6 +543,17 @@ function Sidebar() {
 										<img src="/img/technical-support.png" alt="" />
 									</div>
 									<span className="nav-text">{t('tickets.title')}</span>
+								</NavLink>
+							)}
+
+							{(isAdminRole || isHRRole) && (
+								<NavLink
+									to="/packages"
+									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/wallet.png" alt="" />
+									</div>
+									<span className="nav-text">{t('sidebar.btnPackages')}</span>
 								</NavLink>
 							)}
 						</div>

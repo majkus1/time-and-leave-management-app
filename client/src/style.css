@@ -588,7 +588,7 @@ select {
 	height: 100vh;
 }
 
-/* CTA: utwórz zespół (okres próbny) — /login */
+/* CTA: załóż darmowy zespół — /login */
 .login-create-team-cta {
 	display: flex;
 	align-items: center;

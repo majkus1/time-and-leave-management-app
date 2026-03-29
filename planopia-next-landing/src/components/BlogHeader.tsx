@@ -4,6 +4,13 @@ import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 interface BlogHeaderProps {
 	lang?: 'pl' | 'en'
@@ -74,15 +81,16 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							{isPolish ? "Cennik" : "Pricing"}
 						</Link>
-						<Link
-							href={isPolish ? "/#kontakt" : "/en#contact"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							{isPolish ? "Kontakt" : "Contact"}
-						</Link>
+						<LandingIndustriesDropdown locale={isPolish ? 'pl' : 'en'} />
 						<Link
 							href={isPolish ? "/blog" : "/en/blog"}
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
+						</Link>
+						<Link
+							href={isPolish ? "/#kontakt" : "/en#contact"}
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							{isPolish ? "Kontakt" : "Contact"}
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -95,7 +103,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 							href="https://app.planopia.pl/team-registration"
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							{isPolish ? "Rozpocznij okres próbny" : "Start free trial"}
+							{isPolish ? "Załóż darmowy zespół" : "Create your free team"}
 						</Link>
 						{!hideLanguageSwitcher && (
 							<Link 
@@ -113,6 +121,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 					<HamburgerButton isOpen={buttonState} onClick={handleMenuClick} />
 				</div>
 			</header>
+			<div className="header-fixed-spacer" aria-hidden="true" />
 
 			{/* Professional Mobile Menu */}
 			<MobileMenu
@@ -120,13 +129,13 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 				onClose={closeMenu}
 				onCloseRequest={handleCloseRequest}
 				lang={lang}
-				menuItems={[
-					{ href: isPolish ? "/#oaplikacji" : "/en#aboutapp", label: isPolish ? "O Aplikacji" : "About the App" },
-					{ href: isPolish ? '/#asystent-ai' : '/en#ai-assistant', label: isPolish ? 'Asystent AI' : 'AI Assistant' },
-					{ href: isPolish ? "/#cennik" : "/en#prices", label: isPolish ? "Cennik" : "Pricing" },
-					{ href: isPolish ? "/#kontakt" : "/en#contact", label: isPolish ? "Kontakt" : "Contact" },
-					{ href: isPolish ? "/blog" : "/en/blog", label: 'Blog' },
-				]}
+				menuItems={
+					isPolish
+						? landingMobileNavItemsPl({ blogHref: '/blog' })
+						: landingMobileNavItemsEn({ blogHref: '/en/blog' })
+				}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig(isPolish ? 'pl' : 'en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={!hideLanguageSwitcher ? {

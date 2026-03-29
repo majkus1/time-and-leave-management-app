@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 
 export const metadata: Metadata = {
   title: "Comprehensive Company Management App – Everything in One Place | Planopia",
-  description: "Planopia is a comprehensive company management app. 30-day trial, up to 5 users, full features. Time tracking, leave, schedules, chats, tasks, and roles — then paid plans.",
+  description: `Planopia is a comprehensive company management app — time tracking, leave, schedules, chats, tasks, and roles. ${blogArticleOfferLine.en}`,
   keywords: [
     "comprehensive company management app",
     "team management app",
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/comprehensive-company-management-app',
     siteName: 'Planopia',
     title: 'Comprehensive Company Management App – Everything in One Place | Planopia',
-    description: 'Planopia is a comprehensive company management app. Time tracking, leave management, work schedules, team chats, task boards, and flexible role configuration. Everything in one tool.',
+    description: `Time tracking, leave, schedules, chats, and tasks in one tool. ${blogArticleOfferLine.en}`,
     images: [
       {
         url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Comprehensive Company Management App – Everything in One Place | Planopia',
-    description: '30-day trial, up to 5 users. Time tracking, leave, schedules, chats, and tasks in one place for your team.',
+    description: `All-in-one operations for your team. ${blogArticleOfferLine.en}`,
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {

@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function ENBlogFour() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +40,7 @@ function ENBlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Planopia: 30-day trial with full features for up to 5 users. Time tracking and leave management; then paid plans.",
+						"description": "Planopia: free time tracking after the trial for up to 5 active accounts; 30-day full trial first. Leave and full HR in paid plans.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -49,7 +55,7 @@ function ENBlogFour() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -65,16 +71,17 @@ function ENBlogFour() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -88,7 +95,7 @@ function ENBlogFour() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function ENBlogFour() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -120,16 +123,16 @@ function ENBlogFour() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
-								Time tracking & leave — first month free
+								Free time tracking app — full product for 30 days
 							</h1>
 							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
-								30-day trial: full product access for up to 5 users (AI Assistant limits apply during the trial).
-								Then choose a plan that fits your team — see{' '}
+								30-day trial: full product for up to 5 users (AI limits during trial). After that, stay on{' '}
+								<strong>free time tracking</strong> for up to 5 active accounts, or upgrade for leave, chat, boards, and AI — see{' '}
 								<Link href="/en#prices" className="text-blue-600 hover:underline font-medium">pricing</Link>.
 							</p>
 							<div className="text-center">
@@ -137,7 +140,7 @@ function ENBlogFour() {
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 								>
-									Start free trial today
+									Create your free team today
 								</Link>
 							</div>
 						</div>
@@ -160,7 +163,7 @@ function ENBlogFour() {
 						</p>
 						<p className="text-lg text-gray-700 mb-6">
 							<strong>Planopia</strong> solves these problems with a clear model:{' '}
-							<strong>30 days free</strong> for up to 5 users, then transparent paid plans.
+							<strong>30 days</strong> full product for up to 5 users, then <strong>free time tracking</strong> for up to 5 active accounts or paid plans.
 						</p>
 					</div>
 
@@ -176,10 +179,10 @@ function ENBlogFour() {
 						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
-								✅ First month free — up to 5 users, full functionality
+								✅ 30 days full product — then free time tracking for up to 5 active accounts
 							</p>
 							<p className="text-blue-700 mt-2">
-								No credit card required during the trial. After 30 days, pick a plan on the{' '}
+									No credit card during the trial. After 30 days, free time tracking or a paid plan on the{' '}
 								<Link href="/en#prices" className="underline font-medium">pricing page</Link>.
 							</p>
 						</div>
@@ -240,7 +243,7 @@ function ENBlogFour() {
 								<thead>
 									<tr className="bg-gray-100">
 										<th className="border border-gray-300 p-4 text-left">Feature</th>
-										<th className="border border-gray-300 p-4 text-center">Planopia (30-day trial)</th>
+										<th className="border border-gray-300 p-4 text-center">Planopia (trial + free tier)</th>
 										<th className="border border-gray-300 p-4 text-center">Competition</th>
 									</tr>
 								</thead>
@@ -283,9 +286,9 @@ function ENBlogFour() {
 						<div className="grid md:grid-cols-3 gap-6">
 							<div className="text-center p-6 bg-green-50 rounded-lg">
 								<div className="text-4xl font-bold text-green-600 mb-2">1</div>
-								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Start free trial</h3>
+								<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Create your free team</h3>
 								<p className="text-gray-700">
-									Click &quot;Start free trial&quot; and fill in basic company information.
+									Click &quot;Create your free team&quot; and fill in basic company information.
 								</p>
 							</div>
 							<div className="text-center p-6 bg-blue-50 rounded-lg">
@@ -317,7 +320,7 @@ function ENBlogFour() {
 								</h3>
 								<p className="text-gray-700">
 									Yes. You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
-									No credit card required. After the trial, you choose a paid plan or stop using the service.
+									No credit card required. After the trial, you can keep free time tracking (up to 5 active accounts) or subscribe for full modules.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -325,7 +328,7 @@ function ENBlogFour() {
 									How long does the trial last?
 								</h3>
 								<p className="text-gray-700">
-									<strong>30 days</strong> — one month of full access for up to 5 users. Then you move to a paid plan or end your use.
+									<strong>30 days</strong> — full access for up to 5 users. Then free time tracking for up to 5 active accounts, or a paid plan with every module.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -361,7 +364,7 @@ function ENBlogFour() {
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Start free trial today
+							Create your free team today
 						</Link>
 					</div>
 				</div>

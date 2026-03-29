@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { planOfferingCopy } from "@/data/planOfferingCopy";
 
 export const metadata: Metadata = {
   title: {
     default: "Blog – Planopia | Porady i informacje o ewidencji czasu pracy i urlopach",
     template: "%s | Blog Planopia"
   },
-  description: "Zdobądź wiedzę na temat ewidencji czasu pracy, zarządzania urlopami i nowoczesnych rozwiązań HR dzięki artykułom na blogu Planopii.",
+  description: `Blog Planopii: ewidencja czasu pracy online, urlopy, HR, produktywność. ${planOfferingCopy.pl.metaShort}`,
   keywords: [
     "blog Planopia",
+    "darmowa ewidencja czasu pracy",
     "ewidencja czasu pracy",
     "zarządzanie urlopami",
     "aplikacja HR",
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Blog Planopii – Porady o ewidencji czasu pracy i HR',
-    description: 'Dowiedz się więcej o zarządzaniu czasem pracy, urlopami i nieobecnościami w firmie z bloga Planopii.',
+    description: `Zarządzanie czasem pracy i urlopami — blog Planopii. ${planOfferingCopy.pl.metaShort}`,
     images: ['https://planopia.pl/img/blog.webp'],
   },
   alternates: {

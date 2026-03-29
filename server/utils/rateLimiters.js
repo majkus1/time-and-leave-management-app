@@ -67,6 +67,18 @@ exports.billingPurchaseRequestLimiter = rateLimit({
 	skipFailedRequests: false,
 })
 
+/** Przelewy24: rozpoczęcie płatności (register) per team */
+exports.billingP24CheckoutLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 20,
+	message: { success: false, message: 'Too many checkout attempts. Try again later.' },
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.teamId?.toString?.() || req.ip,
+	skipSuccessfulRequests: false,
+	skipFailedRequests: false,
+})
+
 /** AI intent export downloads (Excel/PDF from DB) */
 exports.aiAssistantExportLimiter = rateLimit({
 	windowMs: 60 * 1000,

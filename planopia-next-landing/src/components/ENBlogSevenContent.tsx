@@ -40,7 +40,7 @@ export default function ENBlogSevenContent() {
 				"name": "How does the Planopia trial work?",
 				"acceptedAnswer": {
 					"@type": "Answer",
-					"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you choose a paid plan that fits your team size."
+					"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you can stay on a free time tracking plan (up to 5 active accounts) or upgrade to a paid plan."
 				}
 			},
 			{
@@ -123,7 +123,7 @@ export default function ENBlogSevenContent() {
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Start free trial
+										Create your free team
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -233,7 +233,7 @@ export default function ENBlogSevenContent() {
 						<strong>Planopia</strong> works well for both small teams and larger companies:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
-						<li><strong>Small teams</strong> – 30-day trial, up to 5 users, full features</li>
+						<li><strong>Small teams</strong> – 30-day full trial; then free time tracking or paid plans</li>
 						<li><strong>Medium companies</strong> – unlimited number of users, flexible configuration</li>
 						<li><strong>Large organizations</strong> – possibility of personalization, integrations, and dedicated environment</li>
 						<li><strong>HR and managers</strong> – comprehensive tool for team management</li>
@@ -267,7 +267,7 @@ export default function ENBlogSevenContent() {
 					</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial and begin managing your company in one place</Link>.
+						Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">create your free team and begin managing your company in one place</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -278,7 +278,7 @@ export default function ENBlogSevenContent() {
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">How does the trial work?</h3>
 								<p className="text-gray-700">
 									You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
-									After the trial, choose a paid plan — see{' '}
+									After the trial, free time tracking or a paid plan — see{' '}
 									<Link href="/en#prices" className="text-blue-600 hover:underline">pricing</Link>.
 								</p>
 							</div>

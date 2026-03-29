@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function ENBlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +25,7 @@ function ENBlogPWA() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "How to Install Planopia as a PWA App? Installation Guide",
-						"description": "Learn how to install Planopia as a PWA app on your mobile device. Simple installation guide for time tracking and leave management app directly on your phone's home screen.",
+						"description": "Install Planopia as a PWA on iPhone, Android, or desktop. Quick access to time tracking; 30-day full trial, then free time tracking for up to 5 active accounts or paid plans with leave and AI.",
 						"image": "https://planopia.pl/img/pwa1.png",
 						"author": {
 							"@type": "Person",
@@ -47,7 +53,7 @@ function ENBlogPWA() {
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -63,16 +69,17 @@ function ENBlogPWA() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -87,7 +94,7 @@ function ENBlogPWA() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog/jak-zainstalowac-planopie-jako-pwa" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Polish version" className="w-6 h-6" />
@@ -103,13 +110,9 @@ function ENBlogPWA() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -199,7 +202,7 @@ function ENBlogPWA() {
 				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
 					<li><strong>Full-screen interface</strong> – without browser bars</li>
 					<li><strong>Fast loading</strong> – the app loads faster than in a browser</li>
-					<li><strong>All features available</strong> – time tracking, leave management, schedules, chat and much more</li>
+					<li><strong>Features by plan</strong> – full modules during trial and on paid plans; after trial without a subscription, focus stays on time tracking</li>
 					<li><strong>Automatic updates</strong> – you always have the latest version</li>
 				</ul>
 
@@ -208,8 +211,8 @@ function ENBlogPWA() {
 				<div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mt-8 text-center max-w-3xl mx-auto">
 					<h3 className="text-xl font-semibold mb-3 text-gray-800 justify-center">Start Using Planopia Today!</h3>
 					<p className="mb-4 text-gray-700">
-						Planopia is a comprehensive app for managing work time, leave, and teams. 
-						30-day trial — up to 5 users, full features!
+						Planopia covers time tracking, and — during the trial and on paid plans — leave, schedules, and team tools. 
+						30-day full trial; then free time tracking for up to 5 active accounts or a paid plan.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
 						<Link
@@ -217,7 +220,7 @@ function ENBlogPWA() {
 							className="bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition whitespace-nowrap"
 							style={{ color: 'white' }}
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link
 							href="/en/#cennik"

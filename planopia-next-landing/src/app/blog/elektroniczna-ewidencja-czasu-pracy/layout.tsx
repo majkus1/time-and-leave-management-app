@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
 	title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.',
+		description: `Elektroniczna ewidencja czasu pracy w firmie. ${blogArticleOfferLine.pl}`,
 		url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
 		siteName: 'Planopia',
 		images: [
@@ -56,7 +57,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: 'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: 30 dni za darmo, do 5 użytkowników, pełne funkcje.',
+		description: `Elektroniczna ewidencja czasu pracy w firmie. ${blogArticleOfferLine.pl}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { planOfferingCopy } from "@/data/planOfferingCopy";
 
 export const metadata: Metadata = {
   title: {
-    default: "Planopia - time tracking, leave & AI assistant | 30-day trial",
+    default: "Planopia — free time tracking app | 30-day full trial",
     template: "%s | Planopia"
   },
-  description: "Planopia: time tracking, leave, schedules, chat, Kanban, and an AI Assistant grounded in team data. 30-day free trial - full features, up to 5 users, AI limits during trial. Then simple monthly plans from 99 PLN; extra AI message packs available in the app after you have an active paid plan.",
+  description: planOfferingCopy.en.metaLong,
   keywords: [
     "time tracking app",
+    "free time tracking app",
     "leave management software", 
     "HR AI assistant",
     "30 day trial",
@@ -42,8 +44,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://planopia.pl/en',
     siteName: 'Planopia',
-    title: 'Planopia - time tracking, leave & AI assistant | 30-day trial',
-    description: '30-day trial: full features, up to 5 users, AI Assistant within trial limits. Then monthly plans from 99 PLN with user and AI quotas.',
+    title: 'Planopia — free time tracking | 30-day full trial',
+    description: planOfferingCopy.en.metaShort,
     images: [
       {
         url: 'https://planopia.pl/img/headerimage.png',
@@ -55,8 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planopia - time tracking, leave & AI | 30-day trial',
-    description: '30-day trial with full product access. AI Assistant, time and leave tracking - then plans from 99 PLN/mo.',
+    title: 'Planopia — free time tracking after trial',
+    description: planOfferingCopy.en.metaShort,
     images: ['https://planopia.pl/img/headerimage.png'],
   },
   alternates: {

@@ -20,6 +20,11 @@ interface MobileMenuProps {
 		flagSrc: string
 		alt: string
 	}
+	/** Sekcja pod główną nawigacją (np. Branże) */
+	industrySectionTitle?: string
+	industryLinks?: Array<{ href: string; label: string }>
+	/** Po ilu elementach z menuItems wstawić „Branże” (np. 3 = po Cenniku). Brak = na końcu listy (stare zachowanie). */
+	industryInsertIndex?: number
 }
 
 export default function MobileMenu({
@@ -30,9 +35,13 @@ export default function MobileMenu({
 	menuItems = [],
 	loginHref = 'https://app.planopia.pl/',
 	registerHref = 'https://app.planopia.pl/team-registration',
-	languageSwitcher
+	languageSwitcher,
+	industrySectionTitle,
+	industryLinks = [],
+	industryInsertIndex
 }: MobileMenuProps) {
 	const [isClosing, setIsClosing] = React.useState(false)
+	const [industryOpen, setIndustryOpen] = React.useState(false)
 	const isPL = lang === 'pl'
 
 	// Reset closing state when menu opens
@@ -41,6 +50,12 @@ export default function MobileMenu({
 			setIsClosing(false)
 		}
 	}, [isOpen])
+
+	useEffect(() => {
+		if (!isOpen && !isClosing) {
+			setIndustryOpen(false)
+		}
+	}, [isOpen, isClosing])
 
 	// Lock body scroll when menu is open and add class for styling
 	useEffect(() => {
@@ -98,11 +113,22 @@ export default function MobileMenu({
 					{ href: isPL ? '/#oaplikacji' : '/en#aboutapp', label: isPL ? 'O Aplikacji' : 'About the App' },
 					{ href: isPL ? '/#asystent-ai' : '/en#ai-assistant', label: isPL ? 'Asystent AI' : 'AI Assistant' },
 					{ href: isPL ? '/#cennik' : '/en#prices', label: isPL ? 'Cennik' : 'Pricing' },
-					{ href: isPL ? '/#kontakt' : '/en#contact', label: isPL ? 'Kontakt' : 'Contact' },
 					{ href: isPL ? '/blog' : '/en/blog', label: 'Blog' },
+					{ href: isPL ? '/#kontakt' : '/en#contact', label: isPL ? 'Kontakt' : 'Contact' },
 				]
 
-	const menuCount = defaultMenuItems.length
+	const hasIndustry = Boolean(industrySectionTitle && industryLinks.length > 0)
+	const insertIdx =
+		hasIndustry && industryInsertIndex !== undefined
+			? Math.max(0, Math.min(industryInsertIndex, defaultMenuItems.length))
+			: hasIndustry
+				? defaultMenuItems.length
+				: null
+	const navBefore = insertIdx === null ? defaultMenuItems : defaultMenuItems.slice(0, insertIdx)
+	const navAfter = insertIdx === null ? [] : defaultMenuItems.slice(insertIdx)
+	/* sloty nawigacji: linki + ewentualnie przycisk „Branże”; przy rozwinięciu + podlinki */
+	const collapsedNavSlots = navBefore.length + (hasIndustry ? 1 : 0) + navAfter.length
+	const menuCount = collapsedNavSlots + (industryOpen ? industryLinks.length : 0)
 
 	// Keep menu visible during closing animation even if isOpen becomes false
 	if (!isOpen && !isClosing) return null
@@ -121,9 +147,9 @@ export default function MobileMenu({
 				<div className="mobile-menu-content">
 					{/* Menu Items */}
 					<nav className="mobile-menu-nav">
-						{defaultMenuItems.map((item, index) => (
+						{navBefore.map((item, index) => (
 							<Link
-								key={index}
+								key={`b-${index}-${item.href}`}
 								href={item.href}
 								onClick={() => {
 									handleClose()
@@ -137,6 +163,58 @@ export default function MobileMenu({
 								{item.label}
 							</Link>
 						))}
+						{hasIndustry && (
+							<>
+								<button
+									type="button"
+									className="mobile-menu-item mobile-menu-industry-toggle"
+									style={{ animationDelay: `${navBefore.length * 0.05}s` }}
+									onClick={() => setIndustryOpen((v) => !v)}
+									aria-expanded={industryOpen}
+									aria-controls="mobile-menu-industry-list">
+									<span>{industrySectionTitle}</span>
+									<span className="mobile-menu-industry-chevron" aria-hidden>
+										{industryOpen ? '▾' : '▸'}
+									</span>
+								</button>
+								{industryOpen && (
+									<div id="mobile-menu-industry-list" className="mobile-menu-industry-children">
+										{industryLinks.map((item, i) => (
+											<Link
+												key={item.href}
+												href={item.href}
+												onClick={handleClose}
+												className="mobile-menu-item mobile-menu-industry-child"
+												style={{
+													animationDelay: `${(navBefore.length + 1 + i) * 0.05}s`
+												}}>
+												{item.label}
+											</Link>
+										))}
+									</div>
+								)}
+							</>
+						)}
+						{navAfter.map((item, index) => {
+							const slot =
+								navBefore.length + (hasIndustry ? 1 : 0) + (industryOpen ? industryLinks.length : 0) + index
+							return (
+								<Link
+									key={`a-${index}-${item.href}`}
+									href={item.href}
+									onClick={() => {
+										handleClose()
+										if (item.onClick) item.onClick()
+									}}
+									className="mobile-menu-item"
+									style={{
+										animationDelay: `${slot * 0.05}s`
+									}}
+								>
+									{item.label}
+								</Link>
+							)
+						})}
 					</nav>
 
 					{/* Action Buttons */}
@@ -160,7 +238,7 @@ export default function MobileMenu({
 								animationDelay: `${(menuCount + 1) * 0.05}s`
 							}}
 						>
-							{isPL ? 'Rozpocznij 30 dni za darmo' : 'Start 30-day trial'}
+							{isPL ? 'Załóż darmowy zespół' : 'Create your free team'}
 						</Link>
 					</div>
 

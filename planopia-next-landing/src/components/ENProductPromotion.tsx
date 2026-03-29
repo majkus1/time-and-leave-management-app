@@ -10,9 +10,17 @@ import { registerLocale } from 'react-datepicker'
 import { enGB } from 'date-fns/locale/en-GB'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 import LandingPricing from './LandingPricing'
+import LandingVideoGuideTeaser from './LandingVideoGuideTeaser'
 import LandingAIHighlight from './LandingAIHighlight'
 import SellerCompanyDetails from './SellerCompanyDetails'
+import { planOfferingCopy } from '@/data/planOfferingCopy'
 
 function ENProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -116,14 +124,14 @@ function ENProductPromotion() {
 							"@type": "Person",
 							"name": "Michał Lipka"
 						},
-						"description": "Planopia - time tracking, leave, schedules, chats, Kanban boards, and an AI Assistant. 30-day trial with full features, up to 5 users, AI message limits during trial. Monthly plans (Starter-Enterprise) with user and AI limits; optional AI add-ons available in-app after a paid plan is active.",
+						"description": planOfferingCopy.en.metaLong,
 						"offers": {
 							"@type": "AggregateOffer",
 							"offerCount": "5",
 							"lowPrice": "99",
 							"highPrice": "799",
 							"priceCurrency": "PLN",
-							"description": "30-day trial; monthly plans from 99 to 799 PLN net; optional AI packs"
+							"description": planOfferingCopy.en.jsonLdOfferDescription
 						}
 					})
 				}}
@@ -154,16 +162,17 @@ function ENProductPromotion() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</a>
-						<a
-							href="#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</a>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Blog
 						</Link>
+						<a
+							href="#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
+						</a>
 						<Link
 							href="https://app.planopia.pl/"
 							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
@@ -175,7 +184,7 @@ function ENProductPromotion() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start 30-day trial
+							Create your free team
 						</Link>
 						<Link href="/" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Wersja Polska" className="w-6 h-6" />
@@ -192,13 +201,9 @@ function ENProductPromotion() {
 				onClose={closeMenu}
 				onCloseRequest={handleCloseRequest}
 				lang="en"
-				menuItems={[
-					{ href: '#aboutapp', label: 'About the App' },
-					{ href: '#ai-assistant', label: 'AI Assistant' },
-					{ href: '#prices', label: 'Pricing' },
-					{ href: '#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -210,21 +215,21 @@ function ENProductPromotion() {
 
 			<main>
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="planopia-welcome">
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid md:grid-cols-2 gap-10 items-center">
 						<div className="ordering">
 							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
-								Time tracking, leave and AI – 30 days free
+								{planOfferingCopy.en.heroH1}
 							</h1>
-							<h2 className="font-semibold text-gray-800 mt-2" id="underheader">
-								Planopia helps teams and companies organize work time, leave and tasks.
+							<h2 className="font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
+								{planOfferingCopy.en.heroSub}
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
-								className="bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-2"
+								className="inline-block bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-4"
 							>
-								Start 30-day trial
+								Create your free team
 							</Link>
 						</div>
 						<img
@@ -431,7 +436,9 @@ function ENProductPromotion() {
 
 			<LandingPricing locale="en" />
 
-<section id="contact" className="py-12 px-4 bg-gray-50">
+			<LandingVideoGuideTeaser locale="en" />
+
+			<section id="contact" className="py-12 px-4 bg-gray-50">
 				<div className="max-w-7xl mx-auto">
 					<h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Contact & company details</h2>
 					<p className="mt-3 text-left text-gray-600">

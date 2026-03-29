@@ -298,11 +298,13 @@ function AIAssistant() {
 			setError(null)
 			try {
 				const preset = periodPreset === 'default' ? 'month' : periodPreset
+				const useOfferDates = offer?.dateFrom && offer?.dateTo
+				const effPreset = useOfferDates ? 'custom' : preset === 'custom' ? 'custom' : preset
 				await downloadAiIntentExport(format, {
 					...offer,
-					periodPreset: preset === 'custom' ? 'custom' : preset,
-					dateFrom: preset === 'custom' ? dateFrom : undefined,
-					dateTo: preset === 'custom' ? dateTo : undefined,
+					periodPreset: effPreset,
+					dateFrom: useOfferDates ? offer.dateFrom : preset === 'custom' ? dateFrom : undefined,
+					dateTo: useOfferDates ? offer.dateTo : preset === 'custom' ? dateTo : undefined,
 					locale: i18n.resolvedLanguage === 'en' ? 'en' : 'pl',
 				})
 				queryClient.invalidateQueries({ queryKey: ['ai-assistant-status'] })
@@ -483,7 +485,10 @@ function AIAssistant() {
 											to: lastMeta.periodTo,
 											scope: lastMeta.scope,
 										})}
-								{!lastMeta.allTime && lastMeta.yearMessageOverride
+								{!lastMeta.allTime && lastMeta.monthFromMessageCaption
+									? t('aiAssistant.contextNoteMonthFromMessage', { period: lastMeta.monthFromMessageCaption })
+									: null}
+								{!lastMeta.allTime && !lastMeta.monthFromMessageCaption && lastMeta.yearMessageOverride
 									? t('aiAssistant.contextNoteYearFromMessage', { year: lastMeta.yearMessageOverride })
 									: null}
 							</p>

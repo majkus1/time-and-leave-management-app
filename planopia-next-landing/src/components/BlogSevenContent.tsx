@@ -40,7 +40,7 @@ export default function BlogSevenContent() {
 				"name": "Jak działa okres próbny w Planopii?",
 				"acceptedAnswer": {
 					"@type": "Answer",
-					"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje aplikacji, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby wybierasz płatny plan dopasowany do wielkości zespołu."
+					"text": "Planopia oferuje 30 dni za darmo: pełne funkcje, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby możesz zostać na bezpłatnym planie ewidencji (do 5 aktywnych kont) albo wykupić pakiet z pełnymi modułami."
 				}
 			},
 			{
@@ -123,7 +123,7 @@ export default function BlogSevenContent() {
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Rozpocznij okres próbny
+										Załóż darmowy zespół
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -233,7 +233,7 @@ export default function BlogSevenContent() {
 						<strong>Planopia</strong> sprawdza się zarówno w małych zespołach, jak i w większych firmach:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
-						<li><strong>Małe zespoły</strong> – okres próbny 30 dni, do 5 użytkowników, pełne funkcje</li>
+						<li><strong>Małe zespoły</strong> – 30 dni pełnej aplikacji; potem darmowa ewidencja lub pakiet płatny</li>
 						<li><strong>Średnie firmy</strong> – nielimitowana liczba użytkowników, elastyczna konfiguracja</li>
 						<li><strong>Duże organizacje</strong> – możliwość personalizacji, integracji i dedykowanego środowiska</li>
 						<li><strong>HR i menedżerowie</strong> – kompleksowe narzędzie do zarządzania zespołem</li>
@@ -267,7 +267,7 @@ export default function BlogSevenContent() {
 					</p>
 
 					<p className="mt-8 font-medium text-blue-600">
-						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny i zacznij zarządzać firmą w jednym miejscu</Link>.
+						Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij zarządzać firmą w jednym miejscu</Link>.
 					</p>
 
 					{/* FAQ Section */}
@@ -278,7 +278,7 @@ export default function BlogSevenContent() {
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">Jak działa okres próbny?</h3>
 								<p className="text-gray-700">
 									Przez 30 dni korzystasz z pełnych funkcji za darmo w zespole do 5 użytkowników (limit wiadomości Asystenta AI w tym okresie).
-									Potem wybierasz płatny plan — szczegóły w{' '}
+									Potem darmowy plan ewidencji lub pakiet — szczegóły w{' '}
 									<Link href="/#cennik" className="text-blue-600 hover:underline">cenniku</Link>.
 								</p>
 							</div>

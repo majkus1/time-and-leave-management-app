@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useSettings, useUpdateSettings } from '../../hooks/useSettings'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useLeaveRequestTypes, useUpdateLeaveRequestTypes, useAddCustomLeaveRequestType, useDeleteCustomLeaveRequestType } from '../../hooks/useLeaveRequestTypes'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import Modal from 'react-modal'
@@ -17,6 +18,7 @@ function Settings() {
 	const { role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
 	const { data: settings, isLoading: loadingSettings } = useSettings()
+	const { freemiumTier } = useFreemiumAccess({ enabled: true })
 	const updateSettingsMutation = useUpdateSettings()
 	const [workOnWeekends, setWorkOnWeekends] = useState(true)
 	const [includePolishHolidays, setIncludePolishHolidays] = useState(false)
@@ -36,12 +38,18 @@ function Settings() {
 	const isAdmin = role && role.includes('Admin')
 	const isHR = role && role.includes('HR')
 	const canEditSettings = isAdmin || isHR
+	/** Worker i przełożony: strona tylko pod powiadomienia push (bez konfiguracji zespołu). */
+	const pushOnlySettings = !canEditSettings
+	/** Freemium + Admin/HR: tylko weekendy i święta (reszta ukryta). */
+	const freemiumSlimSettings = Boolean(canEditSettings && freemiumTier)
 	const [isInfoExpanded, setIsInfoExpanded] = useState(false)
 	const [isHolidayInfoExpanded, setIsHolidayInfoExpanded] = useState(false)
 	const [isPolishHolidaysModalOpen, setIsPolishHolidaysModalOpen] = useState(false)
 	
-	// Leave Request Types
-	const { data: leaveRequestTypes = [], isLoading: loadingLeaveTypes } = useLeaveRequestTypes()
+	// Leave Request Types (niepotrzebne w uproszczonym widoku freemium)
+	const { data: leaveRequestTypes = [], isLoading: loadingLeaveTypes } = useLeaveRequestTypes({
+		enabled: canEditSettings && !freemiumTier,
+	})
 	
 	// Push Notifications
 	const {
@@ -53,6 +61,8 @@ function Settings() {
 		updatePreferences: updatePushPreferences
 	} = usePushNotifications()
 	const [pushLoading, setPushLoading] = useState(false)
+	/** Na mobile zielona wskazówka PWA domyślnie zwinięta; od md w górę zawsze widoczna */
+	const [pushPwaTipMobileOpen, setPushPwaTipMobileOpen] = useState(false)
 	const updateLeaveRequestTypesMutation = useUpdateLeaveRequestTypes()
 	const addCustomLeaveRequestTypeMutation = useAddCustomLeaveRequestType()
 	const deleteCustomLeaveRequestTypeMutation = useDeleteCustomLeaveRequestType()
@@ -177,19 +187,28 @@ function Settings() {
 
 	const handleSave = async () => {
 		try {
-			// Zapisz workHours jako tablicę (lub null jeśli pusta)
-			const workHoursData = workHoursList.length > 0 ? workHoursList : null
-			
-			await updateSettingsMutation.mutateAsync({ 
-				workOnWeekends,
-				includePolishHolidays,
-				includeCustomHolidays,
-				customHolidays,
-				workHours: workHoursData,
-				leaveCalculationMode,
-				leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
-				timerEnabled
-			})
+			if (freemiumSlimSettings) {
+				await updateSettingsMutation.mutateAsync({
+					workOnWeekends,
+					includePolishHolidays,
+					includeCustomHolidays,
+					customHolidays,
+				})
+			} else {
+				// Zapisz workHours jako tablicę (lub null jeśli pusta)
+				const workHoursData = workHoursList.length > 0 ? workHoursList : null
+
+				await updateSettingsMutation.mutateAsync({
+					workOnWeekends,
+					includePolishHolidays,
+					includeCustomHolidays,
+					customHolidays,
+					workHours: workHoursData,
+					leaveCalculationMode,
+					leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
+					timerEnabled,
+				})
+			}
 			await showAlert(t('settings.saveSuccess'))
 		} catch (error) {
 			console.error('Error updating settings:', error)
@@ -416,7 +435,7 @@ function Settings() {
 		}
 	}
 
-	if (loadingSettings || loadingLeaveTypes) return <Loader />
+	if ((canEditSettings && loadingSettings) || loadingLeaveTypes) return <Loader />
 
 	return (
 		<>
@@ -439,8 +458,24 @@ function Settings() {
 					<hr></hr>
 				</div>
 
-				{/* Push Notifications Section - Available for all users - Moved to top */}
-				{pushSupported && (
+				{freemiumTier && pushOnlySettings && (
+					<div
+						style={{
+							backgroundColor: '#f8f9fa',
+							border: '1px solid #dee2e6',
+							borderRadius: '8px',
+							padding: '16px 20px',
+							marginBottom: '20px',
+						}}
+					>
+						<p style={{ margin: 0, color: '#495057', fontSize: '15px', lineHeight: 1.55 }}>
+							{t('settings.freemiumPushUnavailable')}
+						</p>
+					</div>
+				)}
+
+				{/* Push tylko poza freemium — powiadomienia w systemie dotyczą modułów (czat, zadania, urlopy…), których w planie darmowym nie ma */}
+				{pushSupported && !freemiumTier && (!freemiumSlimSettings || pushOnlySettings) && (
 					<div style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
@@ -462,26 +497,46 @@ function Settings() {
 								<p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
 									{t('settings.pushNotificationsDescription')}
 								</p>
-								<div style={{ 
-									backgroundColor: '#e8f5e9',
-									borderLeft: '4px solid #4caf50',
-									padding: '12px 16px',
-									borderRadius: '4px',
-									marginBottom: '15px',
-									fontSize: '14px',
-									color: '#2e7d32'
-								}}>
+								<button
+									type="button"
+									className="mb-2 flex w-full items-center justify-between gap-2 rounded-md border border-[#a5d6a7] bg-[#e8f5e9] px-3 py-3 text-left text-sm font-semibold text-[#2e7d32] md:hidden"
+									onClick={() => setPushPwaTipMobileOpen((v) => !v)}
+									aria-expanded={pushPwaTipMobileOpen}
+									aria-controls="settings-push-pwa-tip-panel"
+								>
+									<span>
+										{pushPwaTipMobileOpen
+											? t('settings.pushNotificationsPWATipHide')
+											: t('settings.pushNotificationsPWATipShow')}
+									</span>
+									<span className="shrink-0 text-base opacity-80" aria-hidden>
+										{pushPwaTipMobileOpen ? '▴' : '▾'}
+									</span>
+								</button>
+								<div
+									id="settings-push-pwa-tip-panel"
+									className={`${pushPwaTipMobileOpen ? 'block' : 'hidden'} md:block`}
+									style={{
+										backgroundColor: '#e8f5e9',
+										borderLeft: '4px solid #4caf50',
+										padding: '12px 16px',
+										borderRadius: '4px',
+										marginBottom: '15px',
+										fontSize: '14px',
+										color: '#2e7d32',
+									}}
+								>
 									<p style={{ margin: 0, marginBottom: '8px' }}>
 										{t('settings.pushNotificationsPWAInfo')}
 									</p>
-									<a 
-										href="https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa" 
-										target="_blank" 
+									<a
+										href="https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa"
+										target="_blank"
 										rel="noopener noreferrer"
 										style={{
 											color: '#2e7d32',
 											textDecoration: 'underline',
-											fontWeight: '600'
+											fontWeight: '600',
 										}}
 									>
 										{t('settings.pushNotificationsPWALink')} →
@@ -709,8 +764,8 @@ function Settings() {
 					</div>
 				)}
 
-				{/* Komunikat przypominający o zapisywaniu zmian - tylko dla Admin i HR */}
-				{canEditSettings && (
+				{/* Komunikat przypominający o zapisywaniu zmian - tylko dla Admin i HR (pełny plan) */}
+				{canEditSettings && !freemiumSlimSettings && (
 					<div style={{ 
 						backgroundColor: '#fff3e0',
 						borderLeft: '4px solid #ff9800',
@@ -735,8 +790,35 @@ function Settings() {
 					</div>
 				)}
 
+				{freemiumSlimSettings && (
+					<div
+						style={{
+							backgroundColor: '#e8f4fd',
+							borderLeft: '4px solid #3498db',
+							borderRadius: '8px',
+							padding: '16px 20px',
+							marginBottom: '20px',
+							boxShadow: '0 2px 4px rgba(0, 0, 0, 0.06)',
+						}}
+					>
+						<p style={{ margin: 0, color: '#2c3e50', fontSize: '15px', lineHeight: 1.55 }}>
+							{t('settings.freemiumSlimNotice')}
+						</p>
+						<p
+							style={{
+								margin: '12px 0 0 0',
+								color: '#5a6c7d',
+								fontSize: '14px',
+								lineHeight: 1.55,
+							}}
+						>
+							{t('settings.freemiumPushBrief')}
+						</p>
+					</div>
+				)}
+
 				{/* QR Code Generator Section - tylko dla Admin i HR */}
-				{canEditSettings && (
+				{canEditSettings && !freemiumSlimSettings && (
 					<div style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
@@ -1325,7 +1407,7 @@ function Settings() {
 						)}
 
 						{/* Sekcja konfiguracji godzin pracy */}
-						{canEditSettings && (
+						{!freemiumSlimSettings && (
 							<>
 								<h3 style={{ 
 									color: '#2c3e50',
@@ -1639,7 +1721,7 @@ function Settings() {
 						)}
 
 						{/* Sekcja konfiguracji obliczania urlopów */}
-						{canEditSettings && (
+						{!freemiumSlimSettings && (
 							<div style={{ 
 								backgroundColor: 'white',
 								borderRadius: '12px',
@@ -1784,7 +1866,7 @@ function Settings() {
 						)}
 
 						{/* Sekcja zarządzania typami wniosków urlopowych */}
-				{canEditSettings && (
+				{!freemiumSlimSettings && (
 					<div style={{ 
 						backgroundColor: 'white',
 						marginBottom: '30px'
@@ -2548,7 +2630,7 @@ function Settings() {
 				
 
 				{/* Informacja dla użytkowników bez uprawnień - tylko jeśli nie ma żadnych dostępnych sekcji */}
-				{!canEditSettings && !pushSupported && (
+				{!canEditSettings && !pushSupported && !freemiumTier && (
 					<div style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',

@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsPl,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function BlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +25,7 @@ function BlogThree() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Planowanie urlopów pracowników – jak uniknąć chaosu w firmie?",
-						"description": "Dowiedz się, jak usprawnić planowanie urlopów i nieobecności w Twojej firmie. Sprawdź, jak Planopia pomaga HR w prowadzeniu kalendarza urlopowego online.",
+						"description": "Planowanie urlopów w firmie z Planopią: 30 dni pełnej aplikacji (do 5 osób), potem darmowa ewidencja czasu pracy do 5 aktywnych kont lub pakiety płatne z kalendarzem urlopowym, akceptacjami i raportami HR.",
 						"image": "https://planopia.pl/img/planvacationblog.webp",
 						"author": {
 							"@type": "Person",
@@ -44,7 +50,7 @@ function BlogThree() {
 					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -60,16 +66,17 @@ function BlogThree() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Cennik
 						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Kontakt
-						</Link>
+						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/#kontakt"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Kontakt
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -84,7 +91,7 @@ function BlogThree() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 						<Link href="/en/blog/leave-planning" className="flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
@@ -100,13 +107,9 @@ function BlogThree() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="pl"
-				menuItems={[
-					{ href: '/#oaplikacji', label: 'O Aplikacji' },
-					{ href: '/#asystent-ai', label: 'Asystent AI' },
-					{ href: '/#cennik', label: 'Cennik' },
-					{ href: '/#kontakt', label: 'Kontakt' },
-					{ href: '/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsPl()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -135,14 +138,14 @@ function BlogThree() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										<strong>Darmowa aplikacja do planowania urlopów</strong>  
-										{' '}— 30 dni za darmo, do 5 użytkowników
+										<strong>Darmowa ewidencja czasu pracy</strong>  
+										{' '}— 30 dni z modułem urlopów; potem bezpłatna ewidencja do 5 kont lub pakiet z urlopami
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Rozpocznij okres próbny
+										Załóż darmowy zespół
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -206,8 +209,7 @@ function BlogThree() {
 				<h2 className="text-2xl font-semibold mb-3">Planopia – aplikacja do planowania urlopów</h2>
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong> 
-					z planowaniem urlopów. Przez pierwszy miesiąc (30 dni) korzystasz z pełnych funkcji za darmo w zespole do 5 osób.
-					W płatnych planach masz wyższe limity użytkowników, personalizację i integracje z innymi systemami.
+					z planowaniem urlopów. Przez pierwszy miesiąc (30 dni) masz pełne moduły w zespole do 5 osób; po próbie urlopy i pozostałe funkcje HR są w pakietach płatnych, a ewidencję czasu możesz prowadzić dalej bezpłatnie (do 5 aktywnych kont).
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
 					<li>Pracownicy składają wnioski urlopowe online</li>
@@ -220,11 +222,11 @@ function BlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Planowanie urlopów online</strong> to sposób na porządek, przejrzystość i mniej stresu w zarządzaniu firmą. 
 					Dzięki aplikacji Planopia unikniesz chaosu, przyspieszysz akceptacje i zyskasz kontrolę nad dostępnością zespołu. 
-					Sprawdź <strong>okres próbny — do 5 osób przez 30 dni</strong> i zobacz, jak łatwe może być zarządzanie urlopami.
+					Zacznij od <strong>30 dni pełnej aplikacji</strong> (do 5 osób), potem zostań na darmowej ewidencji lub wykup moduł urlopów w pakiecie płatnym.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">rozpocznij okres próbny i zacznij planować urlopy online</Link>.
+					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij planować urlopy online</Link>.
 				</p>
 			</article>
 

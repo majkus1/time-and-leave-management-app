@@ -23,6 +23,7 @@ function formatDate(d) {
  * @param {import('mongoose').Types.ObjectId[]} params.detailedUserIds
  * @param {'team'|'supervised'|'self'} params.scope
  * @param {number|null} params.yearMessageOverride
+ * @param {string|null} [params.monthMessageOverride] - YYYY-MM when message pinned a calendar month
  */
 async function buildVerifiedStatsForAi({
 	requestingUser,
@@ -30,6 +31,7 @@ async function buildVerifiedStatsForAi({
 	detailedUserIds,
 	scope,
 	yearMessageOverride = null,
+	monthMessageOverride = null,
 }) {
 	const start = range.start
 	const end = range.end
@@ -105,6 +107,7 @@ async function buildVerifiedStatsForAi({
 		periodFrom: formatDate(start),
 		periodTo: formatDate(end),
 		yearMessageOverrideApplied: yearMessageOverride,
+		monthMessageOverrideApplied: monthMessageOverride,
 		requestingUser: {
 			id: requesterId,
 			displayName,

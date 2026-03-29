@@ -4,6 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
+import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import {
+	industryMobileConfig,
+	landingMobileNavItemsEn,
+	MOBILE_INDUSTRY_INSERT_INDEX,
+} from '../data/landingNav'
 
 function ENBlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +25,7 @@ function ENBlogThree() {
 						"@context": "https://schema.org",
 						"@type": "BlogPosting",
 						"headline": "Employee Leave Planning – Best Tools and Practices",
-						"description": "Improve leave planning and absence management. Planopia: online leave calendar, approvals, reports. 30-day trial, up to 5 users.",
+						"description": "Leave planning with Planopia: 30-day full trial (up to 5 users), then free time tracking for up to 5 active accounts or paid plans with online leave calendar, approvals, and HR reports.",
 						"image": "https://planopia.pl/img/desktopnews.webp",
 						"author": {
 							"@type": "Person",
@@ -44,7 +50,7 @@ function ENBlogThree() {
 					<Link href="/en" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 					</Link>
-					<nav className="hidden flex space-x-8 navdesktop">
+					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
@@ -60,17 +66,17 @@ function ENBlogThree() {
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
 							Pricing
 						</Link>
-						
-						<Link
-							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
-							Contact
-						</Link>
+						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
 							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
 							onClick={toggleMenu}>
 							Blog
+						</Link>
+						<Link
+							href="/en#contact"
+							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							Contact
 						</Link>
 						<Link
 							href="https://app.planopia.pl/"
@@ -85,7 +91,7 @@ function ENBlogThree() {
 							onClick={toggleMenu}
 							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
-							Start free trial
+							Create your free team
 						</Link>
 						<Link href="/blog/planowanie-urlopow" className="flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
@@ -101,13 +107,9 @@ function ENBlogThree() {
 				isOpen={menuOpen}
 				onClose={toggleMenu}
 				lang="en"
-				menuItems={[
-					{ href: '/en#aboutapp', label: 'About the App' },
-					{ href: '/en#ai-assistant', label: 'AI Assistant' },
-					{ href: '/en#prices', label: 'Pricing' },
-					{ href: '/en#contact', label: 'Contact' },
-					{ href: '/en/blog', label: 'Blog' },
-				]}
+				menuItems={landingMobileNavItemsEn()}
+				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
+				{...industryMobileConfig('en')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
 				languageSwitcher={{
@@ -136,15 +138,15 @@ function ENBlogThree() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-									<strong>Free leave planning app</strong>  
+									<strong>Free time tracking after trial</strong>  
 									<br />
-									30 days free, up to 5 users
+									30-day full app; then free time tracking (5 accounts) or paid leave module
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Start free trial
+										Create your free team
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -222,11 +224,11 @@ function ENBlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Online leave planning</strong> brings order, clarity, and less stress to day-to-day operations. 
 					With Planopia you'll avoid scheduling conflicts, speed up approvals, 
-					and keep full control over team availability. Start the <strong>30-day trial for teams up to 5 users</strong> and see how easy <strong>leave management</strong> can be.
+					and keep full control over team availability. Start with a <strong>30-day full trial (up to 5 users)</strong>, then use <strong>free time tracking</strong> or upgrade for full <strong>leave management</strong>.
 				</p>
 
 				<p className="mt-8 font-medium text-blue-600">
-					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">start your free trial and start planning leave online</Link>.
+					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">create your team: 30-day trial, then free time tracking or paid leave tools</Link>.
 				</p>
 			</article>
 

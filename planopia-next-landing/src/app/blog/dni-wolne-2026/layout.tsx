@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { planOfferingCopy } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/dni-wolne-2026',
     siteName: 'Planopia',
     title: 'Dni wolne 2026 – kalendarz świąt i dni ustawowo wolnych od pracy w Polsce | Planopia',
-    description: 'Sprawdź kompletny kalendarz dni wolnych 2026 w Polsce. Wszystkie święta ustawowe, długie weekendy i porady dotyczące efektywnego planowania urlopów w 2026 roku.',
+    description: `Kalendarz świąt i dni wolnych 2026. ${planOfferingCopy.pl.metaShort}`,
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnew.webp',
@@ -74,7 +75,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Dni wolne 2026 – kalendarz świąt i dni ustawowo wolnych od pracy | Planopia',
-    description: 'Kompletny kalendarz dni wolnych 2026 w Polsce. Wszystkie święta ustawowe i porady dotyczące planowania urlopów.',
+    description: `Dni wolne 2026 i urlopy w firmie. ${planOfferingCopy.pl.metaShort}`,
     images: ['https://planopia.pl/img/plans-urlopnew.webp'],
   },
   alternates: {

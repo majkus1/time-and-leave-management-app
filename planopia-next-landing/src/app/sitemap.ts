@@ -15,6 +15,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+
+    // Industry landings
+    {
+      url: 'https://planopia.pl/dla-branzy-budowlanej',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+    {
+      url: 'https://planopia.pl/en/for-construction-industry',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
     
     // Blog main pages
     {
@@ -106,6 +120,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+
+    // Blog — video tutorials / user guide
+    {
+      url: 'https://planopia.pl/blog/instrukcja-wideo-planopia',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/video-tutorials',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+
+    // Blog — construction / budowlanka
+    {
+      url: 'https://planopia.pl/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.82,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/time-tracking-on-construction-sites',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.82,
     },
     
     // Blog articles - Medium priority

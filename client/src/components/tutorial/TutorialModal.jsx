@@ -5,11 +5,14 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { API_URL } from '../../config'
 import { useAuth } from '../../context/AuthContext'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useSupervisorConfig } from '../../hooks/useSupervisor'
 
 function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
-	const { refreshUserData, role, username } = useAuth()
+	const { refreshUserData, role, username, userId } = useAuth()
+	const { freemiumTier, freemiumSeatBlocked } = useFreemiumAccess({ enabled: true })
 	const [activeSection, setActiveSection] = useState(null)
 	const [isMarkingAsSeen, setIsMarkingAsSeen] = useState(false)
 	const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -24,9 +27,15 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	
 	// Sprawdź role użytkownika
 	const isAdmin = role && role.includes('Admin')
-	const canSeePackagesTutorial = isAdmin || username === 'michalipka1@gmail.com'
 	const isHR = role && role.includes('HR')
 	const isSupervisor = role && role.includes('Przełożony (Supervisor)')
+	const canSeePackagesTutorial = isAdmin || isHR || username === 'michalipka1@gmail.com'
+	const { data: supervisorConfig } = useSupervisorConfig(
+		userId,
+		isSupervisor && !isAdmin && !isHR
+	)
+	const supervisorCanViewTimesheets =
+		isSupervisor && supervisorConfig?.permissions?.canViewTimesheets !== false
 
 	const formatTutorialContent = (content) => {
 		if (!content || typeof content !== 'string') return []
@@ -369,13 +378,106 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		}
 	]
 
-	// Połącz sekcje:
-	// - Admin/HR: sekcje administracyjne
-	// - pozostali: sekcja personalizacji ustawień
-	const sections = [
-		...baseSections,
-		...(isAdmin || isHR ? adminHRSections : nonAdminHRSections)
-	]
+	const pl = i18n.resolvedLanguage === 'pl'
+	const FREEMIUM_OMIT_BASE_IDS = new Set([
+		'leave-request',
+		'timer',
+		'boards',
+		'schedule',
+		'chat',
+		'ai-assistant',
+		'announcements',
+		'leave-planner',
+		'leave-plans',
+	])
+
+	let sections
+	if (freemiumTier) {
+		const overview = {
+			id: 'freemium-overview',
+			title: pl ? 'Plan darmowy (freemium)' : 'Free plan (freemium)',
+			icon: '/img/info.png',
+			description: pl
+				? 'Co jest dostępne w uproszczonej wersji aplikacji'
+				: 'What is available in the simplified app experience',
+			path: '/dashboard',
+			hideNavigateButton: true,
+			content: pl
+				? [
+						'Twój zespół korzysta z planu darmowego (freemium).',
+						'W menu jest węższy zestaw funkcji niż w pełnej subskrypcji — m.in. ewidencja czasu pracy („Czas pracy”, wpisy ręczne) oraz edycja profilu.',
+						'Dla Administratora i HR są dodatkowo: lista kalendarzy ewidencji, ustawienia świąt i weekendów, zarządzanie zespołem oraz „Pakiety i rozliczenia”.',
+						freemiumSeatBlocked
+							? 'Gdy przekroczony zostanie limit liczby kont, część ekranów może być ograniczona do czasu dopasowania zespołu do limitu lub wykupienia planu — zgodnie z komunikatami w aplikacji.'
+							: null,
+						'Moduły takie jak grafiki, wnioski urlopowe, tablice, czat, asystent AI czy komunikaty oraz szersze ustawienia zespołu są dostępne po rozszerzeniu planu (Administrator lub HR → Pakiety i rozliczenia).',
+				  ]
+						.filter(Boolean)
+						.join('\n\n')
+				: [
+						'Your team is on the free (freemium) plan.',
+						'The menu shows a smaller feature set than the full subscription — including the timesheet (“Timesheet”, manual entries) and profile editing.',
+						'Admin and HR also have: team calendars, holiday & weekend settings, team management, and “Packages & billing”.',
+						freemiumSeatBlocked
+							? 'If active accounts exceed the free limit, some screens may stay limited until the team is adjusted or you upgrade — follow the in-app notices.'
+							: null,
+						'Schedules, leave requests, boards, chat, AI assistant, announcements, and broader team settings unlock after upgrading (Admin or HR → Packages & billing).',
+				  ]
+						.filter(Boolean)
+						.join('\n\n'),
+		}
+
+		const baseFiltered = baseSections
+			.filter((s) => !FREEMIUM_OMIT_BASE_IDS.has(s.id))
+			.map((s) => {
+				if (s.id !== 'timesheet') return s
+				return {
+					...s,
+					description: pl
+						? 'Kalendarz miesięczny — wpisy ręczne (w tym planie bez licznika i QR)'
+						: 'Monthly calendar — manual entries (no counter/QR on this plan)',
+					content: pl
+						? 'W planie darmowym uzupełniasz ewidencję w kalendarzu miesięcznym na stronie „Czas pracy”: godziny od–do lub liczba godzin oraz ewentualne nadgodziny. Licznika czasu pracy i skanowania kodów QR w tym planie nie ma — te funkcje wracają po rozszerzeniu planu (Administrator lub HR).'
+						: 'On the free plan you use the monthly calendar under “Timesheet”: start/end times or hours, plus overtime when needed. There is no work-time counter or QR scanning on this plan — Admin or HR can unlock those after upgrading.',
+				}
+			})
+
+		if (isAdmin || isHR) {
+			const adminFreemium = adminHRSections
+				.filter((s) => s.id !== 'leave-approval' && s.id !== 'help-center')
+				.map((s) => {
+					if (s.id === 'settings') {
+						return {
+							...s,
+							description: pl
+								? 'W freemium: weekendy i święta (reszta po rozszerzeniu planu)'
+								: 'On freemium: weekends & holidays (more after upgrade)',
+							content: pl
+								? 'W planie darmowym Administrator i HR mogą zmieniać wyłącznie pracę w weekendy oraz dni świąteczne (polskie i własne). Pozostałe ustawienia zespołu, typy urlopów, godziny pracy, QR i licznik są dostępne po rozszerzeniu planu. Powiadomienia push skonfigurujesz na pełnej stronie ustawień, jeśli Twoja rola ma do niej dostęp.'
+								: 'On the free plan, Admin and HR can only change weekend work and public/custom holidays. Other team settings (leave types, work hours, QR and counter) unlock after upgrading. Configure push notifications on the full Settings page when your role can open it.',
+						}
+					}
+					if (s.id === 'create-user' && isAdmin) {
+						const extra = pl
+							? '\n\nW planie darmowym obowiązuje limit liczby aktywnych kont — przed dodaniem osoby sprawdź „Pakiety i rozliczenia” oraz komunikaty w aplikacji.'
+							: '\n\nThe free plan limits active accounts — check “Packages & billing” and in-app notices before adding users.'
+						return { ...s, content: s.content + extra }
+					}
+					return s
+				})
+			sections = [overview, ...baseFiltered, ...adminFreemium]
+		} else if (isSupervisor && supervisorCanViewTimesheets) {
+			const ts = adminHRSections.find((x) => x.id === 'timesheets-admin')
+			sections = ts ? [overview, ...baseFiltered, ts] : [overview, ...baseFiltered]
+		} else {
+			sections = [overview, ...baseFiltered]
+		}
+	} else {
+		sections = [
+			...baseSections,
+			...(isAdmin || isHR ? adminHRSections : nonAdminHRSections),
+		]
+	}
 
 	// Podziel sekcje na kolumny (maksymalnie 2 kolumny na desktop, 1 na mobile)
 	const columns = useMemo(() => {
@@ -526,9 +628,13 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						color: '#6b7280',
 						fontSize: '16px'
 					}}>
-						{i18n.resolvedLanguage === 'pl' 
-							? 'Poznaj główne funkcje aplikacji i dowiedz się, jak z nich korzystać'
-							: 'Learn about the main features of the app and how to use them'
+						{freemiumTier
+							? (i18n.resolvedLanguage === 'pl'
+								? 'Instrukcja dostosowana do planu darmowego — tylko to, co masz w menu'
+								: 'Guidance for the free plan — only what you have in the sidebar')
+							: (i18n.resolvedLanguage === 'pl'
+								? 'Poznaj główne funkcje aplikacji i dowiedz się, jak z nich korzystać'
+								: 'Learn about the main features of the app and how to use them')
 						}
 					</p>
 				</div>

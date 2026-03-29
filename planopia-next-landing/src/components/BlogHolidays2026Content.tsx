@@ -59,14 +59,14 @@ export default function BlogHolidays2026Content() {
 							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
 									<p className="text-gray-800 mb-3">
-										<strong>Aplikacja do planowania urlopów</strong>  
-										{' '}— 30 dni za darmo, do 5 użytkowników
+										<strong>Ewidencja i urlopy w jednej aplikacji</strong>  
+										{' '}— 30 dni pełnej aplikacji; potem darmowa ewidencja lub pakiet z urlopami
 									</p>
 									<Link
 										href="https://app.planopia.pl/team-registration"
 										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
 									>
-										Rozpocznij okres próbny
+										Załóż darmowy zespół
 									</Link>
 								</div>
 								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
@@ -296,7 +296,7 @@ export default function BlogHolidays2026Content() {
 					<p className="mb-4 text-gray-700">
 						<strong>Planowanie urlopów</strong> w firmie może być skomplikowane, szczególnie gdy masz do czynienia z większym zespołem. 
 						Chociaż wiele osób korzysta z <strong>rocznego planu urlopów 2026 w Excelu</strong>, istnieją lepsze rozwiązania. 
-						<Link href="/blog/planowanie-urlopow" className="text-blue-600 hover:underline font-semibold"> Planopia oferuje 30 dni za darmo (do 5 użytkowników, pełne funkcje)</Link>, 
+						<Link href="/blog/planowanie-urlopow" className="text-blue-600 hover:underline font-semibold"> Planopia: 30 dni pełnej aplikacji, potem darmowa ewidencja czasu lub pakiet z kalendarzem urlopowym</Link>, 
 						co pozwala w prosty i efektywny sposób zarządzać urlopami pracowników. Dzięki <strong>kalendarzowi urlopowemu online</strong> możesz:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
@@ -320,8 +320,7 @@ export default function BlogHolidays2026Content() {
 					</p>
 					<p className="mb-4 text-gray-700">
 						Pamiętaj, że <strong>planowanie urlopów z wyprzedzeniem</strong> zwiększa szanse na akceptację wniosków przez pracodawcę 
-						i pozwala na lepsze wykorzystanie dni wolnych. Jeśli zarządzasz urlopami w firmie, rozważ użycie <strong>darmowego programu do urlopów</strong>, 
-						która ułatwi koordynację i uniknięcie konfliktów. Zamiast tworzyć <strong>roczny plan urlopów 2026 w Excelu</strong>, możesz 
+						i pozwala na lepsze wykorzystanie dni wolnych. Jeśli zarządzasz urlopami w firmie, rozważ <strong>aplikację z kalendarzem urlopowym</strong> (w Planopii — w okresie próbnym i pakietach płatnych) albo zacznij od <strong>darmowej ewidencji czasu pracy</strong> po próbie. Zamiast tworzyć <strong>roczny plan urlopów 2026 w Excelu</strong>, możesz 
 						skorzystać z nowoczesnego rozwiązania, które automatyzuje proces i eliminuje ryzyko błędów.
 					</p>
 
@@ -331,13 +330,13 @@ export default function BlogHolidays2026Content() {
 							Chcesz wypróbować aplikację do planowania urlopów?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							30 dni za darmo, do 5 użytkowników — rozpocznij zarządzanie urlopami i uporządkuj planowanie w firmie.
+							30 dni pełnej aplikacji (do 5 osób), potem darmowa ewidencja czasu do 5 kont lub pakiet z modułem urlopów — uporządkuj planowanie w firmie.
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
 							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
 						>
-							Rozpocznij okres próbny
+							Załóż darmowy zespół
 						</Link>
 					</div>
 				</article>

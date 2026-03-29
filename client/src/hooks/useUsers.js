@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
+import { BILLING_ENTITLEMENTS_QUERY_KEY } from './useBilling'
 
 // Query hook - pobieranie wszystkich użytkowników
 export const useUsers = () => {
@@ -58,6 +59,7 @@ export const useCreateUser = () => {
 			// Natychmiast odśwież dane
 			queryClient.refetchQueries({ queryKey: ['users'] })
 			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+			queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 		},
 	})
 }
@@ -181,6 +183,7 @@ export const useRestoreUser = () => {
 			// Natychmiast odśwież dane
 			queryClient.refetchQueries({ queryKey: ['users'] })
 			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+			queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 		},
 	})
 }
@@ -203,6 +206,7 @@ export const usePermanentlyDeleteUser = () => {
 			// Natychmiast odśwież dane
 			queryClient.refetchQueries({ queryKey: ['users'] })
 			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+			queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 		},
 	})
 }
@@ -247,6 +251,7 @@ export const useDeleteUser = () => {
 			// Natychmiast odśwież dane
 			queryClient.refetchQueries({ queryKey: ['users'] })
 			queryClient.refetchQueries({ queryKey: ['teamMembers'] })
+			queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 		},
 	})
 }

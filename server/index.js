@@ -305,8 +305,8 @@ app.use((req, res, next) => {
 app.use(helmet())
 app.use(i18nextMiddleware.handle(i18next))
 
-const trialLapseApiGuard = require('./middleware/trialLapseApiGuard')
-app.use(trialLapseApiGuard)
+const freemiumApiGuard = require('./middleware/freemiumApiGuard')
+app.use(freemiumApiGuard)
 
 app.use('/api/public', publicRoutes)
 app.use('/api/teams', teamRoutes) // nowe trasy dla zespołów

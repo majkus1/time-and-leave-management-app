@@ -5,6 +5,7 @@ const {
 	SPECIAL_UNLIMITED_AI_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
 	FORCE_LEGACY_PRE_BILLING_TEAM_NAMES,
+	FORCE_FREEMIUM_TEST_TEAM_NAMES,
 } = require('../constants/specialTeams')
 const { TRIAL, PAID_PLANS, LEGACY_PRE_BILLING_GRACE_UNTIL } = require('../constants/planCatalog')
 
@@ -53,15 +54,32 @@ function isLegacyPreBillingTeam(team, now = new Date()) {
 	return isStructuralLegacyPreBillingTeam(team, now) && now < LEGACY_PRE_BILLING_GRACE_UNTIL
 }
 
-/** Mur API / socket: wygasły trial bez opłacenia, wygaśnięty opłacony okres, albo minął okres przejściowy legacy. */
-function requiresFullAppSubscriptionWall(team, now = new Date()) {
+/**
+ * Kiedyś: pełny mur API po wygaśnięciu trialu / subskrypcji. Obecnie dostęp = freemium (freemiumApiGuard).
+ * Zostawione dla kompatybilności wywołań (socket); zawsze false — brak całkowitego odcięcia apki.
+ */
+function requiresFullAppSubscriptionWall() {
+	return false
+}
+
+/** Trial nieopłacony, koniec opłaconego okresu planu, lub koniec okresu przejściowego legacy — wąski dostęp freemium. */
+function isFreemiumTierTeam(team, now = new Date()) {
 	if (!team || team.isActive === false) return false
 	if (isSpecialNamedTeam(team)) return false
+	/** FORCE_FREEMIUM_TEST_TEAM_NAMES: test UI freemium bez subskrypcji; po aktywacji płatnego planu pełna apka jak dla innych zespołów. */
+	if (
+		team.name &&
+		FORCE_FREEMIUM_TEST_TEAM_NAMES.includes(team.name) &&
+		!isPaidSubscriptionActive(team, now)
+	) {
+		return true
+	}
 	if (isLegacyPreBillingTeam(team, now)) return false
-	if (isTrialExpiredUnpaid(team, now)) return true
-	if (isPaidPlanPeriodLapsed(team, now)) return true
-	if (isLegacyPreBillingGraceExpired(team, now)) return true
-	return false
+	return (
+		isTrialExpiredUnpaid(team, now) ||
+		isPaidPlanPeriodLapsed(team, now) ||
+		isLegacyPreBillingGraceExpired(team, now)
+	)
 }
 
 /** Tylko wybrane nazwy (np. OficjalnyAdminowy) — AI bez limitu licznika. Halo Rental System: Starter z limitem jak w PAID_PLANS. */
@@ -243,13 +261,20 @@ function pickConsumeBucket(team, now = new Date()) {
 	return null
 }
 
-function buildClientEntitlements(team) {
+function buildClientEntitlements(team, options = {}) {
 	const now = new Date()
 	const structuralLegacy = isStructuralLegacyPreBillingTeam(team, now)
 	const legacyGrandfatheredActive = isLegacyPreBillingTeam(team, now)
 	const unrestricted = hasUnrestrictedAi(team)
 	const buckets = computeAiBuckets(team, now)
 	const maxUsers = effectiveMaxUsers(team, now)
+	const freemiumTier = isFreemiumTierTeam(team, now)
+	const freemiumMaxSeats = TRIAL.maxUsers
+	const activeSeatCount = options.activeSeatCount
+	const freemiumSeatBlocked =
+		freemiumTier &&
+		typeof activeSeatCount === 'number' &&
+		activeSeatCount > freemiumMaxSeats
 
 	return {
 		legacy: structuralLegacy,
@@ -266,6 +291,9 @@ function buildClientEntitlements(team) {
 		billingPeriodEnd: team.billingPeriodEnd || null,
 		maxUsers,
 		storedMaxUsers: team.maxUsers,
+		freemiumTier,
+		freemiumMaxSeats,
+		freemiumSeatBlocked,
 		ai: {
 			unrestricted,
 			/** Wspólny licznik: czat AI + AI grafiku + drafty w asystencie */
@@ -392,6 +420,7 @@ module.exports = {
 	isLegacyPreBillingGraceExpired,
 	isLegacyPreBillingTeam,
 	requiresFullAppSubscriptionWall,
+	isFreemiumTierTeam,
 	isLegacyUnmeteredTeam,
 	hasUnrestrictedAi,
 	isTrialActive,
