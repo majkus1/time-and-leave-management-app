@@ -156,29 +156,6 @@ function validateAndClampRange(range, opts = {}) {
 	return { start, end, clamped: false, isAllTime: !!opts.isAllTime }
 }
 
-function leaveStatusBucket(status) {
-	if (status === 'status.pending') return 'pending'
-	if (status === 'status.rejected') return 'rejected'
-	return 'acceptedOrSent'
-}
-
-function incrementDayMap(map, date, bucket) {
-	const key = formatDate(date)
-	if (!key) return
-	if (!map[key]) map[key] = { pending: 0, acceptedOrSent: 0, rejected: 0 }
-	map[key][bucket] = (map[key][bucket] || 0) + 1
-}
-
-function expandLeaveToDayMap(leave, map) {
-	const s = new Date(leave.startDate)
-	const e = new Date(leave.endDate)
-	s.setHours(0, 0, 0, 0)
-	e.setHours(0, 0, 0, 0)
-	for (let t = s.getTime(); t <= e.getTime(); t += MS_PER_DAY) {
-		incrementDayMap(map, new Date(t), leaveStatusBucket(leave.status))
-	}
-}
-
 function announcementVisibleToUser(ann, userId, userDepartments) {
 	if (ann.targetScope === 'all') return true
 	if (ann.targetScope === 'department' && ann.targetDepartment) {
@@ -370,8 +347,8 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 
 	const roleHelp =
 		locale === 'en'
-			? 'Roles: Admin (full team), HR (full team leave/timesheets), Przełożony (Supervisor) (scoped by config), Pracownik (Worker) (own data + anonymized team leave load).'
-			: 'Role: Admin (cały zespół), HR (cały zespół), Przełożony (Supervisor) (według konfiguracji), Pracownik (Worker) (własne dane + anonimowe obłożenie urlopami).'
+			? 'Roles: Leave rows in DATA CONTEXT always list **all active team members** (aligned with the in-app leave planner). Workdays, timer aggregates, and tasks still follow role scope: Admin/HR (full team), Supervisor (per config), Worker (own / supervised visibility as in “Users in scope”).'
+			: 'Role: Wiersze urlopów w DATA CONTEXT zawsze obejmują **cały aktywny zespół** (jak w planerze urlopów). Ewidencja czasu, licznik i zadania nadal wg zakresu roli: Admin/HR (cały zespół), Przełożony (wg konfiguracji), Pracownik (własne / widoczność jak w „Users in scope”).'
 
 	const parts = []
 	parts.push('--- Team & app configuration (current) ---')
@@ -457,6 +434,49 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 			return [id, n]
 		})
 	)
+
+	// Leave planner shows all team members' requests — mirror that in AI context (names for all active team users).
+	const teamUsersForLeaveNames = await User.find({ _id: { $in: teamUserIds } })
+		.select('firstName lastName')
+		.lean()
+	const leaveDisplayNameByUserId = new Map(
+		teamUsersForLeaveNames.map(u => {
+			const id = u._id?.toString?.() || String(u._id)
+			const n = `${u.firstName || ''} ${u.lastName || ''}`.trim()
+			return [id, n]
+		})
+	)
+
+	const leavesDetailed = await LeaveRequest.find({
+		userId: { $in: teamUserIds },
+		startDate: { $lte: end },
+		endDate: { $gte: start },
+	})
+		.sort({ startDate: -1 })
+		.lean()
+
+	const maxLeaves = useCompact ? MAX_LEAVE_LINES_COMPACT : MAX_LEAVE_LINES
+	let leaveLines = leavesDetailed.map(lr => {
+		const uid = lr.userId?.toString?.() || String(lr.userId)
+		const st = formatLeaveStatusForContext(lr.status, locale)
+		const person = (leaveDisplayNameByUserId.get(uid) || '').trim()
+		const nameSeg = person ? `name:${person} | ` : ''
+		return `- ${nameSeg}userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
+	})
+
+	let leaveExtra = ''
+	if (leaveLines.length > maxLeaves) {
+		const byStatus = {}
+		const byType = {}
+		for (const lr of leavesDetailed) {
+			const stLabel = formatLeaveStatusForContext(lr.status, locale)
+			byStatus[stLabel] = (byStatus[stLabel] || 0) + 1
+			byType[lr.type] = (byType[lr.type] || 0) + 1
+		}
+		leaveExtra = `\nLeave summary in range: byStatus=${JSON.stringify(byStatus)} byTypeId=${JSON.stringify(byType)}`
+		leaveLines = leaveLines.slice(0, maxLeaves)
+		leaveExtra += `\n(showing last ${maxLeaves} leave rows; totals above are for full range)`
+	}
 
 	let workdaysTruncated = false
 	let workdayJson = '[]'
@@ -581,50 +601,6 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	)
 	const timerSessionAggregatesHitDocLimit = workdaysForTimerAgg.length >= MAX_WORKDAYS_FOR_TIMER_AGG
 
-	const leavesDetailed = await LeaveRequest.find({
-		userId: { $in: detailedUserIds },
-		startDate: { $lte: end },
-		endDate: { $gte: start },
-	})
-		.sort({ startDate: -1 })
-		.lean()
-
-	let leaveLines = leavesDetailed.map(lr => {
-		const uid = lr.userId?.toString?.() || String(lr.userId)
-		const st = formatLeaveStatusForContext(lr.status, locale)
-		const person = (displayNameByUserId.get(uid) || '').trim()
-		const nameSeg = person ? `name:${person} | ` : ''
-		return `- ${nameSeg}userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
-	})
-
-	let leaveExtra = ''
-	const maxLeaves = useCompact ? MAX_LEAVE_LINES_COMPACT : MAX_LEAVE_LINES
-	if (leaveLines.length > maxLeaves) {
-		const byStatus = {}
-		const byType = {}
-		for (const lr of leavesDetailed) {
-			const stLabel = formatLeaveStatusForContext(lr.status, locale)
-			byStatus[stLabel] = (byStatus[stLabel] || 0) + 1
-			byType[lr.type] = (byType[lr.type] || 0) + 1
-		}
-		leaveExtra = `\nLeave summary in range: byStatus=${JSON.stringify(byStatus)} byTypeId=${JSON.stringify(byType)}`
-		leaveLines = leaveLines.slice(0, maxLeaves)
-		leaveExtra += `\n(showing last ${maxLeaves} leave rows; totals above are for full range)`
-	}
-
-	const teamLeaveDayMap = {}
-	if (scope === 'self') {
-		const teamLeaves = await LeaveRequest.find({
-			userId: { $in: teamUserIds },
-			startDate: { $lte: end },
-			endDate: { $gte: start },
-		}).lean()
-
-		for (const lr of teamLeaves) {
-			expandLeaveToDayMap(lr, teamLeaveDayMap)
-		}
-	}
-
 	const boards = await Board.find({ teamId, isActive: true }).select('_id name type departmentName').lean()
 	const boardIds = boards.map(b => b._id)
 	const boardMap = Object.fromEntries(boards.map(b => [b._id.toString(), b]))
@@ -704,13 +680,6 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		`- ${formatDate(a.createdAt)} | ${(a.title || '').slice(0, 160)} | scope:${a.targetScope}`
 	)
 
-	const occupancyLines =
-		scope === 'self'
-			? Object.entries(teamLeaveDayMap)
-				.sort(([a], [b]) => a.localeCompare(b))
-				.map(([day, c]) => `${day}: acceptedOrSent=${c.acceptedOrSent}, pending=${c.pending}, rejected=${c.rejected} (headcount on leave that day, anonymized)`)
-			: []
-
 	const meta = {
 		locale,
 		scope,
@@ -739,6 +708,19 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push('--- Users in scope (detailed) ---')
 	parts.push(userLines.length ? userLines.join('\n') : '(none)')
 	parts.push('')
+	parts.push('--- Leave requests (in period, whole active team — same idea as leave planner) ---')
+	parts.push(
+		String(locale || '').toLowerCase().startsWith('en')
+			? 'These rows cover **all active team members** (not only “Users in scope” above). `(none)` means no leave requests overlap Meta.periodFrom–periodTo — not missing permissions.'
+			: 'Wiersze obejmują **wszystkich aktywnych członków zespołu** (nie tylko listę „Users in scope” powyżej). `(none)` oznacza brak wniosków nakładających się na okres z Meta — **nie** brak uprawnień.'
+	)
+	parts.push(
+		String(locale || '').toLowerCase().startsWith('en')
+			? 'Each row includes `name:` (when known) before `userId:` — use the name in markdown tables for team/supervisor summaries so the answer matches exports.'
+			: 'Każdy wiersz zawiera `name:` (gdy znane) przed `userId:` — w tabelach markdown (raport zespołu / przełożonego) podawaj imię i nazwisko jak w eksporcie PDF/Excel.'
+	)
+	parts.push((leaveLines.length ? leaveLines.join('\n') : '(none)') + leaveExtra)
+	parts.push('')
 	parts.push('--- Workdays & timer sessions ---')
 	parts.push(workdayJson.slice(0, 120000))
 	parts.push('')
@@ -747,23 +729,6 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push('')
 	parts.push(timerPack.jsonString.slice(0, 80000))
 	parts.push('')
-	parts.push('--- Leave requests (in period) ---')
-	parts.push(
-		String(locale || '').toLowerCase().startsWith('en')
-			? 'Each row includes `name:` (when known) before `userId:` — use the name in markdown tables for team/supervisor summaries so the answer matches exports.'
-			: 'Każdy wiersz zawiera `name:` (gdy znane) przed `userId:` — w tabelach markdown (raport zespołu / przełożonego) podawaj imię i nazwisko jak w eksporcie PDF/Excel.'
-	)
-	parts.push((leaveLines.length ? leaveLines.join('\n') : '(none)') + leaveExtra)
-	parts.push('')
-	if (scope === 'self') {
-		parts.push('--- Team leave occupancy by day (anonymized) ---')
-		parts.push(
-			occupancyLines.length
-				? occupancyLines.join('\n')
-				: '(no overlapping leaves in range)'
-		)
-		parts.push('')
-	}
 	parts.push('--- Tasks (boards / kanban, in period) ---')
 	parts.push(taskLines.length ? taskLines.join('\n') : '(none)')
 	parts.push('')

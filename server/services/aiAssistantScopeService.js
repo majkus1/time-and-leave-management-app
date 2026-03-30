@@ -1,6 +1,7 @@
 /**
- * Determines which user IDs the requester may see in AI context (detailed data).
+ * Determines which user IDs the requester may see in AI context for workdays, timer aggregates, and tasks.
  * Mirrors workday team visibility: Admin/HR → full team; Supervisor → supervised scope; Worker → self only.
+ * (Leave requests in the assistant are loaded separately for **all active team members** — see aiContextBuilderService.)
  */
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)

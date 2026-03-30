@@ -179,7 +179,16 @@ function tryCalendarMonthOverrideFromMessage(lastUserText, now = new Date()) {
 	if (foundMi >= 0) {
 		const nowM = now.getMonth()
 		const nowY = now.getFullYear()
-		const y = foundMi <= nowM ? nowY : nowY - 1
+		// Month name without year: prefer same calendar year. If the month is *later* in the year than today,
+		// treat it as upcoming months in nowY when within ~half a year (e.g. March → April same year);
+		// otherwise assume previous calendar year (e.g. January → December).
+		let y
+		if (foundMi > nowM) {
+			const gap = foundMi - nowM
+			y = gap <= 6 ? nowY : nowY - 1
+		} else {
+			y = nowY
+		}
 		const { start, end } = monthCalendarRange(y, foundMi)
 		return {
 			range: { start, end },
@@ -445,6 +454,9 @@ async function prepareAssistantTurn(input) {
 		verifiedStatsRule,
 		periodFromMessageRule,
 		'Do not invent employees, hours, or leave requests when answering from DATA CONTEXT.',
+		locale === 'en'
+			? '**Leave requests:** The DATA CONTEXT section “Leave requests (in period, whole active team…)” includes **all active team members** (same broad visibility as the in-app leave planner), regardless of Meta.scope. Never tell the user you have “no access to team leave data” when that section is present. If it shows only `(none)`, it means **no requests overlap** Meta.periodFrom–Meta.periodTo — not missing permissions. Use those rows for “who is off / collisions” questions.'
+			: '**Wnioski urlopowe:** Sekcja DATA CONTEXT „Leave requests (in period, whole active team…)” obejmuje **wszystkich aktywnych członków zespołu** (tak szeroki widok jak w planerze urlopów w aplikacji), niezależnie od Meta.scope. Nie mów użytkownikowi, że „nie masz dostępu do urlopów zespołu”, skoro ta sekcja jest w kontekście. Jeśli jest tylko `(none)`, znaczy to **brak wniosków nakładających się** na Meta.periodFrom–Meta.periodTo — a nie brak uprawnień. Pytania „kto ma urlop / kolizje” rozstrzygaj wyłącznie na podstawie tych wierszy.',
 		'Polish calendar / public holidays: NEVER invent dates, weekdays, or Easter from memory. In Poland Labour Day (Święto Pracy) is **1 May** (1 maja), not 1 April. Easter and Corpus Christi are movable — only use dates from the POLISH PUBLIC HOLIDAYS block when it is present below. When that block lists **24 December (Christmas Eve / Wigilia)**, treat it as a non-working day in Planopia’s Polish-holiday calendar — do not advise taking annual leave on 24 Dec solely “to get the day off” unless DATA CONTEXT shows Polish holidays are disabled for the team.',
 		'Format answers with GitHub-flavored Markdown: use ##/### headings, **bold**, bullet lists, and tables when they improve clarity.',
 		'Map leave type ids (e.g. leaveform.option1) to human names from the LEAVE TYPE IDS section when explaining to users.',

@@ -69,11 +69,12 @@ W menu bocznym: **„Pakiety i rozliczenia”** (PL) / **„Packages & billing�
 
 ## Role i zakres danych (DATA CONTEXT)
 
-- **Admin / HR**: mogą widzieć szczegółowe dane wszystkich aktywnych użytkowników zespołu (czas pracy, urlopy, zadania na tablicach zespołu).
-- **Przełożony (Supervisor)**: pracownicy zgodnie z konfiguracją przełożonego (jak w ewidencji).
-- **Pracownik**: tylko własne dane + **anonimowe** obłożenie urlopami zespołu po dniach (bez imion).
+- **Admin / HR**: mogą widzieć szczegółowe dane wszystkich aktywnych użytkowników zespołu (czas pracy, zadania na tablicach zespołu) w zakresie roli.
+- **Przełożony (Supervisor)**: pracownicy zgodnie z konfiguracją przełożonego (jak w ewidencji / zadaniach).
+- **Pracownik**: w ewidencji i zadaniach — zwykle własny zakres widoczności jak w aplikacji.
+- **Wnioski urlopowe w AI Asystencie**: lista w DATA CONTEXT obejmuje **wszystkich aktywnych członków zespołu** (jak szeroki podgląd w planerze urlopów), z imionami i statusami — niezależnie od roli przy pytaniach o urlopy.
 
-Nie ujawniaj danych spoza DATA CONTEXT. Jeśli użytkownik pyta o osoby poza zakresem — wyjaśnij brak dostępu.
+Nie ujawniaj danych spoza DATA CONTEXT. Jeśli użytkownik pyta o osoby poza zakresem **dla ewidencji lub zadań** — wyjaśnij brak dostępu; dla urlopów w Asystencie korzystaj z sekcji wniosków zespołowych w kontekście.
 
 ---
 
@@ -170,10 +171,9 @@ Jeśli w prompcie jest blok **POLSKIE ŚWIĘTA** / **POLISH PUBLIC HOLIDAYS**, t
 ## Słownik danych w kontekście (skrót)
 
 - **Workdays**: godziny, notatki, nieobecności, sesje timera.
-- **Leave requests**: typ, daty, statusy (pending, accepted, rejected, sent).
+- **Leave requests**: typ, daty, statusy (pending, accepted, rejected, sent) — w Asystencie dla **całego aktywnego zespołu**.
 - **Tasks**: status Kanban, tablica, przypisania.
 - **Announcements**: tytuły widocznych komunikatów.
-- **Team leave occupancy** (pracownik): anonimowe obłożenie dniami.
 
 ---
 
