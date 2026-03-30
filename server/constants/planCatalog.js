@@ -11,10 +11,13 @@ const TRIAL = {
 
 /**
  * Zespoły bez pól billing w Mongo (konta sprzed cennika) mają pełny dostęp do aplikacji bez subskrypcji
- * do tego momentu — północ przejścia na 2.01.2027 w Europe/Warsaw.
+ * do tego momentu — pierwsza chwila PO 1.08.2026 (Europe/Warsaw), tj. 2.08.2026 00:00 w tej strefie.
  * Nie dotyczy OficjalnyAdminowy / Halo Rental System (osobna obsługa, nie są „structural legacy”).
  */
-const LEGACY_PRE_BILLING_GRACE_UNTIL = new Date('2027-01-02T00:00:00+01:00')
+const LEGACY_PRE_BILLING_GRACE_UNTIL = new Date('2026-08-02T00:00:00+02:00')
+
+/** Jednorazowa pula AI (czat + grafik + drafty) na cały okres legacy — bez resetu miesięcznego. */
+const LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL = 10
 
 const PAID_PLANS = {
 	starter: {
@@ -93,6 +96,7 @@ function checkoutAmountGroszeForAddon(addonId) {
 module.exports = {
 	TRIAL,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
+	LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL,
 	PAID_PLANS,
 	AI_ADDON_PACKS,
 	PAID_PLAN_KEYS,

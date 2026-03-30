@@ -142,9 +142,9 @@ async function applyAiAddonPack({ teamId, addonId, idempotencyKey, actorLabel = 
 		err.code = 'NOT_FOUND'
 		throw err
 	}
-	if (!team.billingHadPaidPlan) {
+	if (!entitlementsService.isPaidSubscriptionActive(team)) {
 		const err = new Error(
-			'Pakietów AI nie można nadać zanim zespół nie ma co najmniej jednej aktywowanej płatnej subskrypcji.'
+			'Pakietów AI można nadać tylko gdy zespół ma aktywną płatną subskrypcję (wygasły plan — odmowa).'
 		)
 		err.code = 'VALIDATION'
 		throw err

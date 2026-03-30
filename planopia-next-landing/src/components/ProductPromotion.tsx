@@ -348,13 +348,13 @@ function ProductPromotion() {
         </div>
 
         <div className="mt-8">
-          <p className="text-gray-700 text-lg leading-relaxed">
-            Potrzebujesz więcej funkcji, własnych integracji lub osobnego środowiska dla firmy? Masz wielu pracowników?{' '}
+          <p className="text-gray-700 text-lg leading-relaxed font-bold">
+            Potrzebujesz więcej funkcji, własnych integracji pod cele organizacji lub osobnego środowiska? Masz wielu pracowników?{' '}
             <span className="text-gray-600">
               Zestawienie pakietów i limitów znajdziesz w sekcji{' '}
               <Link
                 href="#cennik"
-                className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
+                className="font-bold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
               >
                 Cennik
               </Link>{' '}

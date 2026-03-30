@@ -6,8 +6,14 @@ const {
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
 	FORCE_LEGACY_PRE_BILLING_TEAM_NAMES,
 	FORCE_FREEMIUM_TEST_TEAM_NAMES,
+	legacyGraceUntilForTeam,
+	legacyGraceOneOffAiTotalForTeam,
 } = require('../constants/specialTeams')
 const { TRIAL, PAID_PLANS, LEGACY_PRE_BILLING_GRACE_UNTIL } = require('../constants/planCatalog')
+
+function effectiveLegacyGraceUntil(team) {
+	return legacyGraceUntilForTeam(team, LEGACY_PRE_BILLING_GRACE_UNTIL)
+}
 
 const MAX_CONSUME_RETRIES = 10
 
@@ -44,14 +50,14 @@ function isStructuralLegacyPreBillingTeam(team, now = new Date()) {
 
 /** Po tej dacie structural legacy podlega temu samemu „murze” co wygasły trial bez płatności. */
 function isLegacyPreBillingGraceExpired(team, now = new Date()) {
-	return isStructuralLegacyPreBillingTeam(team, now) && now >= LEGACY_PRE_BILLING_GRACE_UNTIL
+	return isStructuralLegacyPreBillingTeam(team, now) && now >= effectiveLegacyGraceUntil(team)
 }
 
 /**
  * Trwa okres przejściowy dla kont sprzed billing — pełna apka bez subskrypcji; AI nadal po wykupieniu planu.
  */
 function isLegacyPreBillingTeam(team, now = new Date()) {
-	return isStructuralLegacyPreBillingTeam(team, now) && now < LEGACY_PRE_BILLING_GRACE_UNTIL
+	return isStructuralLegacyPreBillingTeam(team, now) && now < effectiveLegacyGraceUntil(team)
 }
 
 /**
@@ -157,6 +163,24 @@ function computeAiBuckets(team, now = new Date()) {
 	}
 
 	if (isLegacyPreBillingTeam(team, now)) {
+		const oneOffCap = legacyGraceOneOffAiTotalForTeam(team)
+		if (oneOffCap != null) {
+			ensureMonthRolloverInMemory(team)
+			const packBal = team.aiPackBalance || 0
+			const packOk = canSpendPackBalance(team) && packBal > 0
+			const used = team.legacyOneOffAiMessagesUsed || 0
+			const legacyRemaining = Math.max(0, oneOffCap - used)
+			const total = legacyRemaining + (packOk ? packBal : 0)
+			return {
+				totalRemaining: total,
+				trialRemaining: legacyRemaining,
+				monthlyRemaining: 0,
+				packRemaining: packBal,
+				hasAiAccess: total > 0,
+				metered: true,
+				denyReason: total > 0 ? undefined : 'quota',
+			}
+		}
 		return {
 			totalRemaining: 0,
 			trialRemaining: 0,
@@ -237,7 +261,17 @@ function computeAiBuckets(team, now = new Date()) {
 
 function pickConsumeBucket(team, now = new Date()) {
 	if (hasUnrestrictedAi(team)) return null
-	if (isLegacyPreBillingTeam(team, now)) return null
+	if (isLegacyPreBillingTeam(team, now)) {
+		const cap = legacyGraceOneOffAiTotalForTeam(team)
+		if (cap != null) {
+			ensureMonthRolloverInMemory(team)
+			const used = team.legacyOneOffAiMessagesUsed || 0
+			if (used < cap) return 'legacy_one_off'
+			if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
+			return null
+		}
+		return null
+	}
 
 	ensureMonthRolloverInMemory(team)
 
@@ -280,7 +314,7 @@ function buildClientEntitlements(team, options = {}) {
 		legacy: structuralLegacy,
 		legacyGrandfatheredActive,
 		legacyGrandfatheredAccessEndsAt: structuralLegacy
-			? LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString()
+			? effectiveLegacyGraceUntil(team).toISOString()
 			: null,
 		billingHadPaidPlan: team.billingHadPaidPlan === true,
 		hideBillingPeriodEnd: hasManualBillingPeriodHidden(team),
@@ -305,12 +339,21 @@ function buildClientEntitlements(team, options = {}) {
 			sharedPoolAppliesTo: ['ai_assistant', 'schedule_ai'],
 			metered: buckets.metered,
 			hasAccess: buckets.hasAiAccess,
-			needsSubscription: structuralLegacy,
+			/** false gdy legacy ma realny limit AI (pula promocyjna / pakiet) — UI nie pokazuje „wybierz plan” */
+			needsSubscription: structuralLegacy && !buckets.hasAiAccess,
 			remainingApprox: buckets.metered ? buckets.totalRemaining : null,
 			denyReason: buckets.denyReason || null,
-			canPurchaseAddon: team.billingHadPaidPlan === true,
-			trialUsed: team.trialAiMessagesUsed || 0,
-			trialCap: isTrialActive(team, now) ? TRIAL.aiTrialOneOffTotal : null,
+			canPurchaseAddon: isPaidSubscriptionActive(team, now),
+			trialUsed:
+				isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) != null
+					? team.legacyOneOffAiMessagesUsed || 0
+					: team.trialAiMessagesUsed || 0,
+			trialCap:
+				isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) != null
+					? legacyGraceOneOffAiTotalForTeam(team)
+					: isTrialActive(team, now)
+						? TRIAL.aiTrialOneOffTotal
+						: null,
 			usedInMonth: team.aiMessagesUsedInMonth || 0,
 			monthlyIncluded: isPaidSubscriptionActive(team, now)
 				? PAID_PLANS[team.billingPlanKey].aiMessagesPerMonth
@@ -351,11 +394,6 @@ async function consumeAiMessage(teamId) {
 		}
 		if (hasUnrestrictedAi(team)) return
 		const now = new Date()
-		if (isLegacyPreBillingTeam(team, now)) {
-			const err = new Error('AI not available')
-			err.code = 'AI_DISABLED_NO_SUBSCRIPTION'
-			throw err
-		}
 
 		ensureMonthRolloverInMemory(team)
 		const bucket = pickConsumeBucket(team, now)
@@ -370,11 +408,13 @@ async function consumeAiMessage(teamId) {
 			aiUsageMonthKey: team.aiUsageMonthKey,
 			aiMessagesUsedInMonth: team.aiMessagesUsedInMonth,
 			trialAiMessagesUsed: team.trialAiMessagesUsed || 0,
+			legacyOneOffAiMessagesUsed: team.legacyOneOffAiMessagesUsed || 0,
 			aiPackBalance: team.aiPackBalance || 0,
 			aiBillingLockVersion: prevVersion + 1,
 		}
 
 		if (bucket === 'trial') setDoc.trialAiMessagesUsed = setDoc.trialAiMessagesUsed + 1
+		else if (bucket === 'legacy_one_off') setDoc.legacyOneOffAiMessagesUsed = setDoc.legacyOneOffAiMessagesUsed + 1
 		else if (bucket === 'monthly') setDoc.aiMessagesUsedInMonth = setDoc.aiMessagesUsedInMonth + 1
 		else setDoc.aiPackBalance = Math.max(0, setDoc.aiPackBalance - 1)
 

@@ -342,13 +342,13 @@ function ENProductPromotion() {
 							</div>
 
 							<div className="mt-8">
-								<p className="text-gray-700 text-lg leading-relaxed">
-									Need more features, custom integrations, or a dedicated environment for your company? Have many employees?{' '}
+								<p className="text-gray-700 text-lg leading-relaxed font-bold">
+									Need more features, custom integrations aligned with your business goals, or a dedicated environment? Have many employees?{' '}
 									<span className="text-gray-600">
 										Plan comparison and limits are in the{' '}
 										<Link
 											href="#prices"
-											className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
+											className="font-bold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
 										>
 											Pricing
 										</Link>{' '}

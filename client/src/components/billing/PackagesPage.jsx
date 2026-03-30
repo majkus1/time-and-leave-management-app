@@ -341,6 +341,15 @@ export default function PackagesPage() {
 	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
 	const activePaid = ent ? paidSubscriptionActive(ent) : false
 	const activeTrial = ent ? trialSubscriptionActive(ent) : false
+	const legacyGraceLastDay =
+		ent?.legacy && ent.legacyGrandfatheredActive && ent.legacyGrandfatheredAccessEndsAt
+			? formatLegacyGraceLastInclusiveDay(ent.legacyGrandfatheredAccessEndsAt, localeTag)
+			: null
+	const legacyGrandfatheredUsageStats =
+		Boolean(ent?.legacy && ent.legacyGrandfatheredActive) &&
+		(ent?.ai?.trialCap != null ||
+			ent?.ai?.monthlyIncluded != null ||
+			(ent?.ai?.packBalance ?? 0) > 0)
 
 	let currentPlanBody = null
 	if (ent) {
@@ -451,7 +460,45 @@ export default function PackagesPage() {
 						{ent.ai?.unrestricted ? (
 							<p className="packages-usage__text">{t('billingPackages.internalUnlimitedAi')}</p>
 						) : ent.legacy && ent.legacyGrandfatheredActive ? (
-							<p className="packages-usage__text">{t('billingPackages.usageLegacyGrandfathered')}</p>
+							legacyGrandfatheredUsageStats ? (
+								<>
+									<p className="packages-usage__text">
+										{t('billingPackages.usageLegacyGrandfatheredPooledIntro', {
+											date: legacyGraceLastDay || '—',
+										})}
+									</p>
+									<dl className="packages-usage__stats">
+										<dt>{t('billingPackages.remaining')}</dt>
+										<dd>
+											{ent.ai.remainingApprox === Number.POSITIVE_INFINITY ||
+											ent.ai.remainingApprox == null
+												? '—'
+												: String(ent.ai.remainingApprox)}
+										</dd>
+										{ent.ai.trialCap != null && (
+											<>
+												<dt>{t('billingPackages.legacyTransitionAiPool')}</dt>
+												<dd>
+													{Math.max(0, ent.ai.trialCap - (ent.ai.trialUsed || 0))} / {ent.ai.trialCap}
+												</dd>
+											</>
+										)}
+										{ent.ai.monthlyIncluded != null && (
+											<>
+												<dt>{t('billingPackages.monthlyPool')}</dt>
+												<dd>
+													{Math.max(0, ent.ai.monthlyIncluded - (ent.ai.usedInMonth || 0))} /{' '}
+													{ent.ai.monthlyIncluded}
+												</dd>
+											</>
+										)}
+										<dt>{t('billingPackages.packBalance')}</dt>
+										<dd>{ent.ai.packBalance ?? 0}</dd>
+									</dl>
+								</>
+							) : (
+								<p className="packages-usage__text">{t('billingPackages.usageLegacyGrandfathered')}</p>
+							)
 						) : ent.legacy && !ent.legacyGrandfatheredActive ? (
 							<p className="packages-usage__text">{t('billingPackages.legacyGraceEndedUsage')}</p>
 						) : (
@@ -615,11 +662,12 @@ export default function PackagesPage() {
 				<div className="packages-addons">
 					<h3>{t('billingPackages.addonsTitle')}</h3>
 					<p className="packages-addons__sub">{t('billingPackages.addonsSubtitle')}</p>
-					{ent && !ent.ai?.unrestricted && !ent.billingHadPaidPlan && (
+					{ent && !ent.ai?.unrestricted && ent.ai?.canPurchaseAddon === false && (
 						<p className="packages-addons__locked">{t('billingPackages.addonsLocked')}</p>
 					)}
 					{catalog.addons.map(a => {
-						const addonLocked = !ent || (!ent.ai?.unrestricted && !ent.billingHadPaidPlan)
+						const addonLocked =
+							!ent || (!ent.ai?.unrestricted && ent.ai?.canPurchaseAddon !== true)
 						const orderDisabled =
 							addonLocked || !canSubmitPurchaseRequest || p24StatusLoading || p24BusyKey !== null
 						return (

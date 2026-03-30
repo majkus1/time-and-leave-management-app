@@ -53,9 +53,9 @@ async function validateBillingPurchaseIntent(params) {
 			err.code = 'VALIDATION'
 			throw err
 		}
-		if (!team.billingHadPaidPlan) {
+		if (!entitlementsService.isPaidSubscriptionActive(team)) {
 			const err = new Error(
-				'Pakietów wiadomości AI można dokupić dopiero po pierwszej aktywacji płatnego planu dla zespołu.'
+				'Pakietów wiadomości AI można dokupić tylko przy aktywnej płatnej subskrypcji zespołu (plan nie może być wygasły).'
 			)
 			err.code = 'ADDON_REQUIRES_PAID_PLAN'
 			throw err

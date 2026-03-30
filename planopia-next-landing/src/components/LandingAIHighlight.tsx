@@ -4,16 +4,26 @@ import { useId, useState } from 'react'
 
 type Locale = 'pl' | 'en'
 
+/** Ten sam początek co zwinięty widok na mobile — pełny tekst to teaser + dalszy akapit (bez „skoku” po rozwinięciu). */
+const PL_LEAD_TEASER =
+	'Asystent AI w Planopii korzysta z danych zespołu (zgodnie z uprawnieniami), by przygotować podsumowania i rekomendacje dla HR oraz ułatwić pracownikom dostęp do urlopów, czasu pracy i zadań.'
+const PL_LEAD_AFTER_TEASER =
+	' Planujesz zespół, pilnujesz terminów i raportów? Na poziomie całej organizacji — wciąż w ramach uprawnień — asystent buduje szersze podsumowania, rekomendacje i konkretne działania. Wspiera codzienną pracę HR i managerów: od planowania urlopów po analizę czasu pracy i przygotowanie raportów.'
+
+const EN_LEAD_TEASER =
+	'The AI Assistant uses your team’s data (within permissions) to deliver summaries and recommendations for HR and quick access to leave, hours, and tasks for employees.'
+const EN_LEAD_AFTER_TEASER =
+	' Planning the team, deadlines, and reports? At company level — still within permissions — it turns that into concrete summaries, recommendations, and actions. It supports HR and managers every day — from leave planning to attendance analysis and reporting.'
+
 const strings = {
 	pl: {
 		eyebrow: 'Nowość w Planopii',
 		title: 'Asystent AI — mniej ręcznej pracy, więcej gotowych wniosków',
-		leadTeaserMobile:
-			'Asystent AI w Planopii korzysta z danych zespołu (zgodnie z uprawnieniami), by przygotować podsumowania i rekomendacje dla HR oraz ułatwić pracownikom dostęp do urlopów, czasu pracy i zadań.',
+		leadTeaserMobile: PL_LEAD_TEASER,
 		readMore: 'Czytaj więcej',
 		showLess: 'Zwiń',
 		leadParagraphs: [
-			'Planujesz zespół, pilnujesz terminów i raportów? Asystent AI w Planopii korzysta z danych firmy (zgodnie z uprawnieniami) i na ich podstawie tworzy konkretne podsumowania, rekomendacje i działania. Wspiera codzienną pracę HR i managerów — od planowania urlopów po analizę czasu pracy i przygotowanie raportów.',
+			PL_LEAD_TEASER + PL_LEAD_AFTER_TEASER,
 			'Dla pracowników to szybki dostęp do własnych danych — czas pracy, urlopy i zadania bez zbędnego klikania. AI może także automatycznie przygotować wniosek urlopowy lub uzupełnić ewidencję czasu pracy na podstawie przekazanych informacji.',
 		],
 		featuresHeading: '🔥 Co potrafi Asystent AI',
@@ -32,12 +42,11 @@ const strings = {
 	en: {
 		eyebrow: 'New in Planopia',
 		title: 'AI Assistant — less manual work, more ready-made insights',
-		leadTeaserMobile:
-			'The AI Assistant uses your team’s data (within permissions) to deliver summaries and recommendations for HR and quick access to leave, hours, and tasks for employees.',
+		leadTeaserMobile: EN_LEAD_TEASER,
 		readMore: 'Read more',
 		showLess: 'Show less',
 		leadParagraphs: [
-			'Planning the team, deadlines, and reports? The AI Assistant in Planopia uses your company data (within permissions) to produce concrete summaries, recommendations, and actions. It supports HR and managers every day — from leave planning to attendance analysis and reporting.',
+			EN_LEAD_TEASER + EN_LEAD_AFTER_TEASER,
 			'For employees, it’s fast access to your own data — hours, leave, and tasks without extra clicking. AI can also draft a leave request or fill in your time log from the information you provide.',
 		],
 		featuresHeading: '🔥 What the AI Assistant can do',

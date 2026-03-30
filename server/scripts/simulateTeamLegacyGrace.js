@@ -1,6 +1,7 @@
 /**
  * Ustawia zespół "testokresprobny" jak stare konta sprzed billing: brak pól planu/trialu w Mongo —
- * pełna aplikacja bez muru do LEGACY_PRE_BILLING_GRACE_UNTIL (planCatalog), AI po wykupieniu planu.
+ * pełna aplikacja bez muru do LEGACY_PRE_BILLING_GRACE_UNTIL (planCatalog),
+ * pula AI: LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL jednorazowo na ten okres (planCatalog).
  *
  * Uruchom z katalogu głównego: node server/scripts/simulateTeamLegacyGrace.js
  */
@@ -46,7 +47,7 @@ async function doUpdate() {
 		`[simulateTeamLegacyGrace] team "${TEAM_NAME}": matched=${res.matchedCount}, modified=${res.modifiedCount}`
 	)
 	console.log(
-		`  Pełny dostęp bez subskrypcji do (wyłącznie): ${LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString()} (Europe/Warsaw → koniec 1.01.2027)`
+		`  Pełny dostęp bez subskrypcji do (wyłącznie): ${LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString()} (Europe/Warsaw → koniec 1.08.2026 włącznie)`
 	)
 	if (res.matchedCount === 0) {
 		console.warn(

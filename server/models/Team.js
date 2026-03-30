@@ -84,6 +84,12 @@ const teamSchema = new mongoose.Schema({
 		default: 0,
 		min: 0,
 	},
+	/** Zużycie jednorazowej puli AI w okresie legacy (np. lip420 — osobno od trialu) */
+	legacyOneOffAiMessagesUsed: {
+		type: Number,
+		default: 0,
+		min: 0,
+	},
 	aiMessagesUsedInMonth: {
 		type: Number,
 		default: 0,

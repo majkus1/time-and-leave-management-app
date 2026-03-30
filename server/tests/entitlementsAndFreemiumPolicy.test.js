@@ -81,8 +81,8 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 	const T_PAID_OK = new Date('2026-04-15T12:00:00.000Z')
 	const T_PAID_LAPSED = new Date('2026-08-01T12:00:00.000Z')
 
-	it('LEGACY_PRE_BILLING_GRACE_UNTIL jest zgodny z planCatalog (2.01.2027 Europe/Warsaw)', () => {
-		assert.equal(LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString(), '2027-01-01T23:00:00.000Z')
+	it('LEGACY_PRE_BILLING_GRACE_UNTIL jest zgodny z planCatalog (2.08.2026 00:00 Europe/Warsaw)', () => {
+		assert.equal(LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString(), '2026-08-01T22:00:00.000Z')
 	})
 
 	it('trial aktywny: nie freemium, subskrypcja płatna nieaktywna', () => {
@@ -140,7 +140,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isFreemiumTierTeam(team, T_PAID_LAPSED), true)
 	})
 
-	it('pre-billing legacy (brak pól billing): przed 2027 — grandfathered, nie freemium', () => {
+	it('pre-billing legacy (brak pól billing): przed końcem grace — grandfathered, nie freemium', () => {
 		const team = {
 			name: 'FirmaZMongoLegacy',
 			isActive: true,
@@ -149,6 +149,22 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_2026), true)
 		assert.equal(e.isLegacyPreBillingTeam(team, T_2026), true)
 		assert.equal(e.isFreemiumTierTeam(team, T_2026), false)
+	})
+
+	it('pre-billing legacy: 10 wiadomości AI jednorazowo na okres (bez resetu miesięcznego)', () => {
+		const team = {
+			name: 'FirmaZMongoLegacy',
+			isActive: true,
+			maxUsers: 50,
+			legacyOneOffAiMessagesUsed: 0,
+		}
+		const b = e.computeAiBuckets(team, T_2026)
+		assert.equal(b.hasAiAccess, true)
+		assert.equal(b.totalRemaining, 10)
+		const teamUsed = { ...team, legacyOneOffAiMessagesUsed: 10 }
+		const b2 = e.computeAiBuckets(teamUsed, T_2026)
+		assert.equal(b2.hasAiAccess, false)
+		assert.equal(b2.denyReason, 'quota')
 	})
 
 	it('pre-billing legacy: po dacie grace — freemium (legacy grace expired)', () => {
@@ -176,7 +192,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isFreemiumTierTeam(team, T_PAID_LAPSED), true)
 	})
 
-	it('FORCE_LEGACY nazwa + brak aktywnej subskrypcji + przed 2027: z powrotem grandfathered', () => {
+	it('FORCE_LEGACY nazwa + brak aktywnej subskrypcji + przed końcem grace: z powrotem grandfathered', () => {
 		const team = {
 			name: 'legacy',
 			isActive: true,
@@ -200,6 +216,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 			billingStatus: 'expired',
 			trialEndsAt: new Date('2020-01-01T00:00:00.000Z'),
 		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_2026), false)
 		assert.equal(e.isFreemiumTierTeam(team, T_2026), true)
 	})
 
@@ -213,6 +230,52 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 			billingPeriodEnd: new Date('2027-06-01T00:00:00.000Z'),
 		}
 		assert.equal(e.isFreemiumTierTeam(team, T_2026), false)
+	})
+
+	const T_LIP420_INSIDE = new Date('2026-07-15T12:00:00.000Z')
+	const T_LIP420_AFTER_GRACE = new Date('2026-08-05T12:00:00.000Z')
+
+	it('lip420: legacy grandfathered do 1.08.2026, potem freemium', () => {
+		const team = { name: 'lip420', isActive: true, maxUsers: 10 }
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), true)
+		assert.equal(e.isLegacyPreBillingTeam(team, T_LIP420_INSIDE), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_LIP420_INSIDE), false)
+		assert.equal(e.isLegacyPreBillingGraceExpired(team, T_LIP420_AFTER_GRACE), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_LIP420_AFTER_GRACE), true)
+	})
+
+	it('lip420: 10 wiadomości AI na cały okres legacy (wspólna pula)', () => {
+		const teamFresh = {
+			name: 'lip420',
+			isActive: true,
+			maxUsers: 10,
+			legacyOneOffAiMessagesUsed: 0,
+		}
+		const b1 = e.computeAiBuckets(teamFresh, T_LIP420_INSIDE)
+		assert.equal(b1.hasAiAccess, true)
+		assert.equal(b1.totalRemaining, 10)
+
+		const teamUsed = { ...teamFresh, legacyOneOffAiMessagesUsed: 10 }
+		const b2 = e.computeAiBuckets(teamUsed, T_LIP420_INSIDE)
+		assert.equal(b2.hasAiAccess, false)
+		assert.equal(b2.denyReason, 'quota')
+	})
+
+	it('lip420 ze Starterem aktywnym: nie legacy — limity jak pakiet', () => {
+		const team = {
+			name: 'lip420',
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: 'starter',
+			billingStatus: 'active',
+			billingPeriodEnd: new Date('2027-06-01T00:00:00.000Z'),
+			aiMessagesUsedInMonth: 0,
+			aiUsageMonthKey: '2026-07',
+		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), false)
+		const b = e.computeAiBuckets(team, T_LIP420_INSIDE)
+		assert.equal(b.hasAiAccess, true)
+		assert.equal(b.monthlyRemaining, 10)
 	})
 
 	it('OficjalnyAdminowy (special): nigdy freemium tier w tym module', () => {
@@ -269,5 +332,39 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		const ent = e.buildClientEntitlements(team, { activeSeatCount: 5 })
 		assert.equal(ent.freemiumTier, true)
 		assert.equal(ent.freemiumSeatBlocked, false)
+	})
+
+	it('buildClientEntitlements: wygasły plan + billingHadPaidPlan — dokup AI zablokowany (canPurchaseAddon false)', () => {
+		const billingPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: 'X',
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: 'starter',
+			billingStatus: 'active',
+			billingPeriodEnd,
+			billingHadPaidPlan: true,
+			aiPackBalance: 50,
+		}
+		const ent = e.buildClientEntitlements(team, {})
+		assert.equal(ent.billingHadPaidPlan, true)
+		assert.equal(ent.freemiumTier, true)
+		assert.equal(ent.ai.canPurchaseAddon, false)
+	})
+
+	it('buildClientEntitlements: aktywny starter — dokup AI dozwolony', () => {
+		const billingPeriodEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: 'X',
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: 'starter',
+			billingStatus: 'active',
+			billingPeriodEnd,
+			billingHadPaidPlan: true,
+		}
+		const ent = e.buildClientEntitlements(team, {})
+		assert.equal(ent.ai.canPurchaseAddon, true)
+		assert.equal(ent.freemiumTier, false)
 	})
 })

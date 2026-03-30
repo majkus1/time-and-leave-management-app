@@ -175,6 +175,11 @@
 	font-size: 0.9rem;
 }
 
+/** Odstęp listy limitów od akapitu powyżej — musi być `.packages-usage dl...`, bo `margin: 0` z `.packages-usage dl` ma wyższą specyficzność niż sama klasa na `dl`. */
+.packages-usage dl.packages-usage__stats {
+	margin-top: 0.75rem;
+}
+
 .packages-usage dt {
 	color: #64748b;
 }

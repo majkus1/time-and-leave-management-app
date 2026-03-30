@@ -191,9 +191,12 @@ i18n
 						unlimitedAi: 'Unlimited AI (legacy or internal plan)',
 						internalUnlimitedAi: 'Unlimited AI (internal account).',
 						usageLegacyGrandfathered:
-							'Pre-billing: AI unlocks after you pick a plan below. One shared team pool: chat, schedule AI, drafts.',
+							'Pre-billing: no AI pool in this grace window — unlock the assistant by activating a plan below (shared: chat, schedule AI, drafts).',
+						usageLegacyGrandfatheredPooledIntro:
+							'Shared AI pool until {{date}} (chat, schedule, drafts). Then plan or packs.',
 						remaining: 'Left (approx.)',
 						trialPool: 'Trial (one-off)',
+						legacyTransitionAiPool: 'AI pool (grace period, team)',
 						monthlyPool: 'This month',
 						packBalance: 'Purchased packs',
 						billingMonthly: 'Monthly',
@@ -245,7 +248,7 @@ i18n
 						addonsTitle: 'AI message packs',
 						addonsSubtitle: 'Top up when you need more assistant replies.',
 						addonsLocked:
-							'Message packs can be ordered after at least one paid plan has been activated for your team.',
+							'Message packs can be ordered only while your team has an active paid subscription (not after the plan has lapsed).',
 						planMaxUsers: 'Up to {{n}} users',
 						planAi: '{{n}} AI messages / month (team)',
 						recommended: 'Recommended',
@@ -258,7 +261,7 @@ i18n
 						currentPlanInternal: 'Internal account — unmetered AI. Contact us to change billing.',
 						currentPlanLegacy: 'Pre-billing — pick a plan below (AI + billing).',
 						currentPlanLegacyGrandfathered:
-							'Pre-billing: full app access until {{date}}, then a paid plan is required. Activate below anytime (also for AI).',
+							'No subscription until {{date}}. Then: paid plan or free time tracking (5 users). Plans below — including for AI.',
 						currentPlanLegacyGraceEnded: 'Pre-billing grace ended — pick a plan below to continue.',
 						legacyGraceEndedUsage: 'No active plan — order below (trial-like limits).',
 						currentPlanTrial: 'Trial until {{date}}.',
@@ -1831,10 +1834,13 @@ i18n
 						addonsTitle: 'Pakiety wiadomości AI',
 						addonsSubtitle: 'Doładuj limit, gdy zespół potrzebuje więcej odpowiedzi asystenta.',
 						addonsLocked:
-							'Pakiety wiadomości można zamówić po co najmniej jednej aktywowanej płatnej subskrypcji zespołu.',
+							'Pakiety wiadomości można zamówić tylko przy aktywnej płatnej subskrypcji zespołu (nie po wygaśnięciu planu).',
 						internalUnlimitedAi: 'AI bez limitu (konto wewnętrzne).',
 						usageLegacyGrandfathered:
-							'Konto sprzed rozliczeń: AI po wyborze planu poniżej. Jeden limit na zespół — czat, AI grafiku, drafty.',
+							'Konto sprzed rozliczeń: bez przydzielonej puli AI w tym okresie — Asystenta uruchomisz po wykupieniu planu poniżej (wspólny limit: czat, AI grafiku, drafty).',
+						usageLegacyGrandfatheredPooledIntro:
+							'Wspólna pula AI do {{date}} (czat, grafik, drafty). Potem plan lub paczki.',
+						legacyTransitionAiPool: 'Pula AI na okres przejściowy (zespół)',
 						planMaxUsers: 'Do {{n}} użytkowników',
 						planAi: '{{n}} wiadomości AI / miesiąc (zespół)',
 						recommended: 'Polecany',
@@ -1845,7 +1851,7 @@ i18n
 						currentPlanInternal: 'Konto wewnętrzne — AI bez limitu. Zmiany rozliczeń: kontakt z nami.',
 						currentPlanLegacy: 'Konto sprzed rozliczeń — plan poniżej: AI i rozliczenia.',
 						currentPlanLegacyGrandfathered:
-							'Bez abonamentu do {{date}}, potem wymagany plan. Aktywacja poniżej (także dla AI).',
+							'Bez abonamentu do {{date}}. Potem: pakiet lub darmowa ewidencja do 5 os. Wykup poniżej (także pod AI).',
 						currentPlanLegacyGraceEnded: 'Koniec okresu przejściowego — wybierz plan poniżej.',
 						legacyGraceEndedUsage: 'Brak planu — zamów poniżej (limity jak po próbie).',
 						currentPlanTrial: 'Próba do {{date}}.',
