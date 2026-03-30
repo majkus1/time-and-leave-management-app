@@ -4,16 +4,16 @@ import { useId, useState } from 'react'
 
 type Locale = 'pl' | 'en'
 
-/** Ten sam początek co zwinięty widok na mobile — pełny tekst to teaser + dalszy akapit (bez „skoku” po rozwinięciu). */
+/** Ten sam początek co zwinięty widok na mobile — po „Czytaj więcej” dokleja się krótkie dokończenie (bez zmiany sensu zdania). */
 const PL_LEAD_TEASER =
-	'Asystent AI w Planopii korzysta z danych zespołu (zgodnie z uprawnieniami), by przygotować podsumowania i rekomendacje dla HR oraz ułatwić pracownikom dostęp do urlopów, czasu pracy i zadań.'
+	'Asystent AI w Planopii korzysta z danych zespołu wyłącznie według uprawnień w aplikacji.'
 const PL_LEAD_AFTER_TEASER =
-	' Planujesz zespół, pilnujesz terminów i raportów? Na poziomie całej organizacji — wciąż w ramach uprawnień — asystent buduje szersze podsumowania, rekomendacje i konkretne działania. Wspiera codzienną pracę HR i managerów: od planowania urlopów po analizę czasu pracy i przygotowanie raportów.'
+	' Pomaga HR i managerom przy podsumowaniach i raportach, a pracownikom — przy urlopach, czasie pracy i zadaniach, bez zbędnego przeklikiwania widoków. W czacie przygotujesz też m.in. treść wniosku urlopowego lub wpisu do ewidencji.'
 
 const EN_LEAD_TEASER =
-	'The AI Assistant uses your team’s data (within permissions) to deliver summaries and recommendations for HR and quick access to leave, hours, and tasks for employees.'
+	'Planopia’s AI assistant uses your team’s data only within the permissions set in the app.'
 const EN_LEAD_AFTER_TEASER =
-	' Planning the team, deadlines, and reports? At company level — still within permissions — it turns that into concrete summaries, recommendations, and actions. It supports HR and managers every day — from leave planning to attendance analysis and reporting.'
+	' It helps HR and managers with summaries and reports, and employees with leave, hours, and tasks—without hopping between screens. In chat, you can draft a leave request or a time entry, too.'
 
 const strings = {
 	pl: {
@@ -22,10 +22,7 @@ const strings = {
 		leadTeaserMobile: PL_LEAD_TEASER,
 		readMore: 'Czytaj więcej',
 		showLess: 'Zwiń',
-		leadParagraphs: [
-			PL_LEAD_TEASER + PL_LEAD_AFTER_TEASER,
-			'Dla pracowników to szybki dostęp do własnych danych — czas pracy, urlopy i zadania bez zbędnego klikania. AI może także automatycznie przygotować wniosek urlopowy lub uzupełnić ewidencję czasu pracy na podstawie przekazanych informacji.',
-		],
+		leadParagraphs: [PL_LEAD_TEASER + PL_LEAD_AFTER_TEASER],
 		featuresHeading: '🔥 Co potrafi Asystent AI',
 		bullets: [
 			'Gotowe podsumowania i statystyki — szybkie wnioski zamiast analiz w tabelach',
@@ -45,10 +42,7 @@ const strings = {
 		leadTeaserMobile: EN_LEAD_TEASER,
 		readMore: 'Read more',
 		showLess: 'Show less',
-		leadParagraphs: [
-			EN_LEAD_TEASER + EN_LEAD_AFTER_TEASER,
-			'For employees, it’s fast access to your own data — hours, leave, and tasks without extra clicking. AI can also draft a leave request or fill in your time log from the information you provide.',
-		],
+		leadParagraphs: [EN_LEAD_TEASER + EN_LEAD_AFTER_TEASER],
 		featuresHeading: '🔥 What the AI Assistant can do',
 		bullets: [
 			'Ready-made summaries and stats — insights instead of spreadsheet crunching',
@@ -88,7 +82,7 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 						<div className="relative">
 							<p className="ai-highlight-eyebrow mb-3">{t.eyebrow}</p>
 							<h2 id="ai-heading">{t.title}</h2>
-							<div className="ai-highlight-lead mt-5 max-w-3xl">
+							<div className="ai-highlight-lead mt-5">
 								<div className="hidden md:block space-y-4">
 									{t.leadParagraphs.map((p, i) => (
 										<p key={i} className="m-0">

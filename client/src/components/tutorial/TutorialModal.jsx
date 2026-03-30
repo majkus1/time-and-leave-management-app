@@ -637,6 +637,72 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								: 'Learn about the main features of the app and how to use them')
 						}
 					</p>
+					<a
+						href={
+							i18n.resolvedLanguage === 'pl'
+								? 'https://planopia.pl/blog/instrukcja-wideo-planopia'
+								: 'https://planopia.pl/en/blog/video-tutorials'
+						}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={
+							i18n.resolvedLanguage === 'pl'
+								? 'Materiały wideo — otwiera się w nowej karcie'
+								: 'Video tutorials — opens in a new tab'
+						}
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: '10px',
+							marginTop: '14px',
+							padding: '10px 14px',
+							maxWidth: '100%',
+							boxSizing: 'border-box',
+							borderRadius: '10px',
+							border: '1px solid #bae6fd',
+							background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+							color: '#0369a1',
+							fontSize: '15px',
+							fontWeight: 600,
+							textDecoration: 'none',
+							transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
+							boxShadow: '0 1px 2px rgba(14, 165, 233, 0.08)',
+						}}
+						onMouseEnter={(e) => {
+							e.currentTarget.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%)'
+							e.currentTarget.style.borderColor = '#38bdf8'
+							e.currentTarget.style.boxShadow = '0 2px 8px rgba(14, 165, 233, 0.15)'
+						}}
+						onMouseLeave={(e) => {
+							e.currentTarget.style.background = 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'
+							e.currentTarget.style.borderColor = '#bae6fd'
+							e.currentTarget.style.boxShadow = '0 1px 2px rgba(14, 165, 233, 0.08)'
+						}}
+					>
+						<svg
+							width="22"
+							height="22"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							aria-hidden
+							style={{ flexShrink: 0 }}
+						>
+							<circle cx="12" cy="12" r="10" />
+							<polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
+						</svg>
+						<span style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
+							{i18n.resolvedLanguage === 'pl'
+								? 'Materiały wideo — krótkie nagrania z aplikacji'
+								: 'Video tutorials — short clips from the app'}
+						</span>
+						<span style={{ flexShrink: 0, opacity: 0.75, fontSize: '18px', lineHeight: 1 }} aria-hidden>
+							↗
+						</span>
+					</a>
 				</div>
 			</div>
 
