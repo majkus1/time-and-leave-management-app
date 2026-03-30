@@ -12,6 +12,7 @@ import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hook
 import {
 	useBillingSuperPaidPlanTeams,
 	useBillingSuperThankPurchaseEmail,
+	useBillingSuperLegacyAnnouncement,
 } from '../../hooks/useBilling'
 import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
@@ -63,7 +64,9 @@ function Logs() {
 
 	const { data: paidPlanTeams = [], isLoading: loadingPaidPlanTeams } = useBillingSuperPaidPlanTeams(isSuperAdmin)
 	const thankPurchaseMutation = useBillingSuperThankPurchaseEmail()
+	const legacyAnnouncementMutation = useBillingSuperLegacyAnnouncement()
 	const [thankEmailBusy, setThankEmailBusy] = useState(null)
+	const [legacyAnnouncementBusy, setLegacyAnnouncementBusy] = useState(null)
 
 	const availableRoles = [
 		'Admin',
@@ -3122,6 +3125,113 @@ function Logs() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{isSuperAdmin && (
+				<section
+					style={{
+						marginTop: '3rem',
+						paddingTop: '2rem',
+						borderTop: '2px solid #e5e7eb',
+					}}
+					aria-labelledby="legacy-announcement-heading"
+				>
+					<h2
+						id="legacy-announcement-heading"
+						style={{
+							margin: '0 0 0.5rem',
+							fontSize: '1.35rem',
+							fontWeight: 700,
+							color: '#111827',
+						}}
+					>
+						{t('logs.legacyAnnouncementTitle')}
+					</h2>
+					<p style={{ margin: '0 0 1rem', color: '#6b7280', fontSize: '0.95rem', maxWidth: '52rem' }}>
+						{t('logs.legacyAnnouncementSub')}
+					</p>
+					<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.5rem' }}>
+						<button
+							type="button"
+							disabled={legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null}
+							onClick={async () => {
+								setLegacyAnnouncementBusy('test')
+								try {
+									await legacyAnnouncementMutation.mutateAsync({ mode: 'test' })
+									await showAlert(t('logs.legacyAnnouncementTestOk'))
+								} catch {
+									await showAlert(t('logs.legacyAnnouncementError'))
+								} finally {
+									setLegacyAnnouncementBusy(null)
+								}
+							}}
+							style={{
+								padding: '10px 18px',
+								borderRadius: '8px',
+								border: 'none',
+								background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+								color: '#fff',
+								fontWeight: 600,
+								fontSize: '0.9rem',
+								cursor:
+									legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null
+										? 'not-allowed'
+										: 'pointer',
+								opacity:
+									legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null ? 0.6 : 1,
+							}}
+						>
+							{legacyAnnouncementBusy === 'test'
+								? t('logs.legacyAnnouncementSending')
+								: t('logs.legacyAnnouncementTestBtn')}
+						</button>
+						<button
+							type="button"
+							disabled={legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null}
+							onClick={async () => {
+								const ok = await showConfirm(t('logs.legacyAnnouncementBroadcastConfirm'))
+								if (!ok) return
+								setLegacyAnnouncementBusy('broadcast')
+								try {
+									const data = await legacyAnnouncementMutation.mutateAsync({ mode: 'broadcast' })
+									const errN = data.errors?.length || 0
+									await showAlert(
+										t('logs.legacyAnnouncementBroadcastOk', {
+											sent: data.sent ?? 0,
+											errors: errN,
+										})
+									)
+								} catch {
+									await showAlert(t('logs.legacyAnnouncementError'))
+								} finally {
+									setLegacyAnnouncementBusy(null)
+								}
+							}}
+							style={{
+								padding: '10px 18px',
+								borderRadius: '8px',
+								border: '1px solid #b91c1c',
+								background: '#fff',
+								color: '#b91c1c',
+								fontWeight: 600,
+								fontSize: '0.9rem',
+								cursor:
+									legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null
+										? 'not-allowed'
+										: 'pointer',
+								opacity:
+									legacyAnnouncementMutation.isPending || legacyAnnouncementBusy !== null ? 0.6 : 1,
+							}}
+						>
+							{legacyAnnouncementBusy === 'broadcast'
+								? t('logs.legacyAnnouncementSending')
+								: t('logs.legacyAnnouncementBroadcastBtn')}
+						</button>
+					</div>
+					<p style={{ margin: '0 0 2rem', color: '#9ca3af', fontSize: '0.85rem', maxWidth: '52rem' }}>
+						{t('logs.legacyAnnouncementFootnote')}
+					</p>
+				</section>
 			)}
 
 			{isSuperAdmin && (

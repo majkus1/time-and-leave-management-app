@@ -1228,6 +1228,20 @@ i18n
 						purchaseThankError: 'Could not send the email.',
 						paidPlanPurchasesEmpty: 'No completed plan payments in the database yet.',
 						paidPlanPurchasesLoading: 'Loading…',
+						legacyAnnouncementTitle: 'Legacy announcement email (AI & access)',
+						legacyAnnouncementSub:
+							'Polish announcement: new AI features, packages (planopia.pl + app packages), full app access until 1 Aug 2026 inclusive, then free tier limits. Test sends only to michalipka1@gmail.com.',
+						legacyAnnouncementTestBtn: 'Send test to michalipka1@gmail.com',
+						legacyAnnouncementBroadcastBtn: 'Send to all team admins (excl. Halo Rental System)',
+						legacyAnnouncementSending: 'Sending…',
+						legacyAnnouncementTestOk: 'Test email sent to michalipka1@gmail.com.',
+						legacyAnnouncementBroadcastOk:
+							'Done. Sent: {{sent}}. Failed: {{errors}} (see server log for details).',
+						legacyAnnouncementBroadcastConfirm:
+							'Send the announcement to every active team’s registration admin email (deduplicated), except Halo Rental System? This cannot be undone.',
+						legacyAnnouncementError: 'Could not complete the request.',
+						legacyAnnouncementFootnote:
+							'Recipients: Team.adminEmail from Mongo. Halo Rental System is excluded. Email body is Polish.',
 						close: 'Close'
 					},
 					common: {
@@ -2820,6 +2834,20 @@ i18n
 						purchaseThankError: 'Nie udało się wysłać wiadomości.',
 						paidPlanPurchasesEmpty: 'Brak zapisanych opłaconych pakietów w bazie.',
 						paidPlanPurchasesLoading: 'Ładowanie…',
+						legacyAnnouncementTitle: 'Mail informacyjny (AI i dostęp legacy)',
+						legacyAnnouncementSub:
+							'W treści: nowości AI, pakiety (planopia.pl oraz app.planopia.pl/packages), pełny dostęp do aplikacji do 1 sierpnia 2026 r. (włącznie), potem wąski plan darmowy. Test tylko na michalipka1@gmail.com.',
+						legacyAnnouncementTestBtn: 'Wyślij test na michalipka1@gmail.com',
+						legacyAnnouncementBroadcastBtn: 'Wyślij do wszystkich adminów zespołów (bez Halo)',
+						legacyAnnouncementSending: 'Wysyłanie…',
+						legacyAnnouncementTestOk: 'Wysłano mail testowy na michalipka1@gmail.com.',
+						legacyAnnouncementBroadcastOk:
+							'Zakończono. Wysłano: {{sent}}. Niepowodzeń: {{errors}} (szczegóły w logu serwera).',
+						legacyAnnouncementBroadcastConfirm:
+							'Wysłać komunikat na adres adminEmail każdego aktywnego zespołu (unikalne adresy), z pominięciem „Halo Rental System”? Operacji nie cofniesz.',
+						legacyAnnouncementError: 'Nie udało się wykonać żądania.',
+						legacyAnnouncementFootnote:
+							'Odbiorcy: pole adminEmail z dokumentu zespołu w bazie. Zespół „Halo Rental System” jest pomijany. Treść maila po polsku.',
 						close: 'Zamknij'
 					},
 					common: {

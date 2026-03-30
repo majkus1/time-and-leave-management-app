@@ -111,3 +111,17 @@ export function useBillingSuperThankPurchaseEmail() {
 		},
 	})
 }
+
+/** mode: 'test' → tylko michalipka1@gmail.com; 'broadcast' → wszyscy adminEmail (bez Halo Rental System) */
+export function useBillingSuperLegacyAnnouncement() {
+	return useMutation({
+		mutationFn: async ({ mode }) => {
+			const { data } = await axios.post(
+				`${API_URL}/api/billing/super/legacy-announcement`,
+				{ mode },
+				{ withCredentials: true }
+			)
+			return data
+		},
+	})
+}
