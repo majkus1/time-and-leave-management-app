@@ -472,7 +472,7 @@ async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail
 /** Podziękowanie po zakupie pakietu — odbiorca może odpowiedzieć mailem z danymi do faktury. */
 async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
-	const subject = 'Dziękujemy za zakup Planopia'
+	const subject = 'Dziękujemy za zakup'
 	const title = 'Dziękujemy za zaufanie'
 	const content = `
 		<p style="margin:0 0 14px 0;">Dzień dobry,</p>

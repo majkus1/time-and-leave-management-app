@@ -146,7 +146,6 @@ function ENBlogPWA() {
 					<li><strong>Quick access</strong> – the app is always at hand on your home screen</li>
 					<li><strong>Works like a native app</strong> – full-screen interface without browser bars</li>
 					<li><strong>Automatic updates</strong> – you always have the latest version without manual updates</li>
-					<li><strong>Works offline</strong> – basic features available even without internet connection</li>
 					<li><strong>Space saving</strong> – doesn't take up much space in phone memory</li>
 					<li><strong>Security</strong> – all data is encrypted and secure</li>
 				</ul>

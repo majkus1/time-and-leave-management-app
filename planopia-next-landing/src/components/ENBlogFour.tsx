@@ -218,7 +218,6 @@ function ENBlogFour() {
 									<li>• PWA (Progressive Web App)</li>
 									<li>• Works on all devices</li>
 									<li>• Real-time synchronization</li>
-									<li>• Offline mode</li>
 								</ul>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">

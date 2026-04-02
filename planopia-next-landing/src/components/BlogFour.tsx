@@ -217,7 +217,6 @@ function BlogFour() {
 									<li>• Aplikacja PWA (Progressive Web App)</li>
 									<li>• Działanie na wszystkich urządzeniach</li>
 									<li>• Synchronizacja w czasie rzeczywistym</li>
-									<li>• Offline mode</li>
 								</ul>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">

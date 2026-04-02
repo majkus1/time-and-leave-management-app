@@ -147,7 +147,6 @@ function BlogPWA() {
 					<li><strong>Szybki dostęp</strong> – aplikacja jest zawsze pod ręką na ekranie głównym</li>
 					<li><strong>Działa jak natywna aplikacja</strong> – pełnoekranowy interfejs bez pasków przeglądarki</li>
 					<li><strong>Automatyczne aktualizacje</strong> – zawsze masz najnowszą wersję bez ręcznego aktualizowania</li>
-					<li><strong>Działa offline</strong> – podstawowe funkcje dostępne nawet bez połączenia z internetem</li>
 					<li><strong>Oszczędność miejsca</strong> – nie zajmuje dużo miejsca w pamięci telefonu</li>
 					<li><strong>Bezpieczeństwo</strong> – wszystkie dane są szyfrowane i bezpieczne</li>
 				</ul>
