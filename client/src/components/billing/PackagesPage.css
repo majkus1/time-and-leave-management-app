@@ -400,6 +400,11 @@
 	color: #374151;
 }
 
+.packages-tier__feature-text--bold {
+	font-weight: 700;
+	color: #0f172a;
+}
+
 @media (min-width: 768px) {
 	.packages-tier__features {
 		font-size: 0.9rem;

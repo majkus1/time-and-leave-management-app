@@ -585,14 +585,26 @@ export default function PackagesPage() {
 														t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
 														t('billingPackages.planAi', { n: tier.aiMessagesPerMonth }),
 													]
-										return lines.map((line, i) => (
-											<li key={i} className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">{line}</span>
-											</li>
-										))
+										return lines.map((line, i) => {
+											const enterpriseBold =
+												tier.id === 'enterprise' && i >= lines.length - 2
+											return (
+												<li key={i} className="packages-tier__feature">
+													<span className="packages-tier__feature-check" aria-hidden>
+														✓
+													</span>
+													<span
+														className={
+															enterpriseBold
+																? 'packages-tier__feature-text packages-tier__feature-text--bold'
+																: 'packages-tier__feature-text'
+														}
+													>
+														{line}
+													</span>
+												</li>
+											)
+										})
 									})()}
 								</ul>
 								<button

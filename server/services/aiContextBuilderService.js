@@ -21,6 +21,8 @@ const { buildVerifiedStatsForAi } = require('./aiVerifiedStatsService')
 const { roundWorkHoursForDisplay } = require('../utils/workHoursDisplay')
 
 const MS_PER_DAY = 86400000
+/** "Upcoming" leave rows after periodTo: hide starts later than this (stops July rows in an April report). */
+const UPCOMING_LEAVES_MAX_DAYS_AFTER_PERIOD = 50
 const MAX_RANGE_DAYS = 366
 const MAX_RANGE_ALL_TIME_DAYS = 5475 // ~15 years
 const MAX_WORKDAY_DOCS = 400
@@ -35,10 +37,14 @@ const MAX_LEAVE_LINES_COMPACT = 90
 const MAX_WORKDAYS_FOR_TIMER_AGG = 10000
 const TIMER_AGG_TOP_DESCRIPTIONS_PER_USER = 12
 
+/** Calendar date in the server local timezone (not UTC — avoids Meta showing 03-31 vs 04-01 around midnight). */
 function formatDate(d) {
 	if (!d) return null
 	const x = new Date(d)
-	return x.toISOString().slice(0, 10)
+	const y = x.getFullYear()
+	const mo = String(x.getMonth() + 1).padStart(2, '0')
+	const day = String(x.getDate()).padStart(2, '0')
+	return `${y}-${mo}-${day}`
 }
 
 /**
@@ -74,6 +80,54 @@ function formatLeaveStatusForContext(status, locale) {
 	}
 	const map = isEn ? EN : PL
 	return map[norm] || raw || (isEn ? 'Unknown' : 'Nieznany')
+}
+
+/**
+ * Kanban task status for AI context (schema uses todo / in-progress / review / done).
+ * @param {string} [status]
+ * @param {string} [locale]
+ */
+function formatTaskStatusForContext(status, locale) {
+	const raw = String(status || 'todo').trim()
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const PL = {
+		todo: 'Do zrobienia',
+		'in-progress': 'W trakcie',
+		review: 'Do sprawdzenia',
+		done: 'Gotowe',
+	}
+	const EN = {
+		todo: 'To Do',
+		'in-progress': 'In Progress',
+		review: 'Review',
+		done: 'Done',
+	}
+	const map = isEn ? EN : PL
+	return map[raw] || raw
+}
+
+/**
+ * Task priority for AI context.
+ * @param {string} [priority]
+ * @param {string} [locale]
+ */
+function formatTaskPriorityForContext(priority, locale) {
+	const raw = String(priority || 'medium').trim()
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const PL = {
+		low: 'Niski',
+		medium: 'Średni',
+		high: 'Wysoki',
+		urgent: 'Pilny',
+	}
+	const EN = {
+		low: 'Low',
+		medium: 'Medium',
+		high: 'High',
+		urgent: 'Urgent',
+	}
+	const map = isEn ? EN : PL
+	return map[raw] || raw
 }
 
 function timerAggregatesSectionHeader(locale) {
@@ -154,6 +208,34 @@ function validateAndClampRange(range, opts = {}) {
 		return { start: clampedStart, end, clamped: true, isAllTime: !!opts.isAllTime }
 	}
 	return { start, end, clamped: false, isAllTime: !!opts.isAllTime }
+}
+
+/**
+ * Leave overlap uses the same [start, end] as workdays — but `end` is often "today", so future
+ * approved leaves never match `startDate <= end`. Extend the upper bound for querying leaves only
+ * so "next leave" / planner-style questions have data. Cap: end of calendar year (now+2y) or rangeEnd if larger.
+ */
+function computeLeaveRangeEndForLeaveQuery(rangeEnd) {
+	const cap = new Date()
+	cap.setFullYear(cap.getFullYear() + 2)
+	cap.setMonth(11, 31)
+	cap.setHours(23, 59, 59, 999)
+	const r = new Date(rangeEnd)
+	return r.getTime() >= cap.getTime() ? r : cap
+}
+
+function partitionLeavesForAi(leaves, periodEndDate) {
+	const pe = new Date(periodEndDate).getTime()
+	const upcoming = []
+	const rest = []
+	for (const lr of leaves) {
+		const sd = new Date(lr.startDate).getTime()
+		if (sd > pe) upcoming.push(lr)
+		else rest.push(lr)
+	}
+	upcoming.sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+	rest.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+	return { upcoming, rest }
 }
 
 function announcementVisibleToUser(ann, userId, userDepartments) {
@@ -447,22 +529,52 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		})
 	)
 
+	const leaveRangeEnd = computeLeaveRangeEndForLeaveQuery(end)
 	const leavesDetailed = await LeaveRequest.find({
 		userId: { $in: teamUserIds },
-		startDate: { $lte: end },
+		startDate: { $lte: leaveRangeEnd },
 		endDate: { $gte: start },
 	})
-		.sort({ startDate: -1 })
 		.lean()
 
 	const maxLeaves = useCompact ? MAX_LEAVE_LINES_COMPACT : MAX_LEAVE_LINES
-	let leaveLines = leavesDetailed.map(lr => {
+	const isEnLocale = String(locale || '').toLowerCase().startsWith('en')
+
+	const formatLeaveRow = lr => {
 		const uid = lr.userId?.toString?.() || String(lr.userId)
 		const st = formatLeaveStatusForContext(lr.status, locale)
 		const person = (leaveDisplayNameByUserId.get(uid) || '').trim()
 		const nameSeg = person ? `name:${person} | ` : ''
 		return `- ${nameSeg}userId:${uid} | ${formatDate(lr.startDate)}→${formatDate(lr.endDate)} | type:${lr.type} | days:${lr.daysRequested} | status:${st}`
-	})
+	}
+
+	const { upcoming, rest } = partitionLeavesForAi(leavesDetailed, end)
+	const upcomingCapTs = end.getTime() + UPCOMING_LEAVES_MAX_DAYS_AFTER_PERIOD * MS_PER_DAY
+	const upcomingCapped = upcoming.filter(lr => new Date(lr.startDate).getTime() <= upcomingCapTs)
+	const rowUp = upcomingCapped.map(formatLeaveRow)
+	const rowRest = rest.map(formatLeaveRow)
+	const startOfToday = new Date()
+	startOfToday.setHours(0, 0, 0, 0)
+	// For periods that already ended (e.g. full March when today is April), omit "upcoming" rows so
+	// period summaries do not mix next month's leaves with the selected window.
+	const omitUpcomingLeaves = end.getTime() < startOfToday.getTime()
+	let leaveLines = []
+	if (rowUp.length && !omitUpcomingLeaves) {
+		leaveLines.push(
+			isEnLocale
+				? `[Upcoming — leave starts after Meta.periodTo (${formatDate(end)}), within ~${UPCOMING_LEAVES_MAX_DAYS_AFTER_PERIOD} days, earliest first]`
+				: `[Nadchodzące — początek urlopu po Meta.periodTo (${formatDate(end)}), max. ~${UPCOMING_LEAVES_MAX_DAYS_AFTER_PERIOD} dni naprzód, od najbliższych]`
+		)
+		leaveLines.push(...rowUp)
+	}
+	if (rowRest.length) {
+		leaveLines.push(
+			isEnLocale
+				? `[Other leave rows — overlap Meta.periodFrom–periodTo or start on/before period end; recent starts first]`
+				: `[Pozostałe wnioski — nakładają się na okres lub start w dniu/końcu wybranego zakresu; nowsze początki wyżej]`
+		)
+		leaveLines.push(...rowRest)
+	}
 
 	let leaveExtra = ''
 	if (leaveLines.length > maxLeaves) {
@@ -474,8 +586,10 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 			byType[lr.type] = (byType[lr.type] || 0) + 1
 		}
 		leaveExtra = `\nLeave summary in range: byStatus=${JSON.stringify(byStatus)} byTypeId=${JSON.stringify(byType)}`
-		leaveLines = leaveLines.slice(0, maxLeaves)
-		leaveExtra += `\n(showing last ${maxLeaves} leave rows; totals above are for full range)`
+		// Keep upcoming block first so "next leave" questions still see future rows when truncated.
+		const head = leaveLines.slice(0, maxLeaves)
+		leaveLines = head
+		leaveExtra += `\n(truncated to ${maxLeaves} lines; upcoming section prioritized)`
 	}
 
 	let workdaysTruncated = false
@@ -611,13 +725,12 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	if (isAllTime) {
 		tasks = await Task.find(taskBase).sort({ updatedAt: -1 }).limit(taskLimit * 2).lean()
 	} else {
-		// Uwzględnij też zadania wg terminu / okresu realizacji (nie tylko data utworzenia/edycji),
-		// żeby asystent widział np. „co wypada w tym tygodniu” przy starszych kartach.
+		// Termin w okresie, okres realizacji nakłada się na okres, albo nowa karta bez terminu i bez workPeriod
+		// (same utworzona w okresie). Bez ogólnego createdAt — inaczej zadanie z marcowym terminem wpadało
+		// do kwietniowego raportu po edycji w kwietniu.
 		tasks = await Task.find({
 			...taskBase,
 			$or: [
-				{ createdAt: { $gte: start, $lte: end } },
-				{ updatedAt: { $gte: start, $lte: end } },
 				{ dueDate: { $gte: start, $lte: end } },
 				{
 					$and: [
@@ -625,6 +738,18 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 						{ workPeriodEnd: { $ne: null } },
 						{ workPeriodStart: { $lte: end } },
 						{ workPeriodEnd: { $gte: start } },
+					],
+				},
+				{
+					$and: [
+						{ createdAt: { $gte: start, $lte: end } },
+						{ $or: [{ dueDate: null }, { dueDate: { $exists: false } }] },
+						{
+							$or: [{ workPeriodStart: null }, { workPeriodStart: { $exists: false } }],
+						},
+						{
+							$or: [{ workPeriodEnd: null }, { workPeriodEnd: { $exists: false } }],
+						},
 					],
 				},
 			],
@@ -654,7 +779,9 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 			wp0 || wp1 ? `${wp0 || '?'}→${wp1 || '?'}` : ''
 		const placement = t.calendarOnly ? 'calendar-only' : 'kanban'
 		const descHint = (t.description || '').replace(/\s+/g, ' ').trim().slice(0, 100)
-		return `- taskId:${t._id} | board:"${b.name || ''}" (${b.type || ''}) | title:${(t.title || '').slice(0, 120)} | status:${t.status} | priority:${t.priority} | dueDate:${due || '-'} | workPeriod:${workPeriod || '-'} | placement:${placement}${descHint ? ` | desc:${descHint}` : ''} | assignedTo:[${assigned}] | createdBy:${t.createdBy}`
+		const st = formatTaskStatusForContext(t.status, locale)
+		const pr = formatTaskPriorityForContext(t.priority, locale)
+		return `- taskId:${t._id} | board:"${b.name || ''}" (${b.type || ''}) | title:${(t.title || '').slice(0, 300)} | status:${st} | priority:${pr} | dueDate:${due || '-'} | workPeriod:${workPeriod || '-'} | placement:${placement}${descHint ? ` | desc:${descHint}` : ''} | assignedTo:[${assigned}] | createdBy:${t.createdBy}`
 	})
 
 	const annLimit = useCompact || isAllTime ? MAX_ANNOUNCEMENTS_ALL : MAX_ANNOUNCEMENTS
@@ -685,6 +812,7 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 		scope,
 		periodFrom: formatDate(start),
 		periodTo: formatDate(end),
+		leaveHorizonTo: formatDate(leaveRangeEnd),
 		rangeClampedToMaxDays: !!clamped,
 		allTime: !!isAllTime,
 		dataMode: useCompact ? 'compact' : 'detailed',
@@ -711,8 +839,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push('--- Leave requests (in period, whole active team — same idea as leave planner) ---')
 	parts.push(
 		String(locale || '').toLowerCase().startsWith('en')
-			? 'These rows cover **all active team members** (not only “Users in scope” above). `(none)` means no leave requests overlap Meta.periodFrom–periodTo — not missing permissions.'
-			: 'Wiersze obejmują **wszystkich aktywnych członków zespołu** (nie tylko listę „Users in scope” powyżej). `(none)` oznacza brak wniosków nakładających się na okres z Meta — **nie** brak uprawnień.'
+			? '**Leave query horizon:** overlaps `Meta.periodFrom`–`Meta.leaveHorizonTo` (future leaves included; `leaveHorizonTo` extends past `periodTo` when the UI period ends at “today”). **Upcoming** = start date **after** `Meta.periodTo` (e.g. next approved leave). `(none)` = no rows — not missing permissions.'
+			: '**Horyzont urlopów:** nakładanie z `Meta.periodFrom`–`Meta.leaveHorizonTo` (przyszłe urlopy są uwzględniane; `leaveHorizonTo` jest dalej niż `periodTo`, gdy okres kończy się „dziś”). **Nadchodzące** = data początku **po** `Meta.periodTo` (np. najbliższy zaakceptowany urlop). `(none)` = brak wierszy — nie brak uprawnień.'
 	)
 	parts.push(
 		String(locale || '').toLowerCase().startsWith('en')
@@ -729,7 +857,11 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push('')
 	parts.push(timerPack.jsonString.slice(0, 80000))
 	parts.push('')
-	parts.push('--- Tasks (boards / kanban, in period) ---')
+	parts.push(
+		isEnLocale
+			? '--- Tasks (boards / kanban, in period) — status/priority are plain language in each line ---'
+			: '--- Tasks (boards / kanban, in period) — status i priority w każdej linii są już po polsku ---'
+	)
 	parts.push(taskLines.length ? taskLines.join('\n') : '(none)')
 	parts.push('')
 	parts.push('--- Announcements visible to this user (titles) ---')

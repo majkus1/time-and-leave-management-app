@@ -207,6 +207,24 @@ function tryCalendarMonthOverrideFromMessage(lastUserText, now = new Date()) {
 function resolveAssistantRangeWithMessage({ periodPreset, dateFrom, dateTo, lastUserMessage }) {
 	const baseRange = resolveDateRange(periodPreset, dateFrom, dateTo)
 	const text = (lastUserMessage && String(lastUserMessage).trim()) || ''
+
+	// Custom range from the Date range control must win: monthly-report prompts contain phrases like
+	// "bieżący miesiąc" / "current month" that would otherwise match tryCalendarMonthOverrideFromMessage
+	// and replace the range with the live calendar month.
+	if (periodPreset === 'custom' && dateFrom && dateTo) {
+		const df = new Date(dateFrom)
+		const dt = new Date(dateTo)
+		if (!Number.isNaN(df.getTime()) && !Number.isNaN(dt.getTime()) && df.getTime() <= dt.getTime()) {
+			return {
+				range: baseRange,
+				yearMessageOverride: null,
+				monthFromMessageKey: null,
+				monthFromMessageCaptionPl: null,
+				monthFromMessageCaptionEn: null,
+			}
+		}
+	}
+
 	if (!text) {
 		return {
 			range: baseRange,
@@ -316,7 +334,8 @@ function resolveDateRange(preset, dateFrom, dateTo) {
 		case 'month': {
 			start = new Date(now.getFullYear(), now.getMonth(), 1)
 			start.setHours(0, 0, 0, 0)
-			break
+			const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+			return { start, end: monthEnd }
 		}
 		case 'year': {
 			start = new Date(now.getFullYear(), 0, 1)
@@ -434,29 +453,48 @@ async function prepareAssistantTurn(input) {
 
 	const productVsDataRule =
 		locale === 'en'
-			? '**Two sources:** (1) **DOMAIN DOCUMENT** — official Planopia feature guide: use it for "Does Planopia have…?", "Where is…?", how menus work (dashboard, schedules, leave, boards, chat, AI). Say you do not know only if the feature is not described there. (2) **DATA CONTEXT** — live team data: use it ONLY for numbers, names, leave statuses, hours, tasks, and settings snapshots. For those, never invent facts; if missing, say so.'
-			: '**Dwa źródła:** (1) **DOMAIN DOCUMENT** — przewodnik po funkcjach Planopii: stosuj przy pytaniach „czy jest…?”, „gdzie znajdę…?”, jak działa menu (czas pracy, grafiki, urlopy, tablice, czat, AI). Nie mów „nie mam informacji o aplikacji”, jeśli jest to opisane poniżej. (2) **DATA CONTEXT** — dane zespołu z bazy: TYLKO do liczb, imion, statusów urlopów, godzin, zadań. Tu nie zmyślaj; jak brak danych — przyznaj się.'
+			? '**Two sources (Planopia-only questions):** (1) **DOMAIN DOCUMENT** — official Planopia feature guide: use it for "Does Planopia have…?", "Where is…?", how menus work (dashboard, schedules, leave, boards, chat, AI). Say you do not know only if the feature is not described there. (2) **DATA CONTEXT** — live team data: use it ONLY for numbers, names, leave statuses, hours, tasks, and settings snapshots. For those, never invent facts; if missing, say so.'
+			: '**Dwa źródła (pytania o Planopię):** (1) **DOMAIN DOCUMENT** — przewodnik po funkcjach Planopii: stosuj przy pytaniach „czy jest…?”, „gdzie znajdę…?”, jak działa menu (czas pracy, grafiki, urlopy, tablice, czat, AI). Nie mów „nie mam informacji o aplikacji”, jeśli jest to opisane poniżej. (2) **DATA CONTEXT** — dane zespołu z bazy: TYLKO do liczb, imion, statusów urlopów, godzin, zadań. Tu nie zmyślaj; jak brak danych — przyznaj się.'
+
+	const generalKnowledgeRule =
+		locale === 'en'
+			? '**General / non-app questions:** You are **not** limited to Planopia when the user asks about something else — e.g. homework, studying, programming, math, writing, language, everyday advice, or brainstorming. Answer **helpfully and clearly**; do **not** refuse with “I only have access to Planopia data.” **Do not** pull fake numbers from DATA CONTEXT for off-topic questions — simply ignore DATA CONTEXT unless the user also asks about their team/work in the app (then address both parts). For graded schoolwork: prefer **guidance** (steps, hints, small examples) over pasting a complete solution that would undermine academic integrity; say so briefly if relevant.'
+			: '**Pytania ogólne (poza Planopią):** Gdy użytkownik pyta o coś **innego** niż dane zespołu, funkcje aplikacji lub jego praca/urlop w Planopii — np. zadanie, nauka, programowanie, matematyka, pisanie, język, porada, burza mózgów — odpowiadaj **normalnie i pomocnie**. Nie odmawiaj w stylu „znam tylko dane z Planopii”. **Nie** podawaj zmyślonych liczb z DATA CONTEXT przy pytaniach ogólnych — zignoruj ten blok, chyba że pytanie łączy wątek z pracą w aplikacji (wtedy obsłuż obie części). Przy pracach na ocenę: stawiaj na **prowadzenie** (kroki, podpowiedzi, mały przykład), a nie na gotowca naruszającego uczciwość akademicką — krótko możesz to zaznaczyć.'
 
 	const verifiedStatsRule =
 		locale === 'en'
-			? '**VERIFIED STATS (JSON in DATA CONTEXT):** Ground truth for numeric answers. For anything about **this user** (I/me/my/how much did I work): use **only** `workStatsForRequestingUser`. For **team size / active accounts**: use **only** `teamRoster`. For **total hours of everyone in scope** (whole team): use `teamWorkAggregateForUsersInAiScope`. Do **not** manually sum `perUserTotals` / all users in the raw workday JSON when the question is about one person. If any other line in DATA CONTEXT disagrees with VERIFIED STATS, **VERIFIED STATS wins**.'
-			: '**VERIFIED STATS (JSON w DATA CONTEXT):** Obowiązujące liczby. Pytania o **Ciebie** (ja/mnie/ile przepracowałem): wyłącznie `workStatsForRequestingUser`. Pytania o **liczbę osób w zespole / konta aktywne**: wyłącznie `teamRoster`. Pytania o **sumę całej grupy w zakresie**: `teamWorkAggregateForUsersInAiScope`. Nie sumuj ręcznie `perUserTotals` po wszystkich użytkownikach, gdy pytanie dotyczy jednej osoby. Gdy coś innego w kontekście się nie zgadza z VERIFIED STATS — **obowiązuje VERIFIED STATS**.'
+			? '**When the question is about Planopia work/leave/team numbers — VERIFIED STATS (JSON in DATA CONTEXT):** Ground truth. For anything about **this user** (I/me/my/how much did I work): use **only** `workStatsForRequestingUser`. For **team size / active accounts**: use **only** `teamRoster`. For **total hours of everyone in scope** (whole team): use `teamWorkAggregateForUsersInAiScope`. Do **not** manually sum `perUserTotals` / all users in the raw workday JSON when the question is about one person. If any other line in DATA CONTEXT disagrees with VERIFIED STATS, **VERIFIED STATS wins**. (Skip this block for purely general questions.)'
+			: '**Gdy pytanie dotyczy liczb z Planopii — VERIFIED STATS (JSON w DATA CONTEXT):** To obowiązujące liczby. Pytania o **Ciebie** (ja/mnie/ile przepracowałem): wyłącznie `workStatsForRequestingUser`. Pytania o **liczbę osób w zespole / konta aktywne**: wyłącznie `teamRoster`. Pytania o **sumę całej grupy w zakresie**: `teamWorkAggregateForUsersInAiScope`. Nie sumuj ręcznie `perUserTotals` po wszystkich użytkownikach, gdy pytanie dotyczy jednej osoby. Gdy coś innego w kontekście się nie zgadza z VERIFIED STATS — **obowiązuje VERIFIED STATS**. (Przy samych pytaniach ogólnych — ten blok pomijaj.)'
 
 	const periodFromMessageRule =
 		locale === 'en'
 			? '**Period from the user’s wording:** If JSON Meta includes `monthFromMessageKey` (YYYY-MM) or numeric `yearMessageOverride`, the DATA CONTEXT range already matches the calendar month/year named in the question — trust `Meta.periodFrom` / `Meta.periodTo`; ignore a mismatch with the period selector above the chat.'
 			: '**Okres z treści pytania:** Gdy w JSON Meta jest `monthFromMessageKey` (YYYY-MM) lub liczbowy `yearMessageOverride`, zakres DATA CONTEXT jest już ustawiony na ten miesiąc lub rok — ufaj `Meta.periodFrom` / `Meta.periodTo`; nie „poprawiaj” pod przełącznik okresu nad czatem.'
 
+	const customDateRangeUiRule =
+		input.periodPreset === 'custom' && input.dateFrom && input.dateTo
+			? locale === 'en'
+				? '**Custom date range (UI):** DATA CONTEXT uses exactly `Meta.periodFrom`–`Meta.periodTo` from the Date range control. For summaries and exports, that window is the report period — even if the user message says “current month” or similar.'
+				: '**Niestandardowy zakres dat (UI):** DATA CONTEXT używa dokładnie `Meta.periodFrom`–`Meta.periodTo` z ustawienia Zakres dat. W podsumowaniach i eksporcie to jest okres raportu — nawet gdy treść wiadomości mówi o „bieżącym miesiącu” itp.'
+			: null
+
 	const systemParts = [
-		'You are AI Asystent — a helpful, precise analyst for team/work data in Planopia.',
+		locale === 'en'
+			? 'You are **AI Asystent** in Planopia: a precise assistant for **team / HR / time-tracking** questions using the DOMAIN DOCUMENT and DATA CONTEXT below, **and** a helpful assistant for **general** questions (learning, problem-solving, everyday topics) when the user is not asking about app data.'
+			: 'Jesteś **AI Asystent** w Planopii: dokładny przy pytaniach o **zespół, HR, czas pracy** (DOMAIN DOCUMENT + DATA CONTEXT poniżej) **oraz** pomocny przy **pytaniach ogólnych** (nauka, rozwiązywanie problemów, codzienne tematy), gdy użytkownik nie pyta o dane z aplikacji.',
 		`Reply in ${locale === 'en' ? 'English' : 'Polish'} unless the user clearly uses another language.`,
 		productVsDataRule,
+		generalKnowledgeRule,
 		verifiedStatsRule,
 		periodFromMessageRule,
+		...(customDateRangeUiRule ? [customDateRangeUiRule] : []),
 		'Do not invent employees, hours, or leave requests when answering from DATA CONTEXT.',
 		locale === 'en'
-			? '**Leave requests:** The DATA CONTEXT section “Leave requests (in period, whole active team…)” includes **all active team members** (same broad visibility as the in-app leave planner), regardless of Meta.scope. Never tell the user you have “no access to team leave data” when that section is present. If it shows only `(none)`, it means **no requests overlap** Meta.periodFrom–Meta.periodTo — not missing permissions. Use those rows for “who is off / collisions” questions.'
-			: '**Wnioski urlopowe:** Sekcja DATA CONTEXT „Leave requests (in period, whole active team…)” obejmuje **wszystkich aktywnych członków zespołu** (tak szeroki widok jak w planerze urlopów w aplikacji), niezależnie od Meta.scope. Nie mów użytkownikowi, że „nie masz dostępu do urlopów zespołu”, skoro ta sekcja jest w kontekście. Jeśli jest tylko `(none)`, znaczy to **brak wniosków nakładających się** na Meta.periodFrom–Meta.periodTo — a nie brak uprawnień. Pytania „kto ma urlop / kolizje” rozstrzygaj wyłącznie na podstawie tych wierszy.',
+			? '**Leave requests:** The DATA CONTEXT “Leave requests…” block lists **all active team members**. It uses `Meta.leaveHorizonTo` (may extend beyond `periodTo`) so **future** approved leaves appear. Rows under **[Upcoming — … after Meta.periodTo]** are the user’s / team’s **next** leaves — use these for “when is my next leave?”. Never claim no access when the block exists. `(none)` only if there are truly no rows.'
+			: '**Wnioski urlopowe:** Blok „Leave requests…” w DATA CONTEXT obejmuje **cały aktywny zespół**. Jest `Meta.leaveHorizonTo` (może być dalej niż `periodTo`), żeby **przyszłe** zaakceptowane urlopy były widoczne. Wiersze pod **[Nadchodzące — … po Meta.periodTo]** to **najbliższe** urlopy — stosuj przy „kiedy mam najbliższy urlop?”. Nie twierdź braku dostępu, gdy blok jest w kontekście. `(none)` tylko gdy faktycznie brak wierszy.',
+		locale === 'en'
+			? '**Submitting leave:** Filing a leave request does **not** require prior time-tracking or workday rows in Planopia. Empty or sparse workdays in DATA CONTEXT are **not** a reason to refuse or discourage leave. Point users to **Leave request** in the app or the “Leave request (AI)” mode; never invent a policy that logged hours are mandatory before taking leave.'
+			: '**Zgłaszanie urlopu:** Złożenie wniosku urlopowego **nie** wymaga wcześniejszej ewidencji czasu pracy ani wpisów z licznika. Uboga lub pusta sekcja ewidencji w DATA CONTEXT **nie** uzasadnia odmowy ani „nie możesz wziąć urlopu”. W razie potrzeby wskaż formularz zgłoszenia urlopu w aplikacji lub tryb „Wniosek urlopowy (AI)”. **Zabronione** jest wymyślanie zasady o konieczności zarejestrowanych godzin przed urlopem.',
 		'Polish calendar / public holidays: NEVER invent dates, weekdays, or Easter from memory. In Poland Labour Day (Święto Pracy) is **1 May** (1 maja), not 1 April. Easter and Corpus Christi are movable — only use dates from the POLISH PUBLIC HOLIDAYS block when it is present below. When that block lists **24 December (Christmas Eve / Wigilia)**, treat it as a non-working day in Planopia’s Polish-holiday calendar — do not advise taking annual leave on 24 Dec solely “to get the day off” unless DATA CONTEXT shows Polish holidays are disabled for the team.',
 		'Format answers with GitHub-flavored Markdown: use ##/### headings, **bold**, bullet lists, and tables when they improve clarity.',
 		'Map leave type ids (e.g. leaveform.option1) to human names from the LEAVE TYPE IDS section when explaining to users.',
@@ -468,7 +506,9 @@ async function prepareAssistantTurn(input) {
 		locale === 'en'
 			? '**Time clock breakdown** (DATA CONTEXT): right under “Time clock: read plain-text…” there is a **plain-text block** with “•” lines — copy those into a **per-person table** (Description | Hours | %). Do **not** collapse to one total row per person when several “•” lines exist. JSON below is supplementary. Same rules for `percentOfUserTimer` and the “day book hours not covered…” row. **Authoritative total hours** — **VERIFIED STATS**. If `hitDocLimit` is true, warn the split may be incomplete.'
 			: '**Praca wg licznika** (DATA CONTEXT): zaraz pod nagłówkiem „Licznik czasu: najpierw podział tekstowy…” jest **blok tekstowy** z liniami „•” — przenieś je do **tabeli per osoba** (Opis | Godziny | %). **Nie** zamieniaj na jeden wiersz sumy na osobę, gdy jest kilka linii „•”. JSON poniżej jest uzupełnieniem. Wiersz o ewidencji bez zamkniętych sesji **nie** znaczy „nie było timera”. **Sumy godzin** — **VERIFIED STATS**. Gdy `hitDocLimit` — uprzedź o niepełności.',
-		'Tasks (Kanban): Task lines may include dueDate (deadline), workPeriod (start→end), and placement: calendar-only (task calendar / quick tasks) vs kanban (board). Use these when the user asks about deadlines, work periods, or calendar-only items.',
+		locale === 'en'
+			? '**Tasks (Kanban):** Each line includes dueDate, workPeriod, placement (calendar-only vs board), and **status/priority already as plain language** in DATA CONTEXT. The Tasks block only lists cards whose **due date or work period intersects** `Meta.periodFrom`–`Meta.periodTo`, plus **new unscheduled** cards (no due / no work period) **created** in that window — not every card edited in the month. For period or monthly summaries, use a **table that lists every task** from the Tasks block with **full title**, status, priority, due date — do not collapse to counts-only or English codes (`todo`/`done`) when the model should mirror the labels from the lines.'
+			: '**Zadania (Kanban):** W każdej linii są dueDate, workPeriod, placement oraz **status i priority już jako czytelny tekst** (po polsku) w DATA CONTEXT. Blok Tasks zawiera tylko karty, których **termin lub okres realizacji przecina** `Meta.periodFrom`–`Meta.periodTo`, oraz **nowe bez terminu i bez okresu** utworzone w tym oknie — nie wszystkie edytowane w miesiącu. Przy podsumowaniu okresu/miesiąca podaj **tabelę ze wszystkimi zadaniami** z bloku Tasks: **pełny tytuł**, status, priorytet, termin — nie ograniczaj się do samych liczb ani kodów `todo`/`done`; powtarzaj etykiety statusów jak w liniach kontekstu.',
 		'Write for end users in plain language. Do NOT mention internal field names (e.g. workOnWeekends), JSON keys, database keys, or raw booleans like "false"/"true". Explain settings in everyday words (e.g. "W ustawieniach zespołu weekendy nie są traktowane jako zwykłe dni pracy przy ewidencji" instead of quoting technical identifiers).',
 		'--- DOMAIN DOCUMENT ---',
 		domainDoc,

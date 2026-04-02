@@ -43,6 +43,10 @@ function TimerPanel() {
 	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
 	const [totalBreakTime, setTotalBreakTime] = useState(0)
 	const [totalOvertimeTime, setTotalOvertimeTime] = useState(0)
+	/** Ms of first start in this run (until Stop). Unchanged on „Zapisz sesję i kontynuuj”; cleared when timer stops. */
+	const [continuousRunStartMs, setContinuousRunStartMs] = useState(null)
+	/** True after at least one „Zapisz sesję i kontynuuj” w tym ciągu — wtedy pokazujemy łączny czas. */
+	const [hasSplitSessionInRun, setHasSplitSessionInRun] = useState(false)
 
 	// Get current month and year
 	const currentDate = new Date()
@@ -97,6 +101,19 @@ function TimerPanel() {
 		
 		return Array.from(descriptions).sort()
 	}, [sessionsData])
+
+	// Anchor for total wall time since first Start in this run (split does not reset startTime anchor)
+	useEffect(() => {
+		if (activeTimer?.active && activeTimer.startTime) {
+			setContinuousRunStartMs(prev => {
+				if (prev != null) return prev
+				return new Date(activeTimer.startTime).getTime()
+			})
+		} else {
+			setContinuousRunStartMs(null)
+			setHasSplitSessionInRun(false)
+		}
+	}, [activeTimer?.active, activeTimer?.startTime])
 
 	// Calculate elapsed time, break time, and overtime time
 	useEffect(() => {
@@ -304,6 +321,9 @@ function TimerPanel() {
 	const isBreak = activeTimer?.isBreak
 	const isFromQR = activeTimer?.qrCodeId ? true : false
 
+	const cumulativeRunElapsedSeconds =
+		continuousRunStartMs != null ? Math.max(0, (Date.now() - continuousRunStartMs) / 1000) : 0
+
 	return (
 		<div style={{
 			backgroundColor: 'white',
@@ -389,7 +409,7 @@ function TimerPanel() {
 						<div style={{
 							fontSize: '14px',
 							color: '#7f8c8d',
-							marginBottom: totalBreakTime > 0 ? '8px' : '0'
+							marginBottom: '8px'
 						}}>
 							{isBreak 
 								? (t('timer.onBreak') || 'Przerwa')
@@ -399,36 +419,6 @@ function TimerPanel() {
 								)
 							}
 						</div>
-						{totalBreakTime > 0 && (
-							<div style={{
-								marginTop: '8px',
-								padding: '6px 12px',
-								backgroundColor: 'rgba(255, 193, 7, 0.15)',
-								borderRadius: '6px',
-								display: 'inline-block',
-								fontSize: '12px',
-								color: '#856404',
-								fontWeight: '500'
-							}}>
-								<span style={{ marginRight: '4px' }}>⏸️</span>
-								{t('timer.totalBreakTime') || 'Łączny czas przerwy'}: <strong>{formatTime(totalBreakTime)}</strong>
-							</div>
-						)}
-						{activeTimer.isOvertime && totalOvertimeTime > 0 && (
-							<div style={{
-								marginTop: '8px',
-								padding: '6px 12px',
-								backgroundColor: 'rgba(231, 76, 60, 0.15)',
-								borderRadius: '6px',
-								display: 'inline-block',
-								fontSize: '12px',
-								color: '#c0392b',
-								fontWeight: '500'
-							}}>
-								<span style={{ marginRight: '4px' }}>⏰</span>
-								{t('timer.totalOvertimeTime') || 'Łączny czas nadgodzin'}: <strong>{formatTime(totalOvertimeTime)}</strong>
-							</div>
-						)}
 						{!isEditing && activeTimer.workDescription && (
 							<div style={{
 								marginTop: '10px',
@@ -439,6 +429,46 @@ function TimerPanel() {
 								{activeTimer.workDescription}
 							</div>
 						)}
+						{(totalBreakTime > 0 || (activeTimer.isOvertime && totalOvertimeTime > 0)) && (
+							<div
+								style={{
+									marginTop: '10px',
+									display: 'flex',
+									flexDirection: 'column',
+									alignItems: 'center',
+									gap: '8px',
+								}}
+							>
+								{totalBreakTime > 0 && (
+									<div style={{
+										padding: '6px 12px',
+										backgroundColor: 'rgba(255, 193, 7, 0.15)',
+										borderRadius: '6px',
+										display: 'inline-block',
+										fontSize: '12px',
+										color: '#856404',
+										fontWeight: '500'
+									}}>
+										<span style={{ marginRight: '4px' }}>⏸️</span>
+										{t('timer.totalBreakTime') || 'Łączny czas przerwy'}: <strong>{formatTime(totalBreakTime)}</strong>
+									</div>
+								)}
+								{activeTimer.isOvertime && totalOvertimeTime > 0 && (
+									<div style={{
+										padding: '6px 12px',
+										backgroundColor: 'rgba(231, 76, 60, 0.15)',
+										borderRadius: '6px',
+										display: 'inline-block',
+										fontSize: '12px',
+										color: '#c0392b',
+										fontWeight: '500'
+									}}>
+										<span style={{ marginRight: '4px' }}>⏰</span>
+										{t('timer.totalOvertimeTime') || 'Łączny czas nadgodzin'}: <strong>{formatTime(totalOvertimeTime)}</strong>
+									</div>
+								)}
+							</div>
+						)}
 						{activeTimer.qrCodeId && (
 							<div style={{
 								marginTop: '8px',
@@ -447,6 +477,23 @@ function TimerPanel() {
 								fontStyle: 'italic'
 							}}>
 								{t('timer.fromQR') || 'Z kodu QR'}
+							</div>
+						)}
+						{continuousRunStartMs != null && hasSplitSessionInRun && (
+							<div
+								style={{
+									fontSize: '12px',
+									fontWeight: '500',
+									color: '#6c757d',
+									marginTop: '12px',
+									paddingTop: '10px',
+									borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+									fontFamily: 'monospace',
+									letterSpacing: '0.02em',
+								}}
+							>
+								{t('timer.cumulativeRunTimeLabel') || 'Łącznie od uruchomienia licznika'}:{' '}
+								<span style={{ color: '#495057' }}>{formatTime(cumulativeRunElapsedSeconds)}</span>
 							</div>
 						)}
 					</div>
@@ -699,6 +746,7 @@ function TimerPanel() {
 														taskId: newSessionTaskId || null,
 														isOvertime: activeTimer.isOvertime
 													})
+													setHasSplitSessionInRun(true)
 													setIsSplitting(false)
 													setNewSessionDescription('')
 													setNewSessionTaskId('')

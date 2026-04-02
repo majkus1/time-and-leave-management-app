@@ -476,9 +476,10 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const title = 'Dziękujemy za zaufanie'
 	const content = `
 		<p style="margin:0 0 14px 0;">Dzień dobry,</p>
-		<p style="margin:0 0 14px 0;">Dziękujemy za wykup pakietu Planopia dla zespołu <strong>${safeTeam}</strong>. Cieszymy się, że jesteście z nami.</p>
-		<p style="margin:0 0 14px 0;">Jeśli potrzebujecie faktury, odpowiedzcie proszę bezpośrednio na tego maila i podajcie dane do faktury: pełną nazwę firmy lub imię i nazwisko, adres oraz NIP (jeśli dotyczy). Wystawimy dokument na podstawie tych informacji.</p>
-		<p style="margin:0;">Z pozdrowieniami,<br>Zespół Planopia</p>
+		<p style="margin:0 0 14px 0;">Dziękujemy za <strong>zakup pakietu Planopia</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się z nawiązania współpracy — <strong>zależy nam, aby była dla Państwa jak najbardziej udana</strong>.</p>
+		<p style="margin:0 0 14px 0;">Jeśli potrzebują Państwo <strong>faktury</strong>, prosimy o odpowiedź bezpośrednio na tego maila i o podanie danych: <strong>pełna nazwa firmy lub imię i nazwisko, adres oraz NIP</strong> (jeśli dotyczy). Dokument wystawimy na podstawie tych informacji.</p>
+		<p style="margin:0 0 14px 0;">W razie pytań lub problemów jesteśmy do Państwa dyspozycji w aplikacji w <strong>Centrum pomocy</strong>, a także pod tym adresem e-mail — chętnie pomożemy.</p>
+		<p style="margin:0;">Serdecznie pozdrawiamy,<br>Zespół Planopia</p>
 	`
 	const html = getEmailTemplate(title, content, null, null, null)
 	await sendEmail(toEmail, null, subject, html)

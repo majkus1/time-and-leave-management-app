@@ -19,6 +19,7 @@ import {
 import LandingPricing from './LandingPricing'
 import LandingVideoGuideTeaser from './LandingVideoGuideTeaser'
 import LandingAIHighlight from './LandingAIHighlight'
+import AboutAppShowcaseVideos from './AboutAppShowcaseVideos'
 import SellerCompanyDetails from './SellerCompanyDetails'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
 
@@ -364,30 +365,9 @@ function ProductPromotion() {
         </div>
 
       </div>
-{/* Obraz / screen produktu */}
-<div className="relative flex justify-center items-center mockup-rotator">
- <div className='desktop-mockup'> 
-  <img
-    src="/img/desktopnews.webp"
-    alt="Planopia – widok desktop"
-    className="rounded-xl shadow-xl ring-1 ring-black/5"
-    loading="eager"
-  />
-  
-  <img
-    src="/img/planopia-leaves.webp"
-    alt="Planopia – widok desktop"
-    className="rounded-xl shadow-xl ring-1 ring-black/5"
-    loading="eager"
-  />
-  </div>
-  
-  <img
-    src="/img/mobilenews.webp"
-    alt="Planopia – widok mobile"
-    className="rounded-xl shadow-xl ring-1 ring-black/5 mobile-mockup"
-    loading="eager"
-  />
+{/* Wideo / screen produktu */}
+<div className="relative flex min-h-[320px] w-full flex-col justify-center mockup-rotator lg:min-h-0 lg:self-center">
+	<AboutAppShowcaseVideos locale="pl" />
 </div>
 
     </div>
@@ -616,14 +596,6 @@ function ProductPromotion() {
 			{/* FOOTER */}
 			<footer className="py-10 px-6 bg-white border-t flex flex-col items-center justify-center text-center">
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
-				<a
-					href="https://ml-devworks.com"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="mt-3 text-sm text-gray-500 hover:text-indigo-700 transition-colors"
-				>
-					ml-devworks.com
-				</a>
 			</footer>
 
 		</>

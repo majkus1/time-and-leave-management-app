@@ -91,7 +91,7 @@ const copy = {
 					'Wszystkie funkcje',
 					'Asystent AI: 1000+ wiadomości miesięcznie (lub fair use)',
 					'Priorytetowe wsparcie',
-					'Funkcje na życzenie pod Twój biznes',
+					'Funkcje i integracje na życzenie pod Twój biznes',
 				],
 				cta: 'Wybierz Enterprise',
 			},
@@ -186,7 +186,7 @@ const copy = {
 					'All features',
 					'AI Assistant: 1000+ messages / month (or fair use)',
 					'Priority support',
-					'Custom features for your business',
+					'Custom features and integrations for your business',
 				],
 				cta: 'Choose Enterprise',
 			},
@@ -264,7 +264,7 @@ function FreeTierCard({ locale }: { locale: Locale }) {
 		<div className="pricing-free-card h-full flex flex-col text-left rounded-2xl p-5 md:p-6 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40 border border-slate-200 shadow-sm w-full">
 			<div className="flex flex-wrap items-center gap-2 mb-2">
 				<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
-				<span className="pricing-badge-pill text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
+				<span className="pricing-badge-pill pricing-badge-pill--hero font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
 					{t.freeBadge}
 				</span>
 			</div>
@@ -295,7 +295,7 @@ function TrialCard({ locale }: { locale: Locale }) {
 		<div className="pricing-trial-card h-full flex flex-col text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm w-full">
 			<div className="flex flex-wrap items-center gap-3 mb-4 shrink-0">
 				<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
-				<span className="pricing-badge-pill text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
+				<span className="pricing-badge-pill pricing-badge-pill--hero font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
 					{t.trialBadge}
 				</span>
 			</div>
@@ -413,14 +413,24 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 									)}
 								</div>
 								<ul className="space-y-2.5 text-sm text-gray-700 flex-1 mb-6">
-									{plan.features.map(f => (
-										<li key={f} className="flex gap-2.5 items-start">
-											<span className="pricing-feature-check mt-0.5 shrink-0 select-none" aria-hidden>
-												✓
-											</span>
-											<span>{f}</span>
-										</li>
-									))}
+									{plan.features.map((f, fi) => {
+										const enterpriseBold =
+											plan.id === 'enterprise' && fi >= plan.features.length - 2
+										return (
+											<li key={f} className="flex gap-2.5 items-start">
+												<span className="pricing-feature-check mt-0.5 shrink-0 select-none" aria-hidden>
+													✓
+												</span>
+												<span
+													className={
+														enterpriseBold ? 'pricing-tier-feature--enterprise-emphasis' : undefined
+													}
+												>
+													{f}
+												</span>
+											</li>
+										)
+									})}
 								</ul>
 								<Link
 									href={paymentHref(plan.id, {

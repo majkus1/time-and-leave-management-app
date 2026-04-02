@@ -442,13 +442,21 @@ function AIAssistant() {
 						<AIAssistantComposer
 							onSend={sendUserMessage}
 							monthlyReportHint={t(monthlyReportHintKey)}
-							onMonthlyReport={() =>
+							onMonthlyReport={() => {
+								const hasCustomRange =
+									periodPreset === 'custom' &&
+									dateFrom &&
+									dateTo &&
+									!Number.isNaN(new Date(dateFrom).getTime()) &&
+									!Number.isNaN(new Date(dateTo).getTime())
 								sendUserMessage(t(monthlyReportPromptKey), {
-									periodPresetOverride: 'month',
+									...(hasCustomRange ? {} : { periodPresetOverride: 'month' }),
 									chatTitle: t('aiAssistant.monthlyReportButton'),
-									userVisibleContent: t('aiAssistant.monthlyReportUserBubble'),
+									userVisibleContent: hasCustomRange
+										? t('aiAssistant.monthlyReportUserBubbleCustom')
+										: t('aiAssistant.monthlyReportUserBubble'),
 								})
-							}
+							}}
 							disabled={disabled}
 							busy={busy}
 							placeholder={

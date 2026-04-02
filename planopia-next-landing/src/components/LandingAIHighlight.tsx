@@ -1,10 +1,7 @@
 'use client'
 
-import { useId, useState } from 'react'
-
 type Locale = 'pl' | 'en'
 
-/** Ten sam początek co zwinięty widok na mobile — po „Czytaj więcej” dokleja się krótkie dokończenie (bez zmiany sensu zdania). */
 const PL_LEAD_TEASER =
 	'Asystent AI w Planopii korzysta z danych zespołu wyłącznie według uprawnień w aplikacji.'
 const PL_LEAD_AFTER_TEASER =
@@ -19,9 +16,6 @@ const strings = {
 	pl: {
 		eyebrow: 'Nowość w Planopii',
 		title: 'Asystent AI — mniej ręcznej pracy, więcej gotowych wniosków',
-		leadTeaserMobile: PL_LEAD_TEASER,
-		readMore: 'Czytaj więcej',
-		showLess: 'Zwiń',
 		leadParagraphs: [PL_LEAD_TEASER + PL_LEAD_AFTER_TEASER],
 		featuresHeading: '🔥 Co potrafi Asystent AI',
 		bullets: [
@@ -39,9 +33,6 @@ const strings = {
 	en: {
 		eyebrow: 'New in Planopia',
 		title: 'AI Assistant — less manual work, more ready-made insights',
-		leadTeaserMobile: EN_LEAD_TEASER,
-		readMore: 'Read more',
-		showLess: 'Show less',
 		leadParagraphs: [EN_LEAD_TEASER + EN_LEAD_AFTER_TEASER],
 		featuresHeading: '🔥 What the AI Assistant can do',
 		bullets: [
@@ -60,8 +51,6 @@ const strings = {
 
 export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 	const t = strings[locale]
-	const [leadExpanded, setLeadExpanded] = useState(false)
-	const leadRegionId = useId()
 	return (
 		<section
 			id={locale === 'pl' ? 'asystent-ai' : 'ai-assistant'}
@@ -82,38 +71,12 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 						<div className="relative">
 							<p className="ai-highlight-eyebrow mb-3">{t.eyebrow}</p>
 							<h2 id="ai-heading">{t.title}</h2>
-							<div className="ai-highlight-lead mt-5">
-								<div className="hidden md:block space-y-4">
-									{t.leadParagraphs.map((p, i) => (
-										<p key={i} className="m-0">
-											{p}
-										</p>
-									))}
-								</div>
-								<div className="md:hidden space-y-3">
-									<div id={leadRegionId}>
-										{leadExpanded ? (
-											<div className="space-y-4">
-												{t.leadParagraphs.map((p, i) => (
-													<p key={i} className="m-0">
-														{p}
-													</p>
-												))}
-											</div>
-										) : (
-											<p className="m-0">{t.leadTeaserMobile}</p>
-										)}
-									</div>
-									<button
-										type="button"
-										className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-sm"
-										onClick={() => setLeadExpanded(v => !v)}
-										aria-expanded={leadExpanded}
-										aria-controls={leadRegionId}
-									>
-										{leadExpanded ? t.showLess : t.readMore}
-									</button>
-								</div>
+							<div className="ai-highlight-lead mt-5 space-y-4">
+								{t.leadParagraphs.map((p, i) => (
+									<p key={i} className="m-0">
+										{p}
+									</p>
+								))}
 							</div>
 							<h3 id="ai-features-heading" className="ai-highlight-features mb-5">
 								{t.featuresHeading}

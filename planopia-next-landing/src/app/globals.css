@@ -375,6 +375,11 @@ span {
 	line-height: 1rem !important;
 	font-weight: 700 !important;
 }
+/* „Bez karty” / „0 zł” (PL) — większy tekst; wyższa specyficzność niż .pricing-badge-pill */
+.landing-pricing span.pricing-badge-pill.pricing-badge-pill--hero {
+	font-size: 16px !important;
+	line-height: 1.25 !important;
+}
 .landing-pricing span.pricing-badge-pill--tier {
 	font-size: 0.7rem !important;
 	max-width: 100%;
@@ -417,6 +422,12 @@ a.landing-video-guide-teaser-cta:focus-visible {
 .landing-pricing span.pricing-feature-check {
 	color: #059669 !important;
 	font-size: 1rem !important;
+}
+
+/* Enterprise: ostatnie dwa punkty listy (priorytet, funkcje na życzenie) */
+.landing-pricing .pricing-tier-feature--enterprise-emphasis {
+	font-weight: 700 !important;
+	color: #0f172a !important;
 }
 .landing-pricing span.pricing-trial-feature-text {
 	color: #374151 !important;
@@ -1973,63 +1984,10 @@ textarea {
 	color: #16a34a; /* Tailwind green-600 */
 }
 
-/* MOBILE (domyślnie): pokaż tylko mobile, bez animacji */
-.mockup-rotator { width: 100%; position: relative; }
-.desktop-mockup { display: none; }
-.mobile-mockup  { display: block; opacity: 1; max-height: 600px; }
-
-/* DESKTOP: rotacja co 5s z fade */
-@media (min-width: 1024px) {
-  .desktop-mockup, .mobile-mockup {
-    display: block;              /* nadpisuje stare display:none */
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    max-width: min(90%, 1000px);
-    height: auto;
-    opacity: 0;                  /* startowo 0, animacja pokaże */
-    will-change: opacity, visibility;
-    animation-duration: 10s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-in-out;
-  }
-
-  /* Desktop startuje od razu (0–5s widoczny) */
-  .desktop-mockup {
-    z-index: 2;
-    animation-name: planopiaShowHide;
-    animation-delay: 0s;
-  }
-
-  /* Mobile start z opóźnieniem 5s (5–10s widoczny) */
-  .mobile-mockup {
-    z-index: 1;
-    animation-name: planopiaShowHide;
-    animation-delay: 5s;
-    max-height: 600px !important;
-  }
-
-  @keyframes planopiaShowHide {
-    /* 0–45%: w pełni widoczny (~4.5s) */
-    0%   { opacity: 1; visibility: visible; }
-    45%  { opacity: 1; visibility: visible; }
-    /* 45–55%: fade-out (~1s) */
-    55%  { opacity: 0; visibility: hidden; }
-    /* 55–95%: ukryty (~4s) */
-    95%  { opacity: 0; visibility: hidden; }
-    /* 95–100%: przygotowanie do następnej pętli */
-    100% { opacity: 1; visibility: visible; }
-  }
-}
-
-/* Preferencje dostępności: wyłącz animacje */
-@media (prefers-reduced-motion: reduce) {
-  .desktop-mockup, .mobile-mockup {
-    animation: none !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    position: static !important;
-  }
+/* Sekcja „O aplikacji”: kontener na mockupy — layout w AboutAppShowcaseVideos (Tailwind) */
+.mockup-rotator {
+	width: 100%;
+	position: relative;
 }
 
 #cennik p, #prices p {
@@ -3288,19 +3246,6 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 .custom-feature-required {
 	color: #6b7280 !important;
 	opacity: 1 !important;
-}
-
-.desktop-mockup {
-	margin-top: -300px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-@media (max-width: 1024px) {
-	.desktop-mockup {
-		display: none !important;
-	}
 }
 
 .navdesktop a,

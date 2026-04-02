@@ -13,7 +13,10 @@ const { roundWorkHoursForDisplay } = require('../utils/workHoursDisplay')
 function formatDate(d) {
 	if (!d) return null
 	const x = new Date(d)
-	return x.toISOString().slice(0, 10)
+	const y = x.getFullYear()
+	const mo = String(x.getMonth() + 1).padStart(2, '0')
+	const day = String(x.getDate()).padStart(2, '0')
+	return `${y}-${mo}-${day}`
 }
 
 /**

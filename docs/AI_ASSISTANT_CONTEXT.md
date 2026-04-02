@@ -110,7 +110,7 @@ Ręczne dodawanie / edycja wpisów w siatce dni nadal jest dostępna (formularz 
 
 ## Urlopy
 
-- **Zgłoś urlop** (`/leave-request`): formularz, typ urlopu z ustawień zespołu, zakres dat.
+- **Zgłoś urlop** (`/leave-request`): formularz, typ urlopu z ustawień zespołu, zakres dat. **Nie** jest wymagana wcześniejsza ewidencja czasu pracy ani wpisy z timera — to osobny moduł.
 - **Plan urlopów** / kalendarze: planowanie i podgląd — zależnie od roli.
 - **Zatwierdzanie**: Admin / HR / przełożony wg uprawnień (`/leave-list`, szczegóły wniosków).
 - **PDF**: podgląd wniosku URLopowego — ścieżka typu `/leave-request-pdf-preview`.
@@ -136,7 +136,7 @@ Ręczne dodawanie / edycja wpisów w siatce dni nadal jest dostępna (formularz 
 ## AI Asystent (ten moduł)
 
 - Ścieżka: `/ai-assistant`.
-- Odpowiada na podstawie **DATA CONTEXT** (dane zespołu za wybrany okres) oraz **tego dokumentu**.
+- Pytania o **Planopię** (funkcje, nawigacja, dane zespołu): **DATA CONTEXT** (dane za wybrany okres) oraz **ten dokument**. Pytania **ogólne** (nauka, zadania, programowanie, porady itd.): odpowiedź z wiedzy ogólnej — bez zmyślania liczb z kontekstu zespołu.
 - **Eksport Excel/PDF**: przyciski **pod** odpowiedzią asystenta (nie w treści czatu) uruchamiają pobranie z bazy — zgodnie z instrukcją systemową w prompcie.
 - **Uwaga:** **szkic grafiku przez AI** jest w **module Grafiki** (osobny panel), nie w tym czacie — opis wyżej w sekcji „AI — szkic grafiku”.
 

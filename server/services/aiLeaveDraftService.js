@@ -129,6 +129,7 @@ async function runLeaveDraftTurn(input) {
 		`- If the user has not chosen a type and several could fit, set ready=false and ask which type.`,
 		`- If dates are unclear, ready=false.`,
 		`- For unrelated questions (not about submitting leave), set ready=false and draft=null; briefly redirect to leave requests.`,
+		`- Planopia does **not** require prior time-tracking / workday entries to submit leave. Never tell the user they must log hours first; empty work history is not a blocker.`,
 	].join('\n')
 
 	const openaiMessages = [{ role: 'system', content: systemPrompt }, ...messages]
