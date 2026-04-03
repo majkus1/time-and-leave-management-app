@@ -186,6 +186,10 @@ i18n
 							depleted: 'No AI messages left for this period.',
 							sharedHint: 'The same pool applies to AI Asystent, schedule auto-fill AI, and AI drafts in this app.',
 						},
+						promoFab: {
+							label: 'AI Assistant',
+							title: 'Open AI Assistant — team data, leave, and time tracking',
+						},
 					},
 					billingPackages: {
 						title: 'Packages & billing',
@@ -1794,6 +1798,10 @@ i18n
 							depleted: 'Brak dostępnych wiadomości AI w tym okresie.',
 							sharedHint:
 								'Ten sam limit obejmuje AI Asystenta, auto-uzupełnianie grafiku AI oraz drafty AI w aplikacji.',
+						},
+						promoFab: {
+							label: 'Asystent AI',
+							title: 'Przejdź do AI Asystenta — pytania o dane zespołu, urlopy i czas pracy',
 						},
 					},
 					billingPackages: {

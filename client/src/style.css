@@ -2613,6 +2613,113 @@ body:has(.pwa-navigation-bar) .container {
 	}
 }
 
+/* Na /settings: zielony FAB przewijania na lewo od zakładki AI (zakładka przy prawej krawędzi) */
+body:has(.ai-assistant-promo-fab-edge--on-settings) .settings-save-scroll-fab {
+	right: calc(max(12px, env(safe-area-inset-right)) + 28px + 10px);
+}
+
+/* Skrót do AI Asystenta — stała zakładka przy prawej krawędzi (Link).
+   Tailwind preflight: a { color: inherit } — bez !important tekst bywa ciemny; Safari: -webkit-text-fill-color */
+a.ai-assistant-promo-fab-edge,
+a.ai-assistant-promo-fab-edge:visited,
+a.ai-assistant-promo-fab-edge:hover,
+a.ai-assistant-promo-fab-edge:active,
+a.ai-assistant-promo-fab-edge:focus,
+a.ai-assistant-promo-fab-edge:focus-visible {
+	text-decoration: none !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff;
+}
+
+.ai-assistant-promo-fab-edge {
+	position: fixed;
+	z-index: 1002;
+	right: max(12px, env(safe-area-inset-right));
+	bottom: max(16px, env(safe-area-inset-bottom));
+	width: 28px;
+	min-height: 52px;
+	padding: 8px 0;
+	border: none;
+	border-radius: 11px 0 0 11px;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	background: linear-gradient(165deg, #0d9668 0%, #047857 100%);
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff;
+	box-shadow:
+		-2px 4px 14px rgba(5, 150, 105, 0.38),
+		0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+	transition: filter 0.2s ease, transform 0.15s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.ai-assistant-promo-fab-edge:hover {
+	filter: brightness(1.07);
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff;
+}
+
+.ai-assistant-promo-fab-edge:active {
+	filter: brightness(0.96);
+	transform: scale(0.98);
+}
+
+/* Falująca linia nad „AI” — płynne przesunięcie (dwie fazy fali w ścieżce) */
+.ai-assistant-promo-fab-edge__wave {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 12px;
+	overflow: hidden;
+	flex-shrink: 0;
+}
+
+.ai-assistant-promo-fab-edge__wave-svg {
+	display: block;
+	overflow: visible;
+}
+
+.ai-assistant-promo-fab-edge__wave-track {
+	animation: aiAssistantPromoFabWaveFlow 2.4s linear infinite;
+	will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ai-assistant-promo-fab-edge__wave-track {
+		animation: none;
+	}
+}
+
+@keyframes aiAssistantPromoFabWaveFlow {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-20px);
+	}
+}
+
+.ai-assistant-promo-fab-edge__label {
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	line-height: 1;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff;
+	text-shadow: none;
+}
+
+@media (max-width: 1499px) {
+	body:has(.pwa-navigation-bar) .ai-assistant-promo-fab-edge {
+		bottom: calc(56px + max(12px, env(safe-area-inset-bottom)));
+	}
+}
+
 /* Ensure sidebar doesn't overlap PWA nav */
 @media (max-width: 1023px) {
 	.pwa-navigation-bar {
