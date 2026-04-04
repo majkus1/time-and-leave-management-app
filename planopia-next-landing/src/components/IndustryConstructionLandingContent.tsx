@@ -2,7 +2,6 @@ import Link from 'next/link'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
 import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 type Locale = 'pl' | 'en'
 
@@ -462,12 +461,6 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 					</div>
 				</article>
 			</main>
-
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<Link href={locale === 'pl' ? '/' : '/en'}>
-					<img src="/img/new-logoplanopia.webp" alt="Planopia" style={{ maxWidth: '180px' }} />
-				</Link>
-			</footer>
 		</>
 	)
 }

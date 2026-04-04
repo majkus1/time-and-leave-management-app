@@ -10,7 +10,6 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 
 function BlogOne() {
@@ -332,9 +331,6 @@ function BlogOne() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-			</footer>
 		</>
 	)
 }

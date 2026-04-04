@@ -105,13 +105,6 @@ const copy = {
 		],
 		tiersFootnote:
 			'* Płatny pakiet możesz anulować w dowolnym momencie — bez długoterminowego zobowiązania. Przyciski pakietów otwierają aplikację: po zalogowaniu jako administrator lub HR uruchamiana jest płatność online (Przelewy24).',
-		legalTitle: 'Regulaminy',
-		legalLinks: [
-			{ href: '/terms', label: 'Regulamin' },
-			{ href: '/privacy', label: 'Polityka prywatności' },
-			{ href: '/dpa', label: 'Umowa DPA' },
-			{ href: '/reklamacje', label: 'Reklamacje' },
-		],
 	},
 	en: {
 		title: 'Planopia pricing',
@@ -200,13 +193,6 @@ const copy = {
 		],
 		tiersFootnote:
 			'* You can cancel your paid plan at any time — no long-term commitment. Plan buttons open the app: after you sign in as Admin or HR, checkout starts online (Przelewy24). Settlement is in PLN; USD amounts are indicative (1 USD ≈ 3.69 PLN).',
-		legalTitle: 'Legal',
-		legalLinks: [
-			{ href: '/en/terms', label: 'Terms of Service' },
-			{ href: '/en/privacy', label: 'Privacy Policy' },
-			{ href: '/en/dpa', label: 'Data Processing Agreement' },
-			{ href: '/en/complaints', label: 'Complaints' },
-		],
 	},
 } as const
 
@@ -479,21 +465,6 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 				<p className="mt-4 max-w-4xl text-sm text-gray-500 leading-relaxed" role="note">
 					{t.tiersFootnote}
 				</p>
-
-				<div className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-left">
-					<h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">{t.legalTitle}</h3>
-					<nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label={locale === 'pl' ? 'Regulaminy' : 'Legal documents'}>
-						{t.legalLinks.map(link => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className="text-sm font-medium text-indigo-700 hover:text-indigo-900 hover:underline underline-offset-2"
-							>
-								{link.label}
-							</Link>
-						))}
-					</nav>
-				</div>
 			</div>
 		</section>
 	)

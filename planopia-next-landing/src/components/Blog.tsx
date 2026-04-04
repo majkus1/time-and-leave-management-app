@@ -11,8 +11,6 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
-
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
@@ -344,10 +342,6 @@ function Blog() {
 				</div>
 			</section>
 
-			{/* FOOTER */}
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-			</footer>
 		</>
 	)
 }

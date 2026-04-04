@@ -20,9 +20,7 @@ import LandingPricing from './LandingPricing'
 import LandingVideoGuideTeaser from './LandingVideoGuideTeaser'
 import LandingAIHighlight from './LandingAIHighlight'
 import AboutAppShowcaseVideos from './AboutAppShowcaseVideos'
-import SellerCompanyDetails from './SellerCompanyDetails'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
-import { LANDING_SITE_FOOTER_CLASS_STACK } from '@/data/landingSiteFooter'
 
 function ENProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -511,8 +509,6 @@ function ENProductPromotion() {
 									<span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">LinkedIn</span>
 								</a>
 							</div>
-
-							<SellerCompanyDetails locale="en" />
 						</div>
 					</div>
 
@@ -604,11 +600,6 @@ function ENProductPromotion() {
 			</section>
 
 			</main>
-
-			{/* FOOTER */}
-			<footer className={LANDING_SITE_FOOTER_CLASS_STACK}>
-				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }} />
-			</footer>
 
 		</>
 	)

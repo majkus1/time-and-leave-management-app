@@ -6,6 +6,7 @@ import "./globals.css";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import GoogleTagManagerNoScript from "../components/GoogleTagManagerNoScript";
 import LandingChatWidget from "@/components/LandingChatWidget";
+import LandingSiteFooter from "@/components/LandingSiteFooter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -133,6 +134,7 @@ export default function RootLayout({
         <GoogleTagManagerNoScript />
         <GoogleAnalytics />
         {children}
+        <LandingSiteFooter />
         <LandingChatWidget />
       </body>
     </html>

@@ -10,7 +10,6 @@ import {
 	landingMobileNavItemsEn,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function ENBlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -235,9 +234,6 @@ function ENBlogPWA() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-			</footer>
 		</>
 	)
 }

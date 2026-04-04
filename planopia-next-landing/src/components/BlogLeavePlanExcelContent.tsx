@@ -2,7 +2,6 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import AnimatedBlogImages from './AnimatedBlogImages'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 type Locale = 'pl' | 'en'
@@ -477,9 +476,6 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 				</article>
 			</main>
 
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="Planopia" style={{ maxWidth: '180px' }} />
-			</footer>
 		</>
 	)
 }

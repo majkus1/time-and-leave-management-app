@@ -7,7 +7,6 @@ import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
 import { industryMobileConfig, MOBILE_INDUSTRY_INSERT_INDEX } from '../data/landingNav'
 import { videoGuideLessons } from '../data/videoGuideLessons'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 type Locale = 'pl' | 'en'
 
@@ -424,9 +423,6 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 				</div>
 			</div>
 
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="Planopia logo" style={{ maxWidth: '180px' }} />
-			</footer>
 		</>
 	)
 }

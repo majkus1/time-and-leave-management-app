@@ -10,7 +10,6 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 import BlogAiAssistantHeroVideo from './BlogAiAssistantHeroVideo'
 
 const PAGE_URL = 'https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik'
@@ -296,9 +295,6 @@ function BlogAiAssistant() {
 				</div>
 			</article>
 
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
-			</footer>
 		</>
 	)
 }

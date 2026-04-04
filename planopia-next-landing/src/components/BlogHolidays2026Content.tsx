@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import AnimatedBlogImages from './AnimatedBlogImages'
-import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 export default function BlogHolidays2026Content() {
 	const blogPostingSchema = {
@@ -328,9 +327,6 @@ export default function BlogHolidays2026Content() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className={LANDING_SITE_FOOTER_CLASS}>
-				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-			</footer>
 		</>
 	)
 }

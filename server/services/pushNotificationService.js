@@ -18,6 +18,9 @@ const formatPushDate = (dateValue, locale) => {
 	}).format(date)
 }
 
+/** Push / dzwoneczek = zwykły tekst, nie HTML — i18next inaczej escapuje m.in. `/` w datach (np. en-US) do &#x2F; */
+const i18nPlainText = { interpolation: { escapeValue: false } }
+
 // Helper function to filter subscriptions by environment
 // In production, only send to app.planopia.pl subscriptions
 // In development, only send to localhost subscriptions
@@ -304,12 +307,12 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	if (isStatusChange) {
 		title = t ? t('email.task.statusChangedTitle') : 'Zmiana statusu zadania'
 		body = t 
-			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText })
+			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText, ...i18nPlainText })
 			: `${creatorName} zmienił status zadania "${taskTitle}" na "${statusText}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
 	} else {
 		title = t ? t('email.task.newTaskTitle') : 'Nowe zadanie'
 		body = t
-			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText })
+			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText, ...i18nPlainText })
 			: `${creatorName} dodał nowe zadanie "${taskTitle}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
 	}
 
@@ -407,7 +410,7 @@ const sendTaskCommentNotification = async ({ task, board, commenterName, recipie
 	const taskTitle = task.title || (t ? t('email.task.taskTitle') : 'Zadanie')
 	const title = t ? t('push.task.newCommentTitle') : 'Nowy komentarz w zadaniu'
 	const body = t
-		? t('push.task.newCommentBody', { commenterName, taskTitle })
+		? t('push.task.newCommentBody', { commenterName, taskTitle, ...i18nPlainText })
 		: `${commenterName} dodał komentarz do zadania "${taskTitle}"`
 
 	const payload = {
@@ -643,7 +646,14 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 		case 'new':
 			title = t ? t('push.leave.newRequestTitle') : 'Nowy wniosek'
 			body = t
-				? t('push.leave.newRequestBody', { userName, type: typeText, startDate, endDate, days: leaveRequest.daysRequested })
+				? t('push.leave.newRequestBody', {
+						userName,
+						type: typeText,
+						startDate,
+						endDate,
+						days: leaveRequest.daysRequested,
+						...i18nPlainText,
+					})
 				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
 			break
 		case 'statusChanged':
@@ -655,7 +665,13 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 				: 'Ktoś'
 			title = t ? t('push.leave.statusChangedTitle') : 'Status wniosku zmieniony'
 			body = t
-				? t('push.leave.statusChangedBody', { userName, type: typeText, status: statusText, updatedByName })
+				? t('push.leave.statusChangedBody', {
+						userName,
+						type: typeText,
+						status: statusText,
+						updatedByName,
+						...i18nPlainText,
+					})
 				: `Wniosek ${userName} (${typeText}) został ${statusText} przez ${updatedByName}.`
 			break
 		case 'statusChangedSelf':
@@ -663,16 +679,28 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 				? getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
 				: 'zmieniony'
 			title = t
-				? t('push.leave.statusChangedSelfTitle', { status: selfStatusText })
+				? t('push.leave.statusChangedSelfTitle', { status: selfStatusText, ...i18nPlainText })
 				: `Twój wniosek został ${selfStatusText}.`
 			body = t
-				? t('push.leave.statusChangedSelfBody', { type: typeText, status: selfStatusText, startDate, endDate })
+				? t('push.leave.statusChangedSelfBody', {
+						type: typeText,
+						status: selfStatusText,
+						startDate,
+						endDate,
+						...i18nPlainText,
+					})
 				: `Twój wniosek został ${selfStatusText} (${typeText}, ${startDate} - ${endDate}).`
 			break
 		case 'cancelled':
 			title = t ? t('push.leave.cancelledTitle') : 'Wniosek anulowany'
 			body = t
-				? t('push.leave.cancelledBody', { userName, type: typeText, startDate, endDate })
+				? t('push.leave.cancelledBody', {
+						userName,
+						type: typeText,
+						startDate,
+						endDate,
+						...i18nPlainText,
+					})
 				: `${userName} anulował wniosek: ${typeText} (${startDate} - ${endDate})`
 			break
 		default:
