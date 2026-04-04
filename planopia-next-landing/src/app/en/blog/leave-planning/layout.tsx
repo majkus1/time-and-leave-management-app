@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     description: `Online leave calendar, approvals, and absence management. ${blogArticleOfferLine.en}`,
     images: [
       {
-        url: 'https://planopia.pl/img/desktop.png',
+        url: 'https://planopia.pl/img/plans-urlopnewen.webp',
         width: 1200,
         height: 630,
         alt: 'Employee Leave Planning – Best Tools and Practices',
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
     description:
       `PTO calendar and HR reports. ${blogArticleOfferLine.en}`,
-    images: ['https://planopia.pl/img/desktop.png'],
+    images: ['https://planopia.pl/img/plans-urlopnewen.webp'],
   },
   alternates: {
     canonical: 'https://planopia.pl/en/blog/leave-planning',
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google verification code
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs'
   },
   category: 'technology',
 };

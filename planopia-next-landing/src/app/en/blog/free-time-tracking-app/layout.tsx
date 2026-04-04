@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Free Time Tracking App for Work Hours and Leave Management | Planopia",
   description:
-    "Free time tracking app from Planopia: 30 days with the full product first, then a no-subscription time tracking tier for teams with up to 5 active accounts. Leave, schedules, team chat, Kanban, and the AI Assistant unlock with paid plans from Starter.",
+    "Planopia: 30-day full trial for teams up to 5 people — no card required to start; then free time tracking for 5 accounts or paid plans — leave, schedules, chat, and AI in pricing.",
   keywords: [
     "free time tracking app",
     "free work hours tracking",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code',
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs',
   },
   category: 'technology',
 };

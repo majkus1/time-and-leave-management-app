@@ -68,28 +68,28 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href={isPolish ? "/#oaplikacji" : "/en#aboutapp"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPolish ? "O Aplikacji" : "About the App"}
 						</Link>
 						<Link
 							href={isPolish ? '/#asystent-ai' : '/en#ai-assistant'}
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							{isPolish ? 'Asystent AI' : 'AI Assistant'}
 						</Link>
 						<Link
 							href={isPolish ? "/#cennik" : "/en#prices"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPolish ? "Cennik" : "Pricing"}
 						</Link>
 						<LandingIndustriesDropdown locale={isPolish ? 'pl' : 'en'} />
 						<Link
 							href={isPolish ? "/blog" : "/en/blog"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<Link
 							href={isPolish ? "/#kontakt" : "/en#contact"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPolish ? "Kontakt" : "Contact"}
 						</Link>
 						<Link

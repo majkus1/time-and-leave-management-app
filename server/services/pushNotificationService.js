@@ -5,6 +5,7 @@ const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { recordPushNotification, recordPushForUserIds } = require('./userNotificationService')
 
 const formatPushDate = (dateValue, locale) => {
 	if (!dateValue) return ''
@@ -107,6 +108,13 @@ const sendPushNotification = async (userId, payload) => {
 
 		const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 		const failed = results.length - sent
+
+		if (sent > 0) {
+			const u = await User.findById(userId).select('teamId').lean()
+			if (u?.teamId) {
+				void recordPushNotification(userId, u.teamId, payload)
+			}
+		}
 
 		return { sent, failed, total: subscriptions.length }
 	} catch (error) {
@@ -223,6 +231,17 @@ const sendChatNotification = async (channelId, message, recipientUserIds) => {
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
 	console.log(`[Push] Chat notification result: ${sent} sent, ${failed} failed`)
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
 	return { sent, failed }
 }
 
@@ -348,6 +367,17 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
 	console.log(`[Push] Task notification result: ${sent} sent, ${failed} failed`)
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
 	return { sent, failed }
 }
 
@@ -423,6 +453,17 @@ const sendTaskCommentNotification = async ({ task, board, commenterName, recipie
 
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
 	return { sent, failed }
 }
 
@@ -495,6 +536,17 @@ const sendAnnouncementPushNotification = async ({ announcement, createdByName, r
 
 	const sent = results.filter((r) => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
 	return { sent, failed }
 }
 
@@ -682,6 +734,17 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	const sent = results.filter(r => r.status === 'fulfilled' && r.value.success).length
 	const failed = results.length - sent
 	console.log(`[Push] Leave notification result: ${sent} sent, ${failed} failed`)
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
 	return { sent, failed }
 }
 

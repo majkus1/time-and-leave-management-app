@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function BlogSix() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -27,7 +28,7 @@ function BlogSix() {
 						"headline": "Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia",
 						"url": "https://planopia.pl/blog/zarzadzanie-urlopami",
 						"datePublished": "2024-10-25",
-						"dateModified": "2024-10-25",
+						"dateModified": "2026-03-27",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -40,9 +41,68 @@ function BlogSix() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Zarządzanie urlopami w firmie: przewodnik. Planopia: 30 dni z modułem urlopów (do 5 osób); potem darmowa ewidencja czasu do 5 kont lub pakiety z pełnym HR.",
+						"description": "Zarządzanie urlopami w firmie — program i aplikacja urlopowa zamiast Excela. Planopia: 30 dni pełnej aplikacji (do 5 osób); potem darmowa ewidencja czasu do 5 aktywnych kont lub pakiety płatne z modułem urlopów i HR.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
+				}}
+			/>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						'@context': 'https://schema.org',
+						'@type': 'FAQPage',
+						mainEntity: [
+							{
+								'@type': 'Question',
+								name: 'Jak długo trwa wdrożenie systemu zarządzania urlopami?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Wdrożenie Planopii trwa zaledwie kilka minut. Możesz rozpocząć korzystanie z systemu natychmiast po rejestracji zespołu i dodaniu pracowników.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy aplikacja do zarządzania urlopami jest bezpieczna?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Planopia oferuje szyfrowanie danych, bezpieczne serwery, regularne kopie zapasowe i pełną zgodność z RODO.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy mogę eksportować dane o urlopach?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Tak — Planopia umożliwia eksport danych o urlopach do formatów PDF i Excel (XLSX).',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy system obsługuje różne rodzaje urlopów?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Planopia obsługuje m.in. urlopy wypoczynkowe, na żądanie oraz inne nieobecności zgodnie z konfiguracją zespołu i modułami w pakiecie.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czym różni się program do urlopów od prowadzenia urlopów w Excelu?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'W dedykowanym programie urlopowym wnioski, akceptacje i salda są w jednym systemie z historią i powiadomieniami; arkusz Excel wymaga ręcznej synchronizacji i łatwiej o błędy przy większym zespole.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy Planopia to dobry system do zarządzania urlopami dla małej firmy?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Tak — możesz zacząć od 30 dni pełnej aplikacji (do 5 użytkowników), a następnie pozostać na bezpłatnym planie ewidencji czasu pracy do 5 aktywnych kont lub wykupić pakiet z pełnym modułem urlopowym.',
+								},
+							},
+						],
+					}),
 				}}
 			/>
 
@@ -58,29 +118,29 @@ function BlogSix() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -126,14 +186,14 @@ function BlogSix() {
 			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
+						<div className="ordering text-left md:text-center">
+							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 mt-4">
 								Zarządzanie urlopami w firmie - kompletny przewodnik
 							</h1>
-							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
+							<p className="text-xl text-gray-600 max-w-4xl mx-0 md:mx-auto mb-8">
 								Dowiedz się, jak efektywnie zarządzać urlopami w swojej firmie, minimalizując błędy i zwiększając satysfakcję pracowników.
 							</p>
-							<div className="text-center">
+							<div>
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
@@ -163,6 +223,30 @@ function BlogSix() {
 						<p className="text-lg text-gray-700 mb-6">
 							<strong>Efektywne zarządzanie urlopami</strong> jest kluczowe dla utrzymania ciągłości pracy, 
 							zgodności z przepisami prawa pracy oraz zadowolenia pracowników.
+						</p>
+					</div>
+
+					<div className="mb-12">
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">
+							Program do urlopów, system urlopowy czy Excel — co wybrać?
+						</h2>
+						<p className="text-lg text-gray-700 mb-4">
+							Pojęcia takie jak <strong>program do urlopów</strong>, <strong>system do zarządzania urlopami</strong> czy <strong>aplikacja urlopowa</strong> opisują tę samą potrzebę: jedno miejsce na wnioski, akceptacje, salda i kalendarz — zamiast rozproszenia między mailami i arkuszami.
+						</p>
+						<p className="text-lg text-gray-700 mb-4">
+							W Planopii moduł urlopowy działa w ramach tego samego konta zespołu co ewidencja czasu pracy (w pakietach z urlopami). Przykładowe powiązane tematy:{' '}
+							<Link href="/blog/planowanie-urlopow" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								planowanie urlopów pracowników
+							</Link>
+							{' · '}
+							<Link href="/blog/dni-wolne-2026" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								dni wolne i święta w Polsce
+							</Link>
+							{' · '}
+							<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								model cenowy i darmowa ewidencja
+							</Link>
+							.
 						</p>
 					</div>
 
@@ -328,8 +412,7 @@ function BlogSix() {
 							<div className="bg-purple-50 p-6 rounded-lg">
 								<h3 className="text-xl font-semibold text-gray-900 mb-3">🏥 Urlopy chorobowe</h3>
 								<p className="text-gray-700">
-									Ewidencja zwolnień lekarskich z możliwością automatycznego rozliczania 
-									i integracji z systemami ZUS.
+									Ewidencja nieobecności i zwolnień w jednym widoku — pracownik i HR widzą aktualny status bez dublowania wpisów w osobnych arkuszach.
 								</p>
 							</div>
 							<div className="bg-orange-50 p-6 rounded-lg">
@@ -380,8 +463,23 @@ function BlogSix() {
 									Czy system obsługuje różne rodzaje urlopów?
 								</h3>
 								<p className="text-gray-700">
-									Tak! Planopia obsługuje wszystkie rodzaje urlopów: wypoczynkowe, na żądanie, chorobowe, 
-									opieka nad dzieckiem, bezpłatne i inne zgodnie z potrzebami Twojej firmy.
+									Zakres typów nieobecności zależy od wybranego pakietu i konfiguracji zespołu — Planopia obsługuje m.in. urlopy wypoczynkowe, na żądanie oraz inne nieobecności zgodnie z ustawieniami i modułami dostępnymi w Twoim planie.
+								</p>
+							</div>
+							<div className="bg-gray-50 p-6 rounded-lg">
+								<h3 className="text-xl font-semibold text-gray-900 mb-3">
+									Czym różni się program do urlopów od prowadzenia urlopów w Excelu?
+								</h3>
+								<p className="text-gray-700">
+									W dedykowanym programie urlopowym wnioski, akceptacje i salda są w jednym systemie z historią i powiadomieniami. Arkusz Excel przy większym zespole wymaga ręcznej synchronizacji i łatwiej o pomyłki oraz konflikt wersji pliku.
+								</p>
+							</div>
+							<div className="bg-gray-50 p-6 rounded-lg">
+								<h3 className="text-xl font-semibold text-gray-900 mb-3">
+									Czy Planopia to dobry system do zarządzania urlopami dla małej firmy?
+								</h3>
+								<p className="text-gray-700">
+									Tak — możesz zacząć od 30 dni pełnej aplikacji (do 5 użytkowników), a następnie pozostać na bezpłatnym planie ewidencji czasu pracy do 5 aktywnych kont lub wykupić pakiet z pełnym modułem urlopowym i pozostałymi funkcjami HR.
 								</p>
 							</div>
 						</div>
@@ -406,7 +504,7 @@ function BlogSix() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

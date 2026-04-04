@@ -36,6 +36,18 @@ i18n
 						btnPackages: 'Packages & billing',
 						pendingLeaveRequests: 'Pending leave requests',
 					},
+					notifications: {
+						title: 'Notifications',
+						empty: 'No notifications yet.',
+						loading: 'Loading…',
+						error: 'Could not load notifications.',
+						markAllRead: 'Mark all read',
+						channelPush: 'Push',
+						channelEmail: 'Email',
+						channelPushShort: 'push',
+						channelEmailShort: 'email',
+						ariaLabel: 'Open notifications',
+					},
 					teamAccessNotice: {
 						title: 'Limited access',
 						seatsBody:
@@ -1646,6 +1658,18 @@ i18n
 						btnDocuments: 'Dokumenty',
 						btnPackages: 'Pakiety i rozliczenia',
 						pendingLeaveRequests: 'Oczekujące wnioski urlopowe',
+					},
+					notifications: {
+						title: 'Powiadomienia',
+						empty: 'Brak powiadomień.',
+						loading: 'Ładowanie…',
+						error: 'Nie udało się wczytać powiadomień.',
+						markAllRead: 'Oznacz wszystkie jako przeczytane',
+						channelPush: 'Push',
+						channelEmail: 'E-mail',
+						channelPushShort: 'push',
+						channelEmailShort: 'e-mail',
+						ariaLabel: 'Otwórz powiadomienia',
 					},
 					teamAccessNotice: {
 						title: 'Ograniczony dostęp',

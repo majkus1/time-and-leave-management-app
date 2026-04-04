@@ -7,9 +7,16 @@ type Props = {
 	locale: 'pl' | 'en'
 	title: string
 	images?: LandingGalleryImage[]
+	/** Domyślnie my-10 md:my-12 — ustaw np. my-0 w osadzonej karcie */
+	sectionClassName?: string
 }
 
-export default function LandingAppScreenshotGallery({ locale, title, images = [] }: Props) {
+export default function LandingAppScreenshotGallery({
+	locale,
+	title,
+	images = [],
+	sectionClassName = 'my-10 md:my-12',
+}: Props) {
 	const [openIndex, setOpenIndex] = useState<number | null>(null)
 
 	const close = useCallback(() => setOpenIndex(null), [])
@@ -30,7 +37,7 @@ export default function LandingAppScreenshotGallery({ locale, title, images = []
 	if (images.length === 0) return null
 
 	return (
-		<section className="landing-app-gallery my-10 md:my-12" aria-labelledby="landing-gallery-heading">
+		<section className={`landing-app-gallery ${sectionClassName}`} aria-labelledby="landing-gallery-heading">
 			<h2 id="landing-gallery-heading" className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
 				{title}
 			</h2>

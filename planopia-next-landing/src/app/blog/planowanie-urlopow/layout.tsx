@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     description: `Planowanie urlopów: kalendarz online, akceptacje, raporty HR. ${blogArticleOfferLine.pl}`,
     images: [
       {
-        url: 'https://planopia.pl/img/planvacationblog.webp',
+        url: 'https://planopia.pl/img/plans-urlopnew.webp',
         width: 1200,
         height: 630,
         alt: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie?',
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia',
     description: `Urlopy w firmie bez chaosu — Planopia. ${blogArticleOfferLine.pl}`,
-    images: ['https://planopia.pl/img/planvacationblog.webp'],
+    images: ['https://planopia.pl/img/plans-urlopnew.webp'],
   },
   alternates: {
     canonical: 'https://planopia.pl/blog/planowanie-urlopow',
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google verification code
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs'
   },
   category: 'technology',
 };

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
-	title: 'Leave Management in a Company - Complete Guide | Planopia',
-	description: `Complete guide to leave management in a company. ${blogArticleOfferLine.en}`,
+	title: 'Leave management — software, system & vacation app | Planopia',
+	description: `Leave management software: requests, calendar, approvals without spreadsheet chaos. ${blogArticleOfferLine.en}`,
 	keywords: [
 		'leave management',
 		'leave management software',
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Leave Management in a Company - Complete Guide | Planopia',
-		description: `Leave policies, requests, and approvals. ${blogArticleOfferLine.en}`,
+		title: 'Leave management — vacation system & software | Planopia',
+		description: `Leave app with requests and approvals in one tool. ${blogArticleOfferLine.en}`,
 		url: 'https://planopia.pl/en/blog/leave-management',
 		siteName: 'Planopia',
 		images: [
@@ -50,13 +50,13 @@ export const metadata: Metadata = {
 		locale: 'en_US',
 		type: 'article',
 		publishedTime: '2024-10-25T00:00:00.000Z',
-		modifiedTime: '2024-10-25T00:00:00.000Z',
+		modifiedTime: '2026-03-27T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Leave Management in a Company - Complete Guide | Planopia',
-		description: `Leave policies, requests, and approvals. ${blogArticleOfferLine.en}`,
+		title: 'Leave management — software for teams | Planopia',
+		description: `Vacation system instead of scattered sheets — Planopia. ${blogArticleOfferLine.en}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

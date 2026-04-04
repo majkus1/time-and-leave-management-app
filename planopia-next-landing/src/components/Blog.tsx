@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -48,28 +49,28 @@ function Blog() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -114,26 +115,46 @@ function Blog() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
+			<section className="px-4 pt-6 pb-3 md:py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">Blog</h1>
+							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-0 md:mb-6 blogh1 text-center mt-2 md:mt-4">Blog</h1>
 						</div>
 						
 					</div>
 				</div>
 			</section>
 
-			<section className="px-4 py-16 bg-white">
+			<section className="px-4 pt-5 pb-12 md:py-16 bg-white">
 				<div className="max-w-7xl mx-auto">
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Karta — Asystent AI */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-indigo-100/90">
+							<img
+								src="/img/aibloga.webp"
+								alt="Asystent AI w Planopii — ewidencja, urlopy, zadania i grafik"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik w jednym systemie
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Jak połączyć ewidencję czasu pracy, urlopy, tablice zadań i grafik z inteligentnym podsumowaniem — automatyzacja pracy zespołu i procesów HR bez pięciu osobnych narzędzi.
+							</p>
+							<Link
+								href="/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
 						{/* Karta — ewidencja na budowie */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-amber-100/80">
 							<img
-								src="/img/worktimeblog.webp"
+								src="/img/budowa1.webp"
 								alt="Ewidencja czasu pracy na budowie — firma budowlana"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
@@ -154,7 +175,7 @@ function Blog() {
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
 							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
 								<img
-									src="/img/worktimeblog.webp"
+									src="/img/video.webp"
 									alt="Instrukcja wideo Planopia — poradniki z aplikacji"
 									className="h-full w-full object-cover opacity-90"
 								/>
@@ -177,7 +198,7 @@ function Blog() {
 
 						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="Instalacja Planopii jako aplikacji PWA na telefonie i komputerze" className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/pwas.webp" alt="Instalacja Planopii jako aplikacji PWA na telefonie i komputerze" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Jak zainstalować Planopię jako aplikację PWA? Instrukcja krok po kroku
 							</h3>
@@ -191,9 +212,29 @@ function Blog() {
 							</Link>
 						</div>
 
+						{/* Karta — roczny plan urlopów Excel / PDF / aplikacja */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-emerald-100/90">
+							<img
+								src="/img/roczny-plan.webp"
+								alt="Roczny plan urlopów — kalendarz i wnioski w Planopii"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać w 2026?
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Arkusz i eksport do PDF na start; checklista programu do wniosków urlopowych; nadgodziny i ewidencja — jak przejść z Excela do systemu z akceptacjami, bez chaosu wersji plików.
+							</p>
+							<Link
+								href="/blog/roczny-plan-urlopow-excel-pdf-aplikacja"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
 						{/* Karta wpisu - Dni wolne 2026 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planvacationblog.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/dni wolnes.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Dni wolne 2026 – kompletny kalendarz świąt w Polsce
 							</h3>
@@ -209,7 +250,7 @@ function Blog() {
 
 						{/* Karta wpisu - Kompleksowa aplikacja */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/kompleksowos.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu
 							</h3>
@@ -225,7 +266,7 @@ function Blog() {
 
 						{/* Karta wpisu 3 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planvacationblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/planowanie urlopows.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Planowanie urlopów pracowników – najlepsze narzędzia i praktyki
 							</h3>
@@ -241,7 +282,7 @@ function Blog() {
 
 						{/* Karta wpisu 4 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm
 							</h3>
@@ -256,7 +297,7 @@ function Blog() {
 						</div>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Ewidencja czasu pracy — także darmowy plan po próbie
 							</h3>
@@ -271,7 +312,7 @@ function Blog() {
 						</div>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/worktimeblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Elektroniczna ewidencja czasu pracy - kompletny przewodnik
 							</h3>
@@ -286,7 +327,7 @@ function Blog() {
 						</div>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planvacationblog.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/planowanie urlopows.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Zarządzanie urlopami w firmie - kompletny przewodnik
 							</h3>
@@ -304,7 +345,7 @@ function Blog() {
 			</section>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

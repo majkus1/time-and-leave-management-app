@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function ENBlog() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -48,28 +49,28 @@ function ENBlog() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							About the App
 						</Link>
 						<Link
 							href="/en#ai-assistant"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							AI Assistant
 						</Link>
 						<Link
 							href="/en#prices"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<Link
 							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Contact
 						</Link>
 						<Link
@@ -114,25 +115,45 @@ function ENBlog() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
+			<section className="px-4 pt-6 pb-3 md:py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
 						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">Blog</h1>
+							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-0 md:mb-6 blogh1 text-center mt-2 md:mt-4">Blog</h1>
 						</div>
 					</div>
 				</div>
 			</section>
 
-			<section className="px-4 py-16 bg-white">
+			<section className="px-4 pt-5 pb-12 md:py-16 bg-white">
 				<div className="max-w-7xl mx-auto">
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
+						{/* Article — Planopia AI Assistant */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-indigo-100/90">
+							<img
+								src="/img/aibloga.webp"
+								alt="Planopia AI Assistant — time tracking, leave, tasks, and schedules"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Planopia AI Assistant: time tracking, leave, tasks, and schedules in one system
+							</h3>
+							<p className="text-gray-600 flex-1">
+								How to connect time tracking, leave, Kanban-style tasks, and schedules with intelligent summaries — team and HR automation without juggling five separate tools.
+							</p>
+							<Link
+								href="/en/blog/planopia-ai-assistant-time-tracking-leave-tasks-schedules"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
+
 						{/* Article — construction time tracking */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-amber-100/80">
 							<img
-								src="/img/worktimeblog.webp"
+								src="/img/budowa1.webp"
 								alt="Time tracking on construction sites — building companies"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
@@ -153,7 +174,7 @@ function ENBlog() {
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
 							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
 								<img
-									src="/img/worktimeblog.webp"
+									src="/img/video.webp"
 									alt="Planopia video tutorials from the app"
 									className="h-full w-full object-cover opacity-90"
 								/>
@@ -177,7 +198,7 @@ function ENBlog() {
 						{/* Article card - How to Install Planopia as PWA */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/worktimeblog.webp"
+								src="/img/pwas.webp"
 								alt="Installing Planopia as a PWA on phone and desktop"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
@@ -197,8 +218,8 @@ function ENBlog() {
 						{/* Article card - Comprehensive Company Management App */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/worktimeblog.webp"
-								alt="Comprehensive Company Management App"
+								src="/img/kompleksowos.webp"
+								alt="Comprehensive company management app — Planopia"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -214,11 +235,31 @@ function ENBlog() {
 							</Link>
 						</div>
 
+						{/* Article — annual leave Excel/PDF vs app */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-emerald-100/90">
+							<img
+								src="/img/roczny-plan.webp"
+								alt="Annual leave calendar and leave requests in Planopia"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Annual leave plan: Excel, PDF, and an app — what to pick in 2026?
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Spreadsheets and PDF exports for a snapshot view; a checklist for leave request software; how overtime and time tracking connect to planning — and when to move from Excel to approvals in one system.
+							</p>
+							<Link
+								href="/en/blog/annual-leave-plan-excel-pdf-app"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Read more
+							</Link>
+						</div>
+
 						{/* Karta wpisu 3 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/planvacationblog.webp"
-								alt="Title img of article 3"
+								src="/img/planowanie urlopows.webp"
+								alt="Employee leave planning — calendar and tools"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -236,8 +277,8 @@ function ENBlog() {
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/worktimeblog.webp"
-								alt="Title img of article 4"
+								src="/img/ewidencjas.webp"
+								alt="Online time tracking for teams"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -255,8 +296,8 @@ function ENBlog() {
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/worktimeblog.webp"
-								alt="Title img of article 4"
+								src="/img/ewidencjas.webp"
+								alt="Free time tracking app — Planopia"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -274,8 +315,8 @@ function ENBlog() {
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/worktimeblog.webp"
-								alt="Title img of article 4"
+								src="/img/ewidencjas.webp"
+								alt="Electronic time tracking in the company"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -293,8 +334,8 @@ function ENBlog() {
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img
-								src="/img/planvacationblog.webp"
-								alt="Title img of article 3"
+								src="/img/planowanie urlopows.webp"
+								alt="Leave management — team calendar"
 								className="rounded-md mb-4 h-48 object-cover"
 							/>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -314,7 +355,7 @@ function ENBlog() {
 			</section>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

@@ -5,6 +5,7 @@ import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "./globals.css";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import GoogleTagManagerNoScript from "../components/GoogleTagManagerNoScript";
+import LandingChatWidget from "@/components/LandingChatWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ const titilliumWeb = Titillium_Web({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://planopia.pl"),
   title: {
     default: "Planopia — darmowa ewidencja czasu pracy online | 30 dni pełnej aplikacji",
     template: "%s | Planopia"
@@ -131,6 +133,7 @@ export default function RootLayout({
         <GoogleTagManagerNoScript />
         <GoogleAnalytics />
         {children}
+        <LandingChatWidget />
       </body>
     </html>
   );

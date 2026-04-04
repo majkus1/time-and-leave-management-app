@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,8 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
+import BlogFreeAppHeroVideo from './BlogFreeAppHeroVideo'
 
 function BlogFour() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -27,7 +29,7 @@ function BlogFour() {
 						"headline": "Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia",
 						"url": "https://planopia.pl/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy",
 						"datePublished": "2024-10-18",
-						"dateModified": "2024-10-18",
+						"dateModified": "2026-03-27",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -40,7 +42,7 @@ function BlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Planopia: darmowa ewidencja czasu pracy online po okresie próbnym (do 5 aktywnych kont). 30 dni z pełnymi modułami na start; urlopy i AI w pakietach płatnych.",
+						"description": "Planopia: 30 dni pełnej aplikacji dla zespołu do 5 osób, bez karty na start; potem darmowa ewidencja do 5 kont lub pakiety płatne — urlopy, grafik, czat i Asystent AI w cenniku.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -58,29 +60,29 @@ function BlogFour() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -123,27 +125,31 @@ function BlogFour() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
-								Ewidencja czasu pracy i urlopy — pierwszy miesiąc za darmo
-							</h1>
-							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
-								30 dni za darmo: pełne funkcje aplikacji, do 5 użytkowników (limit wiadomości Asystenta AI w tym okresie).
-								Po próbie: darmowy plan ewidencji do 5 kont lub pakiet z urlopami i pozostałymi modułami — bez karty w okresie próbnym.
-							</p>
-							<div className="text-center">
-								<Link
-									href="https://app.planopia.pl/team-registration"
-									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-								>
-									Załóż darmowy zespół
-								</Link>
-							</div>
-						</div>
+			<section
+				className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14 bg-gradient-to-br from-slate-50 via-blue-50/60 to-emerald-50/30 landing-hero-below-fixed-header"
+				id="blog-free-app-welcome">
+				<div className="max-w-4xl md:max-w-5xl xl:max-w-6xl mx-auto w-full">
+					<div className="rounded-2xl md:rounded-3xl border border-blue-100/80 bg-white shadow-md md:shadow-lg px-6 py-9 sm:px-10 sm:py-10 md:px-12 md:py-12 lg:px-16 lg:py-14 text-left md:text-center ring-1 ring-slate-200/60">
+						<h1 className="font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 blogh1 leading-[1.2] tracking-tight max-w-5xl md:mx-auto">
+							Ewidencja czasu pracy i urlopy — pierwszy miesiąc za darmo
+						</h1>
+						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
+							30 dni pełnej aplikacji dla zespołu do 5 osób —{' '}
+							<strong className="font-semibold text-gray-800">bez karty na start</strong>.
+							{' '}
+							Potem darmowa ewidencja (5 kont) lub pakiety płatne.{' '}
+							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
+								Szczegóły w cenniku
+							</Link>
+							.
+						</p>
+						<Link
+							href="https://app.planopia.pl/team-registration"
+							className="inline-block bg-green-600 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-xl shadow-lg hover:bg-green-700 transition text-base sm:text-lg white-text-btn">
+							Załóż darmowy zespół
+						</Link>
 					</div>
+					<BlogFreeAppHeroVideo locale="pl" />
 				</div>
 			</section>
 
@@ -352,17 +358,16 @@ function BlogFour() {
 					</div>
 
 					{/* CTA */}
-					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl">
-						<h2 className="text-3xl font-bold text-gray-900 mb-4 justify-center">
+					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-5 sm:p-8 rounded-2xl shadow-sm">
+						<h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug">
 							Gotowy na darmową aplikację do ewidencji czasu pracy?
 						</h2>
-						<p className="text-xl text-gray-700 mb-6">
+						<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-2xl mx-auto leading-snug sm:leading-relaxed">
 							Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
-							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-						>
+							className="inline-block bg-green-600 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn">
 							Załóż darmowy zespół
 						</Link>
 					</div>
@@ -370,7 +375,7 @@ function BlogFour() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

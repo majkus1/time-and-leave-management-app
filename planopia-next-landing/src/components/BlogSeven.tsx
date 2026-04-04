@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,8 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function BlogSeven() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -113,29 +115,29 @@ function BlogSeven() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -161,6 +163,7 @@ function BlogSeven() {
 					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
 			</header>
+			<div className="header-fixed-spacer" aria-hidden="true" />
 
 			{/* Professional Mobile Menu */}
 			<MobileMenu
@@ -180,7 +183,7 @@ function BlogSeven() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero" style={{ marginTop: '70px' }}>
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero">
 				<div className="max-w-7xl mx-auto text-left content-blog">
 					<div className="grid xl:grid-cols-2 gap-10 items-center">
 						<div>
@@ -195,34 +198,7 @@ function BlogSeven() {
 								dla całego zespołu.
 							</p>
 
-							{/* CTA boxy */}
-							<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
-								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
-									<p className="text-gray-800 mb-3">
-										<strong>30 dni za darmo</strong>
-										{' '}
-										— pełne funkcje, do 5 użytkowników (pierwszy miesiąc)
-									</p>
-									<Link
-										href="https://app.planopia.pl/team-registration"
-										className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
-									>
-										Załóż darmowy zespół
-									</Link>
-								</div>
-								<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
-									<p className="text-gray-800 mb-3">
-									<strong>Dla większych firm: </strong>  
-									nielimitowana liczba użytkowników, elastyczne funkcje i integracje
-									</p>
-									<Link
-										href="/#cennik"
-										className="inline-block sec-cta bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition"
-									>
-										Zobacz cennik
-									</Link>
-								</div>
-							</div>
+							<BlogHeroDualCtaCards locale="pl" />
 						</div>
 
 						<figure>
@@ -404,7 +380,7 @@ function BlogSeven() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

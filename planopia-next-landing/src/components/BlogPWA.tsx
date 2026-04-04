@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function BlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -56,29 +57,29 @@ function BlogPWA() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -104,6 +105,7 @@ function BlogPWA() {
 					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
 			</header>
+			<div className="header-fixed-spacer" aria-hidden="true" />
 
 			{/* Professional Mobile Menu */}
 			<MobileMenu
@@ -123,7 +125,7 @@ function BlogPWA() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero" style={{ marginTop: '70px' }}>
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero">
 				<div className="max-w-7xl mx-auto text-left content-blog">
 					<div className="max-w-4xl mx-auto">
 						<h1 className="text-4xl font-bold mb-6">
@@ -234,7 +236,7 @@ function BlogPWA() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

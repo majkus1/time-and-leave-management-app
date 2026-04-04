@@ -57,9 +57,10 @@ export default function MobileMenu({
 		}
 	}, [isOpen, isClosing])
 
-	// Lock body scroll when menu is open and add class for styling
+	// Lock body scroll when menu is open (albo w trakcie zamykania) + klasa do styli (np. ukrycie widgetu czatu)
+	const menuBlockingUi = isOpen || isClosing
 	useEffect(() => {
-		if (isOpen && !isClosing) {
+		if (menuBlockingUi) {
 			document.body.style.overflow = 'hidden'
 			document.body.classList.add('mobile-menu-open')
 		} else {
@@ -70,7 +71,7 @@ export default function MobileMenu({
 			document.body.style.overflow = ''
 			document.body.classList.remove('mobile-menu-open')
 		}
-	}, [isOpen, isClosing])
+	}, [menuBlockingUi])
 
 	// Handle close with animation
 	const handleClose = useCallback(() => {
@@ -167,13 +168,13 @@ export default function MobileMenu({
 							<>
 								<button
 									type="button"
-									className="mobile-menu-item mobile-menu-industry-toggle"
+									className="mobile-menu-item mobile-menu-industry-toggle !text-blue-600 hover:!text-blue-600"
 									style={{ animationDelay: `${navBefore.length * 0.05}s` }}
 									onClick={() => setIndustryOpen((v) => !v)}
 									aria-expanded={industryOpen}
 									aria-controls="mobile-menu-industry-list">
-									<span>{industrySectionTitle}</span>
-									<span className="mobile-menu-industry-chevron" aria-hidden>
+									<span className="!text-blue-600">{industrySectionTitle}</span>
+									<span className="mobile-menu-industry-chevron !text-blue-600" aria-hidden>
 										{industryOpen ? '▾' : '▸'}
 									</span>
 								</button>

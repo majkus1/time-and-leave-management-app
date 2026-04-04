@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 function BlogFive() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -27,7 +28,7 @@ function BlogFive() {
 						"headline": "Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia",
 						"url": "https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy",
 						"datePublished": "2024-10-18",
-						"dateModified": "2024-10-18",
+						"dateModified": "2026-03-27",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -40,9 +41,52 @@ function BlogFive() {
 								"url": "https://planopia.pl/img/new-logoplanopia.png"
 							}
 						},
-						"description": "Elektroniczna ewidencja czasu pracy: przewodnik i wybór narzędzia. Planopia: 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 aktywnych kont lub pakiety płatne z urlopami i AI.",
+						"description": "Elektroniczna ewidencja czasu pracy — program i aplikacja online zamiast Excela. Planopia: 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 aktywnych kont lub pakiety płatne z urlopami i AI.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
+				}}
+			/>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						'@context': 'https://schema.org',
+						'@type': 'FAQPage',
+						mainEntity: [
+							{
+								'@type': 'Question',
+								name: 'Czy elektroniczna ewidencja czasu pracy jest obowiązkowa?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Tak, zgodnie z polskim prawem pracy każdy pracodawca musi prowadzić ewidencję czasu pracy swoich pracowników. Elektroniczna ewidencja czasu pracy jest pełnoprawną metodą spełnienia tego obowiązku.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Jak długo trwa wdrożenie programu do ewidencji czasu pracy?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Wdrożenie elektronicznej ewidencji czasu pracy w Planopii trwa zaledwie kilka minut. Możesz rozpocząć korzystanie z systemu natychmiast po rejestracji zespołu.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy program do ewidencji czasu pracy jest bezpieczny?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Planopia oferuje szyfrowanie danych, bezpieczne serwery, regularne kopie zapasowe i zgodność z RODO.',
+								},
+							},
+							{
+								'@type': 'Question',
+								name: 'Czy mogę eksportować dane z programu do ewidencji czasu pracy?',
+								acceptedAnswer: {
+									'@type': 'Answer',
+									text: 'Tak — Planopia umożliwia eksport danych do formatów PDF i Excel (XLSX). Twoje dane możesz pobrać w każdej chwili.',
+								},
+							},
+						],
+					}),
 				}}
 			/>
 
@@ -58,29 +102,29 @@ function BlogFive() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</Link>
 						<Link
 							href="/#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</Link>
 						<Link
 							href="/#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</Link>
 						<Link
@@ -126,14 +170,14 @@ function BlogFive() {
 			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="max-w-7xl mx-auto text-left">
 					<div className="grid gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
+						<div className="ordering text-left md:text-center">
+							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 mt-4">
 								Elektroniczna ewidencja czasu pracy - kompletny przewodnik
 							</h1>
-							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
+							<p className="text-xl text-gray-600 max-w-4xl mx-0 md:mx-auto mb-8">
 								Dowiedz się wszystkiego o elektronicznej ewidencji czasu pracy. Kompletny przewodnik po wyborze najlepszego programu do ewidencji czasu pracy dla Twojej firmy.
 							</p>
-							<div className="text-center">
+							<div>
 								<Link
 									href="https://app.planopia.pl/team-registration"
 									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
@@ -162,6 +206,30 @@ function BlogFive() {
 						<p className="text-lg text-gray-700 mb-6">
 							<strong>Program do ewidencji czasu pracy</strong> automatycznie oblicza godziny pracy, nadgodziny, dni wolne i generuje raporty, 
 							co znacznie usprawnia proces zarządzania czasem pracy w firmie.
+						</p>
+					</div>
+
+					<div className="mb-12">
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">
+							Excel a program do elektronicznej ewidencji czasu pracy
+						</h2>
+						<p className="text-lg text-gray-700 mb-4">
+							Wiele firm zaczyna od arkusza Excel — to rozwiązanie na start, ale przy większym zespole rośnie ryzyko pomyłek, rozproszenia plików i braku jednej aktualnej wersji.{' '}
+							<strong>Program do ewidencji czasu pracy</strong> w formie aplikacji webowej trzyma dane centralnie, ułatwia wpisy z telefonu lub komputera i przyspiesza raporty dla kadr.
+						</p>
+						<p className="text-lg text-gray-700 mb-4">
+							Planopia umożliwia prowadzenie <strong>ewidencji czasu pracy online</strong> z przeglądarki (także jako PWA na telefonie), eksport zestawień do PDF/XLSX oraz — po wybraniu odpowiedniego pakietu — korzystanie z modułów urlopowych i pozostałych funkcji HR.
+						</p>
+						<p className="text-lg text-gray-700">
+							Zobacz też:{' '}
+							<Link href="/blog/ewidencja-czasu-pracy-online" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								ewidencja czasu pracy online — podejścia i funkcje
+							</Link>
+							{' · '}
+							<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								darmowa aplikacja do ewidencji czasu pracy po okresie próbnym
+							</Link>
+							.
 						</p>
 					</div>
 
@@ -328,7 +396,7 @@ function BlogFive() {
 							Gotowy na elektroniczną ewidencję czasu pracy?
 						</h2>
 						<p className="text-xl text-gray-700 mb-6">
-							Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!
+							Załóż zespół w Planopii i przetestuj elektroniczną ewidencję czasu pracy — pełna aplikacja przez 30 dni, potem darmowy plan ewidencji do 5 aktywnych kont lub pakiety płatne.
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
@@ -341,7 +409,7 @@ function BlogFive() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

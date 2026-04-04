@@ -22,6 +22,7 @@ import LandingAIHighlight from './LandingAIHighlight'
 import AboutAppShowcaseVideos from './AboutAppShowcaseVideos'
 import SellerCompanyDetails from './SellerCompanyDetails'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import { LANDING_SITE_FOOTER_CLASS_STACK } from '@/data/landingSiteFooter'
 
 function ENProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -150,28 +151,28 @@ function ENProductPromotion() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<a
 							href="#aboutapp"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							About the App
 						</a>
 						<a
 							href="#ai-assistant"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							AI Assistant
 						</a>
 						<a
 							href="#prices"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</a>
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<a
 							href="#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Contact
 						</a>
 						<Link
@@ -228,7 +229,7 @@ function ENProductPromotion() {
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
-								className="inline-block bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-4"
+								className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4"
 							>
 								Create your free team
 							</Link>
@@ -248,9 +249,17 @@ function ENProductPromotion() {
 
 			<section id="aboutapp" className="py-12 bg-white px-4">
 				<div className="max-w-7xl mx-auto">
-					<div className="grid lg:grid-cols-2 gap-10 items-center">
-						{/* Text */}
-						<div>
+					<div
+						className="
+							grid gap-10
+							[grid-template-areas:'features'_'callout'_'video']
+							lg:grid-cols-2 lg:gap-x-10 lg:gap-y-10
+							lg:[grid-template-areas:'features_video'_'callout_callout']
+							lg:items-start
+						"
+					>
+						{/* Text + feature cards */}
+						<div className="[grid-area:features] min-w-0">
 							<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
 								Comprehensive company management app
 							</h2>
@@ -341,26 +350,38 @@ function ENProductPromotion() {
 									</div>
 								</div>
 							</div>
-
-							<div className="mt-8">
-								<p className="text-gray-700 text-lg leading-relaxed font-bold">
-									Need more features, custom integrations aligned with your business goals, or a dedicated environment? Have many employees?{' '}
-									<span className="text-gray-600">
-										Plan comparison and limits are in the{' '}
-										<Link
-											href="#prices"
-											className="font-bold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
-										>
-											Pricing
-										</Link>{' '}
-										section further down.
-									</span>
-								</p>
-							</div>
 						</div>
 
+						<aside
+							className="[grid-area:callout] w-full rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/95 via-white to-slate-50 p-5 md:p-6 shadow-sm ring-1 ring-indigo-100/70"
+							aria-labelledby="planopia-enterprise-offer-heading-en"
+						>
+							<h3
+								id="planopia-enterprise-offer-heading-en"
+								className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 mb-2"
+							>
+								Building Planopia for your organization
+							</h3>
+							<p className="text-gray-900 text-base md:text-lg leading-relaxed font-semibold">
+								Need more than the standard offering?{' '}
+								<span className="text-gray-800">
+									We also extend the product for company-specific needs: extra features, integrations aligned with your processes, a dedicated environment, or scaling to a large workforce.
+								</span>
+							</p>
+							<p className="mt-3 text-gray-700 text-sm md:text-base leading-relaxed">
+								Compare plans and limits in the{' '}
+								<Link
+									href="#prices-paid-plans"
+									className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 underline-offset-[3px] hover:decoration-indigo-500 transition-colors"
+								>
+									Pricing
+								</Link>{' '}
+								section further down the page.
+							</p>
+						</aside>
+
 						{/* Product videos */}
-						<div className="relative flex min-h-[320px] w-full flex-col justify-center mockup-rotator lg:min-h-0 lg:self-center">
+						<div className="[grid-area:video] relative flex min-h-[320px] w-full flex-col justify-center mockup-rotator lg:min-h-0 lg:self-center">
 							<AboutAppShowcaseVideos locale="en" />
 						</div>
 					</div>
@@ -585,7 +606,7 @@ function ENProductPromotion() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t flex flex-col items-center justify-center text-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS_STACK}>
 				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }} />
 			</footer>
 

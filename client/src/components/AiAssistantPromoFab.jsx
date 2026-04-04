@@ -2,6 +2,7 @@ import React, { useId, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { useFreemiumAccess } from '../hooks/useFreemiumAccess'
 
 /**
  * Stała zakładka przy prawej krawędzi → /ai-assistant (nad paskiem PWA jak inne FAB-y).
@@ -9,17 +10,20 @@ import { useAuth } from '../context/AuthContext'
  */
 function AiAssistantPromoFab() {
 	const { loggedIn } = useAuth()
+	const { isLoading: billingEntLoading, freemiumTier } = useFreemiumAccess({ enabled: !!loggedIn })
 	const { pathname } = useLocation()
 	const { t } = useTranslation()
 	const waveGradId = `ai-fab-wave-${useId().replace(/:/g, '')}`
 
 	const show = useMemo(() => {
 		if (!loggedIn) return false
+		/** Freemium: brak promocji AI (Sidebar też wyłącza premium). Do czasu entitlements nie pokazuj — unikamy błysku. */
+		if (billingEntLoading || freemiumTier) return false
 		if (pathname === '/ai-assistant') return false
 		if (['/login', '/team-registration', '/reset-password'].includes(pathname)) return false
 		if (pathname.startsWith('/set-password/') || pathname.startsWith('/new-password/')) return false
 		return true
-	}, [loggedIn, pathname])
+	}, [loggedIn, pathname, billingEntLoading, freemiumTier])
 
 	if (!show) return null
 

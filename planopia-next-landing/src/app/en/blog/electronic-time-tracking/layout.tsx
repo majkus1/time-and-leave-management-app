@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
-	title: 'Electronic Time Tracking - Complete Guide | Planopia',
-	description: `Complete guide to electronic time tracking and choosing software. ${blogArticleOfferLine.en}`,
+	title: 'Electronic time tracking — app, software & online system | Planopia',
+	description: `Electronic time tracking: choosing a program, replacing spreadsheets, PDF/XLSX exports. ${blogArticleOfferLine.en}`,
 	keywords: [
 		'electronic time tracking',
 		'time tracking software',
@@ -14,9 +14,7 @@ export const metadata: Metadata = {
 		'free time tracking',
 		'Planopia',
 		'time tracking program',
-		'electronic time tracking',
-		'leave management software',
-		'leave application'
+		'time tracking excel',
 	],
 	authors: [{ name: 'Michał Lipka' }],
 	creator: 'Michał Lipka',
@@ -50,13 +48,13 @@ export const metadata: Metadata = {
 		locale: 'en_US',
 		type: 'article',
 		publishedTime: '2024-10-18T00:00:00.000Z',
-		modifiedTime: '2024-10-18T00:00:00.000Z',
+		modifiedTime: '2026-03-27T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: `Electronic attendance records for teams. ${blogArticleOfferLine.en}`,
+		title: 'Electronic time tracking — software & online app | Planopia',
+		description: `Spreadsheets vs time tracking software — guide. ${blogArticleOfferLine.en}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

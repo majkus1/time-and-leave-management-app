@@ -39,11 +39,11 @@ export default function LandingIndustriesDropdown({ locale }: Props) {
 		<div className="relative inline-flex" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
 			<button
 				type="button"
-				className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-gray-700 font-medium hover:text-blue-600 transition"
+				className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-blue-600 font-bold hover:text-blue-700 transition"
 				aria-expanded={open}
 				aria-haspopup="true">
 				{label}
-				<span className="text-xs opacity-70" aria-hidden>
+				<span className="text-xs text-blue-600/85" aria-hidden>
 					▾
 				</span>
 			</button>

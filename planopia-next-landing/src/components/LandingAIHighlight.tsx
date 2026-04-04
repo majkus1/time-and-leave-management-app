@@ -28,7 +28,7 @@ const strings = {
 			'Szybki wgląd dla pracowników — wszystko w jednym miejscu',
 		],
 		cta: 'Pakiety i limity Asystenta AI',
-		ctaHref: '#cennik',
+		ctaHref: '#cennik-pakiety-platne',
 	},
 	en: {
 		eyebrow: 'New in Planopia',
@@ -45,7 +45,7 @@ const strings = {
 			'Quick employee view — everything in one place',
 		],
 		cta: 'Plans and AI Assistant limits',
-		ctaHref: '#prices',
+		ctaHref: '#prices-paid-plans',
 	},
 } as const
 

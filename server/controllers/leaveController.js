@@ -354,6 +354,13 @@ exports.submitLeaveRequest = async (req, res) => {
 			${!typeRequiresApproval ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.autoApprovedInfo')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 		`
 		
+		const employee = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+		const qtyLabel =
+			settings.leaveCalculationMode === 'hours'
+				? `${(finalDaysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} h`
+				: `${finalDaysRequested} ${t('email.leaveform.days') || 'dni'}`
+		const newLeavePreview = `${employee} · ${typeText} · ${trimmedStartDate}–${trimmedEndDate} · ${qtyLabel}`
+
 		// Wyślij email do wszystkich unikalnych odbiorców
 		const emailPromises = recipients.map(recipient =>
 			sendEmail(
@@ -366,7 +373,8 @@ exports.submitLeaveRequest = async (req, res) => {
 					t('email.leaveform.goToRequest'),
 					`${appUrl}/leave-requests/${userId}`,
 					t
-				)
+				),
+				{ teamId, preview: newLeavePreview }
 			)
 		)
 

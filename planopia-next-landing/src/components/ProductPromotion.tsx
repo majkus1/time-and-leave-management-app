@@ -22,6 +22,7 @@ import LandingAIHighlight from './LandingAIHighlight'
 import AboutAppShowcaseVideos from './AboutAppShowcaseVideos'
 import SellerCompanyDetails from './SellerCompanyDetails'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import { LANDING_SITE_FOOTER_CLASS_STACK } from '@/data/landingSiteFooter'
 
 function ProductPromotion() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -151,28 +152,28 @@ function ProductPromotion() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<a
 							href="#oaplikacji"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							O Aplikacji
 						</a>
 						<a
 							href="#asystent-ai"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							Asystent AI
 						</a>
 						<a
 							href="#cennik"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</a>
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<a
 							href="#kontakt"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Kontakt
 						</a>
 						<Link
@@ -232,7 +233,7 @@ function ProductPromotion() {
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
-								className="inline-block bg-green-600 text-white font-semibold py-3 px-4 rounded shadow hover:bg-green-700 transition mt-4">
+								className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4">
 								Załóż darmowy zespół
 							</Link>
 						</div>
@@ -251,9 +252,17 @@ function ProductPromotion() {
 
 			<section id="oaplikacji" className="py-12 bg-white px-4">
   <div className="max-w-7xl mx-auto">
-    <div className="grid lg:grid-cols-2 gap-10 items-center">
-      {/* Tekst */}
-      <div>
+    <div
+      className="
+        grid gap-10
+        [grid-template-areas:'features'_'callout'_'video']
+        lg:grid-cols-2 lg:gap-x-10 lg:gap-y-10
+        lg:[grid-template-areas:'features_video'_'callout_callout']
+        lg:items-start
+      "
+    >
+      {/* Tekst + kafelki */}
+      <div className="[grid-area:features] min-w-0">
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
           Kompleksowa aplikacja do zarządzania firmą
         </h2>
@@ -348,28 +357,40 @@ function ProductPromotion() {
           </div>
         </div>
 
-        <div className="mt-8">
-          <p className="text-gray-700 text-lg leading-relaxed font-bold">
-            Potrzebujesz więcej funkcji, własnych integracji pod cele organizacji lub osobnego środowiska? Masz wielu pracowników?{' '}
-            <span className="text-gray-600">
-              Zestawienie pakietów i limitów znajdziesz w sekcji{' '}
-              <Link
-                href="#cennik"
-                className="font-bold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-200 underline-offset-[3px] hover:decoration-indigo-400 transition-colors"
-              >
-                Cennik
-              </Link>{' '}
-              niżej na stronie.
-            </span>
-          </p>
-        </div>
-
       </div>
-{/* Wideo / screen produktu */}
-<div className="relative flex min-h-[320px] w-full flex-col justify-center mockup-rotator lg:min-h-0 lg:self-center">
-	<AboutAppShowcaseVideos locale="pl" />
-</div>
 
+      <aside
+        className="[grid-area:callout] w-full rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/95 via-white to-slate-50 p-5 md:p-6 shadow-sm ring-1 ring-indigo-100/70"
+        aria-labelledby="planopia-enterprise-offer-heading-pl"
+      >
+        <h3
+          id="planopia-enterprise-offer-heading-pl"
+          className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 mb-2"
+        >
+          Rozwój Planopii pod Twoją organizację
+        </h3>
+        <p className="text-gray-900 text-base md:text-lg leading-relaxed font-semibold">
+          Potrzebujesz więcej niż standardowa oferta?{' '}
+          <span className="text-gray-800">
+            Rozwijamy aplikację także pod konkretne potrzeby firm: dodatkowe funkcje, integracje dopasowane do procesów, osobne środowisko lub obsługa dużej liczby pracowników.
+          </span>
+        </p>
+        <p className="mt-3 text-gray-700 text-sm md:text-base leading-relaxed">
+          Zestawienie pakietów i limitów znajdziesz w sekcji{' '}
+          <Link
+            href="#cennik-pakiety-platne"
+            className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 underline-offset-[3px] hover:decoration-indigo-500 transition-colors"
+          >
+            Cennik
+          </Link>{' '}
+          niżej na stronie.
+        </p>
+      </aside>
+
+      {/* Wideo / screen produktu */}
+      <div className="[grid-area:video] relative flex min-h-[320px] w-full flex-col justify-center mockup-rotator lg:min-h-0 lg:self-center">
+        <AboutAppShowcaseVideos locale="pl" />
+      </div>
     </div>
   </div>
 </section>
@@ -594,7 +615,7 @@ function ProductPromotion() {
 			</main>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t flex flex-col items-center justify-center text-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS_STACK}>
 				<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 			</footer>
 

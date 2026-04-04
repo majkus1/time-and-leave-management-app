@@ -5,14 +5,17 @@
 type Props = {
 	locale: 'pl' | 'en'
 	imgClassName?: string
+	/** Nadpisanie źródła wideo na desktop (np. starszy materiał). Domyślnie: podsumowanie-ai-desktop.mp4. */
+	desktopVideoSrc?: string
 }
 
-const VIDEO_DESKTOP = '/img/aias.mp4'
+const VIDEO_DESKTOP = '/img/podsumowanie-ai-desktop.mp4'
 const VIDEO_MOBILE = '/img/aias-mob.mp4'
 
 export default function ConstructionAiAssistantScreenshot({
 	locale,
 	imgClassName = 'w-full h-auto object-cover object-top',
+	desktopVideoSrc = VIDEO_DESKTOP,
 }: Props) {
 	const isPl = locale === 'pl'
 	const posterDesktop = isPl ? '/img/aiass.webp' : '/img/aiass-en.webp'
@@ -42,7 +45,7 @@ export default function ConstructionAiAssistantScreenshot({
 				{...videoProps}
 				poster={posterDesktop}
 			>
-				<source src={VIDEO_DESKTOP} type="video/mp4" />
+				<source src={desktopVideoSrc} type="video/mp4" />
 			</video>
 		</>
 	)

@@ -22,9 +22,9 @@ const titilliumWeb = Titillium_Web({
 });
 
 export const metadata: Metadata = {
-  title: "Online Time Tracking – best apps and software for companies | Planopia",
+  title: "Online time tracking — app, software & hour registration | Planopia",
   description:
-    `Online time tracking for companies — attendance, overtime, exports. ${blogArticleOfferLine.en}`,
+    `Online time tracking: web-based hour registration and overtime reports — no emailed Excel files. ${blogArticleOfferLine.en}`,
   keywords: [
     "online time tracking",
     "time tracking app",
@@ -56,8 +56,10 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://planopia.pl/en/blog/time-tracking-online',
     siteName: 'Planopia',
-    title: 'Online Time Tracking – modern solutions for businesses | Planopia',
-    description: `Modern online time tracking: hours, overtime, exports. ${blogArticleOfferLine.en}`,
+    title: 'Online time tracking — software & app (no spreadsheets) | Planopia',
+    description: `Hour registration and PDF/XLSX exports from a web app. ${blogArticleOfferLine.en}`,
+    publishedTime: '2025-08-25T12:00:00.000Z',
+    modifiedTime: '2026-03-27T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -69,9 +71,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Online Time Tracking – modern solutions for businesses | Planopia',
+    title: 'Online time tracking — software & app | Planopia',
     description:
-      `Attendance and hours in one app. ${blogArticleOfferLine.en}`,
+      `Online attendance system with exports — Planopia. ${blogArticleOfferLine.en}`,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {
@@ -82,7 +84,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google verification code
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs'
   },
   category: 'technology',
 };

@@ -56,28 +56,28 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href={isPL ? "/#oaplikacji" : "/en#aboutapp"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPL ? 'O Aplikacji' : 'About the App'}
 						</Link>
 						<Link
 							href={isPL ? '/#asystent-ai' : '/en#ai-assistant'}
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							{isPL ? 'Asystent AI' : 'AI Assistant'}
 						</Link>
 						<Link
 							href={isPL ? "/#cennik" : "/en#prices"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPL ? 'Cennik' : 'Pricing'}
 						</Link>
 						<LandingIndustriesDropdown locale={isPL ? 'pl' : 'en'} />
 						<Link
 							href={isPL ? "/blog" : "/en/blog"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Blog
 						</Link>
 						<Link
 							href={isPL ? "/#kontakt" : "/en#contact"}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPL ? 'Kontakt' : 'Contact'}
 						</Link>
 						<Link

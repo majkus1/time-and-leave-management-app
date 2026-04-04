@@ -2,6 +2,7 @@ import Link from 'next/link'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
 import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 type Locale = 'pl' | 'en'
 
@@ -28,8 +29,9 @@ const COPY: Record<
 		aiParas: string[]
 		dailyTitle: string
 		dailyParas: string[]
-		summaryTitle: string
-		summaryPara: string
+		ctaTitle: string
+		ctaBody: string
+		ctaButton: string
 	}
 > = {
 	pl: {
@@ -75,9 +77,10 @@ const COPY: Record<
 		dailyParas: [
 			'Firmy, które wygrywają z wdrożeniami HR i operacyjnymi, zwykle wybierają jedno spójne narzędzie: tam, gdzie pracownik i tak spędza czas (zadania, komunikacja), pojawia się też prawidłowo uzupełniany czas pracy. Dlatego w Planopii obok ewidencji są tablice zadań i czaty — żeby zespół nie musiał skakać między pięcioma aplikacjami.',
 		],
-		summaryTitle: 'Podsumowanie',
-		summaryPara:
-			'Ewidencja czasu pracy na budowie nie musi oznaczać wieczorów z Excelem. Wystarczy spójny system: zbiór danych w jednym miejscu, raporty na kliknięcie i — jeśli chcesz — wsparcie AI przy analizie miesiąca. Zobacz też dedykowany opis pod branżę budowlaną na stronie ',
+		ctaTitle: 'Porządek na budowie i w biurze?',
+		ctaBody:
+			'30 dni pełnej aplikacji; potem darmowa ewidencja (5 kont) lub plan płatny — urlopy, grafik, czat, AI.',
+		ctaButton: 'Załóż zespół — 30 dni gratis',
 	},
 	en: {
 		title: 'How to track time on construction sites (simply, without spreadsheets)',
@@ -122,9 +125,10 @@ const COPY: Record<
 		dailyParas: [
 			'Teams adopt tools that sit where work already happens. When tasks and chat live next to time tracking, data stays fresher and the team jumps between fewer apps. That is why Planopia combines boards and chat with schedules and time tracking.',
 		],
-		summaryTitle: 'Summary',
-		summaryPara:
-			'Site time tracking does not have to mean spreadsheet evenings. A coherent system — one place for data, exports on demand, and optional AI for monthly analysis — is enough to get control without friction. See the construction-focused overview on ',
+		ctaTitle: 'Site and office under control?',
+		ctaBody:
+			'30 days full access; then free time tracking (5 accounts) or a paid plan — leave, schedules, chat, AI.',
+		ctaButton: 'Create your team — 30 days free',
 	},
 }
 
@@ -198,7 +202,7 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
 			<main className="bg-white overflow-x-hidden">
-				<article className="max-w-4xl mx-auto px-4 py-10 md:py-14 blogarticlecontent break-words">
+				<article className="max-w-4xl mx-auto px-4 pt-10 md:pt-14 pb-4 md:pb-5 blogarticlecontent break-words">
 					<header className="mb-8">
 						<h1 className="construction-industry-h1 text-gray-900 mb-4 leading-tight">{c.title}</h1>
 						<p className="text-gray-600 text-lg leading-relaxed">{c.intro}</p>
@@ -285,28 +289,27 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 
 					<LandingAppScreenshotGallery locale={locale} title={c.galleryTitle} images={LANDING_APP_GALLERY_IMAGES} />
 
-					<section className="mb-10 rounded-xl border border-blue-100 bg-blue-50/40 px-5 py-6" aria-labelledby="sum-h">
-						<h2 id="sum-h" className="text-2xl font-bold text-gray-900 mb-3">
-							{c.summaryTitle}
-						</h2>
-						<p className="text-gray-700 m-0">
-							{c.summaryPara}
-							<Link href={landingPath} className="text-blue-600 font-semibold hover:underline">
-								{landingLabel}
+					<section className="mb-0" aria-labelledby="construction-blog-cta-h">
+						<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-5 sm:p-8 rounded-2xl shadow-sm">
+							<h2
+								id="construction-blog-cta-h"
+								className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug">
+								{c.ctaTitle}
+							</h2>
+							<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-3xl mx-auto leading-snug sm:leading-relaxed">
+								{c.ctaBody}
+							</p>
+							<Link
+								href={registerHref}
+								className="inline-block bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn text-center max-w-full">
+								{c.ctaButton}
 							</Link>
-							{locale === 'pl' ? ', a następnie ' : ', then '}
-							<a href={registerHref} className="text-green-700 font-semibold hover:underline">
-								{locale === 'pl'
-									? 'załóż zespół — 30 dni próby, potem darmowa ewidencja do 5 kont'
-									: 'create your team — 30-day trial, then free time tracking (5 accounts)'}
-							</a>
-							{locale === 'pl' ? ' w Planopii.' : ' in Planopia.'}
-						</p>
+						</div>
 					</section>
 				</article>
 			</main>
 
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<Link href={locale === 'pl' ? '/blog' : '/en/blog'}>
 					<img src="/img/new-logoplanopia.webp" alt="Planopia" style={{ maxWidth: '180px' }} />
 				</Link>

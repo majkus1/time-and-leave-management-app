@@ -22,15 +22,18 @@ const titilliumWeb = Titillium_Web({
 });
 
 export const metadata: Metadata = {
-  title: "Ewidencja czasu pracy online – najlepsze programy i aplikacje | Planopia",
+  title:
+    "Ewidencja czasu pracy online — program, aplikacja, rejestracja godzin | Planopia",
   description:
-    `Dowiedz się, jak prowadzić ewidencję czasu pracy online. Planopia automatyzuje godziny i nadgodziny; urlopy w pełnej aplikacji (trial i pakiety płatne). ${blogArticleOfferLine.pl}`,
+    `Ewidencja czasu pracy online: system rejestracji godzin i nadgodzin z przeglądarki — bez plików Excel na mailu. ${blogArticleOfferLine.pl}`,
   keywords: [
     "ewidencja czasu pracy online",
     "program do ewidencji czasu pracy",
     "aplikacja do ewidencji godzin pracy",
+    "rejestracja czasu pracy online",
+    "system ewidencji czasu pracy",
     "darmowa ewidencja czasu pracy",
-    "rejestracja czasu pracy",
+    "ewidencja czasu pracy excel",
     "Planopia",
     "zarządzanie czasem pracy",
     "nadgodziny",
@@ -56,8 +59,11 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',
     siteName: 'Planopia',
-    title: 'Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm | Planopia',
-    description: `Nowoczesna ewidencja czasu pracy zamiast Excela. ${blogArticleOfferLine.pl}`,
+    title:
+      'Ewidencja czasu pracy online — program i aplikacja (bez Excela) | Planopia',
+    description: `Rejestracja godzin i raporty PDF/XLSX z aplikacji webowej. ${blogArticleOfferLine.pl}`,
+    publishedTime: '2025-08-25T12:00:00.000Z',
+    modifiedTime: '2026-03-27T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -69,9 +75,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm | Planopia',
+    title:
+      'Ewidencja czasu pracy online — program i aplikacja | Planopia',
     description:
-      `Ewidencja czasu pracy i eksport PDF/XLSX. ${blogArticleOfferLine.pl}`,
+      `System ewidencji online z raportami — zamiast arkuszy. ${blogArticleOfferLine.pl}`,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {
@@ -82,7 +89,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code', // Add your Google verification code
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs'
   },
   category: 'technology',
 };

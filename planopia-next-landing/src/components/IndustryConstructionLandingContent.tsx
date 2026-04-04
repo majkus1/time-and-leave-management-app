@@ -2,6 +2,7 @@ import Link from 'next/link'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
 import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 type Locale = 'pl' | 'en'
 
@@ -31,6 +32,8 @@ const COPY: Record<
 		ctaButton: string
 		ctaNote: string
 		blogLinkLabel: string
+		heroImageSrc: string
+		heroImageAlt: string
 	}
 > = {
 	pl: {
@@ -92,11 +95,13 @@ const COPY: Record<
 				a: 'Nie. Planopia łączy ewidencję czasu, grafiki, urlopy, tablice zadań i czaty — żeby firma miała jedno spójne narzędzie na co dzień.',
 			},
 		],
-		ctaTitle: 'Gotowi uporządkować budowę i biuro?',
-		ctaButton: 'Załóż darmowy zespół — 30 dni bez opłat',
+		ctaTitle: 'Porządek na budowie i w biurze?',
+		ctaButton: 'Załóż zespół — 30 dni gratis',
 		ctaNote:
-			'30 dni z pełnymi funkcjami; następnie darmowy plan ewidencji (do 5 kont) albo pakiet płatny z urlopami, grafikami, czatem i AI.',
+			'30 dni pełnej aplikacji; potem darmowa ewidencja (5 kont) lub plan płatny — urlopy, grafik, czat, AI.',
 		blogLinkLabel: 'Przeczytaj artykuł: ewidencja czasu na budowie',
+		heroImageSrc: '/img/budowa1.webp',
+		heroImageAlt: 'Planopia na budowie — ewidencja czasu pracy i zespół w terenie',
 	},
 	en: {
 		heroH1: 'Construction time tracking and crew scheduling for building companies',
@@ -157,11 +162,13 @@ const COPY: Record<
 				a: 'No. Planopia combines time tracking, schedules, leave, Kanban tasks, and chat — one coherent tool for daily operations.',
 			},
 		],
-		ctaTitle: 'Ready to align site and office?',
-		ctaButton: 'Create your free team — 30 days free',
+		ctaTitle: 'Site and office under control?',
+		ctaButton: 'Create your team — 30 days free',
 		ctaNote:
-			'Full features for 30 days; afterwards free time tracking (up to 5 accounts) or a paid plan with leave, schedules, chat, and AI.',
+			'30 days full access; then free time tracking (5 accounts) or a paid plan — leave, schedules, chat, AI.',
 		blogLinkLabel: 'Read the article: time tracking on construction sites',
+		heroImageSrc: '/img/budowa1.webp',
+		heroImageAlt: 'Construction site team — time tracking with Planopia',
 	},
 }
 
@@ -253,32 +260,59 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
 			<main className="bg-white overflow-x-hidden">
-				<article className="max-w-4xl mx-auto px-4 py-10 md:py-14 break-words">
-					<header className="mb-10 text-center md:text-left">
-						<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
-							{locale === 'pl' ? 'Branża: budownictwo' : 'Industry: construction'}
-						</p>
-						<h1 className="construction-industry-h1 text-gray-900 mb-4 leading-tight">{c.heroH1}</h1>
-						<p className="text-lg text-gray-600 max-w-3xl">{c.heroSub}</p>
-						<div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
-							<a
-								href={registerHref}
-								className="construction-solid-btn construction-solid-btn--green order-1 inline-flex min-h-[48px] items-center justify-center rounded-xl bg-green-600 px-6 py-3 text-center text-base font-semibold shadow-md transition hover:bg-green-700">
-								{c.ctaButton}
-							</a>
-							<Link
-								href={blogPath}
-								className="order-2 inline-flex min-h-[48px] items-center justify-center px-1 text-center text-base font-semibold text-blue-700 underline-offset-4 hover:text-blue-800 hover:underline sm:px-2">
-								{c.blogLinkLabel}
-							</Link>
-						</div>
-					</header>
-
+				<article className="break-words">
+					{/* Hero: jak strona główna — desktop: tekst | obraz; mobile: obraz nad tekstem */}
 					<section
-						className="construction-video-card mb-10 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-slate-100/80 px-5 py-6 shadow-sm md:px-7 md:py-7"
+						className="px-4 pt-5 pb-10 md:py-12 bg-gradient-to-r from-blue-50 to-white"
+						aria-labelledby="construction-hero-heading"
+					>
+						<div className="max-w-7xl mx-auto">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+								<header
+									id="construction-hero-heading"
+									className="order-2 md:order-1 min-w-0 text-left"
+								>
+									<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
+										{locale === 'pl' ? 'Branża: budownictwo' : 'Industry: construction'}
+									</p>
+									<h1 className="construction-industry-h1 text-gray-900 mb-4 leading-tight">{c.heroH1}</h1>
+									<p className="text-lg text-gray-600 max-w-3xl">{c.heroSub}</p>
+									<div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+										<a
+											href={registerHref}
+											className="construction-solid-btn construction-solid-btn--green order-1 inline-flex min-h-[48px] items-center justify-center rounded-xl bg-green-600 px-6 py-3 text-center text-base font-semibold shadow-md transition hover:bg-green-700"
+										>
+											{c.ctaButton}
+										</a>
+										<Link
+											href={blogPath}
+											className="order-2 inline-flex min-h-[48px] items-center justify-start px-1 text-left text-base font-semibold text-blue-700 underline-offset-4 hover:text-blue-800 hover:underline sm:px-2"
+										>
+											{c.blogLinkLabel}
+										</Link>
+									</div>
+								</header>
+								<div className="order-1 md:order-2 min-w-0">
+									<img
+										src={c.heroImageSrc}
+										alt={c.heroImageAlt}
+										className="rounded-xl w-full h-auto aspect-[3/2] object-cover"
+										loading="eager"
+										fetchPriority="high"
+										width={800}
+										height={533}
+									/>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
+					<section
+						className="construction-video-card rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/70 px-5 py-7 shadow-md ring-1 ring-slate-200/60 md:px-8 md:py-8"
 						aria-labelledby="construction-video-teaser">
 						<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
-							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-600">{c.videoEyebrow}</p>
+							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{c.videoEyebrow}</p>
 							<h2 id="construction-video-teaser" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
 								{c.videoTitle}
 							</h2>
@@ -293,95 +327,143 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 						</div>
 					</section>
 
-					<section className="mb-12" aria-labelledby="problems-heading">
-						<h2 id="problems-heading" className="text-2xl font-bold text-gray-900 mb-4">
+					<section aria-labelledby="problems-heading">
+						<h2 id="problems-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
 							{c.problemsTitle}
 						</h2>
 						<ul className="list-none space-y-3 m-0 p-0">
 							{c.problems.map((p, i) => (
-								<li key={i} className="flex gap-3 rounded-lg border border-red-100 bg-red-50/60 px-4 py-3 text-gray-800">
-									<span className="font-bold text-red-600 shrink-0">!</span>
+								<li
+									key={i}
+									className="flex gap-3 rounded-2xl border border-red-100/90 bg-gradient-to-r from-red-50/90 to-white px-4 py-3.5 text-gray-800 shadow-sm ring-1 ring-red-100/40"
+								>
+									<span className="font-bold text-red-600 shrink-0" aria-hidden>
+										!
+									</span>
 									<span>{p}</span>
 								</li>
 							))}
 						</ul>
 					</section>
 
-					<section className="mb-12" aria-labelledby="solution-heading">
-						<h2 id="solution-heading" className="text-2xl font-bold text-gray-900 mb-3">
+					<section
+						className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-100/80 md:p-8"
+						aria-labelledby="solution-heading"
+					>
+						<h2 id="solution-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
 							{c.solutionTitle}
 						</h2>
-						<p className="text-gray-700 mb-4">{c.solutionIntro}</p>
-						<ul className="list-disc pl-5 space-y-2 text-gray-700">
+						<p className="text-gray-700 mb-5 leading-relaxed">{c.solutionIntro}</p>
+						<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
 							{c.features.map((f, i) => (
-								<li key={i}>{f}</li>
+								<li
+									key={i}
+									className="flex gap-3 rounded-xl border border-gray-100 bg-slate-50/60 px-4 py-2.5 text-gray-800 shadow-sm"
+								>
+									<span className="text-blue-600 font-bold shrink-0" aria-hidden>
+										✓
+									</span>
+									<span>{f}</span>
+								</li>
 							))}
 						</ul>
 					</section>
 
-					<LandingAppScreenshotGallery locale={locale} title={c.galleryTitle} images={LANDING_APP_GALLERY_IMAGES} />
+					<div className="rounded-2xl border border-gray-100/90 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-7 shadow-sm ring-1 ring-gray-100/70">
+						<LandingAppScreenshotGallery
+							locale={locale}
+							title={c.galleryTitle}
+							images={LANDING_APP_GALLERY_IMAGES}
+							sectionClassName="my-0"
+						/>
+					</div>
 
-					<section className="mb-12 rounded-xl border border-indigo-100 bg-indigo-50/50 px-5 py-6 overflow-hidden" aria-labelledby="ai-heading">
-						<h2 id="ai-heading" className="text-xl font-bold text-gray-900 mb-3">
+					<section
+						className="rounded-2xl border border-indigo-100/90 bg-gradient-to-br from-indigo-50/90 via-white to-slate-50/40 px-5 py-7 shadow-md ring-1 ring-indigo-100/50 md:px-8 md:py-8 overflow-hidden"
+						aria-labelledby="ai-heading"
+					>
+						<h2 id="ai-heading" className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
 							{c.aiTitle}
 						</h2>
-						<div className="mb-5 overflow-hidden rounded-lg border border-indigo-200/80 bg-white shadow-sm">
+						<div className="mb-5 overflow-hidden rounded-xl border border-indigo-200/70 bg-white shadow-md ring-1 ring-indigo-100/40">
 							<ConstructionAiAssistantScreenshot locale={locale} />
 						</div>
-						<ul className="list-none space-y-2 m-0 p-0 text-gray-700">
+						<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
 							{c.aiBullets.map((b, i) => (
-								<li key={i} className="flex gap-2">
-									<span className="text-indigo-600 font-bold">✓</span>
+								<li key={i} className="flex gap-3 rounded-lg border border-indigo-100/50 bg-white/70 px-3 py-2">
+									<span className="text-indigo-600 font-bold shrink-0" aria-hidden>
+										✓
+									</span>
 									<span>{b}</span>
 								</li>
 							))}
 						</ul>
 					</section>
 
-					<section className="mb-12" aria-labelledby="steps-heading">
-						<h2 id="steps-heading" className="text-2xl font-bold text-gray-900 mb-4">
+					<section aria-labelledby="steps-heading">
+						<h2 id="steps-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
 							{c.stepsTitle}
 						</h2>
-						<ol className="list-decimal pl-5 space-y-3 text-gray-700">
+						<ol className="list-none space-y-3 m-0 p-0">
 							{c.steps.map((s, i) => (
-								<li key={i}>{s}</li>
+								<li
+									key={i}
+									className="flex gap-4 rounded-2xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/50 to-white px-4 py-3.5 text-gray-800 ring-1 ring-emerald-100/40"
+								>
+									{/* div zamiast span: globalne `span { color: #213555 !important }` farbuje cyfry */}
+									<div
+										className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold !text-white tabular-nums leading-none"
+										aria-hidden
+									>
+										{i + 1}
+									</div>
+									<span className="min-w-0 pt-0.5 leading-relaxed">{s}</span>
+								</li>
 							))}
 						</ol>
 					</section>
 
-					<section className="mb-12" aria-labelledby="faq-heading">
-						<h2 id="faq-heading" className="text-2xl font-bold text-gray-900 mb-6">
+					<section aria-labelledby="faq-heading">
+						<h2 id="faq-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-6">
 							{c.faqTitle}
 						</h2>
-						<div className="space-y-6">
+						<div className="space-y-4 md:space-y-5">
 							{c.faqs.map((f, i) => (
-								<div key={i}>
+								<div
+									key={i}
+									className="rounded-2xl border border-gray-100 bg-white p-5 md:p-6 shadow-sm ring-1 ring-gray-100/80"
+								>
 									<h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
-									<p className="text-gray-700 m-0">{f.a}</p>
+									<p className="text-gray-700 m-0 leading-relaxed">{f.a}</p>
 								</div>
 							))}
 						</div>
 					</section>
 
-					<section
-						className="construction-final-cta rounded-2xl px-6 py-12 shadow-lg md:px-10 md:py-14"
-						aria-labelledby="cta-heading">
-						<div className="mx-auto flex w-full flex-col items-center gap-5 text-center">
-							<h2 id="cta-heading" className="construction-final-cta__title text-2xl font-bold leading-tight md:text-3xl">
+					<section className="pb-0" aria-labelledby="industry-landing-cta-h">
+						<div className="text-center bg-gradient-to-br from-blue-50 via-white to-emerald-50/90 p-6 sm:p-9 rounded-2xl shadow-md ring-1 ring-blue-100/60">
+							<h2
+								id="industry-landing-cta-h"
+								className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug"
+							>
 								{c.ctaTitle}
 							</h2>
-							<p className="construction-final-cta__note m-0 text-base leading-relaxed md:text-lg">{c.ctaNote}</p>
+							<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-3xl mx-auto leading-snug sm:leading-relaxed m-0">
+								{c.ctaNote}
+							</p>
 							<a
 								href={registerHref}
-								className="construction-final-cta__button inline-flex min-h-[48px] w-full max-w-sm items-center justify-center rounded-xl px-6 py-3.5 text-center text-base font-semibold shadow-md transition sm:w-auto">
+								className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn text-center max-w-full"
+							>
 								{c.ctaButton}
 							</a>
 						</div>
 					</section>
+					</div>
 				</article>
 			</main>
 
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<Link href={locale === 'pl' ? '/' : '/en'}>
 					<img src="/img/new-logoplanopia.webp" alt="Planopia" style={{ maxWidth: '180px' }} />
 				</Link>

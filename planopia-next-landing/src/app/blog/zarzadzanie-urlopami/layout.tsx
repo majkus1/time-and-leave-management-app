@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
-	title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-	description: `Kompletny przewodnik po zarządzaniu urlopami w firmie. ${blogArticleOfferLine.pl}`,
+	title:
+		'Zarządzanie urlopami w firmie — program, system i aplikacja urlopowa | Planopia',
+	description:
+		'Program do urlopów i zarządzanie urlopami pracowników: wnioski, kalendarz, zatwierdzenia bez chaosu w Excelu. ' + blogArticleOfferLine.pl,
 	keywords: [
 		'zarządzanie urlopami',
 		'aplikacja do urlopów',
@@ -16,7 +18,10 @@ export const metadata: Metadata = {
 		'Planopia',
 		'urlopy w firmie',
 		'automatyzacja urlopów',
-		'zarządzanie nieobecnościami'
+		'zarządzanie nieobecnościami',
+		'system do zarządzania urlopami',
+		'aplikacja urlopowa',
+		'zarządzanie urlopami pracowników',
 	],
 	authors: [{ name: 'Michał Lipka' }],
 	creator: 'Michał Lipka',
@@ -35,8 +40,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: `Zarządzanie urlopami w praktyce. ${blogArticleOfferLine.pl}`,
+		title: 'Zarządzanie urlopami — system urlopowy i aplikacja dla firm | Planopia',
+		description: `Program do urlopów i ewidencja nieobecności w jednym narzędziu. ${blogArticleOfferLine.pl}`,
 		url: 'https://planopia.pl/blog/zarzadzanie-urlopami',
 		siteName: 'Planopia',
 		images: [
@@ -50,13 +55,13 @@ export const metadata: Metadata = {
 		locale: 'pl_PL',
 		type: 'article',
 		publishedTime: '2024-10-25T00:00:00.000Z',
-		modifiedTime: '2024-10-25T00:00:00.000Z',
+		modifiedTime: '2026-03-27T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Zarządzanie urlopami w firmie - kompletny przewodnik | Planopia',
-		description: `Zarządzanie urlopami w praktyce. ${blogArticleOfferLine.pl}`,
+		title: 'Zarządzanie urlopami — program i aplikacja dla firm | Planopia',
+		description: `System urlopowy zamiast arkuszy — Planopia. ${blogArticleOfferLine.pl}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

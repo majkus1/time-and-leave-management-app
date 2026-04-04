@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,8 @@ import {
 	landingMobileNavItemsEn,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
+import BlogFreeAppHeroVideo from './BlogFreeAppHeroVideo'
 
 function ENBlogFour() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -27,7 +29,7 @@ function ENBlogFour() {
 						"headline": "Free Time Tracking App for Work Hours and Leave Management | Planopia",
 						"url": "https://planopia.pl/en/blog/free-time-tracking-app",
 						"datePublished": "2024-10-18",
-						"dateModified": "2024-10-18",
+						"dateModified": "2026-03-27",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -40,7 +42,7 @@ function ENBlogFour() {
 								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
-						"description": "Planopia: free time tracking after the trial for up to 5 active accounts; 30-day full trial first. Leave and full HR in paid plans.",
+						"description": "Planopia: 30-day full trial for teams up to 5 people, no card required to start; then free time tracking for 5 accounts or paid plans with leave, schedules, chat, and AI.",
 						"image": "https://planopia.pl/img/desktopnews.webp"
 					})
 				}}
@@ -58,29 +60,29 @@ function ENBlogFour() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							About App
 						</Link>
 						<Link
 							href="/en#ai-assistant"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							AI Assistant
 						</Link>
 						<Link
 							href="/en#prices"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Contact
 						</Link>
 						<Link
@@ -123,28 +125,31 @@ function ENBlogFour() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 text-center mt-4">
-								Free time tracking app — full product for 30 days
-							</h1>
-							<p className="text-xl text-gray-600 text-center max-w-4xl mx-auto mb-8">
-								30-day trial: full product for up to 5 users (AI limits during trial). After that, stay on{' '}
-								<strong>free time tracking</strong> for up to 5 active accounts, or upgrade for leave, chat, boards, and AI — see{' '}
-								<Link href="/en#prices" className="text-blue-600 hover:underline font-medium">pricing</Link>.
-							</p>
-							<div className="text-center">
-								<Link
-									href="https://app.planopia.pl/team-registration"
-									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-								>
-									Create your free team today
-								</Link>
-							</div>
-						</div>
+			<section
+				className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14 bg-gradient-to-br from-slate-50 via-blue-50/60 to-emerald-50/30 landing-hero-below-fixed-header"
+				id="blog-free-app-welcome">
+				<div className="max-w-4xl md:max-w-5xl xl:max-w-6xl mx-auto w-full">
+					<div className="rounded-2xl md:rounded-3xl border border-blue-100/80 bg-white shadow-md md:shadow-lg px-6 py-9 sm:px-10 sm:py-10 md:px-12 md:py-12 lg:px-16 lg:py-14 text-left md:text-center ring-1 ring-slate-200/60">
+						<h1 className="font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 blogh1 leading-[1.2] tracking-tight max-w-5xl md:mx-auto">
+							Free time tracking app — full product for 30 days
+						</h1>
+						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
+							30 days full access for teams of up to 5 people —{' '}
+							<strong className="font-semibold text-gray-800">no credit card required to get started</strong>.
+							{' '}
+							Then <strong className="font-semibold text-gray-800">free time tracking</strong> (5 accounts) or paid plans.{' '}
+							<Link href="/en#prices" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
+								See pricing
+							</Link>
+							.
+						</p>
+						<Link
+							href="https://app.planopia.pl/team-registration"
+							className="inline-block bg-green-600 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-xl shadow-lg hover:bg-green-700 transition text-base sm:text-lg white-text-btn">
+							Create your free team today
+						</Link>
 					</div>
+					<BlogFreeAppHeroVideo locale="en" />
 				</div>
 			</section>
 
@@ -352,17 +357,16 @@ function ENBlogFour() {
 					</div>
 
 					{/* CTA */}
-					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl">
-						<h2 className="text-3xl font-bold text-gray-900 mb-4 justify-center">
+					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-5 sm:p-8 rounded-2xl shadow-sm">
+						<h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug">
 							Ready for a free time tracking app?
 						</h2>
-						<p className="text-xl text-gray-700 mb-6">
+						<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-2xl mx-auto leading-snug sm:leading-relaxed">
 							Start managing leave today and streamline planning in your company!
 						</p>
 						<Link
 							href="https://app.planopia.pl/team-registration"
-							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-						>
+							className="inline-block bg-green-600 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn">
 							Create your free team today
 						</Link>
 					</div>
@@ -370,7 +374,7 @@ function ENBlogFour() {
 			</article>
 
 			{/* FOOTER */}
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="official logo planopia" style={{ maxWidth: '180px' }}/>
 			</footer>
 		</>

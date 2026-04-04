@@ -336,7 +336,12 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 				</div>
 
 				<div className="mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
-					<p className="pricing-paid-plans-intro font-semibold text-gray-700 m-0 leading-snug">{t.paidPlansIntro}</p>
+					<p
+						id={locale === 'pl' ? 'cennik-pakiety-platne' : 'prices-paid-plans'}
+						className="pricing-paid-plans-intro font-semibold text-gray-700 m-0 leading-snug scroll-mt-24"
+					>
+						{t.paidPlansIntro}
+					</p>
 					<div className="flex flex-row flex-wrap items-center gap-3">
 						<span className="text-sm font-semibold text-gray-800 shrink-0">{t.billingLabel}</span>
 						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm shrink-0">
@@ -444,9 +449,6 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						)
 					})}
 				</div>
-				<p className="mt-4 max-w-4xl text-sm text-gray-500 leading-relaxed" role="note">
-					{t.tiersFootnote}
-				</p>
 				<div className="mt-12 rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/80 to-fuchsia-50/50 p-6 md:p-8">
 					<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
 					<p className="text-sm text-gray-600 mt-1 mb-6">{t.addonSubtitle}</p>
@@ -474,6 +476,9 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						))}
 					</div>
 				</div>
+				<p className="mt-4 max-w-4xl text-sm text-gray-500 leading-relaxed" role="note">
+					{t.tiersFootnote}
+				</p>
 
 				<div className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-left">
 					<h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">{t.legalTitle}</h3>

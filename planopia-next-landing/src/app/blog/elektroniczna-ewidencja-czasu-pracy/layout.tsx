@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 export const metadata: Metadata = {
-	title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
+	title:
+		'Elektroniczna ewidencja czasu pracy — program, aplikacja i system online | Planopia',
 	description:
-		'Kompletny przewodnik po elektronicznej ewidencji czasu pracy. Planopia: miesiąc próbny (30 dni), do 5 użytkowników, pełne funkcje.',
+		'Elektroniczna ewidencja czasu pracy: jak wybrać program, czym zastąpić Excel i co zyskuje firma. Planopia — aplikacja webowa z raportami PDF/XLSX. ' +
+		blogArticleOfferLine.pl,
 	keywords: [
 		'elektroniczna ewidencja czasu pracy',
 		'program do ewidencji czasu pracy',
@@ -16,8 +18,8 @@ export const metadata: Metadata = {
 		'Planopia',
 		'time tracking software',
 		'elektroniczna ewidencja',
-		'program do urlopów',
-		'aplikacja do urlopów'
+		'system ewidencji czasu pracy',
+		'ewidencja czasu pracy excel',
 	],
 	authors: [{ name: 'Michał Lipka' }],
 	creator: 'Michał Lipka',
@@ -36,8 +38,9 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: `Elektroniczna ewidencja czasu pracy w firmie. ${blogArticleOfferLine.pl}`,
+		title:
+			'Elektroniczna ewidencja czasu pracy — program i aplikacja online | Planopia',
+		description: `Przewodnik: elektroniczna ewidencja zamiast papieru i Excela. ${blogArticleOfferLine.pl}`,
 		url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
 		siteName: 'Planopia',
 		images: [
@@ -51,13 +54,14 @@ export const metadata: Metadata = {
 		locale: 'pl_PL',
 		type: 'article',
 		publishedTime: '2024-10-18T00:00:00.000Z',
-		modifiedTime: '2024-10-18T00:00:00.000Z',
+		modifiedTime: '2026-03-27T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia',
-		description: `Elektroniczna ewidencja czasu pracy w firmie. ${blogArticleOfferLine.pl}`,
+		title:
+			'Elektroniczna ewidencja czasu pracy — program i aplikacja online | Planopia',
+		description: `Excel vs program do ewidencji — przewodnik. ${blogArticleOfferLine.pl}`,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

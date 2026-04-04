@@ -46,6 +46,13 @@ body.mobile-menu-open #planopiaheader {
 	box-shadow: none !important;
 }
 
+/* Widget czatu (FAB) — nie nakładać się na panel menu mobilnego i przyciski CTA (backup + !important vs Tailwind) */
+body.mobile-menu-open .landing-chat-widget {
+	display: none !important;
+	visibility: hidden !important;
+	pointer-events: none !important;
+}
+
 /* Domyślnie ukryj tekst dla szerokości poniżej 1200px */
 .aboutapp .context {
 	max-height: 0;
@@ -2017,9 +2024,35 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 	max-width: 300px !important;
 }
 
-/* Odstęp pod stały pasek — pierwsza sekcja #planopia-welcome (np. / i /en, indeks bloga) */
-#planopia-welcome.landing-hero-below-fixed-header {
+/* Odstęp pod stały pasek — pierwsza sekcja hero (/, /en, indeks bloga, wpisy z dedykowanym id) */
+#planopia-welcome.landing-hero-below-fixed-header,
+#blog-free-app-welcome.landing-hero-below-fixed-header,
+#blog-ai-assistant-welcome.landing-hero-below-fixed-header {
 	margin-top: 70px;
+}
+
+/* Wpis /blog/darmowa-aplikacja… — H1 bez „sztucznego” powiększenia z #planopia-welcome; czytelne px */
+#blog-free-app-welcome h1 {
+	font-size: 25px !important;
+	line-height: 1.2 !important;
+}
+
+@media (min-width: 768px) {
+	#blog-free-app-welcome h1 {
+		font-size: 35px !important;
+	}
+}
+
+/* Wpis Asystent AI — ten sam rozmiar H1 co „darmowa aplikacja” */
+#blog-ai-assistant-welcome h1 {
+	font-size: 25px !important;
+	line-height: 1.2 !important;
+}
+
+@media (min-width: 768px) {
+	#blog-ai-assistant-welcome h1 {
+		font-size: 35px !important;
+	}
 }
 
 /* Stały nagłówek jak na stronie głównej — wszystkie widoki z id="planopiaheader" */
@@ -2656,6 +2689,51 @@ header {
 	color: white;
 }
 
+/* Karty CTA w hero wpisów blogowych — globalne `a { color: #007bff }` nie może farbować tekstu na gradientowych przyciskach */
+.blog-hero-dual-cta a.blog-hero-dual-cta__btn,
+.blog-hero-dual-cta a.blog-hero-dual-cta__btn:visited,
+.blog-hero-dual-cta a.blog-hero-dual-cta__btn:hover,
+.blog-hero-dual-cta a.blog-hero-dual-cta__btn:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: none !important;
+}
+
+/* CTA pod treścią wpisu BlogOne / ENBlogOne — bez <main> w komponencie: tylko aside.blog-end-cta (nie używaj main article …) */
+aside.blog-end-cta h3 {
+	font-size: clamp(1.25rem, 1.1rem + 0.55vw, 1.625rem) !important;
+	line-height: 1.2 !important;
+	color: #111827 !important;
+	-webkit-text-fill-color: #111827 !important;
+}
+aside.blog-end-cta p.text-sm {
+	color: #4b5563 !important;
+	-webkit-text-fill-color: #4b5563 !important;
+	font-size: 0.875rem !important;
+}
+aside.blog-end-cta a.blog-inline-cta-btn,
+aside.blog-end-cta a.blog-inline-cta-btn:visited,
+aside.blog-end-cta a.blog-inline-cta-btn:hover,
+aside.blog-end-cta a.blog-inline-cta-btn:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: none !important;
+}
+
+/* BlogLeavePlanExcelContent: globalne `p, span { color: #213555 !important }` oraz `a { color: #007bff }` nadpisują numerki i CTA */
+main article span.blog-leave-checklist-num {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+main article a.blog-leave-excel-cta,
+main article a.blog-leave-excel-cta:visited,
+main article a.blog-leave-excel-cta:hover,
+main article a.blog-leave-excel-cta:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: none !important;
+}
+
 /* Galeria zrzutów: globalne style (np. kolor w article/button) nie mogą przyciemniać podpisów na ciemnym gradientcie */
 .landing-app-gallery__caption,
 .landing-app-gallery__caption-wrap {
@@ -2672,8 +2750,8 @@ button.landing-app-gallery__thumb .landing-app-gallery__caption {
 
 /* Strony branży budowlanej (landing + wpis blogowy): globalne h1 ma 18px — tutaj 40px / extrabold */
 main article h1.construction-industry-h1 {
-	font-size: 40px !important;
-	font-weight: 800 !important;
+	font-size: 32px !important;
+	font-weight: bold;
 	line-height: 1.2 !important;
 	color: #111827 !important;
 	-webkit-text-fill-color: #111827 !important;
@@ -2705,61 +2783,6 @@ main article a.construction-solid-btn.construction-solid-btn--blue:focus-visible
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff !important;
 	text-decoration: none !important;
-}
-
-/* Końcowy baner CTA — tło i typografia poza Tailwind (unikaj kolizji z globalnym h2/p !important) */
-section.construction-final-cta {
-	text-align: center;
-	background: linear-gradient(152deg, #2563eb 0%, #1d4ed8 40%, #0f172a 100%) !important;
-	border: 1px solid rgba(255, 255, 255, 0.14);
-	box-shadow:
-		0 22px 44px -14px rgba(15, 23, 42, 0.45),
-		inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-main article section.construction-final-cta h2#cta-heading.construction-final-cta__title,
-section.construction-final-cta h2#cta-heading.construction-final-cta__title {
-	color: #ffffff !important;
-	-webkit-text-fill-color: #ffffff !important;
-	font-size: clamp(1.375rem, 1.12rem + 0.95vw, 1.875rem) !important;
-	line-height: 1.25 !important;
-	font-weight: 800 !important;
-	text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
-}
-
-main article section.construction-final-cta p.construction-final-cta__note,
-section.construction-final-cta p.construction-final-cta__note {
-	color: rgba(255, 255, 255, 0.96) !important;
-	-webkit-text-fill-color: rgba(255, 255, 255, 0.96) !important;
-	font-size: clamp(1rem, 0.94rem + 0.22vw, 1.125rem) !important;
-	line-height: 1.55 !important;
-	text-shadow: 0 1px 12px rgba(0, 0, 0, 0.28);
-}
-
-main article section.construction-final-cta a.construction-final-cta__button,
-section.construction-final-cta a.construction-final-cta__button,
-main article section.construction-final-cta a.construction-final-cta__button:visited,
-section.construction-final-cta a.construction-final-cta__button:visited {
-	color: #0f172a !important;
-	-webkit-text-fill-color: #0f172a !important;
-	background-color: #ffffff !important;
-	border: 2px solid rgba(255, 255, 255, 0.72) !important;
-	text-decoration: none !important;
-	box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.35);
-}
-
-main article section.construction-final-cta a.construction-final-cta__button:hover,
-section.construction-final-cta a.construction-final-cta__button:hover {
-	color: #1e3a8a !important;
-	-webkit-text-fill-color: #1e3a8a !important;
-	background-color: #f8fafc !important;
-	border-color: #ffffff !important;
-}
-
-main article section.construction-final-cta a.construction-final-cta__button:focus-visible,
-section.construction-final-cta a.construction-final-cta__button:focus-visible {
-	outline: 2px solid #ffffff !important;
-	outline-offset: 3px !important;
 }
 
 button {
@@ -2932,7 +2955,13 @@ button {
 	animation: slideUpFade 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Rozwijane „Branże” w menu mobilnym */
+/* Rozwijane „Branże” w menu mobilnym — niebieski jak pozostałe linki (preflight button { color: inherit } + warstwy Tailwind) */
+button.mobile-menu-item.mobile-menu-industry-toggle,
+button.mobile-menu-item.mobile-menu-industry-toggle span {
+	color: #2563eb !important;
+	-webkit-text-fill-color: #2563eb;
+}
+
 button.mobile-menu-item.mobile-menu-industry-toggle {
 	cursor: pointer;
 	border: none;
@@ -2949,7 +2978,9 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 .mobile-menu-industry-chevron {
 	flex-shrink: 0;
 	font-size: 0.75rem;
-	opacity: 0.75;
+	color: #2563eb !important;
+	-webkit-text-fill-color: #2563eb;
+	opacity: 0.9;
 	min-width: 1.25rem;
 	text-align: center;
 }
@@ -3256,4 +3287,29 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 
 .boxvideo {
 	color: white !important;
+}
+
+/* Widget czatu AI: nagłówek to div.landing-chat-panel__title (nie h2 — globalne h2 { #213555 !important }) */
+.landing-chat-panel__title {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	font-size: 1rem !important;
+	font-weight: 700 !important;
+	line-height: 1.25 !important;
+}
+.landing-chat-panel .landing-chat-panel__close {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+
+/* Przycisk FAB czatu (stan „zamknij”): myślnik — globalne span/h2 nie dotykają div, ale dla spójności */
+.landing-chat-fab-minus {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+
+/* Czat AI: min. 16px — czytelność i brak auto-zoom iOS przy focusie */
+.landing-chat-panel textarea,
+.landing-chat-panel input[type="email"] {
+	font-size: 16px !important;
 }

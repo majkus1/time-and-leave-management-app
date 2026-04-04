@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -7,6 +7,7 @@ import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
 import { industryMobileConfig, MOBILE_INDUSTRY_INSERT_INDEX } from '../data/landingNav'
 import { videoGuideLessons } from '../data/videoGuideLessons'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
 
 type Locale = 'pl' | 'en'
 
@@ -191,28 +192,28 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href={t.menuItems[0].href}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{t.navAbout}
 						</Link>
 						<Link
 							href={t.menuItems[1].href}
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							{t.navAi}
 						</Link>
 						<Link
 							href={t.menuItems[2].href}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{t.navPricing}
 						</Link>
 						<LandingIndustriesDropdown locale={locale === 'pl' ? 'pl' : 'en'} />
 						<Link
 							href={t.blogHref}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{t.navBlog}
 						</Link>
 						<Link
 							href={t.menuItems[4].href}
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{t.navContact}
 						</Link>
 						<Link
@@ -233,6 +234,7 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
 			</header>
+			<div className="header-fixed-spacer" aria-hidden="true" />
 
 			<MobileMenu
 				isOpen={menuOpen}
@@ -249,7 +251,7 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 			<section
 				className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100/60"
 				id="blog-hero"
-				style={{ marginTop: '70px' }}>
+			>
 				<div className="max-w-7xl mx-auto">
 					<div className="max-w-3xl">
 						<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
@@ -422,7 +424,7 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 				</div>
 			</div>
 
-			<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+			<footer className={LANDING_SITE_FOOTER_CLASS}>
 				<img src="/img/new-logoplanopia.webp" alt="Planopia logo" style={{ maxWidth: '180px' }} />
 			</footer>
 		</>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -10,6 +10,8 @@ import {
 	landingMobileNavItemsEn,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { LANDING_SITE_FOOTER_CLASS } from '@/data/landingSiteFooter'
+import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 
 function ENBlogOne() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -56,29 +58,29 @@ function ENBlogOne() {
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
 						<Link
 							href="/en#aboutapp"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							About the App
 						</Link>
 						<Link
 							href="/en#ai-assistant"
-							className="cursor-pointer text-gray-700 font-medium hover:text-indigo-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
 							AI Assistant
 						</Link>
 						<Link
 							href="/en#prices"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition"
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Blog
 						</Link>
 						<Link
 							href="/en#contact"
-							className="cursor-pointer text-gray-700 font-medium hover:text-blue-600 transition">
+							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Contact
 						</Link>
 						<Link
@@ -104,6 +106,7 @@ function ENBlogOne() {
 					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
 			</header>
+			<div className="header-fixed-spacer" aria-hidden="true" />
 
 			{/* Professional Mobile Menu */}
 			<MobileMenu
@@ -123,7 +126,7 @@ function ENBlogOne() {
 			/>
 
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero" style={{ marginTop: '70px' }}>
+			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero">
 				<div className="max-w-7xl mx-auto text-left content-blog">
 					<div className="grid xl:grid-cols-2 gap-10 items-center">
 						<div>
@@ -136,34 +139,23 @@ function ENBlogOne() {
 								That's why more and more companies choose <strong>online time tracking apps </strong>  
 								 that automate and organize the process.
 							</p>
-						{/* CTA boxy */}
-					<div className="mt-6 grid sm:grid-cols-2 gap-4 cta-blog">
-							<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
-								<p className="text-gray-800 mb-3">
-								<strong>30-day free trial</strong>
-								<br />
-								Full features, up to 5 users
-								</p>
-								<Link
-									href="https://app.planopia.pl/team-registration"
-									className="inline-block first-cta bg-green-600 text-white px-6 py-3 rounded-md font-medium hover:bg-green-700 transition"
-								>
-									Create your free team
-								</Link>
-							</div>
-							<div className="bg-white border border-gray-200 rounded-xl py-5 px-4 shadow-sm text-center">
-								<p className="text-gray-800 mb-3">
-								<strong>For larger companies: </strong>  
-								unlimited users, more features and flexibility
-								</p>
-								<Link
-									href="/en#prices"
-									className="inline-block sec-cta bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition"
-								>
-									View pricing
-								</Link>
-							</div>
-						</div>
+						<BlogHeroDualCtaCards
+							locale="en"
+							trial={
+								<>
+									<span className="font-semibold text-emerald-900">30-day free trial</span>
+									{' '}
+									— full features, up to 5 users
+								</>
+							}
+							enterprise={
+								<>
+									<span className="font-semibold text-slate-900">For larger companies:</span>{' '}
+									unlimited users, more features and flexibility
+								</>
+							}
+							pricingCtaLabel="View pricing"
+						/>
 					</div>
 
 					<img
@@ -230,13 +222,36 @@ function ENBlogOne() {
 				or manage a large organization – Planopia keeps everything under control.
 			</p>
 
-			<p className="mt-8 font-medium text-blue-600">
-				Try Planopia – <Link href="https://app.planopia.pl/team-registration" className="underline">create your team — 30-day full trial, then free time tracking</Link>.
-			</p>
+			<aside
+				className="blog-end-cta mt-10 md:mt-12 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-sky-50/40 p-6 md:p-8 shadow-sm ring-1 ring-emerald-100/60"
+				aria-label="Try Planopia"
+			>
+				<div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+					<div className="min-w-0">
+						<p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700/90 mb-2">
+							Start for free
+						</p>
+						<h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight tracking-tight m-0">
+							Try Planopia
+						</h3>
+						<p className="mt-2 text-sm text-gray-600 leading-relaxed m-0 max-w-xl">
+							Create your team — 30-day full trial, then free time tracking for up to 5 active accounts.
+						</p>
+					</div>
+					<div className="shrink-0 w-full sm:w-auto">
+						<Link
+							href="https://app.planopia.pl/team-registration"
+							className="blog-inline-cta-btn inline-flex w-full min-h-[48px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-center text-base font-semibold text-white shadow-md transition hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+						>
+							Create your free team
+						</Link>
+					</div>
+				</div>
+			</aside>
 		</article>
 
 		{/* FOOTER */}
-		<footer className="py-10 px-6 bg-white border-t text-center d-flex justify-center">
+		<footer className={LANDING_SITE_FOOTER_CLASS}>
 			<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
 		</footer>
 	</>

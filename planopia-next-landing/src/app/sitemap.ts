@@ -60,6 +60,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: 'https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.82,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/planopia-ai-assistant-time-tracking-leave-tasks-schedules',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.82,
+    },
+    {
       url: 'https://planopia.pl/en/blog/free-time-tracking-app',
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -174,6 +186,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+
+    // Blog — annual leave Excel/PDF vs app (GSC pillar)
+    {
+      url: 'https://planopia.pl/blog/roczny-plan-urlopow-excel-pdf-aplikacja',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.77,
+    },
+    {
+      url: 'https://planopia.pl/en/blog/annual-leave-plan-excel-pdf-app',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.77,
     },
     
     // Legal documents - Polish

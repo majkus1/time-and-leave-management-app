@@ -307,10 +307,21 @@ exports.createAnnouncement = async (req, res) => {
 				t
 			)
 
+			const snippet = String(rawContent || '')
+				.replace(/\s+/g, ' ')
+				.trim()
+				.slice(0, 220)
+			const announcementPreview = `${creatorName} · ${rawTitle}${snippet ? ` — ${snippet}` : ''}`
+
 			Promise.allSettled(
 				recipients
 					.filter((recipient) => recipient._id.toString() !== userId.toString())
-					.map((recipient) => sendEmail(recipient.username, `${appUrl}/announcements`, emailSubject, emailHtml))
+					.map((recipient) =>
+						sendEmail(recipient.username, `${appUrl}/announcements`, emailSubject, emailHtml, {
+							teamId,
+							preview: announcementPreview,
+						})
+					)
 			).catch((error) => {
 				console.error('Error sending announcement emails:', error)
 			})

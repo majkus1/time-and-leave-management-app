@@ -85,6 +85,7 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/userlogs',
 	'/api/qr',
 	'/api/push',
+	'/api/notifications',
 ]
 
 function pathStartsWithAny(path, prefixes) {

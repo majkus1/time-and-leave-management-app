@@ -408,6 +408,12 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			t
 		)
 
+		const employeePreview = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+		const byPreview = `${updatedByUser.firstName || ''} ${updatedByUser.lastName || ''}`.trim()
+		const statusChangePreview = `${employeePreview} · ${typeText} · ${startDate}–${endDate} · ${statusText}${
+			byPreview ? ` · ${t('email.leaveRequest.updatedBy')}: ${byPreview}` : ''
+		}`
+
 		// Wyślij email tylko jeśli użytkownik jest aktywny
 		if (user.isActive !== false) {
 			try {
@@ -415,7 +421,8 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 					user.username,
 					null,
 					ownRequestStatusTitle,
-					mailContent
+					mailContent,
+					{ teamId: user.teamId, preview: statusChangePreview }
 				)
 			} catch (emailError) {
 				console.error('Error sending email to user:', emailError)
@@ -924,7 +931,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 		const user = await User.findOne({
 			_id: leaveRequest.userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username department roles')
+		}).select('firstName lastName username department roles teamId')
 		if (!user) {
 			return res.status(404).send('User not found or inactive.')
 		}
@@ -971,6 +978,8 @@ exports.cancelLeaveRequest = async (req, res) => {
 				</div>
 			`
 
+			const cancelPreview = `${user.firstName || ''} ${user.lastName || ''}`.trim() + ` · ${typeText} · ${startDate}–${endDate} · ${t('email.leaveform.requestCancelledTitle')}`
+
 			// Wyślij email do wszystkich unikalnych odbiorców
 			const emailPromises = recipients.map(recipient =>
 				sendEmail(
@@ -983,7 +992,8 @@ exports.cancelLeaveRequest = async (req, res) => {
 						t('email.leaveform.goToApp') || 'Przejdź do aplikacji',
 						`${appUrl}/leave-requests/${user._id}`,
 						t
-					)
+					),
+					{ teamId, preview: cancelPreview }
 				)
 			)
 
@@ -1052,7 +1062,7 @@ exports.updateLeaveRequest = async (req, res) => {
 		const user = await User.findOne({
 			_id: leaveRequest.userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username department roles')
+		}).select('firstName lastName username department roles teamId')
 		if (!user) {
 			return res.status(404).send('User not found or inactive.')
 		}
@@ -1234,6 +1244,12 @@ exports.updateLeaveRequest = async (req, res) => {
 				${!typeRequiresApproval ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 			`
 
+			const qtyLabel =
+				settings.leaveCalculationMode === 'hours'
+					? `${(daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} h`
+					: `${daysRequested} ${t('email.leaveform.days') || 'dni'}`
+			const editPreview = `${user.firstName || ''} ${user.lastName || ''}`.trim() + ` · ${typeText} · ${startDate}–${endDate} · ${qtyLabel}`
+
 			// Wyślij email do wszystkich unikalnych odbiorców
 			const emailPromises = recipients.map(recipient =>
 				sendEmail(
@@ -1246,7 +1262,8 @@ exports.updateLeaveRequest = async (req, res) => {
 						t('email.leaveform.goToRequest'),
 						`${appUrl}/leave-requests/${user._id}`,
 						t
-					)
+					),
+					{ teamId, preview: editPreview }
 				)
 			)
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia",
   description:
-    "Darmowa ewidencja czasu pracy online w Planopii: 30 dni pełnej aplikacji na start, potem bezpłatny plan skupiony na rejestracji czasu pracy dla zespołów do 5 aktywnych kont — bez abonamentu. Urlopy, grafiki pracy, czat zespołowy, tablice Kanban i Asystent AI w pakietach płatnych od Starter.",
+    "Planopia: 30 dni pełnej aplikacji dla zespołu do 5 osób, bez karty na start; potem darmowa ewidencja do 5 kont lub pakiety — urlopy, grafik, czat i AI w cenniku.",
   keywords: [
     "darmowa aplikacja do ewidencji czasu pracy",
     "darmowa ewidencja czasu pracy online",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code',
+    google: 'vqK0qvKKbzo3mrL-VPWqdHEoe3pqVyvOs1kID0L1kWs',
   },
   category: 'technology',
 };

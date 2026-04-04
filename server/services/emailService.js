@@ -96,7 +96,7 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, 
 	`
 }
 
-const sendEmail = async (to, link, subject, html) => {
+const sendEmail = async (to, link, subject, html, meta = {}) => {
 	const recipients = normalizeEmailRecipients(to)
 	if (recipients.length === 0) return
 
@@ -117,6 +117,16 @@ const sendEmail = async (to, link, subject, html) => {
 		subject,
 		html,
 	})
+
+	const teamId = meta && meta.teamId
+	if (teamId) {
+		const { recordEmailNotificationsForTeam } = require('./userNotificationService')
+		void recordEmailNotificationsForTeam(teamId, recipients, {
+			subject,
+			link: link || null,
+			preview: meta.preview != null && meta.preview !== '' ? String(meta.preview) : null,
+		})
+	}
 }
 
 
@@ -186,6 +196,10 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			</div>
 		`
 		
+		const employee = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+		const by = `${updatedByUser.firstName || ''} ${updatedByUser.lastName || ''}`.trim()
+		const inboxPreview = `${employee} · ${typeText} · ${startDate}–${endDate} · ${statusWithRequestWord} · ${t('email.leaveRequest.updatedBy')}: ${by}`
+
 		const emailPromises = usersToNotify.map(notifyUser =>
 			sendEmail(
 				notifyUser.username,
@@ -197,7 +211,8 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 					t('email.leaveRequest.goToRequest'),
 					`${appUrl}/leave-requests/${user._id}`,
 					t
-				)
+				),
+				{ teamId, preview: inboxPreview }
 			)
 		)
 
@@ -345,6 +360,13 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 		}
 		
 		const boardLink = `${appUrl}/boards/${board._id}`
+
+		const plainTask = String(task.title || '').trim().slice(0, 160)
+		const plainBoard = String(board.name || '').trim().slice(0, 120)
+		const plainCreator = `${createdByUser.firstName || ''} ${createdByUser.lastName || ''}`.trim()
+		const inboxPreview = [plainCreator, plainTask, plainBoard, statusText, priorityText]
+			.filter(Boolean)
+			.join(' · ')
 		
 		// Send emails to all members
 		const emailPromises = members.map(member =>
@@ -358,7 +380,8 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 					t('email.task.viewBoard'),
 					boardLink,
 					t
-				)
+				),
+				{ teamId: board.teamId, preview: inboxPreview }
 			).catch(error => {
 				console.error(`Error sending task notification email to ${member.username}:`, error)
 			})

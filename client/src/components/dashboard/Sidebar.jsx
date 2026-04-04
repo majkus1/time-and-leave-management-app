@@ -10,6 +10,7 @@ import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import TutorialModal from '../tutorial/TutorialModal'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import NotificationBell from '../NotificationBell'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -18,6 +19,10 @@ function Sidebar() {
 	const [isNavbarVisible, setIsNavbarVisible] = useState(true)
 	const [lastScrollY, setLastScrollY] = useState(0)
 	const [showTutorialModal, setShowTutorialModal] = useState(false)
+	/** Dzwonek tylko w sidebarze na desktop (>1500px); na mobile wyłącznie obok hamburgera w pasku. */
+	const [isDesktopLayout, setIsDesktopLayout] = useState(
+		typeof window !== 'undefined' && window.innerWidth > 1500
+	)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const location = useLocation()
@@ -88,6 +93,14 @@ function Sidebar() {
 
 	const isLeavePlans = location.pathname === '/all-leave-plans' || location.pathname.startsWith('/leave-plans')
 	const isAnnouncementsActive = location.pathname.startsWith('/announcements')
+
+	useEffect(() => {
+		const mq = window.matchMedia('(min-width: 1501px)')
+		const syncDesktop = () => setIsDesktopLayout(mq.matches)
+		syncDesktop()
+		mq.addEventListener('change', syncDesktop)
+		return () => mq.removeEventListener('change', syncDesktop)
+	}, [])
 
 	useEffect(() => {
 		let lastWidth = window.innerWidth
@@ -193,18 +206,21 @@ function Sidebar() {
 					<Link to="/" className="navbar-brand">
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="mobile-logo" />
 					</Link>
-					<button 
-						className={`navbar-toggler ${isMenuOpen ? 'active' : ''}`} 
-						type="button" 
-						onClick={toggleMenu}
-						aria-label="Toggle navigation"
-					>
-						<div className="hamburger-icon">
-							<span></span>
-							<span></span>
-							<span></span>
-						</div>
-					</button>
+					<div className="mobile-navbar-actions">
+						{loggedIn && <NotificationBell variant="mobile" enabled />}
+						<button 
+							className={`navbar-toggler ${isMenuOpen ? 'active' : ''}`} 
+							type="button" 
+							onClick={toggleMenu}
+							aria-label="Toggle navigation"
+						>
+							<div className="hamburger-icon">
+								<span></span>
+								<span></span>
+								<span></span>
+							</div>
+						</button>
+					</div>
 				</nav>
 			)}
 
@@ -237,7 +253,9 @@ function Sidebar() {
 			)}
 
 			{/* Sidebar */}
-			<div className={`sidebar text-white ${isMenuOpen && !isSidebarCollapsed ? 'opened' : 'closed'} ${isSidebarCollapsed ? 'collapsed' : ''} ${isAnimating ? 'animating' : ''}`}>
+			<div
+				className={`sidebar text-white ${isMenuOpen && !isSidebarCollapsed ? 'opened' : 'closed'} ${isSidebarCollapsed ? 'collapsed' : ''} ${isAnimating ? 'animating' : ''} ${loggedIn && isDesktopLayout ? 'sidebar--desktop-bell' : ''}`}
+			>
 				{/* Toggle Button - w sidebarze u góry (tylko desktop) */}
 				{window.innerWidth > 1500 && !isSidebarCollapsed && (
 					<button
@@ -277,6 +295,13 @@ function Sidebar() {
 					<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" />
 				</Link>
 
+				{/* Desktop: dzwonek między logo a mailem — równe odstępy (CSS) */}
+				{loggedIn && isDesktopLayout && (
+					<div className="sidebar-bell-between-logo-and-user">
+						<NotificationBell variant="sidebar" enabled />
+					</div>
+				)}
+
 				{/* Close Button */}
 				<button 
 					onClick={toggleMenu} 
@@ -288,9 +313,9 @@ function Sidebar() {
 					</svg>
 				</button>
 
-				{/* User Header */}
+				{/* User Header — na mobile bez dzwonka (dzwonek w pasku obok menu) */}
 				<div className="sidebar-header">
-					<div className="user-info">
+					<div className="sidebar-user-row">
 						<h5 className="username">{username}</h5>
 					</div>
 				</div>
