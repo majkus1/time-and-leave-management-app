@@ -2681,50 +2681,16 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	transform: scale(0.98);
 }
 
-/* Falująca linia nad „AI” — płynne przesunięcie (dwie fazy fali w ścieżce) */
-.ai-assistant-promo-fab-edge__wave {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 22px;
-	height: 12px;
-	overflow: hidden;
-	flex-shrink: 0;
-}
-
-.ai-assistant-promo-fab-edge__wave-svg {
+/* Ikona w pasku — mieści się w tym samym ~28×52 co wcześniejszy wave + etykieta „AI” */
+.ai-assistant-promo-fab-edge__icon {
 	display: block;
-	overflow: visible;
-}
-
-.ai-assistant-promo-fab-edge__wave-track {
-	animation: aiAssistantPromoFabWaveFlow 2.4s linear infinite;
-	will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.ai-assistant-promo-fab-edge__wave-track {
-		animation: none;
-	}
-}
-
-@keyframes aiAssistantPromoFabWaveFlow {
-	from {
-		transform: translateX(0);
-	}
-	to {
-		transform: translateX(-20px);
-	}
-}
-
-.ai-assistant-promo-fab-edge__label {
-	font-size: 11px;
-	font-weight: 800;
-	letter-spacing: 0.06em;
-	line-height: 1;
-	color: #ffffff !important;
-	-webkit-text-fill-color: #ffffff;
-	text-shadow: none;
+	width: 35px;
+	height: auto;
+	max-height: 34px;
+	object-fit: contain;
+	flex-shrink: 0;
+	pointer-events: none;
+	user-select: none;
 }
 
 /* Desktop: zakładka AI na środku wysokości przy prawej krawędzi (mobile/tablet: nadal przy dole) */

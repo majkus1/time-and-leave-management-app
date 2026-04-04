@@ -496,7 +496,7 @@ async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail
 async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
 	const subject = 'Dziękujemy za zakup'
-	const title = 'Dziękujemy za zaufanie'
+	const title = 'Dziękujemy za zakup'
 	const content = `
 		<p style="margin:0 0 14px 0;">Dzień dobry,</p>
 		<p style="margin:0 0 14px 0;">Dziękujemy za <strong>zakup pakietu Planopia</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się z nawiązania współpracy — <strong>zależy nam, aby była dla Państwa jak najbardziej udana</strong>.</p>

@@ -3302,12 +3302,6 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 	-webkit-text-fill-color: #ffffff !important;
 }
 
-/* Przycisk FAB czatu (stan „zamknij”): myślnik — globalne span/h2 nie dotykają div, ale dla spójności */
-.landing-chat-fab-minus {
-	color: #ffffff !important;
-	-webkit-text-fill-color: #ffffff !important;
-}
-
 /* Czat AI: min. 16px — czytelność i brak auto-zoom iOS przy focusie */
 .landing-chat-panel textarea,
 .landing-chat-panel input[type="email"] {

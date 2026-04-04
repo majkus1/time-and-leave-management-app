@@ -410,7 +410,7 @@ export default function LandingChatWidget() {
 						<button
 							type="button"
 							onClick={() => setOpen(false)}
-							className="landing-chat-panel__close rounded-lg px-2 py-1 text-sm font-medium hover:bg-white/10"
+							className="landing-chat-panel__close flex h-10 min-w-10 shrink-0 items-center justify-center rounded-lg text-2xl font-normal leading-none text-white hover:bg-white/15"
 							aria-label={t.close}
 						>
 							✕
@@ -562,20 +562,9 @@ export default function LandingChatWidget() {
 				aria-label={open ? t.close : t.open}
 				aria-expanded={open}
 			>
-				{open ? (
-					/* div zamiast span — globalne span { color: #213555 !important } */
-					<div
-						className="landing-chat-fab-minus text-xl font-light leading-none !text-white"
-						style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
-						aria-hidden
-					>
-						–
-					</div>
-				) : (
-					<span className="relative flex h-8 w-8 items-center justify-center">
-						<img src={CHAT_ICON} alt="" className="h-[85%] w-[85%] object-contain" />
-					</span>
-				)}
+				<span className="relative flex h-8 w-8 items-center justify-center" aria-hidden>
+					<img src={CHAT_ICON} alt="" className="h-[85%] w-[85%] object-contain" />
+				</span>
 			</button>
 		</div>
 	)
