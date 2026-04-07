@@ -110,7 +110,13 @@ const teamSchema = new mongoose.Schema({
 		default: 0,
 		min: 0,
 	},
-	/** Dane do faktury (opcjonalnie, uzupełnia Admin/HR w Pakietach) */
+	/** Dane do faktury (Admin/HR w Pakietach) — firma lub osoba fizyczna */
+	billingInvoiceBuyerType: {
+		type: String,
+		enum: ['company', 'individual'],
+		default: 'company',
+	},
+	/** Nazwa firmy lub imię i nazwisko (osoba fizyczna) */
 	billingInvoiceCompanyName: {
 		type: String,
 		default: '',

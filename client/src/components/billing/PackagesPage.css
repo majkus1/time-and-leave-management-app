@@ -11,6 +11,8 @@
 	background: linear-gradient(145deg, rgba(248, 250, 252, 0.95), rgba(241, 245, 249, 0.98));
 	border: 1px solid #e2e8f0;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+	min-width: 0;
+	overflow-x: visible;
 }
 
 .packages-invoice-section__title {
@@ -26,7 +28,37 @@
 	font-size: 0.9rem;
 	line-height: 1.5;
 	color: #64748b;
-	max-width: 42rem;
+	width: 100%;
+	max-width: none;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.packages-invoice-section__buyer-toggle {
+	margin-bottom: 1rem;
+}
+
+.packages-invoice-section__buyer-toggle .packages-billing-toggle__buttons {
+	flex-wrap: wrap;
+}
+
+.packages-invoice-section__buyer-toggle .packages-billing-toggle__buttons button {
+	flex: 1 1 auto;
+	min-width: min(100%, 9.5rem);
+}
+
+.packages-invoice-section__label-inline {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.55rem;
+}
+
+.packages-invoice-section__nip-hint {
+	font-size: 0.78rem;
+	font-weight: 400;
+	color: #64748b;
+	line-height: 1.35;
 }
 
 .packages-invoice-section__grid {

@@ -20,6 +20,9 @@ import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './PackagesPage.css'
 
+/** Zgodnie z serwerem (billingPurchaseIntentValidator) — min. sensowna długość adresu */
+const MIN_INVOICE_ADDRESS_LEN = 6
+
 const TIER_LABELS = {
 	starter: 'Starter',
 	pro: 'Pro',
@@ -41,6 +44,9 @@ function billingAxiosErrorMessage(error, t) {
 			used: d.meta.used,
 			maxUsers: d.meta.maxUsers,
 		})
+	}
+	if (d?.code === 'INVOICE_INCOMPLETE' && d?.meta?.i18nKey && typeof d.meta.i18nKey === 'string') {
+		return t(`billingPackages.${d.meta.i18nKey}`)
 	}
 	return d?.message || error?.message || null
 }
@@ -159,15 +165,22 @@ export default function PackagesPage() {
 	const location = useLocation()
 	const appliedQueryRef = useRef(false)
 	const p24ReturnHandledRef = useRef(false)
+	/** Pierwsze wczytanie billingInvoice z API zawsze stosujemy (nie blokować kliknięciem przełącznika Firma/Osoba). */
+	const invoiceHydratedOnceRef = useRef(false)
+	/** Po edycji nie nadpisujemy formularza refetchem — do czasu udanego zapisu. */
+	const invoiceEditedByUserRef = useRef(false)
 
 	const [billing, setBilling] = useState('monthly')
 	const [modal, setModal] = useState(null)
 	const [note, setNote] = useState('')
 	const [justSent, setJustSent] = useState(false)
 	const [p24BusyKey, setP24BusyKey] = useState(null)
-	const [invCompany, setInvCompany] = useState('')
-	const [invAddress, setInvAddress] = useState('')
-	const [invNip, setInvNip] = useState('')
+	const [invBuyerType, setInvBuyerType] = useState('company')
+	const [compName, setCompName] = useState('')
+	const [compAddress, setCompAddress] = useState('')
+	const [compNip, setCompNip] = useState('')
+	const [indName, setIndName] = useState('')
+	const [indAddress, setIndAddress] = useState('')
 
 	const loading = catLoading || !catalog
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
@@ -175,30 +188,139 @@ export default function PackagesPage() {
 	useEffect(() => {
 		const bi = ent?.billingInvoice
 		if (!bi) return
-		setInvCompany(bi.companyName ?? '')
-		setInvAddress(bi.address ?? '')
-		setInvNip(bi.nip ?? '')
-	}, [ent?.billingInvoice?.companyName, ent?.billingInvoice?.address, ent?.billingInvoice?.nip])
+
+		const apply = () => {
+			const buyer = bi.buyerType === 'individual' ? 'individual' : 'company'
+			setInvBuyerType(buyer)
+			if (buyer === 'individual') {
+				setIndName(bi.companyName ?? '')
+				setIndAddress(bi.address ?? '')
+				setCompName('')
+				setCompAddress('')
+				setCompNip('')
+			} else {
+				setCompName(bi.companyName ?? '')
+				setCompAddress(bi.address ?? '')
+				setCompNip(bi.nip ?? '')
+				setIndName('')
+				setIndAddress('')
+			}
+		}
+
+		if (!invoiceHydratedOnceRef.current) {
+			invoiceHydratedOnceRef.current = true
+			apply()
+			return
+		}
+		if (invoiceEditedByUserRef.current) return
+		apply()
+	}, [
+		ent?.billingInvoice?.buyerType,
+		ent?.billingInvoice?.companyName,
+		ent?.billingInvoice?.address,
+		ent?.billingInvoice?.nip,
+	])
+
+	const ensureInvoiceForPurchase = useCallback(async () => {
+		const type = invBuyerType === 'individual' ? 'individual' : 'company'
+		const scrollInv = () => {
+			requestAnimationFrame(() => {
+				document.getElementById('packages-invoice-section')?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center',
+				})
+			})
+		}
+
+		if (type === 'individual') {
+			const name = indName.trim()
+			const addr = indAddress.trim()
+			const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
+			if (name.length < 3 || !addrOk) {
+				await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+				scrollInv()
+				return false
+			}
+			try {
+				await patchTeamInvoice.mutateAsync({
+					buyerType: 'individual',
+					companyName: indName,
+					address: indAddress,
+					nip: '',
+				})
+				invoiceEditedByUserRef.current = false
+			} catch (e) {
+				await showAlert(
+					billingAxiosErrorMessage(e, t) || e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
+				)
+				return false
+			}
+			return true
+		}
+
+		const nipDigits = compNip.replace(/\D/g, '')
+		if (nipDigits.length !== 10) {
+			await showAlert(t('billingPackages.invoiceNipInvalid10'))
+			scrollInv()
+			return false
+		}
+		const name = compName.trim()
+		const addr = compAddress.trim()
+		const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
+		if (name.length < 2 || !addrOk) {
+			await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+			scrollInv()
+			return false
+		}
+		try {
+			await patchTeamInvoice.mutateAsync({
+				buyerType: 'company',
+				companyName: compName,
+				address: compAddress,
+				nip: compNip,
+			})
+			invoiceEditedByUserRef.current = false
+		} catch (e) {
+			await showAlert(
+				billingAxiosErrorMessage(e, t) || e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
+			)
+			return false
+		}
+		return true
+	}, [
+		invBuyerType,
+		indName,
+		indAddress,
+		compName,
+		compAddress,
+		compNip,
+		patchTeamInvoice,
+		showAlert,
+		t,
+	])
 
 	const startP24Checkout = useCallback(
 		async body => {
-			if (!canSubmitPurchaseRequest) return
+			if (!canSubmitPurchaseRequest) return false
 			if (body.kind === 'plan' && catalog && teamSeats != null) {
 				const tier = catalog.tiers.find(t => t.id === body.planKey)
 				if (tier && teamSeats > tier.maxUsers) {
 					await showAlert(
 						t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers })
 					)
-					return
+					return false
 				}
 			}
+			if (!(await ensureInvoiceForPurchase())) return false
 			const busyKey = p24BusyKeyForBody(body)
 			if (busyKey) setP24BusyKey(busyKey)
 			try {
 				const data = await p24Checkout.mutateAsync(body)
 				if (data.redirectUrl) {
 					window.location.assign(data.redirectUrl)
+					return true
 				}
+				return false
 			} catch (e) {
 				await showAlert(
 					billingAxiosErrorMessage(e, t) ||
@@ -206,11 +328,12 @@ export default function PackagesPage() {
 						e.message ||
 						t('billingPackages.p24PayError')
 				)
+				return false
 			} finally {
 				setP24BusyKey(null)
 			}
 		},
-		[canSubmitPurchaseRequest, catalog, teamSeats, p24Checkout, t, showAlert]
+		[canSubmitPurchaseRequest, catalog, teamSeats, p24Checkout, t, showAlert, ensureInvoiceForPurchase]
 	)
 
 	useEffect(() => {
@@ -305,6 +428,7 @@ export default function PackagesPage() {
 				return
 			}
 		}
+		if (!(await ensureInvoiceForPurchase())) return
 		try {
 			if (modal.kind === 'plan') {
 				await purchase.mutateAsync({
@@ -733,41 +857,121 @@ export default function PackagesPage() {
 				</div>
 
 				{canSubmitPurchaseRequest && (
-					<section className="packages-invoice-section" aria-labelledby="packages-invoice-heading">
+					<section
+						id="packages-invoice-section"
+						className="packages-invoice-section"
+						aria-labelledby="packages-invoice-heading"
+					>
 						<h3 id="packages-invoice-heading" className="packages-invoice-section__title">
 							{t('billingPackages.invoiceSectionTitle')}
 						</h3>
 						<p className="packages-invoice-section__hint">{t('billingPackages.invoiceSectionHint')}</p>
+						<div className="packages-billing-toggle packages-invoice-section__buyer-toggle">
+							<span className="packages-billing-toggle__label">{t('billingPackages.invoiceBuyerTypeLabel')}:</span>
+							<div
+								className="packages-billing-toggle__buttons"
+								role="group"
+								aria-label={t('billingPackages.invoiceBuyerTypeLabel')}
+							>
+								<button
+									type="button"
+									className={invBuyerType === 'company' ? 'is-on' : ''}
+									disabled={patchTeamInvoice.isPending}
+									onClick={() => {
+										invoiceEditedByUserRef.current = true
+										setInvBuyerType('company')
+									}}
+								>
+									{t('billingPackages.invoiceBuyerCompany')}
+								</button>
+								<button
+									type="button"
+									className={invBuyerType === 'individual' ? 'is-on' : ''}
+									disabled={patchTeamInvoice.isPending}
+									onClick={() => {
+										invoiceEditedByUserRef.current = true
+										setInvBuyerType('individual')
+									}}
+								>
+									{t('billingPackages.invoiceBuyerIndividual')}
+								</button>
+							</div>
+						</div>
 						<div className="packages-invoice-section__grid">
-							<label className="packages-invoice-section__field">
-								<span className="packages-invoice-section__label">{t('billingPackages.invoiceCompany')}</span>
-								<input
-									type="text"
-									value={invCompany}
-									onChange={e => setInvCompany(e.target.value)}
-									autoComplete="organization"
-									disabled={patchTeamInvoice.isPending}
-								/>
-							</label>
-							<label className="packages-invoice-section__field packages-invoice-section__field--wide">
-								<span className="packages-invoice-section__label">{t('billingPackages.invoiceAddress')}</span>
-								<textarea
-									rows={3}
-									value={invAddress}
-									onChange={e => setInvAddress(e.target.value)}
-									disabled={patchTeamInvoice.isPending}
-								/>
-							</label>
-							<label className="packages-invoice-section__field">
-								<span className="packages-invoice-section__label">{t('billingPackages.invoiceNip')}</span>
-								<input
-									type="text"
-									value={invNip}
-									onChange={e => setInvNip(e.target.value)}
-									autoComplete="off"
-									disabled={patchTeamInvoice.isPending}
-								/>
-							</label>
+							{invBuyerType === 'company' ? (
+								<>
+									<label className="packages-invoice-section__field">
+										<span className="packages-invoice-section__label">{t('billingPackages.invoiceCompany')}</span>
+										<input
+											type="text"
+											value={compName}
+											onChange={e => {
+												invoiceEditedByUserRef.current = true
+												setCompName(e.target.value)
+											}}
+											autoComplete="organization"
+											disabled={patchTeamInvoice.isPending}
+										/>
+									</label>
+									<label className="packages-invoice-section__field packages-invoice-section__field--wide">
+										<span className="packages-invoice-section__label">{t('billingPackages.invoiceAddress')}</span>
+										<textarea
+											rows={3}
+											value={compAddress}
+											onChange={e => {
+												invoiceEditedByUserRef.current = true
+												setCompAddress(e.target.value)
+											}}
+											disabled={patchTeamInvoice.isPending}
+										/>
+									</label>
+									<label className="packages-invoice-section__field">
+										<span className="packages-invoice-section__label-inline">
+											<span className="packages-invoice-section__label">{t('billingPackages.invoiceNip')}</span>
+											<span className="packages-invoice-section__nip-hint">{t('billingPackages.invoiceNipHint')}</span>
+										</span>
+										<input
+											type="text"
+											value={compNip}
+											onChange={e => {
+												invoiceEditedByUserRef.current = true
+												setCompNip(e.target.value)
+											}}
+											autoComplete="off"
+											inputMode="numeric"
+											disabled={patchTeamInvoice.isPending}
+										/>
+									</label>
+								</>
+							) : (
+								<>
+									<label className="packages-invoice-section__field">
+										<span className="packages-invoice-section__label">{t('billingPackages.invoiceFullName')}</span>
+										<input
+											type="text"
+											value={indName}
+											onChange={e => {
+												invoiceEditedByUserRef.current = true
+												setIndName(e.target.value)
+											}}
+											autoComplete="name"
+											disabled={patchTeamInvoice.isPending}
+										/>
+									</label>
+									<label className="packages-invoice-section__field packages-invoice-section__field--wide">
+										<span className="packages-invoice-section__label">{t('billingPackages.invoiceAddress')}</span>
+										<textarea
+											rows={3}
+											value={indAddress}
+											onChange={e => {
+												invoiceEditedByUserRef.current = true
+												setIndAddress(e.target.value)
+											}}
+											disabled={patchTeamInvoice.isPending}
+										/>
+									</label>
+								</>
+							)}
 						</div>
 						<button
 							type="button"
@@ -775,15 +979,48 @@ export default function PackagesPage() {
 							disabled={patchTeamInvoice.isPending}
 							onClick={async () => {
 								try {
-									await patchTeamInvoice.mutateAsync({
-										companyName: invCompany,
-										address: invAddress,
-										nip: invNip,
-									})
+									const type = invBuyerType === 'individual' ? 'individual' : 'company'
+									if (type === 'individual') {
+										const n = indName.trim()
+										const a = indAddress.trim()
+										if (n.length < 3 || a.length < MIN_INVOICE_ADDRESS_LEN) {
+											await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+											return
+										}
+										await patchTeamInvoice.mutateAsync({
+											buyerType: 'individual',
+											companyName: indName,
+											address: indAddress,
+											nip: '',
+										})
+									} else {
+										const nipDigits = compNip.replace(/\D/g, '')
+										if (nipDigits.length !== 10) {
+											await showAlert(t('billingPackages.invoiceNipInvalid10'))
+											return
+										}
+										if (
+											compName.trim().length < 2 ||
+											compAddress.trim().length < MIN_INVOICE_ADDRESS_LEN
+										) {
+											await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+											return
+										}
+										await patchTeamInvoice.mutateAsync({
+											buyerType: 'company',
+											companyName: compName,
+											address: compAddress,
+											nip: compNip,
+										})
+									}
+									invoiceEditedByUserRef.current = false
 									await showAlert(t('billingPackages.invoiceSaved'))
 								} catch (e) {
 									await showAlert(
-										e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
+										billingAxiosErrorMessage(e, t) ||
+											e?.response?.data?.message ||
+											e?.message ||
+											t('billingPackages.p24PayError')
 									)
 								}
 							}}

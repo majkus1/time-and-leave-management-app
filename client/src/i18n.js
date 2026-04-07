@@ -312,13 +312,22 @@ i18n
 							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
 						invoiceSectionTitle: 'Invoice details for your team',
 						invoiceSectionHint:
-							'Optional. If you need an invoice, save your company details here — we can also ask for them by email after purchase.',
+							'Required before paying online. Choose company (with tax ID) or a private individual, then save. We issue invoices to these details.',
+						invoiceBuyerTypeLabel: 'Buyer type',
+						invoiceBuyerCompany: 'Company',
+						invoiceBuyerIndividual: 'Private individual',
 						invoiceCompany: 'Company / organization name',
+						invoiceFullName: 'Full name (for the invoice)',
 						invoiceAddress: 'Address (street, postal code, city)',
 						invoiceNip: 'Tax ID (NIP)',
+						invoiceNipHint: '10 digits (Polish NIP)',
+						invoiceNipInvalid10:
+							'Tax ID (NIP) must be exactly 10 digits. Check your entry — an extra digit is a common mistake.',
 						invoiceSave: 'Save invoice details',
 						invoiceSaving: 'Saving…',
 						invoiceSaved: 'Invoice details saved.',
+						invoiceRequiredBeforePay:
+							'To continue, fill in the invoice section below and save — either as a company (with tax ID) or as a private individual (name and address).',
 					},
 					usersInfo: {
 						title: 'User List',
@@ -1938,13 +1947,22 @@ i18n
 							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',
 						invoiceSectionTitle: 'Dane do faktury zespołu',
 						invoiceSectionHint:
-							'Opcjonalnie. Jeśli potrzebujecie faktury, zapiszcie tutaj dane firmy — możemy też poprosić o nie mailem po zakupie.',
+							'Wymagane przed płatnością online. Wybierz firmę (z NIP) lub osobę fizyczną, uzupełnij pola i zapisz — na te dane wystawiamy fakturę.',
+						invoiceBuyerTypeLabel: 'Rodzaj nabywcy',
+						invoiceBuyerCompany: 'Firma',
+						invoiceBuyerIndividual: 'Osoba fizyczna',
 						invoiceCompany: 'Nazwa firmy / organizacji',
+						invoiceFullName: 'Imię i nazwisko (na fakturze)',
 						invoiceAddress: 'Adres (ulica, kod, miejscowość)',
 						invoiceNip: 'NIP',
+						invoiceNipHint: '10 cyfr',
+						invoiceNipInvalid10:
+							'NIP musi mieć dokładnie 10 cyfr. Sprawdź wpis — często pomyłką jest jedna cyfra za dużo lub za mało.',
 						invoiceSave: 'Zapisz dane do faktury',
 						invoiceSaving: 'Zapisywanie…',
 						invoiceSaved: 'Zapisano dane do faktury.',
+						invoiceRequiredBeforePay:
+							'Żeby przejść dalej, uzupełnij poniżej dane do faktury i zapisz je — albo jako firma (z NIP), albo jako osoba fizyczna (imię, nazwisko i adres).',
 					},
 					usersInfo: {
 						title: 'Lista użytkowników',

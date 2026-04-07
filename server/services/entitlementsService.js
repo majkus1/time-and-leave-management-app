@@ -329,6 +329,7 @@ function buildClientEntitlements(team, options = {}) {
 		freemiumMaxSeats,
 		freemiumSeatBlocked,
 		billingInvoice: {
+			buyerType: team.billingInvoiceBuyerType === 'individual' ? 'individual' : 'company',
 			companyName: team.billingInvoiceCompanyName || '',
 			address: team.billingInvoiceAddress || '',
 			nip: team.billingInvoiceNip || '',

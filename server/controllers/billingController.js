@@ -73,7 +73,8 @@ exports.postPurchaseRequest = async (req, res) => {
 			e.code === 'VALIDATION' ||
 			e.code === 'NOT_FOUND' ||
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
-			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED'
+			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
+			e.code === 'INVOICE_INCOMPLETE'
 		) {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
@@ -143,7 +144,8 @@ exports.postP24Checkout = async (req, res) => {
 			e.code === 'NOT_FOUND' ||
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
-			e.code === 'P24_NOT_CONFIGURED'
+			e.code === 'P24_NOT_CONFIGURED' ||
+			e.code === 'INVOICE_INCOMPLETE'
 		) {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
@@ -186,14 +188,16 @@ function normInvoiceField(v, maxLen) {
 
 exports.patchTeamInvoice = async (req, res) => {
 	try {
-		const { companyName, address, nip } = req.body || {}
+		const { companyName, address, nip, buyerType } = req.body || {}
 		const team = await Team.findById(req.user.teamId)
 		if (!team) {
 			return res.status(404).json({ success: false, message: 'Team not found' })
 		}
+		const type = buyerType === 'individual' ? 'individual' : 'company'
+		team.billingInvoiceBuyerType = type
 		team.billingInvoiceCompanyName = normInvoiceField(companyName, 200)
 		team.billingInvoiceAddress = normInvoiceField(address, 500)
-		team.billingInvoiceNip = normInvoiceField(nip, 32)
+		team.billingInvoiceNip = type === 'individual' ? '' : normInvoiceField(nip, 32)
 		await team.save()
 		const teamMemberCount = await countTeamSeats(req.user.teamId)
 		res.json({

@@ -81,7 +81,10 @@ export function useBillingPatchTeamInvoice() {
 			})
 			return data
 		},
-		onSuccess: () => {
+		onSuccess: data => {
+			if (data?.entitlements) {
+				qc.setQueryData(BILLING_ENTITLEMENTS_QUERY_KEY, data.entitlements)
+			}
 			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 		},
 	})
