@@ -348,6 +348,11 @@ exports.createTask = async (req, res) => {
 		})
 
 		normalizeTaskScheduleFields(newTask)
+		if (!newTask.dueDate && !newTask.workPeriodStart && !newTask.workPeriodEnd) {
+			// If no schedule is provided, anchor task in calendar on creation day.
+			const now = new Date()
+			newTask.dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0)
+		}
 		if (newTask.workPeriodStart && newTask.workPeriodEnd && newTask.workPeriodStart > newTask.workPeriodEnd) {
 			return res.status(400).json({ message: 'Invalid work period (start after end)' })
 		}

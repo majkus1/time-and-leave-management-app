@@ -5,6 +5,7 @@ const User = require('../models/user')(firmDb)
 const Department = require('../models/Department')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const { sendChatNotification } = require('../services/pushNotificationService')
+const { sendChatEmailNotification } = require('../services/emailService')
 const fs = require('fs').promises
 const path = require('path')
 const mongoose = require('mongoose')
@@ -472,6 +473,19 @@ exports.sendMessage = async (req, res) => {
 						console.error('Error sending chat push notifications:', error)
 						// Don't fail the request if push fails
 					})
+
+				const senderName = message?.userId?.firstName && message?.userId?.lastName
+					? `${message.userId.firstName} ${message.userId.lastName}`
+					: (message?.userId?.username || 'User')
+				sendChatEmailNotification({
+					channel,
+					message: message.toObject(),
+					senderName,
+					recipientUserIds,
+					t: req.t,
+				}).catch((error) => {
+					console.error('Error sending chat email notifications:', error)
+				})
 			}
 		} catch (error) {
 			console.error('Error preparing chat push notifications:', error)

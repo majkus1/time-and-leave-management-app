@@ -6,6 +6,7 @@ const User = require('../models/user')(firmDb)
 const path = require('path')
 const fs = require('fs').promises
 const { sendTaskCommentNotification } = require('../services/pushNotificationService')
+const { sendTaskCommentEmailNotification } = require('../services/emailService')
 const { isAdminUser, canUserAccessTask, getTaskNotificationRecipients, normalizeObjectIdString } = require('../utils/taskAccess')
 
 const emitTaskCommentRealtimeUpdate = async ({
@@ -154,7 +155,7 @@ exports.createComment = async (req, res) => {
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 		})
 
-		// Push only: notify users assigned to this task (excluding comment author).
+		// Notify users assigned to this task (excluding comment author).
 		try {
 			const recipientUserIds = (await getTaskNotificationRecipients(task, board))
 				.map((id) => id.toString())
@@ -173,6 +174,16 @@ exports.createComment = async (req, res) => {
 					t,
 				}).catch((pushError) => {
 					console.error('Error sending task comment push notification:', pushError)
+				})
+				sendTaskCommentEmailNotification({
+					task,
+					board,
+					commenterName,
+					commentContent: newComment.content,
+					recipientUserIds,
+					t,
+				}).catch((emailError) => {
+					console.error('Error sending task comment email notification:', emailError)
 				})
 			}
 		} catch (notificationError) {

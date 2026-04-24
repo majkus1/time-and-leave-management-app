@@ -86,7 +86,35 @@
 			"assignedTo": "Przypisane do",
 			"assignedToAllMembers": "Wszyscy członkowie tablicy",
 			"unassigned": "Nieprzypisane",
-			"viewBoard": "Zobacz tablicę"
+			"viewBoard": "Zobacz tablicę",
+			"commentTitle": "Nowy komentarz w zadaniu",
+			"commentSubject": "Nowy komentarz: {{taskTitle}}",
+			"commentMessage": "{{commenterName}} dodał komentarz do zadania \"{{taskTitle}}\" w tablicy \"{{boardName}}\".",
+			"commentContentLabel": "Treść komentarza"
+		},
+		"schedule": {
+			"defaultName": "Grafik",
+			"publishedTitle": "Opublikowano grafik",
+			"publishedSubject": "Opublikowano grafik: {{scheduleName}} ({{month}})",
+			"publishedMessage": "Twój grafik \"{{scheduleName}}\" na {{month}} został opublikowany.",
+			"openSchedule": "Otwórz grafik",
+			"entryDetailsTitle": "Twoje opublikowane wpisy",
+			"entryDate": "Data",
+			"entryTime": "Godziny",
+			"entryNotes": "Notatka",
+			"entryNotesEmpty": "—",
+			"entryMore": "+ {{count}} kolejnych wpisów"
+		},
+		"chat": {
+			"defaultChannel": "Kanał",
+			"defaultSender": "Użytkownik",
+			"newMessageTitle": "Nowa wiadomość na czacie",
+			"newMessageSubject": "Nowa wiadomość na czacie: {{channelName}}",
+			"newMessageHeader": "{{senderName}} wysłał(a) nową wiadomość na kanale „{{channelName}}”.",
+			"messageContentLabel": "Treść wiadomości",
+			"noMessageContent": "(wiadomość bez tekstu)",
+			"attachmentsInfo": "Wiadomość zawiera załączniki.",
+			"openChat": "Otwórz czat"
 		}
 	},
 	"leaveform": {
@@ -191,6 +219,10 @@
 		"task": {
 			"newCommentTitle": "Nowy komentarz w zadaniu",
 			"newCommentBody": "{{commenterName}} dodał komentarz do zadania \"{{taskTitle}}\""
+		},
+		"schedule": {
+			"publishedTitle": "Opublikowano grafik",
+			"publishedBody": "Twój grafik „{{scheduleName}}” na {{month}} został opublikowany."
 		}
 	}
 }

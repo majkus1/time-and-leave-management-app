@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db')
 const Announcement = require('../models/Announcement')(firmDb)
 const User = require('../models/user')(firmDb)
+const EmailNotificationPreference = require('../models/EmailNotificationPreference')(firmDb)
 const { sendEmail, getEmailTemplate, escapeHtml } = require('../services/emailService')
 const { sendAnnouncementPushNotification } = require('../services/pushNotificationService')
 const { appUrl } = require('../config')
@@ -312,10 +313,24 @@ exports.createAnnouncement = async (req, res) => {
 				.trim()
 				.slice(0, 220)
 			const announcementPreview = `${creatorName} · ${rawTitle}${snippet ? ` — ${snippet}` : ''}`
+			const emailRecipientIds = recipients
+				.filter((recipient) => recipient._id.toString() !== userId.toString())
+				.map((recipient) => recipient._id.toString())
+			const preferenceDocs = await EmailNotificationPreference.find({
+				teamId,
+				userId: { $in: emailRecipientIds },
+			}).select('userId preferences')
+			const preferenceMap = new Map(
+				preferenceDocs.map((doc) => [doc.userId.toString(), doc.preferences || {}])
+			)
+			const emailRecipients = recipients.filter((recipient) => {
+				if (recipient._id.toString() === userId.toString()) return false
+				const prefs = preferenceMap.get(recipient._id.toString())
+				return !prefs || prefs.announcements !== false
+			})
 
 			Promise.allSettled(
-				recipients
-					.filter((recipient) => recipient._id.toString() !== userId.toString())
+				emailRecipients
 					.map((recipient) =>
 						sendEmail(recipient.username, `${appUrl}/announcements`, emailSubject, emailHtml, {
 							teamId,

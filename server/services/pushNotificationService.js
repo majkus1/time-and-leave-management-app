@@ -470,6 +470,91 @@ const sendTaskCommentNotification = async ({ task, board, commenterName, recipie
 	return { sent, failed }
 }
 
+const sendSchedulePublishedPushNotification = async ({
+	schedule,
+	recipientUserIds,
+	year,
+	month,
+	t = null,
+}) => {
+	if (!schedule || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	let subscriptions = await PushSubscription.find({
+		userId: { $in: recipientUserIds },
+		enabled: true,
+		$or: [
+			{ 'preferences.schedulePublished': true },
+			{ 'preferences.schedulePublished': { $exists: false } },
+		],
+	})
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+	if (subscriptions.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	const scheduleName = schedule.name || (t ? t('email.schedule.defaultName') : 'Schedule')
+	const monthLabel = `${String(month).padStart(2, '0')}.${year}`
+	const payload = {
+		title: t ? t('push.schedule.publishedTitle') : 'Schedule published',
+		body: t
+			? t('push.schedule.publishedBody', { scheduleName, month: monthLabel, ...i18nPlainText })
+			: `Your schedule "${scheduleName}" for ${monthLabel} has been published.`,
+		icon: '/icon-192x192.png',
+		badge: '/icon-96x96.png',
+		tag: `schedule-published-${schedule._id}-${year}-${month}`,
+		data: {
+			url: `/schedule/${schedule._id}`,
+			type: 'schedule',
+			scheduleId: schedule._id?.toString(),
+			year: String(year),
+			month: String(month),
+		},
+		requireInteraction: false,
+		silent: false,
+	}
+
+	const results = await Promise.allSettled(
+		subscriptions.map(async (subscription) => {
+			try {
+				const subscriptionData = {
+					endpoint: subscription.endpoint,
+					keys: {
+						p256dh: subscription.keys.p256dh,
+						auth: subscription.keys.auth,
+					},
+				}
+				await webpush.sendNotification(subscriptionData, JSON.stringify(payload))
+				subscription.lastUsed = new Date()
+				await subscription.save()
+				return { success: true }
+			} catch (error) {
+				if (error.statusCode === 410) {
+					await PushSubscription.findByIdAndDelete(subscription._id)
+					return { success: false, error: 'Subscription expired' }
+				}
+				return { success: false, error: error.message }
+			}
+		})
+	)
+
+	const sent = results.filter((r) => r.status === 'fulfilled' && r.value.success).length
+	const failed = results.length - sent
+	if (sent > 0) {
+		const successfulUserIds = []
+		results.forEach((r, i) => {
+			if (r.status === 'fulfilled' && r.value.success && subscriptions[i]?.userId) {
+				successfulUserIds.push(subscriptions[i].userId)
+			}
+		})
+		if (successfulUserIds.length > 0) {
+			void recordPushForUserIds(successfulUserIds, payload)
+		}
+	}
+	return { sent, failed }
+}
+
 /**
  * Send announcement push notification
  */
@@ -782,6 +867,7 @@ module.exports = {
 	sendChatNotification,
 	sendTaskNotification,
 	sendTaskCommentNotification,
+	sendSchedulePublishedPushNotification,
 	sendAnnouncementPushNotification,
 	sendLeaveRequestPushNotification
 }

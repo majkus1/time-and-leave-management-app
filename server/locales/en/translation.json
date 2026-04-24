@@ -86,7 +86,35 @@
 			"assignedTo": "Assigned to",
 			"assignedToAllMembers": "All board members",
 			"unassigned": "Unassigned",
-			"viewBoard": "View board"
+			"viewBoard": "View board",
+			"commentTitle": "New comment in task",
+			"commentSubject": "New comment: {{taskTitle}}",
+			"commentMessage": "{{commenterName}} added a comment to task \"{{taskTitle}}\" in board \"{{boardName}}\".",
+			"commentContentLabel": "Comment content"
+		},
+		"schedule": {
+			"defaultName": "Schedule",
+			"publishedTitle": "Schedule published",
+			"publishedSubject": "Schedule published: {{scheduleName}} ({{month}})",
+			"publishedMessage": "Your schedule \"{{scheduleName}}\" for {{month}} has been published.",
+			"openSchedule": "Open schedule",
+			"entryDetailsTitle": "Your published entries",
+			"entryDate": "Date",
+			"entryTime": "Time",
+			"entryNotes": "Notes",
+			"entryNotesEmpty": "—",
+			"entryMore": "+ {{count}} more entries"
+		},
+		"chat": {
+			"defaultChannel": "Channel",
+			"defaultSender": "User",
+			"newMessageTitle": "New chat message",
+			"newMessageSubject": "New chat message: {{channelName}}",
+			"newMessageHeader": "{{senderName}} sent a new message in “{{channelName}}”.",
+			"messageContentLabel": "Message content",
+			"noMessageContent": "(message without text)",
+			"attachmentsInfo": "This message includes attachments.",
+			"openChat": "Open chat"
 		}
 	},
 	"leaveform": {
@@ -191,6 +219,10 @@
 		"task": {
 			"newCommentTitle": "New comment in task",
 			"newCommentBody": "{{commenterName}} added a comment to task \"{{taskTitle}}\""
+		},
+		"schedule": {
+			"publishedTitle": "Schedule published",
+			"publishedBody": "Your schedule \"{{scheduleName}}\" for {{month}} has been published."
 		}
 	}
 }

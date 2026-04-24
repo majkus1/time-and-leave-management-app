@@ -3,6 +3,7 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { sendEmailToHR, sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const User = require('../models/user')(firmDb)
+const EmailNotificationPreference = require('../models/EmailNotificationPreference')(firmDb)
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const LeavePlan = require('../models/LeavePlan')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
@@ -18,6 +19,22 @@ const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = r
 function isWeekend(date) {
 	const day = new Date(date).getDay()
 	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+}
+
+async function filterRecipientsByLeaveEmailPreference(recipients, teamId) {
+	if (!Array.isArray(recipients) || recipients.length === 0) return []
+	const recipientIds = recipients
+		.map((recipient) => recipient?._id?.toString?.())
+		.filter(Boolean)
+	const prefDocs = await EmailNotificationPreference.find({
+		teamId,
+		userId: { $in: recipientIds },
+	}).select('userId preferences')
+	const prefMap = new Map(prefDocs.map((doc) => [doc.userId.toString(), doc.preferences || {}]))
+	return recipients.filter((recipient) => {
+		const prefs = prefMap.get(recipient._id.toString())
+		return !prefs || prefs.leaves !== false
+	})
 }
 
 // Funkcja pomocnicza do generowania wszystkich dat w zakresie (z pominięciem weekendów i świąt)
@@ -417,13 +434,19 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		// Wyślij email tylko jeśli użytkownik jest aktywny
 		if (user.isActive !== false) {
 			try {
-				await sendEmail(
-					user.username,
-					null,
-					ownRequestStatusTitle,
-					mailContent,
-					{ teamId: user.teamId, preview: statusChangePreview }
+				const [selfPref] = await filterRecipientsByLeaveEmailPreference(
+					[{ _id: user._id, username: user.username }],
+					user.teamId
 				)
+				if (selfPref) {
+					await sendEmail(
+						user.username,
+						null,
+						ownRequestStatusTitle,
+						mailContent,
+						{ teamId: user.teamId, preview: statusChangePreview }
+					)
+				}
 			} catch (emailError) {
 				console.error('Error sending email to user:', emailError)
 				// Nie przerywaj procesu jeśli email nie zadziała
@@ -954,6 +977,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 		const recipients = await getUniqueEmailRecipients(user, teamId, t)
 
 		if (recipients.length > 0) {
+			const emailRecipients = await filterRecipientsByLeaveEmailPreference(recipients, teamId)
 			const cancelContent = `
 				<div style="background-color: #f9fafb; border-left: 4px solid #ef4444; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.leaveform.requestDetails')}</p>
@@ -981,7 +1005,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 			const cancelPreview = `${user.firstName || ''} ${user.lastName || ''}`.trim() + ` · ${typeText} · ${startDate}–${endDate} · ${t('email.leaveform.requestCancelledTitle')}`
 
 			// Wyślij email do wszystkich unikalnych odbiorców
-			const emailPromises = recipients.map(recipient =>
+			const emailPromises = emailRecipients.map(recipient =>
 				sendEmail(
 					recipient.username,
 					`${appUrl}/leave-requests/${user._id}`,
@@ -1216,6 +1240,7 @@ exports.updateLeaveRequest = async (req, res) => {
 		}
 
 		if (recipients.length > 0) {
+			const emailRecipients = await filterRecipientsByLeaveEmailPreference(recipients, teamId)
 			const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
 			const typeText = getLeaveRequestTypeName(settings, type, t, language)
 			const content = `
@@ -1251,7 +1276,7 @@ exports.updateLeaveRequest = async (req, res) => {
 			const editPreview = `${user.firstName || ''} ${user.lastName || ''}`.trim() + ` · ${typeText} · ${startDate}–${endDate} · ${qtyLabel}`
 
 			// Wyślij email do wszystkich unikalnych odbiorców
-			const emailPromises = recipients.map(recipient =>
+			const emailPromises = emailRecipients.map(recipient =>
 				sendEmail(
 					recipient.username,
 					`${appUrl}/leave-requests/${user._id}`,

@@ -60,6 +60,10 @@ const pushSubscriptionSchema = new mongoose.Schema({
 		announcements: {
 			type: Boolean,
 			default: true
+		},
+		schedulePublished: {
+			type: Boolean,
+			default: true
 		}
 	},
 	createdAt: {

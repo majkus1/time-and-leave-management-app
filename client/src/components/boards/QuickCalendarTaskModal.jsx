@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext'
 
 const SCHEDULE_DEADLINE = 'deadline'
 const SCHEDULE_PERIOD = 'period'
+const SCHEDULE_NONE = 'none'
 
 const TASK_STATUSES = [
 	{ id: 'todo' },
@@ -33,7 +34,7 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 	const [pickedBoardId, setPickedBoardId] = useState(fixedBoardId || '')
 	const [title, setTitle] = useState('')
 	const [status, setStatus] = useState('todo')
-	const [scheduleMode, setScheduleMode] = useState(SCHEDULE_DEADLINE)
+	const [scheduleMode, setScheduleMode] = useState(SCHEDULE_NONE)
 	const [dueDate, setDueDate] = useState('')
 	const [periodStart, setPeriodStart] = useState('')
 	const [periodEnd, setPeriodEnd] = useState('')
@@ -93,7 +94,7 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 				return
 			}
 			payload.dueDate = dueDate
-		} else {
+		} else if (scheduleMode === SCHEDULE_PERIOD) {
 			if (!periodStart || !periodEnd) {
 				await showAlert(t('boards.periodRequired') || 'Podaj daty okresu')
 				return
@@ -234,7 +235,16 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 
 				<div style={{ marginBottom: '16px' }}>
 					<label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#2c3e50' }}>
-						{t('boards.scheduleType') || 'Termin'}
+						{t('boards.scheduleType') || 'Termin / okres'}
+					</label>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+						<input
+							type="radio"
+							name="sched"
+							checked={scheduleMode === SCHEDULE_NONE}
+							onChange={() => setScheduleMode(SCHEDULE_NONE)}
+						/>
+						<span>{t('boards.noSchedule') || 'Brak'}</span>
 					</label>
 					<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
 						<input

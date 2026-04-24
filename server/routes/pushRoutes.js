@@ -42,7 +42,8 @@ router.post('/register', authenticateToken, async (req, res) => {
 				taskStatusChanges: true,
 				taskComments: true,
 				leaves: true,
-				announcements: true
+				announcements: true,
+				schedulePublished: true
 			}
 			})
 			await subscription.save()
@@ -96,7 +97,8 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 					'preferences.taskStatusChanges': preferences.taskStatusChanges !== undefined ? preferences.taskStatusChanges : true,
 					'preferences.taskComments': preferences.taskComments !== undefined ? preferences.taskComments : true,
 					'preferences.leaves': preferences.leaves !== undefined ? preferences.leaves : true,
-					'preferences.announcements': preferences.announcements !== undefined ? preferences.announcements : true
+					'preferences.announcements': preferences.announcements !== undefined ? preferences.announcements : true,
+					'preferences.schedulePublished': preferences.schedulePublished !== undefined ? preferences.schedulePublished : true
 				}
 			}
 		)
@@ -127,7 +129,8 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 					taskStatusChanges: true,
 					taskComments: true,
 					leaves: true,
-					announcements: true
+					announcements: true,
+					schedulePublished: true
 				}
 			})
 		}
@@ -139,6 +142,7 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 			taskComments: subscription.preferences?.taskComments !== false,
 			leaves: subscription.preferences?.leaves !== false,
 			announcements: subscription.preferences?.announcements !== false,
+			schedulePublished: subscription.preferences?.schedulePublished !== false,
 		}
 
 		res.json({

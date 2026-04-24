@@ -2,12 +2,57 @@ const nodemailer = require('nodemailer')
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
+const EmailNotificationPreference = require('../models/EmailNotificationPreference')(firmDb)
 const { appUrl } = require('../config')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 
 /** Powiadomienia wewnętrzne: nowe zgłoszenia / aktywność w dyskusji Help Center */
 const HELP_CENTER_STAFF_EMAILS = ['planopiaapp@gmail.com', 'michalipka1@gmail.com']
+const DEFAULT_EMAIL_NOTIFICATION_PREFERENCES = {
+	chat: true,
+	tasks: true,
+	taskStatusChanges: true,
+	taskComments: true,
+	leaves: true,
+	announcements: true,
+	schedulePublished: true,
+}
+
+const formatYmd = (value) => {
+	const d = new Date(value)
+	if (Number.isNaN(d.getTime())) return ''
+	const y = d.getFullYear()
+	const m = String(d.getMonth() + 1).padStart(2, '0')
+	const day = String(d.getDate()).padStart(2, '0')
+	return `${y}-${m}-${day}`
+}
+
+async function filterUsersByEmailPreference(users, teamId, preferenceKey) {
+	if (!Array.isArray(users) || users.length === 0) return []
+	if (!preferenceKey) return users
+
+	const userIds = users
+		.map((user) => (user?._id && user._id.toString ? user._id.toString() : null))
+		.filter(Boolean)
+
+	if (userIds.length === 0) return []
+
+	const prefs = await EmailNotificationPreference.find({
+		teamId,
+		userId: { $in: userIds },
+	}).select('userId preferences')
+	const prefMap = new Map(
+		prefs.map((doc) => [doc.userId?.toString?.() || String(doc.userId), doc.preferences || {}])
+	)
+
+	return users.filter((user) => {
+		const userId = user?._id && user._id.toString ? user._id.toString() : null
+		if (!userId) return false
+		const pref = prefMap.get(userId) || DEFAULT_EMAIL_NOTIFICATION_PREFERENCES
+		return pref[preferenceKey] !== false
+	})
+}
 
 function normalizeEmailRecipients(to) {
 	if (to == null || to === '') return []
@@ -136,7 +181,7 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			teamId, 
 			roles: { $in: ['HR'] },
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		})
+		}).select('_id username firstName lastName')
 
 		// Nigdy nie wysyłaj "HR notification" do autora wniosku.
 		let usersToNotify = hrUsers.filter(hr => hr.username !== user.username)
@@ -147,7 +192,7 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 				teamId,
 				roles: { $in: ['Admin'] },
 				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-			}).select('username')
+			}).select('_id username firstName lastName')
 
 			// Usuń użytkownika który złożył wniosek jeśli jest adminem (nie powinien dostawać powiadomienia o swojej własnej zmianie statusu)
 			usersToNotify = adminUsers.filter(admin => admin.username !== user.username)
@@ -155,6 +200,10 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 			if (usersToNotify.length === 0) {
 				return
 			}
+		usersToNotify = await filterUsersByEmailPreference(usersToNotify, teamId, 'leaves')
+		if (usersToNotify.length === 0) {
+			return
+		}
 		}
 
 		const startDate = leaveRequest.startDate.toISOString().split('T')[0]
@@ -235,11 +284,16 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 		}
 		
 		// Get member users (only active)
-		const members = await User.find({ 
+		let members = await User.find({ 
 			_id: { $in: filteredRecipientIds },
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('username firstName lastName')
+		}).select('_id username firstName lastName')
 		
+		if (members.length === 0) {
+			return
+		}
+		const preferenceKey = isStatusChange ? 'taskStatusChanges' : 'tasks'
+		members = await filterUsersByEmailPreference(members, board.teamId, preferenceKey)
 		if (members.length === 0) {
 			return
 		}
@@ -393,6 +447,218 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 	}
 }
 
+const sendTaskCommentEmailNotification = async ({
+	task,
+	board,
+	commenterName,
+	commentContent = '',
+	recipientUserIds,
+	t = null,
+}) => {
+	try {
+		if (!task || !board || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) return
+
+		let recipients = await User.find({
+			_id: { $in: recipientUserIds },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select('_id username firstName lastName')
+		recipients = await filterUsersByEmailPreference(recipients, board.teamId, 'taskComments')
+		if (recipients.length === 0) return
+
+		const taskTitle = escapeHtml(task.title || (t ? t('email.task.taskTitle') : 'Zadanie'))
+		const boardName = escapeHtml(board.name || 'Board')
+		const author = escapeHtml(commenterName || 'Someone')
+		const subject = t
+			? t('email.task.commentSubject', { taskTitle })
+			: `Nowy komentarz w zadaniu: ${taskTitle}`
+		const body = t
+			? t('email.task.commentMessage', { commenterName: author, taskTitle, boardName })
+			: `${author} dodał komentarz do zadania "${taskTitle}" na tablicy "${boardName}".`
+		const safeCommentContent = escapeHtml(String(commentContent || '').trim())
+		const commentBlock = safeCommentContent
+			? `<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 16px; margin: 16px 0; border-radius: 4px;"><p style="margin: 0 0 8px 0; font-weight: 600; color: #1f2937;">${t ? (t('email.task.commentContentLabel') || 'Treść komentarza') : 'Treść komentarza'}</p><p style="margin: 0; color: #374151; white-space: pre-wrap;">${safeCommentContent}</p></div>`
+			: ''
+		const boardLink = `${appUrl}/boards/${board._id}`
+		const html = getEmailTemplate(
+			t ? t('email.task.commentTitle') : 'Nowy komentarz w zadaniu',
+			`<p style="margin: 0 0 16px 0;">${body}</p>${commentBlock}`,
+			t ? t('email.task.viewBoard') : 'Zobacz tablicę',
+			boardLink,
+			t
+		)
+
+		await Promise.all(
+			recipients.map((recipient) =>
+				sendEmail(recipient.username, boardLink, subject, html, {
+					teamId: board.teamId,
+					preview: `${commenterName || ''} · ${task.title || ''}`.trim(),
+				})
+			)
+		)
+	} catch (error) {
+		console.error('Error sending task comment email notifications:', error)
+	}
+}
+
+const sendChatEmailNotification = async ({
+	channel,
+	message,
+	senderName,
+	recipientUserIds,
+	t = null,
+}) => {
+	try {
+		if (!channel || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) return
+
+		let recipients = await User.find({
+			_id: { $in: recipientUserIds },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select('_id username firstName lastName')
+		recipients = await filterUsersByEmailPreference(recipients, channel.teamId, 'chat')
+		if (recipients.length === 0) return
+
+		const channelNameRaw = String(channel.name || '').trim() || (t ? t('email.chat.defaultChannel') : 'Kanał')
+		const channelName = escapeHtml(channelNameRaw)
+		const safeSenderName = escapeHtml(senderName || (t ? t('email.chat.defaultSender') : 'Użytkownik'))
+		const contentRaw = String(message?.content || '').trim()
+		const safeMessageContent = escapeHtml(contentRaw)
+		const hasAttachments = Array.isArray(message?.attachments) && message.attachments.length > 0
+
+		const subject = t
+			? t('email.chat.newMessageSubject', { channelName: channelNameRaw })
+			: `Nowa wiadomość na czacie: ${channelNameRaw}`
+		const headerText = t
+			? t('email.chat.newMessageHeader', { senderName: safeSenderName, channelName })
+			: `${safeSenderName} wysłał(a) nową wiadomość na kanale ${channelName}.`
+		const messageTitle = t ? t('email.chat.messageContentLabel') : 'Treść wiadomości'
+		const noContentText = t ? t('email.chat.noMessageContent') : '(wiadomość bez tekstu)'
+		const attachmentText = hasAttachments
+			? `<p style="margin: 12px 0 0 0; color: #6b7280; font-size: 14px;">${t ? (t('email.chat.attachmentsInfo') || 'Wiadomość zawiera załączniki.') : 'Wiadomość zawiera załączniki.'}</p>`
+			: ''
+		const messageBlock = `
+			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 16px; margin: 16px 0; border-radius: 4px;">
+				<p style="margin: 0 0 8px 0; font-weight: 600; color: #1f2937;">${messageTitle}</p>
+				<p style="margin: 0; color: #374151; white-space: pre-wrap;">${safeMessageContent || noContentText}</p>
+				${attachmentText}
+			</div>
+		`
+		const channelLink = `${appUrl}/chat`
+		const html = getEmailTemplate(
+			t ? t('email.chat.newMessageTitle') : 'Nowa wiadomość na czacie',
+			`<p style="margin: 0 0 16px 0;">${headerText}</p>${messageBlock}`,
+			t ? t('email.chat.openChat') : 'Otwórz czat',
+			channelLink,
+			t
+		)
+
+		await Promise.all(
+			recipients.map((recipient) =>
+				sendEmail(recipient.username, channelLink, subject, html, {
+					teamId: channel.teamId,
+					preview: `${senderName || ''} · ${channelNameRaw} · ${(contentRaw || '').slice(0, 120)}`.trim(),
+				})
+			)
+		)
+	} catch (error) {
+		console.error('Error sending chat email notifications:', error)
+	}
+}
+
+const sendSchedulePublishedEmailNotification = async ({
+	schedule,
+	recipientUserIds,
+	year,
+	month,
+	t = null,
+}) => {
+	try {
+		if (!schedule || !Array.isArray(recipientUserIds) || recipientUserIds.length === 0) return
+		let recipients = await User.find({
+			_id: { $in: recipientUserIds },
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select('_id username firstName lastName')
+		recipients = await filterUsersByEmailPreference(recipients, schedule.teamId, 'schedulePublished')
+		if (recipients.length === 0) return
+
+		const scheduleNameRaw = schedule.name || (t ? t('email.schedule.defaultName') : 'Grafik')
+		const scheduleName = escapeHtml(scheduleNameRaw)
+		const monthLabel = `${String(month).padStart(2, '0')}.${year}`
+		const title = t ? t('email.schedule.publishedTitle') : 'Opublikowano grafik'
+		const scheduleLink = `${appUrl}/schedule/${schedule._id}`
+		const monthPrefix = `${year}-${String(month).padStart(2, '0')}`
+
+		await Promise.all(
+			recipients.map(async (recipient) => {
+				const recipientId = recipient._id.toString()
+				const recipientEntries = []
+				for (const day of schedule.days || []) {
+					const dayKey = formatYmd(day?.date)
+					if (!dayKey.startsWith(monthPrefix)) continue
+					for (const entry of day.entries || []) {
+						if (entry?.employeeId?.toString() !== recipientId) continue
+						if (entry?.isPublished === false) continue
+						recipientEntries.push({
+							date: dayKey,
+							timeFrom: entry?.timeFrom || '',
+							timeTo: entry?.timeTo || '',
+							notes: entry?.notes || '',
+						})
+					}
+				}
+
+				const entriesPreviewLimit = 8
+				const visibleEntries = recipientEntries.slice(0, entriesPreviewLimit)
+				const detailsRows = visibleEntries
+					.map((item) => {
+						const dateLabel = escapeHtml(item.date)
+						const timeLabel = `${escapeHtml(item.timeFrom)}-${escapeHtml(item.timeTo)}`
+						const notesLabel = item.notes ? escapeHtml(item.notes) : (t ? (t('email.schedule.entryNotesEmpty') || '—') : '—')
+						return `<tr><td style="padding: 8px 0; color: #1f2937;">${dateLabel}</td><td style="padding: 8px 0; color: #1f2937;">${timeLabel}</td><td style="padding: 8px 0; color: #4b5563;">${notesLabel}</td></tr>`
+					})
+					.join('')
+				const remainingCount = Math.max(recipientEntries.length - visibleEntries.length, 0)
+				const detailsBlock = recipientEntries.length
+					? `<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 16px; margin: 16px 0; border-radius: 4px;">
+							<p style="margin: 0 0 10px 0; font-weight: 600; color: #1f2937;">${t ? (t('email.schedule.entryDetailsTitle') || 'Twoje opublikowane wpisy') : 'Twoje opublikowane wpisy'} (${recipientEntries.length})</p>
+							<table style="width: 100%; border-collapse: collapse;">
+								<thead>
+									<tr>
+										<th align="left" style="padding: 4px 0; color: #6b7280; font-size: 13px;">${t ? (t('email.schedule.entryDate') || 'Data') : 'Data'}</th>
+										<th align="left" style="padding: 4px 0; color: #6b7280; font-size: 13px;">${t ? (t('email.schedule.entryTime') || 'Godziny') : 'Godziny'}</th>
+										<th align="left" style="padding: 4px 0; color: #6b7280; font-size: 13px;">${t ? (t('email.schedule.entryNotes') || 'Notatka') : 'Notatka'}</th>
+									</tr>
+								</thead>
+								<tbody>${detailsRows}</tbody>
+							</table>
+							${remainingCount > 0 ? `<p style="margin: 12px 0 0 0; color: #6b7280; font-size: 13px;">${t ? (t('email.schedule.entryMore', { count: remainingCount }) || `+ ${remainingCount} kolejnych wpisów`) : `+ ${remainingCount} kolejnych wpisów`}</p>` : ''}
+						</div>`
+					: ''
+
+				const subject = t
+					? t('email.schedule.publishedSubject', { scheduleName: scheduleNameRaw, month: monthLabel })
+					: `Opublikowano grafik: ${scheduleNameRaw} (${monthLabel})`
+				const content = t
+					? t('email.schedule.publishedMessage', { scheduleName: scheduleNameRaw, month: monthLabel })
+					: `Twój grafik "${scheduleNameRaw}" na ${monthLabel} został opublikowany.`
+				const html = getEmailTemplate(
+					title,
+					`<p style="margin: 0 0 16px 0;">${escapeHtml(content)}</p>${detailsBlock}`,
+					t ? t('email.schedule.openSchedule') : 'Otwórz grafik',
+					scheduleLink,
+					t
+				)
+
+				return sendEmail(recipient.username, scheduleLink, subject, html, {
+					teamId: schedule.teamId,
+					preview: `${scheduleNameRaw} · ${monthLabel}${recipientEntries.length ? ` · ${recipientEntries.length}` : ''}`,
+				})
+			})
+		)
+	} catch (error) {
+		console.error('Error sending schedule published email notifications:', error)
+	}
+}
+
 /**
  * Powiadomienie e-mail do autora zgłoszenia (odpowiedź obsługi / zmiana statusu).
  * Wymaga EMAIL_USER i EMAIL_PASS; błędy są logowane, nie rzucane na zewnątrz.
@@ -512,6 +778,9 @@ module.exports = {
 	sendEmail,
 	sendEmailToHR,
 	sendTaskNotification,
+	sendTaskCommentEmailNotification,
+	sendChatEmailNotification,
+	sendSchedulePublishedEmailNotification,
 	notifyTicketReporter,
 	notifyHelpCenterStaff,
 	sendBillingPurchaseThankYouEmail,

@@ -8,6 +8,7 @@ import { useSettings, useUpdateSettings } from '../../hooks/useSettings'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useLeaveRequestTypes, useUpdateLeaveRequestTypes, useAddCustomLeaveRequestType, useDeleteCustomLeaveRequestType } from '../../hooks/useLeaveRequestTypes'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
+import { useEmailNotificationPreferences } from '../../hooks/useEmailNotificationPreferences'
 import Modal from 'react-modal'
 import { getPolishHolidaysForYear } from '../../utils/holidays'
 import { calculateHours } from '../../utils/timeHelpers'
@@ -61,6 +62,7 @@ function Settings() {
 		updatePreferences: updatePushPreferences
 	} = usePushNotifications()
 	const [pushLoading, setPushLoading] = useState(false)
+	const [emailPrefLoading, setEmailPrefLoading] = useState(false)
 	/** Na mobile zielona wskazówka PWA domyślnie zwinięta; od md w górę zawsze widoczna */
 	const [pushPwaTipMobileOpen, setPushPwaTipMobileOpen] = useState(false)
 	const updateLeaveRequestTypesMutation = useUpdateLeaveRequestTypes()
@@ -78,6 +80,10 @@ function Settings() {
 		allowDaysLimit: false,
 		minDaysBefore: null
 	})
+	const {
+		preferences: emailPreferences,
+		updatePreferences: updateEmailPreferences,
+	} = useEmailNotificationPreferences()
 
 	// Helper function to calculate hours from time range
 	const calculateHours = (timeFrom, timeTo) => {
@@ -435,6 +441,24 @@ function Settings() {
 		}
 	}
 
+	const handleUpdateEmailPreferences = async (key, value) => {
+		const nextPreferences = { ...emailPreferences, [key]: value }
+		setEmailPrefLoading(true)
+		try {
+			const result = await updateEmailPreferences(nextPreferences)
+			if (result.success) {
+				await showAlert(t('settings.emailNotificationsUpdateSuccess'))
+			} else {
+				await showAlert(result.error || t('settings.emailNotificationsUpdateError'))
+			}
+		} catch (error) {
+			console.error('Error updating email notification preferences:', error)
+			await showAlert(t('settings.emailNotificationsUpdateError'))
+		} finally {
+			setEmailPrefLoading(false)
+		}
+	}
+
 	if ((canEditSettings && loadingSettings) || loadingLeaveTypes) return <Loader />
 
 	return (
@@ -758,9 +782,101 @@ function Settings() {
 											<span>{t('settings.pushNotificationsAnnouncements')}</span>
 										</label>
 									</div>
+
+									<div style={{ marginBottom: '15px' }}>
+										<label style={{ 
+											display: 'flex',
+											alignItems: 'center',
+											cursor: pushLoading ? 'not-allowed' : 'pointer',
+											color: '#2c3e50'
+										}}>
+											<input
+												type="checkbox"
+												checked={pushPreferences.schedulePublished !== false}
+												onChange={(e) => handleUpdatePushPreferences('schedulePublished', e.target.checked)}
+												disabled={pushLoading}
+												style={{
+													marginRight: '10px',
+													width: '18px',
+													height: '18px',
+													cursor: pushLoading ? 'not-allowed' : 'pointer'
+												}}
+											/>
+											<span>{t('settings.pushNotificationsSchedulePublished')}</span>
+										</label>
+									</div>
 								</div>
 							</>
 						)}
+					</div>
+				)}
+
+				{!freemiumTier && (!freemiumSlimSettings || pushOnlySettings) && (
+					<div style={{ 
+						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '20px',
+						marginBottom: '20px'
+					}}>
+						<h3 style={{ 
+							color: '#2c3e50', 
+							marginBottom: '20px',
+							fontSize: '20px',
+							fontWeight: '600'
+						}}>
+							✉️ {t('settings.emailNotificationsTitle')}
+						</h3>
+						<p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
+							{t('settings.emailNotificationsDescription')}
+						</p>
+						<div style={{
+							borderTop: '1px solid #ecf0f1',
+							paddingTop: '20px',
+							marginTop: '20px'
+						}}>
+							<h4 style={{ 
+								color: '#2c3e50', 
+								marginBottom: '15px',
+								fontSize: '16px',
+								fontWeight: '600'
+							}}>
+								{t('settings.emailNotificationsPreferences')}
+							</h4>
+
+							{[
+								['chat', t('settings.emailNotificationsChat')],
+								['tasks', t('settings.emailNotificationsTasks')],
+								['taskStatusChanges', t('settings.emailNotificationsTaskStatus')],
+								['taskComments', t('settings.emailNotificationsTaskComments')],
+								['leaves', t('settings.emailNotificationsLeaves')],
+								['announcements', t('settings.emailNotificationsAnnouncements')],
+								['schedulePublished', t('settings.emailNotificationsSchedulePublished')],
+							].map(([key, label]) => (
+								<div key={key} style={{ marginBottom: '15px' }}>
+									<label style={{
+										display: 'flex',
+										alignItems: 'center',
+										cursor: emailPrefLoading ? 'not-allowed' : 'pointer',
+										color: '#2c3e50',
+									}}>
+										<input
+											type="checkbox"
+											checked={emailPreferences[key] !== false}
+											onChange={(e) => handleUpdateEmailPreferences(key, e.target.checked)}
+											disabled={emailPrefLoading}
+											style={{
+												marginRight: '10px',
+												width: '18px',
+												height: '18px',
+												cursor: emailPrefLoading ? 'not-allowed' : 'pointer',
+											}}
+										/>
+										<span>{label}</span>
+									</label>
+								</div>
+							))}
+						</div>
 					</div>
 				)}
 

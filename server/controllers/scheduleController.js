@@ -10,6 +10,8 @@ const { runScheduleAutoDraftTurn } = require('../services/aiScheduleAutoDraftSer
 const entitlementsService = require('../services/entitlementsService')
 const { createLog } = require('../services/logService')
 const { isHoliday } = require('../utils/holidays')
+const { sendSchedulePublishedPushNotification } = require('../services/pushNotificationService')
+const { sendSchedulePublishedEmailNotification } = require('../services/emailService')
 
 const normalizeDepartments = (departmentValue) =>
 	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
@@ -690,6 +692,34 @@ exports.upsertScheduleEntry = async (req, res) => {
 		}
 
 		await schedule.save()
+
+		// Manual entries are saved as already published, so notify the affected user immediately.
+		if (employeeId) {
+			const entryDateObj = new Date(date)
+			const notifyYear = Number.isNaN(entryDateObj.getTime()) ? new Date().getFullYear() : entryDateObj.getFullYear()
+			const notifyMonth = Number.isNaN(entryDateObj.getTime()) ? new Date().getMonth() + 1 : entryDateObj.getMonth() + 1
+			const recipientUserIds = [String(employeeId)]
+
+			sendSchedulePublishedPushNotification({
+				schedule,
+				recipientUserIds,
+				year: notifyYear,
+				month: notifyMonth,
+				t: req.t,
+			}).catch((error) => {
+				console.error('Error sending manual schedule entry push notification:', error)
+			})
+
+			sendSchedulePublishedEmailNotification({
+				schedule,
+				recipientUserIds,
+				year: notifyYear,
+				month: notifyMonth,
+				t: req.t,
+			}).catch((error) => {
+				console.error('Error sending manual schedule entry email notification:', error)
+			})
+		}
 		
 		res.json({ message: 'Schedule entry added successfully', schedule })
 	} catch (error) {
@@ -841,6 +871,7 @@ exports.publishMonthDraftEntries = async (req, res) => {
 		const monthPrefix = `${parsedYear}-${String(parsedMonth).padStart(2, '0')}`
 		let publishedEntries = 0
 		let touchedDays = 0
+		const affectedEmployeeIds = new Set()
 
 		for (const day of schedule.days) {
 			const dayDate = new Date(day.date)
@@ -852,12 +883,38 @@ exports.publishMonthDraftEntries = async (req, res) => {
 					entry.isPublished = true
 					publishedEntries += 1
 					dayUpdated = true
+					if (entry.employeeId) {
+						affectedEmployeeIds.add(entry.employeeId.toString())
+					}
 				}
 			}
 			if (dayUpdated) touchedDays += 1
 		}
 
 		await schedule.save()
+
+		const recipientUserIds = Array.from(affectedEmployeeIds)
+		if (recipientUserIds.length > 0) {
+			sendSchedulePublishedPushNotification({
+				schedule,
+				recipientUserIds,
+				year: parsedYear,
+				month: parsedMonth,
+				t: req.t,
+			}).catch((error) => {
+				console.error('Error sending schedule published push notifications:', error)
+			})
+			sendSchedulePublishedEmailNotification({
+				schedule,
+				recipientUserIds,
+				year: parsedYear,
+				month: parsedMonth,
+				t: req.t,
+			}).catch((error) => {
+				console.error('Error sending schedule published email notifications:', error)
+			})
+		}
+
 		emitScheduleUpdated(req, {
 			teamId: schedule.teamId,
 			scheduleId: schedule._id,
