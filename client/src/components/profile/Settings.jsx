@@ -880,6 +880,40 @@ function Settings() {
 					</div>
 				)}
 
+				{canEditSettings && (
+					<div
+						style={{
+							backgroundColor: '#f8f9fa',
+							border: '1px solid #dee2e6',
+							borderRadius: '10px',
+							padding: '14px 18px',
+							marginTop: '50px',
+							marginBottom: '20px',
+						}}
+					>
+						<h3
+							style={{
+								margin: 0,
+								color: '#2c3e50',
+								fontSize: '18px',
+								fontWeight: '700',
+								letterSpacing: '0.2px',
+							}}
+						>
+							{t('settings.teamSettingsHeader') || 'Ustawienia zespołu'}
+						</h3>
+						<p
+							style={{
+								margin: '6px 0 0 0',
+								color: '#6c757d',
+								fontSize: '14px',
+							}}
+						>
+							{t('settings.teamSettingsHeaderDescription') || 'Poniższa konfiguracja dotyczy całego zespołu.'}
+						</p>
+					</div>
+				)}
+
 				{/* Komunikat przypominający o zapisywaniu zmian - tylko dla Admin i HR (pełny plan) */}
 				{canEditSettings && !freemiumSlimSettings && (
 					<div style={{ 
