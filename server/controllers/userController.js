@@ -388,7 +388,7 @@ exports.resetPasswordRequest = async (req, res) => {
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 		if (!user) {
-			return res.status(404).send('No user with that email exists.')
+			return res.send('If a user with that email is registered, a password reset link has been sent.')
 		}
 
 		const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {

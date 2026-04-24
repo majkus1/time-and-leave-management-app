@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 type Locale = 'pl' | 'en'
@@ -99,6 +100,73 @@ const TEASER_FADE_MS = 520
 function localeFromPath(pathname: string | null): Locale {
 	if (!pathname) return 'pl'
 	return pathname.startsWith('/en') ? 'en' : 'pl'
+}
+
+/**
+ * Modele często zwracają fragmenty w stylu Markdown (**pogrubienie**).
+ * Czasem podwójnie „opakowują” (np. **\\*\\*Pro\\*\\***) — upraszczamy przed parsowaniem.
+ */
+function normalizeAssistantMarkdown(raw: string): string {
+	let s = raw.replace(/\\([*`_#])/g, '$1')
+	for (let i = 0; i < 4; i++) {
+		const next = s.replace(/\*\*(\*\*[^*]+?\*\*)\*\*/g, '$1')
+		if (next === s) break
+		s = next
+	}
+	/* np. ****Pro**** → **Pro** (model czasem „podwójnie” pogrubia) */
+	for (let i = 0; i < 4; i++) {
+		const next = s.replace(/\*{3,}([^*\n]+?)\*{3,}/g, '**$1**')
+		if (next === s) break
+		s = next
+	}
+	return s
+}
+
+/** Jedna linia tekstu: **wyróżnienie** → <strong>, reszta zwykły tekst (bez HTML z modelu). */
+function formatAssistantLine(line: string, keyPrefix: string): ReactNode[] {
+	const normalized = normalizeAssistantMarkdown(line)
+	const out: ReactNode[] = []
+	const re = /\*\*([^*]+)\*\*/g
+	let last = 0
+	let m: RegExpExecArray | null
+	let k = 0
+	while ((m = re.exec(normalized)) !== null) {
+		if (m.index > last) {
+			out.push(<span key={`${keyPrefix}-t-${k++}`}>{normalized.slice(last, m.index)}</span>)
+		}
+		out.push(
+			<strong key={`${keyPrefix}-b-${k++}`} className="font-semibold text-gray-900">
+				{m[1]}
+			</strong>
+		)
+		last = re.lastIndex
+	}
+	if (last < normalized.length) {
+		out.push(<span key={`${keyPrefix}-t-${k++}`}>{normalized.slice(last)}</span>)
+	}
+	return out.length ? out : [normalized]
+}
+
+/** Treść bąbelka asystenta: akapity + zwykłe łamanie linii. */
+function AssistantMessageContent({ text }: { text: string }) {
+	const paras = text.split(/\n{2,}/)
+	return (
+		<div className="whitespace-pre-wrap break-words">
+			{paras.map((para, pi) => {
+				const lines = para.split('\n')
+				return (
+					<p key={pi} className={pi > 0 ? 'mt-2' : ''}>
+						{lines.map((line, li) => (
+							<Fragment key={li}>
+								{li > 0 ? <br /> : null}
+								{formatAssistantLine(line, `${pi}-${li}`)}
+							</Fragment>
+						))}
+					</p>
+				)
+			})}
+		</div>
+	)
 }
 
 function ChatIcon({ className }: { className?: string }) {
@@ -432,7 +500,11 @@ export default function LandingChatWidget() {
 											: 'border border-slate-200 bg-white text-gray-800'
 									}`}
 								>
-									{line.content}
+									{line.role === 'assistant' ? (
+										<AssistantMessageContent text={line.content} />
+									) : (
+										<span className="whitespace-pre-wrap break-words">{line.content}</span>
+									)}
 								</div>
 							</div>
 						))}

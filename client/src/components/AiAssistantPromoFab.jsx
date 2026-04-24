@@ -19,7 +19,7 @@ function AiAssistantPromoFab() {
 		/** Freemium: brak promocji AI (Sidebar też wyłącza premium). Do czasu entitlements nie pokazuj — unikamy błysku. */
 		if (billingEntLoading || freemiumTier) return false
 		if (pathname === '/ai-assistant') return false
-		if (['/login', '/team-registration', '/reset-password'].includes(pathname)) return false
+		if (['/login', '/team-registration', '/reset-password', '/chat'].includes(pathname)) return false
 		if (pathname.startsWith('/set-password/') || pathname.startsWith('/new-password/')) return false
 		return true
 	}, [loggedIn, pathname, billingEntLoading, freemiumTier])

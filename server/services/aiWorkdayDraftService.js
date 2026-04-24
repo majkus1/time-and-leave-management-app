@@ -82,20 +82,25 @@ async function runWorkdayDraftTurn(input) {
 	const locale = input.locale === 'en' ? 'en' : 'pl'
 	const today = warsawTodayYmd()
 
+	const MAX_DRAFT_DAYS = 31
+
 	const systemPrompt = [
-		`You help an employee compose a WORK TIME / ATTENDANCE log entry for the Planopia app. The user writes in ${locale === 'en' ? 'English' : 'Polish'}.`,
+		`You help an employee compose WORK TIME / ATTENDANCE log entries for the Planopia app. The user writes in ${locale === 'en' ? 'English' : 'Polish'}.`,
 		`Today's calendar date in Europe/Warsaw is **${today}** (YYYY-MM-DD). Interpret "today", "yesterday", "last Monday" using Warsaw local calendar.`,
-		`Map the user's text to these form fields:`,
-		`- date: YYYY-MM-DD (required when ready=true)`,
+		`Map the user's text to these form fields (each calendar day is a separate entry when needed):`,
+		`- date: YYYY-MM-DD`,
 		`- hoursWorked: total hours (e.g. 8, 8.5). Null if only absence or only notes.`,
 		`- additionalWorked: overtime hours included in the total (e.g. 1, 1.5). Null if none.`,
 		`- realTimeDayWorked: time range string like "8-16" or "8:00-16:30". Null if not mentioned.`,
 		`- absenceType: free text for absence type (sick leave, remote work, etc.) when NOT a normal working hours entry. Null if logging hours.`,
-		`- notes: optional remarks. Combine user intent into concise notes.`,
+		`- notes: optional remarks per day. Combine user intent into concise notes.`,
 		`Reply ONLY with a single JSON object (no markdown fences) with these keys:`,
 		`- "assistantMessage": string — short reply in the user's language (Markdown allowed). Ask for missing info or confirm.`,
-		`- "ready": boolean — true ONLY if you have a concrete calendar date and a clear intent (hours, OR absence type, OR notes-only for that day).`,
-		`- "draft": null OR object with keys: "date" (YYYY-MM-DD), "hoursWorked" (number|null), "additionalWorked" (number|null), "realTimeDayWorked" (string|null), "absenceType" (string|null), "notes" (string|null).`,
+		`- "ready": boolean — true ONLY if you have concrete calendar date(s) and a clear intent (hours, OR absence type, OR notes-only for each day).`,
+		`- "draft": null OR object with EITHER:`,
+		`  (A) Legacy single-day shape: keys "date" (YYYY-MM-DD), "hoursWorked", "additionalWorked", "realTimeDayWorked", "absenceType", "notes" — use for exactly one day; OR`,
+		`  (B) Multi-day shape: "entries": array of at most ${MAX_DRAFT_DAYS} objects, each with the same keys as (A) (each must have its own "date").`,
+		`When the user asks to log the SAME pattern for MULTIPLE consecutive or listed days (e.g. "21–24 April, 8h, 9–17"), you MUST use shape (B) and include ONE object per day with the same hoursWorked/realTimeDayWorked/etc. Do NOT collapse multiple days into a single date.`,
 		`Rules:`,
 		`- Never set both hoursWorked and absenceType for the same day (mutually exclusive).`,
 		`- If the user describes normal work with hours and range, fill hoursWorked, optional additionalWorked, optional realTimeDayWorked.`,
@@ -107,7 +112,7 @@ async function runWorkdayDraftTurn(input) {
 	const { content, model, usage } = await createChatCompletionJson({
 		messages: openaiMessages,
 		temperature: 0.2,
-		maxTokens: 1600,
+		maxTokens: 3200,
 	})
 
 	let parsed
@@ -142,61 +147,108 @@ async function runWorkdayDraftTurn(input) {
 		}
 	}
 
-	const dateStr = typeof rawDraft.date === 'string' ? rawDraft.date.trim().slice(0, 10) : ''
-	if (!isIsoDate(dateStr)) {
-		return {
-			reply: assistantMessage || (locale === 'en' ? 'Invalid date format.' : 'Nieprawidłowy format daty.'),
-			draft: null,
-			draftError: 'INVALID_DATE',
-			model,
-			usage,
+	/** @returns {Array<object>|null} raw entry objects from model */
+	function coalesceDraftRows(obj) {
+		if (Array.isArray(obj.entries) && obj.entries.length > 0) {
+			return obj.entries.slice(0, MAX_DRAFT_DAYS)
 		}
+		if (typeof obj.date === 'string') {
+			return [obj]
+		}
+		return null
 	}
 
-	const body = {
-		hoursWorked: rawDraft.hoursWorked,
-		additionalWorked: rawDraft.additionalWorked,
-		realTimeDayWorked: rawDraft.realTimeDayWorked,
-		absenceType: rawDraft.absenceType,
-		notes: rawDraft.notes,
+	function dedupeDraftRowsByDate(rows) {
+		const map = new Map()
+		for (const row of rows) {
+			const d = typeof row.date === 'string' ? row.date.trim().slice(0, 10) : ''
+			if (!d) continue
+			map.set(d, { ...row, date: d })
+		}
+		return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v)
 	}
-	const normalized = normalizeWorkdayPayload(body)
 
-	const v = await validateNewWorkdayEntry({
-		WorkdayModel: Workday,
-		LeaveRequestModel: LeaveRequest,
-		// Must preserve Mongoose model as `this` inside getSettings (uses this.findOne)
-		getSettings: teamId => Settings.getSettings(teamId),
-		userId: user._id,
-		teamId,
-		dateYmd: dateStr,
-		normalized,
-		locale,
-	})
-
-	if (!v.ok) {
+	let rows = coalesceDraftRows(rawDraft)
+	if (rows?.length) {
+		rows = dedupeDraftRowsByDate(rows)
+	}
+	if (!rows || rows.length === 0) {
 		return {
 			reply:
 				assistantMessage ||
-				(locale === 'en'
-					? 'This entry cannot be saved with the current rules. Adjust the date or details.'
-					: 'Tego wpisu nie można zapisać przy obecnych zasadach. Popraw datę lub szczegóły.'),
+				(locale === 'en' ? 'Please specify the date(s) and what to log.' : 'Podaj datę (lub daty) oraz co zapisać.'),
 			draft: null,
-			draftError: v.code,
-			draftMessage: v.message,
+			draftError: null,
 			model,
 			usage,
 		}
 	}
 
-	const draft = {
-		date: dateStr,
-		hoursWorked: v.sanitized.hoursWorked,
-		additionalWorked: v.sanitized.additionalWorked,
-		realTimeDayWorked: v.sanitized.realTimeDayWorked,
-		absenceType: v.sanitized.absenceType,
-		notes: v.sanitized.notes,
+	const sanitizedEntries = []
+	for (let i = 0; i < rows.length; i++) {
+		const row = rows[i]
+		const dateStr = typeof row.date === 'string' ? row.date.trim().slice(0, 10) : ''
+		if (!isIsoDate(dateStr)) {
+			return {
+				reply: assistantMessage || (locale === 'en' ? 'Invalid date format in the draft.' : 'Nieprawidłowy format daty w szkicu.'),
+				draft: null,
+				draftError: 'INVALID_DATE',
+				model,
+				usage,
+			}
+		}
+
+		const body = {
+			hoursWorked: row.hoursWorked,
+			additionalWorked: row.additionalWorked,
+			realTimeDayWorked: row.realTimeDayWorked,
+			absenceType: row.absenceType,
+			notes: row.notes,
+		}
+		const normalized = normalizeWorkdayPayload(body)
+
+		const v = await validateNewWorkdayEntry({
+			WorkdayModel: Workday,
+			LeaveRequestModel: LeaveRequest,
+			getSettings: teamId => Settings.getSettings(teamId),
+			userId: user._id,
+			teamId,
+			dateYmd: dateStr,
+			normalized,
+			locale,
+		})
+
+		if (!v.ok) {
+			const dayHint = rows.length > 1 ? ` (${dateStr})` : ''
+			return {
+				reply:
+					assistantMessage ||
+					(locale === 'en'
+						? `This entry cannot be saved with the current rules${dayHint}. Adjust the date or details.`
+						: `Tego wpisu nie można zapisać przy obecnych zasadach${dayHint}. Popraw datę lub szczegóły.`),
+				draft: null,
+				draftError: v.code,
+				draftMessage: v.message,
+				model,
+				usage,
+			}
+		}
+
+		sanitizedEntries.push({
+			date: dateStr,
+			hoursWorked: v.sanitized.hoursWorked,
+			additionalWorked: v.sanitized.additionalWorked,
+			realTimeDayWorked: v.sanitized.realTimeDayWorked,
+			absenceType: v.sanitized.absenceType,
+			notes: v.sanitized.notes,
+		})
 	}
+
+	/** Jedna data: pola jak dotąd + `entries` z jednym elementem; wiele dni: tylko `entries`. */
+	const draft =
+		sanitizedEntries.length === 1
+			? { ...sanitizedEntries[0], entries: sanitizedEntries }
+			: { entries: sanitizedEntries }
 
 	return {
 		reply: assistantMessage,

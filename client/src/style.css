@@ -1491,7 +1491,7 @@ button, .btn {
 	   kolumna z podsumowaniem miesiąca schodzi niżej żeby zrobić miejsce
 	   na panel timera i listę sesji. */
 	.resume-month-work.resume-month-work--with-timer {
-		margin-top: 500px;
+		margin-top: 510px;
 	}
 
 	/* Gdy timer jest aktywny (liczy czas), kolumna schodzi jeszcze niżej */
@@ -2168,11 +2168,13 @@ textarea {
 	padding: 15px;
 	margin-bottom: 0;
 	border-bottom: 0;
+	font-size: 14px !important;
 }
 
 .confirm-border {
 	border: 1px solid rgba(128, 128, 128, 0.184);
 	border-bottom: 0;
+	font-size: 14px !important;
 }
 
 .allfrommonth-p:last-child {
@@ -2180,8 +2182,12 @@ textarea {
 }
 
 .allfrommonth-p img {
-	width: 30px;
+	width: 25px;
 	margin-right: 10px;
+}
+
+.confirm-border img {
+	width: 25px !important;
 }
 
 @media (max-width: 1024px) {
@@ -2628,7 +2634,7 @@ body:has(.pwa-navigation-bar) .container {
 
 /* Na /settings: zielony FAB przewijania na lewo od zakładki AI (zakładka przy prawej krawędzi) */
 body:has(.ai-assistant-promo-fab-edge--on-settings) .settings-save-scroll-fab {
-	right: calc(max(12px, env(safe-area-inset-right)) + 28px + 10px);
+	right: calc(max(0px, env(safe-area-inset-right)) + 28px + 10px);
 }
 
 /* Skrót do AI Asystenta — stała zakładka przy prawej krawędzi (Link).
@@ -2647,7 +2653,7 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 .ai-assistant-promo-fab-edge {
 	position: fixed;
 	z-index: 1002;
-	right: max(12px, env(safe-area-inset-right));
+	right: max(0px, env(safe-area-inset-right));
 	bottom: max(16px, env(safe-area-inset-bottom));
 	width: 28px;
 	min-height: 52px;
@@ -2660,25 +2666,55 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
-	background: linear-gradient(165deg, #0d9668 0%, #047857 100%);
+	border: 2px solid transparent;
+	background-image:
+		linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #312e81 100%),
+		linear-gradient(
+			125deg,
+			#818cf8 0%,
+			#a78bfa 20%,
+			#d946ef 40%,
+			#06b6d4 60%,
+			#6366f1 82%,
+			#a855f7 100%
+		);
+	background-origin: border-box;
+	background-clip: padding-box, border-box;
+	background-size: 180% 180%, 260% 260%;
+	background-position: 0% 50%, 0% 50%;
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff;
 	box-shadow:
-		-2px 4px 14px rgba(5, 150, 105, 0.38),
-		0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+		-2px 6px 20px rgba(99, 102, 241, 0.26),
+		0 0 0 1px rgba(255, 255, 255, 0.55) inset;
 	transition: filter 0.2s ease, transform 0.15s ease;
+	animation: ai-fab-gradient-shift 10s ease-in-out infinite alternate;
+	will-change: background-position;
 	-webkit-tap-highlight-color: transparent;
 }
 
 .ai-assistant-promo-fab-edge:hover {
-	filter: brightness(1.07);
+	filter: brightness(1.04);
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff;
+	animation-duration: 7s;
 }
 
 .ai-assistant-promo-fab-edge:active {
 	filter: brightness(0.96);
 	transform: scale(0.98);
+}
+
+@keyframes ai-fab-gradient-shift {
+	0% {
+		background-position: 0% 50%, 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%, 50% 100%;
+	}
+	100% {
+		background-position: 0% 50%, 100% 0%;
+	}
 }
 
 /* Ikona w pasku — mieści się w tym samym ~28×52 co wcześniejszy wave + etykieta „AI” */
@@ -2710,6 +2746,12 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 @media (max-width: 1023px) {
 	body:has(.pwa-navigation-bar) .ai-assistant-promo-fab-edge {
 		bottom: calc(56px + max(12px, env(safe-area-inset-bottom)));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ai-assistant-promo-fab-edge {
+		animation: none;
 	}
 }
 
@@ -3026,7 +3068,26 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 		justify-content: center;
 		align-items: center;
 		width: 100%;
-		margin: 18px 0;
+		margin: 12px 0;
+	}
+
+	/* Desktop sidebar bell: kompaktowy rozmiar z zachowaniem wygodnego kliknięcia */
+	.notification-bell--sidebar .notification-bell__trigger {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+	}
+
+	.notification-bell--sidebar .notification-bell__icon {
+		width: 19px;
+		height: 19px;
+	}
+
+	.notification-bell--sidebar .notification-bell__badge {
+		top: 7px;
+		right: 7px;
+		width: 8px;
+		height: 8px;
 	}
 
 	.sidebar--desktop-bell .sidebar-header {
@@ -3781,7 +3842,7 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 @media (min-width: 1500px) {
 	.fc-dayGridMonth-view p, .fc-dayGridMonth-view span, .fc-event-title {
-		font-size: 16px !important;
+		font-size: 14px !important;
 	}
 }
 

@@ -38,12 +38,12 @@ const settingsSchema = new mongoose.Schema({
 	},
 	includePolishHolidays: {
 		type: Boolean,
-		default: false, // Domyślnie wyłączone
+		default: true, // Domyślnie włączone (dla nowych zespołów)
 		required: true
 	},
 	includeCustomHolidays: {
 		type: Boolean,
-		default: false, // Domyślnie wyłączone
+		default: true, // Domyślnie włączone (dla nowych zespołów)
 		required: true
 	},
 	customHolidays: {
@@ -105,7 +105,7 @@ const settingsSchema = new mongoose.Schema({
 	// Włącz/wyłącz funkcję QR i licznika czasu pracy
 	timerEnabled: {
 		type: Boolean,
-		default: true,
+		default: false, // Domyślnie wyłączone (dla nowych zespołów)
 		required: true
 	}
 }, {
@@ -134,10 +134,11 @@ settingsSchema.statics.getSettings = async function(teamId) {
 		settings = await this.create({ 
 			teamId,
 			workOnWeekends: true,
-			includePolishHolidays: false,
-			includeCustomHolidays: false,
+			includePolishHolidays: true,
+			includeCustomHolidays: true,
 			customHolidays: [],
-			leaveRequestTypes: getDefaultSystemLeaveTypes()
+			leaveRequestTypes: getDefaultSystemLeaveTypes(),
+			timerEnabled: false,
 		})
 	} else {
 		// Migracja: jeśli istnieje stary dokument z includeHolidays, zamień na includePolishHolidays

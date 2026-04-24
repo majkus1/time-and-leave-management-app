@@ -175,6 +175,8 @@ i18n
 							placeholder:
 								'e.g. yesterday 8 hours 8–16 with 1h overtime, note: finished the report…',
 							previewTitle: 'Time log summary — confirm before saving',
+							previewTitleMany: 'Time log summary ({{n}} days) — confirm before saving',
+							dayIndex: 'Day {{n}} · {{date}}',
 							fieldDate: 'Date:',
 							fieldHours: 'Hours worked:',
 							fieldOvertime: 'Including overtime:',
@@ -184,8 +186,10 @@ i18n
 							disclaimer:
 								'By saving, you add a real work time entry in Planopia under your account. The server applies the same validation as the monthly calendar (weekends, holidays, approved leave, one entry type per day).',
 							confirmSend: 'Save entry',
+							confirmSendMany: 'Save {{n}} entries',
 							cancel: 'Discard',
 							submitSuccess: 'Entry saved to your time log.',
+							submitSuccessMany: '{{n}} entries saved to your time log.',
 							submitError: 'Could not save the entry. Use the calendar or check the date and rules.',
 						},
 						quotaExceeded:
@@ -1807,6 +1811,8 @@ i18n
 							placeholder:
 								'np. wczoraj 8 godzin 8–16, nadgodziny 1h, uwagi: domknąłem raport…',
 							previewTitle: 'Podsumowanie wpisu — potwierdź przed zapisem',
+							previewTitleMany: 'Podsumowanie wpisów ({{n}} dni) — potwierdź przed zapisem',
+							dayIndex: 'Dzień {{n}} · {{date}}',
 							fieldDate: 'Data:',
 							fieldHours: 'Godziny pracy:',
 							fieldOvertime: 'W tym nadgodziny:',
@@ -1816,8 +1822,10 @@ i18n
 							disclaimer:
 								'Zapisując, dodajesz prawdziwy wpis ewidencji czasu w Planopii na swoje konto. Serwer stosuje tę samą walidację co kalendarz (weekendy, święta, zaakceptowany urlop, jeden „typ” wpisu na dzień).',
 							confirmSend: 'Zapisz wpis',
+							confirmSendMany: 'Zapisz {{n}} wpisów',
 							cancel: 'Odrzuć',
 							submitSuccess: 'Wpis został zapisany w ewidencji.',
+							submitSuccessMany: 'Zapisano {{n}} wpisów w ewidencji.',
 							submitError: 'Nie udało się zapisać wpisu. Użyj kalendarza lub sprawdź datę i zasady.',
 						},
 						quotaExceeded:

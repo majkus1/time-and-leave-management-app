@@ -202,7 +202,7 @@ function Sidebar() {
 		<div className="container-fluid p-0">
 		{/* Mobile Navigation Bar */}
 		{!shouldHideMobileNav && (
-			<nav className={`navbar navbar-expand-lg d-md-none mobile-navbar ${isNavbarVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
+			<nav className={`navbar d-md-none mobile-navbar ${isNavbarVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
 					<Link to="/" className="navbar-brand">
 						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="mobile-logo" />
 					</Link>

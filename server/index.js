@@ -32,6 +32,7 @@ const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
 const helmet = require('helmet')
 const { firmDb, centralTicketConnection } = require('./db/db')
+const { authenticateToken } = require('./middleware/authMiddleware')
 
 const http = require('http')
 const { Server } = require('socket.io')
@@ -418,7 +419,7 @@ app.use('/api/time-entry', timeEntryRoutes)
 app.use('/api/announcements', announcementRoutes)
 app.use('/api/ai-assistant', aiAssistantRoutes)
 app.use('/api/billing', require('./routes/billingRoutes'))
-app.use('/uploads', express.static('uploads'))
+app.use('/uploads', authenticateToken, express.static('uploads'))
 
 // Socket.io setup
 const jwt = require('jsonwebtoken')

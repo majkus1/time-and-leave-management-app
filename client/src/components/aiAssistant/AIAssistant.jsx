@@ -276,17 +276,30 @@ function AIAssistant() {
 
 	const handleConfirmWorkdayDraft = useCallback(async () => {
 		if (!pendingWorkdayDraft) return
+		const entries =
+			Array.isArray(pendingWorkdayDraft.entries) && pendingWorkdayDraft.entries.length > 0
+				? pendingWorkdayDraft.entries
+				: pendingWorkdayDraft.date
+					? [pendingWorkdayDraft]
+					: []
+		if (entries.length === 0) return
 		setError(null)
 		try {
-			await createWorkdayMutation.mutateAsync({
-				date: `${pendingWorkdayDraft.date}T12:00:00.000Z`,
-				hoursWorked: pendingWorkdayDraft.hoursWorked,
-				additionalWorked: pendingWorkdayDraft.additionalWorked,
-				realTimeDayWorked: pendingWorkdayDraft.realTimeDayWorked,
-				absenceType: pendingWorkdayDraft.absenceType,
-				notes: pendingWorkdayDraft.notes,
-			})
-			await showAlert(t('aiAssistant.workday.submitSuccess'))
+			for (const row of entries) {
+				await createWorkdayMutation.mutateAsync({
+					date: `${row.date}T12:00:00.000Z`,
+					hoursWorked: row.hoursWorked,
+					additionalWorked: row.additionalWorked,
+					realTimeDayWorked: row.realTimeDayWorked,
+					absenceType: row.absenceType,
+					notes: row.notes,
+				})
+			}
+			await showAlert(
+				entries.length > 1
+					? t('aiAssistant.workday.submitSuccessMany', { n: entries.length })
+					: t('aiAssistant.workday.submitSuccess')
+			)
 			setPendingWorkdayDraft(null)
 		} catch (e) {
 			await showAlert(e.response?.data?.message || t('aiAssistant.workday.submitError'))

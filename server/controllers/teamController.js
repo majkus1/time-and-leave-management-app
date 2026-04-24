@@ -13,6 +13,13 @@ const {
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
 } = require('../constants/specialTeams')
 const entitlementsService = require('../services/entitlementsService')
+const SUPER_ADMIN_USERNAME = 'michalipka1@gmail.com'
+
+function canAccessTeamScopedResource(req, teamId) {
+	if (!req?.user || !teamId) return false
+	if (req.user.username === SUPER_ADMIN_USERNAME) return true
+	return String(req.user.teamId) === String(teamId)
+}
 
 // Helper function to update maxUsers for special teams
 const updateSpecialTeamLimit = async (team) => {
@@ -314,6 +321,12 @@ exports.registerTeam = async (req, res) => {
 exports.getTeamInfo = async (req, res) => {
 	try {
 		const { teamId } = req.params;
+		if (!canAccessTeamScopedResource(req, teamId)) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak dostępu do danych innego zespołu'
+			})
+		}
 
 		const team = await Team.findById(teamId).select('-adminPassword');
 		if (!team) {
@@ -368,6 +381,12 @@ exports.getTeamInfo = async (req, res) => {
 exports.getTeamUsers = async (req, res) => {
 	try {
 		const { teamId } = req.params;
+		if (!canAccessTeamScopedResource(req, teamId)) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak dostępu do danych innego zespołu'
+			})
+		}
 
 		const users = await User.find({ teamId }).select('-password');
 
@@ -397,6 +416,12 @@ exports.getTeamUsers = async (req, res) => {
 exports.checkUserLimit = async (req, res) => {
 	try {
 		const { teamId } = req.params;
+		if (!canAccessTeamScopedResource(req, teamId)) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak dostępu do danych innego zespołu'
+			})
+		}
 
 		const team = await Team.findById(teamId);
 		if (!team) {
