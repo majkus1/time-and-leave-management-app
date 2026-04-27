@@ -813,7 +813,7 @@ export default function PackagesPage() {
 							>
 								<div>
 									<strong>+{a.messages}</strong>
-									<span style={{ color: '#64748b', marginLeft: '0.5rem' }}>
+									<span className="packages-addon-row__price">
 										{formatCatalogPrice(a.pricePlnNet, i18n.resolvedLanguage)}
 									</span>
 								</div>

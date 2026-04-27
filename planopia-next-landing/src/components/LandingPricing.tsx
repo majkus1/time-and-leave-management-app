@@ -394,10 +394,10 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 										</p>
 									)}
 									<div className="flex flex-wrap items-baseline gap-x-1 gap-y-0">
-										<span className="text-3xl md:text-[2rem] font-light tabular-nums text-slate-800">
+										<span className="pricing-tier-main-price text-4xl md:text-[2.35rem] font-extrabold tabular-nums text-slate-900 leading-none tracking-tight">
 											{display.main}
 										</span>
-										<span className="text-gray-600 text-sm font-normal">{display.period}</span>
+										<span className="pricing-tier-period text-gray-600 text-sm font-normal">{display.period}</span>
 									</div>
 									{display.subline && (
 										<p className="mt-2 text-xs text-gray-500 leading-snug">{display.subline}</p>
@@ -446,7 +446,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							>
 								<div>
 									<p className="font-semibold text-gray-900">{a.label}</p>
-									<p className="text-indigo-700 font-bold">
+									<p className="pricing-addon-price text-indigo-700 font-bold">
 										{locale === 'pl'
 											? `${a.pricePln} zł`
 											: `$${formatMoney('en', plnToUsd(a.pricePln), 2)}`}

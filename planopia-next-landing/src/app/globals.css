@@ -430,6 +430,35 @@ a.landing-video-guide-teaser-cta:focus-visible {
 	color: #059669 !important;
 	font-size: 1rem !important;
 }
+.landing-pricing .pricing-tier-main-price {
+	font-size: 2.35rem !important;
+	font-weight: 800 !important;
+	line-height: 1 !important;
+	letter-spacing: -0.02em !important;
+	color: #0f172a !important;
+}
+@media (min-width: 768px) {
+	.landing-pricing .pricing-tier-main-price {
+		font-size: 2.35rem !important;
+	}
+}
+.landing-pricing .pricing-tier-period {
+	font-size: 0.875rem !important;
+	font-weight: 400 !important;
+	color: #4b5563 !important;
+}
+.landing-pricing p.pricing-addon-price {
+	font-size: 1.25rem !important;
+	font-weight: 700 !important;
+	line-height: 1 !important;
+	letter-spacing: -0.01em !important;
+	color: #4338ca !important;
+}
+@media (min-width: 768px) {
+	.landing-pricing p.pricing-addon-price {
+		font-size: 1.5rem !important;
+	}
+}
 
 /* Enterprise: ostatnie dwa punkty listy (priorytet, funkcje na życzenie) */
 .landing-pricing .pricing-tier-feature--enterprise-emphasis {

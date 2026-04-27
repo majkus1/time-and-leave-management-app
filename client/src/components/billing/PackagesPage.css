@@ -384,9 +384,11 @@
 }
 
 .packages-tier__price {
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: #0f172a;
+	font-size: 1.9rem;
+	font-weight: 900;
+	color: #020617;
+	letter-spacing: -0.02em;
+	line-height: 1.05;
 	margin-bottom: 0.25rem;
 }
 
@@ -531,6 +533,14 @@
 	font-weight: 600;
 	font-size: 0.85rem;
 	cursor: pointer;
+}
+
+.packages-addon-row__price {
+	color: #1e293b;
+	margin-left: 0.55rem;
+	font-size: 1.15rem;
+	font-weight: 800;
+	letter-spacing: -0.01em;
 }
 
 .packages-modal-overlay {
