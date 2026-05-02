@@ -47,8 +47,7 @@ const AI_ADDON_PACKS = {
 const PAID_PLAN_KEYS = Object.keys(PAID_PLANS)
 
 const MONTHLY_NET_PRICES_PLN = {
-	/** Tymczasowo 1 PLN — test cyklu Stripe na prod; przywróć 119 przed normalnym ruchem. */
-	starter: 1,
+	starter: 119,
 	pro: 239,
 	business: 479,
 	enterprise: 949,
