@@ -1,0 +1,575 @@
+const mongoose = require('mongoose')
+const Stripe = require('stripe')
+const { firmDb } = require('../../db/db')
+const BillingLedgerEntry = require('../../models/BillingLedgerEntry')(firmDb)
+const Team = require('../../models/Team')(firmDb)
+const { validateBillingPurchaseIntent } = require('../billingPurchaseIntentValidator')
+const billingActivationService = require('../billingActivationService')
+const { syncSeatLimitAfterStripePaidInvoice } = require('../billingPlanSeatLimitService')
+const { getStripeConfig } = require('./stripeConfig')
+const { getStripePriceDefinition } = require('./stripePriceMapService')
+const { isPaidPlanKey } = require('../../constants/planCatalog')
+
+let stripeClient = null
+let stripeClientKey = ''
+
+function getStripeClient() {
+	const cfg = getStripeConfig()
+	if (!cfg.credsOk) {
+		const err = new Error('Stripe is not configured (missing STRIPE_SECRET_KEY).')
+		err.code = 'STRIPE_NOT_CONFIGURED'
+		throw err
+	}
+	if (!stripeClient || stripeClientKey !== cfg.secretKey) {
+		stripeClient = new Stripe(cfg.secretKey)
+		stripeClientKey = cfg.secretKey
+	}
+	return stripeClient
+}
+
+function assertStripeWebhookReady() {
+	const cfg = getStripeConfig()
+	if (!cfg.webhookOk) {
+		const err = new Error('Stripe webhook is not configured (missing STRIPE_WEBHOOK_SECRET).')
+		err.code = 'STRIPE_NOT_CONFIGURED'
+		throw err
+	}
+}
+
+function safeObjectId(v) {
+	return mongoose.Types.ObjectId.isValid(v) ? String(v) : null
+}
+
+function periodEndIsoFromUnixSeconds(sec) {
+	const n = Number(sec)
+	if (!Number.isFinite(n) || n <= 0) return null
+	return new Date(n * 1000).toISOString()
+}
+
+function eventSeenKey(eventId) {
+	return `stripe:event:${eventId}`
+}
+
+function invoiceSeenKey(invoiceId) {
+	return `stripe:invoice:${invoiceId}`
+}
+
+function resolvePlanIntentFromSubscriptionMetadata(metadata = {}) {
+	const planKey = String(metadata.planKey || '').trim()
+	const billingCycle = String(metadata.billingCycle || '').trim()
+	if (!isPaidPlanKey(planKey)) return null
+	if (billingCycle !== 'monthly' && billingCycle !== 'annual') return null
+	return { planKey, billingCycle }
+}
+
+async function markStripeEvent(teamId, eventId, action, payload = {}) {
+	const idempotencyKey = eventSeenKey(eventId)
+	const existing = await BillingLedgerEntry.findOne({ idempotencyKey }).select('_id')
+	if (existing) return false
+	await BillingLedgerEntry.create({
+		idempotencyKey,
+		teamId,
+		action,
+		payload,
+	})
+	return true
+}
+
+async function createStripeCheckoutSession(params) {
+	const cfg = getStripeConfig()
+	if (!cfg.ready) {
+		const err = new Error(
+			'Stripe is not ready. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_APP_PUBLIC_URL.'
+		)
+		err.code = 'STRIPE_NOT_CONFIGURED'
+		throw err
+	}
+	const stripe = getStripeClient()
+	const { teamId, userId, priceId } = params
+	const stripeDef = getStripePriceDefinition(priceId)
+	const { team, requester } = await validateBillingPurchaseIntent({
+		teamId,
+		requestingUserId: userId,
+		kind: stripeDef.kind,
+		planKey: stripeDef.planKey,
+		addonId: stripeDef.addonId,
+		billingCycle: stripeDef.billingCycle,
+	})
+
+	const sessionParams = {
+		mode: stripeDef.kind === 'plan' ? 'subscription' : 'payment',
+		success_url: `${cfg.appPublicUrl}/packages?stripe=success`,
+		cancel_url: `${cfg.appPublicUrl}/packages?stripe=cancel`,
+		client_reference_id: String(team._id),
+		customer_email: (team.adminEmail || requester.username || '').trim() || undefined,
+		line_items: [{ price: stripeDef.priceId, quantity: 1 }],
+		metadata: {
+			teamId: String(team._id),
+			userId: String(requester._id),
+			kind: stripeDef.kind,
+			priceId: stripeDef.priceId,
+			planKey: stripeDef.planKey || '',
+			billingCycle: stripeDef.billingCycle || '',
+			addonId: stripeDef.addonId || '',
+		},
+	}
+
+	if (stripeDef.kind === 'plan') {
+		team.stripePendingPlanKey = stripeDef.planKey
+		team.stripePendingBillingCycle = stripeDef.billingCycle
+		await team.save()
+		sessionParams.subscription_data = {
+			metadata: {
+				teamId: String(team._id),
+				planKey: stripeDef.planKey,
+				billingCycle: stripeDef.billingCycle,
+				priceId: stripeDef.priceId,
+			},
+		}
+	}
+
+	const session = await stripe.checkout.sessions.create(sessionParams)
+	return {
+		provider: 'stripe',
+		checkoutSessionId: session.id,
+		redirectUrl: session.url,
+	}
+}
+
+async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
+	const invoiceId = String(invoice.id || '')
+	let subscription = null
+	if (invoice.subscription) {
+		subscription = await stripe.subscriptions.retrieve(String(invoice.subscription))
+	}
+	const metadata = subscription?.metadata || {}
+	let teamId = safeObjectId(metadata.teamId)
+	if (!teamId && invoice.customer) {
+		const teamByCustomer = await Team.findOne({ stripeCustomerId: String(invoice.customer) }).select('_id')
+		teamId = teamByCustomer ? String(teamByCustomer._id) : null
+	}
+	if (!teamId && subscription?.id) {
+		const teamBySub = await Team.findOne({ stripeSubscriptionId: String(subscription.id) }).select('_id')
+		teamId = teamBySub ? String(teamBySub._id) : null
+	}
+	if (!teamId) {
+		const invEmail = String(invoice.customer_email || '').trim().toLowerCase()
+		if (invEmail) {
+			const teamByEmail = await Team.findOne({ adminEmail: invEmail }).select('_id')
+			teamId = teamByEmail ? String(teamByEmail._id) : null
+		}
+	}
+	if (!teamId) {
+		console.warn(`[stripe] invoice.paid skipped: cannot resolve teamId for invoice=${invoiceId}`)
+		return null
+	}
+
+	let stripeDef = null
+
+	const fromMetaIntent = resolvePlanIntentFromSubscriptionMetadata(metadata)
+	if (fromMetaIntent) {
+		stripeDef = { kind: 'plan', ...fromMetaIntent }
+	}
+
+	let priceId = ''
+	const firstLine = Array.isArray(invoice.lines?.data) ? invoice.lines.data[0] : null
+	if (!priceId && firstLine?.price?.id) priceId = String(firstLine.price.id)
+	if (!priceId && firstLine?.pricing?.price_details?.price) {
+		priceId = String(firstLine.pricing.price_details.price)
+	}
+	if (!priceId && Array.isArray(subscription?.items?.data) && subscription.items.data[0]?.price?.id) {
+		priceId = String(subscription.items.data[0].price.id)
+	}
+	if (!priceId && metadata?.priceId) {
+		priceId = String(metadata.priceId)
+	}
+	if (!stripeDef && priceId) {
+		try {
+			stripeDef = getStripePriceDefinition(priceId)
+		} catch {
+			stripeDef = null
+		}
+	}
+	if (!stripeDef || stripeDef.kind !== 'plan') {
+		const team = await Team.findById(teamId).select('stripePendingPlanKey stripePendingBillingCycle')
+		const pending = resolvePlanIntentFromSubscriptionMetadata({
+			planKey: team?.stripePendingPlanKey,
+			billingCycle: team?.stripePendingBillingCycle,
+		})
+		if (pending) {
+			stripeDef = { kind: 'plan', ...pending }
+		} else {
+			console.warn(`[stripe] invoice.paid skipped: cannot resolve plan intent for invoice=${invoiceId}`)
+			return null
+		}
+	}
+
+	const periodEndIso =
+		periodEndIsoFromUnixSeconds(firstLine?.period?.end) ||
+		periodEndIsoFromUnixSeconds(subscription?.current_period_end)
+	if (!periodEndIso) {
+		const err = new Error(`Missing period end for Stripe invoice ${invoiceId}`)
+		err.code = 'STRIPE_PAYLOAD'
+		throw err
+	}
+
+	return {
+		teamId,
+		planKey: stripeDef.planKey,
+		billingCycle: stripeDef.billingCycle,
+		periodEndIso,
+		invoiceId,
+		subscriptionId: subscription ? String(subscription.id) : '',
+	}
+}
+
+async function handleCheckoutSessionCompleted(event) {
+	const data = event.data?.object || {}
+	if (data.mode === 'subscription') {
+		let teamId = safeObjectId(data.metadata?.teamId || data.client_reference_id)
+		if (!teamId) {
+			const email = String(data.customer_email || '').trim().toLowerCase()
+			if (email) {
+				const teamByEmail = await Team.findOne({ adminEmail: email }).select('_id')
+				teamId = teamByEmail ? String(teamByEmail._id) : null
+			}
+		}
+		if (!teamId && data.customer) {
+			const teamByCustomer = await Team.findOne({ stripeCustomerId: String(data.customer) }).select('_id')
+			teamId = teamByCustomer ? String(teamByCustomer._id) : null
+		}
+		if (!teamId) return { handled: true, eventType: event.type, skipped: true }
+		const marked = await markStripeEvent(teamId, event.id, 'stripe_checkout_completed', {
+			sessionId: data.id,
+			mode: data.mode,
+			subscriptionId: data.subscription || null,
+			customerId: data.customer || null,
+		})
+		if (!marked) return { handled: true, eventType: event.type, duplicate: true }
+		const team = await Team.findById(teamId)
+		if (team) {
+			team.stripeCustomerId = data.customer ? String(data.customer) : team.stripeCustomerId
+			team.stripeSubscriptionId = data.subscription ? String(data.subscription) : team.stripeSubscriptionId
+			team.stripeSubscriptionStatus = 'active'
+			await team.save()
+		}
+
+		// Fallback activation for first payment in case invoice payload lacks team metadata mapping.
+		try {
+			const priceId = data.metadata?.priceId
+			const stripeDef = getStripePriceDefinition(priceId)
+			if (stripeDef.kind === 'plan' && data.subscription) {
+				const stripe = getStripeClient()
+				const sub = await stripe.subscriptions.retrieve(String(data.subscription))
+				const periodEndIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+				if (periodEndIso) {
+					await billingActivationService.activatePaidPlan({
+						teamId,
+						planKey: stripeDef.planKey,
+						billingCycle: stripeDef.billingCycle,
+						periodEnd: periodEndIso,
+						idempotencyKey: eventSeenKey(event.id),
+						actorLabel: 'stripe',
+					})
+				}
+			}
+		} catch (e) {
+			console.warn('[stripe] checkout.session.completed fallback activation skipped:', e.message)
+		}
+		return { handled: true, eventType: event.type, duplicate: false }
+	}
+	if (data.mode !== 'payment' || data.payment_status !== 'paid') {
+		return { handled: true, eventType: event.type, skipped: true }
+	}
+	const teamId = safeObjectId(data.metadata?.teamId)
+	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
+
+	const priceId = data.metadata?.priceId
+	const stripeDef = getStripePriceDefinition(priceId)
+	if (stripeDef.kind !== 'addon') return { handled: true, eventType: event.type, skipped: true }
+
+	await billingActivationService.applyAiAddonPack({
+		teamId,
+		addonId: stripeDef.addonId,
+		idempotencyKey: eventSeenKey(event.id),
+		actorLabel: 'stripe',
+	})
+	return { handled: true, eventType: event.type, duplicate: false }
+}
+
+async function handleInvoicePaid(event, stripe) {
+	const invoice = event.data?.object || {}
+	const resolved = await resolveTeamAndPlanFromInvoice(stripe, invoice)
+	if (!resolved) return { handled: true, eventType: event.type, skipped: true }
+
+	/** Kolejna rata subskrypcji — nie blokuj przedłużenia przy nadwyżce miejsc (sync + mail poniżej). */
+	const isRenewalCycle = String(invoice.billing_reason || '') === 'subscription_cycle'
+
+	await billingActivationService.activatePaidPlan({
+		teamId: resolved.teamId,
+		planKey: resolved.planKey,
+		billingCycle: resolved.billingCycle,
+		periodEnd: resolved.periodEndIso,
+		idempotencyKey: invoiceSeenKey(resolved.invoiceId),
+		actorLabel: 'stripe',
+		enforceSeatLimit: !isRenewalCycle,
+	})
+	const team = await Team.findById(resolved.teamId)
+	if (team) {
+		team.stripeCustomerId = invoice.customer ? String(invoice.customer) : team.stripeCustomerId
+		team.stripeSubscriptionId = resolved.subscriptionId || team.stripeSubscriptionId
+		team.stripeSubscriptionStatus = 'active'
+		team.stripeCancelAtPeriodEnd = false
+		team.stripePendingPlanKey = null
+		team.stripePendingBillingCycle = null
+		await team.save()
+	}
+
+	try {
+		await syncSeatLimitAfterStripePaidInvoice(resolved.teamId, resolved.planKey)
+	} catch (e) {
+		console.error('[stripe] syncSeatLimitAfterStripePaidInvoice:', e.message || e)
+	}
+
+	return { handled: true, eventType: event.type, duplicate: false }
+}
+
+async function handleSubscriptionUpdated(event) {
+	const sub = event.data?.object || {}
+	const teamId = safeObjectId(sub.metadata?.teamId)
+	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
+
+	const marked = await markStripeEvent(teamId, event.id, 'stripe_subscription_updated', {
+		subscriptionId: sub.id,
+		status: sub.status,
+		cancelAtPeriodEnd: sub.cancel_at_period_end === true,
+		currentPeriodEnd: sub.current_period_end || null,
+	})
+	if (!marked) return { handled: true, eventType: event.type, duplicate: true }
+
+	const team = await Team.findById(teamId)
+	if (team) {
+		team.stripeSubscriptionId = sub.id ? String(sub.id) : team.stripeSubscriptionId
+		team.stripeCustomerId = sub.customer ? String(sub.customer) : team.stripeCustomerId
+		team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
+		team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
+		const endIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+		if (endIso) team.billingPeriodEnd = new Date(endIso)
+		if (sub.status && sub.status !== 'active' && sub.status !== 'trialing') {
+			team.billingStatus = 'inactive'
+		}
+		await team.save()
+	}
+	return { handled: true, eventType: event.type, duplicate: false }
+}
+
+async function handleSubscriptionDeleted(event) {
+	const sub = event.data?.object || {}
+	const teamId = safeObjectId(sub.metadata?.teamId)
+	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
+
+	const marked = await markStripeEvent(teamId, event.id, 'stripe_subscription_deleted', {
+		subscriptionId: sub.id,
+		status: sub.status,
+	})
+	if (!marked) return { handled: true, eventType: event.type, duplicate: true }
+
+	const team = await Team.findById(teamId)
+	if (team) {
+		team.billingStatus = 'inactive'
+		team.stripeSubscriptionStatus = sub.status || 'canceled'
+		team.stripeCancelAtPeriodEnd = false
+		team.stripeSubscriptionId = sub.id ? String(sub.id) : null
+		team.stripeCustomerId = sub.customer ? String(sub.customer) : team.stripeCustomerId
+		const endIso =
+			periodEndIsoFromUnixSeconds(sub.ended_at) ||
+			periodEndIsoFromUnixSeconds(sub.current_period_end)
+		if (endIso) team.billingPeriodEnd = new Date(endIso)
+		await team.save()
+	}
+	return { handled: true, eventType: event.type, duplicate: false }
+}
+
+function summarizeStripeCardFromPaymentMethod(pm) {
+	if (!pm || pm.type !== 'card' || !pm.card) return null
+	const c = pm.card
+	return {
+		brand: c.brand ? String(c.brand) : null,
+		last4: c.last4 ? String(c.last4) : null,
+		expMonth: typeof c.exp_month === 'number' ? c.exp_month : null,
+		expYear: typeof c.exp_year === 'number' ? c.exp_year : null,
+	}
+}
+
+/**
+ * Zwraca maskę karty z Stripe (brand, last4, exp) — bez pełnego numeru (Stripe go nie udostępnia).
+ */
+async function getStripeCardSummaryForTeam(teamId) {
+	const team = await Team.findById(teamId)
+	if (!team?.stripeCustomerId) {
+		return { card: null }
+	}
+	const stripe = getStripeClient()
+	let pm = null
+
+	try {
+		const customer = await stripe.customers.retrieve(team.stripeCustomerId, {
+			expand: ['invoice_settings.default_payment_method'],
+		})
+		const def = customer.invoice_settings?.default_payment_method
+		if (def && typeof def === 'object' && def.type === 'card') {
+			pm = def
+		}
+	} catch (e) {
+		console.error('getStripeCardSummaryForTeam customer:', e.message)
+	}
+
+	if (!pm && team.stripeSubscriptionId) {
+		try {
+			const sub = await stripe.subscriptions.retrieve(String(team.stripeSubscriptionId), {
+				expand: ['default_payment_method'],
+			})
+			const d = sub.default_payment_method
+			if (d && typeof d === 'object' && d.type === 'card') {
+				pm = d
+			}
+		} catch (e) {
+			console.error('getStripeCardSummaryForTeam subscription:', e.message)
+		}
+	}
+
+	if (!pm) {
+		try {
+			const list = await stripe.paymentMethods.list({
+				customer: team.stripeCustomerId,
+				type: 'card',
+				limit: 5,
+			})
+			const firstCard = list.data.find(x => x.type === 'card')
+			if (firstCard) pm = firstCard
+		} catch (e) {
+			console.error('getStripeCardSummaryForTeam list:', e.message)
+		}
+	}
+
+	const card = summarizeStripeCardFromPaymentMethod(pm)
+	return { card }
+}
+
+/**
+ * Stripe Customer Portal — aktualizacja karty, anulowanie itd. (konfiguracja w Dashboard → Billing → Customer portal).
+ */
+async function createStripeBillingPortalSession(teamId) {
+	const cfg = getStripeConfig()
+	if (!cfg.ready) {
+		const err = new Error(
+			'Stripe is not ready. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_APP_PUBLIC_URL.'
+		)
+		err.code = 'STRIPE_NOT_CONFIGURED'
+		throw err
+	}
+	const stripe = getStripeClient()
+	const team = await Team.findById(teamId)
+	if (!team) {
+		const err = new Error('Team not found')
+		err.code = 'NOT_FOUND'
+		throw err
+	}
+	if (!team.stripeCustomerId) {
+		const err = new Error('No saved billing profile for this team')
+		err.code = 'VALIDATION'
+		throw err
+	}
+	let session
+	try {
+		session = await stripe.billingPortal.sessions.create({
+			customer: team.stripeCustomerId,
+			return_url: `${cfg.appPublicUrl}/packages`,
+		})
+	} catch (e) {
+		const err = new Error(
+			e.message ||
+				'Could not open billing portal. Enable Customer portal in Stripe Dashboard (Billing → Customer portal).'
+		)
+		err.code = 'STRIPE_PORTAL'
+		throw err
+	}
+	return { url: session.url }
+}
+
+async function cancelStripeSubscriptionForTeam(teamId) {
+	const stripe = getStripeClient()
+	const team = await Team.findById(teamId)
+	if (!team) {
+		const err = new Error('Team not found')
+		err.code = 'NOT_FOUND'
+		throw err
+	}
+	if (!team.stripeSubscriptionId) {
+		const err = new Error('No active Stripe subscription to cancel')
+		err.code = 'VALIDATION'
+		throw err
+	}
+	const sub = await stripe.subscriptions.update(String(team.stripeSubscriptionId), {
+		cancel_at_period_end: true,
+	})
+	team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
+	team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
+	const endIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+	if (endIso) team.billingPeriodEnd = new Date(endIso)
+	await team.save()
+	return {
+		ok: true,
+		subscriptionId: sub.id,
+		cancelAtPeriodEnd: sub.cancel_at_period_end === true,
+		currentPeriodEnd: endIso,
+	}
+}
+
+async function handleStripeWebhookEvent(rawBody, signatureHeader) {
+	assertStripeWebhookReady()
+	const cfg = getStripeConfig()
+	const stripe = getStripeClient()
+	if (!signatureHeader) {
+		const err = new Error('Missing Stripe signature header')
+		err.code = 'STRIPE_SIGN'
+		throw err
+	}
+	const payload = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody || ''), 'utf8')
+	let event
+	try {
+		event = stripe.webhooks.constructEvent(payload, signatureHeader, cfg.webhookSecret)
+	} catch (e) {
+		const err = new Error(`Stripe signature verification failed: ${e.message}`)
+		err.code = 'STRIPE_SIGN'
+		throw err
+	}
+
+	try {
+		switch (event.type) {
+			case 'checkout.session.completed':
+				return handleCheckoutSessionCompleted(event)
+			case 'invoice.paid':
+				return handleInvoicePaid(event, stripe)
+			case 'customer.subscription.updated':
+				return handleSubscriptionUpdated(event)
+			case 'customer.subscription.deleted':
+				return handleSubscriptionDeleted(event)
+			default:
+				return { handled: true, eventType: event.type, ignored: true }
+		}
+	} catch (e) {
+		if (e.code === 'VALIDATION') {
+			e.code = 'STRIPE_PAYLOAD'
+		}
+		throw e
+	}
+}
+
+module.exports = {
+	createStripeCheckoutSession,
+	handleStripeWebhookEvent,
+	cancelStripeSubscriptionForTeam,
+	getStripeCardSummaryForTeam,
+	createStripeBillingPortalSession,
+}

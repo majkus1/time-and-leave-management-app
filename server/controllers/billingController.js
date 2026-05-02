@@ -8,6 +8,14 @@ const billingRequestService = require('../services/billingRequestService')
 const billingActivationService = require('../services/billingActivationService')
 const { getP24Config } = require('../services/przelewy24/p24Config')
 const { createCheckoutSessionAndRegister } = require('../services/przelewy24/p24CheckoutService')
+const {
+	createStripeCheckoutSession,
+	cancelStripeSubscriptionForTeam,
+	getStripeCardSummaryForTeam,
+	createStripeBillingPortalSession,
+} = require('../services/stripe/billingStripeService')
+const { getStripeConfig } = require('../services/stripe/stripeConfig')
+const { listStripePriceMap, findStripePriceIdByIntent } = require('../services/stripe/stripePriceMapService')
 const { countTeamSeats } = require('../services/teamSeatCountService')
 const {
 	sendLegacyTransitionAnnouncement,
@@ -125,6 +133,28 @@ exports.getP24Status = async (req, res) => {
 	}
 }
 
+exports.getStripeStatus = async (req, res) => {
+	try {
+		const cfg = getStripeConfig()
+		res.json({
+			success: true,
+			stripe: {
+				configured: cfg.credsOk,
+				webhookConfigured: cfg.webhookOk,
+				ready: cfg.ready,
+				sandbox: cfg.sandbox,
+				priceMap: listStripePriceMap(),
+			},
+		})
+	} catch (e) {
+		if (e.code === 'STRIPE_CONFIG') {
+			return res.status(400).json({ success: false, message: e.message, code: e.code })
+		}
+		console.error('billingController.getStripeStatus:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
 exports.postP24Checkout = async (req, res) => {
 	try {
 		const { kind, planKey, addonId, billingCycle, note } = req.body || {}
@@ -157,6 +187,90 @@ exports.postP24Checkout = async (req, res) => {
 			})
 		}
 		console.error('billingController.postP24Checkout:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+exports.postStripeCheckout = async (req, res) => {
+	try {
+		const { priceId, kind, planKey, addonId, billingCycle } = req.body || {}
+		const resolvedPriceId =
+			priceId ||
+			findStripePriceIdByIntent({
+				kind,
+				planKey,
+				addonId,
+				billingCycle,
+			})
+		const result = await createStripeCheckoutSession({
+			teamId: req.user.teamId,
+			userId: req.user.userId,
+			priceId: resolvedPriceId,
+		})
+		res.json({ success: true, ...result })
+	} catch (e) {
+		if (
+			e.code === 'VALIDATION' ||
+			e.code === 'NOT_FOUND' ||
+			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
+			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
+			e.code === 'INVOICE_INCOMPLETE' ||
+			e.code === 'STRIPE_CONFIG'
+		) {
+			return res.status(400).json(billingClientErrorPayload(e))
+		}
+		if (e.code === 'STRIPE_NOT_CONFIGURED') {
+			return res.status(503).json({ success: false, message: e.message, code: e.code })
+		}
+		console.error('billingController.postStripeCheckout:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+exports.postStripeCancelSubscription = async (req, res) => {
+	try {
+		const result = await cancelStripeSubscriptionForTeam(req.user.teamId)
+		res.json({ success: true, ...result })
+	} catch (e) {
+		if (e.code === 'VALIDATION' || e.code === 'NOT_FOUND') {
+			return res.status(400).json(billingClientErrorPayload(e))
+		}
+		if (e.code === 'STRIPE_NOT_CONFIGURED') {
+			return res.status(503).json({ success: false, message: e.message, code: e.code })
+		}
+		console.error('billingController.postStripeCancelSubscription:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+exports.getStripeCardSummary = async (req, res) => {
+	try {
+		const summary = await getStripeCardSummaryForTeam(req.user.teamId)
+		res.json({ success: true, ...summary })
+	} catch (e) {
+		if (e.code === 'STRIPE_NOT_CONFIGURED') {
+			return res.status(503).json({ success: false, message: e.message, code: e.code })
+		}
+		console.error('billingController.getStripeCardSummary:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+exports.postStripeBillingPortal = async (req, res) => {
+	try {
+		const result = await createStripeBillingPortalSession(req.user.teamId)
+		res.json({ success: true, ...result })
+	} catch (e) {
+		if (e.code === 'VALIDATION' || e.code === 'NOT_FOUND') {
+			return res.status(400).json(billingClientErrorPayload(e))
+		}
+		if (e.code === 'STRIPE_NOT_CONFIGURED') {
+			return res.status(503).json({ success: false, message: e.message, code: e.code })
+		}
+		if (e.code === 'STRIPE_PORTAL') {
+			return res.status(503).json({ success: false, message: e.message, code: e.code })
+		}
+		console.error('billingController.postStripeBillingPortal:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }

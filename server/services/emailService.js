@@ -758,6 +758,29 @@ async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail
 	}
 }
 
+const BILLING_PLAN_LABEL_PL = {
+	starter: 'Starter',
+	pro: 'Pro',
+	business: 'Business',
+	enterprise: 'Enterprise',
+}
+
+/** Po odnowieniu subskrypcji — zespół ma więcej kont niż limit pakietu (mail throttle po stronie wywołującego). */
+async function sendBillingSeatOverLimitEmail(toEmail, teamName, { used, maxUsers, planKey }) {
+	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
+	const planLabel = escapeHtml(BILLING_PLAN_LABEL_PL[planKey] || planKey || '—')
+	const subject = 'Planopia — liczba kont przekracza limit pakietu'
+	const title = 'Liczba kont w zespole przekracza limit pakietu'
+	const content = `
+		<p style="margin:0 0 14px 0;">Dzień dobry,</p>
+		<p style="margin:0 0 14px 0;">Po zaksięgowaniu kolejnej opłaty za subskrypcję zauważyliśmy, że zespół <strong>${safeTeam}</strong> ma obecnie <strong>${Number(used)}</strong> aktywnych kont użytkowników, a wybrany pakiet <strong>${planLabel}</strong> obejmuje do <strong>${Number(maxUsers)}</strong> kont.</p>
+		<p style="margin:0 0 14px 0;">Dostęp do aplikacji został przedłużony zgodnie z opłatą. Prosimy o dopasowanie liczby kont do limitu pakietu <strong>(dezaktywacja lub usunięcie nadmiarowych kont w zarządzaniu zespołem)</strong> albo o kontakt w sprawie wyższego pakietu — odpowiedź na tego maila lub Help Center w aplikacji.</p>
+		<p style="margin:0;">Pozdrawiamy,<br>Zespół Planopia</p>
+	`
+	const html = getEmailTemplate(title, content, null, null, null)
+	await sendEmail(toEmail, null, subject, html)
+}
+
 /** Podziękowanie po zakupie pakietu — odbiorca może odpowiedzieć mailem z danymi do faktury. */
 async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
@@ -784,6 +807,7 @@ module.exports = {
 	notifyTicketReporter,
 	notifyHelpCenterStaff,
 	sendBillingPurchaseThankYouEmail,
+	sendBillingSeatOverLimitEmail,
 	escapeHtml,
 	getEmailTemplate,
 }

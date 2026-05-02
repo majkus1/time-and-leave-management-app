@@ -37,6 +37,7 @@ async function activatePaidPlan({
 	periodEnd,
 	idempotencyKey,
 	actorLabel = 'billing',
+	enforceSeatLimit = true,
 }) {
 	if (!idempotencyKey || typeof idempotencyKey !== 'string' || idempotencyKey.length > 200) {
 		const err = new Error('Invalid idempotencyKey')
@@ -78,7 +79,9 @@ async function activatePaidPlan({
 		throw err
 	}
 
-	await assertPaidPlanSeatLimit(teamId, planKey)
+	if (enforceSeatLimit) {
+		await assertPaidPlanSeatLimit(teamId, planKey)
+	}
 
 	team.billingPlanKey = planKey
 	team.billingStatus = 'active'

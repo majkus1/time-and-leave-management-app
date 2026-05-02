@@ -285,7 +285,15 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
-app.use(express.json())
+app.use(
+	express.json({
+		verify: (req, res, buf) => {
+			if (req.originalUrl && req.originalUrl.startsWith('/api/billing/webhooks/stripe')) {
+				req.rawBody = Buffer.from(buf)
+			}
+		},
+	})
+)
 app.use(cookieParser())
 app.use(xss())
 // mongoSanitize usuwa kropki z kluczy (np. 'leaveform.option1' -> 'leaveform_option1')
@@ -421,6 +429,7 @@ app.use('/api/time-entry', timeEntryRoutes)
 app.use('/api/announcements', announcementRoutes)
 app.use('/api/ai-assistant', aiAssistantRoutes)
 app.use('/api/billing', require('./routes/billingRoutes'))
+app.use('/api/billing/stripe', require('./routes/billingStripeRoutes'))
 app.use('/uploads', authenticateToken, express.static('uploads'))
 
 // Socket.io setup

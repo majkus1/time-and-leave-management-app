@@ -5,32 +5,6 @@ const { isPaidPlanKey, isAddonId } = require('../constants/planCatalog')
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 
-function assertTeamInvoiceComplete(team) {
-	const type = team.billingInvoiceBuyerType === 'individual' ? 'individual' : 'company'
-	const name = (team.billingInvoiceCompanyName || '').trim()
-	const addr = (team.billingInvoiceAddress || '').trim()
-	const nipDigits = String(team.billingInvoiceNip || '').replace(/\D/g, '')
-
-	// Min. 6 znaków — 8 odrzucało krótkie sensowne wpisy (np. „Kraków”, kod + miejscowość)
-	const addrOk = addr.length >= 6
-
-	if (type === 'individual') {
-		if (name.length < 3 || !addrOk) {
-			const err = new Error('Invoice details incomplete')
-			err.code = 'INVOICE_INCOMPLETE'
-			err.meta = { i18nKey: 'invoiceRequiredBeforePay' }
-			throw err
-		}
-		return
-	}
-	if (name.length < 2 || !addrOk || nipDigits.length !== 10) {
-		const err = new Error('Invoice details incomplete')
-		err.code = 'INVOICE_INCOMPLETE'
-		err.meta = { i18nKey: 'invoiceRequiredBeforePay' }
-		throw err
-	}
-}
-
 /**
  * Shared rules for email purchase requests and Przelewy24 checkout.
  * @returns {Promise<{ team: import('mongoose').Document, requester: import('mongoose').Document }>}
@@ -46,8 +20,6 @@ async function validateBillingPurchaseIntent(params) {
 		err.code = 'NOT_FOUND'
 		throw err
 	}
-
-	assertTeamInvoiceComplete(team)
 
 	const requester = await User.findById(requestingUserId).select('username firstName lastName')
 	if (!requester) {

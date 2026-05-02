@@ -4,6 +4,7 @@ import { API_URL } from '../config.js'
 
 /** Wspólny klucz — invaliduj po zużyciu limitu AI (czat, grafik, eksport). */
 export const BILLING_ENTITLEMENTS_QUERY_KEY = ['billing-entitlements']
+export const BILLING_STRIPE_CARD_QUERY_KEY = ['billing-stripe-card-summary']
 
 export function useBillingCatalog() {
 	return useQuery({
@@ -68,6 +69,75 @@ export function useBillingP24Checkout() {
 		},
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
+export function useBillingStripeStatus() {
+	return useQuery({
+		queryKey: ['billing-stripe-status'],
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/billing/stripe/status`, { withCredentials: true })
+			return data.stripe
+		},
+		staleTime: 60 * 1000,
+	})
+}
+
+export function useBillingStripeCheckout() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async body => {
+			const { data } = await axios.post(`${API_URL}/api/billing/stripe/checkout`, body, {
+				withCredentials: true,
+			})
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
+export function useBillingStripeCancelSubscription() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await axios.post(
+				`${API_URL}/api/billing/stripe/subscription/cancel`,
+				{},
+				{ withCredentials: true }
+			)
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
+export function useBillingStripeCardSummary(options = {}) {
+	const { enabled = true } = options
+	return useQuery({
+		queryKey: BILLING_STRIPE_CARD_QUERY_KEY,
+		enabled,
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/billing/stripe/card-summary`, { withCredentials: true })
+			return data
+		},
+		staleTime: 60 * 1000,
+	})
+}
+
+export function useBillingStripeBillingPortal() {
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await axios.post(
+				`${API_URL}/api/billing/stripe/billing-portal`,
+				{},
+				{ withCredentials: true }
+			)
+			return data
 		},
 	})
 }

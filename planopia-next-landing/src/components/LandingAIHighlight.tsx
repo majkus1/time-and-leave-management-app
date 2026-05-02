@@ -69,8 +69,16 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 				<div className="rounded-3xl p-[1.5px] bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-500 shadow-[0_0_60px_-12px_rgba(34,211,238,0.45),0_25px_50px_-12px_rgba(0,0,0,0.5)]">
 					<div className="rounded-3xl bg-white px-6 py-10 md:px-12 md:py-12 relative overflow-hidden shadow-inner shadow-slate-200/60">
 						<div className="relative">
-							<p className="ai-highlight-eyebrow mb-3">{t.eyebrow}</p>
-							<h2 id="ai-heading">{t.title}</h2>
+							<span
+								className="pointer-events-none absolute right-0 top-0 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-cyan-100 bg-white shadow-md ring-2 ring-cyan-200/70 md:h-20 md:w-20"
+								aria-hidden
+							>
+								<img src="/img/planio-ai.png" alt="" className="h-full w-full object-cover" />
+							</span>
+							<p className="ai-highlight-eyebrow mb-3 pr-20 md:pr-24">{t.eyebrow}</p>
+							<h2 id="ai-heading" className="pr-20 md:pr-28">
+								{t.title}
+							</h2>
 							<div className="ai-highlight-lead mt-5 space-y-4">
 								{t.leadParagraphs.map((p, i) => (
 									<p key={i} className="m-0">

@@ -314,6 +314,18 @@ i18n
 						planSeatsExceededShort: 'Too many users for this plan',
 						planSeatsExceededHint:
 							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
+						stripeRecurringCardHeading: 'Card on file (monthly billing)',
+						stripeCardSummary: '{{brand}} ···· {{last4}}, expires {{expMonth}}/{{expYear}}',
+						stripeCardUnknown: 'Card details are not available yet.',
+						stripeCardLoading: 'Loading card…',
+						stripeCardBrandUnknown: 'Card',
+						stripeChangeCard: 'Update card',
+						stripeChangeCardBusy: 'Opening…',
+						stripePortalError: 'Could not open card settings. Try again later or contact support.',
+						paidSeatLimitBannerAdmin:
+							'Your team has {{count}} accounts; the {{plan}} plan includes up to {{max}}. Upgrade below or reduce users in Team management.',
+						paidSeatLimitBannerWorker:
+							'This team has {{count}} accounts; the {{plan}} plan includes up to {{max}}. Ask an administrator to upgrade or reduce accounts.',
 						invoiceSectionTitle: 'Invoice details for your team',
 						invoiceSectionHint:
 							'Required before paying online. Choose company (with tax ID) or a private individual, then save. We issue invoices to these details.',
@@ -1968,6 +1980,18 @@ i18n
 						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
 						planSeatsExceededHint:
 							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',
+						stripeRecurringCardHeading: 'Karta do płatności cyklicznej',
+						stripeCardSummary: '{{brand}} ···· {{last4}}, ważna do {{expMonth}}/{{expYear}}',
+						stripeCardUnknown: 'Nie udało się wczytać danych karty.',
+						stripeCardLoading: 'Wczytywanie karty…',
+						stripeCardBrandUnknown: 'Karta',
+						stripeChangeCard: 'Zmień kartę',
+						stripeChangeCardBusy: 'Otwieranie…',
+						stripePortalError: 'Nie udało się otworzyć ustawień karty. Spróbuj ponownie lub napisz do nas.',
+						paidSeatLimitBannerAdmin:
+							'W zespole jest {{count}} kont, a pakiet {{plan}} obejmuje do {{max}}. Wybierz wyższy pakiet poniżej albo zmniejsz liczbę kont w zarządzaniu zespołem.',
+						paidSeatLimitBannerWorker:
+							'W tym zespole jest {{count}} kont, a pakiet {{plan}} obejmuje do {{max}}. Poproś administratora o upgrade lub o zmniejszenie liczby kont.',
 						invoiceSectionTitle: 'Dane do faktury zespołu',
 						invoiceSectionHint:
 							'Wymagane przed płatnością online. Wybierz firmę (z NIP) lub osobę fizyczną, uzupełnij pola i zapisz — na te dane wystawiamy fakturę.',

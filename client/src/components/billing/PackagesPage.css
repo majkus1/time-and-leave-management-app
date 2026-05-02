@@ -178,6 +178,43 @@
 	color: #64748b;
 }
 
+.packages-stripe-card {
+	margin-top: 0.75rem;
+	padding-top: 0.65rem;
+	border-top: 1px solid rgba(99, 102, 241, 0.18);
+}
+
+.packages-stripe-card__heading {
+	margin: 0 0 0.35rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #475569;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.packages-stripe-card__update {
+	margin-top: 0.45rem;
+	padding: 0.35rem 0.65rem;
+	font-size: 0.82rem;
+	font-weight: 500;
+	color: #475569;
+	background: #fff;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.packages-stripe-card__update:hover:not(:disabled) {
+	border-color: #94a3b8;
+	color: #334155;
+}
+
+.packages-stripe-card__update:disabled {
+	opacity: 0.65;
+	cursor: wait;
+}
+
 .packages-usage__text {
 	margin: 0;
 	color: #475569;
@@ -658,6 +695,17 @@
 	background: #fef2f2;
 	border: 1px solid #fecaca;
 	color: #991b1b;
+	padding: 0.75rem 1rem;
+	border-radius: 10px;
+	margin-bottom: 1rem;
+	font-size: 0.92rem;
+	line-height: 1.5;
+}
+
+.packages-paid-plan-seat-banner {
+	background: #fffbeb;
+	border: 1px solid #fbbf24;
+	color: #92400e;
 	padding: 0.75rem 1rem;
 	border-radius: 10px;
 	margin-bottom: 1rem;

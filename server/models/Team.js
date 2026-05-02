@@ -79,6 +79,30 @@ const teamSchema = new mongoose.Schema({
 		type: Date,
 		default: null,
 	},
+	stripeCustomerId: {
+		type: String,
+		default: null,
+	},
+	stripeSubscriptionId: {
+		type: String,
+		default: null,
+	},
+	stripeSubscriptionStatus: {
+		type: String,
+		default: null,
+	},
+	stripeCancelAtPeriodEnd: {
+		type: Boolean,
+		default: false,
+	},
+	stripePendingPlanKey: {
+		type: String,
+		default: null,
+	},
+	stripePendingBillingCycle: {
+		type: String,
+		default: null,
+	},
 	trialAiMessagesUsed: {
 		type: Number,
 		default: 0,
@@ -134,6 +158,16 @@ const teamSchema = new mongoose.Schema({
 		default: '',
 		trim: true,
 		maxlength: 32,
+	},
+	/** Ostatnia synchronizacja po fakturze Stripe: zespół ma więcej kont niż limit pakietu */
+	billingSeatLimitExceededActive: {
+		type: Boolean,
+		default: false,
+	},
+	/** Ostatni mail „nad limit miejsc” (throttle kolejnych powiadomień) */
+	billingSeatLimitExceededEmailAt: {
+		type: Date,
+		default: null,
 	},
 }, {
 	collection: 'teams',

@@ -47,7 +47,7 @@ const copy = {
 			{
 				id: 'starter',
 				name: 'Starter',
-				monthlyNet: 99,
+				monthlyNet: 119,
 				highlight: false,
 				features: [
 					'Do 10 użytkowników',
@@ -59,7 +59,7 @@ const copy = {
 			{
 				id: 'pro',
 				name: 'Pro',
-				monthlyNet: 199,
+				monthlyNet: 239,
 				highlight: true,
 				badge: 'Polecany',
 				features: [
@@ -72,7 +72,7 @@ const copy = {
 			{
 				id: 'business',
 				name: 'Business',
-				monthlyNet: 399,
+				monthlyNet: 479,
 				highlight: false,
 				features: [
 					'Do 100 użytkowników',
@@ -84,7 +84,7 @@ const copy = {
 			{
 				id: 'enterprise',
 				name: 'Enterprise',
-				monthlyNet: 799,
+				monthlyNet: 949,
 				highlight: false,
 				features: [
 					'Do 300 użytkowników (lub nielimit — opcja)',
@@ -135,7 +135,7 @@ const copy = {
 			{
 				id: 'starter',
 				name: 'Starter',
-				monthlyNet: 99,
+				monthlyNet: 119,
 				highlight: false,
 				features: [
 					'Up to 10 users',
@@ -147,7 +147,7 @@ const copy = {
 			{
 				id: 'pro',
 				name: 'Pro',
-				monthlyNet: 199,
+				monthlyNet: 239,
 				highlight: true,
 				badge: 'Recommended',
 				features: [
@@ -160,7 +160,7 @@ const copy = {
 			{
 				id: 'business',
 				name: 'Business',
-				monthlyNet: 399,
+				monthlyNet: 479,
 				highlight: false,
 				features: [
 					'Up to 100 users',
@@ -172,7 +172,7 @@ const copy = {
 			{
 				id: 'enterprise',
 				name: 'Enterprise',
-				monthlyNet: 799,
+				monthlyNet: 949,
 				highlight: false,
 				features: [
 					'Up to 300 users (or unlimited - optional)',

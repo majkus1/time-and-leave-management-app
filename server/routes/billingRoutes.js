@@ -12,6 +12,7 @@ router.get('/super/paid-plan-teams', authenticateToken, billingController.getSup
 router.post('/super/thank-purchase-email', authenticateToken, billingController.postSuperThankPurchaseEmail)
 router.post('/super/legacy-announcement', authenticateToken, billingController.postSuperLegacyAnnouncement)
 router.get('/p24/status', authenticateToken, billingController.getP24Status)
+router.get('/stripe/status', authenticateToken, billingController.getStripeStatus)
 router.post(
 	'/purchase-request',
 	authenticateToken,

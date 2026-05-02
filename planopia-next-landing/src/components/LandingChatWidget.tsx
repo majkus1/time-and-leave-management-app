@@ -10,7 +10,7 @@ type ChatLine = { role: 'user' | 'assistant'; content: string }
 
 type MailStep = 'idle' | 'form' | 'confirm'
 
-const CHAT_ICON = '/img/aichatonline.png'
+const CHAT_ICON = '/img/planio-czat.png'
 
 const UI: Record<
 	Locale,
@@ -40,15 +40,14 @@ const UI: Record<
 	}
 > = {
 	pl: {
-		teaserBubble: 'Cześć! Pytania o aplikację? Chętnie pomogę.',
+		teaserBubble: 'Cześć, jestem Planio. Jak mogę pomóc?',
 		teaserDismissAria: 'Zamknij podpowiedź',
-		title: 'Asystent Planopia',
+		title: 'Planio - Asystent',
 		placeholder: 'Napisz pytanie…',
 		send: 'Wyślij',
 		thinking: 'Chwila…',
 		error: 'Nie udało się uzyskać odpowiedzi. Spróbuj ponownie za chwilę.',
-		welcome:
-			'Cześć! Jestem asystentem Planopia. Mogę opisać funkcje aplikacji, okres próbny, cennik i dobór pakietu — w czym pomóc?',
+		welcome: 'Cześć, jestem Planio. Jak mogę pomóc?',
 		close: 'Zamknij czat',
 		open: 'Otwórz czat z asystentem',
 		emailCta: 'Wyślij pytanie e-mailem do zespołu',
@@ -66,7 +65,7 @@ const UI: Record<
 	en: {
 		teaserBubble: 'Hi! App questions? Happy to help.',
 		teaserDismissAria: 'Close tip',
-		title: 'Planopia assistant',
+		title: 'Planio - Assistant',
 		placeholder: 'Type your question…',
 		send: 'Send',
 		thinking: 'One moment…',
@@ -122,28 +121,73 @@ function normalizeAssistantMarkdown(raw: string): string {
 	return s
 }
 
-/** Jedna linia tekstu: **wyróżnienie** → <strong>, reszta zwykły tekst (bez HTML z modelu). */
+function isSafeHttpUrl(value: string): boolean {
+	try {
+		const url = new URL(value)
+		return url.protocol === 'http:' || url.protocol === 'https:'
+	} catch {
+		return false
+	}
+}
+
+/** Jedna linia tekstu: linki markdown + **wyróżnienie** (bez HTML z modelu). */
 function formatAssistantLine(line: string, keyPrefix: string): ReactNode[] {
 	const normalized = normalizeAssistantMarkdown(line)
 	const out: ReactNode[] = []
-	const re = /\*\*([^*]+)\*\*/g
-	let last = 0
-	let m: RegExpExecArray | null
-	let k = 0
-	while ((m = re.exec(normalized)) !== null) {
-		if (m.index > last) {
-			out.push(<span key={`${keyPrefix}-t-${k++}`}>{normalized.slice(last, m.index)}</span>)
+	const linkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
+	let cursor = 0
+	let linkMatch: RegExpExecArray | null
+	let nodeIndex = 0
+
+	const pushWithBold = (chunk: string) => {
+		if (!chunk) return
+		const boldRe = /\*\*([^*]+)\*\*/g
+		let boldCursor = 0
+		let boldMatch: RegExpExecArray | null
+
+		while ((boldMatch = boldRe.exec(chunk)) !== null) {
+			if (boldMatch.index > boldCursor) {
+				out.push(<span key={`${keyPrefix}-t-${nodeIndex++}`}>{chunk.slice(boldCursor, boldMatch.index)}</span>)
+			}
+			out.push(
+				<strong key={`${keyPrefix}-b-${nodeIndex++}`} className="font-semibold text-gray-900">
+					{boldMatch[1]}
+				</strong>
+			)
+			boldCursor = boldRe.lastIndex
 		}
-		out.push(
-			<strong key={`${keyPrefix}-b-${k++}`} className="font-semibold text-gray-900">
-				{m[1]}
-			</strong>
-		)
-		last = re.lastIndex
+
+		if (boldCursor < chunk.length) {
+			out.push(<span key={`${keyPrefix}-t-${nodeIndex++}`}>{chunk.slice(boldCursor)}</span>)
+		}
 	}
-	if (last < normalized.length) {
-		out.push(<span key={`${keyPrefix}-t-${k++}`}>{normalized.slice(last)}</span>)
+
+	while ((linkMatch = linkRe.exec(normalized)) !== null) {
+		const before = normalized.slice(cursor, linkMatch.index)
+		pushWithBold(before)
+
+		const label = linkMatch[1]
+		const href = linkMatch[2]
+		if (isSafeHttpUrl(href)) {
+			out.push(
+				<a
+					key={`${keyPrefix}-a-${nodeIndex++}`}
+					href={href}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="landing-chat-assistant-link underline decoration-emerald-400 underline-offset-2 font-medium"
+				>
+					{label}
+				</a>
+			)
+		} else {
+			pushWithBold(linkMatch[0])
+		}
+
+		cursor = linkRe.lastIndex
 	}
+
+	pushWithBold(normalized.slice(cursor))
 	return out.length ? out : [normalized]
 }
 
@@ -172,10 +216,10 @@ function AssistantMessageContent({ text }: { text: string }) {
 function ChatIcon({ className }: { className?: string }) {
 	return (
 		<span
-			className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 ${className ?? ''}`}
+			className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-white/95 shadow-md shadow-emerald-900/20 ${className ?? ''}`}
 			aria-hidden
 		>
-			<img src={CHAT_ICON} alt="" className="h-[70%] w-[70%] object-contain" />
+			<img src={CHAT_ICON} alt="" className="h-[95%] w-[95%] object-contain" />
 		</span>
 	)
 }
@@ -493,18 +537,26 @@ export default function LandingChatWidget() {
 								key={`${line.role}-${i}`}
 								className={`flex ${line.role === 'user' ? 'justify-end' : 'justify-start'}`}
 							>
-								<div
-									className={`max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-										line.role === 'user'
-											? 'bg-emerald-600 text-white'
-											: 'border border-slate-200 bg-white text-gray-800'
-									}`}
-								>
-									{line.role === 'assistant' ? (
-										<AssistantMessageContent text={line.content} />
-									) : (
-										<span className="whitespace-pre-wrap break-words">{line.content}</span>
-									)}
+								<div className={`flex items-end gap-2.5 ${line.role === 'user' ? '' : 'pr-3'}`}>
+									{line.role === 'assistant' ? <ChatIcon className="h-10 w-10 mb-0.5 shrink-0" /> : null}
+									<div
+										className={`max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+											line.role === 'user'
+												? 'landing-chat-message--user bg-emerald-600 text-white'
+												: 'border border-slate-200 bg-white text-gray-800'
+										}`}
+									>
+										{line.role === 'assistant' ? (
+											<AssistantMessageContent text={line.content} />
+										) : (
+											<span
+												className="landing-chat-user-text whitespace-pre-wrap break-words text-white"
+												style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
+											>
+												{line.content}
+											</span>
+										)}
+									</div>
 								</div>
 							</div>
 						))}
@@ -630,13 +682,11 @@ export default function LandingChatWidget() {
 			<button
 				type="button"
 				onClick={() => (open ? setOpen(false) : openPanel())}
-				className="landing-chat-fab flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-900/25 ring-2 ring-white/90 transition hover:scale-[1.03] hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+				className="landing-chat-fab flex h-14 w-14 items-center justify-center rounded-full bg-transparent p-0 text-white shadow-none transition hover:scale-[1.03] hover:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
 				aria-label={open ? t.close : t.open}
 				aria-expanded={open}
 			>
-				<span className="relative flex h-8 w-8 items-center justify-center" aria-hidden>
-					<img src={CHAT_ICON} alt="" className="h-[85%] w-[85%] object-contain" />
-				</span>
+				<ChatIcon className="h-14 w-14" />
 			</button>
 		</div>
 	)

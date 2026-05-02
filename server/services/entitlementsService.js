@@ -9,7 +9,12 @@ const {
 	legacyGraceUntilForTeam,
 	legacyGraceOneOffAiTotalForTeam,
 } = require('../constants/specialTeams')
-const { TRIAL, PAID_PLANS, LEGACY_PRE_BILLING_GRACE_UNTIL } = require('../constants/planCatalog')
+const {
+	TRIAL,
+	PAID_PLANS,
+	LEGACY_PRE_BILLING_GRACE_UNTIL,
+	isPaidPlanKey,
+} = require('../constants/planCatalog')
 
 function effectiveLegacyGraceUntil(team) {
 	return legacyGraceUntilForTeam(team, LEGACY_PRE_BILLING_GRACE_UNTIL)
@@ -310,6 +315,12 @@ function buildClientEntitlements(team, options = {}) {
 		typeof activeSeatCount === 'number' &&
 		activeSeatCount > freemiumMaxSeats
 
+	const paidPlanSeatLimitExceeded =
+		typeof activeSeatCount === 'number' &&
+		isPaidSubscriptionActive(team, now) &&
+		isPaidPlanKey(team.billingPlanKey) &&
+		activeSeatCount > PAID_PLANS[team.billingPlanKey].maxUsers
+
 	return {
 		legacy: structuralLegacy,
 		legacyGrandfatheredActive,
@@ -323,11 +334,30 @@ function buildClientEntitlements(team, options = {}) {
 		billingCycle: team.billingCycle || null,
 		trialEndsAt: team.trialEndsAt || null,
 		billingPeriodEnd: team.billingPeriodEnd || null,
+		stripe: {
+			customerId: team.stripeCustomerId || null,
+			subscriptionId: team.stripeSubscriptionId || null,
+			subscriptionStatus: team.stripeSubscriptionStatus || null,
+			cancelAtPeriodEnd: team.stripeCancelAtPeriodEnd === true,
+			canCancelSubscription:
+				team.stripeSubscriptionId != null &&
+				team.stripeCancelAtPeriodEnd !== true &&
+				team.billingStatus === 'active' &&
+				team.billingCycle === 'monthly',
+			/** Karta / portal Stripe — tylko przy miesięcznej subskrypcji powiązanej ze Stripe */
+			canManagePaymentMethod:
+				team.stripeCustomerId != null &&
+				team.stripeSubscriptionId != null &&
+				team.billingStatus === 'active' &&
+				team.billingCycle === 'monthly',
+		},
 		maxUsers,
 		storedMaxUsers: team.maxUsers,
 		freemiumTier,
 		freemiumMaxSeats,
 		freemiumSeatBlocked,
+		/** Aktywny płatny plan, ale więcej kont niż limit pakietu (upgrade lub redukcja kont) */
+		paidPlanSeatLimitExceeded,
 		billingInvoice: {
 			buyerType: team.billingInvoiceBuyerType === 'individual' ? 'individual' : 'company',
 			companyName: team.billingInvoiceCompanyName || '',

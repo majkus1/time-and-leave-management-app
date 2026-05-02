@@ -12,8 +12,14 @@ import {
 	useBillingPurchaseRequest,
 	useBillingP24Status,
 	useBillingP24Checkout,
+	useBillingStripeStatus,
+	useBillingStripeCheckout,
+	useBillingStripeCancelSubscription,
+	useBillingStripeCardSummary,
+	useBillingStripeBillingPortal,
 	useBillingPatchTeamInvoice,
 	BILLING_ENTITLEMENTS_QUERY_KEY,
+	BILLING_STRIPE_CARD_QUERY_KEY,
 } from '../../hooks/useBilling'
 import LegalDocumentsSection from '../legal/LegalDocumentsSection'
 import { useAuth } from '../../context/AuthContext'
@@ -106,6 +112,12 @@ function formatCatalogPln(n) {
 	return `${n} PLN`
 }
 
+function formatStripeBrandLabel(brand, t) {
+	const b = String(brand || '').trim().toLowerCase()
+	if (!b) return t('billingPackages.stripeCardBrandUnknown')
+	return b.charAt(0).toUpperCase() + b.slice(1)
+}
+
 /** Cena katalogowa (np. pakiet AI): PLN lub USD w zależności od języka. */
 function formatCatalogPrice(n, resolvedLang) {
 	if (n == null) return '—'
@@ -117,6 +129,22 @@ function p24BusyKeyForBody(body) {
 	if (body?.kind === 'plan' && body.planKey) return `plan:${body.planKey}`
 	if (body?.kind === 'addon' && body.addonId) return `addon:${body.addonId}`
 	return null
+}
+
+function hasStripeMappingForBody(stripeStatus, body) {
+	const map = Array.isArray(stripeStatus?.priceMap) ? stripeStatus.priceMap : []
+	if (body?.kind === 'plan') {
+		return map.some(
+			r =>
+				r.kind === 'plan' &&
+				r.planKey === body.planKey &&
+				r.billingCycle === body.billingCycle
+		)
+	}
+	if (body?.kind === 'addon') {
+		return map.some(r => r.kind === 'addon' && r.addonId === body.addonId)
+	}
+	return false
 }
 
 function priceBlock(monthlyNet, billing, t, resolvedLang) {
@@ -156,7 +184,15 @@ export default function PackagesPage() {
 	const { data: ent, isLoading: entLoading } = useBillingEntitlements()
 	const purchase = useBillingPurchaseRequest()
 	const { data: p24Status, isPending: p24StatusLoading } = useBillingP24Status()
+	const { data: stripeStatus, isPending: stripeStatusLoading } = useBillingStripeStatus()
 	const p24Checkout = useBillingP24Checkout()
+	const stripeCheckout = useBillingStripeCheckout()
+	const stripeCancelSubscription = useBillingStripeCancelSubscription()
+	const stripeBillingPortal = useBillingStripeBillingPortal()
+	const stripeCardSummaryEnabled = Boolean(ent?.stripe?.canManagePaymentMethod)
+	const { data: stripeCardPayload, isPending: stripeCardLoading } = useBillingStripeCardSummary({
+		enabled: stripeCardSummaryEnabled,
+	})
 	const patchTeamInvoice = useBillingPatchTeamInvoice()
 	const queryClient = useQueryClient()
 	const navigate = useNavigate()
@@ -165,6 +201,7 @@ export default function PackagesPage() {
 	const location = useLocation()
 	const appliedQueryRef = useRef(false)
 	const p24ReturnHandledRef = useRef(false)
+	const stripeReturnHandledRef = useRef(false)
 	/** Pierwsze wczytanie billingInvoice z API zawsze stosujemy (nie blokować kliknięciem przełącznika Firma/Osoba). */
 	const invoiceHydratedOnceRef = useRef(false)
 	/** Po edycji nie nadpisujemy formularza refetchem — do czasu udanego zapisu. */
@@ -172,6 +209,8 @@ export default function PackagesPage() {
 
 	const [billing, setBilling] = useState('monthly')
 	const [modal, setModal] = useState(null)
+	const [paymentChoiceModal, setPaymentChoiceModal] = useState(null)
+	const [cancelStripeModalOpen, setCancelStripeModalOpen] = useState(false)
 	const [note, setNote] = useState('')
 	const [justSent, setJustSent] = useState(false)
 	const [p24BusyKey, setP24BusyKey] = useState(null)
@@ -184,6 +223,8 @@ export default function PackagesPage() {
 
 	const loading = catLoading || !catalog
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
+	const onlineStatusLoading = p24StatusLoading || stripeStatusLoading
+	const isPl = i18n.resolvedLanguage === 'pl'
 
 	useEffect(() => {
 		const bi = ent?.billingInvoice
@@ -222,85 +263,12 @@ export default function PackagesPage() {
 	])
 
 	const ensureInvoiceForPurchase = useCallback(async () => {
-		const type = invBuyerType === 'individual' ? 'individual' : 'company'
-		const scrollInv = () => {
-			requestAnimationFrame(() => {
-				document.getElementById('packages-invoice-section')?.scrollIntoView({
-					behavior: 'smooth',
-					block: 'center',
-				})
-			})
-		}
-
-		if (type === 'individual') {
-			const name = indName.trim()
-			const addr = indAddress.trim()
-			const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
-			if (name.length < 3 || !addrOk) {
-				await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
-				scrollInv()
-				return false
-			}
-			try {
-				await patchTeamInvoice.mutateAsync({
-					buyerType: 'individual',
-					companyName: indName,
-					address: indAddress,
-					nip: '',
-				})
-				invoiceEditedByUserRef.current = false
-			} catch (e) {
-				await showAlert(
-					billingAxiosErrorMessage(e, t) || e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
-				)
-				return false
-			}
-			return true
-		}
-
-		const nipDigits = compNip.replace(/\D/g, '')
-		if (nipDigits.length !== 10) {
-			await showAlert(t('billingPackages.invoiceNipInvalid10'))
-			scrollInv()
-			return false
-		}
-		const name = compName.trim()
-		const addr = compAddress.trim()
-		const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
-		if (name.length < 2 || !addrOk) {
-			await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
-			scrollInv()
-			return false
-		}
-		try {
-			await patchTeamInvoice.mutateAsync({
-				buyerType: 'company',
-				companyName: compName,
-				address: compAddress,
-				nip: compNip,
-			})
-			invoiceEditedByUserRef.current = false
-		} catch (e) {
-			await showAlert(
-				billingAxiosErrorMessage(e, t) || e?.response?.data?.message || e?.message || t('billingPackages.p24PayError')
-			)
-			return false
-		}
+		// Invoice data is optional for starting checkout.
 		return true
-	}, [
-		invBuyerType,
-		indName,
-		indAddress,
-		compName,
-		compAddress,
-		compNip,
-		patchTeamInvoice,
-		showAlert,
-		t,
-	])
+	}, [])
 
-	const startP24Checkout = useCallback(
-		async body => {
+	const startOnlineCheckout = useCallback(
+		async (body, options = {}) => {
 			if (!canSubmitPurchaseRequest) return false
 			if (body.kind === 'plan' && catalog && teamSeats != null) {
 				const tier = catalog.tiers.find(t => t.id === body.planKey)
@@ -315,7 +283,37 @@ export default function PackagesPage() {
 			const busyKey = p24BusyKeyForBody(body)
 			if (busyKey) setP24BusyKey(busyKey)
 			try {
-				const data = await p24Checkout.mutateAsync(body)
+				const stripeReady =
+					body?.kind === 'plan' &&
+					stripeStatus?.ready === true &&
+					hasStripeMappingForBody(stripeStatus, body)
+				const p24Ready = p24Status?.ready === true
+				const preferred = options?.forceProvider
+				const provider =
+					preferred === 'stripe' || preferred === 'p24'
+						? preferred
+						: stripeReady
+							? 'stripe'
+							: 'p24'
+
+				if (provider === 'stripe' && !stripeReady) {
+					await showAlert(
+						isPl
+							? 'Płatność kartą cykliczną nie jest teraz dostępna dla wybranego pakietu.'
+							: 'Recurring card checkout is not available for this plan right now.'
+					)
+					return false
+				}
+				if (provider === 'p24' && !p24Ready) {
+					await showAlert(
+						isPl
+							? 'Platnosc Przelewy24 nie jest teraz dostepna.'
+							: 'Przelewy24 checkout is not available right now.'
+					)
+					return false
+				}
+
+				const data = provider === 'stripe' ? await stripeCheckout.mutateAsync(body) : await p24Checkout.mutateAsync(body)
 				if (data.redirectUrl) {
 					window.location.assign(data.redirectUrl)
 					return true
@@ -333,7 +331,36 @@ export default function PackagesPage() {
 				setP24BusyKey(null)
 			}
 		},
-		[canSubmitPurchaseRequest, catalog, teamSeats, p24Checkout, t, showAlert, ensureInvoiceForPurchase]
+		[
+			canSubmitPurchaseRequest,
+			catalog,
+			teamSeats,
+			stripeStatus?.ready,
+			stripeCheckout,
+			p24Status?.ready,
+			p24Checkout,
+			isPl,
+			t,
+			showAlert,
+			ensureInvoiceForPurchase,
+		]
+	)
+
+	const requestPlanOnlineCheckout = useCallback(
+		body => {
+			const stripeReady = stripeStatus?.ready === true && hasStripeMappingForBody(stripeStatus, body)
+			const p24Ready = p24Status?.ready === true
+			if (body.billingCycle === 'annual') {
+				void startOnlineCheckout(body, { forceProvider: 'p24' })
+				return
+			}
+			if (body.billingCycle === 'monthly' && stripeReady && p24Ready) {
+				setPaymentChoiceModal(body)
+				return
+			}
+			void startOnlineCheckout(body)
+		},
+		[stripeStatus, p24Status, startOnlineCheckout]
 	)
 
 	useEffect(() => {
@@ -346,7 +373,16 @@ export default function PackagesPage() {
 	}, [searchParams, navigate, queryClient, showAlert, t])
 
 	useEffect(() => {
-		if (!catalog || appliedQueryRef.current || isCheckingAuth || p24StatusLoading) return
+		if (stripeReturnHandledRef.current) return
+		if (searchParams.get('stripe') !== 'success') return
+		stripeReturnHandledRef.current = true
+		queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		queryClient.invalidateQueries({ queryKey: BILLING_STRIPE_CARD_QUERY_KEY })
+		navigate('/packages', { replace: true })
+	}, [searchParams, navigate, queryClient])
+
+	useEffect(() => {
+		if (!catalog || appliedQueryRef.current || isCheckingAuth || onlineStatusLoading) return
 		if (!canSubmitPurchaseRequest) {
 			if (searchParams.get('plan')) appliedQueryRef.current = true
 			return
@@ -356,10 +392,12 @@ export default function PackagesPage() {
 		if (plan === 'addon') {
 			const addonId = searchParams.get('addon')
 			if (addonId && catalog.addons?.some(a => a.id === addonId)) {
+				const body = { kind: 'addon', addonId }
+				const canOnline = p24Status?.ready
 				appliedQueryRef.current = true
 				setNote('')
-				if (p24Status?.ready) {
-					void startP24Checkout({ kind: 'addon', addonId })
+				if (canOnline) {
+					void startOnlineCheckout(body)
 				} else {
 					setModal({ kind: 'addon', addonId })
 				}
@@ -381,8 +419,10 @@ export default function PackagesPage() {
 			appliedQueryRef.current = true
 			setBilling(bill)
 			setNote('')
-			if (p24Status?.ready) {
-				void startP24Checkout({ kind: 'plan', planKey: plan, billingCycle: bill })
+			const body = { kind: 'plan', planKey: plan, billingCycle: bill }
+			const canOnline = p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)
+			if (canOnline) {
+				requestPlanOnlineCheckout(body)
 			} else {
 				setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
 			}
@@ -393,9 +433,11 @@ export default function PackagesPage() {
 		searchParams,
 		canSubmitPurchaseRequest,
 		isCheckingAuth,
+		stripeStatus,
 		p24Status,
-		p24StatusLoading,
-		startP24Checkout,
+		onlineStatusLoading,
+		requestPlanOnlineCheckout,
+		startOnlineCheckout,
 	])
 
 	useEffect(() => {
@@ -476,6 +518,7 @@ export default function PackagesPage() {
 			(ent?.ai?.packBalance ?? 0) > 0)
 
 	let currentPlanBody = null
+	let stripeCancellationBody = null
 	if (ent) {
 		const cycleShort =
 			ent.billingCycle === 'annual' ? t('billingPackages.billingAnnualShort') : t('billingPackages.billingMonthlyShort')
@@ -503,6 +546,11 @@ export default function PackagesPage() {
 					cycle: cycleShort,
 					until: formatPlanDate(ent.billingPeriodEnd, localeTag),
 				})
+			}
+			if (ent?.stripe?.cancelAtPeriodEnd && ent.billingPeriodEnd) {
+				stripeCancellationBody = isPl
+					? `Subskrypcja cykliczna jest anulowana na koniec okresu rozliczeniowego (${formatPlanDate(ent.billingPeriodEnd, localeTag)}).`
+					: `Recurring subscription is set to cancel at period end (${formatPlanDate(ent.billingPeriodEnd, localeTag)}).`
 			}
 		} else if (ent.planKey === 'trial' && ent.trialEndsAt) {
 			currentPlanBody = t('billingPackages.currentPlanTrialEnded')
@@ -554,6 +602,25 @@ export default function PackagesPage() {
 					</div>
 				)}
 
+				{ent?.paidPlanSeatLimitExceeded &&
+					typeof ent?.maxUsers === 'number' &&
+					teamSeats != null &&
+					ent?.planKey && (
+						<div className="packages-paid-plan-seat-banner" role="alert">
+							{canSubmitPurchaseRequest
+								? t('billingPackages.paidSeatLimitBannerAdmin', {
+										count: teamSeats,
+										max: ent.maxUsers,
+										plan: TIER_LABELS[ent.planKey] || ent.planKey,
+									})
+								: t('billingPackages.paidSeatLimitBannerWorker', {
+										count: teamSeats,
+										max: ent.maxUsers,
+										plan: TIER_LABELS[ent.planKey] || ent.planKey,
+									})}
+						</div>
+					)}
+
 				{!canSubmitPurchaseRequest && (
 					<div className="packages-admin-only-banner" role="status">
 						{t('billingPackages.purchaseRequestAdminOnly')}
@@ -570,10 +637,66 @@ export default function PackagesPage() {
 					<div className="packages-current-plan">
 						<h3>{t('billingPackages.currentPlanTitle')}</h3>
 						<p className="packages-current-plan__body">{currentPlanBody}</p>
+						{stripeCancellationBody && (
+							<p className="packages-current-plan__body">{stripeCancellationBody}</p>
+						)}
 						{teamSeats != null && (
 							<p className="packages-current-plan__seats" role="status">
 								{t('billingPackages.teamSeatsInTeam', { count: teamSeats })}
 							</p>
+						)}
+						{ent?.stripe?.canManagePaymentMethod && (
+							<div className="packages-stripe-card">
+								<p className="packages-stripe-card__heading">{t('billingPackages.stripeRecurringCardHeading')}</p>
+								{stripeCardLoading ? (
+									<p className="packages-current-plan__body">{t('billingPackages.stripeCardLoading')}</p>
+								) : stripeCardPayload?.card?.last4 ? (
+									<p className="packages-current-plan__body">
+										{t('billingPackages.stripeCardSummary', {
+											brand: formatStripeBrandLabel(stripeCardPayload.card.brand, t),
+											last4: stripeCardPayload.card.last4,
+											expMonth: String(stripeCardPayload.card.expMonth ?? '').padStart(2, '0'),
+											expYear: String(stripeCardPayload.card.expYear ?? ''),
+										})}
+									</p>
+								) : (
+									<p className="packages-current-plan__body">{t('billingPackages.stripeCardUnknown')}</p>
+								)}
+								<button
+									type="button"
+									className="packages-stripe-card__update"
+									disabled={stripeBillingPortal.isPending}
+									onClick={async () => {
+										try {
+											const data = await stripeBillingPortal.mutateAsync()
+											if (data?.url) window.location.href = data.url
+										} catch (e) {
+											void showAlert(
+												billingAxiosErrorMessage(e, t) || t('billingPackages.stripePortalError')
+											)
+										}
+									}}
+								>
+									{stripeBillingPortal.isPending
+										? t('billingPackages.stripeChangeCardBusy')
+										: t('billingPackages.stripeChangeCard')}
+								</button>
+							</div>
+						)}
+						{ent?.stripe?.canCancelSubscription && (
+							<button
+								type="button"
+								disabled={stripeCancelSubscription.isPending}
+								onClick={() => setCancelStripeModalOpen(true)}
+							>
+								{stripeCancelSubscription.isPending
+									? isPl
+										? 'Anulowanie...'
+										: 'Cancelling...'
+									: isPl
+										? 'Anuluj płatność cykliczną'
+										: 'Cancel recurring payment'}
+							</button>
 						)}
 					</div>
 				)}
@@ -737,7 +860,7 @@ export default function PackagesPage() {
 										isCurrentPlan ||
 										!canSubmitPurchaseRequest ||
 										planSeatsBlocked ||
-										p24StatusLoading ||
+										onlineStatusLoading ||
 										p24BusyKey !== null
 									}
 									title={
@@ -756,12 +879,13 @@ export default function PackagesPage() {
 										if (isCurrentPlan || !canSubmitPurchaseRequest || planSeatsBlocked) return
 										setJustSent(false)
 										setNote('')
-										if (p24Status?.ready) {
-											void startP24Checkout({
-												kind: 'plan',
-												planKey: tier.id,
-												billingCycle: cycle,
-											})
+										const body = {
+											kind: 'plan',
+											planKey: tier.id,
+											billingCycle: cycle,
+										}
+										if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
+											requestPlanOnlineCheckout(body)
 										} else {
 											setModal({ kind: 'plan', planKey: tier.id, billingCycle: cycle })
 										}
@@ -782,9 +906,14 @@ export default function PackagesPage() {
 										t('billingPackages.planSeatsExceededShort')
 									) : !canSubmitPurchaseRequest ? (
 										t('billingPackages.orderEmailAdminOnlyShort')
-									) : p24StatusLoading ? (
+									) : onlineStatusLoading ? (
 										t('billingPackages.checkingPaymentOptions')
-									) : p24Status?.ready ? (
+									) : p24Status?.ready ||
+									  hasStripeMappingForBody(stripeStatus, {
+											kind: 'plan',
+											planKey: tier.id,
+											billingCycle: cycle,
+									  }) ? (
 										t('billingPackages.payOnlineCta')
 									) : (
 										t('billingPackages.orderEmail')
@@ -805,7 +934,7 @@ export default function PackagesPage() {
 						const addonLocked =
 							!ent || (!ent.ai?.unrestricted && ent.ai?.canPurchaseAddon !== true)
 						const orderDisabled =
-							addonLocked || !canSubmitPurchaseRequest || p24StatusLoading || p24BusyKey !== null
+							addonLocked || !canSubmitPurchaseRequest || onlineStatusLoading || p24BusyKey !== null
 						return (
 							<div
 								key={a.id}
@@ -825,8 +954,9 @@ export default function PackagesPage() {
 										if (addonLocked || !canSubmitPurchaseRequest) return
 										setJustSent(false)
 										setNote('')
+										const body = { kind: 'addon', addonId: a.id }
 										if (p24Status?.ready) {
-											void startP24Checkout({ kind: 'addon', addonId: a.id })
+											void startOnlineCheckout(body)
 										} else {
 											setModal({ kind: 'addon', addonId: a.id })
 										}
@@ -843,7 +973,7 @@ export default function PackagesPage() {
 										</span>
 									) : !canSubmitPurchaseRequest ? (
 										t('billingPackages.orderEmailAdminOnlyShort')
-									) : p24StatusLoading ? (
+									) : onlineStatusLoading ? (
 										t('billingPackages.checkingPaymentOptions')
 									) : p24Status?.ready ? (
 										t('billingPackages.payOnlineCta')
@@ -1089,6 +1219,115 @@ export default function PackagesPage() {
 							</button>
 							<button type="button" onClick={() => setModal(null)} disabled={purchase.isPending}>
 								{modalLabels.cancel}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+			{paymentChoiceModal && (
+				<div
+					className="packages-modal-overlay"
+					role="dialog"
+					aria-modal="true"
+					onClick={() => setPaymentChoiceModal(null)}
+				>
+					<div className="packages-modal" onClick={e => e.stopPropagation()}>
+						<h4>
+							{isPl ? 'Wybierz metodę płatności' : 'Choose payment method'}
+						</h4>
+						<p className="packages-modal__fallback-intro" style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.75rem' }}>
+							{isPl
+								? 'Wybierz wygodną metodę: karta cykliczna albo płatność jednorazowa (BLIK, banki).'
+								: 'Choose your method: recurring card or one-time payment (BLIK, banks).'}
+						</p>
+						<div className="packages-modal__actions packages-modal__actions--stack">
+							<button
+								type="button"
+								className="primary"
+								onClick={() => {
+									const body = paymentChoiceModal
+									setPaymentChoiceModal(null)
+									void startOnlineCheckout(body, { forceProvider: 'stripe' })
+								}}
+							>
+								{isPl ? 'Subskrypcja cykliczna kartą' : 'Recurring card subscription'}
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									const body = paymentChoiceModal
+									setPaymentChoiceModal(null)
+									void startOnlineCheckout(body, { forceProvider: 'p24' })
+								}}
+							>
+								{isPl ? 'Płatność jednorazowa (BLIK/banki)' : 'One-time payment (BLIK/banks)'}
+							</button>
+							<button type="button" onClick={() => setPaymentChoiceModal(null)}>
+								{isPl ? 'Anuluj' : 'Cancel'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+			{cancelStripeModalOpen && (
+				<div
+					className="packages-modal-overlay"
+					role="dialog"
+					aria-modal="true"
+					onClick={() => !stripeCancelSubscription.isPending && setCancelStripeModalOpen(false)}
+				>
+					<div className="packages-modal" onClick={e => e.stopPropagation()}>
+						<h4>
+							{isPl ? 'Potwierdź anulowanie subskrypcji' : 'Confirm subscription cancellation'}
+						</h4>
+						<p
+							className="packages-modal__fallback-intro"
+							style={{ fontSize: '0.95rem', color: '#334155', marginBottom: '0.9rem' }}
+						>
+							{isPl
+								? 'Czy na pewno anulować subskrypcję cykliczną na koniec bieżącego okresu?'
+								: 'Cancel recurring subscription at the end of the current period?'}
+						</p>
+						<div className="packages-modal__actions">
+							<button
+								type="button"
+								onClick={() => setCancelStripeModalOpen(false)}
+								disabled={stripeCancelSubscription.isPending}
+							>
+								{isPl ? 'Nie, zostaw subskrypcję' : 'No, keep subscription'}
+							</button>
+							<button
+								type="button"
+								className="primary"
+								disabled={stripeCancelSubscription.isPending}
+								aria-busy={stripeCancelSubscription.isPending}
+								onClick={async () => {
+									try {
+										await stripeCancelSubscription.mutateAsync()
+										setCancelStripeModalOpen(false)
+										await showAlert(
+											isPl
+												? 'Subskrypcja została ustawiona do anulowania na koniec okresu rozliczeniowego.'
+												: 'Subscription has been set to cancel at period end.'
+										)
+										queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+									} catch (e) {
+										await showAlert(
+											billingAxiosErrorMessage(e, t) ||
+												e?.response?.data?.message ||
+												e?.message ||
+												(isPl ? 'Nie udało się anulować subskrypcji.' : 'Could not cancel subscription.')
+										)
+									}
+								}}
+							>
+								{stripeCancelSubscription.isPending
+									? isPl
+										? 'Anulowanie...'
+										: 'Cancelling...'
+									: isPl
+										? 'Tak, anuluj'
+										: 'Yes, cancel'}
 							</button>
 						</div>
 					</div>

@@ -3330,6 +3330,33 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff !important;
 }
+.landing-chat-panel .landing-chat-assistant-link,
+.landing-chat-panel .landing-chat-assistant-link:visited,
+.landing-chat-panel .landing-chat-assistant-link:hover,
+.landing-chat-panel .landing-chat-assistant-link:focus-visible {
+	color: #0f766e !important;
+	-webkit-text-fill-color: #0f766e !important;
+	text-decoration: underline !important;
+}
+
+/* Wiadomość usera: globalne `span { color: ... !important }` nie może nadpisywać białego tekstu */
+.landing-chat-panel .landing-chat-message--user,
+.landing-chat-panel .landing-chat-message--user span,
+.landing-chat-panel .landing-chat-message--user p,
+.landing-chat-panel .landing-chat-message--user strong,
+.landing-chat-panel .landing-chat-message--user a,
+.landing-chat-panel .landing-chat-user-text {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+.landing-chat-panel .landing-chat-message--user a,
+.landing-chat-panel .landing-chat-message--user a:visited,
+.landing-chat-panel .landing-chat-message--user a:hover,
+.landing-chat-panel .landing-chat-message--user a:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: underline !important;
+}
 
 /* Czat AI: min. 16px — czytelność i brak auto-zoom iOS przy focusie */
 .landing-chat-panel textarea,
