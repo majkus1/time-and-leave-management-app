@@ -1582,7 +1582,19 @@ export default function PackagesPage() {
 					onClick={() => setCoreConfiguratorOpen(false)}
 				>
 					<div className="packages-modal packages-modal--wide" onClick={e => e.stopPropagation()}>
-						<h4 id="core-configurator-title">{t('billingPackages.coreConfiguratorTitle')}</h4>
+						<div className="packages-modal__header">
+							<h4 id="core-configurator-title" className="packages-modal__title">
+								{t('billingPackages.coreConfiguratorTitle')}
+							</h4>
+							<button
+								type="button"
+								className="packages-modal__close"
+								aria-label={t('billingPackages.modalCloseAriaLabel')}
+								onClick={() => setCoreConfiguratorOpen(false)}
+							>
+								×
+							</button>
+						</div>
 						<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">
 							{t('billingPackages.coreConfiguratorHint')}
 						</p>
@@ -1794,11 +1806,24 @@ export default function PackagesPage() {
 				<div
 					className="packages-modal-overlay"
 					role="dialog"
+					aria-labelledby="payment-choice-title"
 					aria-modal="true"
 					onClick={() => setPaymentChoiceModal(null)}
 				>
 					<div className="packages-modal" onClick={e => e.stopPropagation()}>
-						<h4>{t('billingPackages.paymentChoiceTitle')}</h4>
+						<div className="packages-modal__header">
+							<h4 id="payment-choice-title" className="packages-modal__title">
+								{t('billingPackages.paymentChoiceTitle')}
+							</h4>
+							<button
+								type="button"
+								className="packages-modal__close"
+								aria-label={t('billingPackages.modalCloseAriaLabel')}
+								onClick={() => setPaymentChoiceModal(null)}
+							>
+								×
+							</button>
+						</div>
 						<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">
 							{t('billingPackages.paymentChoiceIntro')}
 						</p>

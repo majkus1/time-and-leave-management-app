@@ -120,6 +120,12 @@
 	color: #64748b;
 }
 
+@media (max-width: 640px) {
+	.landing-pricing-app-clone .packages-tier__hint {
+		margin-bottom: 0.85rem;
+	}
+}
+
 .landing-pricing-app-clone .packages-tier__cta {
 	margin-top: auto;
 	padding: 0.55rem 1rem;

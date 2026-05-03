@@ -256,6 +256,7 @@ i18n
 						enterpriseStripBody:
 							'When off-the-shelf plans are not enough — tell us in the form; we’ll reply with a proposal.',
 						enterpriseCta: 'Open form — describe your needs',
+						modalCloseAriaLabel: 'Close',
 						coreConfiguratorTitle: 'Configure Core',
 						coreConfiguratorHint: 'Pick team size, optionally add modules — totals below.',
 						coreConfiguratorStep1Title: 'How many people on the team?',
@@ -1987,6 +1988,7 @@ i18n
 						enterpriseStripBody:
 							'Gdy gotowe pakiety to za mało — napisz w formularzu, wrócimy z propozycją.',
 						enterpriseCta: 'Formularz — opisz potrzebę',
+						modalCloseAriaLabel: 'Zamknij',
 						coreConfiguratorTitle: 'Konfiguracja Core',
 						coreConfiguratorHint: 'Wybierz wielkość zespołu, opcjonalnie moduły — suma poniżej.',
 						coreConfiguratorStep1Title: 'Ile osób w zespole?',
