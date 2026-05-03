@@ -42,19 +42,25 @@ W menu bocznym: **„Pakiety i rozliczenia”** (PL) / **„Packages & billing�
 
 - **Bieżący plan zespołu**: okres próbny (trial), aktywna subskrypcja płatna (plan + okres rozliczeniowy), ewentualnie konta „legacy” (pełny dostęp do aplikacji w okresie przejściowym — szczegół w UI).
 - **Wykorzystanie Asystenta AI (zespołu)**: wspólny limit na **AI Asystenta** (`/ai-assistant`), **AI szkicu grafiku** na stronie harmonogramu oraz **drafty AI** (np. wniosek urlopowy / wpis czasu z opisu). W UI widać m.in. szacowane pozostałe wiadomości, pulę próbną trialu i saldo **dokupionych pakietów** wiadomości.
-- **Wybór planu**: **Starter, Pro, Business, Enterprise** — limity użytkowników i miesięczne wiadomości AI są powiązane z planem (patrz tabela poniżej). Rozliczenie **miesięczne lub roczne** (w interfejsie widać przeliczenie roczne — typowo **10× cena miesięczna netto za 12 miesięcy**).
+- **Wybór planu**: **Core** (rozmiary S / M / L + opcjonalne moduły) oraz pakiety **Pro, Business, Enterprise** (wszystkie moduły w cenie) — limity użytkowników i AI jak w tabeli poniżej. Rozliczenie **miesięczne lub roczne** (rocznie typowo **10× cena miesięczna netto za 12 miesięcy**, plan + moduły Core w tym samym cyklu).
 - **Zakup**: administrator zespołu może wysłać **zapytanie o zakup** (plan lub pakiet dodatkowy AI) — proces w aplikacji prowadzi przez formularz / e-mail (nie podawaj fikcyjnych linków do płatności kartą, jeśli użytkownik pyta „jak zapłacić” — odsyłaj do tej sekcji w UI).
 - **Pakiety dodatkowe AI**: dodatkowe wiadomości poza limitem planu — **dostępność w UI jest uzależniona od reguł produktu** (np. po wcześniejszej aktywnej płatnej subskrypcji); kwoty i rozmiary pakietów są na stronie Pakiety.
 - **Dokumenty prawne** na dole tej samej strony: regulamin, polityka prywatności, ewentualnie DPA — akceptacje w jednym miejscu, gdy wymagane.
 
-**Tabela planów (orientacyjnie — źródło: katalog w kodzie aplikacji; użytkownik zawsze widzi aktualne wartości na `/packages`):**
+**Tabela planów (orientacyjnie — źródło: `server/constants/planCatalog.js`; użytkownik zawsze widzi aktualne wartości na `/packages`):**
 
 | Plan | Cena miesięczna netto (PLN) | Max użytkowników | Wiadomości AI / miesiąc (plan) |
 |------|------------------------------|------------------|--------------------------------|
-| **Starter** | 99 | 10 | 10 |
-| **Pro** | 199 | 30 | 50 |
-| **Business** | 399 | 100 | 300 |
-| **Enterprise** | 799 | 300 | 1000 |
+| **Core S** (`base_s`) | 119 | 15 | 0 w bazie; po wykupieniu modułu Asystenta AI i/lub grafik z AI — **wspólna pula 50** (te dwa moduły łącznie) |
+| **Core M** (`base_m`) | 199 | 30 | jak wyżej |
+| **Core L** (`base_l`) | 349 | 100 | jak wyżej |
+| **Pro** | 239 | 30 | 50 (wszystkie moduły w pakiecie) |
+| **Business** | 479 | 100 | 300 |
+| **Enterprise** | 949 | 300 | 1000 |
+
+**Moduły dokupywane do Core (mies. netto PLN, orientacyjnie):** timer + QR 39; grafiki + AI w grafiku 59; tablice 39; czat 29; Asystent AI 29.
+
+**Alias:** stary klucz „starter” w danych = **Core S** (`base_s`).
 
 **Okres próbny (trial):** ok. **30 dni**, do **5 użytkowników**, **10 jednorazowych** wiadomości AI (wspólna pula próbna, nie miesięczny limit planu).
 
