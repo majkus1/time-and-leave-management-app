@@ -31,6 +31,8 @@ const billingPaymentSessionSchema = new mongoose.Schema(
 			type: String,
 			enum: ['monthly', 'annual'],
 		},
+		/** Moduły CORE dokupione razem z planem (P24); aktywacja przez webhook */
+		moduleKeys: [{ type: String }],
 		amountGrosze: { type: Number, required: true },
 		currency: { type: String, default: 'PLN', maxlength: 3 },
 		customerEmail: { type: String, required: true },

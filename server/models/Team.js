@@ -103,6 +103,16 @@ const teamSchema = new mongoose.Schema({
 		type: String,
 		default: null,
 	},
+	/** Moduły z intencji checkout Stripe — używane gdy webhook nie ma ich jeszcze w metadata/items subskrypcji */
+	stripePendingModuleKeys: {
+		type: [String],
+		default: undefined,
+	},
+	/** Aktywne moduły miesięczne (CORE); pakiety bundle ustawiają pełny zestaw przy aktywacji */
+	billingModuleKeys: {
+		type: [String],
+		default: undefined,
+	},
 	trialAiMessagesUsed: {
 		type: Number,
 		default: 0,

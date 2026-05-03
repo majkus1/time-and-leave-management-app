@@ -10,6 +10,7 @@ import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import TutorialModal from '../tutorial/TutorialModal'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
 
 function Sidebar() {
@@ -29,6 +30,7 @@ function Sidebar() {
 	const { role, logout, username, loggedIn, userId } = useAuth()
 	const {
 		isLoading: billingEntLoading,
+		data: billingEnt,
 		freemiumTier,
 		freemiumSeatBlocked,
 		freemiumAppRestricted,
@@ -36,11 +38,21 @@ function Sidebar() {
 	/** Freemium: bez zapytań do czatu/tablic/ogłoszeń/urlopów (403 z freemiumApiGuard). */
 	const premiumSidebarQueriesEnabled = !!loggedIn && !billingEntLoading && !freemiumTier
 
-	const { data: unreadCount = 0 } = useUnreadCount({ enabled: premiumSidebarQueriesEnabled })
+	const showNavSchedule =
+		premiumSidebarQueriesEnabled &&
+		canShowBillingModuleNav(billingEnt, 'schedules_ai', billingEntLoading)
+	const showNavTasks =
+		premiumSidebarQueriesEnabled &&
+		canShowBillingModuleNav(billingEnt, 'tasks', billingEntLoading)
+	const showNavChat =
+		premiumSidebarQueriesEnabled &&
+		canShowBillingModuleNav(billingEnt, 'chat', billingEntLoading)
+
+	const { data: unreadCount = 0 } = useUnreadCount({ enabled: showNavChat })
 	const { data: unreadAnnouncementsCount = 0 } = useAnnouncementsUnreadCount({
 		enabled: premiumSidebarQueriesEnabled,
 	})
-	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: premiumSidebarQueriesEnabled })
+	const { data: boardsUnreadSummary } = useBoardsUnreadSummary({ enabled: showNavTasks })
 	const unreadBoardsTotal = boardsUnreadSummary?.totalUnread || 0
 	
 	// HIERARCHIA RÓL: Admin > HR > Przełożony
@@ -70,6 +82,16 @@ function Sidebar() {
 	const compactFreemiumNav = freemiumSeatBlocked
 	const narrowFreemiumNav = freemiumAppRestricted
 	const showPremiumModules = !compactFreemiumNav && !narrowFreemiumNav
+	const showScheduleLink =
+		showPremiumModules &&
+		canShowBillingModuleNav(billingEnt, 'schedules_ai', billingEntLoading)
+	const showBoardsLink =
+		showPremiumModules && canShowBillingModuleNav(billingEnt, 'tasks', billingEntLoading)
+	const showChatLink =
+		showPremiumModules && canShowBillingModuleNav(billingEnt, 'chat', billingEntLoading)
+	const showAiAssistantLink =
+		showPremiumModules &&
+		canShowBillingModuleNav(billingEnt, 'ai_assistant', billingEntLoading)
 	/** Kalendarze / ewidencje zespołu — także freemium i przy blokadzie miejsc (Admin / HR / przełożony z uprawnieniem). */
 	const showAdminCalendars =
 		isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets)
@@ -343,7 +365,7 @@ function Sidebar() {
 					</NavLink>
 					)}
 
-					{showPremiumModules && (
+					{showScheduleLink && (
 					<NavLink
 						to="/schedule"
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -387,7 +409,7 @@ function Sidebar() {
 					</NavLink>
 					)}
 
-					{showPremiumModules && (
+					{showBoardsLink && (
 					<NavLink
 								to="/boards"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -406,7 +428,7 @@ function Sidebar() {
 							</NavLink>
 					)}
 
-					{showPremiumModules && (
+					{showChatLink && (
 					<NavLink
 								to="/chat"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -444,7 +466,7 @@ function Sidebar() {
 							</NavLink>
 					)}
 
-					{showPremiumModules && (
+					{showAiAssistantLink && (
 					<NavLink
 						to="/ai-assistant"
 						className={({ isActive }) => `nav-link nav-link--ai ${isActive ? 'active' : ''}`}>

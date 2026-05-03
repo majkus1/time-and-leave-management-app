@@ -25,16 +25,20 @@ function Login() {
 	// const [rememberMe, setRememberMe] = useState(false)
 	const navigate = useNavigate()
 	const location = useLocation()
-	const from = location.state?.from?.pathname || '/dashboard'
+	const redirectAfterLogin = (() => {
+		const loc = location.state?.from
+		if (!loc?.pathname) return '/dashboard'
+		return `${loc.pathname}${loc.search || ''}${loc.hash || ''}`
+	})()
 	const { t, i18n } = useTranslation()
 	const { setLoggedIn, setRole, setUsername, setTeamId, setIsTeamAdmin, loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
 
 	useEffect(() => {
 		if (loggedIn) {
-			navigate('/dashboard', { replace: true })
+			navigate(redirectAfterLogin, { replace: true })
 		}
-	}, [loggedIn, navigate])
+	}, [loggedIn, navigate, redirectAfterLogin])
 
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
@@ -65,7 +69,7 @@ function Login() {
 			// This prevents race conditions with AuthContext's checkAuth
 			await new Promise(resolve => setTimeout(resolve, 50))
 			
-			navigate(from)
+			navigate(redirectAfterLogin)
 		} catch (error) {
 			console.error('Login error:', error)
 			setErrorMessage(t('login.failed'))

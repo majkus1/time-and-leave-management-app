@@ -2,7 +2,50 @@ const express = require('express')
 const router = express.Router()
 const { firmDb } = require('../db/db')
 const PushSubscription = require('../models/PushSubscription')(firmDb)
+const Team = require('../models/Team')(firmDb)
 const { authenticateToken } = require('../middleware/authMiddleware')
+const entitlementsService = require('../services/entitlementsService')
+const { normalizePaidPlanKey, isCorePlanKey } = require('../constants/planCatalog')
+
+const DEFAULT_PUSH_PREFERENCES = {
+	chat: true,
+	tasks: true,
+	taskStatusChanges: true,
+	taskComments: true,
+	leaves: true,
+	announcements: true,
+	schedulePublished: true,
+}
+
+const PUSH_PREF_MODULE_REQUIREMENTS = {
+	chat: 'chat',
+	tasks: 'tasks',
+	taskStatusChanges: 'tasks',
+	taskComments: 'tasks',
+	schedulePublished: 'schedules_ai',
+}
+
+function canUsePushPreference(team, prefKey) {
+	const reqModule = PUSH_PREF_MODULE_REQUIREMENTS[prefKey]
+	if (!reqModule) return true
+	if (!team) return false
+	if (entitlementsService.isTrialActive(team)) return true
+	if (entitlementsService.isLegacyPreBillingTeam(team)) return true
+	if (entitlementsService.isSpecialNamedTeam(team)) return true
+	if (entitlementsService.isFreemiumTierTeam(team)) return false
+	if (!entitlementsService.isPaidSubscriptionActive(team)) return false
+	const nk = normalizePaidPlanKey(team.billingPlanKey)
+	if (!isCorePlanKey(nk)) return true
+	return entitlementsService.effectiveBillingModuleKeys(team).includes(reqModule)
+}
+
+function sanitizePushPreferencesByTeam(team, raw) {
+	const prefs = { ...DEFAULT_PUSH_PREFERENCES, ...(raw || {}) }
+	for (const key of Object.keys(PUSH_PREF_MODULE_REQUIREMENTS)) {
+		if (!canUsePushPreference(team, key)) prefs[key] = false
+	}
+	return prefs
+}
 
 // Register push subscription
 router.post('/register', authenticateToken, async (req, res) => {
@@ -36,15 +79,7 @@ router.post('/register', authenticateToken, async (req, res) => {
 				keys,
 				userAgent: userAgent || req.headers['user-agent'] || '',
 				enabled: true,
-			preferences: {
-				chat: true,
-				tasks: true,
-				taskStatusChanges: true,
-				taskComments: true,
-				leaves: true,
-				announcements: true,
-				schedulePublished: true
-			}
+			preferences: DEFAULT_PUSH_PREFERENCES
 			})
 			await subscription.save()
 		}
@@ -82,23 +117,27 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 	try {
 		const userId = req.user.userId
 		const { preferences } = req.body
+		const team = await Team.findById(req.user.teamId).select(
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+		)
 
 		if (!preferences || typeof preferences !== 'object') {
 			return res.status(400).json({ message: 'Invalid preferences data' })
 		}
+		const sanitized = sanitizePushPreferencesByTeam(team, preferences)
 
 		// Update all user's subscriptions
 		const result = await PushSubscription.updateMany(
 			{ userId },
 			{
 				$set: {
-					'preferences.chat': preferences.chat !== undefined ? preferences.chat : true,
-					'preferences.tasks': preferences.tasks !== undefined ? preferences.tasks : true,
-					'preferences.taskStatusChanges': preferences.taskStatusChanges !== undefined ? preferences.taskStatusChanges : true,
-					'preferences.taskComments': preferences.taskComments !== undefined ? preferences.taskComments : true,
-					'preferences.leaves': preferences.leaves !== undefined ? preferences.leaves : true,
-					'preferences.announcements': preferences.announcements !== undefined ? preferences.announcements : true,
-					'preferences.schedulePublished': preferences.schedulePublished !== undefined ? preferences.schedulePublished : true
+					'preferences.chat': sanitized.chat !== false,
+					'preferences.tasks': sanitized.tasks !== false,
+					'preferences.taskStatusChanges': sanitized.taskStatusChanges !== false,
+					'preferences.taskComments': sanitized.taskComments !== false,
+					'preferences.leaves': sanitized.leaves !== false,
+					'preferences.announcements': sanitized.announcements !== false,
+					'preferences.schedulePublished': sanitized.schedulePublished !== false
 				}
 			}
 		)
@@ -117,33 +156,20 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 router.get('/preferences', authenticateToken, async (req, res) => {
 	try {
 		const userId = req.user.userId
+		const team = await Team.findById(req.user.teamId).select(
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+		)
 
 		const subscription = await PushSubscription.findOne({ userId, enabled: true })
 
 		if (!subscription) {
 			return res.json({
 				enabled: false,
-				preferences: {
-					chat: true,
-					tasks: true,
-					taskStatusChanges: true,
-					taskComments: true,
-					leaves: true,
-					announcements: true,
-					schedulePublished: true
-				}
+				preferences: sanitizePushPreferencesByTeam(team, DEFAULT_PUSH_PREFERENCES)
 			})
 		}
 
-		const preferences = {
-			chat: subscription.preferences?.chat !== false,
-			tasks: subscription.preferences?.tasks !== false,
-			taskStatusChanges: subscription.preferences?.taskStatusChanges !== false,
-			taskComments: subscription.preferences?.taskComments !== false,
-			leaves: subscription.preferences?.leaves !== false,
-			announcements: subscription.preferences?.announcements !== false,
-			schedulePublished: subscription.preferences?.schedulePublished !== false,
-		}
+		const preferences = sanitizePushPreferencesByTeam(team, subscription.preferences)
 
 		res.json({
 			enabled: subscription.enabled,

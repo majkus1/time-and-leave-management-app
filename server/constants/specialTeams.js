@@ -4,6 +4,8 @@ const SPECIAL_ELEVATED_SEAT_TEAM_NAMES = [
 	'Halo Rental System',
 	/** Testowy zespół — ta sama logika co Halo (11 miejsc, Starter, rozliczenia ręczne). */
 	'testokresprobny',
+	'vxvxvxv',
+	'qwd',
 ]
 
 /** Unmetered AI — tylko wskazane zespoły wewnętrzne. */
@@ -13,7 +15,7 @@ const SPECIAL_UNLIMITED_AI_TEAM_NAMES = ['OficjalnyAdminowy']
  * Starter w aplikacji (limity jak Starter), rozliczenie ręcznymi przelewami —
  * w UI nie pokazujemy daty końca opłaconego okresu.
  */
-const SPECIAL_MANUAL_BILLING_TEAM_NAMES = ['Halo Rental System', 'testokresprobny']
+const SPECIAL_MANUAL_BILLING_TEAM_NAMES = ['Halo Rental System', 'testokresprobny', 'vxvxvxv', 'qwd']
 
 /**
  * Zespoły wymuszające tryb „structural legacy” (jak konta sprzed billing w Mongo),
@@ -26,7 +28,7 @@ const FORCE_LEGACY_PRE_BILLING_TEAM_NAMES = ['testnewversion', 'legacy', 'lip420
  * (isPaidSubscriptionActive). Po wykupieniu planu zespół zachowuje się jak zwykły płatny.
  * Tej samej nazwy nie dodawaj do FORCE_LEGACY — wtedy `ent.legacy` i kopia w Pakietach sugerują grandfathering mimo freemium.
  */
-const FORCE_FREEMIUM_TEST_TEAM_NAMES = ['testleeegacy']
+const FORCE_FREEMIUM_TEST_TEAM_NAMES = ['testleeegacy', 'qwww']
 
 /**
  * Koniec okresu grandfathered legacy dla wybranej nazwy zespołu (pierwsza chwila PO ostatnim dniu grace).

@@ -1,6 +1,6 @@
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
-const { PAID_PLANS, isPaidPlanKey } = require('../constants/planCatalog')
+const { PAID_PLANS, isPaidPlanKey, normalizePaidPlanKey } = require('../constants/planCatalog')
 const { countTeamSeats } = require('./teamSeatCountService')
 const { sendBillingSeatOverLimitEmail } = require('./emailService')
 
@@ -15,8 +15,9 @@ const SEAT_OVER_LIMIT_EMAIL_THROTTLE_MS = 30 * 24 * 60 * 60 * 1000
  * @param {string} planKey
  */
 async function assertPaidPlanSeatLimit(teamId, planKey) {
-	if (!isPaidPlanKey(planKey)) return
-	const maxUsers = PAID_PLANS[planKey].maxUsers
+	const nk = normalizePaidPlanKey(planKey)
+	if (!isPaidPlanKey(nk)) return
+	const maxUsers = PAID_PLANS[nk].maxUsers
 	const used = await countTeamSeats(teamId)
 	if (used > maxUsers) {
 		const err = new Error(
@@ -24,7 +25,7 @@ async function assertPaidPlanSeatLimit(teamId, planKey) {
 				'Zmniejsz liczbę kont do limitu (usuń lub dezaktywuj użytkowników w zespole), a następnie spróbuj ponownie.'
 		)
 		err.code = 'PLAN_SEAT_LIMIT_EXCEEDED'
-		err.meta = { used, maxUsers, planKey }
+		err.meta = { used, maxUsers, planKey: nk }
 		throw err
 	}
 }
@@ -34,11 +35,12 @@ async function assertPaidPlanSeatLimit(teamId, planKey) {
  * Przy odnowieniu nie blokujemy aktywacji — tu tylko informujemy i oznaczamy zespół.
  */
 async function syncSeatLimitAfterStripePaidInvoice(teamId, planKey) {
-	if (!isPaidPlanKey(planKey)) return
+	const nk = normalizePaidPlanKey(planKey)
+	if (!isPaidPlanKey(nk)) return
 	const team = await Team.findById(teamId)
 	if (!team) return
 
-	const maxUsers = PAID_PLANS[planKey].maxUsers
+	const maxUsers = PAID_PLANS[nk].maxUsers
 	const used = await countTeamSeats(teamId)
 
 	if (used <= maxUsers) {
@@ -57,10 +59,10 @@ async function syncSeatLimitAfterStripePaidInvoice(teamId, planKey) {
 
 	if (shouldEmail) {
 		try {
-			await sendBillingSeatOverLimitEmail(team.adminEmail, team.name, {
+			await 			sendBillingSeatOverLimitEmail(team.adminEmail, team.name, {
 				used,
 				maxUsers,
-				planKey,
+				planKey: nk,
 			})
 			team.billingSeatLimitExceededEmailAt = new Date()
 		} catch (e) {

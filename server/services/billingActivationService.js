@@ -8,6 +8,9 @@ const {
 	AI_ADDON_PACKS,
 	isPaidPlanKey,
 	isAddonId,
+	normalizePaidPlanKey,
+	effectiveIncludedModulesForPlan,
+	isModuleKey,
 } = require('../constants/planCatalog')
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
@@ -38,13 +41,15 @@ async function activatePaidPlan({
 	idempotencyKey,
 	actorLabel = 'billing',
 	enforceSeatLimit = true,
+	moduleKeys,
 }) {
 	if (!idempotencyKey || typeof idempotencyKey !== 'string' || idempotencyKey.length > 200) {
 		const err = new Error('Invalid idempotencyKey')
 		err.code = 'VALIDATION'
 		throw err
 	}
-	if (!isPaidPlanKey(planKey)) {
+	const nk = normalizePaidPlanKey(planKey)
+	if (!isPaidPlanKey(nk)) {
 		const err = new Error('Unknown plan')
 		err.code = 'VALIDATION'
 		throw err
@@ -71,7 +76,7 @@ async function activatePaidPlan({
 		return { ok: true, duplicate: true, teamId: existing.teamId.toString(), action: existing.action }
 	}
 
-	const limits = PAID_PLANS[planKey]
+	const limits = PAID_PLANS[nk]
 	const team = await Team.findById(teamId)
 	if (!team || team.isActive === false) {
 		const err = new Error('Team not found')
@@ -80,24 +85,37 @@ async function activatePaidPlan({
 	}
 
 	if (enforceSeatLimit) {
-		await assertPaidPlanSeatLimit(teamId, planKey)
+		await assertPaidPlanSeatLimit(teamId, nk)
 	}
 
-	team.billingPlanKey = planKey
+	team.billingPlanKey = nk
 	team.billingStatus = 'active'
 	team.billingCycle = billingCycle
 	team.billingPeriodEnd = end
 	team.maxUsers = limits.maxUsers
 	team.billingHadPaidPlan = true
-	team.subscriptionType = mapPlanToSubscriptionType(planKey)
+	if (limits.tierType === 'bundle') {
+		team.billingModuleKeys = effectiveIncludedModulesForPlan(nk)
+	} else {
+		const mods = Array.isArray(moduleKeys) ? moduleKeys.filter(isModuleKey) : []
+		team.billingModuleKeys = [...new Set(mods)]
+	}
+	team.subscriptionType = mapPlanToSubscriptionType(nk)
 	entitlementsService.ensureMonthRolloverInMemory(team)
 	await team.save()
+	await entitlementsService.syncTimerEnabledSettingForTeam(team._id)
 
 	await BillingLedgerEntry.create({
 		idempotencyKey,
 		teamId: team._id,
 		action: 'subscription_activated',
-		payload: { planKey, billingCycle, periodEnd: end.toISOString(), actorLabel },
+		payload: {
+			planKey: nk,
+			billingCycle,
+			moduleKeys: team.billingModuleKeys,
+			periodEnd: end.toISOString(),
+			actorLabel,
+		},
 	})
 
 	const logUserId = await resolveLogUserId(team._id)
@@ -105,7 +123,7 @@ async function activatePaidPlan({
 		await createLog(
 			logUserId,
 			'BILLING_SUBSCRIPTION_ACTIVATED',
-			`team=${team._id} plan=${planKey} cycle=${billingCycle} until=${end.toISOString()} by=${actorLabel}`,
+			`team=${team._id} plan=${nk} cycle=${billingCycle} until=${end.toISOString()} by=${actorLabel}`,
 			logUserId
 		)
 	}

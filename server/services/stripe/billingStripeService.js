@@ -3,12 +3,16 @@ const Stripe = require('stripe')
 const { firmDb } = require('../../db/db')
 const BillingLedgerEntry = require('../../models/BillingLedgerEntry')(firmDb)
 const Team = require('../../models/Team')(firmDb)
-const { validateBillingPurchaseIntent } = require('../billingPurchaseIntentValidator')
+const {
+	validateBillingPurchaseIntent,
+	validateStripeSubscriptionCheckout,
+} = require('../billingPurchaseIntentValidator')
 const billingActivationService = require('../billingActivationService')
 const { syncSeatLimitAfterStripePaidInvoice } = require('../billingPlanSeatLimitService')
 const { getStripeConfig } = require('./stripeConfig')
 const { getStripePriceDefinition } = require('./stripePriceMapService')
-const { isPaidPlanKey } = require('../../constants/planCatalog')
+const { isPaidPlanKey, normalizePaidPlanKey, isCorePlanKey, isModuleKey } = require('../../constants/planCatalog')
+const entitlementsService = require('../entitlementsService')
 
 let stripeClient = null
 let stripeClientKey = ''
@@ -62,6 +66,44 @@ function resolvePlanIntentFromSubscriptionMetadata(metadata = {}) {
 	return { planKey, billingCycle }
 }
 
+function parseModuleKeysMetadataCsv(s) {
+	if (s == null || s === '') return []
+	return String(s)
+		.split(',')
+		.map(x => x.trim())
+		.filter(k => isModuleKey(k))
+}
+
+function mergeModuleKeysArrays(...arrays) {
+	const set = new Set()
+	for (const arr of arrays) {
+		if (!Array.isArray(arr)) continue
+		for (const k of arr) {
+			if (isModuleKey(k)) set.add(k)
+		}
+	}
+	return [...set]
+}
+
+function collectModuleKeysFromStripeSubscription(subscription) {
+	const set = new Set()
+	const metadata = subscription?.metadata || {}
+	if (metadata.moduleKeys) {
+		parseModuleKeysMetadataCsv(metadata.moduleKeys).forEach(k => set.add(k))
+	}
+	for (const item of subscription?.items?.data || []) {
+		const pid = item.price?.id
+		if (!pid) continue
+		try {
+			const def = getStripePriceDefinition(pid)
+			if (def.kind === 'module') set.add(def.moduleKey)
+		} catch (_) {
+			// ignore unknown price ids (np. brak wpisu w STRIPE_PRICE_MAP_JSON na serwerze)
+		}
+	}
+	return [...set].filter(isModuleKey)
+}
+
 async function markStripeEvent(teamId, eventId, action, payload = {}) {
 	const idempotencyKey = eventSeenKey(eventId)
 	const existing = await BillingLedgerEntry.findOne({ idempotencyKey }).select('_id')
@@ -85,47 +127,98 @@ async function createStripeCheckoutSession(params) {
 		throw err
 	}
 	const stripe = getStripeClient()
-	const { teamId, userId, priceId } = params
-	const stripeDef = getStripePriceDefinition(priceId)
-	const { team, requester } = await validateBillingPurchaseIntent({
+	const { teamId, userId, priceId, priceIds } = params
+	const ids =
+		Array.isArray(priceIds) && priceIds.length > 0
+			? priceIds.map(String)
+			: priceId
+				? [String(priceId)]
+				: []
+	if (!ids.length) {
+		const err = new Error('Podaj priceId lub tablicę priceIds.')
+		err.code = 'VALIDATION'
+		throw err
+	}
+
+	const defs = ids.map(id => getStripePriceDefinition(id))
+	const hasAddon = defs.some(d => d.kind === 'addon')
+	if (hasAddon && defs.length > 1) {
+		const err = new Error('Pakietu wiadomości AI nie łącz z innymi pozycjami w jednej sesji.')
+		err.code = 'VALIDATION'
+		throw err
+	}
+
+	if (hasAddon) {
+		const stripeDef = defs[0]
+		const { team, requester } = await validateBillingPurchaseIntent({
+			teamId,
+			requestingUserId: userId,
+			kind: 'addon',
+			addonId: stripeDef.addonId,
+		})
+		const sessionParams = {
+			mode: 'payment',
+			success_url: `${cfg.appPublicUrl}/packages?stripe=success`,
+			cancel_url: `${cfg.appPublicUrl}/packages?stripe=cancel`,
+			client_reference_id: String(team._id),
+			customer_email: (team.adminEmail || requester.username || '').trim() || undefined,
+			line_items: [{ price: stripeDef.priceId, quantity: 1 }],
+			metadata: {
+				teamId: String(team._id),
+				userId: String(requester._id),
+				kind: stripeDef.kind,
+				priceId: stripeDef.priceId,
+				addonId: stripeDef.addonId || '',
+			},
+		}
+		const session = await stripe.checkout.sessions.create(sessionParams)
+		return {
+			provider: 'stripe',
+			checkoutSessionId: session.id,
+			redirectUrl: session.url,
+		}
+	}
+
+	const { team, requester, planDef, moduleDefs } = await validateStripeSubscriptionCheckout({
 		teamId,
 		requestingUserId: userId,
-		kind: stripeDef.kind,
-		planKey: stripeDef.planKey,
-		addonId: stripeDef.addonId,
-		billingCycle: stripeDef.billingCycle,
+		priceDefinitions: defs,
 	})
 
+	const moduleKeysJoined = moduleDefs.map(m => m.moduleKey).join(',')
+	const line_items = defs.map(d => ({ price: d.priceId, quantity: 1 }))
+
+	team.stripePendingPlanKey = planDef.planKey
+	team.stripePendingBillingCycle = planDef.billingCycle
+	team.stripePendingModuleKeys = moduleDefs.map(m => m.moduleKey).filter(isModuleKey)
+	await team.save()
+
 	const sessionParams = {
-		mode: stripeDef.kind === 'plan' ? 'subscription' : 'payment',
+		mode: 'subscription',
 		success_url: `${cfg.appPublicUrl}/packages?stripe=success`,
 		cancel_url: `${cfg.appPublicUrl}/packages?stripe=cancel`,
 		client_reference_id: String(team._id),
 		customer_email: (team.adminEmail || requester.username || '').trim() || undefined,
-		line_items: [{ price: stripeDef.priceId, quantity: 1 }],
+		line_items,
 		metadata: {
 			teamId: String(team._id),
 			userId: String(requester._id),
-			kind: stripeDef.kind,
-			priceId: stripeDef.priceId,
-			planKey: stripeDef.planKey || '',
-			billingCycle: stripeDef.billingCycle || '',
-			addonId: stripeDef.addonId || '',
+			kind: 'subscription',
+			planKey: planDef.planKey,
+			billingCycle: planDef.billingCycle,
+			moduleKeys: moduleKeysJoined,
+			priceIds: ids.join(','),
+			planPriceId: planDef.priceId,
 		},
-	}
-
-	if (stripeDef.kind === 'plan') {
-		team.stripePendingPlanKey = stripeDef.planKey
-		team.stripePendingBillingCycle = stripeDef.billingCycle
-		await team.save()
-		sessionParams.subscription_data = {
+		subscription_data: {
 			metadata: {
 				teamId: String(team._id),
-				planKey: stripeDef.planKey,
-				billingCycle: stripeDef.billingCycle,
-				priceId: stripeDef.priceId,
+				planKey: planDef.planKey,
+				billingCycle: planDef.billingCycle,
+				moduleKeys: moduleKeysJoined,
+				priceId: planDef.priceId,
 			},
-		}
+		},
 	}
 
 	const session = await stripe.checkout.sessions.create(sessionParams)
@@ -140,7 +233,9 @@ async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
 	const invoiceId = String(invoice.id || '')
 	let subscription = null
 	if (invoice.subscription) {
-		subscription = await stripe.subscriptions.retrieve(String(invoice.subscription))
+		subscription = await stripe.subscriptions.retrieve(String(invoice.subscription), {
+			expand: ['items.data.price'],
+		})
 	}
 	const metadata = subscription?.metadata || {}
 	let teamId = safeObjectId(metadata.teamId)
@@ -164,46 +259,54 @@ async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
 		return null
 	}
 
-	let stripeDef = null
+	let planKey = null
+	let billingCycle = null
+	const teamSnap = await Team.findById(teamId).select(
+		'stripePendingPlanKey stripePendingBillingCycle stripePendingModuleKeys'
+	)
+	const moduleKeys = mergeModuleKeysArrays(
+		collectModuleKeysFromStripeSubscription(subscription),
+		teamSnap?.stripePendingModuleKeys
+	)
+
+	for (const item of subscription?.items?.data || []) {
+		const pid = item.price?.id
+		if (!pid) continue
+		try {
+			const def = getStripePriceDefinition(pid)
+			if (def.kind === 'plan') {
+				planKey = def.planKey
+				billingCycle = def.billingCycle
+				break
+			}
+		} catch (_) {
+			// skip
+		}
+	}
 
 	const fromMetaIntent = resolvePlanIntentFromSubscriptionMetadata(metadata)
-	if (fromMetaIntent) {
-		stripeDef = { kind: 'plan', ...fromMetaIntent }
+	if (!planKey && fromMetaIntent) {
+		planKey = fromMetaIntent.planKey
+		billingCycle = fromMetaIntent.billingCycle
 	}
 
-	let priceId = ''
-	const firstLine = Array.isArray(invoice.lines?.data) ? invoice.lines.data[0] : null
-	if (!priceId && firstLine?.price?.id) priceId = String(firstLine.price.id)
-	if (!priceId && firstLine?.pricing?.price_details?.price) {
-		priceId = String(firstLine.pricing.price_details.price)
-	}
-	if (!priceId && Array.isArray(subscription?.items?.data) && subscription.items.data[0]?.price?.id) {
-		priceId = String(subscription.items.data[0].price.id)
-	}
-	if (!priceId && metadata?.priceId) {
-		priceId = String(metadata.priceId)
-	}
-	if (!stripeDef && priceId) {
-		try {
-			stripeDef = getStripePriceDefinition(priceId)
-		} catch {
-			stripeDef = null
-		}
-	}
-	if (!stripeDef || stripeDef.kind !== 'plan') {
-		const team = await Team.findById(teamId).select('stripePendingPlanKey stripePendingBillingCycle')
+	if (!planKey || !billingCycle) {
 		const pending = resolvePlanIntentFromSubscriptionMetadata({
-			planKey: team?.stripePendingPlanKey,
-			billingCycle: team?.stripePendingBillingCycle,
+			planKey: teamSnap?.stripePendingPlanKey,
+			billingCycle: teamSnap?.stripePendingBillingCycle,
 		})
 		if (pending) {
-			stripeDef = { kind: 'plan', ...pending }
-		} else {
-			console.warn(`[stripe] invoice.paid skipped: cannot resolve plan intent for invoice=${invoiceId}`)
-			return null
+			planKey = pending.planKey
+			billingCycle = pending.billingCycle
 		}
 	}
 
+	if (!planKey || !billingCycle) {
+		console.warn(`[stripe] invoice.paid skipped: cannot resolve plan intent for invoice=${invoiceId}`)
+		return null
+	}
+
+	const firstLine = Array.isArray(invoice.lines?.data) ? invoice.lines.data[0] : null
 	const periodEndIso =
 		periodEndIsoFromUnixSeconds(firstLine?.period?.end) ||
 		periodEndIsoFromUnixSeconds(subscription?.current_period_end)
@@ -215,8 +318,9 @@ async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
 
 	return {
 		teamId,
-		planKey: stripeDef.planKey,
-		billingCycle: stripeDef.billingCycle,
+		planKey,
+		billingCycle,
+		moduleKeys,
 		periodEndIso,
 		invoiceId,
 		subscriptionId: subscription ? String(subscription.id) : '',
@@ -254,23 +358,49 @@ async function handleCheckoutSessionCompleted(event) {
 			await team.save()
 		}
 
-		// Fallback activation for first payment in case invoice payload lacks team metadata mapping.
+		// Fallback aktywacji gdy invoice.paid przyjdzie później lub mapowanie jest niepełne.
 		try {
-			const priceId = data.metadata?.priceId
-			const stripeDef = getStripePriceDefinition(priceId)
-			if (stripeDef.kind === 'plan' && data.subscription) {
+			if (data.subscription) {
 				const stripe = getStripeClient()
-				const sub = await stripe.subscriptions.retrieve(String(data.subscription))
+				const sub = await stripe.subscriptions.retrieve(String(data.subscription), {
+					expand: ['items.data.price'],
+				})
 				const periodEndIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
-				if (periodEndIso) {
+				let planKey = null
+				let billingCycle = null
+				for (const item of sub.items?.data || []) {
+					const pid = item.price?.id
+					if (!pid) continue
+					try {
+						const d = getStripePriceDefinition(pid)
+						if (d.kind === 'plan') {
+							planKey = d.planKey
+							billingCycle = d.billingCycle
+							break
+						}
+					} catch (_) {}
+				}
+				const teamPending = await Team.findById(teamId).select('stripePendingModuleKeys')
+				const moduleKeys = mergeModuleKeysArrays(
+					collectModuleKeysFromStripeSubscription(sub),
+					parseModuleKeysMetadataCsv(data.metadata?.moduleKeys),
+					teamPending?.stripePendingModuleKeys
+				)
+				if (periodEndIso && planKey && billingCycle) {
 					await billingActivationService.activatePaidPlan({
 						teamId,
-						planKey: stripeDef.planKey,
-						billingCycle: stripeDef.billingCycle,
+						planKey,
+						billingCycle,
 						periodEnd: periodEndIso,
 						idempotencyKey: eventSeenKey(event.id),
 						actorLabel: 'stripe',
+						moduleKeys,
 					})
+					const tClear = await Team.findById(teamId)
+					if (tClear) {
+						tClear.stripePendingModuleKeys = undefined
+						await tClear.save()
+					}
 				}
 			}
 		} catch (e) {
@@ -313,6 +443,7 @@ async function handleInvoicePaid(event, stripe) {
 		idempotencyKey: invoiceSeenKey(resolved.invoiceId),
 		actorLabel: 'stripe',
 		enforceSeatLimit: !isRenewalCycle,
+		moduleKeys: resolved.moduleKeys,
 	})
 	const team = await Team.findById(resolved.teamId)
 	if (team) {
@@ -322,6 +453,7 @@ async function handleInvoicePaid(event, stripe) {
 		team.stripeCancelAtPeriodEnd = false
 		team.stripePendingPlanKey = null
 		team.stripePendingBillingCycle = null
+		team.stripePendingModuleKeys = undefined
 		await team.save()
 	}
 
@@ -358,7 +490,26 @@ async function handleSubscriptionUpdated(event) {
 		if (sub.status && sub.status !== 'active' && sub.status !== 'trialing') {
 			team.billingStatus = 'inactive'
 		}
+		if (
+			(sub.status === 'active' || sub.status === 'trialing') &&
+			isCorePlanKey(normalizePaidPlanKey(team.billingPlanKey))
+		) {
+			try {
+				const stripe = getStripeClient()
+				const full = await stripe.subscriptions.retrieve(String(sub.id), {
+					expand: ['items.data.price'],
+				})
+				let keys = collectModuleKeysFromStripeSubscription(full)
+				if (!keys.length && team.stripePendingModuleKeys?.length) {
+					keys = team.stripePendingModuleKeys.filter(isModuleKey)
+				}
+				team.billingModuleKeys = keys
+			} catch (e) {
+				console.warn('[stripe] subscription.updated module sync skipped:', e.message)
+			}
+		}
 		await team.save()
+		await entitlementsService.syncTimerEnabledSettingForTeam(teamId)
 	}
 	return { handled: true, eventType: event.type, duplicate: false }
 }

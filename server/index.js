@@ -77,8 +77,8 @@ firmDb.on('connected', async () => {
 			}
 			if (SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(team.name)) {
 				let billingChanged = false
-				if (team.billingPlanKey !== 'starter') {
-					team.billingPlanKey = 'starter'
+				if (team.billingPlanKey !== 'pro' && team.billingPlanKey !== 'starter' && team.billingPlanKey !== 'base_s') {
+					team.billingPlanKey = 'pro'
 					billingChanged = true
 				}
 				if (team.billingStatus !== 'active') {
@@ -95,6 +95,10 @@ firmDb.on('connected', async () => {
 				}
 				if (team.billingPeriodEnd != null) {
 					team.billingPeriodEnd = null
+					billingChanged = true
+				}
+				if (team.trialEndsAt != null) {
+					team.trialEndsAt = null
 					billingChanged = true
 				}
 				if (team.subscriptionType !== 'premium') {
@@ -317,7 +321,9 @@ app.use(helmet())
 app.use(i18nextMiddleware.handle(i18next))
 
 const freemiumApiGuard = require('./middleware/freemiumApiGuard')
+const planModuleApiGuard = require('./middleware/planModuleApiGuard')
 app.use(freemiumApiGuard)
+app.use(planModuleApiGuard)
 
 app.use('/api/public', publicRoutes)
 app.use('/api/teams', teamRoutes) // nowe trasy dla zespołów

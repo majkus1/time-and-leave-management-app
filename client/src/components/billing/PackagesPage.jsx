@@ -30,13 +30,46 @@ import './PackagesPage.css'
 const MIN_INVOICE_ADDRESS_LEN = 6
 
 const TIER_LABELS = {
-	starter: 'Starter',
-	pro: 'Pro',
+	starter: 'Core — do 15 użytkowników',
+	base_s: 'Core — do 15 użytkowników',
+	base_m: 'Core — do 30 użytkowników',
+	base_l: 'Core — do 100 użytkowników',
+	pro: 'PRO',
 	business: 'Business',
 	enterprise: 'Enterprise',
 }
 
-const PAID_PLAN_IDS = ['starter', 'pro', 'business', 'enterprise']
+const PAID_PLAN_IDS = ['base_s', 'base_m', 'base_l', 'pro', 'business', 'enterprise']
+
+const MODULE_LABELS = {
+	timer_qr: 'Timer + QR',
+	schedules_ai: 'Grafiki + AI',
+	tasks: 'Zadania (kanban)',
+	chat: 'Czat zespołowy',
+	ai_assistant: 'Asystent AI',
+}
+
+function collectPriceIdsForStripeCheckout(stripeStatus, planKey, billingCycle, moduleKeys) {
+	const map = Array.isArray(stripeStatus?.priceMap) ? stripeStatus.priceMap : []
+	const planRow = map.find(
+		r => r.kind === 'plan' && r.planKey === planKey && r.billingCycle === billingCycle
+	)
+	if (!planRow) return null
+	const ids = [planRow.priceId]
+	for (const mk of moduleKeys || []) {
+		const mr = map.find(
+			r => r.kind === 'module' && r.moduleKey === mk && r.billingCycle === billingCycle
+		)
+		if (!mr) return null
+		ids.push(mr.priceId)
+	}
+	return ids
+}
+
+function stripeMapsAllPriceIds(stripeStatus, ids) {
+	const set = new Set((stripeStatus?.priceMap || []).map(r => r.priceId))
+	return ids.every(id => set.has(id))
+}
 
 function billingAxiosErrorMessage(error, t) {
 	const d = error?.response?.data
@@ -147,6 +180,30 @@ function hasStripeMappingForBody(stripeStatus, body) {
 	return false
 }
 
+function parseModulesFromSearchParams(searchParams, catalog) {
+	const raw = searchParams.get('modules')
+	if (!raw?.trim() || !catalog?.modules?.length) return []
+	const allowed = new Set(catalog.modules.map(m => m.id))
+	return raw
+		.split(',')
+		.map(s => s.trim())
+		.filter(id => allowed.has(id))
+}
+
+function corePlanCheckoutAvailableFromUrl(stripeStatus, p24Status, planKey, billingCycle, moduleKeys) {
+	if (billingCycle === 'annual') {
+		return p24Status?.ready === true
+	}
+	if (!moduleKeys?.length) {
+		const body = { kind: 'plan', planKey, billingCycle }
+		return p24Status?.ready === true || hasStripeMappingForBody(stripeStatus, body)
+	}
+	const compositeIds = collectPriceIdsForStripeCheckout(stripeStatus, planKey, billingCycle, moduleKeys)
+	const compositeOk =
+		compositeIds && stripeStatus?.ready === true && stripeMapsAllPriceIds(stripeStatus, compositeIds)
+	return p24Status?.ready === true || compositeOk === true
+}
+
 function priceBlock(monthlyNet, billing, t, resolvedLang) {
 	if (isEnglishResolved(resolvedLang)) {
 		if (billing === 'monthly') {
@@ -212,6 +269,9 @@ export default function PackagesPage() {
 	const [paymentChoiceModal, setPaymentChoiceModal] = useState(null)
 	const [cancelStripeModalOpen, setCancelStripeModalOpen] = useState(false)
 	const [note, setNote] = useState('')
+	const [coreConfiguratorOpen, setCoreConfiguratorOpen] = useState(false)
+	const [coreConfiguratorPlanKey, setCoreConfiguratorPlanKey] = useState('base_s')
+	const [coreConfiguratorMods, setCoreConfiguratorMods] = useState([])
 	const [justSent, setJustSent] = useState(false)
 	const [p24BusyKey, setP24BusyKey] = useState(null)
 	const [invBuyerType, setInvBuyerType] = useState('company')
@@ -225,6 +285,45 @@ export default function PackagesPage() {
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
 	const onlineStatusLoading = p24StatusLoading || stripeStatusLoading
 	const isPl = i18n.resolvedLanguage === 'pl'
+
+	const coreTierList = useMemo(() => {
+		if (!catalog?.tiers) return []
+		return catalog.tiers.filter(t => t.tierType === 'core')
+	}, [catalog])
+
+	const proTier = useMemo(() => catalog?.tiers?.find(t => t.id === 'pro'), [catalog])
+	const businessTier = useMemo(() => catalog?.tiers?.find(t => t.id === 'business'), [catalog])
+
+	const coreMonthlyMinPln = useMemo(() => {
+		if (!coreTierList.length) return null
+		const nums = coreTierList.map(t => t.monthlyNetPln).filter(n => n != null && Number.isFinite(n))
+		return nums.length ? Math.min(...nums) : null
+	}, [coreTierList])
+
+	const coreEstimatedMonthlyPln = useMemo(() => {
+		if (!catalog?.tiers) return 0
+		const tier = catalog.tiers.find(t => t.id === coreConfiguratorPlanKey)
+		const base = tier?.monthlyNetPln ?? 0
+		let mods = 0
+		for (const id of coreConfiguratorMods) {
+			mods += catalog.modules?.find(m => m.id === id)?.monthlyNetPln ?? 0
+		}
+		return base + mods
+	}, [catalog, coreConfiguratorPlanKey, coreConfiguratorMods])
+
+	const coreUpsellVsPro = useMemo(() => {
+		const proPln = proTier?.monthlyNetPln
+		if (proPln == null || !Number.isFinite(proPln)) return false
+		return coreEstimatedMonthlyPln > proPln
+	}, [coreEstimatedMonthlyPln, proTier])
+
+	const coreConfiguratorPriceDisplay = useMemo(
+		() => priceBlock(coreEstimatedMonthlyPln, billing, t, i18n.resolvedLanguage),
+		[coreEstimatedMonthlyPln, billing, t, i18n.resolvedLanguage]
+	)
+
+	const hasCoreOptionalModules = Boolean(Array.isArray(catalog?.modules) && catalog.modules.length > 0)
+	const coreConfiguratorSummaryStepNum = hasCoreOptionalModules ? 3 : 2
 
 	useEffect(() => {
 		const bi = ent?.billingInvoice
@@ -363,6 +462,134 @@ export default function PackagesPage() {
 		[stripeStatus, p24Status, startOnlineCheckout]
 	)
 
+	const executeCoreCheckout = useCallback(
+		async provider => {
+			if (provider !== 'stripe' && provider !== 'p24') return
+			if (!canSubmitPurchaseRequest) return
+			const planKey = coreConfiguratorPlanKey
+			const mods = coreConfiguratorMods
+			const tier = catalog?.tiers?.find(t => t.id === planKey)
+			if (catalog && teamSeats != null && tier && teamSeats > tier.maxUsers) {
+				await showAlert(
+					t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers })
+				)
+				return
+			}
+			setJustSent(false)
+			setNote('')
+			const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+
+			if (mods.length > 0) {
+				if (provider === 'p24') {
+					await startOnlineCheckout(
+						{ kind: 'plan', planKey, billingCycle: cycle, moduleKeys: mods },
+						{ forceProvider: 'p24' }
+					)
+					return
+				}
+				const compositeIds = collectPriceIdsForStripeCheckout(stripeStatus, planKey, cycle, mods)
+				const compositeOk =
+					compositeIds && stripeStatus?.ready === true && stripeMapsAllPriceIds(stripeStatus, compositeIds)
+				if (!stripeStatus?.ready || !compositeIds || !compositeOk) {
+					await showAlert(t('billingPackages.stripeModulesNeedStripe'))
+					return
+				}
+				setP24BusyKey(`plan:${planKey}`)
+				try {
+					const data = await stripeCheckout.mutateAsync({ priceIds: compositeIds })
+					if (data?.redirectUrl) window.location.assign(data.redirectUrl)
+				} catch (e) {
+					await showAlert(
+						billingAxiosErrorMessage(e, t) ||
+							e.response?.data?.message ||
+							e.message ||
+							t('billingPackages.p24PayError')
+					)
+				} finally {
+					setP24BusyKey(null)
+				}
+				return
+			}
+
+			const body = { kind: 'plan', planKey, billingCycle: cycle }
+			const anyOnline = p24Status?.ready === true || hasStripeMappingForBody(stripeStatus, body)
+
+			if (!anyOnline) {
+				setCoreConfiguratorOpen(false)
+				setModal({ kind: 'plan', planKey, billingCycle: cycle })
+				return
+			}
+
+			if (cycle === 'annual' && provider === 'stripe') {
+				await showAlert(t('billingPackages.coreConfiguratorAnnualStripeUnavailable'))
+				return
+			}
+
+			await startOnlineCheckout(body, { forceProvider: provider })
+		},
+		[
+			canSubmitPurchaseRequest,
+			catalog,
+			teamSeats,
+			billing,
+			stripeStatus,
+			p24Status,
+			stripeCheckout,
+			t,
+			showAlert,
+			startOnlineCheckout,
+			coreConfiguratorPlanKey,
+			coreConfiguratorMods,
+		]
+	)
+
+	const coreConfiguratorPayDisabled = useMemo(() => {
+		const planKey = coreConfiguratorPlanKey
+		const mods = coreConfiguratorMods
+		const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+		const tier = catalog?.tiers?.find(t => t.id === planKey)
+		const seatBlocked = teamSeats != null && tier && teamSeats > tier.maxUsers
+		const baseBusy = !canSubmitPurchaseRequest || onlineStatusLoading || seatBlocked || p24BusyKey !== null
+
+		const body = { kind: 'plan', planKey, billingCycle: cycle }
+		const stripeMapped = hasStripeMappingForBody(stripeStatus, body)
+		const stripeReadyPlan = stripeStatus?.ready === true && stripeMapped
+		const p24Ready = p24Status?.ready === true
+		const anyOnline = p24Ready || stripeMapped
+
+		let stripeDisabled = baseBusy
+		let p24Disabled = baseBusy
+
+		if (mods.length > 0) {
+			const compositeIds = collectPriceIdsForStripeCheckout(stripeStatus, planKey, cycle, mods)
+			const compositeOk =
+				Boolean(compositeIds) &&
+				stripeStatus?.ready === true &&
+				stripeMapsAllPriceIds(stripeStatus, compositeIds)
+			stripeDisabled = baseBusy || !compositeOk
+			p24Disabled = baseBusy || !p24Ready
+		} else if (cycle === 'annual') {
+			stripeDisabled = true
+			p24Disabled = baseBusy || (anyOnline && !p24Ready)
+		} else {
+			stripeDisabled = baseBusy || (anyOnline && !stripeReadyPlan)
+			p24Disabled = baseBusy || (anyOnline && !p24Ready)
+		}
+
+		return { stripeDisabled, p24Disabled }
+	}, [
+		coreConfiguratorPlanKey,
+		coreConfiguratorMods,
+		billing,
+		catalog,
+		teamSeats,
+		canSubmitPurchaseRequest,
+		onlineStatusLoading,
+		p24BusyKey,
+		stripeStatus,
+		p24Status,
+	])
+
 	useEffect(() => {
 		if (p24ReturnHandledRef.current) return
 		if (searchParams.get('p24') !== '1') return
@@ -387,7 +614,8 @@ export default function PackagesPage() {
 			if (searchParams.get('plan')) appliedQueryRef.current = true
 			return
 		}
-		const plan = searchParams.get('plan')
+		let plan = searchParams.get('plan')
+		if (plan === 'starter') plan = 'base_s'
 		const bill = searchParams.get('billing') === 'annual' ? 'annual' : 'monthly'
 		if (plan === 'addon') {
 			const addonId = searchParams.get('addon')
@@ -402,6 +630,41 @@ export default function PackagesPage() {
 					setModal({ kind: 'addon', addonId })
 				}
 			}
+			return
+		}
+		if (plan && ['base_s', 'base_m', 'base_l'].includes(plan)) {
+			if (ent && paidSubscriptionActive(ent) && ent.planKey === plan) {
+				appliedQueryRef.current = true
+				return
+			}
+			if (!ent) return
+			const tier = catalog.tiers.find(t => t.id === plan)
+			const seats = typeof ent.teamMemberCount === 'number' ? ent.teamMemberCount : null
+			if (seats != null && tier && seats > tier.maxUsers) {
+				appliedQueryRef.current = true
+				return
+			}
+			const modulesFiltered = parseModulesFromSearchParams(searchParams, catalog)
+			const checkoutNow = searchParams.get('checkout') === '1'
+			appliedQueryRef.current = true
+			setBilling(bill)
+			setNote('')
+			setCoreConfiguratorPlanKey(plan)
+			setCoreConfiguratorMods(modulesFiltered)
+			if (
+				checkoutNow &&
+				corePlanCheckoutAvailableFromUrl(stripeStatus, p24Status, plan, bill, modulesFiltered)
+			) {
+				const body = {
+					kind: 'plan',
+					planKey: plan,
+					billingCycle: bill,
+					...(modulesFiltered.length ? { moduleKeys: modulesFiltered } : {}),
+				}
+				requestPlanOnlineCheckout(body)
+				return
+			}
+			setCoreConfiguratorOpen(true)
 			return
 		}
 		if (plan && catalog.tiers?.some(t => t.id === plan)) {
@@ -799,13 +1062,23 @@ export default function PackagesPage() {
 					)}
 				</div>
 
-				<div className="packages-grid">
-					{catalog.tiers.map(tier => {
+				{(() => {
+					const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+					const isCorePlanActive =
+						activePaid && ent && ['base_s', 'base_m', 'base_l'].includes(ent.planKey)
+					const corePb =
+						coreMonthlyMinPln != null
+							? priceBlock(coreMonthlyMinPln, billing, t, i18n.resolvedLanguage)
+							: { main: '—', sub: '' }
+
+					const renderBundleCard = tier => {
+						if (!tier) return null
 						const isPro = tier.id === 'pro'
 						const isCurrentPlan = Boolean(ent && activePaid && ent.planKey === tier.id)
 						const planSeatsBlocked = teamSeats != null && teamSeats > tier.maxUsers
 						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t, i18n.resolvedLanguage)
-						const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+						const planBody = { kind: 'plan', planKey: tier.id, billingCycle: cycle }
+						const stripePlanReady = hasStripeMappingForBody(stripeStatus, planBody)
 						return (
 							<div
 								key={tier.id}
@@ -822,37 +1095,95 @@ export default function PackagesPage() {
 								<h3>{TIER_LABELS[tier.id] || tier.id}</h3>
 								<div className="packages-tier__price">{main}</div>
 								<div className="packages-tier__price-sub">{sub}</div>
+								{tier.id === 'pro' && (
+									<p className="packages-tier__lead">{t('billingPackages.heroProLead')}</p>
+								)}
+								{tier.id === 'business' && (
+									<p className="packages-tier__lead">{t('billingPackages.heroBusinessLead')}</p>
+								)}
 								<ul className="packages-tier__features">
-									{(() => {
-										const feats = t(`billingPackages.tierFeatures.${tier.id}`, { returnObjects: true })
-										const lines =
-											Array.isArray(feats) && feats.length
-												? feats
-												: [
-														t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
-														t('billingPackages.planAi', { n: tier.aiMessagesPerMonth }),
-													]
-										return lines.map((line, i) => {
-											const enterpriseBold =
-												tier.id === 'enterprise' && i >= lines.length - 2
-											return (
+									{tier.id === 'pro' ? (
+										<>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">
+													<strong>{t('billingPackages.proBulletModules')}</strong>
+												</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">{t('billingPackages.proBulletAi')}</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">{t('billingPackages.proBulletUsers')}</span>
+											</li>
+										</>
+									) : tier.id === 'business' ? (
+										<>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">
+													<strong>{t('billingPackages.businessBulletModules')}</strong>
+												</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">{t('billingPackages.businessBulletAi')}</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">{t('billingPackages.businessBulletUsers')}</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">
+													<strong>{t('billingPackages.businessBulletPriority')}</strong>
+												</span>
+											</li>
+											<li className="packages-tier__feature">
+												<span className="packages-tier__feature-check" aria-hidden>
+													✓
+												</span>
+												<span className="packages-tier__feature-text">
+													<strong>{t('billingPackages.businessBulletIntegrations')}</strong>
+												</span>
+											</li>
+										</>
+									) : (
+										(() => {
+											const feats = t(`billingPackages.tierFeatures.${tier.id}`, { returnObjects: true })
+											const lines =
+												Array.isArray(feats) && feats.length
+													? feats
+													: [
+															t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
+															t('billingPackages.planAi', { n: tier.aiMessagesPerMonth }),
+														]
+											return lines.map((line, i) => (
 												<li key={i} className="packages-tier__feature">
 													<span className="packages-tier__feature-check" aria-hidden>
 														✓
 													</span>
-													<span
-														className={
-															enterpriseBold
-																? 'packages-tier__feature-text packages-tier__feature-text--bold'
-																: 'packages-tier__feature-text'
-														}
-													>
-														{line}
-													</span>
+													<span className="packages-tier__feature-text">{line}</span>
 												</li>
-											)
-										})
-									})()}
+											))
+										})()
+									)}
 								</ul>
 								<button
 									type="button"
@@ -879,11 +1210,7 @@ export default function PackagesPage() {
 										if (isCurrentPlan || !canSubmitPurchaseRequest || planSeatsBlocked) return
 										setJustSent(false)
 										setNote('')
-										const body = {
-											kind: 'plan',
-											planKey: tier.id,
-											billingCycle: cycle,
-										}
+										const body = { kind: 'plan', planKey: tier.id, billingCycle: cycle }
 										if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
 											requestPlanOnlineCheckout(body)
 										} else {
@@ -908,12 +1235,7 @@ export default function PackagesPage() {
 										t('billingPackages.orderEmailAdminOnlyShort')
 									) : onlineStatusLoading ? (
 										t('billingPackages.checkingPaymentOptions')
-									) : p24Status?.ready ||
-									  hasStripeMappingForBody(stripeStatus, {
-											kind: 'plan',
-											planKey: tier.id,
-											billingCycle: cycle,
-									  }) ? (
+									) : p24Status?.ready || stripePlanReady ? (
 										t('billingPackages.payOnlineCta')
 									) : (
 										t('billingPackages.orderEmail')
@@ -921,8 +1243,88 @@ export default function PackagesPage() {
 								</button>
 							</div>
 						)
-					})}
-				</div>
+					}
+
+					return (
+						<>
+							<div className="packages-grid packages-grid--hero">
+								<div
+									className={`packages-tier packages-tier--core-summary${
+										isCorePlanActive ? ' packages-tier--current' : ''
+									}`}
+								>
+									{isCorePlanActive && (
+										<span className="packages-tier__badge packages-tier__badge--current">
+											{t('billingPackages.planCurrentBadge')}
+										</span>
+									)}
+									<h3>{t('billingPackages.heroCoreTitle')}</h3>
+									<div className="packages-tier__price">
+										{t('billingPackages.fromWord')} {corePb.main}
+									</div>
+									<div className="packages-tier__price-sub">{corePb.sub}</div>
+									<p className="packages-tier__lead">{t('billingPackages.heroCoreLead')}</p>
+									<ul className="packages-tier__features">
+										<li className="packages-tier__feature">
+											<span className="packages-tier__feature-check" aria-hidden>
+												✓
+											</span>
+											<span className="packages-tier__feature-text">
+												<strong>{t('billingPackages.heroCoreFeat1')}</strong>
+											</span>
+										</li>
+										<li className="packages-tier__feature">
+											<span className="packages-tier__feature-check" aria-hidden>
+												✓
+											</span>
+											<span className="packages-tier__feature-text">
+												<strong>{t('billingPackages.heroCoreFeat2')}</strong>
+											</span>
+										</li>
+										<li className="packages-tier__feature">
+											<span className="packages-tier__feature-check" aria-hidden>
+												✓
+											</span>
+											<span className="packages-tier__feature-text">{t('billingPackages.heroCoreFeat3')}</span>
+										</li>
+									</ul>
+									<p className="packages-tier__hint">{t('billingPackages.heroCoreTeamHint')}</p>
+									<button
+										type="button"
+										className="packages-tier__cta"
+										disabled={!canSubmitPurchaseRequest || onlineStatusLoading}
+										onClick={() => {
+											setCoreConfiguratorPlanKey('base_s')
+											setCoreConfiguratorMods([])
+											setCoreConfiguratorOpen(true)
+										}}
+									>
+										{t('billingPackages.heroCoreCta')}
+									</button>
+								</div>
+
+								{renderBundleCard(proTier)}
+								{renderBundleCard(businessTier)}
+							</div>
+
+							<section className="packages-enterprise-strip" aria-labelledby="packages-enterprise-heading">
+								<div className="packages-enterprise-strip__main">
+									<h3 id="packages-enterprise-heading">{t('billingPackages.enterpriseStripTitle')}</h3>
+									<p className="packages-enterprise-strip__body">{t('billingPackages.enterpriseStripBody')}</p>
+								</div>
+								<div className="packages-enterprise-strip__cta">
+									<button
+										type="button"
+										className="packages-enterprise-strip__btn"
+										onClick={() => navigate('/helpcenter')}
+									>
+										{t('billingPackages.enterpriseCta')}
+									</button>
+								</div>
+							</section>
+						</>
+					)
+				})()}
 
 				<div className="packages-addons">
 					<h3>{t('billingPackages.addonsTitle')}</h3>
@@ -1165,6 +1567,164 @@ export default function PackagesPage() {
 				</section>
 			</div>
 
+			{coreConfiguratorOpen && (
+				<div
+					className="packages-modal-overlay packages-modal-overlay--scroll"
+					role="dialog"
+					aria-labelledby="core-configurator-title"
+					aria-modal="true"
+					onClick={() => setCoreConfiguratorOpen(false)}
+				>
+					<div className="packages-modal packages-modal--wide" onClick={e => e.stopPropagation()}>
+						<h4 id="core-configurator-title">{t('billingPackages.coreConfiguratorTitle')}</h4>
+						<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">
+							{t('billingPackages.coreConfiguratorHint')}
+						</p>
+						<div className="packages-core-step">
+							<div className="packages-core-step__head">
+								<span className="packages-core-step__num" aria-hidden>
+									1
+								</span>
+								<p className="packages-core-step__title">{t('billingPackages.coreConfiguratorStep1Title')}</p>
+							</div>
+							<fieldset className="packages-core-fieldset">
+								<legend className="packages-core-legend packages-core-legend--vh">
+									{t('billingPackages.coreConfiguratorStep1Title')}
+								</legend>
+								{coreTierList.map(ct => (
+									<label key={ct.id} className="packages-core-radio">
+										<input
+											type="radio"
+											name="corePlan"
+											checked={coreConfiguratorPlanKey === ct.id}
+											onChange={() => setCoreConfiguratorPlanKey(ct.id)}
+										/>
+										<span>
+											{t('billingPackages.coreConfiguratorSeatShort', {
+												maxUsers: ct.maxUsers,
+											})}
+										</span>
+									</label>
+								))}
+							</fieldset>
+						</div>
+						{hasCoreOptionalModules && (
+							<div className="packages-core-step">
+								<div className="packages-core-step__head">
+									<span className="packages-core-step__num" aria-hidden>
+										2
+									</span>
+									<p className="packages-core-step__title">{t('billingPackages.coreConfiguratorStep2Title')}</p>
+								</div>
+								<fieldset className="packages-core-fieldset">
+									<legend className="packages-core-legend packages-core-legend--vh">
+										{t('billingPackages.coreConfiguratorStep2Title')}
+									</legend>
+									{catalog.modules.map(m => (
+										<label key={m.id} className="packages-core-check">
+											<input
+												type="checkbox"
+												checked={coreConfiguratorMods.includes(m.id)}
+												onChange={() => {
+													setCoreConfiguratorMods(prev =>
+														prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id]
+													)
+												}}
+											/>
+											<span>
+												{MODULE_LABELS[m.id] || m.id}
+												{m.monthlyNetPln != null ? ` (+${m.monthlyNetPln} PLN)` : ''}
+											</span>
+										</label>
+									))}
+								</fieldset>
+								<p className="packages-core-module-footnote" role="note">
+									{t('billingPackages.coreConfiguratorAiModuleFootnote')}
+								</p>
+							</div>
+						)}
+						<div className="packages-core-step packages-core-step--summary">
+							<div className="packages-core-step__head">
+								<span className="packages-core-step__num" aria-hidden>
+									{coreConfiguratorSummaryStepNum}
+								</span>
+								<p className="packages-core-step__title">{t('billingPackages.coreConfiguratorStep3Title')}</p>
+							</div>
+							<div className="packages-core-total" role="status">
+								<div className="packages-core-total__row">
+									<strong>{t('billingPackages.coreConfiguratorTotalEmphasis')}</strong>{' '}
+									<span className="packages-core-total__amount">
+										{coreConfiguratorPriceDisplay.main}
+									</span>
+									{billing === 'monthly' && (
+										<span className="packages-core-total-note">
+											{' '}
+											{coreConfiguratorPriceDisplay.sub}
+										</span>
+									)}
+								</div>
+								{billing === 'annual' && (
+									<p className="packages-core-total-annual-note">{coreConfiguratorPriceDisplay.sub}</p>
+								)}
+							</div>
+							{coreUpsellVsPro && (
+								<div className="packages-core-upsell" role="status">
+									{t('billingPackages.coreUpsellPro', { proPrice: proTier?.monthlyNetPln ?? 239 })}
+								</div>
+							)}
+						</div>
+						<div className="packages-modal__actions packages-modal__actions--stack packages-modal__actions--pay">
+							<button
+								type="button"
+								className="packages-pay-btn packages-pay-btn--primary"
+								disabled={coreConfiguratorPayDisabled.stripeDisabled}
+								onClick={() => void executeCoreCheckout('stripe')}
+							>
+								{t('billingPackages.coreConfiguratorPayCard')}
+							</button>
+							<button
+								type="button"
+								className="packages-pay-btn packages-pay-btn--secondary"
+								disabled={coreConfiguratorPayDisabled.p24Disabled}
+								onClick={() => void executeCoreCheckout('p24')}
+							>
+								{t('billingPackages.coreConfiguratorPayP24')}
+							</button>
+							{coreUpsellVsPro && proTier && (
+								<button
+									type="button"
+									className="packages-pay-btn packages-pay-btn--upsell"
+									onClick={() => {
+										setCoreConfiguratorOpen(false)
+										setJustSent(false)
+										setNote('')
+										const billCycle = billing === 'monthly' ? 'monthly' : 'annual'
+										const body = { kind: 'plan', planKey: 'pro', billingCycle: billCycle }
+										if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
+											requestPlanOnlineCheckout(body)
+										} else {
+											setModal({ kind: 'plan', planKey: 'pro', billingCycle: billCycle })
+										}
+									}}
+								>
+									{t('billingPackages.coreUpsellProCta')}
+								</button>
+							)}
+							<button
+								type="button"
+								className="packages-pay-btn packages-pay-btn--ghost"
+								onClick={() => setCoreConfiguratorOpen(false)}
+							>
+								{modalLabels.cancel}
+							</button>
+						</div>
+						<p className="packages-core-payment-footnote" role="note">
+							{t('billingPackages.coreConfiguratorPayFootnote')}
+						</p>
+					</div>
+				</div>
+			)}
+
 			{modal && (
 				<div
 					className="packages-modal-overlay"
@@ -1232,38 +1792,39 @@ export default function PackagesPage() {
 					onClick={() => setPaymentChoiceModal(null)}
 				>
 					<div className="packages-modal" onClick={e => e.stopPropagation()}>
-						<h4>
-							{isPl ? 'Wybierz metodę płatności' : 'Choose payment method'}
-						</h4>
-						<p className="packages-modal__fallback-intro" style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.75rem' }}>
-							{isPl
-								? 'Wybierz wygodną metodę: karta cykliczna albo płatność jednorazowa (BLIK, banki).'
-								: 'Choose your method: recurring card or one-time payment (BLIK, banks).'}
+						<h4>{t('billingPackages.paymentChoiceTitle')}</h4>
+						<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">
+							{t('billingPackages.paymentChoiceIntro')}
 						</p>
-						<div className="packages-modal__actions packages-modal__actions--stack">
+						<div className="packages-modal__actions packages-modal__actions--stack packages-modal__actions--pay">
 							<button
 								type="button"
-								className="primary"
+								className="packages-pay-btn packages-pay-btn--primary"
 								onClick={() => {
 									const body = paymentChoiceModal
 									setPaymentChoiceModal(null)
 									void startOnlineCheckout(body, { forceProvider: 'stripe' })
 								}}
 							>
-								{isPl ? 'Subskrypcja cykliczna kartą' : 'Recurring card subscription'}
+								{t('billingPackages.paymentChoiceStripeBtn')}
 							</button>
 							<button
 								type="button"
+								className="packages-pay-btn packages-pay-btn--secondary"
 								onClick={() => {
 									const body = paymentChoiceModal
 									setPaymentChoiceModal(null)
 									void startOnlineCheckout(body, { forceProvider: 'p24' })
 								}}
 							>
-								{isPl ? 'Płatność jednorazowa (BLIK/banki)' : 'One-time payment (BLIK/banks)'}
+								{t('billingPackages.paymentChoiceP24Btn')}
 							</button>
-							<button type="button" onClick={() => setPaymentChoiceModal(null)}>
-								{isPl ? 'Anuluj' : 'Cancel'}
+							<button
+								type="button"
+								className="packages-pay-btn packages-pay-btn--ghost"
+								onClick={() => setPaymentChoiceModal(null)}
+							>
+								{modalLabels.cancel}
 							</button>
 						</div>
 					</div>

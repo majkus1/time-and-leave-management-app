@@ -138,7 +138,7 @@ exports.registerTeam = async (req, res) => {
 				}
 			: isManualBillingStarter
 				? {
-						billingPlanKey: 'starter',
+						billingPlanKey: 'pro',
 						billingStatus: 'active',
 						billingHadPaidPlan: true,
 						billingCycle: 'monthly',

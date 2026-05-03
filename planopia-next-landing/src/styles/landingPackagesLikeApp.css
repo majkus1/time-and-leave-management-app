@@ -1,0 +1,464 @@
+/* Fragment stylów z client/.../PackagesPage.css — karty hero + modal Core (landing). */
+.landing-pricing-app-clone {
+	font-family: inherit;
+	color: #0f172a;
+}
+
+.landing-pricing-app-clone .packages-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+
+@media (min-width: 900px) {
+	.landing-pricing-app-clone .packages-grid--hero {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		align-items: stretch;
+	}
+}
+
+.landing-pricing-app-clone .packages-tier {
+	position: relative;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 1.1rem;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.landing-pricing-app-clone .packages-tier--highlight {
+	border-color: #a5b4fc;
+	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.landing-pricing-app-clone .packages-tier__badge {
+	position: absolute;
+	top: -0.5rem;
+	left: 50%;
+	transform: translateX(-50%);
+	background: linear-gradient(90deg, #6366f1, #8b5cf6);
+	/* Globalne `a { color }` / Tailwind nie mogą nadpisać — tekst na fioletowym tle */
+	color: #ffffff !important;
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 0.2rem 0.65rem;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.landing-pricing-app-clone .packages-tier h3 {
+	margin: 0.25rem 0 0.5rem;
+	font-size: 1.15rem;
+	color: #0f172a;
+}
+
+.landing-pricing-app-clone .packages-tier__price {
+	font-size: 1.9rem;
+	font-weight: 900;
+	color: #020617;
+	letter-spacing: -0.02em;
+	line-height: 1.05;
+	margin-bottom: 0.25rem;
+}
+
+.landing-pricing-app-clone .packages-tier__price-sub {
+	font-size: 0.75rem;
+	color: #64748b;
+	margin-bottom: 0.75rem;
+	min-height: 2.2em;
+}
+
+.landing-pricing-app-clone .packages-tier__features {
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	font-size: 0.875rem;
+	color: #334155;
+	line-height: 1.45;
+}
+
+.landing-pricing-app-clone .packages-tier__feature {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.65rem;
+}
+
+.landing-pricing-app-clone .packages-tier__feature-check {
+	color: #059669;
+	font-size: 1rem;
+	line-height: 1.25;
+	flex-shrink: 0;
+	margin-top: 0.125rem;
+	user-select: none;
+}
+
+.landing-pricing-app-clone .packages-tier__feature-text {
+	flex: 1;
+	min-width: 0;
+	color: #374151;
+}
+
+.landing-pricing-app-clone .packages-tier__lead {
+	margin: 0.5rem 0 0.75rem;
+	font-size: 0.9rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.landing-pricing-app-clone .packages-tier__hint {
+	margin: 0.5rem 0 0;
+	font-size: 0.8rem;
+	line-height: 1.4;
+	color: #64748b;
+}
+
+.landing-pricing-app-clone .packages-tier__cta {
+	margin-top: auto;
+	padding: 0.55rem 1rem;
+	border-radius: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid #0f172a;
+	background: #0f172a;
+	color: #fff;
+	width: 100%;
+	font-size: inherit;
+	font-family: inherit;
+}
+
+.landing-pricing-app-clone .packages-tier__cta:hover {
+	opacity: 0.92;
+}
+
+.landing-pricing-app-clone .packages-tier--core-summary {
+	display: flex;
+	flex-direction: column;
+}
+
+.landing-pricing-app-clone .packages-tier a.packages-tier__bundle-cta {
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	margin-top: auto;
+	width: 100%;
+	padding: 0.65rem 1rem;
+	border-radius: 10px;
+	border: none;
+	font-weight: 600;
+	cursor: pointer;
+	background: #0f172a;
+	color: #ffffff !important;
+	box-sizing: border-box;
+	font-size: inherit;
+	font-family: inherit;
+}
+
+.landing-pricing-app-clone .packages-tier--highlight a.packages-tier__bundle-cta {
+	background: linear-gradient(90deg, #4f46e5, #7c3aed);
+}
+
+.landing-pricing-app-clone .packages-tier a.packages-tier__bundle-cta:hover {
+	opacity: 0.92;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip {
+	margin: 1.5rem 0 2rem;
+	padding: 1.25rem 1.5rem;
+	border-radius: 14px;
+	background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+	border: 1px solid #e2e8f0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem 2rem;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__main {
+	flex: 1 1 280px;
+	min-width: 0;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__main h3 {
+	margin: 0 0 0.35rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__body {
+	margin: 0;
+	font-size: 0.9rem;
+	color: #64748b;
+	line-height: 1.5;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__cta {
+	flex: 0 0 auto;
+	text-align: right;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__btn {
+	padding: 0.5rem 1.1rem;
+	border-radius: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid #334155;
+	background: #fff;
+	color: #0f172a;
+	font-size: inherit;
+	font-family: inherit;
+	text-decoration: none;
+	display: inline-block;
+}
+
+.landing-pricing-app-clone .packages-enterprise-strip__btn:hover {
+	background: #f8fafc;
+}
+
+/* Modal */
+.landing-pricing-app-clone .packages-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+	z-index: 10050;
+}
+
+.landing-pricing-app-clone .packages-modal {
+	background: #fff;
+	border-radius: 14px;
+	max-width: 520px;
+	width: 100%;
+	padding: 1.25rem;
+	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+	max-height: min(92dvh, 900px);
+	overflow-x: hidden;
+	overflow-y: auto;
+	margin-top: max(0.75rem, env(safe-area-inset-top));
+	margin-bottom: 1rem;
+	overscroll-behavior: contain;
+}
+
+.landing-pricing-app-clone .packages-modal h4 {
+	margin: 0 0 0.75rem;
+	color: #0f172a;
+}
+
+.landing-pricing-app-clone .packages-modal__fallback-intro--compact {
+	margin-bottom: 1rem;
+	font-size: 0.88rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.landing-pricing-app-clone .packages-core-step {
+	margin-bottom: 1.15rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.landing-pricing-app-clone .packages-core-step--summary {
+	border-bottom: 0;
+	margin-bottom: 0.75rem;
+	padding-bottom: 0;
+}
+
+.landing-pricing-app-clone .packages-core-step__head {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.55rem;
+	margin-bottom: 0.55rem;
+}
+
+.landing-pricing-app-clone .packages-core-step__num {
+	flex-shrink: 0;
+	width: 1.65rem;
+	height: 1.65rem;
+	line-height: 1.65rem;
+	text-align: center;
+	border-radius: 999px;
+	font-size: 0.85rem;
+	font-weight: 700;
+	background: #e0e7ff;
+	color: #3730a3;
+}
+
+.landing-pricing-app-clone .packages-core-step__title {
+	margin: 0;
+	font-size: 0.92rem;
+	font-weight: 600;
+	color: #334155;
+	line-height: 1.35;
+}
+
+.landing-pricing-app-clone .packages-core-fieldset {
+	margin: 0.75rem 0 0;
+	padding: 0.75rem 1rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fafafa;
+}
+
+.landing-pricing-app-clone .packages-core-legend--vh {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.landing-pricing-app-clone .packages-core-radio,
+.landing-pricing-app-clone .packages-core-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0.4rem 0;
+	cursor: pointer;
+	font-size: 0.9rem;
+	color: #475569;
+}
+
+.landing-pricing-app-clone .packages-core-module-footnote {
+	margin: 0.55rem 0 0;
+	padding: 0 0.15rem;
+	font-size: 0.72rem;
+	line-height: 1.35;
+	color: #64748b;
+}
+
+.landing-pricing-app-clone .packages-core-total {
+	margin-top: 1rem;
+	padding: 0.65rem 0.85rem;
+	border-radius: 10px;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	font-size: 0.95rem;
+	color: #1e3a5f;
+}
+
+.landing-pricing-app-clone .packages-core-total__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0 0.25rem;
+}
+
+.landing-pricing-app-clone .packages-core-total__amount {
+	font-weight: 600;
+}
+
+.landing-pricing-app-clone .packages-core-total-note {
+	font-weight: 400;
+	font-size: 0.8rem;
+	color: #64748b;
+}
+
+.landing-pricing-app-clone .packages-core-total-annual-note {
+	margin: 0.45rem 0 0;
+	font-size: 0.8rem;
+	line-height: 1.45;
+	font-weight: 400;
+	color: #475569;
+}
+
+.landing-pricing-app-clone .packages-core-upsell {
+	margin-top: 0.75rem;
+	padding: 0.65rem 0.85rem;
+	border-radius: 10px;
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	font-size: 0.88rem;
+	line-height: 1.45;
+	color: #92400e;
+}
+
+.landing-pricing-app-clone .packages-modal__actions.packages-modal__actions--stack {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.5rem;
+}
+
+/* Przyciski i linki CTA (w modalu primary to <a>, nie <button> — wcześniej bez flex wyglądało jak „pasek z tekstem z lewej”) */
+.landing-pricing-app-clone .packages-modal__actions--pay .packages-pay-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0.62rem 1rem;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	cursor: pointer;
+	font-family: inherit;
+	line-height: 1.35;
+	text-align: center;
+	text-decoration: none;
+	transition:
+		opacity 0.15s ease,
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--primary {
+	background: #0f172a;
+	color: #ffffff !important;
+	border: 1px solid #0f172a;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--primary:hover,
+.landing-pricing-app-clone .packages-pay-btn--primary:focus-visible {
+	opacity: 0.92;
+	color: #ffffff !important;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--ghost {
+	background: #fff;
+	color: #64748b;
+	border: 1px solid #e2e8f0;
+	font-weight: 500;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--ghost:hover {
+	background: #f8fafc;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--upsell {
+	background: #fffbeb;
+	color: #92400e !important;
+	border: 1px solid #fcd34d;
+	font-weight: 600;
+}
+
+.landing-pricing-app-clone .packages-pay-btn--upsell:hover,
+.landing-pricing-app-clone .packages-pay-btn--upsell:focus-visible {
+	background: #fff7ed;
+	color: #92400e !important;
+}
+
+.landing-pricing-app-clone .packages-core-payment-footnote {
+	margin: 0.75rem 0 0;
+	padding: 0 0.15rem;
+	font-size: 0.72rem;
+	line-height: 1.4;
+	color: #64748b;
+}

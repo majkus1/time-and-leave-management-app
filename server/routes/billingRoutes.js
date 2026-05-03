@@ -5,6 +5,8 @@ const requireBillingStaffRole = require('../middleware/requireBillingStaffRole')
 const billingController = require('../controllers/billingController')
 const { billingPurchaseRequestLimiter, billingP24CheckoutLimiter } = require('../utils/rateLimiters')
 
+/** Publiczny katalog cen (jak `/packages` — bez logowania; dla landingu / integracji). */
+router.get('/public-catalog', billingController.getCatalog)
 router.get('/catalog', authenticateToken, billingController.getCatalog)
 router.get('/entitlements', authenticateToken, billingController.getEntitlements)
 router.patch('/team-invoice', authenticateToken, requireBillingStaffRole, billingController.patchTeamInvoice)

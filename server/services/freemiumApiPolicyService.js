@@ -68,7 +68,7 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 		return true
 	}
 
-	if (pathStartsWithAny(path, ['/api/settings'])) return true
+	if (pathStartsWithAny(path, ['/api/settings', '/api/email-notifications'])) return true
 
 	return false
 }
@@ -78,6 +78,7 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/time-entry',
 	'/api/calendar',
 	'/api/settings',
+	'/api/email-notifications',
 	'/api/supervisors',
 	'/api/departments',
 	/** Wnioski urlopowe (GET m.in. accepted-leave-requests) — lista kalendarzy / ewidencja zespołu na freemium. */

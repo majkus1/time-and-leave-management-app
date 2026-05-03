@@ -157,7 +157,7 @@ exports.getStripeStatus = async (req, res) => {
 
 exports.postP24Checkout = async (req, res) => {
 	try {
-		const { kind, planKey, addonId, billingCycle, note } = req.body || {}
+		const { kind, planKey, addonId, billingCycle, note, moduleKeys } = req.body || {}
 		const result = await createCheckoutSessionAndRegister({
 			teamId: req.user.teamId,
 			userId: req.user.userId,
@@ -165,6 +165,7 @@ exports.postP24Checkout = async (req, res) => {
 			planKey,
 			addonId,
 			billingCycle,
+			moduleKeys,
 			note,
 		})
 		res.json({ success: true, ...result })
@@ -193,19 +194,34 @@ exports.postP24Checkout = async (req, res) => {
 
 exports.postStripeCheckout = async (req, res) => {
 	try {
-		const { priceId, kind, planKey, addonId, billingCycle } = req.body || {}
-		const resolvedPriceId =
-			priceId ||
-			findStripePriceIdByIntent({
-				kind,
-				planKey,
-				addonId,
-				billingCycle,
+		const { priceId, priceIds, kind, planKey, addonId, billingCycle, moduleKey } = req.body || {}
+		let resolvedPriceIds =
+			Array.isArray(priceIds) && priceIds.length > 0 ? priceIds.map(String) : null
+		if (!resolvedPriceIds && priceId) {
+			resolvedPriceIds = [String(priceId)]
+		}
+		if (!resolvedPriceIds && kind) {
+			resolvedPriceIds = [
+				findStripePriceIdByIntent({
+					kind,
+					planKey,
+					addonId,
+					billingCycle,
+					moduleKey,
+				}),
+			]
+		}
+		if (!resolvedPriceIds?.length) {
+			return res.status(400).json({
+				success: false,
+				message: 'Brak priceId, priceIds lub kompletu kind + mapowania Stripe.',
+				code: 'VALIDATION',
 			})
+		}
 		const result = await createStripeCheckoutSession({
 			teamId: req.user.teamId,
 			userId: req.user.userId,
-			priceId: resolvedPriceId,
+			priceIds: resolvedPriceIds,
 		})
 		res.json({ success: true, ...result })
 	} catch (e) {

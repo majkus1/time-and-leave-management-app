@@ -132,6 +132,8 @@ async function handlePrzelewy24Notification(body) {
 
 	if (session.kind === 'plan') {
 		const periodEnd = subscriptionPeriodEnd(paymentNow, session.billingCycle)
+		const mk =
+			Array.isArray(session.moduleKeys) && session.moduleKeys.length > 0 ? session.moduleKeys : undefined
 		await billingActivationService.activatePaidPlan({
 			teamId: session.teamId,
 			planKey: session.planKey,
@@ -139,6 +141,7 @@ async function handlePrzelewy24Notification(body) {
 			periodEnd: periodEnd.toISOString(),
 			idempotencyKey,
 			actorLabel,
+			moduleKeys: mk,
 		})
 	} else {
 		await billingActivationService.applyAiAddonPack({

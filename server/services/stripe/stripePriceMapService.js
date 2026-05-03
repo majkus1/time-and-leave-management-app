@@ -19,18 +19,23 @@ function listStripePriceMap() {
 		planKey: def?.planKey || null,
 		billingCycle: def?.billingCycle || null,
 		addonId: def?.addonId || null,
+		moduleKey: def?.moduleKey || null,
 	}))
 }
 
 function findStripePriceIdByIntent(intent) {
-	const { kind, planKey, billingCycle, addonId } = intent || {}
+	const { kind, planKey, billingCycle, addonId, moduleKey } = intent || {}
 	const rows = listStripePriceMap()
-	const row =
-		kind === 'plan'
-			? rows.find(
-					r => r.kind === 'plan' && r.planKey === planKey && r.billingCycle === billingCycle
-				)
-			: rows.find(r => r.kind === 'addon' && r.addonId === addonId)
+	let row
+	if (kind === 'plan') {
+		row = rows.find(r => r.kind === 'plan' && r.planKey === planKey && r.billingCycle === billingCycle)
+	} else if (kind === 'addon') {
+		row = rows.find(r => r.kind === 'addon' && r.addonId === addonId)
+	} else if (kind === 'module') {
+		row = rows.find(
+			r => r.kind === 'module' && r.moduleKey === moduleKey && r.billingCycle === billingCycle
+		)
+	}
 	if (!row?.priceId) {
 		const err = new Error('No Stripe priceId mapping for requested purchase')
 		err.code = 'STRIPE_CONFIG'
@@ -66,6 +71,14 @@ function getStripePriceDefinition(priceId) {
 			priceId: pid,
 			kind: 'addon',
 			addonId: def.addonId,
+		}
+	}
+	if (def.kind === 'module') {
+		return {
+			priceId: pid,
+			kind: 'module',
+			moduleKey: def.moduleKey,
+			billingCycle: def.billingCycle,
 		}
 	}
 	const err = new Error(`Invalid Stripe map kind for priceId: ${pid}`)

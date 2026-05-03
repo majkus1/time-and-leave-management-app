@@ -1,5 +1,6 @@
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
 const {
 	SPECIAL_TEAM_NAMES,
 	SPECIAL_UNLIMITED_AI_TEAM_NAMES,
@@ -14,6 +15,9 @@ const {
 	PAID_PLANS,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
 	isPaidPlanKey,
+	normalizePaidPlanKey,
+	effectiveAiMessagesPerMonth,
+	isModuleKey,
 } = require('../constants/planCatalog')
 
 function effectiveLegacyGraceUntil(team) {
@@ -115,7 +119,8 @@ function isTrialExpiredUnpaid(team, now = new Date()) {
 function isPaidSubscriptionActive(team, now = new Date()) {
 	if (team.billingStatus !== 'active') return false
 	if (!team.billingPlanKey || team.billingPlanKey === 'trial') return false
-	if (!PAID_PLANS[team.billingPlanKey]) return false
+	const nk = normalizePaidPlanKey(team.billingPlanKey)
+	if (!PAID_PLANS[nk]) return false
 	if (team.billingPeriodEnd && new Date(team.billingPeriodEnd) < now) return false
 	return true
 }
@@ -126,9 +131,58 @@ function isPaidSubscriptionActive(team, now = new Date()) {
  */
 function isPaidPlanPeriodLapsed(team, now = new Date()) {
 	if (!team?.billingPlanKey || team.billingPlanKey === 'trial') return false
-	if (!PAID_PLANS[team.billingPlanKey]) return false
+	const nk = normalizePaidPlanKey(team.billingPlanKey)
+	if (!PAID_PLANS[nk]) return false
 	if (!team.billingPeriodEnd) return false
 	return new Date(team.billingPeriodEnd) < now
+}
+
+/**
+ * Zestaw modułów z perspektywy uprawnień: bundle = z katalogu; CORE = zespół.billingModuleKeys (po walidacji).
+ */
+function effectiveBillingModuleKeys(team, now = new Date()) {
+	if (!isPaidSubscriptionActive(team, now)) return []
+	const nk = normalizePaidPlanKey(team.billingPlanKey)
+	const plan = PAID_PLANS[nk]
+	if (!plan) return []
+	if (plan.tierType === 'bundle') return [...(plan.includedModules || [])]
+	const raw = team.billingModuleKeys
+	if (!Array.isArray(raw)) return []
+	return raw.filter(k => isModuleKey(k))
+}
+
+/**
+ * Gdy aktywna płatna subskrypcja nie obejmuje modułu timer_qr — wyłącz QR/licznik w ustawieniach zespołu.
+ * Nie dotyczy trial / legacy / braku płatnego planu (tam nie nadpisujemy ustawień).
+ */
+async function syncTimerEnabledSettingForTeam(teamId) {
+	if (!teamId) return
+	const team = await Team.findById(teamId).select(
+		'billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+	)
+	if (!team) return
+	const now = new Date()
+	if (!isPaidSubscriptionActive(team, now)) return
+	const mods = effectiveBillingModuleKeys(team, now)
+	if (mods.includes('timer_qr')) return
+	const settings = await Settings.findOne({ teamId })
+	if (settings?.timerEnabled) {
+		settings.timerEnabled = false
+		await settings.save()
+	}
+}
+
+/**
+ * Czy można zapisać timerEnabled=true — spójnie z planModuleApiGuard (trial/legacy/freemium/specjalne vs płatny CORE + moduł / bundle).
+ */
+function mayEnableTimerQrByBilling(team, now = new Date()) {
+	if (!team) return false
+	if (isFreemiumTierTeam(team, now)) return true
+	if (isLegacyPreBillingTeam(team, now)) return true
+	if (isSpecialNamedTeam(team)) return true
+	if (isTrialActive(team, now)) return true
+	if (!isPaidSubscriptionActive(team, now)) return false
+	return effectiveBillingModuleKeys(team, now).includes('timer_qr')
 }
 
 function ensureMonthRolloverInMemory(team) {
@@ -142,8 +196,9 @@ function ensureMonthRolloverInMemory(team) {
 function effectiveMaxUsers(team, now = new Date()) {
 	if (isSpecialNamedTeam(team)) return team.maxUsers
 	if (isLegacyPreBillingTeam(team, now)) return team.maxUsers
-	if (isPaidSubscriptionActive(team, now) && PAID_PLANS[team.billingPlanKey]) {
-		return PAID_PLANS[team.billingPlanKey].maxUsers
+	if (isPaidSubscriptionActive(team, now)) {
+		const nk = normalizePaidPlanKey(team.billingPlanKey)
+		if (PAID_PLANS[nk]) return PAID_PLANS[nk].maxUsers
 	}
 	if (isTrialActive(team, now)) return TRIAL.maxUsers
 	if (isTrialExpiredUnpaid(team, now)) return Math.min(team.maxUsers, TRIAL.maxUsers)
@@ -235,8 +290,9 @@ function computeAiBuckets(team, now = new Date()) {
 	}
 
 	if (isPaidSubscriptionActive(team, now)) {
-		const plan = PAID_PLANS[team.billingPlanKey]
-		const included = plan.aiMessagesPerMonth
+		const nk = normalizePaidPlanKey(team.billingPlanKey)
+		const mods = effectiveBillingModuleKeys(team, now)
+		const included = effectiveAiMessagesPerMonth(nk, mods)
 		const usedMonth = team.aiMessagesUsedInMonth || 0
 		const monthlyRemaining = Math.max(0, included - usedMonth)
 		const total = monthlyRemaining + (packOk ? packBal : 0)
@@ -289,9 +345,11 @@ function pickConsumeBucket(team, now = new Date()) {
 	}
 
 	if (isPaidSubscriptionActive(team, now)) {
-		const plan = PAID_PLANS[team.billingPlanKey]
+		const nk = normalizePaidPlanKey(team.billingPlanKey)
+		const mods = effectiveBillingModuleKeys(team, now)
+		const cap = effectiveAiMessagesPerMonth(nk, mods)
 		const usedMonth = team.aiMessagesUsedInMonth || 0
-		if (usedMonth < plan.aiMessagesPerMonth) return 'monthly'
+		if (usedMonth < cap) return 'monthly'
 		if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
 		return null
 	}
@@ -315,11 +373,15 @@ function buildClientEntitlements(team, options = {}) {
 		typeof activeSeatCount === 'number' &&
 		activeSeatCount > freemiumMaxSeats
 
+	const paidPlanNorm = team.billingPlanKey ? normalizePaidPlanKey(team.billingPlanKey) : null
 	const paidPlanSeatLimitExceeded =
 		typeof activeSeatCount === 'number' &&
 		isPaidSubscriptionActive(team, now) &&
-		isPaidPlanKey(team.billingPlanKey) &&
-		activeSeatCount > PAID_PLANS[team.billingPlanKey].maxUsers
+		paidPlanNorm &&
+		PAID_PLANS[paidPlanNorm] &&
+		activeSeatCount > PAID_PLANS[paidPlanNorm].maxUsers
+
+	const modsEffective = effectiveBillingModuleKeys(team, now)
 
 	return {
 		legacy: structuralLegacy,
@@ -329,7 +391,10 @@ function buildClientEntitlements(team, options = {}) {
 			: null,
 		billingHadPaidPlan: team.billingHadPaidPlan === true,
 		hideBillingPeriodEnd: hasManualBillingPeriodHidden(team),
-		planKey: team.billingPlanKey || null,
+		planKey: paidPlanNorm || team.billingPlanKey || null,
+		modules: {
+			effectiveKeys: modsEffective,
+		},
 		billingStatus: team.billingStatus || null,
 		billingCycle: team.billingCycle || null,
 		trialEndsAt: team.trialEndsAt || null,
@@ -367,7 +432,7 @@ function buildClientEntitlements(team, options = {}) {
 		ai: {
 			unrestricted,
 			/** Wspólny licznik: czat AI + AI grafiku + drafty w asystencie */
-			sharedPoolAppliesTo: ['ai_assistant', 'schedule_ai'],
+			sharedPoolAppliesTo: ['ai_assistant', 'schedules_ai'],
 			metered: buckets.metered,
 			hasAccess: buckets.hasAiAccess,
 			/** false gdy legacy ma realny limit AI (pula promocyjna / pakiet) — UI nie pokazuje „wybierz plan” */
@@ -387,7 +452,7 @@ function buildClientEntitlements(team, options = {}) {
 						: null,
 			usedInMonth: team.aiMessagesUsedInMonth || 0,
 			monthlyIncluded: isPaidSubscriptionActive(team, now)
-				? PAID_PLANS[team.billingPlanKey].aiMessagesPerMonth
+				? effectiveAiMessagesPerMonth(paidPlanNorm, modsEffective)
 				: null,
 			packBalance: team.aiPackBalance || 0,
 			usageMonthKey: team.aiUsageMonthKey || currentMonthKey(now),
@@ -512,4 +577,7 @@ module.exports = {
 	consumeAiMessageForUser,
 	getTeamById: async teamId => Team.findById(teamId),
 	ensureMonthRolloverInMemory,
+	effectiveBillingModuleKeys,
+	syncTimerEnabledSettingForTeam,
+	mayEnableTimerQrByBilling,
 }

@@ -31,6 +31,7 @@ describe('freemiumApiPolicyService', () => {
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/workdays/123', 'GET'), true)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/calendar/foo', 'GET'), true)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/settings/team', 'GET'), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed('/api/email-notifications/preferences', 'GET'), true)
 	})
 
 	it('freemium active tier: billing i users są dostępne', () => {
@@ -267,6 +268,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 			isActive: true,
 			maxUsers: 10,
 			billingPlanKey: 'starter',
+			billingModuleKeys: ['ai_assistant'],
 			billingStatus: 'active',
 			billingPeriodEnd: new Date('2027-06-01T00:00:00.000Z'),
 			aiMessagesUsedInMonth: 0,
@@ -275,7 +277,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), false)
 		const b = e.computeAiBuckets(team, T_LIP420_INSIDE)
 		assert.equal(b.hasAiAccess, true)
-		assert.equal(b.monthlyRemaining, 10)
+		assert.equal(b.monthlyRemaining, 50)
 	})
 
 	it('OficjalnyAdminowy (special): nigdy freemium tier w tym module', () => {

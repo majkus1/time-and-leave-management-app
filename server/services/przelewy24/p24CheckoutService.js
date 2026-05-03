@@ -4,15 +4,20 @@ const BillingPaymentSession = require('../../models/BillingPaymentSession')(firm
 const { validateBillingPurchaseIntent } = require('../billingPurchaseIntentValidator')
 const {
 	checkoutAmountGroszeForPlan,
+	checkoutAmountGroszeForPlanWithModules,
 	checkoutAmountGroszeForAddon,
+	isModuleKey,
 } = require('../../constants/planCatalog')
 const { getP24Config } = require('./p24Config')
 const { signRegister } = require('./p24Sign')
 const { p24Request, assertP24Ok } = require('./p24HttpClient')
 
 const PLAN_LABELS = {
-	starter: 'Starter',
-	pro: 'Pro',
+	starter: 'Core (do 15 osób)',
+	base_s: 'Core (do 15 osób)',
+	base_m: 'Core (do 30 osób)',
+	base_l: 'Core (do 100 osób)',
+	pro: 'PRO',
 	business: 'Business',
 	enterprise: 'Enterprise',
 }
@@ -37,6 +42,7 @@ function pickPayerEmail(team, requester) {
  * @param {string} [params.planKey]
  * @param {string} [params.addonId]
  * @param {'monthly'|'annual'} [params.billingCycle]
+ * @param {string[]} [params.moduleKeys] — tylko CORE (Przelewy24)
  * @param {string} [params.note]
  */
 async function createCheckoutSessionAndRegister(params) {
@@ -58,6 +64,7 @@ async function createCheckoutSessionAndRegister(params) {
 		planKey: params.planKey,
 		addonId: params.addonId,
 		billingCycle: params.billingCycle,
+		moduleKeys: params.moduleKeys,
 	})
 
 	const email = pickPayerEmail(team, requester)
@@ -72,12 +79,25 @@ async function createCheckoutSessionAndRegister(params) {
 	const kind = params.kind
 	let amountGrosze
 	let description
+	const planModuleKeysClean =
+		kind === 'plan' && Array.isArray(params.moduleKeys)
+			? params.moduleKeys.filter(m => isModuleKey(m))
+			: []
 
 	if (kind === 'plan') {
-		amountGrosze = checkoutAmountGroszeForPlan(params.planKey, params.billingCycle)
+		amountGrosze =
+			planModuleKeysClean.length > 0
+				? checkoutAmountGroszeForPlanWithModules(
+						params.planKey,
+						params.billingCycle,
+						planModuleKeysClean
+					)
+				: checkoutAmountGroszeForPlan(params.planKey, params.billingCycle)
 		const label = PLAN_LABELS[params.planKey] || params.planKey
 		const cycle = params.billingCycle === 'annual' ? 'roczny' : 'miesięczny'
-		description = truncate(`Planopia ${label} (${cycle}) — ${team.name}`, 1024)
+		const modSuffix =
+			planModuleKeysClean.length > 0 ? ` + moduły: ${planModuleKeysClean.join(', ')}` : ''
+		description = truncate(`Planopia ${label} (${cycle})${modSuffix} — ${team.name}`, 1024)
 	} else {
 		amountGrosze = checkoutAmountGroszeForAddon(params.addonId)
 		description = truncate(`Planopia pakiet AI ${params.addonId} — ${team.name}`, 1024)
@@ -100,6 +120,8 @@ async function createCheckoutSessionAndRegister(params) {
 		planKey: kind === 'plan' ? params.planKey : undefined,
 		addonId: kind === 'addon' ? params.addonId : undefined,
 		billingCycle: kind === 'plan' ? params.billingCycle : undefined,
+		moduleKeys:
+			kind === 'plan' && planModuleKeysClean.length > 0 ? planModuleKeysClean : undefined,
 		amountGrosze,
 		customerEmail: email,
 		note,

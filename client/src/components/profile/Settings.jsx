@@ -12,14 +12,35 @@ import { useEmailNotificationPreferences } from '../../hooks/useEmailNotificatio
 import Modal from 'react-modal'
 import { getPolishHolidaysForYear } from '../../utils/holidays'
 import { calculateHours } from '../../utils/timeHelpers'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import QRCodeGenerator from '../qr/QRCodeGenerator'
+
+const NOTIFICATION_MODULE_REQUIREMENTS = {
+	chat: 'chat',
+	tasks: 'tasks',
+	taskStatusChanges: 'tasks',
+	taskComments: 'tasks',
+	schedulePublished: 'schedules_ai',
+}
 
 function Settings() {
 	const { t, i18n } = useTranslation()
 	const { role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
 	const { data: settings, isLoading: loadingSettings } = useSettings()
-	const { freemiumTier } = useFreemiumAccess({ enabled: true })
+	const { freemiumTier, isLoading: billingEntLoading, data: billingEnt } = useFreemiumAccess({ enabled: true })
+	const showTimerQrSettings = canShowBillingModuleNav(billingEnt, 'timer_qr', billingEntLoading)
+	const canUseNotificationPreference = useCallback((prefKey) => {
+		const moduleKey = NOTIFICATION_MODULE_REQUIREMENTS[prefKey]
+		if (!moduleKey) return true
+		if (billingEntLoading) return false
+		if (!billingEnt) return false
+		if (billingEnt.planKey === 'trial') return true
+		if (billingEnt.legacy === true || billingEnt.ai?.unrestricted === true) return true
+		if (billingEnt.planKey === 'pro' || billingEnt.planKey === 'business' || billingEnt.planKey === 'enterprise') return true
+		const keys = Array.isArray(billingEnt.modules?.effectiveKeys) ? billingEnt.modules.effectiveKeys : []
+		return keys.includes(moduleKey)
+	}, [billingEntLoading, billingEnt])
 	const updateSettingsMutation = useUpdateSettings()
 	const [workOnWeekends, setWorkOnWeekends] = useState(true)
 	const [includePolishHolidays, setIncludePolishHolidays] = useState(false)
@@ -212,7 +233,7 @@ function Settings() {
 					workHours: workHoursData,
 					leaveCalculationMode,
 					leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
-					timerEnabled,
+					...(showTimerQrSettings ? { timerEnabled } : {}),
 				})
 			}
 			await showAlert(t('settings.saveSuccess'))
@@ -424,6 +445,7 @@ function Settings() {
 	}
 
 	const handleUpdatePushPreferences = async (key, value) => {
+		if (!canUseNotificationPreference(key)) return
 		const newPreferences = { ...pushPreferences, [key]: value }
 		setPushLoading(true)
 		try {
@@ -442,6 +464,7 @@ function Settings() {
 	}
 
 	const handleUpdateEmailPreferences = async (key, value) => {
+		if (!canUseNotificationPreference(key)) return
 		const nextPreferences = { ...emailPreferences, [key]: value }
 		setEmailPrefLoading(true)
 		try {
@@ -645,166 +668,41 @@ function Settings() {
 										{t('settings.pushNotificationsPreferences')}
 									</h4>
 									
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.chat !== false}
-												onChange={(e) => handleUpdatePushPreferences('chat', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsChat')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.tasks !== false}
-												onChange={(e) => handleUpdatePushPreferences('tasks', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsTasks')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.taskStatusChanges !== false}
-												onChange={(e) => handleUpdatePushPreferences('taskStatusChanges', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsTaskStatus')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.taskComments !== false}
-												onChange={(e) => handleUpdatePushPreferences('taskComments', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsTaskComments')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.leaves !== false}
-												onChange={(e) => handleUpdatePushPreferences('leaves', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsLeaves')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.announcements !== false}
-												onChange={(e) => handleUpdatePushPreferences('announcements', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsAnnouncements')}</span>
-										</label>
-									</div>
-
-									<div style={{ marginBottom: '15px' }}>
-										<label style={{ 
-											display: 'flex',
-											alignItems: 'center',
-											cursor: pushLoading ? 'not-allowed' : 'pointer',
-											color: '#2c3e50'
-										}}>
-											<input
-												type="checkbox"
-												checked={pushPreferences.schedulePublished !== false}
-												onChange={(e) => handleUpdatePushPreferences('schedulePublished', e.target.checked)}
-												disabled={pushLoading}
-												style={{
-													marginRight: '10px',
-													width: '18px',
-													height: '18px',
-													cursor: pushLoading ? 'not-allowed' : 'pointer'
-												}}
-											/>
-											<span>{t('settings.pushNotificationsSchedulePublished')}</span>
-										</label>
-									</div>
+									{[
+										['chat', t('settings.pushNotificationsChat')],
+										['tasks', t('settings.pushNotificationsTasks')],
+										['taskStatusChanges', t('settings.pushNotificationsTaskStatus')],
+										['taskComments', t('settings.pushNotificationsTaskComments')],
+										['leaves', t('settings.pushNotificationsLeaves')],
+										['announcements', t('settings.pushNotificationsAnnouncements')],
+										['schedulePublished', t('settings.pushNotificationsSchedulePublished')],
+									].map(([key, label]) => {
+										const disabledByPlan = !canUseNotificationPreference(key)
+										return (
+											<div key={key} style={{ marginBottom: '15px' }}>
+												<label style={{ 
+													display: 'flex',
+													alignItems: 'center',
+													cursor: (pushLoading || disabledByPlan) ? 'not-allowed' : 'pointer',
+													color: disabledByPlan ? '#95a5a6' : '#2c3e50'
+												}}>
+													<input
+														type="checkbox"
+														checked={!disabledByPlan && pushPreferences[key] !== false}
+														onChange={(e) => handleUpdatePushPreferences(key, e.target.checked)}
+														disabled={pushLoading || disabledByPlan}
+														style={{
+															marginRight: '10px',
+															width: '18px',
+															height: '18px',
+															cursor: (pushLoading || disabledByPlan) ? 'not-allowed' : 'pointer'
+														}}
+													/>
+													<span>{label}</span>
+												</label>
+											</div>
+										)
+									})}
 								</div>
 							</>
 						)}
@@ -854,26 +752,31 @@ function Settings() {
 								['schedulePublished', t('settings.emailNotificationsSchedulePublished')],
 							].map(([key, label]) => (
 								<div key={key} style={{ marginBottom: '15px' }}>
+									{(() => {
+										const disabledByPlan = !canUseNotificationPreference(key)
+										return (
 									<label style={{
 										display: 'flex',
 										alignItems: 'center',
-										cursor: emailPrefLoading ? 'not-allowed' : 'pointer',
-										color: '#2c3e50',
+										cursor: (emailPrefLoading || disabledByPlan) ? 'not-allowed' : 'pointer',
+										color: disabledByPlan ? '#95a5a6' : '#2c3e50',
 									}}>
 										<input
 											type="checkbox"
-											checked={emailPreferences[key] !== false}
+											checked={!disabledByPlan && emailPreferences[key] !== false}
 											onChange={(e) => handleUpdateEmailPreferences(key, e.target.checked)}
-											disabled={emailPrefLoading}
+											disabled={emailPrefLoading || disabledByPlan}
 											style={{
 												marginRight: '10px',
 												width: '18px',
 												height: '18px',
-												cursor: emailPrefLoading ? 'not-allowed' : 'pointer',
+												cursor: (emailPrefLoading || disabledByPlan) ? 'not-allowed' : 'pointer',
 											}}
 										/>
 										<span>{label}</span>
 									</label>
+										)
+									})()}
 								</div>
 							))}
 						</div>
@@ -967,8 +870,8 @@ function Settings() {
 					</div>
 				)}
 
-				{/* QR Code Generator Section - tylko dla Admin i HR */}
-				{canEditSettings && !freemiumSlimSettings && (
+				{/* QR / licznik — tylko przy module timer_qr lub trial/legacy/freemium (jak sidebar) */}
+				{canEditSettings && !freemiumSlimSettings && showTimerQrSettings && (
 					<div style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',

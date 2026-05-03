@@ -391,6 +391,10 @@ span {
 	font-size: 0.7rem !important;
 	max-width: 100%;
 }
+/* PRO „Polecany” — karta używa packages-tier__badge (nie pricing-badge-pill); wymuszamy biel vs globalne kolory */
+.landing-pricing .landing-pricing-app-clone span.packages-tier__badge {
+	color: #ffffff !important;
+}
 @media (min-width: 400px) {
 	.landing-pricing span.pricing-badge-pill--tier {
 		font-size: 0.75rem !important;

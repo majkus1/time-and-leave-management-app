@@ -1,5 +1,6 @@
 const { firmDb } = require('../db/db')
 const Settings = require('../models/Settings')(firmDb)
+const entitlementsService = require('../services/entitlementsService')
 
 exports.getSettings = async (req, res) => {
 	try {
@@ -8,7 +9,9 @@ exports.getSettings = async (req, res) => {
 		if (!requestingUser || !requestingUser.teamId) {
 			return res.status(403).send('Access denied. User team not found.')
 		}
-		
+
+		await entitlementsService.syncTimerEnabledSettingForTeam(requestingUser.teamId)
+
 		const settings = await Settings.getSettings(requestingUser.teamId)
 		res.json(settings)
 	} catch (error) {
@@ -173,8 +176,21 @@ exports.updateSettings = async (req, res) => {
 			settings.leaveHoursPerDay = leaveHoursPerDay
 		}
 		
-		// Obsługa timerEnabled
+		// Obsługa timerEnabled — zgodnie z mayEnableTimerQrByBilling (jak planModuleApiGuard)
 		if (timerEnabled !== undefined && typeof timerEnabled === 'boolean') {
+			if (timerEnabled === true) {
+				const Team = require('../models/Team')(firmDb)
+				const team = await Team.findById(requestingUser.teamId).select(
+					'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+				)
+				if (!entitlementsService.mayEnableTimerQrByBilling(team, new Date())) {
+					return res.status(400).json({
+						success: false,
+						message:
+							'Włączenie licznika i QR wymaga modułu Timer + QR albo pakietu PRO / BUSINESS / ENTERPRISE.',
+					})
+				}
+			}
 			settings.timerEnabled = timerEnabled
 		}
 

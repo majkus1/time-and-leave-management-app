@@ -1,15 +1,16 @@
 /**
- * Ustawia zespół "testokresprobny" tak jak synchronizacja startowa dla Halo Rental System:
- * maxUsers 11, Starter, active, billingPeriodEnd null, subscription premium.
- * Wymaga wpisu w specialTeams (testokresprobny na listach specjalnych).
+ * Ustawia wskazany zespół tak jak profil Halo Rental System (sync przy starcie serwera):
+ * maxUsers 11, Starter, active, billingPeriodEnd null, subscription premium, bez trialEndsAt.
+ * Wymaga wpisu zespołu w specialTeams (jak Halo — lista „manual billing”).
  *
- * Uruchom: npm run simulate:halo-like
+ * Domyślnie: testokresprobny.
+ * Inna nazwa: TEAM_NAME=vxvxvxv node server/scripts/simulateTeamHaloLike.js
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') })
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
 
-const TEAM_NAME = 'testokresprobny'
+const TEAM_NAME = process.env.TEAM_NAME || process.argv[2] || 'testokresprobny'
 
 async function run() {
 	if (firmDb.readyState === 1) {
@@ -38,6 +39,7 @@ async function doUpdate() {
 				billingPeriodEnd: null,
 				subscriptionType: 'premium',
 				trialEndsAt: null,
+				billingModuleKeys: [],
 			},
 		}
 	)
