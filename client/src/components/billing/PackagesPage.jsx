@@ -313,9 +313,15 @@ export default function PackagesPage() {
 
 	const coreUpsellVsPro = useMemo(() => {
 		const proPln = proTier?.monthlyNetPln
+		const proMax = proTier?.maxUsers
 		if (proPln == null || !Number.isFinite(proPln)) return false
+		if (typeof proMax === 'number' && proMax > 0) {
+			const selectedCore = catalog?.tiers?.find(t => t.id === coreConfiguratorPlanKey)
+			if (selectedCore?.maxUsers != null && selectedCore.maxUsers > proMax) return false
+			if (teamSeats != null && teamSeats > proMax) return false
+		}
 		return coreEstimatedMonthlyPln > proPln
-	}, [coreEstimatedMonthlyPln, proTier])
+	}, [coreEstimatedMonthlyPln, proTier, catalog, coreConfiguratorPlanKey, teamSeats])
 
 	const coreConfiguratorPriceDisplay = useMemo(
 		() => priceBlock(coreEstimatedMonthlyPln, billing, t, i18n.resolvedLanguage),

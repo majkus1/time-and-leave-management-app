@@ -318,7 +318,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 		return base + m
 	}, [corePlan, coreMods])
 
-	const coreUpsellVsPro = coreEstimatedMonthly > 239
+	const proBundle = landingBundles.find(b => b.id === 'pro')
+	const selectedCoreTier = landingCoreTiers.find(t => t.id === corePlan)
+	const coreUpsellVsPro = Boolean(
+		proBundle &&
+			selectedCoreTier &&
+			selectedCoreTier.maxUsers <= proBundle.maxUsers &&
+			coreEstimatedMonthly > proBundle.monthlyNetPln,
+	)
 	const summaryDisplay = useMemo(() => tierPriceDisplay(locale, coreEstimatedMonthly, billing), [locale, coreEstimatedMonthly, billing])
 
 	const checkoutHref = paymentHref(corePlan, {
