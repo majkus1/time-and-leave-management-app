@@ -9,7 +9,7 @@ export const planOfferingCopy = {
 		metaShort:
 			'30 dni pełnej aplikacji za darmo (do 5 osób). Potem darmowa ewidencja czasu pracy do 5 kont lub pakiety płatne z urlopami, grafikami, czatem i Asystentem AI.',
 		jsonLdOfferDescription:
-			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 949 PLN netto miesięcznie (wg katalogu w aplikacji); dodatki AI po aktywnym pakiecie płatnym.',
+			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
 		heroH1: 'Ewidencja czasu pracy, urlopy i zadania w jednym systemie z AI',
 		heroSub:
 			'30 dni pełnych funkcji za darmo — potem darmowa ewidencja do 5 osób lub pełna wersja z raportami i AI.',
@@ -22,7 +22,7 @@ export const planOfferingCopy = {
 		metaShort:
 			'30-day full-product trial (up to 5 users). Then free time tracking for up to 5 active accounts, or paid plans with leave, schedules, chat, tasks, and the AI Assistant.',
 		jsonLdOfferDescription:
-			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 949 PLN net per month (per in-app catalog); optional AI packs after an active paid plan.',
+			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
 		heroH1: 'Time tracking, leave, and tasks in one system with AI',
 		heroSub:
 			'30 days of full features for free — then free time tracking for up to 5 people, or the full version with reports and AI.',
