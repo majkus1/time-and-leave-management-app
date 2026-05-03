@@ -2717,16 +2717,18 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	}
 }
 
-/* Ikona w pasku — mieści się w tym samym ~28×52 co wcześniejszy wave + etykieta „AI” */
+/* Ikona AI (aiasystent.png) — monochrom na biało na ciemnym tle zakładki */
 .ai-assistant-promo-fab-edge__icon {
 	display: block;
-	width: 35px;
-	height: auto;
-	max-height: 34px;
+	width: 22px;
+	height: 22px;
+	border-radius: 0;
 	object-fit: contain;
+	object-position: center;
 	flex-shrink: 0;
 	pointer-events: none;
 	user-select: none;
+	filter: brightness(0) invert(1);
 }
 
 /* Desktop: zakładka AI na środku wysokości przy prawej krawędzi (mobile/tablet: nadal przy dole) */
@@ -3248,6 +3250,20 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 
 .nav-link.nav-link--ai.active .nav-text {
 	color: #1e293b;
+}
+
+/* Planio — postać zamiast zielonej ikony AI; okrągłe przycięcie białego tła PNG */
+.nav-link.nav-link--ai .nav-icon--planio {
+	width: 28px;
+	height: 28px;
+}
+.nav-link.nav-link--ai .nav-icon--planio img {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+	object-position: center 20%;
+	box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
 }
 
 .nav-icon {

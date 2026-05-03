@@ -44,7 +44,7 @@ function AiAssistantPromoFab() {
 		>
 			<img
 				className="ai-assistant-promo-fab-edge__icon"
-				src="/img/aiicon.png"
+				src="/img/aiasystent.png"
 				alt=""
 				aria-hidden
 				draggable={false}

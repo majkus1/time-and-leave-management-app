@@ -470,8 +470,8 @@ function Sidebar() {
 					<NavLink
 						to="/ai-assistant"
 						className={({ isActive }) => `nav-link nav-link--ai ${isActive ? 'active' : ''}`}>
-						<div className="nav-icon">
-							<img src="/img/aiasystent.png" alt="AI Asystent" />
+						<div className="nav-icon nav-icon--planio">
+							<img src="/img/planio.png" alt="" aria-hidden />
 						</div>
 						<span className="nav-text">{t('sidebar.btnAssistant')}</span>
 					</NavLink>

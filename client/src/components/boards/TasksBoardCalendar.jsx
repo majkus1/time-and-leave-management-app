@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react'
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -115,6 +115,8 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 					extendedProps: {
 						boardId: String(task.boardId),
 						calendarOnly: task.calendarOnly,
+						taskStatus: task.status || 'todo',
+						taskPriority: task.priority || 'medium',
 					},
 				})
 			} else if (task.workPeriodStart && task.workPeriodEnd) {
@@ -134,12 +136,33 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 					extendedProps: {
 						boardId: String(task.boardId),
 						calendarOnly: task.calendarOnly,
+						taskStatus: task.status || 'todo',
+						taskPriority: task.priority || 'medium',
 					},
 				})
 			}
 		}
 		return out
 	}, [tasks, showBoardNameInTitle])
+
+	const renderEventContent = useCallback(
+		eventInfo => {
+			const p = eventInfo.event.extendedProps || {}
+			const statusKey = p.taskStatus || 'todo'
+			const priorityKey = p.taskPriority || 'medium'
+			const statusLabel = t(`boards.status.${statusKey}`)
+			const priorityLabel = t(`boards.priority.${priorityKey}`)
+			const meta = `${t('boards.status')}: ${statusLabel} · ${t('boards.priority')}: ${priorityLabel}`
+			const fullTitle = `${eventInfo.event.title} — ${meta}`
+			return (
+				<div className="tasks-board-calendar-event-inner" title={fullTitle}>
+					<div className="tasks-board-calendar-event-title">{eventInfo.event.title}</div>
+					<div className="tasks-board-calendar-event-meta">{meta}</div>
+				</div>
+			)
+		},
+		[t],
+	)
 
 	const heading =
 		title ||
@@ -288,6 +311,7 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 							navigate(`/boards/${bid}?task=${encodeURIComponent(tid)}`)
 						}
 					}}
+					eventContent={renderEventContent}
 					eventDisplay="block"
 					dayMaxEvents={4}
 					moreLinkText={(n) => `+${n}`}
@@ -312,6 +336,45 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 				}
 				.tasks-board-calendar-fc .fc { font-family: inherit; }
 				.tasks-board-calendar-fc .fc-scrollgrid { border-radius: 8px; overflow: hidden; }
+				.tasks-board-calendar-fc .fc-daygrid-event {
+					min-height: 38px;
+				}
+				.tasks-board-calendar-fc .fc-daygrid-event .fc-event-main {
+					padding: 3px 5px 4px;
+				}
+				.tasks-board-calendar-event-inner {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-start;
+					gap: 2px;
+					width: 100%;
+					min-width: 0;
+					color: #fff;
+				}
+				.tasks-board-calendar-event-title {
+					font-size: 11px;
+					font-weight: 700;
+					line-height: 1.25;
+					color: #fff !important;
+					white-space: normal;
+					word-break: break-word;
+					width: 100%;
+				}
+				.tasks-board-calendar-event-meta {
+					font-size: 9px;
+					font-weight: 600;
+					line-height: 1.2;
+					color: rgba(255, 255, 255, 0.92) !important;
+					white-space: normal;
+					word-break: break-word;
+					width: 100%;
+					opacity: 0.98;
+					letter-spacing: 0.01em;
+				}
+				@media (min-width: 768px) {
+					.tasks-board-calendar-event-title { font-size: 12px; }
+					.tasks-board-calendar-event-meta { font-size: 10px; }
+				}
 			`}</style>
 		</div>
 	)

@@ -26,10 +26,11 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 			<div className="ai-assistant-header__title-row">
 				<img
 					className="ai-assistant-header__logo"
-					src="/img/aiasystent.png"
+					src="/img/planio.png"
 					alt=""
 					width={40}
 					height={40}
+					draggable={false}
 				/>
 				<h1 className="ai-assistant-header__title">{t('aiAssistant.title')}</h1>
 				{statusPending && (

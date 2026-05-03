@@ -20,8 +20,8 @@ function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onInten
 		}
 	}
 
-	return (
-		<div className={`ai-assistant-msg ${isUser ? 'ai-assistant-msg--user' : 'ai-assistant-msg--assistant'}`}>
+	const body = (
+		<>
 			<div className="ai-assistant-msg__role">{isUser ? userLabel : assistantLabel}</div>
 			<div className={`ai-assistant-msg__body ${!isUser ? 'ai-assistant-msg__body--md' : ''}`}>
 				{isUser ? (
@@ -60,6 +60,23 @@ function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onInten
 					</div>
 				</div>
 			)}
+		</>
+	)
+
+	if (isUser) {
+		return <div className="ai-assistant-msg ai-assistant-msg--user">{body}</div>
+	}
+
+	return (
+		<div className="ai-assistant-msg ai-assistant-msg--assistant ai-assistant-msg--with-avatar">
+			<img
+				className="ai-assistant-msg__avatar"
+				src="/img/planioanswer.png"
+				alt=""
+				aria-hidden
+				draggable={false}
+			/>
+			<div className="ai-assistant-msg__stack">{body}</div>
 		</div>
 	)
 }
@@ -77,7 +94,17 @@ function AIAssistantMessageList({ messages, onIntentExport, busy }) {
 
 	return (
 		<div className="ai-assistant-messages" role="log" aria-live="polite">
-			{messages.length === 0 && <div className="ai-assistant-empty">{t('aiAssistant.emptyHint')}</div>}
+			{messages.length === 0 && (
+				<div className="ai-assistant-empty ai-assistant-empty--with-planio">
+					<img
+						className="ai-assistant-empty__mascot"
+						src="/img/planioask.png"
+						alt=""
+						draggable={false}
+					/>
+					<p className="ai-assistant-empty__hint">{t('aiAssistant.emptyHint')}</p>
+				</div>
+			)}
 			{messages.map((m, i) => (
 				<Bubble
 					key={`ai-msg-${i}`}
