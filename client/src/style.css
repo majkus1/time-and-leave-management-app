@@ -4465,3 +4465,57 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	max-height: 7.5em;
 	overflow: hidden;
 }
+
+/* Monthly Calendar modal: subtle UI refresh without layout changes */
+.monthly-calendar-modal {
+	outline: none;
+}
+
+.monthly-calendar-modal h2,
+.monthly-calendar-modal h3 {
+	letter-spacing: -0.01em;
+}
+
+.monthly-calendar-modal form {
+	background: #fbfcfd;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 16px;
+}
+
+.monthly-calendar-modal input,
+.monthly-calendar-modal textarea {
+	border-color: #d1d5db !important;
+	border-radius: 8px !important;
+	background-color: #fff;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease,
+		background-color 0.2s ease;
+}
+
+.monthly-calendar-modal input:focus,
+.monthly-calendar-modal textarea:focus {
+	border-color: #3b82f6 !important;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.monthly-calendar-modal input:disabled,
+.monthly-calendar-modal textarea:disabled {
+	background-color: #f3f4f6 !important;
+}
+
+.monthly-calendar-modal button[type='submit'],
+.monthly-calendar-modal button[type='button'] {
+	font-weight: 600;
+	border-radius: 8px;
+}
+
+.monthly-calendar-modal__close {
+	border-radius: 8px !important;
+	transition: background-color 0.2s ease;
+}
+
+.monthly-calendar-modal__close:hover {
+	background-color: #f3f4f6 !important;
+}

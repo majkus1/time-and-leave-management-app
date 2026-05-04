@@ -1274,27 +1274,34 @@ function MonthlyCalendar() {
 					setModalIsOpen(false)
 					resetFormFields()
 				}}
+				className="monthly-calendar-modal"
 				style={{
 					overlay: {
+						position: 'fixed',
+						top: 0,
+						right: 0,
+						bottom: 0,
+						left: 0,
 						display: 'flex',
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: 'rgba(0, 0, 0, 0.5)',
-						backdropFilter: 'blur(2px)',
-						WebkitBackdropFilter: 'blur(2px)',
+						backgroundColor: 'rgba(15, 23, 42, 0.45)',
+						backdropFilter: 'blur(3px)',
+						WebkitBackdropFilter: 'blur(3px)',
 					},
 					content: {
 						position: 'relative',
 						inset: 'unset',
 						margin: '0',
-						maxWidth: '600px',
+						maxWidth: '680px',
 						width: '90%',
-						maxHeight: '90vh',
+						maxHeight: '92vh',
 						overflowY: 'auto',
-						borderRadius: '1rem',
-						padding: '2rem',
-						backgroundColor: 'white',
-						boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+						borderRadius: '14px',
+						padding: '24px',
+						backgroundColor: '#ffffff',
+						border: '1px solid #e5e7eb',
+						boxShadow: '0 16px 40px rgba(15, 23, 42, 0.2)',
 					},
 				}}
 				contentLabel={t('workcalendar.modalContentLabel')}>
@@ -1309,6 +1316,7 @@ function MonthlyCalendar() {
 							setModalIsOpen(false)
 							resetFormFields()
 						}}
+						className="monthly-calendar-modal__close"
 						style={{
 							background: 'transparent',
 							border: 'none',
