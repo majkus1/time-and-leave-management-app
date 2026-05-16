@@ -6,7 +6,6 @@ const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { isHoliday } = require('../utils/holidays')
-const timerPushService = require('../services/timerPushService')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -210,7 +209,6 @@ exports.registerTimeEntry = async (req, res) => {
 					await sessionWorkday.save()
 				}
 
-				void timerPushService.notifyUserTimerEvent(userId, 'stopped', null)
 			} else {
 				// Update workday from TimeEntry (old method)
 				await updateWorkdayFromTimeEntry(userId, lastEntry)
@@ -275,8 +273,6 @@ exports.registerTimeEntry = async (req, res) => {
 				qrCodeId: qrCode._id
 			}
 			await workday.save()
-
-			void timerPushService.notifyUserTimerEvent(userId, 'started', workday.activeTimer)
 
 			res.json({
 				type: 'entry',

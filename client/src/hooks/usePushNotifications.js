@@ -17,7 +17,6 @@ export const usePushNotifications = () => {
 		leaves: true,
 		announcements: true,
 		schedulePublished: true,
-		timer: true,
 	})
 	const { loggedIn } = useAuth()
 
@@ -109,7 +108,6 @@ export const usePushNotifications = () => {
 						leaves: response.data.preferences?.leaves !== false,
 						announcements: response.data.preferences?.announcements !== false,
 						schedulePublished: response.data.preferences?.schedulePublished !== false,
-						timer: response.data.preferences?.timer !== false,
 					})
 				} catch (error) {
 					console.error('Error loading push preferences:', error)

@@ -15,7 +15,6 @@ const DEFAULT_PUSH_PREFERENCES = {
 	leaves: true,
 	announcements: true,
 	schedulePublished: true,
-	timer: true,
 }
 
 const PUSH_PREF_MODULE_REQUIREMENTS = {
@@ -24,7 +23,6 @@ const PUSH_PREF_MODULE_REQUIREMENTS = {
 	taskStatusChanges: 'tasks',
 	taskComments: 'tasks',
 	schedulePublished: 'schedules_ai',
-	timer: 'timer_qr',
 }
 
 function canUsePushPreference(team, prefKey) {
@@ -140,7 +138,6 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 					'preferences.leaves': sanitized.leaves !== false,
 					'preferences.announcements': sanitized.announcements !== false,
 					'preferences.schedulePublished': sanitized.schedulePublished !== false,
-					'preferences.timer': sanitized.timer !== false,
 				}
 			}
 		)

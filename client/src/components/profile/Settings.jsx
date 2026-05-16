@@ -21,7 +21,6 @@ const NOTIFICATION_MODULE_REQUIREMENTS = {
 	taskStatusChanges: 'tasks',
 	taskComments: 'tasks',
 	schedulePublished: 'schedules_ai',
-	timer: 'timer_qr',
 }
 
 function Settings() {
@@ -677,7 +676,6 @@ function Settings() {
 										['leaves', t('settings.pushNotificationsLeaves')],
 										['announcements', t('settings.pushNotificationsAnnouncements')],
 										['schedulePublished', t('settings.pushNotificationsSchedulePublished')],
-										['timer', t('settings.pushNotificationsTimer')],
 									].map(([key, label]) => {
 										const disabledByPlan = !canUseNotificationPreference(key)
 										return (
@@ -702,11 +700,6 @@ function Settings() {
 													/>
 													<span>{label}</span>
 												</label>
-												{key === 'timer' && !disabledByPlan && (
-													<p style={{ margin: '6px 0 0 28px', fontSize: '13px', color: '#6c757d', lineHeight: 1.45 }}>
-														{t('settings.pushNotificationsTimerHint')}
-													</p>
-												)}
 											</div>
 										)
 									})}

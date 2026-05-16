@@ -135,7 +135,7 @@ export default defineConfig({
 					}
 				],
 				// Dodaj custom kod dla push notifications w dev mode
-				importScripts: ['/timer-notification-sw.js', '/sw-push-handlers.js']
+				importScripts: ['/sw-push-handlers.js']
 			} : undefined,
 			// Konfiguracja dla injectManifest (production)
 			injectManifest: !isDev ? {
