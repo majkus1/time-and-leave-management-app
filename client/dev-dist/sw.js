@@ -69,7 +69,7 @@ if (!self.define) {
 }
 define(['./workbox-9bd01273'], (function (workbox) { 'use strict';
 
-  importScripts("/timer-notification-sw.js", "/sw-push-handlers.js");
+  importScripts("/sw-push-handlers.js");
   self.skipWaiting();
   workbox.clientsClaim();
   workbox.registerRoute(({

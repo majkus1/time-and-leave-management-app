@@ -51,7 +51,7 @@ function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onInten
 						</button>
 						<button
 							type="button"
-							className="ai-assistant-msg__export-btn"
+							className="ai-assistant-msg__export-btn ai-assistant-msg__export-btn--pdf"
 							disabled={busy || downloading}
 							onClick={() => runExport('pdf')}
 						>

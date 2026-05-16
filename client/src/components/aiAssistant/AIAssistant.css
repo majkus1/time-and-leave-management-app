@@ -700,6 +700,16 @@
 	cursor: not-allowed;
 }
 
+.ai-assistant-msg__export-btn--pdf {
+	border-color: #2980b9;
+	background: #3498db;
+	color: #fff;
+}
+
+.ai-assistant-msg__export-btn--pdf:hover:not(:disabled) {
+	background: #2980b9;
+}
+
 .ai-assistant-composer {
 	margin-top: 1rem;
 	padding-top: 1rem;

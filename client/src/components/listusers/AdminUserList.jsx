@@ -13,7 +13,9 @@ import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
+import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { useAuth } from '../../context/AuthContext'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import {
 	buildPdfDocument,
@@ -23,6 +25,7 @@ import {
 	pdfTitleBlock,
 } from '../../utils/export/pdfDownload'
 import { computeTeamTotalsForMonth, aggregateYearTeamTotals } from '../../utils/teamWorkCalendarSummary'
+import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
 
 function workdayUserIdString(day) {
 	if (!day?.userId) return ''
@@ -32,10 +35,16 @@ function workdayUserIdString(day) {
 	return String(day.userId)
 }
 
+function userIdString(id) {
+	if (!id) return ''
+	if (typeof id === 'object' && id._id) return id._id.toString()
+	return String(id)
+}
+
 function AdminUserList() {
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
-	const { role, teamId } = useAuth()
+	const { role, teamId, userId } = useAuth()
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const calendarRef = useRef(null)
@@ -48,10 +57,13 @@ function AdminUserList() {
 	const [expandedDepartments, setExpandedDepartments] = useState({})
 	const [calendarView, setCalendarView] = useState('single') // 'single' | 'all-months'
 	
-	// Sprawdź czy użytkownik ma uprawnienia (Admin lub HR)
-	const isAdmin = role && role.includes('Admin')
-	const isHR = role && role.includes('HR')
-	const canFilter = isAdmin || isHR
+	const isAdminRole = isAdmin(role)
+	const isHRRole = isHR(role)
+	const isSupervisorRole = isSupervisor(role)
+	const isSupervisorOnly = isSupervisorRole && !isAdminRole && !isHRRole
+	const canFilter = isAdminRole || isHRRole || isSupervisorOnly
+
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorOnly)
 
 	// TanStack Query hooks
 	const { data: users = [], isLoading: loadingUsers, error: usersError } = useUsers()
@@ -59,6 +71,27 @@ function AdminUserList() {
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
+
+	const priorityEmployeeIds = useMemo(() => {
+		const raw = supervisorConfig?.selectedEmployees || []
+		return new Set(raw.map((id) => userIdString(id)))
+	}, [supervisorConfig])
+
+	/** Dla przełożonego: tylko działy widocznych podwładnych (nie cały zespół). */
+	const filterableDepartments = useMemo(() => {
+		if (!isSupervisorOnly) return departments
+		const namesFromUsers = new Set()
+		for (const user of users) {
+			if (!Array.isArray(user.department)) continue
+			for (const dept of user.department) {
+				if (dept) namesFromUsers.add(dept)
+			}
+		}
+		return departments.filter((dept) => {
+			const deptName = typeof dept === 'object' ? dept.name : dept
+			return namesFromUsers.has(deptName)
+		})
+	}, [departments, users, isSupervisorOnly])
 
 	const loading = loadingUsers || loadingWorkdays || loadingRequests
 	const error = usersError || workdaysError || requestsError
@@ -168,14 +201,17 @@ function AdminUserList() {
 		}
 		
 		if (selectedDepartments.length > 0) {
-			return users.filter(user => {
+			return users.filter((user) => {
+				if (isSupervisorOnly && priorityEmployeeIds.has(userIdString(user._id))) {
+					return true
+				}
 				if (!user.department || !Array.isArray(user.department)) return false
-				return user.department.some(dept => selectedDepartments.includes(dept))
+				return user.department.some((dept) => selectedDepartments.includes(dept))
 			})
 		}
-		
+
 		return users
-	}, [users, showAllTeam, selectedDepartments, selectedUserIds])
+	}, [users, showAllTeam, selectedDepartments, selectedUserIds, isSupervisorOnly, priorityEmployeeIds])
 
 	// Filtruj workdays na podstawie wybranych użytkowników
 	const filteredWorkdays = useMemo(() => {
@@ -1172,66 +1208,6 @@ function AdminUserList() {
 						)}
 					</div>
 
-					{/* Widok kalendarza: u przełożonych bez modala filtrowania zostaje na stronie */}
-					{!canFilter && (
-						<div
-							style={{
-								marginTop: '12px',
-								marginBottom: '8px',
-								display: 'flex',
-								flexWrap: 'wrap',
-								gap: '10px',
-								alignItems: 'center',
-							}}
-						>
-							<span style={{ fontWeight: 600, color: '#2c3e50', marginRight: '4px' }}>
-								{t('planslist.calendarView') || 'Widok kalendarza'}:
-							</span>
-							<label
-								style={{
-									display: 'flex',
-									alignItems: 'center',
-									cursor: 'pointer',
-									padding: '8px 12px',
-									borderRadius: '6px',
-									backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa',
-									border: '1px solid',
-									borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef',
-								}}
-							>
-								<input
-									type="radio"
-									name="adminCalViewNoModal"
-									checked={calendarView === 'single'}
-									onChange={() => setCalendarView('single')}
-									style={{ marginRight: '8px' }}
-								/>
-								{t('planslist.singleMonth') || 'Jeden miesiąc'}
-							</label>
-							<label
-								style={{
-									display: 'flex',
-									alignItems: 'center',
-									cursor: 'pointer',
-									padding: '8px 12px',
-									borderRadius: '6px',
-									backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa',
-									border: '1px solid',
-									borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef',
-								}}
-							>
-								<input
-									type="radio"
-									name="adminCalViewNoModal"
-									checked={calendarView === 'all-months'}
-									onChange={() => setCalendarView('all-months')}
-									style={{ marginRight: '8px' }}
-								/>
-								{t('planslist.allMonths') || 'Wszystkie miesiące'}
-							</label>
-						</div>
-					)}
-
 					{calendarView === 'single' ? (
 					<div>
 						<FullCalendar
@@ -1287,36 +1263,10 @@ function AdminUserList() {
 								{t('planslist.teamSummaryTitle')}
 							</h4>
 							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-								<button
-									type="button"
-									onClick={handleExportSummaryExcel}
-									style={{
-										padding: '8px 14px',
-										fontSize: '13px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										border: '1px solid #1e7e34',
-										backgroundColor: '#28a745',
-										color: '#fff',
-										cursor: 'pointer',
-									}}
-								>
+								<button type="button" onClick={handleExportSummaryExcel} style={exportExcelButtonStyle}>
 									{t('planslist.exportExcel')}
 								</button>
-								<button
-									type="button"
-									onClick={handleExportSummaryPdf}
-									style={{
-										padding: '8px 14px',
-										fontSize: '13px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										border: '1px solid #c82333',
-										backgroundColor: '#dc3545',
-										color: '#fff',
-										cursor: 'pointer',
-									}}
-								>
+								<button type="button" onClick={handleExportSummaryPdf} style={exportPdfButtonStyle}>
 									{t('planslist.exportPdf')}
 								</button>
 							</div>
@@ -1443,36 +1393,10 @@ function AdminUserList() {
 										</p>
 									</div>
 									<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-										<button
-											type="button"
-											onClick={handleExportPerUserExcel}
-											style={{
-												padding: '8px 14px',
-												fontSize: '13px',
-												fontWeight: 600,
-												borderRadius: '8px',
-												border: '1px solid #117a4a',
-												backgroundColor: '#20c997',
-												color: '#fff',
-												cursor: 'pointer',
-											}}
-										>
+										<button type="button" onClick={handleExportPerUserExcel} style={exportExcelButtonStyle}>
 											{t('planslist.exportExcelPerUser')}
 										</button>
-										<button
-											type="button"
-											onClick={handleExportPerUserPdf}
-											style={{
-												padding: '8px 14px',
-												fontSize: '13px',
-												fontWeight: 600,
-												borderRadius: '8px',
-												border: '1px solid #a71d2a',
-												backgroundColor: '#e35d6a',
-												color: '#fff',
-												cursor: 'pointer',
-											}}
-										>
+										<button type="button" onClick={handleExportPerUserPdf} style={exportPdfButtonStyle}>
 											{t('planslist.exportPdfPerUser')}
 										</button>
 									</div>
@@ -1571,7 +1495,7 @@ function AdminUserList() {
 						)}
 					</div>
 
-					{/* Modal filtrowania - tylko dla Admin i HR */}
+					{/* Modal filtrowania — Admin, HR, Przełożony (lista z API) */}
 					{canFilter && (
 						<Modal
 							isOpen={filterModalOpen}
@@ -1697,7 +1621,9 @@ function AdminUserList() {
 										style={{ marginRight: '10px', cursor: 'pointer' }}
 									/>
 									<span style={{ fontWeight: showAllTeam ? '600' : '400' }}>
-										{t('planslist.allTeamMembers') || 'Wszyscy z zespołu'}
+										{isSupervisorOnly
+											? t('planslist.allVisibleSubordinates') || 'Wszyscy widoczni pracownicy'
+											: t('planslist.allTeamMembers') || 'Wszyscy z zespołu'}
 									</span>
 								</label>
 
@@ -1706,9 +1632,9 @@ function AdminUserList() {
 									<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 										{t('planslist.filterByDepartments') || 'Filtrowanie po działach'}
 									</h4>
-									{departments.length > 0 ? (
+									{filterableDepartments.length > 0 ? (
 										<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
-											{departments.map(dept => {
+											{filterableDepartments.map(dept => {
 												const deptName = typeof dept === 'object' ? dept.name : dept
 												const deptKey = typeof dept === 'object' ? (dept._id || dept.name) : dept
 												

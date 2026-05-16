@@ -20,6 +20,7 @@ import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { buildPdfDocument, downloadPdf, pdfDataTable, pdfTitleBlock } from '../../utils/export/pdfDownload'
+import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
 
 /** Domyślne filtry statusów (jak wcześniej: oczekujące, zaakceptowane, wysłane/L4). */
 const DEFAULT_STATUS_FILTERS = {
@@ -63,6 +64,12 @@ function getRequestUserIdString(request) {
 	return null
 }
 
+function userIdString(id) {
+	if (!id) return ''
+	if (typeof id === 'object' && id._id) return id._id.toString()
+	return String(id)
+}
+
 function requestOverlapsVisiblePeriod(request, calendarView, currentYear, currentMonth) {
 	if (!request?.startDate || !request.endDate) return false
 	const s = new Date(request.startDate)
@@ -95,14 +102,13 @@ function VacationListUser() {
 	const [statusFilters, setStatusFilters] = useState(() => ({ ...DEFAULT_STATUS_FILTERS }))
 	const [typeFilters, setTypeFilters] = useState({})
 
-	// Sprawdź uprawnienia - Admin i HR mogą filtrować
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
 	const isSupervisorRole = isSupervisor(role)
-	const canFilter = isAdminRole || isHRRole
-	
-	// Sprawdź konfigurację przełożonego
-	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	const isSupervisorOnly = isSupervisorRole && !isAdminRole && !isHRRole
+	const canFilter = isAdminRole || isHRRole || isSupervisorOnly
+
+	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorOnly)
 	const canApproveLeaves = isAdminRole || isHRRole 
 		? true 
 		: (isSupervisorRole && (supervisorConfig?.permissions?.canApproveLeaves !== false))
@@ -126,6 +132,26 @@ function VacationListUser() {
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
 	const pendingByUser = pendingSummary?.pendingByUser || {}
+
+	const priorityEmployeeIds = useMemo(() => {
+		const raw = supervisorConfig?.selectedEmployees || []
+		return new Set(raw.map((id) => userIdString(id)))
+	}, [supervisorConfig])
+
+	const filterableDepartments = useMemo(() => {
+		if (!isSupervisorOnly) return departments
+		const namesFromUsers = new Set()
+		for (const user of users) {
+			if (!Array.isArray(user.department)) continue
+			for (const dept of user.department) {
+				if (dept) namesFromUsers.add(dept)
+			}
+		}
+		return departments.filter((dept) => {
+			const deptName = typeof dept === 'object' ? dept.name : dept
+			return namesFromUsers.has(deptName)
+		})
+	}, [departments, users, isSupervisorOnly])
 
 	const loading = loadingUsers || loadingRequests
 	const error = usersError || requestsError
@@ -219,14 +245,17 @@ function VacationListUser() {
 		}
 		
 		if (selectedDepartments.length > 0) {
-			return availableUsers.filter(user => {
+			return availableUsers.filter((user) => {
+				if (isSupervisorOnly && priorityEmployeeIds.has(userIdString(user._id))) {
+					return true
+				}
 				if (!user.department || !Array.isArray(user.department)) return false
-				return user.department.some(dept => selectedDepartments.includes(dept))
+				return user.department.some((dept) => selectedDepartments.includes(dept))
 			})
 		}
-		
+
 		return availableUsers
-	}, [users, showAllTeam, selectedDepartments, selectedUserIds])
+	}, [users, showAllTeam, selectedDepartments, selectedUserIds, isSupervisorOnly, priorityEmployeeIds])
 
 	const filteredUserIdSet = useMemo(
 		() => new Set(filteredUsers.map((u) => (u?._id ? u._id.toString() : null)).filter(Boolean)),
@@ -917,36 +946,10 @@ function VacationListUser() {
 								{t('planslist.requestsListTitle') || 'Wnioski w wybranym okresie (zgodnie z filtrami)'}
 							</h4>
 							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-								<button
-									type="button"
-									onClick={handleExportExcel}
-									style={{
-										padding: '8px 14px',
-										fontSize: '13px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										border: '1px solid #1e7e34',
-										backgroundColor: '#28a745',
-										color: '#fff',
-										cursor: 'pointer',
-									}}
-								>
+								<button type="button" onClick={handleExportExcel} style={exportExcelButtonStyle}>
 									{t('planslist.exportExcel')}
 								</button>
-								<button
-									type="button"
-									onClick={handleExportPdf}
-									style={{
-										padding: '8px 14px',
-										fontSize: '13px',
-										fontWeight: 600,
-										borderRadius: '8px',
-										border: '1px solid #c82333',
-										backgroundColor: '#dc3545',
-										color: '#fff',
-										cursor: 'pointer',
-									}}
-								>
+								<button type="button" onClick={handleExportPdf} style={exportPdfButtonStyle}>
 									{t('planslist.exportPdf')}
 								</button>
 							</div>
@@ -1013,7 +1016,7 @@ function VacationListUser() {
 						</div>
 					</div>
 
-					{/* Modal filtrowania - tylko dla Admin i HR */}
+					{/* Modal filtrowania — Admin, HR, Przełożony (lista z visible-users) */}
 					{canFilter && (
 						<Modal
 							isOpen={filterModalOpen}
@@ -1199,7 +1202,9 @@ function VacationListUser() {
 										style={{ marginRight: '10px', cursor: 'pointer' }}
 									/>
 									<span style={{ fontWeight: showAllTeam ? '600' : '400' }}>
-										{t('planslist.allTeamMembers') || 'Wszyscy z zespołu'}
+										{isSupervisorOnly
+											? t('planslist.allVisibleSubordinates') || 'Wszyscy widoczni pracownicy'
+											: t('planslist.allTeamMembers') || 'Wszyscy z zespołu'}
 									</span>
 								</label>
 
@@ -1208,9 +1213,9 @@ function VacationListUser() {
 									<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 										{t('planslist.filterByDepartments') || 'Filtrowanie po działach'}
 									</h4>
-									{departments.length > 0 ? (
+									{filterableDepartments.length > 0 ? (
 										<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
-											{departments.map(dept => {
+											{filterableDepartments.map(dept => {
 												const deptName = typeof dept === 'object' ? dept.name : dept
 												const deptKey = typeof dept === 'object' ? (dept._id || dept.name) : dept
 												

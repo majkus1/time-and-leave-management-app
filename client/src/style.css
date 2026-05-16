@@ -2637,14 +2637,19 @@ body:has(.ai-assistant-promo-fab-edge--on-settings) .settings-save-scroll-fab {
 	right: calc(max(0px, env(safe-area-inset-right)) + 28px + 10px);
 }
 
-/* Skrót do AI Asystenta — stała zakładka przy prawej krawędzi (Link).
+/* Skrót do AI Asystenta — stała zakładka przy prawej krawędzi.
    Tailwind preflight: a { color: inherit } — bez !important tekst bywa ciemny; Safari: -webkit-text-fill-color */
 a.ai-assistant-promo-fab-edge,
 a.ai-assistant-promo-fab-edge:visited,
 a.ai-assistant-promo-fab-edge:hover,
 a.ai-assistant-promo-fab-edge:active,
 a.ai-assistant-promo-fab-edge:focus,
-a.ai-assistant-promo-fab-edge:focus-visible {
+a.ai-assistant-promo-fab-edge:focus-visible,
+button.ai-assistant-promo-fab-edge,
+button.ai-assistant-promo-fab-edge:hover,
+button.ai-assistant-promo-fab-edge:active,
+button.ai-assistant-promo-fab-edge:focus,
+button.ai-assistant-promo-fab-edge:focus-visible {
 	text-decoration: none !important;
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff;
@@ -2652,12 +2657,17 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 
 .ai-assistant-promo-fab-edge {
 	position: fixed;
+	isolation: isolate;
 	z-index: 1002;
 	right: max(0px, env(safe-area-inset-right));
 	bottom: max(16px, env(safe-area-inset-bottom));
 	width: 28px;
 	min-height: 52px;
 	padding: 8px 0;
+	margin: 0;
+	font: inherit;
+	appearance: none;
+	-webkit-appearance: none;
 	border: none;
 	border-radius: 11px 0 0 11px;
 	cursor: pointer;
@@ -2666,6 +2676,9 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
+	touch-action: manipulation;
+	-webkit-user-select: none;
+	user-select: none;
 	border: 2px solid transparent;
 	background-image:
 		linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #312e81 100%),
@@ -2690,7 +2703,18 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	transition: filter 0.2s ease, transform 0.15s ease;
 	animation: ai-fab-gradient-shift 10s ease-in-out infinite alternate;
 	will-change: background-position;
-	-webkit-tap-highlight-color: transparent;
+	-webkit-tap-highlight-color: rgba(99, 102, 241, 0.35);
+}
+
+/* Niewidoczny większy obszar dotyku (szczególnie mobile przy krawędzi ekranu) */
+.ai-assistant-promo-fab-edge::before {
+	content: '';
+	position: absolute;
+	top: -10px;
+	right: 0;
+	bottom: -10px;
+	left: -18px;
+	z-index: -1;
 }
 
 .ai-assistant-promo-fab-edge:hover {
@@ -2746,8 +2770,32 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 
 /* Tylko układ „przy dole”: nad paskiem PWA (desktop ≥1024 ma zakładkę na środku wysokości) */
 @media (max-width: 1023px) {
+	/* Wizualnie wąska zakładka; większy obszar dotyku tylko w ::before */
+	.ai-assistant-promo-fab-edge {
+		width: 28px;
+		min-width: 28px;
+		min-height: 46px;
+		padding: 7px 0;
+		border-radius: 9px 0 0 9px;
+	}
+
+	.ai-assistant-promo-fab-edge__icon {
+		width: 18px;
+		height: 18px;
+	}
+
+	.ai-assistant-promo-fab-edge::before {
+		top: -16px;
+		bottom: -16px;
+		left: -28px;
+	}
+
 	body:has(.pwa-navigation-bar) .ai-assistant-promo-fab-edge {
 		bottom: calc(56px + max(12px, env(safe-area-inset-bottom)));
+	}
+
+	body:has(.ai-assistant-promo-fab-edge--on-settings) .settings-save-scroll-fab {
+		right: calc(max(0px, env(safe-area-inset-right)) + 28px + 10px);
 	}
 }
 
@@ -3542,12 +3590,19 @@ a.ai-assistant-promo-fab-edge:focus-visible {
 	}
 }
 
-.pdfexcelbtns .btn-primary {
+.pdfexcelbtns .btn-pdf.btn-primary {
 	display: none;
+	background-color: #3498db !important;
+	border-color: #2980b9 !important;
+}
+
+.pdfexcelbtns .btn-pdf.btn-primary:hover {
+	background-color: #2980b9 !important;
+	border-color: #2471a3 !important;
 }
 
 @media (min-width: 1200px) {
-	.pdfexcelbtns .btn-primary {
+	.pdfexcelbtns .btn-pdf.btn-primary {
 		display: block;
 	}
 }
