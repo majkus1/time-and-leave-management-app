@@ -29,5 +29,11 @@ router.post(
 	billingP24CheckoutLimiter,
 	billingController.postP24Checkout
 )
+router.post(
+	'/p24/confirm-return',
+	authenticateToken,
+	requireBillingStaffRole,
+	billingController.postP24ConfirmReturn
+)
 
 module.exports = router

@@ -18,8 +18,8 @@ import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
+import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
+import { buildPdfDocument, downloadPdf, pdfDataTable, pdfTitleBlock } from '../../utils/export/pdfDownload'
 
 /** Domyślne filtry statusów (jak wcześniej: oczekujące, zaakceptowane, wysłane/L4). */
 const DEFAULT_STATUS_FILTERS = {
@@ -667,83 +667,61 @@ function VacationListUser() {
 		return `leave_requests_year_${currentYear}`
 	}
 
-	const handleExportExcel = () => {
+	const handleExportExcel = async () => {
 		const rows = buildExportRows()
 		if (rows.length === 0) {
 			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
 			return
 		}
-		const headers = [
-			t('planslist.columnEmployee'),
-			t('planslist.columnDates'),
-			t('planslist.columnType'),
-			t('planslist.columnStatus'),
-		]
-		const wb = XLSX.utils.book_new()
-		const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-		ws['!cols'] = [{ wch: 26 }, { wch: 22 }, { wch: 36 }, { wch: 20 }]
-		XLSX.utils.book_append_sheet(wb, ws, t('planslist.exportSheetName') || 'Wnioski')
-		XLSX.writeFile(wb, `${exportFileNameBase()}.xlsx`)
+		try {
+			const headers = [
+				t('planslist.columnEmployee'),
+				t('planslist.columnDates'),
+				t('planslist.columnType'),
+				t('planslist.columnStatus'),
+			]
+			await downloadExcelWorkbook(
+				[
+					{
+						name: t('planslist.exportSheetName') || 'Wnioski',
+						rows: [headers, ...rows],
+						colWidths: [26, 22, 36, 20],
+					},
+				],
+				`${exportFileNameBase()}.xlsx`
+			)
+		} catch (e) {
+			console.error('handleExportExcel:', e)
+		}
 	}
 
-	const handleExportPdf = () => {
+	const handleExportPdf = async () => {
 		const rows = buildExportRows()
 		if (rows.length === 0) {
 			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
 			return
 		}
-		const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-		const margin = 12
-		let y = 14
-		const pageW = doc.internal.pageSize.getWidth()
-		doc.setFontSize(14)
-		doc.text(t('planslist.requestsListTitle'), margin, y, { maxWidth: pageW - 2 * margin })
-		y += 9
-		doc.setFontSize(10)
-		doc.setTextColor(80, 80, 80)
-		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y, { maxWidth: pageW - 2 * margin })
-		y += 10
-		doc.setTextColor(0, 0, 0)
-		const headers = [
-			t('planslist.columnEmployee'),
-			t('planslist.columnDates'),
-			t('planslist.columnType'),
-			t('planslist.columnStatus'),
-		]
-		const colWidths = [52, 68, 92, 58]
-		doc.setFontSize(9)
-		doc.setFont('helvetica', 'bold')
-		let x = margin
-		headers.forEach((h, i) => {
-			const lines = doc.splitTextToSize(h, colWidths[i] - 2)
-			doc.text(lines, x, y)
-			x += colWidths[i]
-		})
-		doc.setFont('helvetica', 'normal')
-		y += 7
-		const lineStep = 4.2
-		rows.forEach((row) => {
-			const lineBlocks = row.map((cell, i) =>
-				doc.splitTextToSize(String(cell ?? ''), colWidths[i] - 2)
+		try {
+			const headers = [
+				t('planslist.columnEmployee'),
+				t('planslist.columnDates'),
+				t('planslist.columnType'),
+				t('planslist.columnStatus'),
+			]
+			const content = [
+				...pdfTitleBlock(
+					t('planslist.requestsListTitle'),
+					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
+				),
+				pdfDataTable(headers, rows, [52, 68, 92, 58]),
+			]
+			await downloadPdf(
+				buildPdfDocument({ content, pageOrientation: 'landscape' }),
+				`${exportFileNameBase()}.pdf`
 			)
-			const maxLines = Math.max(...lineBlocks.map((l) => l.length), 1)
-			const rowH = maxLines * lineStep + 3
-			if (y + rowH > 195) {
-				doc.addPage()
-				y = 14
-			}
-			x = margin
-			lineBlocks.forEach((lines, i) => {
-				let yy = y
-				lines.forEach((line) => {
-					doc.text(line, x, yy)
-					yy += lineStep
-				})
-				x += colWidths[i]
-			})
-			y += rowH
-		})
-		doc.save(`${exportFileNameBase()}.pdf`)
+		} catch (e) {
+			console.error('handleExportPdf:', e)
+		}
 	}
 
 	return (

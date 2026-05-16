@@ -28,7 +28,7 @@ i18n
 						btn9: 'Team Management',
 						btnBoards: 'Task Boards',
 						btnChat: 'Chat',
-						btnAssistant: 'AI Asystent',
+						btnAssistant: 'AI Assistant',
 						btnAnnouncements: 'Announcements',
 						btn10: 'Logout',
 						btnSettings: 'Settings',
@@ -62,19 +62,22 @@ i18n
 						logout: 'Log out',
 					},
 					aiAssistant: {
-						pageTitle: 'AI Asystent',
-						title: 'AI Asystent',
+						pageTitle: 'AI Assistant',
+						title: 'AI Assistant',
 						introBullets: [
-							'Answers use only Planopia data visible for your account.',
-							'Scope: time tracking, leave, tasks, schedules, boards, team settings.',
-							'Pick the period above; ask for a summary. Request Excel or PDF in your message — download buttons from the database appear under the reply.',
-							'Green Summarize month: written monthly report; prompt targets your role (team for Admin/HR, your reports + you for supervisors, yourself for others). PDF/Excel from the database can appear under the reply.',
+							'Answers from Planopia data visible on your account (time, leave, tasks, schedules, team).',
+							'Pick the period above; ask for Excel or PDF — download buttons from the database appear under the reply.',
+							'Green “Summarize month”: role-based report; PDF/Excel may appear under the reply.',
 							'Export the chat as TXT from the toolbar above.',
-							'Month draft from a description uses a separate AI module on the schedule page, not this chat.',
 						],
-						introBrowserNote: 'Your conversation is stored only in this browser.',
+						introBrowserNote:
+							'History stays in this browser only — it won’t appear on your phone or another computer.',
+						introPrivacySensitive:
+							'Avoid unnecessary sensitive data (e.g. national ID, passwords, medical or financial details).',
+						composerPrivacyHint:
+							'History stays in this browser only (not synced across devices). Avoid sensitive data you do not need in your messages.',
 						introLegalNote: 'Not legal advice; answers do not replace HR decisions or company procedures.',
-						introToggle: 'About AI Asystent',
+						introToggle: 'About AI Assistant',
 						disabledBadge: 'Not configured',
 						statusChecking: 'Checking status…',
 						statusLoadError: 'Could not load status',
@@ -200,7 +203,7 @@ i18n
 								'AI assistant is available after you activate a paid plan. Open Packages & billing to choose a plan.',
 							remaining: 'About {{n}} AI messages left this period (shared: chat, schedule AI, drafts).',
 							depleted: 'No AI messages left for this period.',
-							sharedHint: 'The same pool applies to AI Asystent, schedule auto-fill AI, and AI drafts in this app.',
+							sharedHint: 'The same pool applies to AI Assistant, schedule auto-fill AI, and AI drafts in this app.',
 						},
 						promoFab: {
 							label: 'AI Assistant',
@@ -828,6 +831,7 @@ i18n
 						genepdf: 'Generate PDF',
 						exportExcel: 'Export to Excel',
 						exportingExcel: 'Exporting...',
+						exportingPdf: 'Generating PDF...',
 						cannotAddToAcceptedLeave: 'Cannot add events to days with accepted leave/absence requests',
 						excel: {
 							filename: 'Work_Time_Report',
@@ -1571,6 +1575,8 @@ i18n
 						pushNotificationsLeaves: 'Notifications for leave requests',
 						pushNotificationsAnnouncements: 'Notifications for announcements',
 						pushNotificationsSchedulePublished: 'Notifications when your schedule is published',
+						pushNotificationsTimer: 'Work timer (live counter in notifications)',
+						pushNotificationsTimerHint: 'One ongoing notification with a live clock (no new alert every second). You can dismiss it anytime.',
 						pushNotificationsEnableSuccess: 'Push notifications have been enabled',
 						pushNotificationsDisableSuccess: 'Push notifications have been disabled',
 						pushNotificationsEnableError: 'Failed to enable push notifications',
@@ -1801,14 +1807,17 @@ i18n
 						pageTitle: 'AI Asystent',
 						title: 'AI Asystent',
 						introBullets: [
-							'Odpowiedzi tylko z danych Planopii widocznych dla Twojego konta.',
-							'Zakres: czas pracy, urlopy, zadania, grafiki, tablice, zespół.',
-							'Okres wybierasz u góry; możesz poprosić o podsumowanie. W treści pytania o Excel lub PDF pod odpowiedzią pojawią się przyciski z bazy.',
-							'Zielony „Podsumuj miesiąc”: raport dopasowany do roli (zespół — Admin/HR, podlegli + Ty — przełożony, tylko Ty — pozostali); PDF/Excel z bazy pod odpowiedzią.',
-							'Rozmowę wyeksportujesz do pliku TXT z paska nad czatem.',
-							'Szkic miesiąca z opisu — osobny moduł AI w widoku harmonogramu, nie ten czat.',
+							'Odpowiedzi z danych Planopii widocznych na Twoim koncie (czas pracy, urlopy, zadania, grafiki, zespół).',
+							'Okres u góry; o Excel/PDF — przyciski z bazy pod odpowiedzią.',
+							'Zielony „Podsumuj miesiąc”: raport wg roli; PDF/Excel pod odpowiedzią.',
+							'Eksport rozmowy: TXT z paska nad czatem.',
 						],
-						introBrowserNote: 'Rozmowa jest zapisywana tylko w tej przeglądarce.',
+						introBrowserNote:
+							'Historia tylko w tej przeglądarce — na telefonie lub innym komputerze jej nie zobaczysz.',
+						introPrivacySensitive:
+							'Bez zbędnych danych wrażliwych (np. PESEL, hasła, dane medyczne lub finansowe).',
+						composerPrivacyHint:
+							'Historia tylko w tej przeglądarce (bez synchronizacji między urządzeniami). Unikaj zbędnych danych wrażliwych w wiadomościach.',
 						introLegalNote:
 							'To nie jest porada prawna; odpowiedzi nie zastępują decyzji HR ani procedur w firmie.',
 						introToggle: 'Informacje o AI Asystent',
@@ -2566,6 +2575,7 @@ i18n
 						genepdf: 'Generuj PDF',
 						exportExcel: 'Eksportuj do Excel',
 						exportingExcel: 'Eksportowanie...',
+						exportingPdf: 'Generowanie PDF…',
 						cannotAddToAcceptedLeave: 'Nie można dodawać wydarzeń do dnia z zaakceptowanym wnioskiem urlopowym/nieobecnością',
 						excel: {
 							filename: 'Ewidencja_Czasu_Pracy',
@@ -3273,6 +3283,8 @@ i18n
 						pushNotificationsLeaves: 'Powiadomienia o wnioskach urlopowych',
 						pushNotificationsAnnouncements: 'Powiadomienia o komunikatach',
 						pushNotificationsSchedulePublished: 'Powiadomienia o opublikowaniu Twojego grafiku',
+						pushNotificationsTimer: 'Licznik czasu pracy (na żywo w powiadomieniach)',
+						pushNotificationsTimerHint: 'Jedno trwające powiadomienie z żywym zegarem (bez nowego alertu co sekundę). Możesz je zamknąć w każdej chwili.',
 						pushNotificationsEnableSuccess: 'Powiadomienia push zostały włączone',
 						pushNotificationsDisableSuccess: 'Powiadomienia push zostały wyłączone',
 						pushNotificationsEnableError: 'Nie udało się włączyć powiadomień push',

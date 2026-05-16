@@ -5,6 +5,13 @@
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const API_URL = 'https://api.openai.com/v1/chat/completions'
 
+function throwOpenAINotConfigured() {
+	console.error('[openai] OPENAI_API_KEY is not configured')
+	const err = new Error('OpenAI is not configured')
+	err.code = 'OPENAI_NOT_CONFIGURED'
+	throw err
+}
+
 /**
  * @param {object} opts
  * @param {Array<{role: string, content: string}>} opts.messages
@@ -20,9 +27,7 @@ exports.createChatCompletion = async function createChatCompletion({
 }) {
 	const apiKey = process.env.OPENAI_API_KEY
 	if (!apiKey || !apiKey.trim()) {
-		const err = new Error('OPENAI_API_KEY is not configured')
-		err.code = 'OPENAI_NOT_CONFIGURED'
-		throw err
+		throwOpenAINotConfigured()
 	}
 
 	const resolvedModel = (model || process.env.OPENAI_MODEL || DEFAULT_MODEL).trim()
@@ -78,9 +83,7 @@ exports.createChatCompletionJson = async function createChatCompletionJson({
 }) {
 	const apiKey = process.env.OPENAI_API_KEY
 	if (!apiKey || !apiKey.trim()) {
-		const err = new Error('OPENAI_API_KEY is not configured')
-		err.code = 'OPENAI_NOT_CONFIGURED'
-		throw err
+		throwOpenAINotConfigured()
 	}
 
 	const resolvedModel = (model || process.env.OPENAI_MODEL || DEFAULT_MODEL).trim()
@@ -143,9 +146,7 @@ exports.createChatCompletionStream = async function* createChatCompletionStream(
 }) {
 	const apiKey = process.env.OPENAI_API_KEY
 	if (!apiKey || !apiKey.trim()) {
-		const err = new Error('OPENAI_API_KEY is not configured')
-		err.code = 'OPENAI_NOT_CONFIGURED'
-		throw err
+		throwOpenAINotConfigured()
 	}
 
 	const resolvedModel = (model || process.env.OPENAI_MODEL || DEFAULT_MODEL).trim()

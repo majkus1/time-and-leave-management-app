@@ -3,8 +3,7 @@ const { firmDb } = require('../../db/db')
 const BillingPaymentSession = require('../../models/BillingPaymentSession')(firmDb)
 const { validateBillingPurchaseIntent } = require('../billingPurchaseIntentValidator')
 const {
-	checkoutAmountGroszeForPlan,
-	checkoutAmountGroszeForPlanWithModules,
+	p24CheckoutAmountGroszeForPlan,
 	checkoutAmountGroszeForAddon,
 	isModuleKey,
 } = require('../../constants/planCatalog')
@@ -48,11 +47,11 @@ function pickPayerEmail(team, requester) {
 async function createCheckoutSessionAndRegister(params) {
 	const cfg = getP24Config()
 	if (!cfg.ready) {
-		const err = new Error(
-			cfg.credsOk
-				? 'Brak publicznego adresu webhooka P24. Ustaw P24_WEBHOOK_URL lub API_PUBLIC_URL (HTTPS), np. tunel ngrok do lokalnego API.'
-				: 'Przelewy24 nie jest skonfigurowane (P24_MERCHANT_ID, P24_POS_ID, P24_CRC, P24_API_KEY).'
-		)
+		const detail = cfg.credsOk
+			? 'missing public webhook URL (P24_WEBHOOK_URL or API_PUBLIC_URL)'
+			: 'missing P24 credentials'
+		console.error('[p24] checkout not ready:', detail)
+		const err = new Error('Przelewy24 is not configured')
 		err.code = 'P24_NOT_CONFIGURED'
 		throw err
 	}
@@ -85,14 +84,11 @@ async function createCheckoutSessionAndRegister(params) {
 			: []
 
 	if (kind === 'plan') {
-		amountGrosze =
-			planModuleKeysClean.length > 0
-				? checkoutAmountGroszeForPlanWithModules(
-						params.planKey,
-						params.billingCycle,
-						planModuleKeysClean
-					)
-				: checkoutAmountGroszeForPlan(params.planKey, params.billingCycle)
+		amountGrosze = p24CheckoutAmountGroszeForPlan(
+			params.planKey,
+			params.billingCycle,
+			planModuleKeysClean
+		)
 		const label = PLAN_LABELS[params.planKey] || params.planKey
 		const cycle = params.billingCycle === 'annual' ? 'roczny' : 'miesięczny'
 		const modSuffix =
@@ -164,6 +160,7 @@ async function createCheckoutSessionAndRegister(params) {
 		const redirectUrl = `${cfg.trnHost}/trnRequest/${encodeURIComponent(token)}`
 		return { redirectUrl, sessionId, sandbox: cfg.sandbox }
 	} catch (e) {
+		console.error('[p24] checkout register failed:', sessionId, e.code, e.message, e.p24Response || '')
 		sessionDoc.status = 'register_error'
 		sessionDoc.registerError = (e && e.message) || String(e)
 		await sessionDoc.save()

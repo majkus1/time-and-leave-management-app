@@ -98,7 +98,10 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 							))}
 						</ul>
 					)}
-					<strong className="ai-assistant-header__intro-browser">{t('aiAssistant.introBrowserNote')}</strong>
+					<div className="ai-assistant-header__intro-privacy" role="note">
+						<p>{t('aiAssistant.introBrowserNote')}</p>
+						<p>{t('aiAssistant.introPrivacySensitive')}</p>
+					</div>
 					<p className="ai-assistant-header__intro-legal">{t('aiAssistant.introLegalNote')}</p>
 				</div>
 			</details>

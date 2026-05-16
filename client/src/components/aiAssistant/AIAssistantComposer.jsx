@@ -143,6 +143,9 @@ function AIAssistantComposer({
 					{busy ? '…' : t('aiAssistant.send')}
 				</button>
 			</div>
+			<p className="ai-assistant-composer__privacy" role="note">
+				{t('aiAssistant.composerPrivacyHint')}
+			</p>
 		</div>
 	)
 }

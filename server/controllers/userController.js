@@ -13,6 +13,18 @@ const { createBoardForDepartment, createTeamBoard } = require('./boardController
 const { createScheduleForDepartment } = require('./scheduleController')
 
 const { appUrl } = require('../config')
+const {
+	buildSessionTokenPayload,
+	signSessionTokens,
+	setSessionCookies,
+	clearSessionCookies,
+	issueRefreshedSessionFromCookie,
+} = require('../utils/authTokens')
+const {
+	canViewTeamUserProfile,
+	canManageTeamUser,
+	isSuperAdminUser,
+} = require('../utils/userProfileAccessPolicy')
 
 // Funkcja walidująca role - sprawdza wzajemnie wykluczające się kombinacje ról
 // Przyjmuje opcjonalną funkcję tłumaczeń t() dla komunikatów błędów
@@ -482,14 +494,28 @@ exports.getUserProfile = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
 	try {
+		const currentUser = await User.findById(req.user.userId)
+		if (!currentUser || currentUser.isActive === false) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+
 		const allowedRoles = ['Admin']
-		if (!allowedRoles.some(role => req.user.roles.includes(role))) {
+		if (!allowedRoles.some(role => currentUser.roles?.includes(role))) {
 			return res.status(403).send('Access denied')
 		}
 
-		const users = await User.find({
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('username firstName lastName role')
+		const activeFilter = {
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}
+		const query = isSuperAdminUser(currentUser)
+			? activeFilter
+			: { ...activeFilter, teamId: currentUser.teamId }
+
+		if (!isSuperAdminUser(currentUser) && !currentUser.teamId) {
+			return res.status(400).send('Brak przypisanego zespołu')
+		}
+
+		const users = await User.find(query).select('username firstName lastName roles')
 		res.json(users)
 	} catch (error) {
 		console.error('Error retrieving users:', error)
@@ -716,37 +742,22 @@ exports.getUserById = async (req, res) => {
 			return res.status(403).send('Brak uprawnień')
 		}
 
-		const isAdmin = requestingUser.roles.includes('Admin')
-		const isHR = requestingUser.roles.includes('HR')
-		const isSelf = requestingUser._id.toString() === userId
-
-		
 		const userToView = await User.findOne({
 			_id: userId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
 		})
 		if (!userToView) {
 			return res.status(404).send('User not found')
 		}
-		
-		// Sprawdź czy użytkownicy są w tym samym zespole
-		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
-		
-		// Sprawdź czy użytkownicy mają wspólny dział (dla wielu działów)
-		const requestingDepts = Array.isArray(requestingUser.department) ? requestingUser.department : (requestingUser.department ? [requestingUser.department] : [])
-		const userToViewDepts = Array.isArray(userToView.department) ? userToView.department : (userToView.department ? [userToView.department] : [])
-		const hasCommonDepartment = requestingDepts.some(dept => userToViewDepts.includes(dept))
-		
-		// HIERARCHIA RÓL: Admin > HR > Przełożony
-		// Sprawdź uprawnienia przełożonego (helper już uwzględnia Admin/HR)
-		const { canSupervisorViewTimesheets } = require('../services/roleService')
-		const isSupervisor = requestingUser.roles.includes('Przełożony (Supervisor)')
-		const canViewAsSupervisor = isSupervisor && userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false
 
-		// Każdy użytkownik w zespole może widzieć innych użytkowników z tego samego zespołu
-		// Admin/HR widzi wszystkich ze swojego zespołu
-		if (!(isSameTeam || isAdmin || isHR || isSelf || canViewAsSupervisor)) {
-			return res.status(403).send('Access denied')
+		if (
+			!canViewTeamUserProfile({
+				viewer: requestingUser,
+				targetUserId: userId,
+				targetUser: userToView,
+			})
+		) {
+			return res.status(404).send('User not found')
 		}
 
 		const user = await User.findOne({
@@ -785,9 +796,21 @@ exports.updateUserRoles = async (req, res) => {
 		}
 
 		try {
-			const user = await User.findById(userId);
+			const requestingUser = await User.findById(req.user.userId)
+			if (!requestingUser) {
+				return res.status(403).send('Access denied')
+			}
+
+			const user = await User.findById(userId)
 			if (!user) {
-				return res.status(404).send('Użytkownik nie znaleziony');
+				return res.status(404).send('Użytkownik nie znaleziony')
+			}
+
+			if (
+				!isSuperAdminUser(requestingUser) &&
+				!canManageTeamUser({ viewer: requestingUser, targetUser: user })
+			) {
+				return res.status(404).send('Użytkownik nie znaleziony')
 			}
 
 		const oldDepartment = user.department;
@@ -1143,19 +1166,7 @@ exports.markTutorialAsSeen = async (req, res) => {
 
 
 exports.logout = (req, res) => {
-	const isProduction = process.env.NODE_ENV === 'production'
-	res.clearCookie('token', {
-		httpOnly: true,
-		secure: isProduction,
-		sameSite: isProduction ? 'None' : 'Lax',
-	})
-
-	res.clearCookie('refreshToken', {
-		httpOnly: true,
-		secure: isProduction,
-		sameSite: isProduction ? 'None' : 'Lax',
-	})
-
+	clearSessionCookies(res)
 	res.status(200).json({ message: 'Wylogowano pomyślnie' })
 }
 
@@ -1192,53 +1203,23 @@ exports.changePassword = async (req, res) => {
 }
 
 
+const INVALID_LOGIN_MESSAGE = 'Nieprawidłowe dane logowania'
+
 exports.login = async (req, res) => {
 	const { username, password } = req.body
 	try {
 		const user = await User.findOne({ username })
-		if (!user) return res.status(401).send('Nieprawidłowe dane logowania')
+		if (!user) return res.status(401).send(INVALID_LOGIN_MESSAGE)
 
 		const passwordIsValid = await bcrypt.compare(password, user.password)
-		if (!passwordIsValid) return res.status(401).send('Nieprawidłowe hasło')
+		if (!passwordIsValid) return res.status(401).send(INVALID_LOGIN_MESSAGE)
 
-		const accessToken = jwt.sign(
-			{ 
-				userId: user._id, 
-				teamId: user.teamId,
-				roles: user.roles, 
-				username: user.username,
-				isTeamAdmin: user.isTeamAdmin
-			},
-			process.env.JWT_SECRET,
-			{ expiresIn: '15m' }
-		)
-
-		const refreshToken = jwt.sign(
-			{ 
-				userId: user._id, 
-				teamId: user.teamId,
-				roles: user.roles, 
-				username: user.username,
-				isTeamAdmin: user.isTeamAdmin
-			},
-			process.env.REFRESH_TOKEN_SECRET,
-			{ expiresIn: '7d' }
-		)
-
-		const isProduction = process.env.NODE_ENV === 'production'
-		res.cookie('token', accessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'None' : 'Lax',
-			maxAge: 15 * 60 * 1000,
-		})
-
-		res.cookie('refreshToken', refreshToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'None' : 'Lax',
-			maxAge: 7 * 24 * 60 * 60 * 1000,
-		})
+		const sessionPayload = buildSessionTokenPayload(user)
+		if (!sessionPayload) {
+			return res.status(401).send(INVALID_LOGIN_MESSAGE)
+		}
+		const tokens = signSessionTokens(sessionPayload)
+		setSessionCookies(res, tokens)
 
 		// Oznacz pierwsze logowanie jeśli jeszcze nie było
 		if (!user.firstLoginAt) {
@@ -1264,54 +1245,24 @@ exports.login = async (req, res) => {
 }
 
 
-exports.refreshToken = (req, res) => {
+exports.refreshToken = async (req, res) => {
 	const refreshToken = req.cookies.refreshToken
-	if (!refreshToken) return res.status(401).json({ message: 'Brak refresh tokena' })
+	if (!refreshToken) {
+		return res.status(401).json({ message: 'Brak refresh tokena' })
+	}
 
-	jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-		if (err) return res.status(403).json({ message: 'Nieprawidłowy refresh token' })
+	try {
+		const result = await issueRefreshedSessionFromCookie(refreshToken)
+		if (!result.ok) {
+			clearSessionCookies(res)
+			return res.status(401).json({ message: 'Unauthorized' })
+		}
 
-		const newAccessToken = jwt.sign(
-			{ 
-				userId: decoded.userId, 
-				teamId: decoded.teamId,
-				roles: decoded.roles, 
-				username: decoded.username,
-				isTeamAdmin: decoded.isTeamAdmin
-			},
-			process.env.JWT_SECRET,
-			{ expiresIn: '15m' }
-		)
-
-		const newRefreshToken = jwt.sign(
-			{ 
-				userId: decoded.userId, 
-				teamId: decoded.teamId,
-				roles: decoded.roles, 
-				username: decoded.username,
-				isTeamAdmin: decoded.isTeamAdmin
-			},
-			process.env.REFRESH_TOKEN_SECRET,
-			{ expiresIn: '7d' }
-		)
-
-		const isProduction = process.env.NODE_ENV === 'production'
-		res.cookie('token', newAccessToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'None' : 'Lax',
-			maxAge: 15 * 60 * 1000,
-		})
-
-		res.cookie('refreshToken', newRefreshToken, {
-			httpOnly: true,
-			secure: isProduction,
-			sameSite: isProduction ? 'None' : 'Lax',
-			maxAge: 7 * 24 * 60 * 60 * 1000,
-		})
-
-		res.json({ message: 'Token refreshed' })
-	})
+		setSessionCookies(res, result.tokens)
+		return res.json({ message: 'Token refreshed' })
+	} catch (error) {
+		return res.status(403).json({ message: 'Nieprawidłowy refresh token' })
+	}
 }
 
 // Endpoint do regeneracji i wysłania linku ustawienia hasła dla użytkowników bez hasła

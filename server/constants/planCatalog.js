@@ -228,6 +228,32 @@ function checkoutAmountGroszeForAddon(addonId) {
 	return Math.round(AI_ADDON_PACKS[addonId].pricePlnNet * 100)
 }
 
+/**
+ * Kwota rejestracji P24 (grosze). Domyślnie jak checkoutAmountGroszeForPlan*.
+ * Test prod: P24_TEST_PRO_PRICE_GROSZE=100 → PRO miesięcznie 1,00 PLN (bez modułów CORE).
+ */
+function p24CheckoutAmountGroszeForPlan(planKey, billingCycle, moduleKeys = []) {
+	const overrideRaw = process.env.P24_TEST_PRO_PRICE_GROSZE
+	const k = normalizePaidPlanKey(planKey)
+	const mods = Array.isArray(moduleKeys) ? moduleKeys.filter(isModuleKey) : []
+	if (overrideRaw != null && String(overrideRaw).trim() !== '') {
+		const override = parseInt(String(overrideRaw).trim(), 10)
+		if (
+			Number.isFinite(override) &&
+			override > 0 &&
+			k === 'pro' &&
+			billingCycle === 'monthly' &&
+			mods.length === 0
+		) {
+			return override
+		}
+	}
+	if (mods.length > 0) {
+		return checkoutAmountGroszeForPlanWithModules(planKey, billingCycle, mods)
+	}
+	return checkoutAmountGroszeForPlan(planKey, billingCycle)
+}
+
 module.exports = {
 	TRIAL,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
@@ -257,4 +283,5 @@ module.exports = {
 	checkoutAmountGroszeForPlan,
 	checkoutAmountGroszeForPlanWithModules,
 	checkoutAmountGroszeForAddon,
+	p24CheckoutAmountGroszeForPlan,
 }

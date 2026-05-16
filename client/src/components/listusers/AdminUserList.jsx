@@ -14,8 +14,14 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 import { useAuth } from '../../context/AuthContext'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
+import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
+import {
+	buildPdfDocument,
+	downloadPdf,
+	pdfDataTable,
+	pdfLabelValueLines,
+	pdfTitleBlock,
+} from '../../utils/export/pdfDownload'
 import { computeTeamTotalsForMonth, aggregateYearTeamTotals } from '../../utils/teamWorkCalendarSummary'
 
 function workdayUserIdString(day) {
@@ -418,6 +424,41 @@ function AdminUserList() {
 		generateDateRangeForCalendar,
 	])
 
+	/** Suma kolumn tabeli „Według osób” (suma wierszy per pracownik). */
+	const perUserTableTotals = useMemo(() => {
+		if (!perUserSummaryRows.length) return null
+		return aggregateYearTeamTotals(perUserSummaryRows.map((r) => r.totals))
+	}, [perUserSummaryRows])
+
+	const formatPerUserLeaveCell = (totals) =>
+		settings?.leaveCalculationMode === 'hours'
+			? `${totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+			: `${totals.leaveDays} (${totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+
+	const buildPerUserTotalsRow = (totals, { compact = false } = {}) => {
+		if (!totals) return null
+		const leaveCell =
+			settings?.leaveCalculationMode === 'hours'
+				? compact
+					? totals.leaveHours.toFixed(1)
+					: formatPerUserLeaveCell(totals)
+				: compact
+					? String(totals.leaveDays)
+					: formatPerUserLeaveCell(totals)
+		return [
+			t('planslist.teamTableTotal'),
+			totals.totalWorkDays,
+			compact
+				? formatHours(totals.totalHours)
+				: `${formatHours(totals.totalHours)} ${t('workcalendar.allfrommonthhours')}`,
+			compact
+				? formatHours(totals.overtime)
+				: `${formatHours(totals.overtime)} ${getOvertimeWord(totals.overtime)}`,
+			leaveCell,
+			totals.otherAbsences,
+		]
+	}
+
 	const exportPeriodLabel = useMemo(() => {
 		if (calendarView === 'single') {
 			const raw = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, {
@@ -438,283 +479,276 @@ function AdminUserList() {
 
 	const exportFileNameBasePerUser = () => `${exportFileNameBase()}_per_user`
 
-	const handleExportSummaryExcel = () => {
-		const wb = XLSX.utils.book_new()
-		const header = [
-			t('planslist.teamExportColMetric'),
-			t('planslist.teamExportColValue'),
-		]
-		let rows = []
+	const handleExportSummaryExcel = async () => {
+		try {
+			const header = [
+				t('planslist.teamExportColMetric'),
+				t('planslist.teamExportColValue'),
+			]
+			let rows = []
 
-		if (calendarView === 'single' && teamSummaryCurrentMonth) {
-			const s = teamSummaryCurrentMonth
-			rows = [
-				[t('workcalendar.allfrommonth1'), s.totalWorkDays],
-				[t('workcalendar.allfrommonth2'), `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
-				[t('workcalendar.allfrommonth3'), `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`],
-				[
-					settings?.leaveCalculationMode === 'hours'
-						? t('workcalendar.allfrommonth4hours')
-						: t('workcalendar.allfrommonth4'),
-					settings?.leaveCalculationMode === 'hours'
-						? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-						: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
-				],
-				[t('workcalendar.allfrommonth5'), s.otherAbsences],
-			]
-			if (s.holidaysCount > 0) {
-				rows.push([t('workcalendar.allfrommonth6'), s.holidaysCount])
+			if (calendarView === 'single' && teamSummaryCurrentMonth) {
+				const s = teamSummaryCurrentMonth
+				rows = [
+					[t('workcalendar.allfrommonth1'), s.totalWorkDays],
+					[t('workcalendar.allfrommonth2'), `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
+					[t('workcalendar.allfrommonth3'), `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`],
+					[
+						settings?.leaveCalculationMode === 'hours'
+							? t('workcalendar.allfrommonth4hours')
+							: t('workcalendar.allfrommonth4'),
+						settings?.leaveCalculationMode === 'hours'
+							? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+							: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+					],
+					[t('workcalendar.allfrommonth5'), s.otherAbsences],
+				]
+				if (s.holidaysCount > 0) {
+					rows.push([t('workcalendar.allfrommonth6'), s.holidaysCount])
+				}
+			} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
+				const y = teamYearBreakdown.yearTotals
+				rows = [
+					[t('workcalendar.allfrommonth1'), y.totalWorkDays],
+					[t('workcalendar.allfrommonth2'), `${formatHours(y.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
+					[t('workcalendar.allfrommonth3'), `${formatHours(y.overtime)} ${getOvertimeWord(y.overtime)}`],
+					[
+						settings?.leaveCalculationMode === 'hours'
+							? t('workcalendar.allfrommonth4hours')
+							: t('workcalendar.allfrommonth4'),
+						settings?.leaveCalculationMode === 'hours'
+							? `${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+							: `${y.leaveDays} (${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+					],
+					[t('workcalendar.allfrommonth5'), y.otherAbsences],
+				]
+				if (y.holidaysCount > 0) {
+					rows.push([t('workcalendar.allfrommonth6'), y.holidaysCount])
+				}
 			}
-		} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
-			const y = teamYearBreakdown.yearTotals
-			rows = [
-				[t('workcalendar.allfrommonth1'), y.totalWorkDays],
-				[t('workcalendar.allfrommonth2'), `${formatHours(y.totalHours)} ${t('workcalendar.allfrommonthhours')}`],
-				[t('workcalendar.allfrommonth3'), `${formatHours(y.overtime)} ${getOvertimeWord(y.overtime)}`],
-				[
-					settings?.leaveCalculationMode === 'hours'
-						? t('workcalendar.allfrommonth4hours')
-						: t('workcalendar.allfrommonth4'),
-					settings?.leaveCalculationMode === 'hours'
-						? `${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-						: `${y.leaveDays} (${y.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
-				],
-				[t('workcalendar.allfrommonth5'), y.otherAbsences],
+
+			const sheets = [
+				{
+					name: t('planslist.teamSummarySheetSummary') || 'Podsumowanie',
+					rows: [header, ...rows],
+					colWidths: [40, 28],
+				},
 			]
-			if (y.holidaysCount > 0) {
-				rows.push([t('workcalendar.allfrommonth6'), y.holidaysCount])
+
+			if (calendarView === 'all-months' && teamYearBreakdown.months.length) {
+				const th = [
+					t('workcalendar.monthlabel'),
+					t('workcalendar.allfrommonth1'),
+					t('workcalendar.allfrommonth2'),
+					t('workcalendar.allfrommonth3'),
+					settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
+					t('workcalendar.allfrommonth5'),
+				]
+				const monthRows = teamYearBreakdown.months.map((m, idx) => {
+					const monthName = new Date(currentYear, idx)
+						.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+						.replace(/^./, (c) => c.toUpperCase())
+					return [
+						monthName,
+						m.totalWorkDays,
+						formatHours(m.totalHours),
+						formatHours(m.overtime),
+						settings?.leaveCalculationMode === 'hours'
+							? m.leaveHours.toFixed(1)
+							: `${m.leaveDays} (${m.leaveHours.toFixed(1)})`,
+						m.otherAbsences,
+					]
+				})
+				const yt = teamYearBreakdown.yearTotals
+				if (yt) {
+					monthRows.push([
+						t('planslist.teamTableTotal'),
+						yt.totalWorkDays,
+						formatHours(yt.totalHours),
+						formatHours(yt.overtime),
+						settings?.leaveCalculationMode === 'hours'
+							? yt.leaveHours.toFixed(1)
+							: `${yt.leaveDays} (${yt.leaveHours.toFixed(1)})`,
+						yt.otherAbsences,
+					])
+				}
+				sheets.push({
+					name: t('planslist.teamSummarySheetMonths') || 'Miesiące',
+					rows: [th, ...monthRows],
+					colWidths: [14, 12, 12, 12, 22, 14],
+				})
 			}
+
+			await downloadExcelWorkbook(sheets, `${exportFileNameBase()}.xlsx`)
+		} catch (e) {
+			console.error('handleExportSummaryExcel:', e)
 		}
+	}
 
-		const ws1 = XLSX.utils.aoa_to_sheet([header, ...rows])
-		ws1['!cols'] = [{ wch: 40 }, { wch: 28 }]
-		XLSX.utils.book_append_sheet(wb, ws1, t('planslist.teamSummarySheetSummary') || 'Podsumowanie')
+	const handleExportSummaryPdf = async () => {
+		try {
+			const content = [
+				...pdfTitleBlock(
+					t('planslist.teamSummaryTitle'),
+					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
+				),
+			]
 
-		if (calendarView === 'all-months' && teamYearBreakdown.months.length) {
+			if (calendarView === 'single' && teamSummaryCurrentMonth) {
+				const s = teamSummaryCurrentMonth
+				const lines = [
+					{ label: t('workcalendar.allfrommonth1'), value: s.totalWorkDays },
+					{
+						label: t('workcalendar.allfrommonth2'),
+						value: `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`,
+					},
+					{
+						label: t('workcalendar.allfrommonth3'),
+						value: `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`,
+					},
+					{
+						label:
+							settings?.leaveCalculationMode === 'hours'
+								? t('workcalendar.allfrommonth4hours')
+								: t('workcalendar.allfrommonth4'),
+						value:
+							settings?.leaveCalculationMode === 'hours'
+								? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+								: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+					},
+					{ label: t('workcalendar.allfrommonth5'), value: s.otherAbsences },
+				]
+				if (s.holidaysCount > 0) {
+					lines.push({ label: t('workcalendar.allfrommonth6'), value: s.holidaysCount })
+				}
+				content.push(...pdfLabelValueLines(lines))
+			} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
+				const ytot = teamYearBreakdown.yearTotals
+				const lines = [
+					{ label: t('workcalendar.allfrommonth1'), value: ytot.totalWorkDays },
+					{
+						label: t('workcalendar.allfrommonth2'),
+						value: `${formatHours(ytot.totalHours)} ${t('workcalendar.allfrommonthhours')}`,
+					},
+					{
+						label: t('workcalendar.allfrommonth3'),
+						value: `${formatHours(ytot.overtime)} ${getOvertimeWord(ytot.overtime)}`,
+					},
+					{
+						label:
+							settings?.leaveCalculationMode === 'hours'
+								? t('workcalendar.allfrommonth4hours')
+								: t('workcalendar.allfrommonth4'),
+						value:
+							settings?.leaveCalculationMode === 'hours'
+								? `${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
+								: `${ytot.leaveDays} (${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
+					},
+					{ label: t('workcalendar.allfrommonth5'), value: ytot.otherAbsences },
+				]
+				if (ytot.holidaysCount > 0) {
+					lines.push({ label: t('workcalendar.allfrommonth6'), value: ytot.holidaysCount })
+				}
+				content.push(...pdfLabelValueLines(lines))
+				content.push({ text: t('planslist.teamMonthlyTableTitle'), fontSize: 11, bold: true, margin: [0, 10, 0, 4] })
+				const headers = [
+					t('workcalendar.monthlabel'),
+					t('planslist.teamColShortWorkDays'),
+					t('planslist.teamColShortHours'),
+					t('planslist.teamColShortOt'),
+					t('planslist.teamColShortLeave'),
+					t('planslist.teamColShortOther'),
+				]
+				const tableRows = teamYearBreakdown.months.map((m, idx) => {
+					const monthName = new Date(currentYear, idx).toLocaleString(i18n.resolvedLanguage, {
+						month: 'short',
+					})
+					return [
+						monthName,
+						String(m.totalWorkDays),
+						formatHours(m.totalHours),
+						formatHours(m.overtime),
+						settings?.leaveCalculationMode === 'hours' ? m.leaveHours.toFixed(1) : String(m.leaveDays),
+						String(m.otherAbsences),
+					]
+				})
+				content.push(pdfDataTable(headers, tableRows, [22, 14, 14, 14, 24, 16]))
+			}
+
+			await downloadPdf(buildPdfDocument({ content }), `${exportFileNameBase()}.pdf`)
+		} catch (e) {
+			console.error('handleExportSummaryPdf:', e)
+		}
+	}
+
+	const handleExportPerUserExcel = async () => {
+		if (perUserSummaryRows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
+		}
+		try {
+			const leaveHeader =
+				settings?.leaveCalculationMode === 'hours'
+					? t('workcalendar.allfrommonth4hours')
+					: t('workcalendar.allfrommonth4')
 			const th = [
-				t('workcalendar.monthlabel'),
+				t('planslist.columnEmployee'),
 				t('workcalendar.allfrommonth1'),
 				t('workcalendar.allfrommonth2'),
 				t('workcalendar.allfrommonth3'),
-				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
+				leaveHeader,
 				t('workcalendar.allfrommonth5'),
 			]
-			const monthRows = teamYearBreakdown.months.map((m, idx) => {
-				const monthName = new Date(currentYear, idx)
-					.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-					.replace(/^./, (c) => c.toUpperCase())
-				return [
-					monthName,
-					m.totalWorkDays,
-					formatHours(m.totalHours),
-					formatHours(m.overtime),
-					settings?.leaveCalculationMode === 'hours'
-						? m.leaveHours.toFixed(1)
-						: `${m.leaveDays} (${m.leaveHours.toFixed(1)})`,
-					m.otherAbsences,
-				]
-			})
-			const yt = teamYearBreakdown.yearTotals
-			if (yt) {
-				monthRows.push([
-					t('planslist.teamTableTotal'),
-					yt.totalWorkDays,
-					formatHours(yt.totalHours),
-					formatHours(yt.overtime),
-					settings?.leaveCalculationMode === 'hours'
-						? yt.leaveHours.toFixed(1)
-						: `${yt.leaveDays} (${yt.leaveHours.toFixed(1)})`,
-					yt.otherAbsences,
-				])
-			}
-			const ws2 = XLSX.utils.aoa_to_sheet([th, ...monthRows])
-			ws2['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }]
-			XLSX.utils.book_append_sheet(wb, ws2, t('planslist.teamSummarySheetMonths') || 'Miesiące')
+			const rows = perUserSummaryRows.map(({ name, totals: s }) => [
+				name,
+				s.totalWorkDays,
+				formatHours(s.totalHours),
+				formatHours(s.overtime),
+				settings?.leaveCalculationMode === 'hours'
+					? s.leaveHours.toFixed(1)
+					: `${s.leaveDays} (${s.leaveHours.toFixed(1)})`,
+				s.otherAbsences,
+			])
+			const footerRow = buildPerUserTotalsRow(perUserTableTotals, { compact: true })
+			await downloadExcelWorkbook(
+				[
+					{
+						name: t('planslist.teamPerUserSheetName') || 'Wg osób',
+						rows: [
+							[t('planslist.teamPerUserTitle')],
+							[`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`],
+							[],
+							th,
+							...rows,
+							...(footerRow ? [footerRow] : []),
+						],
+						colWidths: [28, 12, 12, 12, 22, 14],
+					},
+				],
+				`${exportFileNameBasePerUser()}.xlsx`
+			)
+		} catch (e) {
+			console.error('handleExportPerUserExcel:', e)
 		}
-
-		XLSX.writeFile(wb, `${exportFileNameBase()}.xlsx`)
 	}
 
-	const handleExportSummaryPdf = () => {
-		const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-		const margin = 14
-		let y = 16
-		doc.setFontSize(13)
-		doc.text(t('planslist.teamSummaryTitle'), margin, y)
-		y += 8
-		doc.setFontSize(10)
-		doc.setTextColor(80, 80, 80)
-		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y)
-		y += 10
-		doc.setTextColor(0, 0, 0)
-
-		const pushLine = (label, value) => {
-			doc.setFont('helvetica', 'bold')
-			doc.text(`${label}`, margin, y)
-			doc.setFont('helvetica', 'normal')
-			const lines = doc.splitTextToSize(String(value ?? ''), 120)
-			doc.text(lines, margin + 85, y)
-			y += Math.max(6, lines.length * 5)
+	const handleExportPerUserPdf = async () => {
+		if (perUserSummaryRows.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
 		}
-
-		if (calendarView === 'single' && teamSummaryCurrentMonth) {
-			const s = teamSummaryCurrentMonth
-			pushLine(t('workcalendar.allfrommonth1'), s.totalWorkDays)
-			pushLine(t('workcalendar.allfrommonth2'), `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`)
-			pushLine(t('workcalendar.allfrommonth3'), `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`)
-			pushLine(
-				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
-				settings?.leaveCalculationMode === 'hours'
-					? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-					: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
-			)
-			pushLine(t('workcalendar.allfrommonth5'), s.otherAbsences)
-			if (s.holidaysCount > 0) pushLine(t('workcalendar.allfrommonth6'), s.holidaysCount)
-		} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
-			const ytot = teamYearBreakdown.yearTotals
-			pushLine(t('workcalendar.allfrommonth1'), ytot.totalWorkDays)
-			pushLine(t('workcalendar.allfrommonth2'), `${formatHours(ytot.totalHours)} ${t('workcalendar.allfrommonthhours')}`)
-			pushLine(t('workcalendar.allfrommonth3'), `${formatHours(ytot.overtime)} ${getOvertimeWord(ytot.overtime)}`)
-			pushLine(
-				settings?.leaveCalculationMode === 'hours' ? t('workcalendar.allfrommonth4hours') : t('workcalendar.allfrommonth4'),
-				settings?.leaveCalculationMode === 'hours'
-					? `${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-					: `${ytot.leaveDays} (${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
-			)
-			pushLine(t('workcalendar.allfrommonth5'), ytot.otherAbsences)
-			if (ytot.holidaysCount > 0) pushLine(t('workcalendar.allfrommonth6'), ytot.holidaysCount)
-			y += 6
-			doc.setFontSize(11)
-			doc.text(t('planslist.teamMonthlyTableTitle'), margin, y)
-			y += 7
-			doc.setFontSize(7.5)
-			const colW = [22, 14, 14, 14, 24, 16]
+		try {
 			const headers = [
-				t('workcalendar.monthlabel'),
+				t('planslist.columnEmployee'),
 				t('planslist.teamColShortWorkDays'),
 				t('planslist.teamColShortHours'),
 				t('planslist.teamColShortOt'),
-				t('planslist.teamColShortLeave'),
+				settings?.leaveCalculationMode === 'hours'
+					? t('planslist.teamColShortLeave')
+					: t('workcalendar.allfrommonth4'),
 				t('planslist.teamColShortOther'),
 			]
-			let x = margin
-			doc.setFont('helvetica', 'bold')
-			headers.forEach((h, i) => {
-				doc.text(doc.splitTextToSize(h, colW[i] - 1), x, y)
-				x += colW[i]
-			})
-			y += 5
-			doc.setFont('helvetica', 'normal')
-			teamYearBreakdown.months.forEach((m, idx) => {
-				if (y > 270) {
-					doc.addPage()
-					y = 14
-				}
-				const monthName = new Date(currentYear, idx).toLocaleString(i18n.resolvedLanguage, { month: 'short' })
-				x = margin
-				const cells = [
-					monthName,
-					String(m.totalWorkDays),
-					formatHours(m.totalHours),
-					formatHours(m.overtime),
-					settings?.leaveCalculationMode === 'hours' ? m.leaveHours.toFixed(1) : String(m.leaveDays),
-					String(m.otherAbsences),
-				]
-				cells.forEach((c, i) => {
-					doc.text(doc.splitTextToSize(c, colW[i] - 1), x, y)
-					x += colW[i]
-				})
-				y += 5
-			})
-		}
-
-		doc.save(`${exportFileNameBase()}.pdf`)
-	}
-
-	const handleExportPerUserExcel = () => {
-		if (perUserSummaryRows.length === 0) {
-			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
-			return
-		}
-		const leaveHeader =
-			settings?.leaveCalculationMode === 'hours'
-				? t('workcalendar.allfrommonth4hours')
-				: t('workcalendar.allfrommonth4')
-		const th = [
-			t('planslist.columnEmployee'),
-			t('workcalendar.allfrommonth1'),
-			t('workcalendar.allfrommonth2'),
-			t('workcalendar.allfrommonth3'),
-			leaveHeader,
-			t('workcalendar.allfrommonth5'),
-		]
-		const rows = perUserSummaryRows.map(({ name, totals: s }) => [
-			name,
-			s.totalWorkDays,
-			formatHours(s.totalHours),
-			formatHours(s.overtime),
-			settings?.leaveCalculationMode === 'hours'
-				? s.leaveHours.toFixed(1)
-				: `${s.leaveDays} (${s.leaveHours.toFixed(1)})`,
-			s.otherAbsences,
-		])
-		const wb = XLSX.utils.book_new()
-		const meta = [
-			[t('planslist.teamPerUserTitle')],
-			[`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`],
-			[],
-		]
-		const ws = XLSX.utils.aoa_to_sheet([...meta, th, ...rows])
-		ws['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }]
-		XLSX.utils.book_append_sheet(wb, ws, t('planslist.teamPerUserSheetName') || 'Wg osób')
-		XLSX.writeFile(wb, `${exportFileNameBasePerUser()}.xlsx`)
-	}
-
-	const handleExportPerUserPdf = () => {
-		if (perUserSummaryRows.length === 0) {
-			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
-			return
-		}
-		const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-		const margin = 12
-		let y = 14
-		const pageW = doc.internal.pageSize.getWidth()
-		doc.setFontSize(12)
-		doc.text(t('planslist.teamPerUserTitle'), margin, y)
-		y += 7
-		doc.setFontSize(9)
-		doc.setTextColor(80, 80, 80)
-		doc.text(`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`, margin, y, { maxWidth: pageW - 2 * margin })
-		y += 10
-		doc.setTextColor(0, 0, 0)
-		const colW = [52, 22, 28, 28, 40, 24]
-		const headers = [
-			t('planslist.columnEmployee'),
-			t('planslist.teamColShortWorkDays'),
-			t('planslist.teamColShortHours'),
-			t('planslist.teamColShortOt'),
-			settings?.leaveCalculationMode === 'hours'
-				? t('planslist.teamColShortLeave')
-				: t('workcalendar.allfrommonth4'),
-			t('planslist.teamColShortOther'),
-		]
-		doc.setFontSize(8)
-		doc.setFont('helvetica', 'bold')
-		let x = margin
-		headers.forEach((h, i) => {
-			doc.text(doc.splitTextToSize(h, colW[i] - 2), x, y)
-			x += colW[i]
-		})
-		y += 6
-		doc.setFont('helvetica', 'normal')
-		const lineH = 5
-		perUserSummaryRows.forEach(({ name, totals: s }) => {
-			if (y > 185) {
-				doc.addPage()
-				y = 14
-			}
-			x = margin
-			const cells = [
+			const tableRows = perUserSummaryRows.map(({ name, totals: s }) => [
 				name,
 				String(s.totalWorkDays),
 				formatHours(s.totalHours),
@@ -723,14 +757,22 @@ function AdminUserList() {
 					? s.leaveHours.toFixed(1)
 					: String(s.leaveDays),
 				String(s.otherAbsences),
+			])
+			const footerRow = buildPerUserTotalsRow(perUserTableTotals, { compact: true })
+			const content = [
+				...pdfTitleBlock(
+					t('planslist.teamPerUserTitle'),
+					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
+				),
+				pdfDataTable(headers, tableRows, [52, 22, 28, 28, 40, 24], footerRow),
 			]
-			cells.forEach((c, i) => {
-				doc.text(doc.splitTextToSize(String(c), colW[i] - 2), x, y)
-				x += colW[i]
-			})
-			y += lineH
-		})
-		doc.save(`${exportFileNameBasePerUser()}.pdf`)
+			await downloadPdf(
+				buildPdfDocument({ content, pageOrientation: 'landscape' }),
+				`${exportFileNameBasePerUser()}.pdf`
+			)
+		} catch (e) {
+			console.error('handleExportPerUserPdf:', e)
+		}
 	}
 
 	// Funkcje do obsługi filtrowania
@@ -1487,14 +1529,42 @@ function AdminUserList() {
 														{formatHours(row.totals.overtime)} {getOvertimeWord(row.totals.overtime)}
 													</td>
 													<td style={{ padding: '8px 10px', textAlign: 'right' }}>
-														{settings?.leaveCalculationMode === 'hours'
-															? `${row.totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-															: `${row.totals.leaveDays} (${row.totals.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`}
+														{formatPerUserLeaveCell(row.totals)}
 													</td>
 													<td style={{ padding: '8px 10px', textAlign: 'right' }}>{row.totals.otherAbsences}</td>
 												</tr>
 											))}
 										</tbody>
+										{perUserTableTotals && (
+											<tfoot>
+												<tr
+													style={{
+														backgroundColor: '#f0f4f8',
+														fontWeight: 700,
+														borderTop: '2px solid #dee2e6',
+													}}
+												>
+													<td style={{ padding: '10px' }}>{t('planslist.teamTableTotal')}</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{perUserTableTotals.totalWorkDays}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{formatHours(perUserTableTotals.totalHours)}{' '}
+														{t('workcalendar.allfrommonthhours')}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{formatHours(perUserTableTotals.overtime)}{' '}
+														{getOvertimeWord(perUserTableTotals.overtime)}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{formatPerUserLeaveCell(perUserTableTotals)}
+													</td>
+													<td style={{ padding: '10px', textAlign: 'right' }}>
+														{perUserTableTotals.otherAbsences}
+													</td>
+												</tr>
+											</tfoot>
+										)}
 									</table>
 								</div>
 							</>

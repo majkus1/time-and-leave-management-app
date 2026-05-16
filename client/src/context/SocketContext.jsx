@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { io } from 'socket.io-client'
 import { API_URL } from '../config.js'
 import { useAuth } from './AuthContext'
+import { devLog, devWarn } from '../utils/devLog.js'
 
 const SocketContext = createContext()
 
@@ -35,7 +36,7 @@ export const SocketProvider = ({ children }) => {
 			socketUrl = url.origin // This gives us 'https://api.planopia.pl' or 'http://localhost:3000'
 		} catch (error) {
 			// Fallback: if URL parsing fails, try replace method
-			console.warn('Failed to parse API_URL, using fallback:', error)
+			devWarn('Failed to parse API_URL, using fallback:', error)
 			socketUrl = API_URL.replace('/api', '').replace(/\/$/, '') // Remove trailing slash if exists
 		}
 		const newSocket = io(socketUrl, {
@@ -52,12 +53,12 @@ export const SocketProvider = ({ children }) => {
 		socketRef.current = newSocket
 
 		newSocket.on('connect', () => {
-			console.log('Socket connected')
+			devLog('Socket connected')
 			setIsConnected(true)
 		})
 
 		newSocket.on('disconnect', () => {
-			console.log('Socket disconnected')
+			devLog('Socket disconnected')
 			setIsConnected(false)
 		})
 

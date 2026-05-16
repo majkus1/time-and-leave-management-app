@@ -1,12 +1,12 @@
 # Regulamin świadczenia usługi Planopia.pl
 
-**Wersja 1.0 - obowiązuje od 07.01.2026r.**
+**Wersja 1.3 - obowiązuje od 15.05.2026r.**
 
 ## 1. Postanowienia ogólne
 
 1.1. Niniejszy Regulamin określa zasady świadczenia usług przez ML Devworks Michał Lipka z siedzibą w Rynek Główny 34 lok. 15, 31-010 Kraków, NIP: 6762707876 (dalej: "Usługodawca") za pośrednictwem platformy Planopia.pl.
 
-1.2. Usługodawca oferuje dostęp do aplikacji internetowej Planopia.pl służącej do ewidencji czasu pracy, zarządzania urlopami, grafiku pracy, tablic zadań oraz komunikacji zespołowej (dalej: "Usługa").
+1.2. Usługodawca oferuje dostęp do aplikacji internetowej Planopia.pl służącej m.in. do ewidencji czasu pracy, zarządzania urlopami i nieobecnościami, grafiku pracy, tablic zadań (Kanban), komunikacji zespołowej oraz — w zależności od planu — funkcji opartych o sztuczną inteligencję (np. Asystent AI, wsparcie AI w grafiku) (dalej: "Usługa").
 
 1.3. Korzystanie z Usługi jest równoznaczne z akceptacją niniejszego Regulaminu.
 
@@ -22,9 +22,12 @@
 
 ## 3. Rodzaje kont i zasady korzystania
 
-3.1. Usługodawca oferuje dwa rodzaje kont:
-   - **Plan darmowy**: dostęp do 6 użytkowników, podstawowe funkcje
-   - **Plany płatne**: nielimitowana liczba użytkowników, dodatkowe funkcje (szczegóły w cenniku)
+3.1. Usługodawca udostępnia m.in. następujące możliwości rozliczeniowe:
+   - **Okres próbny**: przez **30 dni** od utworzenia Konta Klient może korzystać z Usługi **bez opłaty abonamentowej**, dla **do 5 aktywnych Użytkowników**, z funkcjami przewidzianymi w Usłudze na ten okres, z zastrzeżeniem limitów (w tym limitów wiadomości Asystenta AI) określonych w interfejsie lub cenniku.
+   - **Dostęp podstawowy (freemium)**: po zakończeniu okresu próbnego, jeśli Klient nie wykupi planu płatnego, może korzystać z **ograniczonego** zakresu Usługi (m.in. ewidencja czasu pracy i powiązane podglądy) dla **do 5 aktywnych Użytkowników** — szczegóły i dostępne moduły wynikają z aktualnej wersji aplikacji.
+   - **Plany płatne**: pełniejszy dostęp, wyższa liczba Użytkowników i moduły dodatkowe zgodnie z wybranym planem i cennikiem (m.in. grafiki, tablice, czat, timer QR, Asystent AI — jeśli objęte planem).
+
+3.1a. **Funkcje AI** (gdy dostępne w ramach planu i włączone po stronie Usługodawcy): służą wyłącznie do wsparcia informacyjnego w aplikacji (podsumowania, szkice wniosków itp.) i **nie zastępują** doradztwa prawnego, kadrowego ani decyzji Klienta. Odpowiedzi mogą zawierać błędy — Klient weryfikuje je przed użyciem. Historia rozmowy w Asystencie AI jest przechowywana **w przeglądarce Użytkownika**, a nie w bazie Usługodawcy (szczegóły w Polityce prywatności).
 
 3.2. Klient jest odpowiedzialny za:
    - zachowanie poufności danych dostępowych do Konta
@@ -35,13 +38,13 @@
 
 ## 4. Płatności i fakturowanie
 
-4.1. Plan darmowy nie wymaga płatności.
+4.1. W okresie próbnym, o którym mowa w ust. 3.1, nie są pobierane opłaty za podstawowy dostęp do Usługi w ramach warunków tego okresu.
 
-4.2. Za plany płatne opłaty są pobierane zgodnie z wybranym planem subskrypcyjnym.
+4.2. Po zakończeniu okresu próbnego opłaty za korzystanie z Usługi są pobierane zgodnie z wybranym planem płatnym i aktualnym cennikiem, o ile Klient kontynuuje korzystanie z Usługi.
 
 4.3. Usługodawca wystawia faktury zgodnie z obowiązującymi przepisami prawa. W chwili obecnej Usługodawca jest zwolniony z obowiązku podatku VAT (art. 113 ust. 1 ustawy o podatku od towarów i usług - zwolnienie dla małych podatników na początku działalności).
 
-4.4. W przypadku braku zapłaty za plan płatny, dostęp może zostać zawieszony.
+4.4. W przypadku braku wyboru planu płatnego po zakończeniu okresu próbnego lub braku zapłaty za plan płatny, dostęp do Usługi może zostać ograniczony lub zawieszony zgodnie z zasadami obowiązującymi w Usłudze.
 
 ## 5. Odpowiedzialność
 
@@ -59,7 +62,7 @@
    - decyzje podejmowane na podstawie danych z Usługi
    - awarie sprzętu lub sieci Klienta
 
-5.5. Odpowiedzialność Usługodawcy jest ograniczona do wysokości opłat wpłaconych przez Klienta w ciągu 12 miesięcy poprzedzających zdarzenie. W przypadku planu darmowego odpowiedzialność Usługodawcy jest wyłączona w najszerszym dopuszczalnym zakresie, a w każdym razie ograniczona do 0 zł.
+5.5. Odpowiedzialność Usługodawcy jest ograniczona do wysokości opłat wpłaconych przez Klienta w ciągu 12 miesięcy poprzedzających zdarzenie. W okresie próbnym (bez pobranych opłat abonamentowych za dany okres) odpowiedzialność Usługodawcy jest wyłączona w najszerszym dopuszczalnym zakresie, a w każdym razie ograniczona do 0 zł.
 
 ## 6. Ochrona danych osobowych
 
@@ -105,5 +108,15 @@
 
 9.4. Kontakt: office@ml-devworks.com
 
-**Data ostatniej aktualizacji: 07.01.2026r.**
+## 10. Reklamacje
+
+10.1. Reklamacje dotyczące świadczenia Usługi (w tym płatności i dostępu do aplikacji) można składać drogą elektroniczną na adres: office@ml-devworks.com. W treści wiadomości prosimy o oznaczenie zgłoszenia jako „Reklamacja Planopia” oraz podanie informacji pozwalających zidentyfikować Konto.
+
+10.2. Reklamację należy złożyć w rozsądnym terminie po stwierdzeniu okoliczności stanowiących jej podstawę, nie później niż w ciągu 14 dni od dnia, w którym uprawniony podmiot dowiedział się o przyczynie reklamacji — w zakresie objętym przepisami o konsumentach, zgodnie z obowiązującymi przepisami.
+
+10.3. Usługodawca rozpatrzy reklamację w terminie 14 dni od daty jej otrzymania (wpływu zgłoszenia na wskazany adres e-mail) i udzieli odpowiedzi na adres e-mail użyty do zgłoszenia, chyba że zgłaszający wskaże inny sposób kontaktu.
+
+10.4. Informacje pomocnicze dotyczące trybu reklamacyjnego są zamieszczone pod adresem: https://planopia.pl/reklamacje
+
+**Data ostatniej aktualizacji: 15.05.2026r.**
 

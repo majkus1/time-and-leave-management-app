@@ -14,6 +14,30 @@ const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestCo
 const { isHoliday } = require('../utils/holidays')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const {
+	resolveTeamScopedLeaveUserViewAccess,
+	resolveTeamScopedLeaveManageAccess,
+	sendTeamScopedLeaveViewAccessError,
+} = require('../utils/vacationAccess')
+
+function respondLeaveUserViewAccessError(res, error) {
+	return sendTeamScopedLeaveViewAccessError(res, error)
+}
+
+async function findLeaveRequestsForUser(userId) {
+	const leaveRequests = await LeaveRequest.find({ userId })
+		.populate({
+			path: 'userId',
+			select: 'username firstName lastName position',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
+		})
+		.populate({
+			path: 'updatedBy',
+			select: 'firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
+		})
+	return leaveRequests.filter((request) => request.userId !== null)
+}
 
 // Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 function isWeekend(date) {
@@ -135,6 +159,17 @@ exports.markLeaveRequestAsProcessed = async (req, res) => {
 			return res.status(404).send('Wniosek nie znaleziony')
 		}
 
+		const access = await resolveTeamScopedLeaveManageAccess(
+			req.user.userId,
+			leaveRequest.userId
+		)
+		if (access.error) {
+			if (access.error.status === 403) {
+				return res.status(403).send('Access denied')
+			}
+			return res.status(404).send(access.error.message || 'Wniosek nie znaleziony')
+		}
+
 		leaveRequest.isProcessed = true
 		await leaveRequest.save()
 
@@ -203,48 +238,14 @@ exports.getOwnLeaveRequests = async (req, res) => {
 
 exports.getUserLeaveRequests = async (req, res) => {
 	const { userId } = req.params
-	const requestingUser = await User.findById(req.user.userId)
-	if (!requestingUser) return res.status(404).send('Brak użytkownika')
-
-	// Admin lub HR – widzi wszystko
-	if (
-		requestingUser.roles.includes('Admin') ||
-		requestingUser.roles.includes('HR')
-	) {
-		// widzi każdego
-	} else if (
-		// Przełożony widzi w zależności od konfiguracji
-		requestingUser.roles.includes('Przełożony (Supervisor)')
-	) {
-		const userToView = await User.findById(userId)
-		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
-		
-		const { canSupervisorApproveLeaves } = require('../services/roleService')
-		const canView = await canSupervisorApproveLeaves(requestingUser, userToView)
-		
-		if (!canView) return res.status(403).send('Brak uprawnień')
-		// OK
-	} else if (
-		// Pracownik widzi tylko swoje
-		requestingUser._id.toString() !== userId
-	) {
-		return res.status(403).send('Brak uprawnień')
-	}
 
 	try {
-		const leaveRequests = await LeaveRequest.find({ userId })
-			.populate({
-				path: 'userId',
-				select: 'username firstName lastName position',
-				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-			})
-			.populate({
-				path: 'updatedBy',
-				select: 'firstName lastName',
-				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-			})
-		// Filtruj wnioski, gdzie userId nie został znaleziony (soft-deleted)
-		const filteredRequests = leaveRequests.filter(req => req.userId !== null)
+		const access = await resolveTeamScopedLeaveUserViewAccess(req.user.userId, userId)
+		if (access.error) {
+			return respondLeaveUserViewAccessError(res, access.error)
+		}
+
+		const filteredRequests = await findLeaveRequestsForUser(userId)
 		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching leave requests:', error)
@@ -343,9 +344,13 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		if (!updatedByUser) return res.status(404).send('Updated by user not found or inactive')
 
 		
+		if (requestingUser.teamId.toString() !== user.teamId.toString()) {
+			return res.status(404).send('Leave request not found.')
+		}
+
 		const isAdmin = requestingUser.roles.includes('Admin')
 		const isHR = requestingUser.roles.includes('HR')
-		
+
 		// Sprawdź uprawnienia przełożonego
 		const { canSupervisorApproveLeaves } = require('../services/roleService')
 		const canApprove = await canSupervisorApproveLeaves(requestingUser, user)
@@ -534,41 +539,17 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
 	} catch (error) {
 		console.error('Error updating leave request status:', error)
-		console.error('Error stack:', error.stack)
-		res.status(500).json({ message: 'Failed to update leave request status.', error: error.message })
+		res.status(500).json({ message: 'Failed to update leave request status.' })
 	}
 }
 
 exports.getAcceptedLeaveRequestsForUser = async (req, res) => {
 	try {
 		const { userId } = req.params
-		const requestingUser = await User.findById(req.user.userId)
-		if (!requestingUser) return res.status(404).send('Brak użytkownika')
 
-		// Sprawdź uprawnienia - użytkownik może widzieć swoje wnioski lub admin/HR/kierownik może widzieć wnioski innych
-		const isOwnRequest = requestingUser._id.toString() === userId
-		const isAdmin = requestingUser.roles.includes('Admin')
-		const isHR = requestingUser.roles.includes('HR')
-		
-		// Sprawdź czy przełożony ma dostęp do użytkownika
-		const userToView = await User.findById(userId)
-		if (!userToView) return res.status(404).send('Nie znaleziono użytkownika')
-		
-		// Sprawdź czy użytkownicy są w tym samym zespole
-		const isSameTeam = requestingUser.teamId.toString() === userToView.teamId.toString()
-		
-		// Sprawdź uprawnienia przełożonego używając helpera urlopowego
-		let canSupervisorView = false
-		if (requestingUser.roles.includes('Przełożony (Supervisor)')) {
-			const { canSupervisorApproveLeaves } = require('../services/roleService')
-			canSupervisorView = await canSupervisorApproveLeaves(requestingUser, userToView)
-		}
-
-		// HIERARCHIA RÓL: Admin > HR > Przełożony
-		// Admin/HR widzi wszystkich ze swojego zespołu
-		// Przełożony widzi zgodnie z konfiguracją urlopową (sprawdzane w canSupervisorApproveLeaves)
-		if (!isOwnRequest && !isSameTeam && !isAdmin && !isHR && !canSupervisorView) {
-			return res.status(403).send('Brak uprawnień')
+		const access = await resolveTeamScopedLeaveUserViewAccess(req.user.userId, userId)
+		if (access.error) {
+			return respondLeaveUserViewAccessError(res, access.error)
 		}
 
 		// Pobierz zaakceptowane wnioski i L4 (status.sent) dla konkretnego użytkownika
@@ -943,20 +924,24 @@ exports.cancelLeaveRequest = async (req, res) => {
 			return res.status(404).send('User not found.')
 		}
 
-		// Sprawdź uprawnienia - tylko właściciel wniosku lub admin może anulować
-		const isOwner = leaveRequest.userId.toString() === req.user.userId
-		const isAdmin = requestingUser.roles.includes('Admin')
-
-		if (!isOwner && !isAdmin) {
-			return res.status(403).send('Access denied. Only the request owner or admin can cancel the request.')
-		}
-
 		const user = await User.findOne({
 			_id: leaveRequest.userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		}).select('firstName lastName username department roles teamId')
 		if (!user) {
 			return res.status(404).send('User not found or inactive.')
+		}
+
+		if (requestingUser.teamId.toString() !== user.teamId.toString()) {
+			return res.status(404).send('Leave request not found.')
+		}
+
+		// Sprawdź uprawnienia - tylko właściciel wniosku lub admin może anulować
+		const isOwner = leaveRequest.userId.toString() === req.user.userId
+		const isAdmin = requestingUser.roles.includes('Admin')
+
+		if (!isOwner && !isAdmin) {
+			return res.status(403).send('Access denied. Only the request owner or admin can cancel the request.')
 		}
 
 		const teamId = user.teamId || requestingUser.teamId

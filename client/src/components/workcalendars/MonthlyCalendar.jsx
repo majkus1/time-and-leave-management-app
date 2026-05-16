@@ -978,7 +978,7 @@ function MonthlyCalendar() {
 					</button>
 				</div>
 
-				<div className="rounded-2xl shadow-md monthly-calendar-fc-wrap">
+				<div className="shadow-md monthly-calendar-fc-wrap">
 				<FullCalendar
 					plugins={[dayGridPlugin, interactionPlugin]}
 					initialView="dayGridMonth"

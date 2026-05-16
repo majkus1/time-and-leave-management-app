@@ -28,7 +28,7 @@ const FORCE_LEGACY_PRE_BILLING_TEAM_NAMES = ['testnewversion', 'legacy', 'lip420
  * (isPaidSubscriptionActive). Po wykupieniu planu zespół zachowuje się jak zwykły płatny.
  * Tej samej nazwy nie dodawaj do FORCE_LEGACY — wtedy `ent.legacy` i kopia w Pakietach sugerują grandfathering mimo freemium.
  */
-const FORCE_FREEMIUM_TEST_TEAM_NAMES = ['testleeegacy', 'qwww']
+const FORCE_FREEMIUM_TEST_TEAM_NAMES = ['testleeegacy', 'qwww', 'eeee', 'czxczczc']
 
 /**
  * Koniec okresu grandfathered legacy dla wybranej nazwy zespołu (pierwsza chwila PO ostatnim dniu grace).

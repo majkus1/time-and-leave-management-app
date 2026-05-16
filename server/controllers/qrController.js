@@ -1,4 +1,5 @@
 const qrService = require('../services/qrService')
+const { mapQrServiceError } = require('../utils/safeHttpErrors')
 
 // Generate QR code for team (Admin/HR only)
 exports.generateQRCode = async (req, res) => {
@@ -22,8 +23,8 @@ exports.generateQRCode = async (req, res) => {
 		res.status(201).json(qrCode)
 	} catch (error) {
 		console.error('Error generating QR code:', error)
-		const statusCode = error.message.includes('wymagana') ? 400 : 500
-		res.status(statusCode).json({ message: error.message || 'Błąd podczas generowania kodu QR' })
+		const { status, body } = mapQrServiceError(error, 'Błąd podczas generowania kodu QR')
+		res.status(status).json(body)
 	}
 }
 
@@ -48,7 +49,7 @@ exports.getTeamQRCodes = async (req, res) => {
 		res.json(qrCodes)
 	} catch (error) {
 		console.error('Error getting QR codes:', error)
-		res.status(500).json({ message: error.message || 'Błąd podczas pobierania kodów QR' })
+		res.status(500).json({ message: 'Błąd podczas pobierania kodów QR' })
 	}
 }
 
@@ -74,8 +75,8 @@ exports.deleteQRCode = async (req, res) => {
 		res.json(result)
 	} catch (error) {
 		console.error('Error deleting QR code:', error)
-		const statusCode = error.message.includes('nie znaleziony') ? 404 : 500
-		res.status(statusCode).json({ message: error.message || 'Błąd podczas usuwania kodu QR' })
+		const { status, body } = mapQrServiceError(error, 'Błąd podczas usuwania kodu QR')
+		res.status(status).json(body)
 	}
 }
 
@@ -94,6 +95,6 @@ exports.verifyQRCode = async (req, res) => {
 		res.json(result)
 	} catch (error) {
 		console.error('Error verifying QR code:', error)
-		res.status(500).json({ message: error.message || 'Błąd podczas weryfikacji kodu QR' })
+		res.status(500).json({ message: 'Błąd podczas weryfikacji kodu QR' })
 	}
 }

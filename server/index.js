@@ -436,7 +436,8 @@ app.use('/api/announcements', announcementRoutes)
 app.use('/api/ai-assistant', aiAssistantRoutes)
 app.use('/api/billing', require('./routes/billingRoutes'))
 app.use('/api/billing/stripe', require('./routes/billingStripeRoutes'))
-app.use('/uploads', authenticateToken, express.static('uploads'))
+const { serveUploadMiddleware } = require('./middleware/serveUploadMiddleware')
+app.use('/uploads', authenticateToken, serveUploadMiddleware)
 
 // Socket.io setup
 const jwt = require('jsonwebtoken')
@@ -501,45 +502,13 @@ io.use(async (socket, next) => {
 	}
 })
 
-io.on('connection', (socket) => {
-	console.log(`User connected: ${socket.userId}`)
-
-	// Join personal room for user-scoped real-time updates (e.g. calendar confirmation status)
-	socket.join(`user:${socket.userId}`)
-
-	// Join team room
-	socket.join(`team:${socket.teamId}`)
-
-	// Join channel room
-	socket.on('join-channel', (channelId) => {
-		socket.join(`channel:${channelId}`)
-	})
-
-	// Leave channel room
-	socket.on('leave-channel', (channelId) => {
-		socket.leave(`channel:${channelId}`)
-	})
-
-	// Handle new message
-	socket.on('new-message', async (data) => {
-		const { channelId, message } = data
-		// Broadcast to all users in the channel
-		io.to(`channel:${channelId}`).emit('message-received', message)
-		// Also notify team members about new message
-		io.to(`team:${socket.teamId}`).emit('new-message-notification', {
-			channelId,
-			message
-		})
-	})
-
-	socket.on('disconnect', () => {
-		console.log(`User disconnected: ${socket.userId}`)
-	})
-})
+const { registerChatSocketHandlers } = require('./utils/socketChatHandlers')
+registerChatSocketHandlers(io)
 
 // Export io for use in controllers
 app.io = io
 
 server.listen(process.env.PORT || 3000, () => {
-	console.log(`Server running on port ${process.env.PORT || 3000}`)
+	const port = process.env.PORT || 3000
+	console.log(`Server running on port ${port}`)
 })

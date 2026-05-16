@@ -67,21 +67,17 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-f39ecc8c'], (function (workbox) { 'use strict';
+define(['./workbox-9bd01273'], (function (workbox) { 'use strict';
 
-  importScripts("/sw-push-handlers.js");
+  importScripts("/timer-notification-sw.js", "/sw-push-handlers.js");
   self.skipWaiting();
   workbox.clientsClaim();
-  workbox.registerRoute(/^https:\/\/api\./i, new workbox.NetworkFirst({
-    "cacheName": "api-cache",
-    "networkTimeoutSeconds": 10,
-    plugins: [new workbox.CacheableResponsePlugin({
-      statuses: [0, 200]
-    }), new workbox.ExpirationPlugin({
-      maxEntries: 50,
-      maxAgeSeconds: 300
-    })]
-  }), 'GET');
+  workbox.registerRoute(({
+    url
+  }) => {
+    if (!url.pathname.startsWith("/api/")) return false;
+    return url.hostname === "api.planopia.pl" || url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  }, new workbox.NetworkOnly(), 'GET');
   workbox.registerRoute(/\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i, new workbox.CacheFirst({
     "cacheName": "images-cache",
     plugins: [new workbox.ExpirationPlugin({
@@ -94,16 +90,6 @@ define(['./workbox-f39ecc8c'], (function (workbox) { 'use strict';
     plugins: [new workbox.ExpirationPlugin({
       maxEntries: 20,
       maxAgeSeconds: 31536000
-    })]
-  }), 'GET');
-  workbox.registerRoute(/\/api\//i, new workbox.NetworkFirst({
-    "cacheName": "api-requests-cache",
-    "networkTimeoutSeconds": 10,
-    plugins: [new workbox.CacheableResponsePlugin({
-      statuses: [0, 200]
-    }), new workbox.ExpirationPlugin({
-      maxEntries: 100,
-      maxAgeSeconds: 300
     })]
   }), 'GET');
   workbox.registerRoute(/\.(?:js|jsx|ts|tsx|mjs)$/i, new workbox.NetworkFirst({

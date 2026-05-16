@@ -31,8 +31,14 @@ async function p24Request(method, path, jsonBody) {
 	try {
 		json = text ? JSON.parse(text) : {}
 	} catch {
-		const err = new Error(`P24 invalid JSON (HTTP ${res.status}): ${text.slice(0, 240)}`)
+		console.error(
+			'[p24] invalid JSON response:',
+			res.status,
+			text.slice(0, 240)
+		)
+		const err = new Error('P24 invalid JSON response')
 		err.code = 'P24_PARSE'
+		err.httpStatus = res.status
 		throw err
 	}
 
@@ -41,8 +47,9 @@ async function p24Request(method, path, jsonBody) {
 
 function assertP24Ok(json, context) {
 	if (json != null && Number(json.responseCode) === 0) return
-	const msg = json?.error || JSON.stringify(json)
-	const err = new Error(`P24 ${context} failed: ${msg}`)
+	const detail = json?.error ?? json
+	console.error(`[p24] API ${context} responseCode != 0`, detail)
+	const err = new Error(`P24 ${context} failed`)
 	err.code = 'P24_API'
 	err.p24Response = json
 	throw err

@@ -25,5 +25,5 @@ module.exports = connection => {
 	ticketSchema.index({ company: 1 });
 	ticketSchema.index({ userEmail: 1 });
 
-	return connection.model('Ticket', ticketSchema)
+	return connection.models.Ticket || connection.model('Ticket', ticketSchema)
 }

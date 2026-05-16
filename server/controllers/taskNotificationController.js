@@ -6,6 +6,7 @@ const User = require('../models/user')(firmDb)
 const BoardViewState = require('../models/BoardViewState')(firmDb)
 const TaskViewState = require('../models/TaskViewState')(firmDb)
 const { isAdminUser, canUserAccessTask, normalizeObjectIdString } = require('../utils/taskAccess')
+const { resolveBoardAccessForUser } = require('../utils/boardAccess')
 
 const getUserDepartments = (user) => {
 	if (!user) return []
@@ -85,17 +86,7 @@ const getTaskActivityTimestamp = ({ task, currentUserId, latestCommentMap }) => 
 }
 
 const ensureBoardAccess = async ({ boardId, reqUser }) => {
-	const board = await Board.findById(boardId)
-	if (!board) return { error: { status: 404, message: 'Board not found' } }
-
-	const isMember = Array.isArray(board.members) && board.members.some((member) => member.toString() === reqUser.userId.toString())
-	const isTeamBoard = board.isTeamBoard
-	const isDepartmentBoard = board.type === 'department'
-	if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-		return { error: { status: 403, message: 'Access denied' } }
-	}
-
-	return { board }
+	return resolveBoardAccessForUser({ boardId, reqUser })
 }
 
 exports.getBoardsUnreadSummary = async (req, res) => {

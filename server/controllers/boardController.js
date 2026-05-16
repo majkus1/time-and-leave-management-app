@@ -4,6 +4,7 @@ const Task = require('../models/Task')(firmDb)
 const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const Department = require('../models/Department')(firmDb)
+const { resolveBoardAccessForUser, loadBoardForUser } = require('../utils/boardAccess')
 
 // Helper function to create board for department
 exports.createBoardForDepartment = async (teamId, departmentName) => {
@@ -243,9 +244,12 @@ exports.getUserBoards = async (req, res) => {
 exports.getBoard = async (req, res) => {
 	try {
 		const { boardId } = req.params
-		const userId = req.user.userId
+		const access = await resolveBoardAccessForUser({ boardId, reqUser: req.user })
+		if (access.error) {
+			return res.status(access.error.status).json({ message: access.error.message })
+		}
 
-		const board = await Board.findById(boardId)
+		const board = await Board.findById(access.board._id)
 			.populate({
 				path: 'members',
 				select: 'username firstName lastName',
@@ -263,15 +267,6 @@ exports.getBoard = async (req, res) => {
 		// Filter out null members (soft-deleted users)
 		board.members = board.members.filter(m => m !== null && m !== undefined)
 
-		// Check if user has access
-		const isMember = board.members.some(m => m._id && m._id.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
-
 		res.json(board)
 	} catch (error) {
 		console.error('Error getting board:', error)
@@ -283,24 +278,14 @@ exports.getBoard = async (req, res) => {
 exports.getBoardUsers = async (req, res) => {
 	try {
 		const { boardId } = req.params
-		const userId = req.user.userId
-
-		const board = await Board.findById(boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
+		const access = await resolveBoardAccessForUser({ boardId, reqUser: req.user })
+		if (access.error) {
+			return res.status(access.error.status).json({ message: access.error.message })
 		}
-
-		// Check if user has access
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = access.board
 
 		// For team boards, get all active team users
-		if (isTeamBoard) {
+		if (board.isTeamBoard) {
 			const users = await User.find({ 
 				teamId: board.teamId,
 				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
@@ -311,7 +296,7 @@ exports.getBoardUsers = async (req, res) => {
 		}
 
 		// For department boards, get active users from that department
-		if (isDepartmentBoard && board.departmentName) {
+		if (board.type === 'department' && board.departmentName) {
 			const users = await User.find({
 				teamId: board.teamId,
 				$or: [
@@ -409,7 +394,12 @@ exports.updateBoard = async (req, res) => {
 		const { name, description, memberIds } = req.body
 		const userId = req.user.userId
 
-		const board = await Board.findById(boardId)
+		const user = await User.findById(userId)
+		if (!user?.teamId) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+
+		const board = await loadBoardForUser(boardId, user)
 		if (!board) {
 			return res.status(404).json({ message: 'Board not found' })
 		}
@@ -478,7 +468,12 @@ exports.deleteBoard = async (req, res) => {
 		const { boardId } = req.params
 		const userId = req.user.userId
 
-		const board = await Board.findById(boardId)
+		const user = await User.findById(userId)
+		if (!user?.teamId) {
+			return res.status(404).json({ message: 'Board not found' })
+		}
+
+		const board = await loadBoardForUser(boardId, user)
 		if (!board) {
 			return res.status(404).json({ message: 'Board not found' })
 		}

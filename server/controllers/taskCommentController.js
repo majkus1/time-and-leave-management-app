@@ -8,6 +8,20 @@ const fs = require('fs').promises
 const { sendTaskCommentNotification } = require('../services/pushNotificationService')
 const { sendTaskCommentEmailNotification } = require('../services/emailService')
 const { isAdminUser, canUserAccessTask, getTaskNotificationRecipients, normalizeObjectIdString } = require('../utils/taskAccess')
+const { resolveBoardAccessForUser } = require('../utils/boardAccess')
+
+async function loadBoardForTask(req, res, task) {
+	if (!task) {
+		res.status(404).json({ message: 'Task not found' })
+		return null
+	}
+	const access = await resolveBoardAccessForUser({ boardId: task.boardId, reqUser: req.user })
+	if (access.error) {
+		res.status(access.error.status).json({ message: access.error.message })
+		return null
+	}
+	return access.board
+}
 
 const emitTaskCommentRealtimeUpdate = async ({
 	req,
@@ -72,18 +86,9 @@ exports.getTaskComments = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
+		const board = await loadBoardForTask(req, res, task)
+		if (!board) return
 
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -124,18 +129,9 @@ exports.createComment = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
+		const board = await loadBoardForTask(req, res, task)
+		if (!board) return
 
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -225,10 +221,9 @@ exports.updateComment = async (req, res) => {
 		if (!task) {
 			return res.status(404).json({ message: 'Task not found' })
 		}
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
+		const board = await loadBoardForTask(req, res, task)
+		if (!board) return
+
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -279,10 +274,9 @@ exports.deleteComment = async (req, res) => {
 		if (!task) {
 			return res.status(404).json({ message: 'Task not found' })
 		}
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
+		const board = await loadBoardForTask(req, res, task)
+		if (!board) return
+
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -345,10 +339,9 @@ exports.uploadCommentAttachment = async (req, res) => {
 		if (!task) {
 			return res.status(404).json({ message: 'Task not found' })
 		}
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
+		const board = await loadBoardForTask(req, res, task)
+		if (!board) return
+
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -432,7 +425,7 @@ exports.deleteCommentAttachment = async (req, res) => {
 		})
 
 		const task = await Task.findById(comment.taskId)
-		const board = task ? await Board.findById(task.boardId) : null
+		const board = task ? await loadBoardForTask(req, res, task) : null
 		if (task && board) {
 			await emitTaskCommentRealtimeUpdate({
 				req,

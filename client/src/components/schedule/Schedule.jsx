@@ -2778,7 +2778,6 @@ function Schedule() {
 												onClick={(e) => {
 													e.preventDefault()
 													e.stopPropagation()
-													console.log('Delete button clicked for entry:', entry._id, 'canEdit:', canEdit)
 													if (handleDeleteEntry) {
 														handleDeleteEntry(entry._id)
 													} else {

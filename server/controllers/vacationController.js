@@ -1,26 +1,24 @@
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
+const { canSupervisorApproveLeaves } = require('../services/roleService')
+const { resolveVacationDaysAccess } = require('../utils/vacationAccess')
+const { formatVacationDaysPayload, isSameTeam } = require('../utils/vacationAccessPolicy')
 
 exports.updateVacationDays = async (req, res) => {
 	const { userId } = req.params
 	const { vacationDays, leaveTypeDays } = req.body
 
 	try {
-		const requestingUser = await User.findById(req.user.userId)
-		if (!requestingUser) {
-			return res.status(404).send('Użytkownik nie znaleziony')
+		const access = await resolveVacationDaysAccess(req.user.userId, userId)
+		if (access.error) {
+			return res.status(access.error.status).send(access.error.message)
 		}
 
-		const user = await User.findById(userId)
-		if (!user) {
-			return res.status(404).send('Użytkownik nie znaleziony')
-		}
+		const requestingUser = access.requestingUser
+		const user = access.targetUser
 
 		const isAdmin = requestingUser.roles.includes('Admin')
 		const isHR = requestingUser.roles.includes('HR')
-		
-		// Sprawdź uprawnienia przełożonego (w tym niestandardowego przez SupervisorConfig)
-		const { canSupervisorApproveLeaves } = require('../services/roleService')
 		const canApprove = await canSupervisorApproveLeaves(requestingUser, user)
 
 		if (!isAdmin && !isHR && !canApprove) {
@@ -32,11 +30,9 @@ exports.updateVacationDays = async (req, res) => {
 			if (!user.leaveTypeDays || typeof user.leaveTypeDays !== 'object') {
 				user.leaveTypeDays = {}
 			}
-			
-			// Zaktualizuj leaveTypeDays - merge z istniejącymi wartościami
-			Object.keys(leaveTypeDays).forEach(typeId => {
+
+			Object.keys(leaveTypeDays).forEach((typeId) => {
 				const value = leaveTypeDays[typeId]
-				// Dopuszczamy również 0 jako ważną wartość
 				if (value !== null && value !== undefined && value !== '') {
 					const numValue = Number(value)
 					if (!isNaN(numValue) && numValue >= 0) {
@@ -45,19 +41,18 @@ exports.updateVacationDays = async (req, res) => {
 						delete user.leaveTypeDays[typeId]
 					}
 				} else {
-					// Jeśli wartość jest null, undefined lub '', usuń klucz
 					delete user.leaveTypeDays[typeId]
 				}
 			})
-			
+
 			user.markModified('leaveTypeDays')
-			
+
 			const savedUser = await user.save()
-			
+
 			res.status(200).json({ message: 'Liczba dni urlopu zaktualizowana pomyślnie', user: savedUser })
 			return
-		} else if (vacationDays !== undefined) {
-			// Stary system - aktualizuj vacationDays i leaveTypeDays dla 'leaveform.option1'
+		}
+		if (vacationDays !== undefined) {
 			user.vacationDays = vacationDays
 			if (!user.leaveTypeDays || typeof user.leaveTypeDays !== 'object') {
 				user.leaveTypeDays = {}
@@ -78,13 +73,17 @@ exports.updateVacationDays = async (req, res) => {
 exports.getVacationDays = async (req, res) => {
 	const { userId } = req.params
 	try {
-		const user = await User.findById(userId).select('vacationDays leaveTypeDays')
-		if (!user) {
+		const access = await resolveVacationDaysAccess(req.user.userId, userId)
+		if (access.error) {
+			return res.status(access.error.status).send(access.error.message)
+		}
+
+		const targetUser = await User.findById(access.targetUser._id).select('vacationDays leaveTypeDays')
+		if (!targetUser) {
 			return res.status(404).send('Użytkownik nie znaleziony')
 		}
-		// Dla kompatybilności wstecznej, zwróć vacationDays (może być przestarzałe) lub leaveTypeDays dla 'leaveform.option1'
-		const vacationDays = user.vacationDays || (user.leaveTypeDays && user.leaveTypeDays['leaveform.option1']) || 0
-		res.status(200).json({ vacationDays, leaveTypeDays: user.leaveTypeDays || {} })
+
+		res.status(200).json(formatVacationDaysPayload(targetUser))
 	} catch (error) {
 		console.error('Błąd podczas pobierania liczby dni urlopu:', error)
 		res.status(500).send('Błąd serwera')
@@ -93,13 +92,15 @@ exports.getVacationDays = async (req, res) => {
 
 exports.getMyVacationDays = async (req, res) => {
 	try {
-		const user = await User.findById(req.user.userId).select('vacationDays leaveTypeDays')
-		if (!user) {
+		const user = await User.findById(req.user.userId).select('vacationDays leaveTypeDays teamId')
+		if (!user || user.isActive === false) {
 			return res.status(404).send('Użytkownik nie znaleziony')
 		}
-		// Dla kompatybilności wstecznej, zwróć vacationDays (może być przestarzałe) lub leaveTypeDays dla 'leaveform.option1'
-		const vacationDays = user.vacationDays || (user.leaveTypeDays && user.leaveTypeDays['leaveform.option1']) || 0
-		res.status(200).json({ vacationDays, leaveTypeDays: user.leaveTypeDays || {} })
+		if (!isSameTeam(user.teamId, req.user.teamId)) {
+			return res.status(401).send('Unauthorized')
+		}
+
+		res.status(200).json(formatVacationDaysPayload(user))
 	} catch (error) {
 		console.error('Błąd podczas pobierania liczby dni urlopu:', error)
 		res.status(500).send('Błąd serwera')

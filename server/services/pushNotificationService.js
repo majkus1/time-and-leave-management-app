@@ -861,6 +861,61 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	return { sent, failed }
 }
 
+/**
+ * Timer / workday counter — ongoing notification updated via SW (preferences.timer).
+ */
+const sendTimerPushNotification = async (userId, payload) => {
+	let subscriptions = await PushSubscription.find({
+		userId,
+		enabled: true,
+		$or: [{ 'preferences.timer': true }, { 'preferences.timer': { $exists: false } }],
+	})
+
+	subscriptions = filterSubscriptionsByEnvironment(subscriptions)
+	if (subscriptions.length === 0) {
+		return { sent: 0, failed: 0 }
+	}
+
+	const results = await Promise.allSettled(
+		subscriptions.map(async (subscription) => {
+			try {
+				await webpush.sendNotification(
+					{
+						endpoint: subscription.endpoint,
+						keys: {
+							p256dh: subscription.keys.p256dh,
+							auth: subscription.keys.auth,
+						},
+					},
+					JSON.stringify(payload)
+				)
+				subscription.lastUsed = new Date()
+				await subscription.save()
+				return { success: true, subscriptionId: subscription._id }
+			} catch (error) {
+				if (error.statusCode === 410) {
+					await PushSubscription.findByIdAndDelete(subscription._id)
+					return { success: false, error: 'Subscription expired', subscriptionId: subscription._id }
+				}
+				console.error(`Error sending timer push to subscription ${subscription._id}:`, error.message)
+				return { success: false, error: error.message, subscriptionId: subscription._id }
+			}
+		})
+	)
+
+	const sent = results.filter((r) => r.status === 'fulfilled' && r.value.success).length
+	const failed = results.length - sent
+
+	if (sent > 0) {
+		const u = await User.findById(userId).select('teamId').lean()
+		if (u?.teamId) {
+			void recordPushNotification(userId, u.teamId, payload)
+		}
+	}
+
+	return { sent, failed, total: subscriptions.length }
+}
+
 module.exports = {
 	sendPushNotification,
 	sendPushNotificationToUsers,
@@ -869,5 +924,6 @@ module.exports = {
 	sendTaskCommentNotification,
 	sendSchedulePublishedPushNotification,
 	sendAnnouncementPushNotification,
-	sendLeaveRequestPushNotification
+	sendLeaveRequestPushNotification,
+	sendTimerPushNotification,
 }

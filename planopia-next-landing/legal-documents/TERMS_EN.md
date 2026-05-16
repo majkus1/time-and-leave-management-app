@@ -1,12 +1,12 @@
 # Terms of Service for Planopia.pl
 
-**Version 1.2 - effective from March 19, 2026**
+**Version 1.3 - effective from May 15, 2026**
 
 ## 1. General Provisions
 
 1.1. These Terms of Service define the rules for providing services by ML Devworks Michał Lipka with its registered office at Rynek Główny 34 lok. 15, 31-010 Kraków, Poland, Tax ID: 6762707876 (hereinafter: "Service Provider") through the Planopia.pl platform.
 
-1.2. The Service Provider offers access to the Planopia.pl web application for time tracking, leave management, work schedules, task boards, and team communication (hereinafter: "Service").
+1.2. The Service Provider offers access to the Planopia.pl web application for, among other things, time tracking, leave and absence management, work schedules, task boards (Kanban), team communication, and — depending on the plan — AI-based features (e.g. AI Assistant, schedule AI support) (hereinafter: "Service").
 
 1.3. Using the Service is equivalent to accepting these Terms of Service.
 
@@ -23,8 +23,11 @@
 ## 3. Account Types and Usage Rules
 
 3.1. The Service Provider makes available, among others, the following commercial options:
-   - **Trial period**: for **30 days** from Account creation (first month), the Client may use the Service **without charge**, for **up to 5 Users**, with the full functionality of the Service, subject to any limits on optional features (including AI Assistant message limits) specified in the Service interface or pricing.
-   - **Paid plans**: after the trial period ends, continued use of the Service requires selecting a paid subscription plan in accordance with the current pricing; paid plans include, among other things, a higher number of Users and additional features (details in pricing).
+   - **Trial period**: for **30 days** from Account creation, the Client may use the Service **without a subscription fee**, for **up to 5 active Users**, with features available for that period, subject to limits (including AI Assistant message limits) shown in the interface or pricing.
+   - **Basic access (freemium)**: after the trial ends, if the Client does not purchase a paid plan, they may use a **limited** scope of the Service (including time tracking and related views) for **up to 5 active Users** — details and available modules follow the current app version.
+   - **Paid plans**: broader access, more Users, and add-on modules per the selected plan and pricing (e.g. schedules, boards, chat, QR timer, AI Assistant — when included in the plan).
+
+3.1a. **AI features** (when available on the plan and enabled on the Service Provider’s side): for informational support in the app only (summaries, draft suggestions, etc.) and **do not replace** legal, HR, or business decisions by the Client. Answers may be incorrect — the Client must verify them before use. AI Assistant chat history is stored **in the User’s browser**, not in the Service Provider’s database (see the Privacy Policy).
 
 3.2. The Client is responsible for:
    - maintaining confidentiality of Account access credentials
@@ -115,5 +118,5 @@
 
 10.4. Additional information about the complaints procedure is available at: https://planopia.pl/en/complaints
 
-**Last updated: March 19, 2026**
+**Last updated: May 15, 2026**
 

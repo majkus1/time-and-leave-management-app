@@ -1,5 +1,11 @@
 // Push notification handlers for dev mode (generateSW)
 // This file is imported by the generated service worker
+importScripts('/timer-notification-sw.js')
+
+self.addEventListener('message', function (event) {
+	if (!event.data) return
+	event.waitUntil(planopiaHandleTimerClientMessage(event.data))
+})
 
 // Listen for push events
 self.addEventListener('push', function(event) {
@@ -21,6 +27,10 @@ self.addEventListener('push', function(event) {
 		try {
 			const data = event.data.json()
 			console.log('[SW] Parsed push data:', data)
+			if (data.type === 'timer') {
+				event.waitUntil(planopiaApplyTimerPushData(data))
+				return
+			}
 			notificationData = {
 				title: data.title || notificationData.title,
 				body: data.body || notificationData.body,

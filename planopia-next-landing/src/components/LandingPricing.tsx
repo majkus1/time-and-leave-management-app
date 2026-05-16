@@ -190,7 +190,7 @@ const copy = {
 		addonSubtitle: 'Dokup wiadomości Asystenta przy aktywnej płatnej subskrypcji — jak w aplikacji.',
 		addonOpenPackages: 'Otwórz Pakiety',
 		tiersFootnote:
-			'* Płatny pakiet możesz anulować w dowolnym momencie. Przyciski prowadzą do sekcji „Pakiety i rozliczenia” w aplikacji — po zalogowaniu jako administrator lub HR dokończysz zakup (np. Przelewy24 lub kartą, jeśli skonfigurowano Stripe).',
+			'* Płatny pakiet możesz anulować w dowolnym momencie. Przyciski prowadzą do sekcji „Pakiety i rozliczenia” w aplikacji — dokończ zakup po zalogowaniu.',
 		coreModalTitle: 'Konfiguracja Core',
 		coreModalHint: 'Wybierz wielkość zespołu, opcjonalnie moduły — suma poniżej.',
 		coreStep1: 'Ile osób w zespole?',
@@ -255,7 +255,7 @@ const copy = {
 		addonSubtitle: 'Top up AI Assistant messages on an active paid subscription — same as in the app.',
 		addonOpenPackages: 'Open Packages',
 		tiersFootnote:
-			'* You can cancel a paid plan at any time. Buttons take you to Packages & billing in the app — sign in as Admin or HR to complete checkout (e.g. Przelewy24 or card if Stripe is configured).',
+			'* You can cancel a paid plan at any time. Buttons take you to Packages & billing in the app — complete your purchase after signing in.',
 		coreModalTitle: 'Configure Core',
 		coreModalHint: 'Pick team size, optionally add modules — totals below.',
 		coreStep1: 'How many people on the team?',
@@ -711,7 +711,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 					</div>
 				</div>
 
-				<p className="mt-4 max-w-4xl text-sm text-gray-500 leading-relaxed" role="note">
+				<p className="mt-4 text-sm text-gray-500 leading-relaxed" role="note">
 					{t.tiersFootnote}{' '}
 					<Link href={PAYMENT_BASE_URL} className="text-indigo-700 underline font-medium">
 						{PAYMENT_BASE_URL.replace('https://', '')}

@@ -1,71 +1,44 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import {
+	createEmptySession,
+	createEmptyStore,
+	defaultDates,
+	loadAiSessionsStore,
+	saveAiSessionsStore,
+} from '../utils/aiAssistantStorage'
 
-const STORAGE_KEY = 'planopia-ai-sessions-v1'
 const MAX_SESSIONS = 40
 
-function defaultDates() {
-	const now = new Date()
-	const from = new Date(now.getFullYear(), now.getMonth(), 1)
-	const fmt = d =>
-		`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-	return { dateFrom: fmt(from), dateTo: fmt(now) }
-}
-
-function createEmptySession() {
-	const { dateFrom, dateTo } = defaultDates()
-	return {
-		id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-		title: '',
-		messages: [],
-		lastMeta: null,
-		periodPreset: 'month',
-		dateFrom,
-		dateTo,
-		updatedAt: Date.now(),
-	}
-}
-
-function loadStore() {
-	try {
-		const raw = localStorage.getItem(STORAGE_KEY)
-		if (raw) {
-			const parsed = JSON.parse(raw)
-			if (parsed?.sessions?.length && parsed.activeId) return parsed
-		}
-	} catch {
-		/* ignore */
-	}
-	const s = createEmptySession()
-	return { sessions: [s], activeId: s.id }
-}
-
 /**
- * ChatGPT-style local session storage (localStorage).
+ * Chat sessions in localStorage, isolated per authenticated userId.
  */
 export function useAIAssistantSessions() {
-	const [data, setData] = useState(loadStore)
+	const { userId, isCheckingAuth } = useAuth()
+	const [data, setData] = useState(createEmptyStore)
+	const skipNextSaveRef = useRef(true)
 
 	useEffect(() => {
-		try {
-			const sanitized = {
-				...data,
-				sessions: data.sessions.map(s => ({
-					...s,
-					messages: (s.messages || []).map(m => {
-						if (m.role === 'user' && m.promptForApi != null) {
-							return Object.fromEntries(
-								Object.entries(m).filter(([k]) => k !== 'promptForApi')
-							)
-						}
-						return m
-					}),
-				})),
-			}
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized))
-		} catch {
-			/* quota */
+		if (isCheckingAuth) return
+
+		if (!userId) {
+			skipNextSaveRef.current = true
+			setData(createEmptyStore())
+			return
 		}
-	}, [data])
+
+		skipNextSaveRef.current = true
+		setData(loadAiSessionsStore(userId))
+	}, [userId, isCheckingAuth])
+
+	useEffect(() => {
+		if (isCheckingAuth || !userId) return
+		if (skipNextSaveRef.current) {
+			skipNextSaveRef.current = false
+			return
+		}
+		saveAiSessionsStore(userId, data)
+	}, [data, userId, isCheckingAuth])
 
 	const activeSession = useMemo(() => {
 		const s = data.sessions.find(x => x.id === data.activeId)

@@ -5,6 +5,7 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
+const timerPushService = require('../services/timerPushService')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -233,26 +234,15 @@ exports.deleteWorkday = async (req, res) => {
 // }
 exports.getUserWorkdays = async (req, res) => {
 	try {
-		const { userId } = req.params;
-		const requestingUser = await User.findById(req.user.userId);
+		const { userId } = req.params
+		const {
+			resolveTeamScopedTimesheetViewAccess,
+			sendTeamScopedTimesheetViewAccessError,
+		} = require('../utils/timesheetAccess')
 
-		if (!requestingUser) {
-			return res.status(403).send('Brak uprawnień');
-		}
-
-		
-		const isAdmin = requestingUser.roles.includes('Admin');
-		const isHR = requestingUser.roles.includes('HR');
-		const isSelf = requestingUser._id.toString() === userId;
-		
-		const userToView = await User.findById(userId);
-		
-		// Sprawdź uprawnienia przełożonego
-		const { canSupervisorViewTimesheets } = require('../services/roleService')
-		const canView = userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false;
-
-		if (!(isAdmin || isHR || isSelf || canView)) {
-			return res.status(403).send('Access denied');
+		const access = await resolveTeamScopedTimesheetViewAccess(req.user.userId, userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetViewAccessError(res, access.error)
 		}
 
 		const workdays = await Workday.find({ userId });
@@ -380,6 +370,8 @@ exports.startTimer = async (req, res) => {
 		}
 
 		await workday.save()
+
+		void timerPushService.notifyUserTimerEvent(userId, 'started', workday.activeTimer)
 
 		res.json({
 			message: 'Timer rozpoczęty',
@@ -546,6 +538,8 @@ exports.stopTimer = async (req, res) => {
 		if (sessionWorkday._id.toString() !== workday._id.toString()) {
 			await sessionWorkday.save()
 		}
+
+		void timerPushService.notifyUserTimerEvent(userId, 'stopped', null)
 
 		res.json({
 			message: 'Timer zatrzymany',
@@ -1069,24 +1063,14 @@ exports.getUserSessions = async (req, res) => {
 	try {
 		const { userId } = req.params
 		const { month, year } = req.query
-		const requestingUser = await User.findById(req.user.userId)
+		const {
+			resolveTeamScopedTimesheetViewAccess,
+			sendTeamScopedTimesheetViewAccessError,
+		} = require('../utils/timesheetAccess')
 
-		if (!requestingUser) {
-			return res.status(403).json({ message: 'Brak uprawnień' })
-		}
-
-		const isAdmin = requestingUser.roles.includes('Admin')
-		const isHR = requestingUser.roles.includes('HR')
-		const isSelf = requestingUser._id.toString() === userId
-
-		const userToView = await User.findById(userId)
-
-		// Sprawdź uprawnienia przełożonego
-		const { canSupervisorViewTimesheets } = require('../services/roleService')
-		const canView = userToView ? await canSupervisorViewTimesheets(requestingUser, userToView) : false
-
-		if (!(isAdmin || isHR || isSelf || canView)) {
-			return res.status(403).json({ message: 'Access denied' })
+		const access = await resolveTeamScopedTimesheetViewAccess(req.user.userId, userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetViewAccessError(res, access.error, { asJson: true })
 		}
 
 		let startDate, endDate

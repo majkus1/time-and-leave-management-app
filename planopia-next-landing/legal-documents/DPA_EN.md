@@ -1,6 +1,6 @@
 # Data Processing Agreement (DPA)
 
-**Version 1.0 - effective from January 7, 2026**
+**Version 1.1 - effective from May 15, 2026**
 
 ## 1. Parties to the Agreement
 
@@ -12,7 +12,9 @@
 
 2.1. The Controller entrusts, and the Processor accepts, the processing of personal data to the extent necessary for providing services through the Planopia.pl platform.
 
-2.2. Processing includes: time tracking, leave management, work schedules, task boards, team communication.
+2.2. Processing includes, among other things: time tracking, leave and absence management, work schedules, task boards (Kanban), team communication, and — when enabled on the plan — OpenAI API-based features (e.g. AI Assistant, schedule AI support), as set out in section 2.3.
+
+2.3. **AI features:** The Processor sends User queries and selected, aggregated Controller Account data to OpenAI (OpenAI, L.L.C., USA) solely to generate a response. AI Assistant chat history is not stored permanently in the Processor’s database — it is saved in the User’s browser (localStorage). The Processor stores usage counters for AI limits, among other things. The Controller should not include in queries more personal data than necessary to use the Service.
 
 ## 3. Categories of Data and Data Subjects
 
@@ -37,8 +39,10 @@
 
 ## 5. Sub-processing (Sub-processors)
 
-5.1. The Processor may entrust processing to subcontractors:
-   - Hosting service providers (Render.com, Netlify, Vercel)
+5.1. The Processor may entrust processing to subcontractors, including:
+   - Hosting and infrastructure providers (including Render.com; Vercel or Netlify — planopia.pl website)
+   - **OpenAI** (OpenAI, L.L.C.) — only for AI features described in section 2.3
+   - Payment operators (including Przelewy24, Stripe) — subscription billing data
    - IT service providers supporting platform operation
 
 5.2. The Controller grants general consent to use sub-processors indicated in this agreement.
@@ -103,7 +107,7 @@
 **Appendix A: Technical and Organizational Measures (TOMs)**
 
 - Data transmission encryption (HTTPS/TLS)
-- Access control with authentication. Multi-factor authentication (2FA) available for users (if feature is enabled)
+- Access control: password login, session (httpOnly cookie tokens), HTTPS/TLS; in-app roles and permissions (at the time of this version, separate 2FA is not offered in the app)
 - Event logging (security logs)
 - Regular security updates and patches
 - Backups (regular, stored according to procedures)
@@ -111,5 +115,5 @@
 - Staff training on GDPR
 - Security incident management procedures
 
-**Last updated: January 7, 2026**
+**Last updated: May 15, 2026**
 

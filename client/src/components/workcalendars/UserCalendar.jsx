@@ -6,7 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import Sidebar from '../dashboard/Sidebar'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import * as XLSX from 'xlsx'
+import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
@@ -102,6 +102,13 @@ function UserCalendar() {
 		if (numHours % 1 === 0) return numHours.toString()
 		// W przeciwnym razie wyświetl z jedną cyfrą po przecinku, ale usuń końcowe zera
 		return numHours.toFixed(1).replace(/\.0$/, '')
+	}
+
+	/** Godziny w eksporcie Excel — jak w kalendarzu: do 0,5 h, bez szumu z timera. */
+	const excelHoursValue = (value) => {
+		if (value === '' || value == null) return ''
+		const rounded = roundToHalfHour(value)
+		return rounded === null ? '' : rounded
 	}
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -485,7 +492,7 @@ function UserCalendar() {
 		})
 	}
 
-	const generateExcel = () => {
+	const generateExcel = async () => {
 		if (!user) return
 
 		setIsExportingExcel(true)
@@ -591,13 +598,13 @@ function UserCalendar() {
 				const allNotes = []
 
 				workdaysForDate.forEach(workday => {
-					// Godziny pracy - weź pierwszy wpis z godzinami
-					if (workday.hoursWorked && !hoursWorked) {
-						hoursWorked = workday.hoursWorked
+					// Godziny pracy - weź pierwszy wpis z godzinami (zaokr. do 0,5 h jak w UI)
+					if (workday.hoursWorked != null && workday.hoursWorked !== '' && hoursWorked === '') {
+						hoursWorked = excelHoursValue(workday.hoursWorked)
 					}
 					// Nadgodziny - weź pierwszy wpis z nadgodzinami
-					if (workday.additionalWorked && !additionalWorked) {
-						additionalWorked = workday.additionalWorked
+					if (workday.additionalWorked != null && workday.additionalWorked !== '' && additionalWorked === '') {
+						additionalWorked = excelHoursValue(workday.additionalWorked)
 					}
 					// Czas pracy - weź pierwszy wpis z czasem pracy
 					if (workday.realTimeDayWorked && !realTimeDayWorked) {
@@ -656,43 +663,29 @@ function UserCalendar() {
 				})]
 			]
 
-			// Create workbook
-			const wb = XLSX.utils.book_new()
-
-			// Create detailed sheet
-			const wsDetails = XLSX.utils.aoa_to_sheet(detailedData)
-			
-			// Set column widths for detailed sheet
-			wsDetails['!cols'] = [
-				{ wch: 30 }, // User name (first row)
-				{ wch: 12 }, // Date
-				{ wch: 15 }, // Hours worked
-				{ wch: 12 }, // Overtime
-				{ wch: 15 }, // Working hours (worktime)
-				{ wch: 25 }, // Absence type
-				{ wch: 25 }, // Leave type
-				{ wch: 20 }  // Notes
-			]
-
-			// Create summary sheet
-			const wsSummary = XLSX.utils.aoa_to_sheet(summaryData)
-			
-			// Set column widths for summary sheet
-			wsSummary['!cols'] = [
-				{ wch: 30 }, // Label
-				{ wch: 20 }  // Value
-			]
-
-			// Add sheets to workbook
-			XLSX.utils.book_append_sheet(wb, wsDetails, t('workcalendar.excel.sheetDetails'))
-			XLSX.utils.book_append_sheet(wb, wsSummary, t('workcalendar.excel.sheetSummary'))
-
-			// Generate filename
-			const monthName = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, { month: 'long' })
+			const monthName = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, {
+				month: 'long',
+			})
 			const filename = `${t('workcalendar.excel.filename')}_${user.firstName}_${user.lastName}_${monthName}_${currentYear}.xlsx`
 
-			// Write and download
-			XLSX.writeFile(wb, filename)
+			await downloadExcelWorkbook(
+				[
+					{
+						name: t('workcalendar.excel.sheetDetails'),
+						rows: detailedData,
+						colWidths: [30, 12, 15, 12, 15, 25, 25, 20],
+						// kolumny B,C = godziny / nadgodziny (1-based); max 1 miejsce po przecinku
+						columnNumFmt: { 2: '0.0', 3: '0.0' },
+						dataStartRow: 4,
+					},
+					{
+						name: t('workcalendar.excel.sheetSummary'),
+						rows: summaryData,
+						colWidths: [30, 20],
+					},
+				],
+				filename
+			)
 
 			setIsExportingExcel(false)
 		} catch (error) {

@@ -12,6 +12,7 @@ import {
 	useBillingPurchaseRequest,
 	useBillingP24Status,
 	useBillingP24Checkout,
+	useBillingP24ConfirmReturn,
 	useBillingStripeStatus,
 	useBillingStripeCheckout,
 	useBillingStripeCancelSubscription,
@@ -42,11 +43,17 @@ const TIER_LABELS = {
 const PAID_PLAN_IDS = ['base_s', 'base_m', 'base_l', 'pro', 'business', 'enterprise']
 
 const MODULE_LABELS = {
-	timer_qr: 'Timer + QR',
-	schedules_ai: 'Grafiki + AI',
-	tasks: 'Zadania (kanban)',
-	chat: 'Czat zespołowy',
-	ai_assistant: 'Asystent AI',
+	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
+	schedules_ai: { pl: 'Grafiki + AI', en: 'Schedules + AI' },
+	tasks: { pl: 'Zadania (kanban)', en: 'Tasks (Kanban)' },
+	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
+	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
+}
+
+function moduleDisplayLabel(moduleId, resolvedLang) {
+	const row = MODULE_LABELS[moduleId]
+	if (!row) return moduleId
+	return isEnglishResolved(resolvedLang) ? row.en : row.pl
 }
 
 function collectPriceIdsForStripeCheckout(stripeStatus, planKey, billingCycle, moduleKeys) {
@@ -243,6 +250,7 @@ export default function PackagesPage() {
 	const { data: p24Status, isPending: p24StatusLoading } = useBillingP24Status()
 	const { data: stripeStatus, isPending: stripeStatusLoading } = useBillingStripeStatus()
 	const p24Checkout = useBillingP24Checkout()
+	const p24ConfirmReturn = useBillingP24ConfirmReturn()
 	const stripeCheckout = useBillingStripeCheckout()
 	const stripeCancelSubscription = useBillingStripeCancelSubscription()
 	const stripeBillingPortal = useBillingStripeBillingPortal()
@@ -599,11 +607,36 @@ export default function PackagesPage() {
 	useEffect(() => {
 		if (p24ReturnHandledRef.current) return
 		if (searchParams.get('p24') !== '1') return
+		const sessionId = searchParams.get('session')
+		if (!sessionId) return
 		p24ReturnHandledRef.current = true
-		queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
-		void showAlert(t('billingPackages.p24ReturnHint'))
-		navigate('/packages', { replace: true })
-	}, [searchParams, navigate, queryClient, showAlert, t])
+
+		const run = async () => {
+			try {
+				const data = await p24ConfirmReturn.mutateAsync({ sessionId })
+				await queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+				if (data?.activated || data?.alreadyPaid) {
+					await showAlert(
+						isPl
+							? 'Płatność potwierdzona — plan został aktywowany.'
+							: 'Payment confirmed — your plan is now active.'
+					)
+				} else if (data?.pending) {
+					await showAlert(t('billingPackages.p24ReturnHint'))
+				} else {
+					await showAlert(t('billingPackages.p24ReturnHint'))
+				}
+			} catch (e) {
+				await showAlert(
+					billingAxiosErrorMessage(e, t) ||
+						e.response?.data?.message ||
+						t('billingPackages.p24ReturnHint')
+				)
+			}
+			navigate('/packages', { replace: true })
+		}
+		void run()
+	}, [searchParams, navigate, queryClient, showAlert, t, isPl, p24ConfirmReturn, billingAxiosErrorMessage])
 
 	useEffect(() => {
 		if (stripeReturnHandledRef.current) return
@@ -1650,8 +1683,10 @@ export default function PackagesPage() {
 												}}
 											/>
 											<span>
-												{MODULE_LABELS[m.id] || m.id}
-												{m.monthlyNetPln != null ? ` (+${m.monthlyNetPln} PLN)` : ''}
+												{moduleDisplayLabel(m.id, i18n.resolvedLanguage)}
+												{m.monthlyNetPln != null
+													? ` (+${formatCatalogPrice(m.monthlyNetPln, i18n.resolvedLanguage)})`
+													: ''}
 											</span>
 										</label>
 									))}

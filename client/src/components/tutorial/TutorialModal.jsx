@@ -215,7 +215,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		},
 		{
 			id: 'ai-assistant',
-			title: 'AI Asystent',
+			title: i18n.resolvedLanguage === 'pl' ? 'AI Asystent' : 'AI Assistant',
 			icon: '/img/aiasystent.png',
 			description:
 				i18n.resolvedLanguage === 'pl'
@@ -224,8 +224,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			path: '/ai-assistant',
 			content:
 				i18n.resolvedLanguage === 'pl'
-					? '– Odpowiedzi tylko z danych Planopii widocznych dla Twojego konta.\n– Pytania: czas pracy, urlopy, zadania, grafiki, tablice, zespół.\n– Okres wybierasz u góry; możesz poprosić o podsumowanie. W treści pytania o Excel lub PDF pod odpowiedzią pojawią się przyciski z bazy.\n– Rozmowę zapiszesz do pliku TXT z paska nad czatem.\n– Szkic miesiąca z opisu jest w osobnym module AI na stronie harmonogramu, nie w tym czacie.\n– Historia czatu tylko w tej przeglądarce.\n– To nie porada prawna; odpowiedzi nie zastępują decyzji HR ani procedur w firmie.'
-					: '– Answers use only Planopia data visible for your account.\n– Ask about time tracking, leave, tasks, schedules, boards, team settings.\n– Pick the period above; you can ask for a summary. Request Excel or PDF in your message — download buttons from the database appear under the reply.\n– Export the chat as TXT from the toolbar above.\n– Month draft from a description uses a separate AI module on the schedule page, not this chat.\n– Chat history stays in this browser only.\n– Not legal advice; answers do not replace HR decisions or company procedures.'
+					? '– Odpowiedzi z danych Planopii na Twoim koncie (czas, urlopy, zadania, grafiki, zespół).\n– Okres u góry; Excel/PDF — przyciski z bazy pod odpowiedzią.\n– Eksport rozmowy: TXT z paska nad czatem.\n– Historia tylko w tej przeglądarce — na telefonie lub innym komputerze jej nie ma.\n– Bez zbędnych danych wrażliwych.\n– To nie porada prawna.'
+					: '– Answers from Planopia data on your account (time, leave, tasks, schedules, team).\n– Pick the period above; Excel/PDF — download buttons under the reply.\n– Export chat as TXT from the toolbar.\n– History stays in this browser only — it won’t appear on your phone or another computer.\n– Avoid unnecessary sensitive data.\n– Not legal advice.'
 		},
 		{
 			id: 'announcements',

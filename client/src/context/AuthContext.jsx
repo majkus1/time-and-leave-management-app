@@ -362,16 +362,15 @@ export const AuthProvider = ({ children }) => {
 
 	const logout = async () => {
 		try {
-			await axios.post(`${API_URL}/api/users/logout`, {}, { 
+			await axios.post(`${API_URL}/api/users/logout`, {}, {
 				withCredentials: true,
-				timeout: 10000
+				timeout: 10000,
 			})
-			clearAuthState()
 		} catch (err) {
 			console.error('Błąd wylogowania:', err)
-			// Even if logout fails, clear local state
-			clearAuthState()
 		}
+		// Full page load: clears React state, React Query cache, in-flight requests (not localStorage).
+		window.location.replace('/login')
 	}
 
 	const refreshUserData = async () => {

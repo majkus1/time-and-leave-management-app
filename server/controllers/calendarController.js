@@ -1,12 +1,30 @@
 const { firmDb } = require('../db/db')
 const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
+const {
+	resolveTeamScopedLeaveUserViewAccess,
+	sendTeamScopedLeaveViewAccessError,
+} = require('../utils/vacationAccess')
 
 exports.getCalendarConfirmationStatus = async (req, res) => {
 	const { month, year } = req.query
-	const userId = req.params.userId || req.user.userId
+	const targetUserId = req.params.userId || req.user.userId
 
 	try {
-		const confirmation = await CalendarConfirmation.findOne({ userId, month, year })
+		if (req.params.userId) {
+			const access = await resolveTeamScopedLeaveUserViewAccess(
+				req.user.userId,
+				targetUserId
+			)
+			if (access.error) {
+				return sendTeamScopedLeaveViewAccessError(res, access.error)
+			}
+		}
+
+		const confirmation = await CalendarConfirmation.findOne({
+			userId: targetUserId,
+			month,
+			year,
+		})
 		res.status(200).json({ isConfirmed: confirmation ? confirmation.isConfirmed : false })
 	} catch (error) {
 		console.error('Error checking calendar confirmation status:', error)

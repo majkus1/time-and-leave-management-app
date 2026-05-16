@@ -9,32 +9,11 @@ const { sendChatEmailNotification } = require('../services/emailService')
 const fs = require('fs').promises
 const path = require('path')
 const mongoose = require('mongoose')
+const { userHasAccessToChannel } = require('../utils/chatChannelAccess')
+const { isSameTeam } = require('../utils/vacationAccessPolicy')
 
-const hasUserInMembers = (members, userId) =>
-	Array.isArray(members) && members.some(m => m?.toString() === userId?.toString())
-
-const userHasAccessToChannel = (channel, user) => {
-	if (!channel || !user) return false
-	const userId = user._id?.toString()
-	if (!userId) return false
-
-	if (channel.type === 'department') {
-		const userDepartments = Array.isArray(user.department)
-			? user.department
-			: (user.department ? [user.department] : [])
-		return userDepartments.includes(channel.departmentName)
-	}
-
-	if (channel.type === 'private') {
-		return hasUserInMembers(channel.members, userId)
-	}
-
-	if (channel.type === 'general') {
-		if (channel.isTeamChannel) return true
-		return hasUserInMembers(channel.members, userId)
-	}
-
-	return false
+function assertChannelInUserTeam(channel, userTeamId) {
+	return channel && isSameTeam(channel.teamId, userTeamId)
 }
 
 const cleanupUploadedFiles = async (files = []) => {
@@ -724,6 +703,10 @@ exports.addMembersToChannel = async (req, res) => {
 			return res.status(404).json({ message: 'Channel not found' })
 		}
 
+		if (!assertChannelInUserTeam(channel, req.user.teamId)) {
+			return res.status(404).json({ message: 'Channel not found' })
+		}
+
 		// Block modification of automatic team channel (isTeamChannel: true)
 		// Allow modification of custom general channels created via form
 		if (channel.type === 'general' && channel.isTeamChannel) {
@@ -773,6 +756,10 @@ exports.removeMembersFromChannel = async (req, res) => {
 
 		const channel = await Channel.findById(channelId)
 		if (!channel) {
+			return res.status(404).json({ message: 'Channel not found' })
+		}
+
+		if (!assertChannelInUserTeam(channel, req.user.teamId)) {
 			return res.status(404).json({ message: 'Channel not found' })
 		}
 
@@ -922,7 +909,11 @@ exports.getChannelUsers = async (req, res) => {
 			return res.status(404).json({ message: 'Channel not found' })
 		}
 
-		// Check if user has access to this channel
+		const requestingUser = await User.findById(userId)
+		if (!requestingUser || !userHasAccessToChannel(channel, requestingUser)) {
+			return res.status(403).json({ message: 'Access denied' })
+		}
+
 		// For team channels, all active team members have access
 		if (channel.isTeamChannel && channel.type === 'general') {
 			const users = await User.find({ 

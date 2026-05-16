@@ -15,6 +15,16 @@ const {
 	canUserAccessTask,
 	normalizeObjectIdString,
 } = require('../utils/taskAccess')
+const { resolveBoardAccessForUser } = require('../utils/boardAccess')
+
+async function loadBoardForRequest(req, res, boardId) {
+	const access = await resolveBoardAccessForUser({ boardId, reqUser: req.user })
+	if (access.error) {
+		res.status(access.error.status).json({ message: access.error.message })
+		return null
+	}
+	return access.board
+}
 
 /** @param {unknown} val */
 function parseOptionalDateInput(val) {
@@ -101,19 +111,8 @@ exports.getBoardTasks = async (req, res) => {
 		const { boardId } = req.params
 		const userId = req.user.userId
 
-		// Check board access
-		const board = await Board.findById(boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, boardId)
+		if (!board) return
 
 		const isAdmin = isAdminUser(req.user)
 		const taskVisibilityFilter = isAdmin
@@ -172,19 +171,8 @@ exports.getTask = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -304,19 +292,8 @@ exports.createTask = async (req, res) => {
 			return res.status(400).json({ message: 'Task title is required' })
 		}
 
-		// Check board access
-		const board = await Board.findById(boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, boardId)
+		if (!board) return
 
 		const boardUsers = await getBoardAssignableUsers(board)
 		const assignment = buildTaskAssignment({ assignedTo, assignToAllMembers, boardUsers })
@@ -448,19 +425,8 @@ exports.updateTask = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -551,19 +517,8 @@ exports.updateTaskStatus = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -656,19 +611,8 @@ exports.deleteTask = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 		const isAdmin = isAdminUser(req.user)
 		if (!canUserAccessTask(task, userId, isAdmin)) {
 			return res.status(403).json({ message: 'Access denied' })
@@ -727,19 +671,8 @@ exports.uploadTaskAttachment = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 
 		task.attachments.push({
 			filename: req.file.originalname,
@@ -778,19 +711,8 @@ exports.deleteTaskAttachment = async (req, res) => {
 			return res.status(404).json({ message: 'Task not found' })
 		}
 
-		// Check board access
-		const board = await Board.findById(task.boardId)
-		if (!board) {
-			return res.status(404).json({ message: 'Board not found' })
-		}
-
-		const isMember = board.members.some(m => m.toString() === userId)
-		const isTeamBoard = board.isTeamBoard
-		const isDepartmentBoard = board.type === 'department'
-
-		if (!isMember && !isTeamBoard && !isDepartmentBoard) {
-			return res.status(403).json({ message: 'Access denied' })
-		}
+		const board = await loadBoardForRequest(req, res, task.boardId)
+		if (!board) return
 
 		const attachmentIndexNum = parseInt(attachmentIndex)
 		if (isNaN(attachmentIndexNum) || attachmentIndexNum < 0 || attachmentIndexNum >= task.attachments.length) {

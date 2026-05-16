@@ -1,6 +1,14 @@
 // Service Worker for Planopia PWA
 // This file will be used with injectManifest strategy
 
+const SW_DEV =
+	typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV === true
+self.__WB_DISABLE_DEV_LOGS = !SW_DEV
+
+function swLog(...args) {
+	if (SW_DEV) console.log(...args)
+}
+
 // Import workbox
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js')
 
@@ -8,33 +16,24 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox
 self.skipWaiting()
 
 if (workbox) {
-	console.log('[SW] Workbox loaded')
+	swLog('[SW] Workbox loaded')
 	
 	// Precache files
 	workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || [])
-	
-	// Cache strategies
+
+	// API: zawsze sieć — bez cache (sesja, CSRF, dane tenantów)
 	workbox.routing.registerRoute(
-		/^https:\/\/api\./i,
-		new workbox.strategies.NetworkFirst({
-			cacheName: 'api-cache',
-			networkTimeoutSeconds: 10,
-			plugins: [
-				{
-					cacheableResponse: {
-						statuses: [0, 200]
-					}
-				},
-				{
-					expiration: {
-						maxEntries: 50,
-						maxAgeSeconds: 5 * 60
-					}
-				}
-			]
-		})
+		({ url }) => {
+			if (!url.pathname.startsWith('/api/')) return false
+			return (
+				url.hostname === 'api.planopia.pl' ||
+				url.hostname === 'localhost' ||
+				url.hostname === '127.0.0.1'
+			)
+		},
+		new workbox.strategies.NetworkOnly()
 	)
-	
+
 	workbox.routing.registerRoute(
 		/\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
 		new workbox.strategies.CacheFirst({
@@ -64,27 +63,6 @@ if (workbox) {
 			]
 		})
 	)
-	
-	workbox.routing.registerRoute(
-		/\/api\//i,
-		new workbox.strategies.NetworkFirst({
-			cacheName: 'api-requests-cache',
-			networkTimeoutSeconds: 10,
-			plugins: [
-				{
-					cacheableResponse: {
-						statuses: [0, 200]
-					}
-				},
-				{
-					expiration: {
-						maxEntries: 100,
-						maxAgeSeconds: 5 * 60
-					}
-				}
-			]
-		})
-	)
 } else {
 	console.warn('[SW] Workbox could not be loaded')
 }
@@ -92,10 +70,16 @@ if (workbox) {
 // ============================================
 // PUSH NOTIFICATIONS HANDLERS
 // ============================================
+importScripts('/timer-notification-sw.js')
+
+self.addEventListener('message', function (event) {
+	if (!event.data) return
+	event.waitUntil(planopiaHandleTimerClientMessage(event.data))
+})
 
 // Listen for push events
 self.addEventListener('push', function(event) {
-	console.log('[SW] Push notification received:', event)
+	swLog('[SW] Push notification received:', event)
 	
 	let notificationData = {
 		title: 'Planopia',
@@ -109,10 +93,16 @@ self.addEventListener('push', function(event) {
 	}
 
 	// Parse push data if available
+	let parsedPush = null
 	if (event.data) {
 		try {
 			const data = event.data.json()
-			console.log('[SW] Parsed push data:', data)
+			parsedPush = data
+			swLog('[SW] Parsed push data:', data)
+			if (data.type === 'timer') {
+				event.waitUntil(planopiaApplyTimerPushData(data))
+				return
+			}
 			notificationData = {
 				title: data.title || notificationData.title,
 				body: data.body || notificationData.body,
@@ -146,7 +136,7 @@ self.addEventListener('push', function(event) {
 		}
 	}
 
-	console.log('[SW] Showing notification:', notificationData.title, notificationData.body)
+	swLog('[SW] Showing notification:', notificationData.title, notificationData.body)
 
 	const promiseChain = self.registration.showNotification(notificationData.title, {
 		body: notificationData.body,
@@ -175,7 +165,7 @@ self.addEventListener('push', function(event) {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', function(event) {
-	console.log('[SW] Notification clicked:', event)
+	swLog('[SW] Notification clicked:', event)
 	
 	event.notification.close()
 
@@ -208,7 +198,7 @@ self.addEventListener('notificationclick', function(event) {
 
 // Handle notification close
 self.addEventListener('notificationclose', function(event) {
-	console.log('[SW] Notification closed:', event)
+	swLog('[SW] Notification closed:', event)
 })
 
 // ============================================
@@ -217,21 +207,22 @@ self.addEventListener('notificationclose', function(event) {
 
 // Czyszczenie starych cache przy instalacji nowego service workera
 self.addEventListener('activate', function(event) {
-	console.log('[SW] Activating new service worker, cleaning old caches...')
+	swLog('[SW] Activating new service worker, cleaning old caches...')
 	
 	event.waitUntil(
 		caches.keys().then(function(cacheNames) {
 			return Promise.all(
 				cacheNames.map(function(cacheName) {
-					// Usuń wszystkie cache, które nie są w aktualnym manifest
-					// Workbox automatycznie zarządza cache z prefiksem 'workbox-'
-					// więc nie usuwamy ich ręcznie
 					if (cacheName.startsWith('workbox-')) {
-						// Workbox sam zarządza tymi cache, więc nie usuwamy ich ręcznie
 						return Promise.resolve()
 					}
+					// Stare cache API (przed NetworkOnly) — zawsze usuń przy aktualizacji SW
+					if (cacheName === 'api-cache' || cacheName === 'api-requests-cache') {
+						swLog('[SW] Deleting legacy API cache:', cacheName)
+						return caches.delete(cacheName)
+					}
 					// Usuń inne stare cache (jeśli są)
-					console.log('[SW] Deleting old cache:', cacheName)
+					swLog('[SW] Deleting old cache:', cacheName)
 					return caches.delete(cacheName)
 				})
 			).then(function() {
@@ -244,7 +235,7 @@ self.addEventListener('activate', function(event) {
 
 // Sprawdzaj aktualizacje service workera przy każdym uruchomieniu
 self.addEventListener('install', function(event) {
-	console.log('[SW] Installing new service worker version')
+	swLog('[SW] Installing new service worker version')
 	// skipWaiting() już wywołane na początku, więc nowy SW aktywuje się natychmiast
 	event.waitUntil(self.skipWaiting())
 })

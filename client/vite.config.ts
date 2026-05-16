@@ -87,20 +87,17 @@ export default defineConfig({
 				// Exclude main JS files from precaching in dev mode
 				globIgnores: ['**/node_modules/**/*', '**/src/**/*.js', '**/src/**/*.jsx', '**/src/**/*.ts', '**/src/**/*.tsx'],
 				runtimeCaching: [
+					// API: NetworkOnly — bez cache (zgodnie z production sw.js)
 					{
-						urlPattern: /^https:\/\/api\./i,
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'api-cache',
-							networkTimeoutSeconds: 10,
-							cacheableResponse: {
-								statuses: [0, 200]
-							},
-							expiration: {
-								maxEntries: 50,
-								maxAgeSeconds: 5 * 60
-							}
-						}
+						urlPattern: ({ url }) => {
+							if (!url.pathname.startsWith('/api/')) return false
+							return (
+								url.hostname === 'api.planopia.pl' ||
+								url.hostname === 'localhost' ||
+								url.hostname === '127.0.0.1'
+							)
+						},
+						handler: 'NetworkOnly',
 					},
 					{
 						urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
@@ -124,21 +121,6 @@ export default defineConfig({
 							}
 						}
 					},
-					{
-						urlPattern: /\/api\//i,
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'api-requests-cache',
-							networkTimeoutSeconds: 10,
-							cacheableResponse: {
-								statuses: [0, 200]
-							},
-							expiration: {
-								maxEntries: 100,
-								maxAgeSeconds: 5 * 60
-							}
-						}
-					},
 					// In dev mode, always use network for JS files
 					{
 						urlPattern: /\.(?:js|jsx|ts|tsx|mjs)$/i,
@@ -153,7 +135,7 @@ export default defineConfig({
 					}
 				],
 				// Dodaj custom kod dla push notifications w dev mode
-				importScripts: ['/sw-push-handlers.js']
+				importScripts: ['/timer-notification-sw.js', '/sw-push-handlers.js']
 			} : undefined,
 			// Konfiguracja dla injectManifest (production)
 			injectManifest: !isDev ? {

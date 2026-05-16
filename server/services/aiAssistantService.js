@@ -386,7 +386,8 @@ function normalizeMessages(messages) {
  */
 async function prepareAssistantTurn(input) {
 	if (!isOpenAIConfigured()) {
-		const err = new Error('AI assistant is not configured (missing OPENAI_API_KEY).')
+		console.error('[ai] OPENAI_API_KEY is not configured')
+		const err = new Error('AI assistant is not configured')
 		err.code = 'OPENAI_NOT_CONFIGURED'
 		throw err
 	}

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
- * Chat list + new chat (localStorage-backed sessions).
+ * Chat list + new chat (localStorage-backed sessions, per userId).
  */
 function AIAssistantSessionSidebar({
 	sessionsSorted,

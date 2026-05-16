@@ -11,6 +11,7 @@ import "@fontsource/titillium-web/700.css"; // np. bold
 import "@fontsource/titillium-web/600.css";
 import "@fontsource/teko";               // domyślny styl Teko (400)
 import "@fontsource/teko/700.css";        // np. bold
+import { devLog } from './utils/devLog.js'
 
 // Set app element for react-modal once (prevents multiple registration warnings)
 if (typeof document !== 'undefined') {
@@ -22,17 +23,17 @@ const updateSW = registerSW({
   immediate: true, // Sprawdź aktualizacje natychmiast
   onNeedRefresh() {
     // Automatycznie odśwież stronę po aktualizacji service workera
-    console.log('[SW] Nowa wersja dostępna, odświeżanie...')
+    devLog('[SW] Nowa wersja dostępna, odświeżanie...')
     // Odśwież po krótkim opóźnieniu, aby użytkownik zobaczył komunikat
     setTimeout(() => {
       updateSW(true) // true = wymusza natychmiastowe odświeżenie
     }, 1000)
   },
   onOfflineReady() {
-    console.log('[SW] Aplikacja gotowa do pracy offline')
+    devLog('[SW] Aplikacja gotowa do pracy offline')
   },
   onRegistered(registration) {
-    console.log('[SW] Service Worker registered:', registration)
+    devLog('[SW] Service Worker registered:', registration)
     
     // Sprawdzaj aktualizacje przy każdym załadowaniu strony
     if (registration) {
@@ -43,7 +44,7 @@ const updateSW = registerSW({
     // To zapewni, że użytkownicy szybko otrzymają nowe wersje
     const updateInterval = setInterval(() => {
       if (registration) {
-        console.log('[SW] Sprawdzanie aktualizacji...')
+        devLog('[SW] Sprawdzanie aktualizacji...')
         registration.update().catch(err => {
           console.error('[SW] Błąd podczas sprawdzania aktualizacji:', err)
         })
@@ -55,7 +56,7 @@ const updateSW = registerSW({
     // Sprawdzaj również gdy użytkownik wraca do aplikacji (focus)
     window.addEventListener('focus', () => {
       if (registration) {
-        console.log('[SW] Aplikacja w focusie, sprawdzanie aktualizacji...')
+        devLog('[SW] Aplikacja w focusie, sprawdzanie aktualizacji...')
         registration.update()
       }
     })
@@ -63,7 +64,7 @@ const updateSW = registerSW({
     // Sprawdzaj gdy użytkownik przełącza się między kartami
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && registration) {
-        console.log('[SW] Karta widoczna, sprawdzanie aktualizacji...')
+        devLog('[SW] Karta widoczna, sprawdzanie aktualizacji...')
         registration.update()
       }
     })

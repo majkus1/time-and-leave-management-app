@@ -8,6 +8,7 @@ const billingRequestService = require('../services/billingRequestService')
 const billingActivationService = require('../services/billingActivationService')
 const { getP24Config } = require('../services/przelewy24/p24Config')
 const { createCheckoutSessionAndRegister } = require('../services/przelewy24/p24CheckoutService')
+const { confirmP24ReturnForTeam } = require('../services/przelewy24/p24ReturnConfirmService')
 const {
 	createStripeCheckoutSession,
 	cancelStripeSubscriptionForTeam,
@@ -23,14 +24,11 @@ const {
 } = require('../services/legacyTransitionAnnouncementEmailService')
 
 const BILLING_SUPER_ADMIN_EMAIL = 'michalipka1@gmail.com'
-
-function billingClientErrorPayload(err) {
-	const payload = { success: false, message: err.message, code: err.code }
-	if (err.meta && typeof err.meta === 'object') {
-		payload.meta = err.meta
-	}
-	return payload
-}
+const {
+	billingClientErrorPayload,
+	billingServiceUnavailablePayload,
+	billingGatewayErrorPayload,
+} = require('../utils/clientSafeErrors')
 
 exports.getCatalog = async (req, res) => {
 	try {
@@ -87,7 +85,8 @@ exports.postPurchaseRequest = async (req, res) => {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		if (e.code === 'CONFIG') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.postPurchaseRequest CONFIG:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		console.error('billingController.postPurchaseRequest:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -148,9 +147,37 @@ exports.getStripeStatus = async (req, res) => {
 		})
 	} catch (e) {
 		if (e.code === 'STRIPE_CONFIG') {
-			return res.status(400).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.getStripeStatus STRIPE_CONFIG:', e.message)
+			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		console.error('billingController.getStripeStatus:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+exports.postP24ConfirmReturn = async (req, res) => {
+	try {
+		const { sessionId } = req.body || {}
+		const result = await confirmP24ReturnForTeam({
+			sessionId,
+			teamId: req.user.teamId,
+		})
+		res.json({ success: true, ...result })
+	} catch (e) {
+		if (
+			e.code === 'VALIDATION' ||
+			e.code === 'SESSION_NOT_FOUND' ||
+			e.code === 'FORBIDDEN' ||
+			e.code === 'SESSION_STATE' ||
+			e.code === 'AMOUNT_MISMATCH'
+		) {
+			return res.status(400).json(billingClientErrorPayload(e))
+		}
+		if (e.code === 'P24_API' || e.code === 'P24_VERIFY' || e.code === 'P24_PARSE') {
+			console.error('billingController.postP24ConfirmReturn', e.code + ':', e.message)
+			return res.status(502).json(billingGatewayErrorPayload(e))
+		}
+		console.error('billingController.postP24ConfirmReturn:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }
@@ -181,11 +208,8 @@ exports.postP24Checkout = async (req, res) => {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		if (e.code === 'P24_API' || e.code === 'P24_PARSE') {
-			return res.status(502).json({
-				success: false,
-				message: e.message || 'Błąd komunikacji z Przelewy24',
-				code: e.code,
-			})
+			console.error('billingController.postP24Checkout', e.code + ':', e.message, e.p24Response || '')
+			return res.status(502).json(billingGatewayErrorPayload(e))
 		}
 		console.error('billingController.postP24Checkout:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -236,7 +260,8 @@ exports.postStripeCheckout = async (req, res) => {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		if (e.code === 'STRIPE_NOT_CONFIGURED') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.postStripeCheckout STRIPE_NOT_CONFIGURED:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		console.error('billingController.postStripeCheckout:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -252,7 +277,8 @@ exports.postStripeCancelSubscription = async (req, res) => {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		if (e.code === 'STRIPE_NOT_CONFIGURED') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.postStripeCancelSubscription STRIPE_NOT_CONFIGURED:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		console.error('billingController.postStripeCancelSubscription:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -265,7 +291,8 @@ exports.getStripeCardSummary = async (req, res) => {
 		res.json({ success: true, ...summary })
 	} catch (e) {
 		if (e.code === 'STRIPE_NOT_CONFIGURED') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.getStripeCardSummary STRIPE_NOT_CONFIGURED:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		console.error('billingController.getStripeCardSummary:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -281,10 +308,12 @@ exports.postStripeBillingPortal = async (req, res) => {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
 		if (e.code === 'STRIPE_NOT_CONFIGURED') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.postStripeBillingPortal STRIPE_NOT_CONFIGURED:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		if (e.code === 'STRIPE_PORTAL') {
-			return res.status(503).json({ success: false, message: e.message, code: e.code })
+			console.error('billingController.postStripeBillingPortal STRIPE_PORTAL:', e.message)
+			return res.status(503).json(billingServiceUnavailablePayload(e))
 		}
 		console.error('billingController.postStripeBillingPortal:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
@@ -428,6 +457,6 @@ exports.postSuperLegacyAnnouncement = async (req, res) => {
 		return res.status(400).json({ success: false, message: 'Invalid mode (use test or broadcast)', code: 'VALIDATION' })
 	} catch (e) {
 		console.error('billingController.postSuperLegacyAnnouncement:', e)
-		res.status(500).json({ success: false, message: e.message || 'Server error' })
+		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }

@@ -12,6 +12,7 @@ const { createLog } = require('../services/logService')
 const { isHoliday } = require('../utils/holidays')
 const { sendSchedulePublishedPushNotification } = require('../services/pushNotificationService')
 const { sendSchedulePublishedEmailNotification } = require('../services/emailService')
+const { getClientSafeMessage } = require('../utils/clientSafeErrors')
 
 const normalizeDepartments = (departmentValue) =>
 	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
@@ -1404,7 +1405,8 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 			return res.status(403).json({ message: err.message, code: err.code })
 		}
 		if (err.code === 'OPENAI_NOT_CONFIGURED') {
-			return res.status(503).json({ message: err.message, code: err.code })
+			console.error('scheduleController.aiScheduleAutoDraft OPENAI_NOT_CONFIGURED:', err.message)
+			return res.status(503).json({ message: getClientSafeMessage(err), code: err.code })
 		}
 		if (err.code === 'VALIDATION' || err.code === 'USER_INVALID' || err.code === 'NOT_FOUND') {
 			return res.status(400).json({ message: err.message, code: err.code })
@@ -1413,7 +1415,11 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 			return res.status(403).json({ message: err.message, code: err.code })
 		}
 		if (err.code === 'OPENAI_HTTP_ERROR') {
-			return res.status(502).json({ message: err.message, code: err.code, status: err.status })
+			return res.status(502).json({
+				message: getClientSafeMessage(err),
+				code: err.code,
+				status: err.status,
+			})
 		}
 		console.error('scheduleController.aiScheduleAutoDraft:', err)
 		res.status(500).json({ message: 'AI schedule draft failed' })

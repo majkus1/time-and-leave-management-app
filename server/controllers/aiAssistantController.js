@@ -6,6 +6,7 @@ const { runLeaveDraftTurn } = require('../services/aiLeaveDraftService')
 const { runWorkdayDraftTurn } = require('../services/aiWorkdayDraftService')
 const entitlementsService = require('../services/entitlementsService')
 const { createLog } = require('../services/logService')
+const { respondAiAssistantError, aiAssistantSseErrorPayload } = require('../utils/clientSafeErrors')
 
 const logAiUse = (req, action, details) => {
 	const who = req.user?.username || '—'
@@ -48,25 +49,8 @@ exports.chat = async (req, res) => {
 			usage: result.usage,
 		})
 	} catch (err) {
-		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
-			return res.status(403).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_NOT_CONFIGURED') {
-			return res.status(503).json({
-				error: err.message,
-				code: err.code,
-			})
-		}
-		if (err.code === 'VALIDATION' || err.code === 'USER_INVALID') {
-			return res.status(400).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_HTTP_ERROR') {
-			return res.status(502).json({
-				error: err.message,
-				code: err.code,
-				status: err.status,
-			})
-		}
+		const handled = respondAiAssistantError(err, res)
+		if (handled) return handled
 		console.error('aiAssistantController.chat:', err)
 		res.status(500).json({ error: 'AI assistant request failed' })
 	}
@@ -107,44 +91,24 @@ exports.chatStream = async (req, res) => {
 			await entitlementsService.consumeAiMessageForUser(req.user.userId)
 			logAiUse(req, 'AI_ASSISTANT_CHAT', 'Asystent AI — rozmowa (czat, strumień)')
 		} catch (consumeErr) {
-			writeSse({
-				type: 'error',
-				code: consumeErr.code || 'AI_CONSUME_FAILED',
-				message: consumeErr.message || 'Could not finalize AI usage',
-			})
+			writeSse(
+				aiAssistantSseErrorPayload({
+					...consumeErr,
+					code: consumeErr.code || 'AI_CONSUME_FAILED',
+				})
+			)
 		}
 		res.end()
 	} catch (err) {
 		if (!res.headersSent) {
-			if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
-				return res.status(403).json({ error: err.message, code: err.code })
-			}
-			if (err.code === 'OPENAI_NOT_CONFIGURED') {
-				return res.status(503).json({
-					error: err.message,
-					code: err.code,
-				})
-			}
-			if (err.code === 'VALIDATION' || err.code === 'USER_INVALID') {
-				return res.status(400).json({ error: err.message, code: err.code })
-			}
-			if (err.code === 'OPENAI_HTTP_ERROR' || err.code === 'OPENAI_STREAM_ERROR') {
-				return res.status(502).json({
-					error: err.message,
-					code: err.code,
-					status: err.status,
-				})
-			}
+			const handled = respondAiAssistantError(err, res)
+			if (handled) return handled
 			console.error('aiAssistantController.chatStream:', err)
 			return res.status(500).json({ error: 'AI assistant request failed' })
 		}
 
 		try {
-			writeSse({
-				type: 'error',
-				code: err.code || 'UNKNOWN',
-				message: err.message || 'AI assistant stream failed',
-			})
+			writeSse(aiAssistantSseErrorPayload(err))
 		} catch (writeErr) {
 			console.error('aiAssistantController.chatStream write error:', writeErr)
 		}
@@ -178,25 +142,8 @@ exports.leaveDraft = async (req, res) => {
 			usage: result.usage,
 		})
 	} catch (err) {
-		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
-			return res.status(403).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_NOT_CONFIGURED') {
-			return res.status(503).json({
-				error: err.message,
-				code: err.code,
-			})
-		}
-		if (err.code === 'VALIDATION' || err.code === 'USER_INVALID') {
-			return res.status(400).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_HTTP_ERROR') {
-			return res.status(502).json({
-				error: err.message,
-				code: err.code,
-				status: err.status,
-			})
-		}
+		const handled = respondAiAssistantError(err, res)
+		if (handled) return handled
 		console.error('aiAssistantController.leaveDraft:', err)
 		res.status(500).json({ error: 'Leave draft request failed' })
 	}
@@ -225,25 +172,8 @@ exports.workdayDraft = async (req, res) => {
 			usage: result.usage,
 		})
 	} catch (err) {
-		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
-			return res.status(403).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_NOT_CONFIGURED') {
-			return res.status(503).json({
-				error: err.message,
-				code: err.code,
-			})
-		}
-		if (err.code === 'VALIDATION' || err.code === 'USER_INVALID') {
-			return res.status(400).json({ error: err.message, code: err.code })
-		}
-		if (err.code === 'OPENAI_HTTP_ERROR') {
-			return res.status(502).json({
-				error: err.message,
-				code: err.code,
-				status: err.status,
-			})
-		}
+		const handled = respondAiAssistantError(err, res)
+		if (handled) return handled
 		console.error('aiAssistantController.workdayDraft:', err)
 		res.status(500).json({ error: 'Workday draft request failed' })
 	}

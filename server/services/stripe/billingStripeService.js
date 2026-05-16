@@ -17,12 +17,17 @@ const entitlementsService = require('../entitlementsService')
 let stripeClient = null
 let stripeClientKey = ''
 
+function throwStripeNotConfigured(detail) {
+	console.error('[stripe]', detail)
+	const err = new Error('Stripe is not configured')
+	err.code = 'STRIPE_NOT_CONFIGURED'
+	throw err
+}
+
 function getStripeClient() {
 	const cfg = getStripeConfig()
 	if (!cfg.credsOk) {
-		const err = new Error('Stripe is not configured (missing STRIPE_SECRET_KEY).')
-		err.code = 'STRIPE_NOT_CONFIGURED'
-		throw err
+		throwStripeNotConfigured('STRIPE_SECRET_KEY is not configured')
 	}
 	if (!stripeClient || stripeClientKey !== cfg.secretKey) {
 		stripeClient = new Stripe(cfg.secretKey)
@@ -34,9 +39,7 @@ function getStripeClient() {
 function assertStripeWebhookReady() {
 	const cfg = getStripeConfig()
 	if (!cfg.webhookOk) {
-		const err = new Error('Stripe webhook is not configured (missing STRIPE_WEBHOOK_SECRET).')
-		err.code = 'STRIPE_NOT_CONFIGURED'
-		throw err
+		throwStripeNotConfigured('STRIPE_WEBHOOK_SECRET is not configured')
 	}
 }
 
@@ -120,11 +123,9 @@ async function markStripeEvent(teamId, eventId, action, payload = {}) {
 async function createStripeCheckoutSession(params) {
 	const cfg = getStripeConfig()
 	if (!cfg.ready) {
-		const err = new Error(
-			'Stripe is not ready. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_APP_PUBLIC_URL.'
+		throwStripeNotConfigured(
+			'Stripe is not ready (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_APP_PUBLIC_URL)'
 		)
-		err.code = 'STRIPE_NOT_CONFIGURED'
-		throw err
 	}
 	const stripe = getStripeClient()
 	const { teamId, userId, priceId, priceIds } = params
@@ -613,11 +614,9 @@ async function getStripeCardSummaryForTeam(teamId) {
 async function createStripeBillingPortalSession(teamId) {
 	const cfg = getStripeConfig()
 	if (!cfg.ready) {
-		const err = new Error(
-			'Stripe is not ready. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_APP_PUBLIC_URL.'
+		throwStripeNotConfigured(
+			'Stripe is not ready (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_APP_PUBLIC_URL)'
 		)
-		err.code = 'STRIPE_NOT_CONFIGURED'
-		throw err
 	}
 	const stripe = getStripeClient()
 	const team = await Team.findById(teamId)
@@ -638,10 +637,8 @@ async function createStripeBillingPortalSession(teamId) {
 			return_url: `${cfg.appPublicUrl}/packages`,
 		})
 	} catch (e) {
-		const err = new Error(
-			e.message ||
-				'Could not open billing portal. Enable Customer portal in Stripe Dashboard (Billing → Customer portal).'
-		)
+		console.error('[stripe] billing portal session failed:', e?.message || e)
+		const err = new Error('Stripe billing portal is not available')
 		err.code = 'STRIPE_PORTAL'
 		throw err
 	}

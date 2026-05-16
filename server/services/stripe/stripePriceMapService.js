@@ -4,8 +4,9 @@ function parseStripePriceMapJson() {
 	try {
 		const parsed = JSON.parse(raw)
 		return parsed && typeof parsed === 'object' ? parsed : {}
-	} catch {
-		const err = new Error('Invalid STRIPE_PRICE_MAP_JSON')
+	} catch (parseErr) {
+		console.error('[stripe] Invalid STRIPE_PRICE_MAP_JSON:', parseErr?.message || parseErr)
+		const err = new Error('Stripe price map is not configured')
 		err.code = 'STRIPE_CONFIG'
 		throw err
 	}
@@ -37,7 +38,8 @@ function findStripePriceIdByIntent(intent) {
 		)
 	}
 	if (!row?.priceId) {
-		const err = new Error('No Stripe priceId mapping for requested purchase')
+		console.error('[stripe] No priceId mapping for purchase intent:', intent)
+		const err = new Error('Stripe price map is not configured')
 		err.code = 'STRIPE_CONFIG'
 		throw err
 	}
@@ -81,7 +83,8 @@ function getStripePriceDefinition(priceId) {
 			billingCycle: def.billingCycle,
 		}
 	}
-	const err = new Error(`Invalid Stripe map kind for priceId: ${pid}`)
+	console.error('[stripe] Invalid map kind for priceId:', pid)
+	const err = new Error('Stripe price map is not configured')
 	err.code = 'STRIPE_CONFIG'
 	throw err
 }

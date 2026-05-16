@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { API_URL } from '../config'
 import { useAuth } from '../context/AuthContext'
+import { devLog } from '../utils/devLog.js'
 
 export const usePushNotifications = () => {
 	const [isSupported, setIsSupported] = useState(false)
@@ -16,6 +17,7 @@ export const usePushNotifications = () => {
 		leaves: true,
 		announcements: true,
 		schedulePublished: true,
+		timer: true,
 	})
 	const { loggedIn } = useAuth()
 
@@ -26,30 +28,30 @@ export const usePushNotifications = () => {
 		const checkSupport = async () => {
 			// Check for Service Worker support
 			if (!('serviceWorker' in navigator)) {
-				console.log('[Push] Service Worker not supported')
+				devLog('[Push] Service Worker not supported')
 				setIsSupported(false)
 				return
 			}
 
 			// Check for Push Manager support
 			if (!('PushManager' in window)) {
-				console.log('[Push] PushManager not supported')
+				devLog('[Push] PushManager not supported')
 				setIsSupported(false)
 				return
 			}
 
 			// Check for Notification API support
 			if (!('Notification' in window)) {
-				console.log('[Push] Notification API not supported')
+				devLog('[Push] Notification API not supported')
 				setIsSupported(false)
 				return
 			}
 
-			console.log('[Push] Push notifications are supported')
+			devLog('[Push] Push notifications are supported')
 			
 			// Check notification permission
 			if (Notification.permission === 'denied') {
-				console.log('[Push] Notification permission denied')
+				devLog('[Push] Notification permission denied')
 				setIsSupported(false)
 				return
 			}
@@ -60,7 +62,7 @@ export const usePushNotifications = () => {
 			try {
 				const response = await axios.get(`${API_URL}/api/push/vapid-public-key`)
 				setVapidPublicKey(response.data.publicKey)
-				console.log('[Push] VAPID public key received')
+				devLog('[Push] VAPID public key received')
 			} catch (error) {
 				console.error('[Push] Error getting VAPID public key:', error)
 				setIsSupported(false)
@@ -70,11 +72,11 @@ export const usePushNotifications = () => {
 			// Wait for service worker to be ready
 			try {
 				const registration = await navigator.serviceWorker.ready
-				console.log('[Push] Service Worker ready, checking for existing subscription')
+				devLog('[Push] Service Worker ready, checking for existing subscription')
 				
 				// Check if push manager is available
 				if (!registration.pushManager) {
-					console.log('[Push] PushManager not available in service worker')
+					devLog('[Push] PushManager not available in service worker')
 					setIsSupported(false)
 					return
 				}
@@ -82,11 +84,11 @@ export const usePushNotifications = () => {
 				const existingSubscription = await registration.pushManager.getSubscription()
 				
 				if (existingSubscription) {
-					console.log('[Push] Found existing subscription:', existingSubscription.endpoint.substring(0, 50))
+					devLog('[Push] Found existing subscription:', existingSubscription.endpoint.substring(0, 50))
 					setSubscription(existingSubscription)
 					setIsSubscribed(true)
 				} else {
-					console.log('[Push] No existing subscription found')
+					devLog('[Push] No existing subscription found')
 				}
 			} catch (error) {
 				console.error('[Push] Error checking existing subscription:', error)
@@ -107,6 +109,7 @@ export const usePushNotifications = () => {
 						leaves: response.data.preferences?.leaves !== false,
 						announcements: response.data.preferences?.announcements !== false,
 						schedulePublished: response.data.preferences?.schedulePublished !== false,
+						timer: response.data.preferences?.timer !== false,
 					})
 				} catch (error) {
 					console.error('Error loading push preferences:', error)
@@ -126,9 +129,9 @@ export const usePushNotifications = () => {
 		try {
 			// Request notification permission first
 			if (Notification.permission === 'default') {
-				console.log('[Push] Requesting notification permission...')
+				devLog('[Push] Requesting notification permission...')
 				const permission = await Notification.requestPermission()
-				console.log('[Push] Notification permission:', permission)
+				devLog('[Push] Notification permission:', permission)
 				if (permission !== 'granted') {
 					return { success: false, error: 'Notification permission denied' }
 				}
@@ -137,7 +140,7 @@ export const usePushNotifications = () => {
 			}
 
 			const registration = await navigator.serviceWorker.ready
-			console.log('[Push] Subscribing to push notifications...')
+			devLog('[Push] Subscribing to push notifications...')
 			
 			// Check if push manager is available
 			if (!registration.pushManager) {
@@ -152,7 +155,7 @@ export const usePushNotifications = () => {
 				applicationServerKey: applicationServerKey
 			})
 
-			console.log('[Push] Subscription created:', newSubscription.endpoint.substring(0, 50))
+			devLog('[Push] Subscription created:', newSubscription.endpoint.substring(0, 50))
 
 			// Send subscription to server
 			const subscriptionData = {
@@ -164,12 +167,12 @@ export const usePushNotifications = () => {
 				userAgent: navigator.userAgent
 			}
 
-			console.log('[Push] Registering subscription on server...')
+			devLog('[Push] Registering subscription on server...')
 			await axios.post(`${API_URL}/api/push/register`, subscriptionData, {
 				withCredentials: true
 			})
 
-			console.log('[Push] Subscription registered successfully')
+			devLog('[Push] Subscription registered successfully')
 			setSubscription(newSubscription)
 			setIsSubscribed(true)
 

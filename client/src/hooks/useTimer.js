@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
+import {
+	resolveActiveTimerRefetchInterval,
+	resolveActiveTimerStaleTime,
+} from './activeTimerQueryPolicy.js'
 
 // Get active timer status
 export const useActiveTimer = ({ enabled = true } = {}) => {
@@ -13,8 +17,10 @@ export const useActiveTimer = ({ enabled = true } = {}) => {
 			return response.data
 		},
 		enabled,
-		refetchInterval: enabled ? 1000 : false,
-		staleTime: 0,
+		staleTime: (query) => resolveActiveTimerStaleTime(query.state.data),
+		refetchInterval: (query) => resolveActiveTimerRefetchInterval(query.state.data, enabled),
+		refetchIntervalInBackground: false,
+		refetchOnWindowFocus: enabled,
 	})
 }
 

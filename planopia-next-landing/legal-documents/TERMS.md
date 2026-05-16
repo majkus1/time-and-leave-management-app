@@ -1,12 +1,12 @@
 # Regulamin świadczenia usługi Planopia.pl
 
-**Wersja 1.2 - obowiązuje od 19.03.2026r.**
+**Wersja 1.3 - obowiązuje od 15.05.2026r.**
 
 ## 1. Postanowienia ogólne
 
 1.1. Niniejszy Regulamin określa zasady świadczenia usług przez ML Devworks Michał Lipka z siedzibą w Rynek Główny 34 lok. 15, 31-010 Kraków, NIP: 6762707876 (dalej: "Usługodawca") za pośrednictwem platformy Planopia.pl.
 
-1.2. Usługodawca oferuje dostęp do aplikacji internetowej Planopia.pl służącej do ewidencji czasu pracy, zarządzania urlopami, grafiku pracy, tablic zadań oraz komunikacji zespołowej (dalej: "Usługa").
+1.2. Usługodawca oferuje dostęp do aplikacji internetowej Planopia.pl służącej m.in. do ewidencji czasu pracy, zarządzania urlopami i nieobecnościami, grafiku pracy, tablic zadań (Kanban), komunikacji zespołowej oraz — w zależności od planu — funkcji opartych o sztuczną inteligencję (np. Asystent AI, wsparcie AI w grafiku) (dalej: "Usługa").
 
 1.3. Korzystanie z Usługi jest równoznaczne z akceptacją niniejszego Regulaminu.
 
@@ -23,8 +23,11 @@
 ## 3. Rodzaje kont i zasady korzystania
 
 3.1. Usługodawca udostępnia m.in. następujące możliwości rozliczeniowe:
-   - **Okres próbny**: przez **30 dni** od utworzenia Konta (pierwszy miesiąc) Klient może korzystać z Usługi **bez opłaty**, dla **do 5 Użytkowników**, z pełnym zakresem funkcji przewidzianym w Usłudze, z zastrzeżeniem ewentualnych limitów funkcji dodatkowych (w tym limitów wiadomości Asystenta AI) określonych w interfejsie Usługi lub cenniku.
-   - **Plany płatne**: po zakończeniu okresu próbnego dalsze korzystanie z Usługi wymaga wyboru płatnego planu subskrypcyjnego zgodnie z aktualnym cennikiem; w ramach planów płatnych dostępna jest m.in. wyższa liczba Użytkowników oraz funkcje dodatkowe (szczegóły w cenniku).
+   - **Okres próbny**: przez **30 dni** od utworzenia Konta Klient może korzystać z Usługi **bez opłaty abonamentowej**, dla **do 5 aktywnych Użytkowników**, z funkcjami przewidzianymi w Usłudze na ten okres, z zastrzeżeniem limitów (w tym limitów wiadomości Asystenta AI) określonych w interfejsie lub cenniku.
+   - **Dostęp podstawowy (freemium)**: po zakończeniu okresu próbnego, jeśli Klient nie wykupi planu płatnego, może korzystać z **ograniczonego** zakresu Usługi (m.in. ewidencja czasu pracy i powiązane podglądy) dla **do 5 aktywnych Użytkowników** — szczegóły i dostępne moduły wynikają z aktualnej wersji aplikacji.
+   - **Plany płatne**: pełniejszy dostęp, wyższa liczba Użytkowników i moduły dodatkowe zgodnie z wybranym planem i cennikiem (m.in. grafiki, tablice, czat, timer QR, Asystent AI — jeśli objęte planem).
+
+3.1a. **Funkcje AI** (gdy dostępne w ramach planu i włączone po stronie Usługodawcy): służą wyłącznie do wsparcia informacyjnego w aplikacji (podsumowania, szkice wniosków itp.) i **nie zastępują** doradztwa prawnego, kadrowego ani decyzji Klienta. Odpowiedzi mogą zawierać błędy — Klient weryfikuje je przed użyciem. Historia rozmowy w Asystencie AI jest przechowywana **w przeglądarce Użytkownika**, a nie w bazie Usługodawcy (szczegóły w Polityce prywatności).
 
 3.2. Klient jest odpowiedzialny za:
    - zachowanie poufności danych dostępowych do Konta
@@ -115,5 +118,5 @@
 
 10.4. Informacje pomocnicze dotyczące trybu reklamacyjnego są zamieszczone pod adresem: https://planopia.pl/reklamacje
 
-**Data ostatniej aktualizacji: 19.03.2026r.**
+**Data ostatniej aktualizacji: 15.05.2026r.**
 

@@ -132,7 +132,8 @@ function resolveUserHint(users, hint) {
  */
 async function runScheduleAutoDraftTurn(input) {
 	if (!isOpenAIConfigured()) {
-		const err = new Error('AI is not configured (missing OPENAI_API_KEY).')
+		console.error('[ai] OPENAI_API_KEY is not configured')
+		const err = new Error('AI assistant is not configured')
 		err.code = 'OPENAI_NOT_CONFIGURED'
 		throw err
 	}

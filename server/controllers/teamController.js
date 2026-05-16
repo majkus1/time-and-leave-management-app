@@ -489,7 +489,7 @@ exports.deleteTeam = async (req, res) => {
 		console.error('Delete team error:', error);
 		res.status(500).json({
 			success: false,
-			message: error.message || 'Błąd serwera podczas usuwania zespołu'
+			message: 'Błąd serwera podczas usuwania zespołu'
 		});
 	}
 };
@@ -517,7 +517,7 @@ exports.permanentlyDeleteTeam = async (req, res) => {
 		console.error('Permanently delete team error:', error);
 		res.status(500).json({
 			success: false,
-			message: error.message || 'Błąd serwera podczas trwałego usuwania zespołu'
+			message: 'Błąd serwera podczas trwałego usuwania zespołu'
 		});
 	}
 };

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
 import { useActiveTimer, useStartTimer, usePauseTimer, useStopTimer, useUpdateActiveTimer, useSplitSession, useTodaySessions } from '../../hooks/useTimer'
+import { useTimerElapsed } from '../../hooks/useTimerElapsed'
+import { formatTimerClock } from '../../utils/timerDisplay'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { useWorkdays } from '../../hooks/useWorkdays'
@@ -33,7 +35,6 @@ function TimerPanel() {
 	const [selectedWorkDescription, setSelectedWorkDescription] = useState('')
 	const [isOvertime, setIsOvertime] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
-	const [elapsedTime, setElapsedTime] = useState(0)
 	const [allTasks, setAllTasks] = useState([])
 	const [loadingTasks, setLoadingTasks] = useState(false)
 	const [infoModalIsOpen, setInfoModalIsOpen] = useState(false)
@@ -41,8 +42,10 @@ function TimerPanel() {
 	const [newSessionDescription, setNewSessionDescription] = useState('')
 	const [newSessionTaskId, setNewSessionTaskId] = useState('')
 	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
-	const [totalBreakTime, setTotalBreakTime] = useState(0)
-	const [totalOvertimeTime, setTotalOvertimeTime] = useState(0)
+	const timerMetrics = useTimerElapsed(activeTimer)
+	const elapsedTime = timerMetrics?.elapsedSeconds ?? 0
+	const totalBreakTime = timerMetrics?.totalBreakTime ?? 0
+	const totalOvertimeTime = timerMetrics?.totalOvertimeTime ?? 0
 	/** Ms of first start in this run (until Stop). Unchanged on „Zapisz sesję i kontynuuj”; cleared when timer stops. */
 	const [continuousRunStartMs, setContinuousRunStartMs] = useState(null)
 	/** True after at least one „Zapisz sesję i kontynuuj” w tym ciągu — wtedy pokazujemy łączny czas. */
@@ -115,49 +118,6 @@ function TimerPanel() {
 		}
 	}, [activeTimer?.active, activeTimer?.startTime])
 
-	// Calculate elapsed time, break time, and overtime time
-	useEffect(() => {
-		if (!activeTimer?.active || !activeTimer.startTime) {
-			setElapsedTime(0)
-			setTotalBreakTime(0)
-			setTotalOvertimeTime(0)
-			return
-		}
-
-		const interval = setInterval(() => {
-			const start = new Date(activeTimer.startTime)
-			const now = new Date()
-			const totalTime = (now - start) / 1000 // seconds
-			
-			// Calculate break time - backend provides base totalBreakTime (completed breaks)
-			// Add current break duration if currently on break
-			let breakTime = activeTimer.totalBreakTime || 0
-			if (activeTimer.isBreak && activeTimer.breakStartTime) {
-				const currentBreakStart = new Date(activeTimer.breakStartTime)
-				const currentBreakDuration = (now - currentBreakStart) / 1000 // seconds
-				breakTime = breakTime + currentBreakDuration
-			}
-			
-			setTotalBreakTime(breakTime)
-			
-			// Calculate overtime time - backend provides base totalOvertimeTime (completed overtime periods)
-			// Add current overtime duration if currently in overtime mode
-			let overtimeTime = activeTimer.totalOvertimeTime || 0
-			if (activeTimer.isOvertime && activeTimer.overtimeStartTime) {
-				const currentOvertimeStart = new Date(activeTimer.overtimeStartTime)
-				const currentOvertimeDuration = (now - currentOvertimeStart) / 1000 // seconds
-				overtimeTime = overtimeTime + currentOvertimeDuration
-			}
-			
-			setTotalOvertimeTime(overtimeTime)
-			
-			// Elapsed time is total time (work continues during breaks and overtime)
-			setElapsedTime(totalTime)
-		}, 1000)
-
-		return () => clearInterval(interval)
-	}, [activeTimer])
-
 	// Sync editing description with active timer
 	useEffect(() => {
 		if (activeTimer?.active && activeTimer.workDescription) {
@@ -167,12 +127,7 @@ function TimerPanel() {
 		}
 	}, [activeTimer])
 
-	const formatTime = (seconds) => {
-		const hours = Math.floor(seconds / 3600)
-		const minutes = Math.floor((seconds % 3600) / 60)
-		const secs = Math.floor(seconds % 60)
-		return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-	}
+	const formatTime = formatTimerClock
 
 	// Helper function to normalize date to YYYY-MM-DD format without timezone issues
 	const normalizeDate = (dateInput) => {

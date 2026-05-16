@@ -1,6 +1,6 @@
 # Umowa powierzenia przetwarzania danych osobowych (DPA)
 
-**Wersja 1.0 - obowiązuje od 07.01.2026r.**
+**Wersja 1.1 - obowiązuje od 15.05.2026r.**
 
 ## 1. Strony umowy
 
@@ -12,7 +12,9 @@
 
 2.1. Administrator powierza, a Procesor przyjmuje przetwarzanie danych osobowych w zakresie niezbędnym do świadczenia usług przez platformę Planopia.pl.
 
-2.2. Przetwarzanie obejmuje: ewidencję czasu pracy, zarządzanie urlopami, grafik pracy, tablice zadań, komunikację zespołową.
+2.2. Przetwarzanie obejmuje m.in.: ewidencję czasu pracy, zarządzanie urlopami i nieobecnościami, grafiki pracy, tablice zadań (Kanban), komunikację zespołową oraz — jeśli włączone w ramach planu — funkcje oparte o API OpenAI (np. Asystent AI, wsparcie AI w grafiku), zgodnie z ust. 2.3.
+
+2.3. **Funkcje AI:** Procesor przekazuje do OpenAI (OpenAI, L.L.C., USA) treść zapytań Użytkownika oraz wybrane, zagregowane dane z Konta Administratora wyłącznie w celu wygenerowania odpowiedzi. Historia rozmowy w Asystencie AI nie jest trwale przechowywana w bazie Procesora — jest zapisywana w przeglądarce Użytkownika (localStorage). Procesor przechowuje m.in. liczniki wykorzystania limitów AI. Administrator powinien nie umieszczać w zapytaniach danych wykraczających poza to, co jest potrzebne do korzystania z Usługi.
 
 ## 3. Kategorie danych i osób
 
@@ -37,8 +39,10 @@
 
 ## 5. Podpowierzenie (Subprocesorzy)
 
-5.1. Procesor może powierzyć przetwarzanie podwykonawcom:
-   - Dostawcom usług hostingowych (Render.com, Netlify, Vercel)
+5.1. Procesor może powierzyć przetwarzanie podwykonawcom, w tym:
+   - Dostawcom hostingu i infrastruktury (m.in. Render.com; Vercel lub Netlify — strona planopia.pl)
+   - **OpenAI** (OpenAI, L.L.C.) — wyłącznie w zakresie funkcji AI opisanych w ust. 2.3
+   - Operatorom płatności (m.in. Przelewy24, Stripe) — dane rozliczeniowe subskrypcji
    - Dostawcom usług informatycznych wspierających działanie platformy
 
 5.2. Administrator wyraża ogólną zgodę na korzystanie z subprocesorów wskazanych w niniejszej umowie.
@@ -103,7 +107,7 @@
 **Załącznik A: Środki techniczne i organizacyjne (TOMs)**
 
 - Szyfrowanie transmisji danych (HTTPS/TLS)
-- Kontrola dostępu z uwierzytelnianiem. Uwierzytelnianie wieloskładnikowe (2FA) dostępne dla użytkowników (jeśli funkcja jest włączona)
+- Kontrola dostępu: logowanie hasłem, sesja (tokeny w plikach cookie httpOnly), HTTPS/TLS; role i uprawnienia w aplikacji (w chwili publikacji niniejszej wersji dokumentu osobne 2FA w aplikacji nie jest oferowane)
 - Rejestrowanie zdarzeń (logi bezpieczeństwa)
 - Regularne aktualizacje i patche bezpieczeństwa
 - Kopie zapasowe (regularnie, przechowywane zgodnie z procedurami)
@@ -111,5 +115,5 @@
 - Szkolenia personelu w zakresie RODO
 - Procedury zarządzania incydentami bezpieczeństwa
 
-**Data ostatniej aktualizacji: 07.01.2026r.**
+**Data ostatniej aktualizacji: 15.05.2026r.**
 

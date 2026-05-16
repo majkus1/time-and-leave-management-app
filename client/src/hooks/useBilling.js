@@ -73,6 +73,24 @@ export function useBillingP24Checkout() {
 	})
 }
 
+/** Po powrocie z P24 — synchronizacja gdy webhook (ngrok) nie dotarł. */
+export function useBillingP24ConfirmReturn() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ sessionId }) => {
+			const { data } = await axios.post(
+				`${API_URL}/api/billing/p24/confirm-return`,
+				{ sessionId },
+				{ withCredentials: true }
+			)
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
 export function useBillingStripeStatus() {
 	return useQuery({
 		queryKey: ['billing-stripe-status'],

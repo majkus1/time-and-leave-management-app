@@ -1,19 +1,4 @@
-const multer = require('multer')
-const path = require('path')
-const crypto = require('crypto')
+/** @deprecated Użyj attachmentUpload.arrayAttachmentUpload — zachowane dla importów. */
+const { createAttachmentMulter } = require('./attachmentUpload')
 
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname)
-    const filename = crypto.randomBytes(16).toString('hex') + ext
-    cb(null, filename)
-  }
-})
-
-const upload = multer({ storage })
-
-module.exports = upload
+module.exports = createAttachmentMulter({ maxFiles: 5 })

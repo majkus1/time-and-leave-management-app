@@ -1,5 +1,9 @@
 const { firmDb } = require('../db/db')
 const LeavePlan = require('../models/LeavePlan')(firmDb)
+const {
+	resolveTeamScopedLeaveUserViewAccess,
+	sendTeamScopedLeaveViewAccessError,
+} = require('../utils/vacationAccess')
 
 exports.getUserLeavePlans = async (req, res) => {
 	try {
@@ -59,6 +63,11 @@ exports.getLeavePlansByAdmin = async (req, res) => {
 	const { userId } = req.params
 
 	try {
+		const access = await resolveTeamScopedLeaveUserViewAccess(req.user.userId, userId)
+		if (access.error) {
+			return sendTeamScopedLeaveViewAccessError(res, access.error)
+		}
+
 		const leavePlans = await LeavePlan.find({ userId }).select('date -_id')
 		const dates = leavePlans.map(plan => plan.date)
 		res.status(200).json(dates)

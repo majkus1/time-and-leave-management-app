@@ -102,16 +102,6 @@ function AdminAllLeaveCalendar() {
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
 	
-	// Debug - sprawdź czy dane są pobierane
-	React.useEffect(() => {
-		if (allTeamLeaveRequests && allTeamLeaveRequests.length > 0) {
-			console.log('[AdminAllLeaveCalendar] Pobrano wnioski:', allTeamLeaveRequests.length)
-			console.log('[AdminAllLeaveCalendar] Przykładowy wniosek:', allTeamLeaveRequests[0])
-		} else {
-			console.log('[AdminAllLeaveCalendar] Brak wniosków lub błąd:', requestsError)
-		}
-	}, [allTeamLeaveRequests, requestsError])
-
 	const loading = loadingUsers || loadingPlans || loadingRequests
 	const error = usersError || plansError || requestsError
 

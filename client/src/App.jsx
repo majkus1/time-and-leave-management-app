@@ -52,13 +52,13 @@ import AIAssistant from './components/aiAssistant/AIAssistant'
 import PackagesPage from './components/billing/PackagesPage'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { handleAuthError } from './utils/authErrorHandler'
-import { Helmet } from 'react-helmet-async'
 import { API_URL } from './config.js'
 import '../src/style.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { AlertProvider } from './context/AlertContext'
 import { SocketProvider } from './context/SocketContext'
+import TimerChrome from './components/timer/TimerChrome'
 
 // Setup QueryClient z optymalnymi ustawieniami
 const queryClient = new QueryClient({
@@ -122,9 +122,7 @@ function AppContent() {
 
 	return (
 		<>
-			<Helmet>
-				<title>Planopia</title>
-			</Helmet>
+			<TimerChrome />
 
 		<div>
 			<ScrollToHashElement />

@@ -17,37 +17,26 @@ function Dashboard() {
   const { t, i18n } = useTranslation();
   const { hasSeenTutorial, firstLoginAt, isTeamAdmin } = useAuth();
 
-  console.log('[Dashboard] Render - location.state:', location.state, 'showSuccessModal:', showSuccessModal);
-
   useEffect(() => {
-    console.log('[Dashboard] useEffect triggered');
     // Sprawdź czy przyszliśmy z rejestracji zespołu (sprawdź sessionStorage i location.state)
     const showModalFromStorage = sessionStorage.getItem('showTeamSuccessModal') === 'true';
     const showModalFromState = location.state?.showTeamSuccessModal;
-    
-    console.log('[Dashboard] showModalFromStorage:', showModalFromStorage, 'showModalFromState:', showModalFromState);
-    
+
     if (showModalFromStorage || showModalFromState) {
-      console.log('[Dashboard] ===== SHOWING TEAM SUCCESS MODAL =====');
-      console.log('[Dashboard] Setting showSuccessModal to true');
       setShowSuccessModal(true);
-      
+
       // Wyczyść flagę z sessionStorage
       if (showModalFromStorage) {
         sessionStorage.removeItem('showTeamSuccessModal');
-        console.log('[Dashboard] Removed showTeamSuccessModal from sessionStorage');
       }
-      
+
       // Wyczyść state, żeby modal nie pokazywał się ponownie przy odświeżeniu
       window.history.replaceState({}, document.title);
-      
+
       // Uruchom konfetti z małym opóźnieniem
       setTimeout(() => {
-        console.log('[Dashboard] Triggering confetti...');
         triggerConfetti();
       }, 300);
-    } else {
-      console.log('[Dashboard] No showTeamSuccessModal flag found');
     }
   }, [location.state]);
 
@@ -125,10 +114,7 @@ function Dashboard() {
       </div>
 
       {/* Modal sukcesu z efektem konfetti */}
-      {(() => {
-        console.log('[Dashboard] Modal render check - showSuccessModal:', showSuccessModal);
-        return showSuccessModal;
-      })() && (
+      {showSuccessModal && (
         <div 
           className="fixed inset-0 flex items-center justify-center"
           style={{

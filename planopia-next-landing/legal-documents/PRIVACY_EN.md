@@ -1,6 +1,6 @@
 # Privacy Policy for Planopia.pl
 
-**Version 1.1 - effective from March 19, 2026**
+**Version 1.2 - effective from May 15, 2026**
 
 ## 1. Data Controller
 
@@ -36,14 +36,20 @@ Contact: office@ml-devworks.com
 3.3. Technical data:
    - IP address
    - Browser information
-   - Cookies
+   - Cookies (including session login cookies)
+
+3.4. **AI Assistant and other OpenAI API features** (when enabled in the Service and available on the Client’s plan):
+   - User questions and selected, aggregated Account data (e.g. working-time and leave summaries for a chosen period — within the User’s permissions) are sent to **OpenAI** (OpenAI, L.L.C., USA) solely to generate a response.
+   - **Chat history** in the AI Assistant UI is stored in the User’s **browser** (localStorage) on their device — we **do not** store it permanently in our database. Users can remove it by clearing site data in the browser.
+   - We store usage counters (plan limits) and technical log entries (e.g. that the feature was used), not the full chat transcript on our servers.
 
 ## 4. Data Recipients
 
 4.1. Data may be transferred to:
-   - Hosting service providers (Render.com, Netlify, Vercel, Oregon - US West)
-   - IT service providers supporting platform operation
-   - Google LLC (Google Analytics, Google Tag Manager) - for landing page traffic analysis
+   - Hosting and infrastructure providers (including Render.com — backend and database; Vercel or Netlify — planopia.pl website)
+   - **OpenAI** (OpenAI, L.L.C.) — only when using AI features described in section 3.4
+   - Payment operators (including Przelewy24, Stripe) — to the extent necessary for subscription billing
+   - Google LLC (Google Analytics, Google Tag Manager) — traffic analysis on planopia.pl
    - Government authorities upon request under applicable law
 
 4.2. All subcontractors are obligated to comply with data protection principles.
@@ -54,7 +60,7 @@ Contact: office@ml-devworks.com
 
 4a.2. Data transfer outside the EEA is based on Standard Contractual Clauses (SCC) pursuant to European Commission Decision 2021/914.
 
-4a.3. Google LLC (Google Analytics, Google Tag Manager) also processes data in the USA based on appropriate protection mechanisms compliant with GDPR.
+4a.3. Google LLC (Google Analytics, Google Tag Manager) and OpenAI (for AI features) also process data in the USA based on appropriate protection mechanisms compliant with GDPR (including Standard Contractual Clauses where applicable).
 
 ## 5. Data Retention Period
 
@@ -96,11 +102,14 @@ Contact: office@ml-devworks.com
 
 ## 8. Security Measures
 
-8.1. We apply appropriate technical and organizational measures:
-   - Connection encryption (HTTPS)
-   - Access control
+8.1. We apply appropriate technical and organizational measures, including:
+   - Connection encryption (HTTPS/TLS)
+   - Password login and session control (httpOnly cookie tokens)
+   - In-app access control (roles and permissions within the Client’s team)
    - Regular backups
    - System monitoring
+
+8.1a. **Note:** at the time of this version, the Service **does not offer** separate multi-factor authentication (2FA) in the app. The Client is responsible for password and device security for Users.
 
 8.2. Data is stored on servers in Oregon (US West), United States. Data transfer outside the European Economic Area (EEA) is based on Standard Contractual Clauses (SCC) pursuant to European Commission Decision 2021/914.
 
@@ -110,5 +119,5 @@ Contact: office@ml-devworks.com
 
 9.2. Users will be notified of significant changes.
 
-**Last updated: March 19, 2026**
+**Last updated: May 15, 2026**
 
