@@ -11,6 +11,8 @@ const Schedule = require('../models/Schedule')(firmDb);
 const Department = require('../models/Department')(firmDb);
 const Channel = require('../models/Channel')(firmDb);
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb);
+const teamService = require('../services/teamService');
+const { logTeamPermanentlyDeletedByRetention } = require('../services/teamDeletionAuditService');
 
 // Import historical records that should be cleaned up when user/team is deleted
 const Workday = require('../models/Workday')(firmDb);
@@ -31,51 +33,16 @@ async function cleanupSoftDeletedRecords() {
 	const teamsToDelete = await Team.find({
 		isActive: false,
 		deletedAt: { $ne: null, $lte: cutoffDate }
-	}).select('_id');
+	}).select('_id name adminEmail');
 
 	const teamIds = teamsToDelete.map(t => t._id);
 
-	// For each team, delete all related data
-	for (const teamId of teamIds) {
+	for (const team of teamsToDelete) {
+		const teamId = team._id;
 		try {
-			// Get all users in this team (including soft-deleted)
-			const teamUsers = await User.find({ teamId }).select('_id');
-			const userIds = teamUsers.map(u => u._id);
-
-			// Delete historical records for all users in this team
-			if (userIds.length > 0) {
-				await Promise.all([
-					Workday.deleteMany({ userId: { $in: userIds } }),
-					LeaveRequest.deleteMany({ userId: { $in: userIds } }),
-					LeavePlan.deleteMany({ userId: { $in: userIds } }),
-					CalendarConfirmation.deleteMany({ userId: { $in: userIds } }),
-					Log.deleteMany({ user: { $in: userIds } }),
-					Message.deleteMany({ userId: { $in: userIds } })
-				]);
-				console.log(`  Deleted historical records for ${userIds.length} users from team ${teamId}`);
-			}
-
-			// Get all channels for this team and delete messages
-			const teamChannels = await Channel.find({ teamId }).select('_id');
-			const channelIds = teamChannels.map(c => c._id);
-			if (channelIds.length > 0) {
-				await Message.deleteMany({ channelId: { $in: channelIds } });
-				console.log(`  Deleted messages from ${channelIds.length} channels in team ${teamId}`);
-			}
-
-			// Delete team resources
-			await Promise.all([
-				Channel.deleteMany({ teamId }),
-				Board.deleteMany({ teamId }),
-				Schedule.deleteMany({ teamId }),
-				Department.deleteMany({ teamId }),
-				SupervisorConfig.deleteMany({ teamId }),
-				User.deleteMany({ teamId })
-			]);
-
-			// Finally delete the team
-			await Team.deleteOne({ _id: teamId });
-			console.log(`  ✅ Permanently deleted team ${teamId} and all related data`);
+			await logTeamPermanentlyDeletedByRetention(team);
+			await teamService.permanentlyDeleteTeam(teamId);
+			console.log(`  ✅ Permanently deleted team ${teamId} (${team.name || '—'}) and all related data`);
 		} catch (error) {
 			console.error(`  ❌ Error deleting team ${teamId}:`, error.message);
 		}

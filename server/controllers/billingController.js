@@ -18,11 +18,6 @@ const {
 const { getStripeConfig } = require('../services/stripe/stripeConfig')
 const { listStripePriceMap, findStripePriceIdByIntent } = require('../services/stripe/stripePriceMapService')
 const { countTeamSeats } = require('../services/teamSeatCountService')
-const {
-	sendLegacyTransitionAnnouncement,
-	broadcastLegacyTransitionAnnouncements,
-} = require('../services/legacyTransitionAnnouncementEmailService')
-
 const BILLING_SUPER_ADMIN_EMAIL = 'michalipka1@gmail.com'
 const {
 	billingClientErrorPayload,
@@ -428,35 +423,6 @@ exports.postSuperThankPurchaseEmail = async (req, res) => {
 		res.json({ success: true, message: 'Sent' })
 	} catch (e) {
 		console.error('billingController.postSuperThankPurchaseEmail:', e)
-		res.status(500).json({ success: false, message: 'Server error' })
-	}
-}
-
-/** Mail: nowości AI + pakiety + dostęp legacy do 1.08.2026. Tylko michalipka1@gmail.com. */
-exports.postSuperLegacyAnnouncement = async (req, res) => {
-	try {
-		if (req.user?.username !== BILLING_SUPER_ADMIN_EMAIL) {
-			return res.status(403).json({ success: false, message: 'Forbidden' })
-		}
-		const mode = req.body?.mode
-		if (mode === 'test') {
-			/* Nazwa jak w realnym mailu (firma z rejestracji) — żeby zdanie „Ponieważ … jest z nami” brzmiało naturalnie */
-			await sendLegacyTransitionAnnouncement(BILLING_SUPER_ADMIN_EMAIL, 'Państwa firma')
-			return res.json({ success: true, sent: 1, mode: 'test' })
-		}
-		if (mode === 'broadcast') {
-			const result = await broadcastLegacyTransitionAnnouncements()
-			return res.json({
-				success: true,
-				mode: 'broadcast',
-				sent: result.sent,
-				uniqueRecipients: result.uniqueRecipients,
-				errors: result.errors,
-			})
-		}
-		return res.status(400).json({ success: false, message: 'Invalid mode (use test or broadcast)', code: 'VALIDATION' })
-	} catch (e) {
-		console.error('billingController.postSuperLegacyAnnouncement:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }

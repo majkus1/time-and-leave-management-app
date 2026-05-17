@@ -1,4 +1,5 @@
 const { TRIAL } = require('../constants/planCatalog')
+const { isSuperAdminUser } = require('../utils/logAccessPolicy')
 
 /**
  * Polityka dostępu API dla zespołów w trybie freemium (wygasły trial / niewznowiona subskrypcja / koniec okresu legacy).
@@ -93,6 +94,15 @@ function pathStartsWithAny(path, prefixes) {
 	return prefixes.some(p => path === p || path.startsWith(`${p}/`))
 }
 
+function isPlatformSuperAdminActivityApiPath(path) {
+	return path === '/api/super/activity' || path.startsWith('/api/super/activity/')
+}
+
+/** Monitor sesji platformy — tylko właściciel, poza polityką freemium / modułów planu. */
+function isPlatformSuperAdminActivityAllowed(path, decodedUser) {
+	return isPlatformSuperAdminActivityApiPath(path) && isSuperAdminUser({ username: decodedUser?.username })
+}
+
 /**
  * Freemium z liczbą miejsc w limicie — wąski zestaw modułów (bez timera, bez grafiku/urlopów/tablic itd.).
  */
@@ -111,4 +121,5 @@ module.exports = {
 	isFreemiumTimerPath,
 	isFreemiumSeatOverageAllowed,
 	isFreemiumActiveTierAllowed,
+	isPlatformSuperAdminActivityAllowed,
 }

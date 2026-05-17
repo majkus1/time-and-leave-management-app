@@ -8,8 +8,8 @@ import { useBoardsUnreadSummary } from '../../hooks/useBoards'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
-import TutorialModal from '../tutorial/TutorialModal'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
 
@@ -19,7 +19,7 @@ function Sidebar() {
 	const [isAnimating, setIsAnimating] = useState(false)
 	const [isNavbarVisible, setIsNavbarVisible] = useState(true)
 	const [lastScrollY, setLastScrollY] = useState(0)
-	const [showTutorialModal, setShowTutorialModal] = useState(false)
+	const { openTutorial } = useTutorial()
 	/** Dzwonek tylko w sidebarze na desktop (>1500px); na mobile wyłącznie obok hamburgera w pasku. */
 	const [isDesktopLayout, setIsDesktopLayout] = useState(
 		typeof window !== 'undefined' && window.innerWidth > 1500
@@ -527,7 +527,7 @@ function Sidebar() {
 							{/* Przycisk "Jak korzystać" — widoczny dla wszystkich (także freemium) */}
 							<button
 								type="button"
-								onClick={() => setShowTutorialModal(true)}
+								onClick={() => openTutorial()}
 								className="nav-link"
 								style={{
 									background: 'rgba(102, 126, 234, 0.1)',
@@ -631,12 +631,6 @@ function Sidebar() {
 				<div className="sidebar-overlay" onClick={toggleMenu}></div>
 			)}
 
-			{/* Modal samouczka */}
-			<TutorialModal 
-				isOpen={showTutorialModal}
-				onClose={() => setShowTutorialModal(false)}
-				showOnFirstView={false}
-			/>
 		</div>
 	)
 }

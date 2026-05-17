@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
-
 const TEAM_ACCESS_NOTICE_PATH = '/team-access-notice'
 
 const FREEMIUM_APP_PATHS = new Set([
@@ -69,6 +68,7 @@ export default function FreemiumRouteSync() {
 		if (isLoading || isFetching || !ent) return
 
 		const p = (location.pathname.replace(/\/+$/, '') || '/').split('?')[0]
+
 		const userIsAdmin = isAdmin(role)
 		const staffBilling = userIsAdmin || isHR(role)
 

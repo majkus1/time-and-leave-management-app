@@ -2,21 +2,17 @@
 
 type Locale = 'pl' | 'en'
 
-const PL_LEAD_TEASER =
-	'Asystent AI w Planopii korzysta z danych zespołu wyłącznie według uprawnień w aplikacji.'
-const PL_LEAD_AFTER_TEASER =
-	' Pomaga HR i managerom przy podsumowaniach i raportach, a pracownikom — przy urlopach, czasie pracy i zadaniach, bez zbędnego przeklikiwania widoków. W czacie przygotujesz też m.in. treść wniosku urlopowego lub wpisu do ewidencji.'
+const PL_LEAD =
+	'Zadaj pytanie — dostaniesz odpowiedź z kontekstu Twojej firmy: ewidencja, urlopy, zadania i grafik w jednym czacie, zamiast pięciu zakładek i Excela. Opisz miesiąc prostymi słowami — AI grafiku ułoży zmiany według Twoich zasad i wykluczeń, z podglądem zanim zatwierdzisz. HR i managerzy dostają gotowe podsumowania i raporty w minutach; pracownicy szybciej ogarniają urlopy i godziny. W kilka chwil przygotujesz też treść wniosku urlopowego albo wpisu do ewidencji.'
 
-const EN_LEAD_TEASER =
-	'Planopia’s AI assistant uses your team’s data only within the permissions set in the app.'
-const EN_LEAD_AFTER_TEASER =
-	' It helps HR and managers with summaries and reports, and employees with leave, hours, and tasks—without hopping between screens. In chat, you can draft a leave request or a time entry, too.'
+const EN_LEAD =
+	'Ask once — get answers grounded in how your team already works in Planopia: time, leave, tasks, and schedules in one chat, not five tabs and a spreadsheet. Describe the month in plain language — AI scheduling builds shift drafts to your rules and exclusions, ready to review before you publish. HR and managers get report-ready summaries in minutes; employees move faster on leave and hours. Draft a leave request or timesheet line in seconds when you need it.'
 
 const strings = {
 	pl: {
 		eyebrow: 'Nowość w Planopii',
 		title: 'Asystent AI — mniej ręcznej pracy, więcej gotowych wniosków',
-		leadParagraphs: [PL_LEAD_TEASER + PL_LEAD_AFTER_TEASER],
+		leadParagraphs: [PL_LEAD],
 		featuresHeading: '🔥 Co potrafi Asystent AI',
 		bullets: [
 			'Gotowe podsumowania i statystyki — szybkie wnioski zamiast analiz w tabelach',
@@ -33,7 +29,7 @@ const strings = {
 	en: {
 		eyebrow: 'New in Planopia',
 		title: 'AI Assistant — less manual work, more ready-made insights',
-		leadParagraphs: [EN_LEAD_TEASER + EN_LEAD_AFTER_TEASER],
+		leadParagraphs: [EN_LEAD],
 		featuresHeading: '🔥 What the AI Assistant can do',
 		bullets: [
 			'Ready-made summaries and stats — insights instead of spreadsheet crunching',

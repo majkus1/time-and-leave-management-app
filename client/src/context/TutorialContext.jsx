@@ -1,0 +1,34 @@
+import React, { createContext, useCallback, useContext, useState } from 'react'
+import TutorialModal from '../components/tutorial/TutorialModal'
+
+const TutorialContext = createContext(null)
+
+export function TutorialProvider({ children }) {
+	const [isOpen, setIsOpen] = useState(false)
+	const [showOnFirstView, setShowOnFirstView] = useState(false)
+
+	const openTutorial = useCallback((options = {}) => {
+		setShowOnFirstView(options.firstView === true)
+		setIsOpen(true)
+	}, [])
+
+	const closeTutorial = useCallback(() => {
+		setIsOpen(false)
+		setShowOnFirstView(false)
+	}, [])
+
+	return (
+		<TutorialContext.Provider value={{ openTutorial, closeTutorial }}>
+			{children}
+			<TutorialModal isOpen={isOpen} onClose={closeTutorial} showOnFirstView={showOnFirstView} />
+		</TutorialContext.Provider>
+	)
+}
+
+export function useTutorial() {
+	const ctx = useContext(TutorialContext)
+	if (!ctx) {
+		throw new Error('useTutorial must be used within TutorialProvider')
+	}
+	return ctx
+}

@@ -18,8 +18,15 @@ const {
 	signSessionTokens,
 	setSessionCookies,
 	clearSessionCookies,
+	loadActiveSessionUser,
 	issueRefreshedSessionFromCookie,
 } = require('../utils/authTokens')
+const {
+	beginAppSession,
+	touchSessionFromReq,
+	endSessionFromReq,
+	getAppSessionIdFromReq,
+} = require('../services/appSessionService')
 const {
 	canViewTeamUserProfile,
 	canManageTeamUser,
@@ -1165,7 +1172,12 @@ exports.markTutorialAsSeen = async (req, res) => {
 }
 
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+	try {
+		await endSessionFromReq(req)
+	} catch (e) {
+		console.error('logout endSession:', e.message)
+	}
 	clearSessionCookies(res)
 	res.status(200).json({ message: 'Wylogowano pomyślnie' })
 }
@@ -1220,6 +1232,7 @@ exports.login = async (req, res) => {
 		}
 		const tokens = signSessionTokens(sessionPayload)
 		setSessionCookies(res, tokens)
+		await beginAppSession(res, { user, req })
 
 		// Oznacz pierwsze logowanie jeśli jeszcze nie było
 		if (!user.firstLoginAt) {
@@ -1254,11 +1267,33 @@ exports.refreshToken = async (req, res) => {
 	try {
 		const result = await issueRefreshedSessionFromCookie(refreshToken)
 		if (!result.ok) {
+			try {
+				await endSessionFromReq(req)
+			} catch {
+				/* ignore */
+			}
 			clearSessionCookies(res)
 			return res.status(401).json({ message: 'Unauthorized' })
 		}
 
 		setSessionCookies(res, result.tokens)
+
+		try {
+			if (getAppSessionIdFromReq(req)) {
+				await touchSessionFromReq(req, { force: true })
+			} else {
+				const decoded = await new Promise((resolve, reject) => {
+					jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, d) =>
+						err ? reject(err) : resolve(d)
+					)
+				})
+				const user = await loadActiveSessionUser(decoded?.userId)
+				if (user) await beginAppSession(res, { user, req })
+			}
+		} catch (sessionErr) {
+			console.error('refreshToken app session:', sessionErr.message)
+		}
+
 		return res.json({ message: 'Token refreshed' })
 	} catch (error) {
 		return res.status(403).json({ message: 'Nieprawidłowy refresh token' })

@@ -9,6 +9,11 @@ const { createTeamBoard } = require('./boardController');
 const { createTeamSchedule } = require('./scheduleController');
 const teamService = require('../services/teamService');
 const {
+	logTeamSoftDeleted,
+	logTeamPermanentlyDeleted,
+} = require('../services/teamDeletionAuditService');
+const { beginAppSession } = require('../services/appSessionService');
+const {
 	SPECIAL_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
 } = require('../constants/specialTeams')
@@ -288,7 +293,12 @@ exports.registerTeam = async (req, res) => {
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
-		
+		try {
+			await beginAppSession(res, { user: teamAdmin, req });
+		} catch (sessionErr) {
+			console.error('team registration app session:', sessionErr.message);
+		}
+
 		await createLog(teamAdmin._id, 'TEAM_CREATED', `Team ${teamName} created successfully`);
 
 		res.status(201).json({
@@ -480,7 +490,16 @@ exports.deleteTeam = async (req, res) => {
 			});
 		}
 
-		// Soft delete team using service
+		const team = await Team.findById(teamId).select('name adminEmail');
+		if (!team) {
+			return res.status(404).json({
+				success: false,
+				message: 'Zespół nie został znaleziony',
+			});
+		}
+
+		await logTeamSoftDeleted(team, currentUser);
+
 		const result = await teamService.softDeleteTeam(teamId);
 
 		res.json(result);
@@ -508,7 +527,16 @@ exports.permanentlyDeleteTeam = async (req, res) => {
 			});
 		}
 
-		// Permanently delete team using service
+		const team = await Team.findById(teamId).select('name adminEmail');
+		if (!team) {
+			return res.status(404).json({
+				success: false,
+				message: 'Zespół nie został znaleziony',
+			});
+		}
+
+		await logTeamPermanentlyDeleted(team, currentUser);
+
 		const result = await teamService.permanentlyDeleteTeam(teamId);
 
 		res.json(result);

@@ -11,6 +11,7 @@ const {
 } = require('../constants/planCatalog')
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
+const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
 
 /**
  * Shared rules for email purchase requests and Przelewy24 checkout.
@@ -27,6 +28,8 @@ async function validateBillingPurchaseIntent(params) {
 		err.code = 'NOT_FOUND'
 		throw err
 	}
+
+	assertTeamInvoiceComplete(team)
 
 	const requester = await User.findById(requestingUserId).select('username firstName lastName')
 	if (!requester) {

@@ -414,7 +414,7 @@ i18n
 						invoiceNip: 'Tax ID (NIP)',
 						invoiceNipHint: '10 digits (Polish NIP)',
 						invoiceNipInvalid10:
-							'Tax ID (NIP) must be exactly 10 digits. Check your entry — an extra digit is a common mistake.',
+							'Complete and save your invoice details below before continuing.',
 						invoiceSave: 'Save invoice details',
 						invoiceSaving: 'Saving…',
 						invoiceSaved: 'Invoice details saved.',
@@ -1349,20 +1349,6 @@ i18n
 						purchaseThankError: 'Could not send the email.',
 						paidPlanPurchasesEmpty: 'No completed plan payments in the database yet.',
 						paidPlanPurchasesLoading: 'Loading…',
-						legacyAnnouncementTitle: 'Legacy announcement email (AI & access)',
-						legacyAnnouncementSub:
-							'Polish announcement: new AI features, packages (planopia.pl + app packages), full app access until 1 Aug 2026 inclusive, then free tier limits. Test sends only to michalipka1@gmail.com.',
-						legacyAnnouncementTestBtn: 'Send test to michalipka1@gmail.com',
-						legacyAnnouncementBroadcastBtn: 'Send to all team admins (excl. Halo Rental System)',
-						legacyAnnouncementSending: 'Sending…',
-						legacyAnnouncementTestOk: 'Test email sent to michalipka1@gmail.com.',
-						legacyAnnouncementBroadcastOk:
-							'Done. Sent: {{sent}}. Failed: {{errors}} (see server log for details).',
-						legacyAnnouncementBroadcastConfirm:
-							'Send the announcement to every active team’s registration admin email (deduplicated), except Halo Rental System? This cannot be undone.',
-						legacyAnnouncementError: 'Could not complete the request.',
-						legacyAnnouncementFootnote:
-							'Recipients: Team.adminEmail from Mongo. Halo Rental System is excluded. Email body is Polish.',
 						close: 'Close'
 					},
 					common: {
@@ -1373,15 +1359,6 @@ i18n
 						title: 'Help Center',
 						subtitle:
 							'Report issues, share ideas, or ask about features and integrations — we read every message.',
-						introLead:
-							'Use this space for technical problems, product ideas, integration needs, or questions about growing Planopia with your company.',
-						bulletBugs: 'Bugs and anything that blocks your daily work',
-						bulletIdeas: 'Ideas for new features and UX improvements',
-						bulletIntegrations: 'Integrations and workflows tailored to your team',
-						bulletOpen: 'We are open to evolving Planopia together with your organization.',
-						emailNotifyHint:
-							'When we reply or change the ticket status, we will send a notification to the e-mail address you use in the app.',
-						introMobileToggle: 'What you can report & e-mail notifications',
 						new: 'New ticket',
 						topicLabel: 'Subject',
 						messageLabel: 'Message',
@@ -2158,7 +2135,7 @@ i18n
 						invoiceNip: 'NIP',
 						invoiceNipHint: '10 cyfr',
 						invoiceNipInvalid10:
-							'NIP musi mieć dokładnie 10 cyfr. Sprawdź wpis — często pomyłką jest jedna cyfra za dużo lub za mało.',
+							'Uzupełnij i zapisz dane do faktury poniżej, zanim przejdziesz dalej.',
 						invoiceSave: 'Zapisz dane do faktury',
 						invoiceSaving: 'Zapisywanie…',
 						invoiceSaved: 'Zapisano dane do faktury.',
@@ -3092,20 +3069,6 @@ i18n
 						purchaseThankError: 'Nie udało się wysłać wiadomości.',
 						paidPlanPurchasesEmpty: 'Brak zapisanych opłaconych pakietów w bazie.',
 						paidPlanPurchasesLoading: 'Ładowanie…',
-						legacyAnnouncementTitle: 'Mail informacyjny (AI i dostęp legacy)',
-						legacyAnnouncementSub:
-							'W treści: nowości AI, pakiety (planopia.pl oraz app.planopia.pl/packages), pełny dostęp do aplikacji do 1 sierpnia 2026 r. (włącznie), potem wąski plan darmowy. Test tylko na michalipka1@gmail.com.',
-						legacyAnnouncementTestBtn: 'Wyślij test na michalipka1@gmail.com',
-						legacyAnnouncementBroadcastBtn: 'Wyślij do wszystkich adminów zespołów (bez Halo)',
-						legacyAnnouncementSending: 'Wysyłanie…',
-						legacyAnnouncementTestOk: 'Wysłano mail testowy na michalipka1@gmail.com.',
-						legacyAnnouncementBroadcastOk:
-							'Zakończono. Wysłano: {{sent}}. Niepowodzeń: {{errors}} (szczegóły w logu serwera).',
-						legacyAnnouncementBroadcastConfirm:
-							'Wysłać komunikat na adres adminEmail każdego aktywnego zespołu (unikalne adresy), z pominięciem „Halo Rental System”? Operacji nie cofniesz.',
-						legacyAnnouncementError: 'Nie udało się wykonać żądania.',
-						legacyAnnouncementFootnote:
-							'Odbiorcy: pole adminEmail z dokumentu zespołu w bazie. Zespół „Halo Rental System” jest pomijany. Treść maila po polsku.',
 						close: 'Zamknij'
 					},
 					common: {
@@ -3116,15 +3079,6 @@ i18n
 						title: 'Centrum pomocy',
 						subtitle:
 							'Zgłoś problem, podziel się pomysłem lub zapytaj o funkcje i integracje — czytamy każdą wiadomość.',
-						introLead:
-							'Możesz tu zgłaszać usterki techniczne, propozycje rozwoju produktu, potrzeby integracji oraz pytania o dopasowanie Planopia do firmy.',
-						bulletBugs: 'Błędy i wszystko, co utrudnia pracę z aplikacją',
-						bulletIdeas: 'Pomysły na nowe funkcje i wygodniejszy interfejs',
-						bulletIntegrations: 'Integracje i procesy szyte na miarę zespołu',
-						bulletOpen: 'Jesteśmy otwarci na rozwój Planopia wraz z rozwojem Twojej organizacji.',
-						emailNotifyHint:
-							'Gdy odpowiemy na zgłoszenie lub zmienimy jego status, wyślemy powiadomienie na adres e-mail przypisany do konta w aplikacji.',
-						introMobileToggle: 'Co można zgłaszać i powiadomienia e-mail',
 						new: 'Nowe zgłoszenie',
 						topicLabel: 'Temat',
 						messageLabel: 'Wiadomość',

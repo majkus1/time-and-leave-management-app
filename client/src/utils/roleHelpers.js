@@ -1,20 +1,16 @@
 // src/utils/roleHelpers.js
 
-export const isAdmin = roles =>
-  roles.includes('Admin');
+const hasRole = (roles, name) => Array.isArray(roles) && roles.includes(name)
 
-export const isHR = roles =>
-  roles.includes('HR');
+export const isAdmin = roles => hasRole(roles, 'Admin')
 
-export const isSupervisor = roles =>
-  roles.includes('Przełożony (Supervisor)');
+export const isHR = roles => hasRole(roles, 'HR')
+
+export const isSupervisor = roles => hasRole(roles, 'Przełożony (Supervisor)')
 
 // Zachowaj kompatybilność wsteczną - aliasy dla starych nazw
-export const isDepartmentSupervisor = roles =>
-  roles.includes('Przełożony (Supervisor)');
+export const isDepartmentSupervisor = roles => hasRole(roles, 'Przełożony (Supervisor)')
 
-export const isDepartmentViewer = roles =>
-  roles.includes('Przełożony (Supervisor)');
+export const isDepartmentViewer = roles => hasRole(roles, 'Przełożony (Supervisor)')
 
-export const isWorker = roles =>
-  roles.includes('Pracownik (Worker)');
+export const isWorker = roles => hasRole(roles, 'Pracownik (Worker)')

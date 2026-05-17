@@ -9,18 +9,6 @@ import './HelpTicket.css'
 
 const uploadsBase = API_URL.replace(/\/api\/?$/, '')
 
-const MailIcon = () => (
-	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-		<path
-			d="M4 6h16v12H4V6zm2 0 6 5 6-5"
-			stroke="currentColor"
-			strokeWidth="1.75"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		/>
-	</svg>
-)
-
 const HelpTicket = () => {
 	const { username, role } = useAuth()
 	const [selectedTicketId, setSelectedTicketId] = useState(null)
@@ -29,7 +17,6 @@ const HelpTicket = () => {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [replyFiles, setReplyFiles] = useState([])
-	const [mobileIntroOpen, setMobileIntroOpen] = useState(false)
 	const replyFileInputRef = useRef(null)
 	const fileInputRef = useRef(null)
 	const { t } = useTranslation()
@@ -143,35 +130,6 @@ const HelpTicket = () => {
 								? t('tickets.dbUnavailable')
 								: t('tickets.fetchError')}
 						</div>
-					)}
-
-					{!selectedTicket && (
-						<section className="help-center__intro">
-							<button
-								type="button"
-								className="help-center__intro-mobile-toggle"
-								aria-expanded={mobileIntroOpen}
-								onClick={() => setMobileIntroOpen(o => !o)}>
-								<span>{t('tickets.introMobileToggle')}</span>
-								<span className="help-center__intro-mobile-toggle-icon" aria-hidden>
-									{mobileIntroOpen ? '▲' : '▼'}
-								</span>
-							</button>
-							<div
-								className={`help-center__intro-stack ${mobileIntroOpen ? 'help-center__intro-stack--open' : ''}`}>
-								<p className="help-center__intro-lead">{t('tickets.introLead')}</p>
-								<ul className="help-center__bullets">
-									<li>{t('tickets.bulletBugs')}</li>
-									<li>{t('tickets.bulletIdeas')}</li>
-									<li>{t('tickets.bulletIntegrations')}</li>
-									<li>{t('tickets.bulletOpen')}</li>
-								</ul>
-								<div className="help-center__email-note">
-									<MailIcon />
-									<span>{t('tickets.emailNotifyHint')}</span>
-								</div>
-							</div>
-						</section>
 					)}
 
 					{!selectedTicket && (

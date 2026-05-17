@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import TutorialModal from './TutorialModal'
+import { useTutorial } from '../../context/TutorialContext'
 
 function TutorialInfoBar() {
 	const { i18n } = useTranslation()
+	const { openTutorial } = useTutorial()
 	const [isVisible, setIsVisible] = useState(false)
-	const [showTutorialModal, setShowTutorialModal] = useState(false)
 
 	useEffect(() => {
 		// Sprawdź czy pasek był zamknięty w localStorage
@@ -21,7 +21,7 @@ function TutorialInfoBar() {
 	}
 
 	const handleOpenTutorial = () => {
-		setShowTutorialModal(true)
+		openTutorial()
 	}
 
 	if (!isVisible) {
@@ -119,12 +119,6 @@ function TutorialInfoBar() {
 				</button>
 			</div>
 
-			{/* Modal samouczka */}
-			<TutorialModal 
-				isOpen={showTutorialModal}
-				onClose={() => setShowTutorialModal(false)}
-				showOnFirstView={false}
-			/>
 		</>
 	)
 }

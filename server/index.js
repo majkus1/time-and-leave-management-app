@@ -436,6 +436,13 @@ app.use('/api/announcements', announcementRoutes)
 app.use('/api/ai-assistant', aiAssistantRoutes)
 app.use('/api/billing', require('./routes/billingRoutes'))
 app.use('/api/billing/stripe', require('./routes/billingStripeRoutes'))
+const requireSuperAdmin = require('./middleware/requireSuperAdmin')
+app.use(
+	'/api/super/activity',
+	authenticateToken,
+	requireSuperAdmin,
+	require('./routes/superAdminActivityRoutes')
+)
 const { serveUploadMiddleware } = require('./middleware/serveUploadMiddleware')
 app.use('/uploads', authenticateToken, serveUploadMiddleware)
 
@@ -494,6 +501,20 @@ io.use(async (socket, next) => {
 
 		socket.userId = decoded.userId
 		socket.teamId = user.teamId
+
+		try {
+			const cookies = socket.handshake.headers.cookie
+			if (cookies) {
+				const m = cookies.match(/appSessionId=([^;]+)/)
+				if (m) {
+					const { touchSessionById } = require('./services/appSessionService')
+					touchSessionById(decodeURIComponent(m[1])).catch(() => {})
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+
 		next()
 	} catch (error) {
 		console.error('Socket authentication error:', error.message)

@@ -45,6 +45,12 @@ function clearSessionCookies(res) {
 	const base = getSessionCookieOptions()
 	res.clearCookie('token', base)
 	res.clearCookie('refreshToken', base)
+	try {
+		const { clearAppSessionCookie } = require('../services/appSessionService')
+		clearAppSessionCookie(res)
+	} catch {
+		/* appSessionService optional at startup */
+	}
 }
 
 async function loadActiveSessionUser(userId) {

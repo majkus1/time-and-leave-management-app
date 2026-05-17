@@ -1,5 +1,6 @@
 // Push notification handlers for dev mode (generateSW)
 // This file is imported by the generated service worker
+
 // Listen for push events
 self.addEventListener('push', function(event) {
 	console.log('[SW] Push notification received:', event)

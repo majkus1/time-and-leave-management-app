@@ -411,6 +411,11 @@ export const AuthProvider = ({ children }) => {
 		setIsCheckingAuth(false)
 	}
 
+	const markTutorialSeenLocally = useCallback(() => {
+		if (!isMountedRef.current) return
+		setHasSeenTutorial(true)
+	}, [])
+
 	return (
 		<AuthContext.Provider
 			value={{
@@ -431,6 +436,7 @@ export const AuthProvider = ({ children }) => {
 				logout,
 				refreshUserData,
 				forceClearAuth,
+				markTutorialSeenLocally,
 			}}>
 			{children}
 		</AuthContext.Provider>

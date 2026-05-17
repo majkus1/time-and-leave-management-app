@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import MonthlyCalendar from '../workcalendars/MonthlyCalendar';
-import TutorialModal from '../tutorial/TutorialModal';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../../context/AuthContext';
+import { useTutorial } from '../../context/TutorialContext';
 
 function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showTutorialModal, setShowTutorialModal] = useState(false);
-  const [tutorialShowOnFirstView, setTutorialShowOnFirstView] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { hasSeenTutorial, firstLoginAt, isTeamAdmin } = useAuth();
+  const { hasSeenTutorial, firstLoginAt } = useAuth();
+  const { openTutorial } = useTutorial();
+  const tutorialAutoOpenedRef = useRef(false);
 
   useEffect(() => {
     // Sprawdź czy przyszliśmy z rejestracji zespołu (sprawdź sessionStorage i location.state)
@@ -40,24 +40,31 @@ function Dashboard() {
     }
   }, [location.state]);
 
-  // Sprawdź czy użytkownik loguje się pierwszy raz i nie widział jeszcze samouczka
-  // UWAGA: Ten useEffect NIE pokazuje samouczka po rejestracji - to robi handleGoToDashboard
-  useEffect(() => {
-    // Nie pokazuj samouczka jeśli:
-    // 1. Użytkownik już widział samouczek (hasSeenTutorial === true)
-    // 2. To nie jest pierwsze logowanie (firstLoginAt === null)
-    // 3. Pokazuje się modal sukcesu rejestracji (showSuccessModal === true) - wtedy samouczek pokaże się po zamknięciu modala sukcesu
-    if (hasSeenTutorial || !firstLoginAt || showSuccessModal) {
-      return
-    }
-
-    // Jeśli użytkownik ma firstLoginAt ustawiony i nie widział samouczka, pokaż samouczek
-    // Pokaż samouczek po małym opóźnieniu
-    setTimeout(() => {
-      setTutorialShowOnFirstView(true)
-      setShowTutorialModal(true)
-    }, 500)
+  const shouldOfferAutoTutorial = useCallback(() => {
+    if (hasSeenTutorial || !firstLoginAt || showSuccessModal) return false
+    return true
   }, [hasSeenTutorial, firstLoginAt, showSuccessModal])
+
+  const openAutoTutorialOnce = useCallback(() => {
+    if (tutorialAutoOpenedRef.current || !shouldOfferAutoTutorial()) return
+    tutorialAutoOpenedRef.current = true
+    openTutorial({ firstView: true })
+  }, [shouldOfferAutoTutorial, openTutorial])
+
+  // Pierwsze logowanie — po wejściu na dashboard lub po zamknięciu modala rejestracji
+  useEffect(() => {
+    if (!shouldOfferAutoTutorial()) return
+    const timer = setTimeout(openAutoTutorialOnce, 500)
+    return () => clearTimeout(timer)
+  }, [shouldOfferAutoTutorial, openAutoTutorialOnce])
+
+  // Gdy firstLoginAt pojawi się po /me (np. tuż po rejestracji), spróbuj ponownie
+  useEffect(() => {
+    if (!firstLoginAt || hasSeenTutorial || showSuccessModal) return
+    if (tutorialAutoOpenedRef.current) return
+    const timer = setTimeout(openAutoTutorialOnce, 400)
+    return () => clearTimeout(timer)
+  }, [firstLoginAt, hasSeenTutorial, showSuccessModal, openAutoTutorialOnce])
 
   const triggerConfetti = () => {
     const duration = 3000;
@@ -91,13 +98,7 @@ function Dashboard() {
 
   const handleGoToDashboard = () => {
     setShowSuccessModal(false);
-    // Po zamknięciu powitalnego modala, pokaż samouczek jeśli użytkownik nie widział go wcześniej
-    if (!hasSeenTutorial) {
-      setTimeout(() => {
-        setTutorialShowOnFirstView(true);
-        setShowTutorialModal(true);
-      }, 300);
-    }
+    setTimeout(openAutoTutorialOnce, 300);
   };
 
   const toggleMenu = () => {
@@ -282,15 +283,6 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Modal samouczka */}
-      <TutorialModal 
-        isOpen={showTutorialModal}
-        onClose={() => {
-          setShowTutorialModal(false)
-          setTutorialShowOnFirstView(false)
-        }}
-        showOnFirstView={tutorialShowOnFirstView}
-      />
     </>
   );
 }

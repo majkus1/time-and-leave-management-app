@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -7,15 +7,14 @@ import { API_URL } from '../../config'
 import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
-
 function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
-	const { refreshUserData, role, username, userId } = useAuth()
+	const { refreshUserData, markTutorialSeenLocally, role, username, userId } = useAuth()
 	const { freemiumTier, freemiumSeatBlocked } = useFreemiumAccess({ enabled: true })
 	const [activeSection, setActiveSection] = useState(null)
-	const [isMarkingAsSeen, setIsMarkingAsSeen] = useState(false)
 	const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+	const dismissFirstViewRef = useRef(false)
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -24,6 +23,27 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		window.addEventListener('resize', handleResize)
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
+
+	useEffect(() => {
+		if (isOpen) dismissFirstViewRef.current = false
+	}, [isOpen])
+
+	const dismissFirstViewTutorial = useCallback(() => {
+		if (dismissFirstViewRef.current) return
+		dismissFirstViewRef.current = true
+		markTutorialSeenLocally()
+		onClose()
+		void (async () => {
+			try {
+				await axios.post(`${API_URL}/api/users/tutorial/seen`, {}, { withCredentials: true })
+				await refreshUserData()
+			} catch (error) {
+				if (process.env.NODE_ENV === 'development') {
+					console.error('Error marking tutorial as seen:', error)
+				}
+			}
+		})()
+	}, [markTutorialSeenLocally, onClose, refreshUserData])
 	
 	// Sprawdź role użytkownika
 	const isAdmin = role && role.includes('Admin')
@@ -492,100 +512,64 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		return cols
 	}, [sections, isMobile])
 
-	const handleMarkAsSeen = async () => {
-		if (isMarkingAsSeen) return
-		
-		setIsMarkingAsSeen(true)
-		try {
-			await axios.post(
-				`${API_URL}/api/users/tutorial/seen`,
-				{},
-				{ withCredentials: true }
-			)
-			await refreshUserData()
-		} catch (error) {
-			// Cicho loguj błąd, ale nie blokuj użytkownika
-			// Jeśli endpoint nie istnieje lub jest błąd, po prostu kontynuuj
-			if (process.env.NODE_ENV === 'development') {
-				console.error('Error marking tutorial as seen:', error)
-			}
-		} finally {
-			setIsMarkingAsSeen(false)
-			// Zawsze zamykaj modal, niezależnie od wyniku zapytania
-			onClose()
-		}
-	}
-
 	const handleClose = () => {
-		// Jeśli to pierwsze wyświetlenie (po rejestracji), oznacz jako obejrzane przed zamknięciem
 		if (showOnFirstView) {
-			handleMarkAsSeen()
+			dismissFirstViewTutorial()
 		} else {
 			onClose()
 		}
 	}
 
-	const handleNavigateToSection = async (path) => {
+	const handleNavigateToSection = (path) => {
 		if (showOnFirstView) {
-			await handleMarkAsSeen()
+			dismissFirstViewTutorial()
 		} else {
 			onClose()
 		}
 		setTimeout(() => {
 			navigate(path)
-		}, 300)
+		}, 100)
 	}
 
 	return (
 		<Modal
 			isOpen={isOpen}
 			onRequestClose={handleClose}
+			shouldCloseOnOverlayClick
+			shouldCloseOnEsc
+			closeTimeoutMS={0}
+			overlayClassName="tutorial-modal-overlay"
+			className="tutorial-modal-content"
 			style={{
-				overlay: {
-					display: 'flex',
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: 'rgba(0, 0, 0, 0.5)',
-					backdropFilter: 'blur(2px)',
-					zIndex: 100000000
-				},
-				content: {
-					position: 'relative',
-					inset: 'unset',
-					margin: '0',
-					maxWidth: '800px',
-					width: '90%',
-					maxHeight: '90vh',
-					overflowY: 'auto',
-					borderRadius: '12px',
-					padding: '30px',
-					backgroundColor: 'white',
-					boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-				},
+				overlay: { zIndex: 100000010 },
+				content: { zIndex: 100000011 },
 			}}
 			contentLabel={i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z aplikacji' : 'How to use the app'}
 		>
 			<button
+				type="button"
 				onClick={handleClose}
+				aria-label={i18n.resolvedLanguage === 'pl' ? 'Zamknij samouczek' : 'Close tutorial'}
 				style={{
 					position: 'absolute',
-					top: '12px',
-					right: '12px',
+					top: '8px',
+					right: '8px',
 					background: 'transparent',
 					border: 'none',
-					fontSize: '30px',
+					fontSize: '32px',
 					cursor: 'pointer',
 					color: '#7f8c8d',
 					lineHeight: '1',
-					padding: '2px',
-					width: '34px',
-					height: '34px',
+					padding: '6px',
+					minWidth: '44px',
+					minHeight: '44px',
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
 					borderRadius: '50%',
 					transition: 'all 0.2s',
-					zIndex: 2
+					zIndex: 2,
+					touchAction: 'manipulation',
 				}}
 				onMouseEnter={(e) => {
 					e.target.style.color = '#2c3e50'
@@ -956,8 +940,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 					gap: '12px'
 				}}>
 					<button
-						onClick={handleMarkAsSeen}
-						disabled={isMarkingAsSeen}
+						type="button"
+						onClick={dismissFirstViewTutorial}
 						style={{
 							padding: '12px 24px',
 							backgroundColor: '#667eea',
@@ -966,42 +950,26 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 							borderRadius: '8px',
 							fontSize: '16px',
 							fontWeight: '600',
-							cursor: isMarkingAsSeen ? 'not-allowed' : 'pointer',
+							cursor: 'pointer',
 							transition: 'all 0.2s',
-							opacity: isMarkingAsSeen ? 0.6 : 1,
 							display: 'flex',
 							alignItems: 'center',
-							gap: '8px'
+							gap: '8px',
+							touchAction: 'manipulation',
 						}}
 						onMouseEnter={(e) => {
-							if (!isMarkingAsSeen) {
-								e.target.style.backgroundColor = '#5568d3'
-								e.target.style.transform = 'translateY(-1px)'
-							}
+							e.target.style.backgroundColor = '#5568d3'
+							e.target.style.transform = 'translateY(-1px)'
 						}}
 						onMouseLeave={(e) => {
-							if (!isMarkingAsSeen) {
-								e.target.style.backgroundColor = '#667eea'
-								e.target.style.transform = 'translateY(0)'
-							}
+							e.target.style.backgroundColor = '#667eea'
+							e.target.style.transform = 'translateY(0)'
 						}}
 					>
-						{isMarkingAsSeen ? (
-							<>
-								<svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
-								{i18n.resolvedLanguage === 'pl' ? 'Zapisywanie...' : 'Saving...'}
-							</>
-						) : (
-							<>
-								{i18n.resolvedLanguage === 'pl' ? 'Rozumiem, przejdź dalej' : 'Got it, continue'}
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-									<polyline points="9 18 15 12 9 6"></polyline>
-								</svg>
-							</>
-						)}
+						{i18n.resolvedLanguage === 'pl' ? 'Rozumiem, przejdź dalej' : 'Got it, continue'}
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+							<polyline points="9 18 15 12 9 6"></polyline>
+						</svg>
 					</button>
 				</div>
 			)}

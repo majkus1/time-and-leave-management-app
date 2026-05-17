@@ -50,6 +50,7 @@ import AiAssistantPromoFab from './components/AiAssistantPromoFab'
 import QRScan from './components/qr/QRScan'
 import AIAssistant from './components/aiAssistant/AIAssistant'
 import PackagesPage from './components/billing/PackagesPage'
+import { isPlatformSuperAdmin } from './utils/platformSuperAdmin'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { handleAuthError } from './utils/authErrorHandler'
 import { API_URL } from './config.js'
@@ -57,6 +58,7 @@ import '../src/style.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { AlertProvider } from './context/AlertContext'
+import { TutorialProvider } from './context/TutorialContext'
 import { SocketProvider } from './context/SocketContext'
 import TimerChrome from './components/timer/TimerChrome'
 
@@ -194,7 +196,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
-						<Route path="/team-management" element={(isAdmin(role) || username === 'michalipka1@gmail.com') ? <Logs /> : <Navigate to="/" />} />
+						<Route path="/team-management" element={(isAdmin(role) || isPlatformSuperAdmin(username)) ? <Logs /> : <Navigate to="/" />} />
 						<Route path="/settings" element={<SettingsRouteGate />} />
 						<Route path="/team-access-notice" element={<TeamAccessNoticePage />} />
 					<Route
@@ -255,9 +257,11 @@ function App() {
 			>
 				<AlertProvider>
 					<AuthProvider>
-						<SocketProvider>
-							<AppContent />
-						</SocketProvider>
+						<TutorialProvider>
+							<SocketProvider>
+								<AppContent />
+							</SocketProvider>
+						</TutorialProvider>
 					</AuthProvider>
 				</AlertProvider>
 			</Router>

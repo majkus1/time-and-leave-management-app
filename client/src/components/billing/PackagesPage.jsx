@@ -27,8 +27,21 @@ import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './PackagesPage.css'
 
-/** Zgodnie z serwerem (billingPurchaseIntentValidator) — min. sensowna długość adresu */
+/** Zgodnie z serwerem (billingInvoiceValidation) — min. sensowna długość adresu */
 const MIN_INVOICE_ADDRESS_LEN = 6
+
+function isInvoiceCompleteFromEnt(bi) {
+	if (!bi) return false
+	const type = bi.buyerType === 'individual' ? 'individual' : 'company'
+	const name = (bi.companyName || '').trim()
+	const addr = (bi.address || '').trim()
+	const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
+	if (type === 'individual') {
+		return name.length >= 3 && addrOk
+	}
+	const nipDigits = String(bi.nip || '').replace(/\D/g, '')
+	return name.length >= 2 && addrOk && nipDigits.length === 10
+}
 
 const TIER_LABELS = {
 	starter: 'Core — do 15 użytkowników',
@@ -376,9 +389,94 @@ export default function PackagesPage() {
 	])
 
 	const ensureInvoiceForPurchase = useCallback(async () => {
-		// Invoice data is optional for starting checkout.
+		if (isInvoiceCompleteFromEnt(ent?.billingInvoice)) {
+			return true
+		}
+
+		const scrollInv = () => {
+			requestAnimationFrame(() => {
+				document.getElementById('packages-invoice-section')?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center',
+				})
+			})
+		}
+
+		const type = invBuyerType === 'individual' ? 'individual' : 'company'
+
+		if (type === 'individual') {
+			const name = indName.trim()
+			const addr = indAddress.trim()
+			const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
+			if (name.length < 3 || !addrOk) {
+				await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+				scrollInv()
+				return false
+			}
+			try {
+				await patchTeamInvoice.mutateAsync({
+					buyerType: 'individual',
+					companyName: indName,
+					address: indAddress,
+					nip: '',
+				})
+				invoiceEditedByUserRef.current = false
+			} catch (e) {
+				await showAlert(
+					billingAxiosErrorMessage(e, t) ||
+						e?.response?.data?.message ||
+						e?.message ||
+						t('billingPackages.p24PayError')
+				)
+				return false
+			}
+			return true
+		}
+
+		const nipDigits = compNip.replace(/\D/g, '')
+		if (nipDigits.length !== 10) {
+			await showAlert(t('billingPackages.invoiceNipInvalid10'))
+			scrollInv()
+			return false
+		}
+		const name = compName.trim()
+		const addr = compAddress.trim()
+		const addrOk = addr.length >= MIN_INVOICE_ADDRESS_LEN
+		if (name.length < 2 || !addrOk) {
+			await showAlert(t('billingPackages.invoiceRequiredBeforePay'))
+			scrollInv()
+			return false
+		}
+		try {
+			await patchTeamInvoice.mutateAsync({
+				buyerType: 'company',
+				companyName: compName,
+				address: compAddress,
+				nip: compNip,
+			})
+			invoiceEditedByUserRef.current = false
+		} catch (e) {
+			await showAlert(
+				billingAxiosErrorMessage(e, t) ||
+					e?.response?.data?.message ||
+					e?.message ||
+					t('billingPackages.p24PayError')
+			)
+			return false
+		}
 		return true
-	}, [])
+	}, [
+		ent?.billingInvoice,
+		invBuyerType,
+		indName,
+		indAddress,
+		compName,
+		compAddress,
+		compNip,
+		patchTeamInvoice,
+		t,
+		showAlert,
+	])
 
 	const startOnlineCheckout = useCallback(
 		async (body, options = {}) => {

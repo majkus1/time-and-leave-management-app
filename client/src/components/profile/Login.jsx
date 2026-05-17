@@ -31,7 +31,7 @@ function Login() {
 		return `${loc.pathname}${loc.search || ''}${loc.hash || ''}`
 	})()
 	const { t, i18n } = useTranslation()
-	const { setLoggedIn, setRole, setUsername, setTeamId, setIsTeamAdmin, loggedIn, isCheckingAuth } = useAuth()
+	const { refreshUserData, loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
 
 	useEffect(() => {
@@ -50,25 +50,14 @@ function Login() {
 		setIsLoading(true)
 		setErrorMessage('')
 		try {
-			const response = await axios.post(
+			await axios.post(
 				`${API_URL}/api/users/login`,
 				{ username: usernameInput, password },
 				{
 					withCredentials: true,
 				}
 			)
-			// Update auth state immediately after successful login
-			// This ensures the state is synchronized before navigation
-			setRole(response.data.roles)
-			setLoggedIn(true)
-			setUsername(response.data.username)
-			setTeamId(response.data.teamId)
-			setIsTeamAdmin(response.data.isTeamAdmin)
-			
-			// Small delay to ensure state is updated before navigation
-			// This prevents race conditions with AuthContext's checkAuth
-			await new Promise(resolve => setTimeout(resolve, 50))
-			
+			await refreshUserData()
 			navigate(redirectAfterLogin)
 		} catch (error) {
 			console.error('Login error:', error)

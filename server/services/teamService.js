@@ -12,6 +12,7 @@ const LeavePlan = require('../models/LeavePlan')(firmDb)
 const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
 const Log = require('../models/log')(firmDb)
 const Message = require('../models/Message')(firmDb)
+const { TEAM_DELETION_AUDIT_ACTIONS } = require('./teamDeletionAuditService')
 
 /**
  * Soft delete a team and all related resources
@@ -81,7 +82,10 @@ exports.permanentlyDeleteTeam = async (teamId) => {
 			LeaveRequest.deleteMany({ userId: { $in: userIds } }),
 			LeavePlan.deleteMany({ userId: { $in: userIds } }),
 			CalendarConfirmation.deleteMany({ userId: { $in: userIds } }),
-			Log.deleteMany({ user: { $in: userIds } }),
+			Log.deleteMany({
+				user: { $in: userIds },
+				action: { $nin: TEAM_DELETION_AUDIT_ACTIONS },
+			}),
 			Message.deleteMany({ userId: { $in: userIds } })
 		])
 	}

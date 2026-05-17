@@ -1,7 +1,9 @@
 const SUPER_ADMIN_USERNAME = 'michalipka1@gmail.com'
 
 function isSuperAdminUser(user) {
-	return user?.username === SUPER_ADMIN_USERNAME
+	const u = user?.username
+	if (!u || typeof u !== 'string') return false
+	return u.trim().toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase()
 }
 
 function isLogViewerAdmin(user) {
