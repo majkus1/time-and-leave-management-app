@@ -33,6 +33,16 @@ const {
 	isSuperAdminUser,
 } = require('../utils/userProfileAccessPolicy')
 
+/** API list użytkowników — hash hasła tylko do obliczenia flagi, nigdy w JSON. */
+function toVisibleUserListRow(user, extra = {}) {
+	const { password, ...safe } = user || {}
+	return {
+		...safe,
+		...extra,
+		hasPassword: Boolean(password && String(password).length > 0),
+	}
+}
+
 // Funkcja walidująca role - sprawdza wzajemnie wykluczające się kombinacje ról
 // Przyjmuje opcjonalną funkcję tłumaczeń t() dla komunikatów błędów
 const validateMutuallyExclusiveRoles = (roles, t = null) => {
@@ -569,23 +579,19 @@ exports.getAllVisibleUsers = async (req, res) => {
                 users.map(async (user) => {
                     // Sprawdź czy użytkownik ma teamId
                     if (!user.teamId) {
-                        return {
-                            ...user,
+                        return toVisibleUserListRow(user, {
                             teamName: 'Brak zespołu',
                             teamAdminEmail: null,
-                            hasPassword: !!user.password
-                        };
+                        })
                     }
-                    
-                    const team = await Team.findById(user.teamId).select('name adminEmail').lean();
-                    return {
-                        ...user,
+
+                    const team = await Team.findById(user.teamId).select('name adminEmail').lean()
+                    return toVisibleUserListRow(user, {
                         teamName: team ? team.name : 'Nieznany zespół',
                         teamAdminEmail: team ? team.adminEmail : null,
-                        hasPassword: !!user.password
-                    };
+                    })
                 })
-            );
+            )
             
             return res.json(addTeamMetaList(usersWithTeams, { preserveRowTeamName: true }));
         }
@@ -600,23 +606,15 @@ exports.getAllVisibleUsers = async (req, res) => {
         // Sprawdź najpierw Admin
         const isAdmin = currentUser.roles && currentUser.roles.includes('Admin');
         if (isAdmin) {
-            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean();
-            const usersWithPasswordInfo = users.map(user => ({
-                ...user,
-                hasPassword: !!user.password
-            }));
-            return res.json(addTeamMetaList(usersWithPasswordInfo));
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean()
+            return res.json(addTeamMetaList(users.map(user => toVisibleUserListRow(user))))
         }
         
         // Potem sprawdź HR
         const isHR = currentUser.roles && currentUser.roles.includes('HR');
         if (isHR) {
-            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean();
-            const usersWithPasswordInfo = users.map(user => ({
-                ...user,
-                hasPassword: !!user.password
-            }));
-            return res.json(addTeamMetaList(usersWithPasswordInfo));
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean()
+            return res.json(addTeamMetaList(users.map(user => toVisibleUserListRow(user))))
         }
         
         // Na końcu sprawdź Przełożony - tylko jeśli nie ma Admin ani HR
