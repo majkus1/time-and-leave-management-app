@@ -535,29 +535,28 @@ export default function LandingChatWidget() {
 						{lines.map((line, i) => (
 							<div
 								key={`${line.role}-${i}`}
-								className={`flex ${line.role === 'user' ? 'justify-end' : 'justify-start'}`}
+								className={`flex w-full min-w-0 ${line.role === 'user' ? 'justify-end' : 'justify-start'}`}
 							>
-								<div className={`flex items-end gap-2.5 ${line.role === 'user' ? '' : 'pr-3'}`}>
-									{line.role === 'assistant' ? <ChatIcon className="h-10 w-10 mb-0.5 shrink-0" /> : null}
-									<div
-										className={`max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-											line.role === 'user'
-												? 'landing-chat-message--user bg-emerald-600 text-white'
-												: 'border border-slate-200 bg-white text-gray-800'
-										}`}
-									>
-										{line.role === 'assistant' ? (
+								{line.role === 'assistant' ? (
+									<div className="flex min-w-0 max-w-[92%] items-end gap-2.5 pr-3">
+										<ChatIcon className="h-10 w-10 mb-0.5 shrink-0" />
+										<div className="min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-gray-800">
 											<AssistantMessageContent text={line.content} />
-										) : (
-											<span
-												className="landing-chat-user-text whitespace-pre-wrap break-words text-white"
-												style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
-											>
-												{line.content}
-											</span>
-										)}
+										</div>
 									</div>
-								</div>
+								) : (
+									<div
+										className="landing-chat-message--user max-w-[92%] w-max rounded-2xl bg-emerald-600 px-3 py-2 text-sm leading-relaxed text-white"
+										style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
+									>
+										<span
+											className="landing-chat-user-text block whitespace-pre-wrap break-words text-white"
+											style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff' }}
+										>
+											{line.content}
+										</span>
+									</div>
+								)}
 							</div>
 						))}
 						{busy && <p className="text-xs text-gray-500 px-1">{t.thinking}</p>}

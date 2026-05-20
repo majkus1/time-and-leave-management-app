@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 export default function BlogSevenContent() {
 	const blogPostingSchema = {
@@ -290,6 +291,8 @@ export default function BlogSevenContent() {
 							</div>
 						</div>
 					</section>
+
+					<BlogRelatedLinks slug="kompleksowa-aplikacja-do-zarzadzania-firma" className="mt-10" />
 				</article>
 			</main>
 

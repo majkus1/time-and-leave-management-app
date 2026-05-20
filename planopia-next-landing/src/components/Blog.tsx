@@ -11,6 +11,9 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import BlogTopicsNav from './BlogTopicsNav'
+import { BLOG_PILLAR_PL } from '@/data/blogInternalLinks'
+
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const toggleMenu = () => setMenuOpen(prev => !prev)
@@ -126,6 +129,8 @@ function Blog() {
 
 			<section className="px-4 pt-5 pb-12 md:py-16 bg-white">
 				<div className="max-w-7xl mx-auto">
+					<BlogTopicsNav />
+
 					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 						
 
@@ -294,20 +299,23 @@ function Blog() {
 							</Link>
 						</div>
 
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+						<article className="blog-pillar-guide-card bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-2 ring-emerald-300/90">
+							<span className="blog-pillar-guide-badge inline-flex w-fit mb-2 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold tracking-wide !text-white">
+								Główny przewodnik
+							</span>
+							<img src="/img/ewidencjas.webp" alt="Darmowa aplikacja do ewidencji czasu pracy Planopia" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Ewidencja czasu pracy — także darmowy plan po próbie
+							Darmowa aplikacja do ewidencji czasu pracy i urlopów
 							</h3>
 							<p className="text-gray-600 flex-1">
 							30 dni pełnej aplikacji za darmo (do 5 osób); potem bezpłatna ewidencja czasu pracy do 5 aktywnych kont lub pakiety płatne z urlopami, grafikami, czatem i AI.
 							</p>
 							<Link
-								href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
+								href={BLOG_PILLAR_PL.href}
+								className="blog-pillar-guide-cta white-text-btn mt-4 inline-block w-full sm:w-auto text-center bg-emerald-600 font-semibold py-2.5 px-5 rounded-lg shadow-sm transition hover:bg-emerald-700 !text-white hover:!text-white no-underline">
+								Czytaj przewodnik
 							</Link>
-						</div>
+						</article>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />

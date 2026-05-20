@@ -11,6 +11,7 @@ import { useUserLogs, useAllLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
 import {
 	useBillingSuperPaidPlanTeams,
+	useBillingSuperStripePaidPlanTeams,
 	useBillingSuperThankPurchaseEmail,
 } from '../../hooks/useBilling'
 import UsersInfoModal from '../shared/UsersInfoModal'
@@ -63,8 +64,26 @@ function Logs() {
 	const isEnglish = i18n.language === 'en'
 
 	const { data: paidPlanTeams = [], isLoading: loadingPaidPlanTeams } = useBillingSuperPaidPlanTeams(isSuperAdmin)
+	const { data: stripePaidPlanTeams = [], isLoading: loadingStripePaidPlanTeams } =
+		useBillingSuperStripePaidPlanTeams(isSuperAdmin)
 	const thankPurchaseMutation = useBillingSuperThankPurchaseEmail()
 	const [thankEmailBusy, setThankEmailBusy] = useState(null)
+
+	const sendPurchaseThankEmail = async ({ busyKey, toEmail, teamName }) => {
+		if (!toEmail) {
+			await showAlert(t('logs.purchaseThankError'))
+			return
+		}
+		setThankEmailBusy(busyKey)
+		try {
+			await thankPurchaseMutation.mutateAsync({ toEmail, teamName })
+			await showAlert(t('logs.purchaseThankSent'))
+		} catch {
+			await showAlert(t('logs.purchaseThankError'))
+		} finally {
+			setThankEmailBusy(null)
+		}
+	}
 
 	const availableRoles = [
 		'Admin',
@@ -3198,6 +3217,7 @@ function Logs() {
 												})
 											: '—'
 										const payer = row.payerEmail || ''
+										const rowKey = `p24-${row.teamId}`
 										return (
 											<tr key={row.teamId}>
 												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
@@ -3219,25 +3239,18 @@ function Logs() {
 												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
 													<button
 														type="button"
-														disabled={!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending}
-														onClick={async () => {
-															if (!payer) {
-																await showAlert(t('logs.purchaseThankError'))
-																return
-															}
-															setThankEmailBusy(payer)
-															try {
-																await thankPurchaseMutation.mutateAsync({
-																	toEmail: payer,
-																	teamName: row.teamName,
-																})
-																await showAlert(t('logs.purchaseThankSent'))
-															} catch {
-																await showAlert(t('logs.purchaseThankError'))
-															} finally {
-																setThankEmailBusy(null)
-															}
-														}}
+														disabled={
+															!payer ||
+															thankEmailBusy === rowKey ||
+															thankPurchaseMutation.isPending
+														}
+														onClick={() =>
+															sendPurchaseThankEmail({
+																busyKey: rowKey,
+																toEmail: payer,
+																teamName: row.teamName,
+															})
+														}
 														style={{
 															padding: '8px 14px',
 															borderRadius: '6px',
@@ -3247,17 +3260,158 @@ function Logs() {
 															fontWeight: 600,
 															fontSize: '0.85rem',
 															cursor:
-																!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending
+																!payer ||
+																thankEmailBusy === rowKey ||
+																thankPurchaseMutation.isPending
 																	? 'not-allowed'
 																	: 'pointer',
 															opacity:
-																!payer || thankEmailBusy === payer || thankPurchaseMutation.isPending
+																!payer ||
+																thankEmailBusy === rowKey ||
+																thankPurchaseMutation.isPending
 																	? 0.55
 																	: 1,
 															whiteSpace: 'nowrap',
 														}}
 													>
-														{thankEmailBusy === payer
+														{thankEmailBusy === rowKey
+															? t('logs.paidPlanPurchasesThankSending')
+															: t('logs.paidPlanPurchasesThank')}
+													</button>
+												</td>
+											</tr>
+										)
+									})}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</section>
+			)}
+
+			{isSuperAdmin && (
+				<section
+					style={{
+						marginTop: '2.5rem',
+						paddingTop: '2rem',
+						borderTop: '2px solid #e5e7eb',
+					}}
+					aria-labelledby="stripe-paid-plan-purchases-heading"
+				>
+					<h2
+						id="stripe-paid-plan-purchases-heading"
+						style={{
+							margin: '0 0 0.5rem',
+							fontSize: '1.35rem',
+							fontWeight: 700,
+							color: '#111827',
+						}}
+					>
+						{t('logs.stripePaidPlanPurchasesTitle')}
+					</h2>
+					<p style={{ margin: '0 0 1.25rem', color: '#6b7280', fontSize: '0.95rem', maxWidth: '52rem' }}>
+						{t('logs.stripePaidPlanPurchasesSub')}
+					</p>
+					{loadingStripePaidPlanTeams ? (
+						<p style={{ color: '#6b7280' }}>{t('logs.paidPlanPurchasesLoading')}</p>
+					) : stripePaidPlanTeams.length === 0 ? (
+						<p style={{ color: '#6b7280' }}>{t('logs.stripePaidPlanPurchasesEmpty')}</p>
+					) : (
+						<div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+							<table
+								style={{
+									width: '100%',
+									borderCollapse: 'collapse',
+									fontSize: '0.9rem',
+									backgroundColor: '#fff',
+								}}
+							>
+								<thead>
+									<tr style={{ backgroundColor: '#f9fafb', textAlign: 'left' }}>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesTeam')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPayer')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesAdmin')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPlan')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb' }}>
+											{t('logs.paidPlanPurchasesPaidAt')}
+										</th>
+										<th style={{ padding: '12px 14px', borderBottom: '1px solid #e5e7eb', width: '1%' }} />
+									</tr>
+								</thead>
+								<tbody>
+									{stripePaidPlanTeams.map(row => {
+										const planLabel = PAID_PLAN_LABELS[row.planKey] || row.planKey || '—'
+										const cycle =
+											row.billingCycle === 'annual'
+												? ' — ' + (isEnglish ? 'annual' : 'rocznie')
+												: row.billingCycle === 'monthly'
+													? ' — ' + (isEnglish ? 'monthly' : 'mies.')
+													: ''
+										const paidStr = row.paidAt
+											? new Date(row.paidAt).toLocaleString(isEnglish ? 'en-GB' : 'pl-PL', {
+													dateStyle: 'short',
+													timeStyle: 'short',
+												})
+											: '—'
+										const payer = row.payerEmail || ''
+										const rowKey = `stripe-${row.teamId}`
+										return (
+											<tr key={rowKey}>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													<strong>{row.teamName}</strong>
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{payer || '—'}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{row.teamAdminEmail || '—'}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{planLabel}
+													{cycle}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													{paidStr}
+												</td>
+												<td style={{ padding: '12px 14px', borderBottom: '1px solid #f3f4f6' }}>
+													<button
+														type="button"
+														disabled={!payer || thankEmailBusy === rowKey || thankPurchaseMutation.isPending}
+														onClick={() =>
+															sendPurchaseThankEmail({
+																busyKey: rowKey,
+																toEmail: payer,
+																teamName: row.teamName,
+															})
+														}
+														style={{
+															padding: '8px 14px',
+															borderRadius: '6px',
+															border: 'none',
+															background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+															color: '#fff',
+															fontWeight: 600,
+															fontSize: '0.85rem',
+															cursor:
+																!payer || thankEmailBusy === rowKey || thankPurchaseMutation.isPending
+																	? 'not-allowed'
+																	: 'pointer',
+															opacity:
+																!payer || thankEmailBusy === rowKey || thankPurchaseMutation.isPending
+																	? 0.55
+																	: 1,
+															whiteSpace: 'nowrap',
+														}}
+													>
+														{thankEmailBusy === rowKey
 															? t('logs.paidPlanPurchasesThankSending')
 															: t('logs.paidPlanPurchasesThank')}
 													</button>

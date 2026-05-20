@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -21,24 +20,26 @@ const titilliumWeb = Titillium_Web({
   weight: ["200", "300", "400", "600", "700", "900"],
 });
 
+/** Meta: ewidencja + urlopy + grafik w jednym narzędziu (bez obietnicy pełnego ERP). */
 export const metadata: Metadata = {
-  title: "Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia",
-  description: `Planopia to kompleksowa aplikacja do zarządzania firmą — ewidencja czasu pracy, urlopy, grafiki, czaty, tablice zadań i role. ${blogArticleOfferLine.pl}`,
+  title: {
+    absolute:
+      "Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia",
+  },
+  description:
+    "Zamiast osobnych arkuszy: godziny pracy, urlopy, grafiki, czat i zadania w Planopii. Dla małych zespołów — 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 osób.",
   keywords: [
-    "kompleksowa aplikacja do zarządzania firmą",
+    "ewidencja czasu pracy i urlopy",
     "aplikacja do zarządzania zespołem",
-    "ewidencja czasu pracy",
+    "program do ewidencji czasu pracy",
     "zarządzanie urlopami",
     "grafiki pracy",
+    "aplikacja HR",
     "czaty zespołowe",
     "tablice zadań",
-    "konfiguracja ról",
-    "system zarządzania firmą",
-    "oprogramowanie dla firm",
+    "oprogramowanie dla małych firm",
     "Planopia",
-    "zarządzanie projektami",
-    "komunikacja wewnętrzna",
-    "aplikacja HR"
+    "system urlopów i grafików",
   ],
   authors: [{ name: "Michał Lipka" }],
   creator: "Michał Lipka",
@@ -59,8 +60,11 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
     siteName: 'Planopia',
-    title: 'Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia',
-    description: `Kompleksowe zarządzanie firmą w Planopii. ${blogArticleOfferLine.pl}`,
+    title: 'Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia',
+    description:
+      'Godziny, urlopy, grafiki pracy, czat i Kanban w jednym systemie — bez pięciu narzędzi. Wypróbuj Planopię: 30 dni trial, potem darmowa ewidencja do 5 osób.',
+    publishedTime: '2025-09-15T12:00:00.000Z',
+    modifiedTime: '2026-05-17T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -72,8 +76,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu | Planopia',
-    description: `Ewidencja, urlopy, grafiki, czaty i zadania w jednym narzędziu. ${blogArticleOfferLine.pl}`,
+    title: 'Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia',
+    description:
+      'Ewidencja godzin, wnioski urlopowe i grafiki w Planopii — jedna aplikacja zamiast Excela i kilku programów. Trial 30 dni za darmo.',
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {

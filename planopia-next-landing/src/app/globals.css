@@ -3367,3 +3367,44 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 .landing-chat-panel input[type="email"] {
 	font-size: 16px !important;
 }
+
+/* Blog /blog — karta „Główny przewodnik”: na końcu pliku (po `a { }` i `p, span { }`) */
+.blog-pillar-guide-card span.blog-pillar-guide-badge {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	background-color: #059669 !important;
+	font-size: 0.75rem !important;
+}
+
+.blog-pillar-guide-card a.blog-pillar-guide-cta,
+.blog-pillar-guide-card a.blog-pillar-guide-cta:visited,
+.blog-pillar-guide-card a.blog-pillar-guide-cta:hover,
+.blog-pillar-guide-card a.blog-pillar-guide-cta:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	background-color: #059669 !important;
+	text-decoration: none !important;
+}
+
+.blog-pillar-guide-card a.blog-pillar-guide-cta:hover,
+.blog-pillar-guide-card a.blog-pillar-guide-cta:focus-visible {
+	background-color: #047857 !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+
+/* Baner „Zacznij tutaj” w wpisach — łagodny niebieski link (nie konkuruje z CTA rejestracji) */
+a.blog-pillar-banner-link,
+a.blog-pillar-banner-link:visited {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	background-color: #3b82c4 !important;
+	text-decoration: none !important;
+}
+
+a.blog-pillar-banner-link:hover,
+a.blog-pillar-banner-link:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	background-color: #2f6fad !important;
+}

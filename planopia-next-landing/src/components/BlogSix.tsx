@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogSix() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -499,6 +500,8 @@ function BlogSix() {
 							Wypróbuj Planopię za darmo
 						</Link>
 					</div>
+
+					<BlogRelatedLinks slug="zarzadzanie-urlopami" className="mt-10" />
 				</div>
 			</article>
 

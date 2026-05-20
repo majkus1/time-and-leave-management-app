@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -232,6 +233,8 @@ function BlogPWA() {
 						</Link>
 					</div>
 				</div>
+
+				<BlogRelatedLinks slug="jak-zainstalowac-planopie-jako-pwa" className="mt-10 max-w-3xl mx-auto" />
 			</article>
 
 			{/* FOOTER */}

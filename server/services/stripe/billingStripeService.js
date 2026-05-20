@@ -349,6 +349,9 @@ async function handleCheckoutSessionCompleted(event) {
 			mode: data.mode,
 			subscriptionId: data.subscription || null,
 			customerId: data.customer || null,
+			customerEmail: data.customer_email || data.customer_details?.email || null,
+			planKey: data.metadata?.planKey || null,
+			billingCycle: data.metadata?.billingCycle || null,
 		})
 		if (!marked) return { handled: true, eventType: event.type, duplicate: true }
 		const team = await Team.findById(teamId)

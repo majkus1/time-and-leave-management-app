@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogFreeAppHeroVideo from './BlogFreeAppHeroVideo'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogFour() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -370,6 +371,8 @@ function BlogFour() {
 							Załóż darmowy zespół
 						</Link>
 					</div>
+
+					<BlogRelatedLinks slug="darmowa-aplikacja-do-ewidencji-czasu-pracy" className="mt-10" />
 				</div>
 			</article>
 

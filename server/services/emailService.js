@@ -781,17 +781,17 @@ async function sendBillingSeatOverLimitEmail(toEmail, teamName, { used, maxUsers
 	await sendEmail(toEmail, null, subject, html)
 }
 
-/** Podziękowanie po zakupie pakietu — odbiorca może odpowiedzieć mailem z danymi do faktury. */
+/** Podziękowanie po zakupie pakietu. */
 async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
-	const subject = 'Dziękujemy za zakup'
-	const title = 'Dziękujemy za zakup'
+	const subject = 'Dziękujemy za wybór Planopia'
+	const title = 'Dziękujemy za wybór Planopia'
 	const content = `
-		<p style="margin:0 0 14px 0;">Dzień dobry,</p>
-		<p style="margin:0 0 14px 0;">Dziękujemy za <strong>zakup pakietu Planopia</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się z nawiązania współpracy — <strong>zależy nam, aby była dla Państwa jak najbardziej udana</strong>.</p>
-		<p style="margin:0 0 14px 0;">Jeśli potrzebują Państwo <strong>faktury</strong>, prosimy o odpowiedź bezpośrednio na tego maila i o podanie danych: <strong>pełna nazwa firmy lub imię i nazwisko, adres oraz NIP</strong> (jeśli dotyczy). Dokument wystawimy na podstawie tych informacji.</p>
-		<p style="margin:0 0 14px 0;">W razie pytań lub problemów jesteśmy do Państwa dyspozycji w aplikacji w <strong>Centrum pomocy</strong>, a także pod tym adresem e-mail — chętnie pomożemy.</p>
-		<p style="margin:0;">Serdecznie pozdrawiamy,<br>Zespół Planopia</p>
+		<p style="margin:0 0 12px 0;">Dzień dobry,</p>
+		<p style="margin:0 0 12px 0;">Dziękujemy za wybór <strong>Planopii</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się, że są Państwo z nami.</p>
+		<p style="margin:0 0 12px 0;"><strong>Fakturę za zakup</strong> wyślemy w ciągu najbliższych dni na ten adres e-mail.</p>
+		<p style="margin:0 0 12px 0;">W razie pytań prosimy o kontakt na tego maila lub w aplikacji w <strong>Centrum pomocy</strong> — chętnie pomożemy.</p>
+		<p style="margin:0;">Pozdrawiamy,<br>Zespół Planopia</p>
 	`
 	const html = getEmailTemplate(title, content, null, null, null)
 	await sendEmail(toEmail, null, subject, html)

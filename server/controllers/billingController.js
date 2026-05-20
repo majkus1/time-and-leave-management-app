@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
 const BillingPaymentSession = require('../models/BillingPaymentSession')(firmDb)
+const BillingLedgerEntry = require('../models/BillingLedgerEntry')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
 const { sendBillingPurchaseThankYouEmail } = require('../services/emailService')
 const { buildPublicCatalog } = require('../services/billingCatalogService')
@@ -19,6 +20,7 @@ const { getStripeConfig } = require('../services/stripe/stripeConfig')
 const { listStripePriceMap, findStripePriceIdByIntent } = require('../services/stripe/stripePriceMapService')
 const { countTeamSeats } = require('../services/teamSeatCountService')
 const BILLING_SUPER_ADMIN_EMAIL = 'michalipka1@gmail.com'
+
 const {
 	billingClientErrorPayload,
 	billingServiceUnavailablePayload,
@@ -409,6 +411,63 @@ exports.getSuperPaidPlanTeams = async (req, res) => {
 	}
 }
 
+/** Super-admin: zespoły z aktywną / historyczną subskrypcją Stripe (tylko odczyt, bez zmiany płatności). */
+exports.getSuperStripePaidPlanTeams = async (req, res) => {
+	try {
+		if (req.user?.username !== BILLING_SUPER_ADMIN_EMAIL) {
+			return res.status(403).json({ success: false, message: 'Forbidden' })
+		}
+
+		const teams = await Team.find({
+			stripeSubscriptionId: { $exists: true, $nin: [null, ''] },
+			billingHadPaidPlan: true,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		})
+			.select(
+				'name adminEmail billingPlanKey billingCycle stripeSubscriptionStatus stripeSubscriptionId updatedAt'
+			)
+			.lean()
+
+		const teamIds = teams.map(t => t._id)
+		const latestCheckoutByTeam = new Map()
+		if (teamIds.length > 0) {
+			const entries = await BillingLedgerEntry.find({
+				teamId: { $in: teamIds },
+				action: 'stripe_checkout_completed',
+			})
+				.sort({ createdAt: -1 })
+				.lean()
+			for (const entry of entries) {
+				const tid = String(entry.teamId)
+				if (!latestCheckoutByTeam.has(tid)) latestCheckoutByTeam.set(tid, entry)
+			}
+		}
+
+		const rows = teams.map(t => {
+			const tid = String(t._id)
+			const ledger = latestCheckoutByTeam.get(tid)
+			const payload = ledger?.payload && typeof ledger.payload === 'object' ? ledger.payload : {}
+			const paidAt = ledger?.createdAt || t.updatedAt || null
+			return {
+				teamId: tid,
+				teamName: t.name ?? '—',
+				teamAdminEmail: t.adminEmail || null,
+				payerEmail: (payload.customerEmail && String(payload.customerEmail).trim()) || t.adminEmail || null,
+				planKey: t.billingPlanKey || payload.planKey || null,
+				billingCycle: t.billingCycle || payload.billingCycle || null,
+				subscriptionStatus: t.stripeSubscriptionStatus || null,
+				paidAt: paidAt ? new Date(paidAt).toISOString() : null,
+			}
+		})
+		rows.sort((a, b) => String(b.paidAt || '').localeCompare(String(a.paidAt || '')))
+
+		res.json({ success: true, rows })
+	} catch (e) {
+		console.error('billingController.getSuperStripePaidPlanTeams:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
 exports.postSuperThankPurchaseEmail = async (req, res) => {
 	try {
 		if (req.user?.username !== BILLING_SUPER_ADMIN_EMAIL) {
@@ -426,3 +485,4 @@ exports.postSuperThankPurchaseEmail = async (req, res) => {
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }
+

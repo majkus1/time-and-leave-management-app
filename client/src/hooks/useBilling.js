@@ -192,6 +192,20 @@ export function useBillingSuperPaidPlanTeams(enabled) {
 	})
 }
 
+export function useBillingSuperStripePaidPlanTeams(enabled) {
+	return useQuery({
+		queryKey: ['billing-super-stripe-paid-plan-teams'],
+		enabled: Boolean(enabled),
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/billing/super/stripe-paid-plan-teams`, {
+				withCredentials: true,
+			})
+			return data.rows || []
+		},
+		staleTime: 30 * 1000,
+	})
+}
+
 export function useBillingSuperThankPurchaseEmail() {
 	return useMutation({
 		mutationFn: async body => {
@@ -202,3 +216,4 @@ export function useBillingSuperThankPurchaseEmail() {
 		},
 	})
 }
+

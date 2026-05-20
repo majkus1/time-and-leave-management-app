@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -21,24 +20,25 @@ const titilliumWeb = Titillium_Web({
   weight: ["200", "300", "400", "600", "700", "900"],
 });
 
+/** Meta pod GSC: „ewidencja czasu pracy online”, „rejestracja czasu pracy online” — odróżnione od pillar „darmowa aplikacja”. */
 export const metadata: Metadata = {
-  title:
-    "Ewidencja czasu pracy online — program, aplikacja, rejestracja godzin | Planopia",
+  title: {
+    absolute:
+      "Ewidencja czasu pracy online — darmowa aplikacja web | Planopia",
+  },
   description:
-    `Ewidencja czasu pracy online: system rejestracji godzin i nadgodzin z przeglądarki — bez plików Excel na mailu. ${blogArticleOfferLine.pl}`,
+    "Program do ewidencji czasu pracy w przeglądarce: godziny, nadgodziny, raporty PDF i Excel. 30 dni pełnej wersji za darmo; potem ewidencja do 5 osób bez opłat.",
   keywords: [
     "ewidencja czasu pracy online",
+    "rejestracja czasu pracy online",
     "program do ewidencji czasu pracy",
     "aplikacja do ewidencji godzin pracy",
-    "rejestracja czasu pracy online",
     "system ewidencji czasu pracy",
     "darmowa ewidencja czasu pracy",
-    "ewidencja czasu pracy excel",
+    "ewidencja czasu pracy bez excel",
     "Planopia",
     "zarządzanie czasem pracy",
     "nadgodziny",
-    "urlopy pracownicze",
-    "HR software"
   ],
   authors: [{ name: "Michał Lipka" }],
   creator: "Michał Lipka",
@@ -59,11 +59,11 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',
     siteName: 'Planopia',
-    title:
-      'Ewidencja czasu pracy online — program i aplikacja (bez Excela) | Planopia',
-    description: `Rejestracja godzin i raporty PDF/XLSX z aplikacji webowej. ${blogArticleOfferLine.pl}`,
+    title: 'Ewidencja czasu pracy online — darmowa aplikacja web | Planopia',
+    description:
+      'Rejestracja godzin online, nadgodziny i eksport PDF/Excel — bez wysyłania arkuszy mailem. Wypróbuj Planopię: 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 osób.',
     publishedTime: '2025-08-25T12:00:00.000Z',
-    modifiedTime: '2026-03-27T12:00:00.000Z',
+    modifiedTime: '2026-05-17T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',
@@ -75,10 +75,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title:
-      'Ewidencja czasu pracy online — program i aplikacja | Planopia',
+    title: 'Ewidencja czasu pracy online — darmowa aplikacja web | Planopia',
     description:
-      `System ewidencji online z raportami — zamiast arkuszy. ${blogArticleOfferLine.pl}`,
+      'Aplikacja do ewidencji godzin w przeglądarce — raporty PDF/Excel, trial 30 dni, potem darmowy plan do 5 pracowników.',
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -127,7 +128,7 @@ function BlogThree() {
 					<div className="grid xl:grid-cols-2 gap-10 items-center">
 						<div>
 							<h1 className="text-4xl font-bold mb-6">
-								Planowanie urlopów pracowników – najlepsze narzędzia i praktyki
+								Aplikacja do urlopów: planowanie, wnioski i kalendarz online
 							</h1>
 							<p className="text-gray-700 text-lg">
 								<strong>Planowanie urlopów</strong> to jedno z najczęstszych wyzwań w działach HR i u menedżerów zespołów. 
@@ -213,6 +214,8 @@ function BlogThree() {
 				<p className="mt-8 font-medium text-blue-600">
 					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij planować urlopy online</Link>.
 				</p>
+
+				<BlogRelatedLinks slug="planowanie-urlopow" className="mt-10" />
 			</article>
 
 			{/* FOOTER */}

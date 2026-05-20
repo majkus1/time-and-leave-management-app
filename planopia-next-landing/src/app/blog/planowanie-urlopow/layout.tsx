@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import { Open_Sans, Teko, Titillium_Web } from "next/font/google";
 import "../../globals.css";
 
@@ -21,20 +20,24 @@ const titilliumWeb = Titillium_Web({
   weight: ["200", "300", "400", "600", "700", "900"],
 });
 
+/** Meta pod GSC: „aplikacja do urlopów”, „zarządzanie urlopami”, „planowanie urlopów”. */
 export const metadata: Metadata = {
-  title: "Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia",
-  description: `Planowanie urlopów pracowników: kalendarz online, powiadomienia, raporty dla HR. ${blogArticleOfferLine.pl}`,
+  title: {
+    absolute: "Aplikacja do urlopów — planowanie i wnioski online | Planopia",
+  },
+  description:
+    "Kalendarz urlopów, wnioski i akceptacje w jednym systemie — koniec z chaosem w Excelu. Program do planowania urlopów; 30 dni trial, potem plan do 5 osób.",
   keywords: [
-    "planowanie urlopów",
-    "kalendarz urlopów online",
     "aplikacja do urlopów",
+    "program do urlopów",
+    "planowanie urlopów",
+    "zarządzanie urlopami",
+    "kalendarz urlopów online",
+    "program do wniosków urlopowych",
     "ewidencja urlopów",
     "zarządzanie nieobecnościami",
-    "program HR",
     "Planopia",
     "urlopy pracownicze",
-    "kalendarz urlopowy",
-    "zarządzanie zespołem"
   ],
   authors: [{ name: "Michał Lipka" }],
   creator: "Michał Lipka",
@@ -55,8 +58,11 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/planowanie-urlopow',
     siteName: 'Planopia',
-    title: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia',
-    description: `Planowanie urlopów: kalendarz online, akceptacje, raporty HR. ${blogArticleOfferLine.pl}`,
+    title: 'Aplikacja do urlopów — planowanie i wnioski online | Planopia',
+    description:
+      'Planowanie urlopów pracowników: kalendarz, wnioski i akceptacje online. Wypróbuj Planopię — 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 kont.',
+    publishedTime: '2025-06-10T12:00:00.000Z',
+    modifiedTime: '2026-05-17T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnew.webp',
@@ -68,8 +74,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie? | Planopia',
-    description: `Urlopy w firmie bez chaosu — Planopia. ${blogArticleOfferLine.pl}`,
+    title: 'Aplikacja do urlopów — planowanie i wnioski online | Planopia',
+    description:
+      'Kalendarz urlopowy i wnioski w jednej aplikacji — bez papieru i Excela. Trial 30 dni, potem darmowy plan ewidencji do 5 osób.',
     images: ['https://planopia.pl/img/plans-urlopnew.webp'],
   },
   alternates: {

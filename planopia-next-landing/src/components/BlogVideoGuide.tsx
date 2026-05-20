@@ -6,6 +6,7 @@ import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
 import { industryMobileConfig, MOBILE_INDUSTRY_INSERT_INDEX } from '../data/landingNav'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import { videoGuideLessons } from '../data/videoGuideLessons'
 
 type Locale = 'pl' | 'en'
@@ -418,6 +419,12 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 									</Link>
 								</div>
 							</div>
+
+							<BlogRelatedLinks
+								slug={locale === 'pl' ? 'instrukcja-wideo-planopia' : 'video-tutorials'}
+								locale={locale}
+								className="mt-10"
+							/>
 						</main>
 					</div>
 				</div>

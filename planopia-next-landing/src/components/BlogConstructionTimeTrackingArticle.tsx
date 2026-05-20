@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
 
@@ -305,6 +306,16 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 							</Link>
 						</div>
 					</section>
+
+					<BlogRelatedLinks
+						slug={
+							locale === 'pl'
+								? 'jak-prowadzic-ewidencje-czasu-pracy-na-budowie'
+								: 'time-tracking-on-construction-sites'
+						}
+						locale={locale}
+						className="mt-10"
+					/>
 				</article>
 			</main>
 		</>

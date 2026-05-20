@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogOne() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -175,6 +176,12 @@ function BlogOne() {
 								które automatyzują i porządkują ten proces.
 							</p>
 
+							<BlogRelatedLinks
+								slug="ewidencja-czasu-pracy-online"
+								position="top"
+								className="mt-6 md:mt-8"
+							/>
+
 							<BlogHeroDualCtaCards
 								locale="pl"
 								trial={
@@ -328,6 +335,8 @@ function BlogOne() {
 						</div>
 					</div>
 				</aside>
+
+				<BlogRelatedLinks slug="ewidencja-czasu-pracy-online" className="mt-10" />
 			</article>
 
 			{/* FOOTER */}

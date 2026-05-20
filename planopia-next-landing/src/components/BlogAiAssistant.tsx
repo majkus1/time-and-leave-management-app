@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import BlogAiAssistantHeroVideo from './BlogAiAssistantHeroVideo'
 
 const PAGE_URL = 'https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik'
@@ -292,6 +293,8 @@ function BlogAiAssistant() {
 							))}
 						</div>
 					</section>
+
+					<BlogRelatedLinks slug="asystent-ai-planopia-ewidencja-urlopy-zadania-grafik" className="mt-10" />
 				</div>
 			</article>
 

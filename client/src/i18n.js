@@ -1344,11 +1344,18 @@ i18n
 						paidPlanPurchasesPlan: 'Plan',
 						paidPlanPurchasesPaidAt: 'Paid',
 						paidPlanPurchasesThank: 'Send thank-you email',
+						paidPlanPurchasesThankTestBtn: 'Send test to me',
+						paidPlanPurchasesThankTestHint:
+							'Delivery only to michalipka1@gmail.com (server-enforced test).',
 						paidPlanPurchasesThankSending: 'Sending…',
 						purchaseThankSent: 'Thank-you email has been sent.',
 						purchaseThankError: 'Could not send the email.',
 						paidPlanPurchasesEmpty: 'No completed plan payments in the database yet.',
 						paidPlanPurchasesLoading: 'Loading…',
+						stripePaidPlanPurchasesTitle: 'Teams with Stripe subscription',
+						stripePaidPlanPurchasesSub:
+							'Teams that activated a paid plan via Stripe (card subscription). Payer email from checkout when recorded, otherwise team admin email. Date is first recorded checkout or last team update.',
+						stripePaidPlanPurchasesEmpty: 'No Stripe plan subscriptions in the database yet.',
 						close: 'Close'
 					},
 					common: {
@@ -3064,11 +3071,18 @@ i18n
 						paidPlanPurchasesPlan: 'Pakiet',
 						paidPlanPurchasesPaidAt: 'Data płatności',
 						paidPlanPurchasesThank: 'Wyślij mail z podziękowaniem',
+						paidPlanPurchasesThankTestBtn: 'Wyślij test do mnie',
+						paidPlanPurchasesThankTestHint:
+							'Wysyłka wyłącznie na michalipka1@gmail.com (wymuszone na serwerze).',
 						paidPlanPurchasesThankSending: 'Wysyłanie…',
 						purchaseThankSent: 'Wysłano wiadomość z podziękowaniem.',
 						purchaseThankError: 'Nie udało się wysłać wiadomości.',
 						paidPlanPurchasesEmpty: 'Brak zapisanych opłaconych pakietów w bazie.',
 						paidPlanPurchasesLoading: 'Ładowanie…',
+						stripePaidPlanPurchasesTitle: 'Zespoły z subskrypcją Stripe',
+						stripePaidPlanPurchasesSub:
+							'Zespoły z aktywowanym płatnym planem przez Stripe (subskrypcja kartą). E-mail płatnika z checkoutu, gdy zapisany — inaczej e-mail admina zespołu. Data: pierwszy zapisany checkout lub ostatnia aktualizacja zespołu.',
+						stripePaidPlanPurchasesEmpty: 'Brak subskrypcji planu przez Stripe w bazie.',
 						close: 'Zamknij'
 					},
 					common: {

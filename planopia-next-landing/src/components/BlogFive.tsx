@@ -10,6 +10,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import BlogRelatedLinks from './BlogRelatedLinks'
 
 function BlogFive() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -171,11 +172,14 @@ function BlogFive() {
 					<div className="grid gap-10 items-center">
 						<div className="ordering text-left md:text-center">
 							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 mt-4">
-								Elektroniczna ewidencja czasu pracy - kompletny przewodnik
+								Elektroniczna ewidencja czasu pracy: papier, Excel czy program?
 							</h1>
 							<p className="text-xl text-gray-600 max-w-4xl mx-0 md:mx-auto mb-8">
 								Dowiedz się wszystkiego o elektronicznej ewidencji czasu pracy. Kompletny przewodnik po wyborze najlepszego programu do ewidencji czasu pracy dla Twojej firmy.
 							</p>
+							<div className="max-w-4xl mx-0 md:mx-auto text-left mb-6">
+								<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" position="top" />
+							</div>
 							<div>
 								<Link
 									href="https://app.planopia.pl/team-registration"
@@ -404,6 +408,8 @@ function BlogFive() {
 							Wypróbuj Planopię za darmo
 						</Link>
 					</div>
+
+					<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" className="mt-10 max-w-4xl mx-auto" />
 				</div>
 			</article>
 

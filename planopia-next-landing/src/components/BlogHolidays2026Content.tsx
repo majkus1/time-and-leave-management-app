@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import AnimatedBlogImages from './AnimatedBlogImages'
 
 export default function BlogHolidays2026Content() {
@@ -323,6 +324,8 @@ export default function BlogHolidays2026Content() {
 							Załóż darmowy zespół
 						</Link>
 					</div>
+
+					<BlogRelatedLinks slug="dni-wolne-2026" className="mt-10" />
 				</article>
 			</main>
 
