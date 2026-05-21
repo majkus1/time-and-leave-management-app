@@ -69,10 +69,10 @@ export const useUpdateUserRoles = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ userId, roles, department }) => {
+		mutationFn: async ({ userId, roles, department, position }) => {
 			const response = await axios.patch(
 				`${API_URL}/api/users/${userId}/roles`,
-				{ roles, department },
+				{ roles, department, position },
 				{ withCredentials: true }
 			)
 			return response.data
@@ -91,6 +91,7 @@ export const useUpdateUserRoles = () => {
 							...updatedUser,
 							roles: Array.isArray(updatedUser.roles) ? updatedUser.roles : user.roles,
 							department: updatedUser.department !== undefined ? updatedUser.department : user.department,
+							position: updatedUser.position !== undefined ? updatedUser.position : user.position,
 						}
 					})
 				})
@@ -102,6 +103,7 @@ export const useUpdateUserRoles = () => {
 						...updatedUser,
 						roles: Array.isArray(updatedUser.roles) ? updatedUser.roles : oldUser.roles,
 						department: updatedUser.department !== undefined ? updatedUser.department : oldUser.department,
+						position: updatedUser.position !== undefined ? updatedUser.position : oldUser.position,
 					}
 				})
 			}

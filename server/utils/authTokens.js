@@ -59,9 +59,9 @@ async function loadActiveSessionUser(userId) {
 	const user = await User.findOne({
 		_id: userId,
 		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
-	}).select('teamId roles username isTeamAdmin')
+	}).select('teamId roles username isTeamAdmin appAccessEnabled')
 
-	if (!user?.teamId) return null
+	if (!user?.teamId || user.appAccessEnabled === false) return null
 
 	const team = await Team.findById(user.teamId).select('isActive')
 	if (!team || team.isActive === false) return null

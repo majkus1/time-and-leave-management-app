@@ -19,6 +19,8 @@ function CreateBoardModal({ onClose, onSuccess }) {
 
 	// Filter users to only show users from the same team
 	const teamUsers = users.filter(user => user.teamId === teamId)
+	const appUsers = teamUsers.filter(user => user.appAccessEnabled !== false)
+	const noAccessUsers = teamUsers.filter(user => user.appAccessEnabled === false)
 
 	const handleMemberToggle = (userId) => {
 		setSelectedMembers(prev => 
@@ -27,6 +29,31 @@ function CreateBoardModal({ onClose, onSuccess }) {
 				: [...prev, userId]
 		)
 	}
+
+	const renderMemberOption = (user) => (
+		<label
+			key={user._id}
+			style={{
+				display: 'flex',
+				alignItems: 'center',
+				padding: '8px',
+				cursor: 'pointer',
+				borderRadius: '4px',
+				transition: 'background-color 0.2s'
+			}}
+			onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+			onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+			<input
+				type="checkbox"
+				checked={selectedMembers.includes(user._id)}
+				onChange={() => handleMemberToggle(user._id)}
+				style={{ marginRight: '10px', transform: 'scale(1.2)' }}
+			/>
+			<span>
+				{user.firstName} {user.lastName}{user.position ? ` - ${user.position}` : ''}
+			</span>
+		</label>
+	)
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
@@ -171,30 +198,22 @@ function CreateBoardModal({ onClose, onSuccess }) {
 						borderRadius: '6px',
 						padding: '10px'
 					}}>
-						{teamUsers.map(user => (
-							<label
-								key={user._id}
-								style={{
-									display: 'flex',
-									alignItems: 'center',
-									padding: '8px',
-									cursor: 'pointer',
-									borderRadius: '4px',
-									transition: 'background-color 0.2s'
-								}}
-								onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-								onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-								<input
-									type="checkbox"
-									checked={selectedMembers.includes(user._id)}
-									onChange={() => handleMemberToggle(user._id)}
-									style={{ marginRight: '10px', transform: 'scale(1.2)' }}
-								/>
-								<span>
-									{user.firstName} {user.lastName}{user.position ? ` - ${user.position}` : ''}
-								</span>
-							</label>
-						))}
+						{appUsers.map(renderMemberOption)}
+						{noAccessUsers.length > 0 && (
+							<div style={{
+								margin: appUsers.length > 0 ? '10px 0 4px' : '0 0 4px',
+								padding: '8px 8px 6px',
+								borderTop: appUsers.length > 0 ? '1px solid #e9ecef' : 'none',
+								color: '#6c757d',
+								fontSize: '13px',
+								fontWeight: '700',
+								textTransform: 'uppercase',
+								letterSpacing: '0.02em'
+							}}>
+								Użytkownicy bez dostępu
+							</div>
+						)}
+						{noAccessUsers.map(renderMemberOption)}
 					</div>
 				</div>
 

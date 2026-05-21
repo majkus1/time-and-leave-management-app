@@ -9,6 +9,7 @@ import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useSettings } from '../../hooks/useSettings'
 import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
@@ -61,6 +62,7 @@ function Sidebar() {
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
 	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	const { data: settings } = useSettings()
 	
 	// Sprawdź uprawnienia zgodnie z hierarchią ról
 	// Admin i HR mają zawsze pełny dostęp, ignorujemy SupervisorConfig
@@ -74,6 +76,9 @@ function Sidebar() {
 		? true // Admin i HR mają zawsze dostęp
 		: (isSupervisorRole && (supervisorConfig?.permissions?.canManageSchedule !== false)) // Przełożony - sprawdź konfigurację
 	const canOpenLeaveList = isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves)
+	const canOpenCreateUser =
+		isAdminRole ||
+		((isHRRole || isSupervisorRole) && settings?.allowManagedNoAccessUsers === true)
 	const { data: pendingSummary } = usePendingLeaveRequestsSummary({
 		enabled: premiumSidebarQueriesEnabled && canOpenLeaveList,
 	})
@@ -558,9 +563,9 @@ function Sidebar() {
 						</div>
 
 					{/* Admin / HR (pakiety); tworzenie użytk. i logi — jak wcześniej. Centrum pomocy nad Pakietami (jeden link Pakiety). */}
-					{(isAdmin(role) || isHRRole || username === 'michalipka1@gmail.com') && (
+					{(canOpenCreateUser || isAdmin(role) || isHRRole || username === 'michalipka1@gmail.com') && (
 						<div className="admin-section">
-							{(isAdmin(role) || username === 'michalipka1@gmail.com') && !compactFreemiumNav && (
+							{(canOpenCreateUser || username === 'michalipka1@gmail.com') && !compactFreemiumNav && (
 							<NavLink
 								to="/create-user"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

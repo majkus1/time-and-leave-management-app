@@ -111,6 +111,11 @@ function AdminLeaveRequests() {
 		'status.sent': 'status-sent',
 	}
 
+	const formatPersonName = person => {
+		if (!person) return ''
+		return `${person.firstName || ''} ${person.lastName || ''}`.trim()
+	}
+
 	return (
 		<>
 			<Sidebar />
@@ -229,6 +234,11 @@ function AdminLeaveRequests() {
 								{request.updatedBy && (
 									<p className="leave-request-updated-by-mobile" style={{ margin: 0, color: '#6b7280' }}>
 										{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
+									</p>
+								)}
+								{request.submittedBy && (
+									<p style={{ margin: 0, color: '#6b7280' }}>
+										Zgłoszono przez: {formatPersonName(request.submittedBy)}
 									</p>
 								)}
 							</div>

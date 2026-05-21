@@ -1,7 +1,10 @@
 const { firmDb } = require('../db/db')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
+const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const Board = require('../models/Board')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
@@ -36,10 +39,14 @@ const {
 /** API list użytkowników — hash hasła tylko do obliczenia flagi, nigdy w JSON. */
 function toVisibleUserListRow(user, extra = {}) {
 	const { password, ...safe } = user || {}
+	const appAccessEnabled = safe.appAccessEnabled !== false
 	return {
 		...safe,
 		...extra,
 		hasPassword: Boolean(password && String(password).length > 0),
+		appAccessEnabled,
+		managedOnly: safe.managedOnly === true,
+		displayUsername: appAccessEnabled ? safe.username : '',
 	}
 }
 
@@ -66,11 +73,97 @@ const validateMutuallyExclusiveRoles = (roles, t = null) => {
 	return { valid: true }
 }
 
+const ACTIVE_USER_FILTER = {
+	$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+}
+
+const WORKER_ROLE = 'Pracownik (Worker)'
+
+function normalizeDepartments(department) {
+	if (Array.isArray(department)) {
+		return department.map(dep => String(dep || '').trim()).filter(Boolean)
+	}
+	return department ? [String(department).trim()].filter(Boolean) : []
+}
+
+function normalizeOptionalPosition(position) {
+	const value = String(position || '').trim()
+	if (value.length > 100) {
+		return {
+			ok: false,
+			message: 'Stanowisko może mieć maksimum 100 znaków',
+		}
+	}
+	return {
+		ok: true,
+		value,
+	}
+}
+
+function hasAnyRole(userOrReqUser, roleNames) {
+	const roles = Array.isArray(userOrReqUser?.roles) ? userOrReqUser.roles : []
+	return roleNames.some(role => roles.includes(role))
+}
+
+function buildManagedUsername(teamId) {
+	const suffix = crypto.randomBytes(6).toString('hex')
+	return `managed-${String(teamId)}-${Date.now()}-${suffix}@no-access.planopia.local`
+}
+
+async function generateUniqueManagedUsername(teamId) {
+	for (let i = 0; i < 5; i += 1) {
+		const username = buildManagedUsername(teamId)
+		const existing = await User.findOne({ username, ...ACTIVE_USER_FILTER }).select('_id').lean()
+		if (!existing) return username
+	}
+	throw new Error('Nie udało się wygenerować identyfikatora pracownika')
+}
+
+function validateSupervisorManagedDepartments(requestingUser, departments) {
+	const supervisorDepartments = normalizeDepartments(requestingUser.department)
+	if (departments.length === 0) {
+		return {
+			ok: false,
+			message: 'Wybierz dział pracownika. Przełożony może dodawać pracowników tylko do swoich działów.',
+		}
+	}
+	const outsideScope = departments.some(dep => !supervisorDepartments.includes(dep))
+	if (outsideScope) {
+		return {
+			ok: false,
+			message: 'Możesz dodać pracownika tylko do działu, którym zarządzasz.',
+		}
+	}
+	return { ok: true }
+}
+
+async function addCreatedManagedEmployeeToSupervisorScope(requestingUser, employeeId) {
+	if (!hasAnyRole(requestingUser, ['Przełożony (Supervisor)']) || hasAnyRole(requestingUser, ['Admin', 'HR'])) {
+		return
+	}
+
+	await SupervisorConfig.updateOne(
+		{ supervisorId: requestingUser._id, teamId: requestingUser.teamId },
+		{ $addToSet: { selectedEmployees: employeeId } }
+	)
+}
+
 
 exports.register = async (req, res) => {
 	try {
-		const { username, firstName, lastName, roles, department, vacationDays } = req.body
+		const { firstName, lastName, vacationDays } = req.body
+		let { username, roles, department, position } = req.body
 		const teamId = req.user.teamId
+		const wantsManagedOnly = req.body.managedOnly === true || req.body.appAccessEnabled === false
+		const normalizedDepartments = normalizeDepartments(department)
+		const requestedRoles = Array.isArray(roles) ? roles : []
+		const normalizedPosition = normalizeOptionalPosition(position)
+		if (!normalizedPosition.ok) {
+			return res.status(400).json({
+				success: false,
+				message: normalizedPosition.message,
+			})
+		}
 
 		// Get translation function - use req.t if available, otherwise create instance with default 'pl'
 		let t = req.t
@@ -88,12 +181,64 @@ exports.register = async (req, res) => {
 			t = i18nInstance.t.bind(i18nInstance)
 		}
 
-		
-		if (!req.user.roles.includes('Admin')) {
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser || requestingUser.isActive === false) {
+			return res.status(403).json({
+				success: false,
+				message: 'Brak uprawnień do dodawania użytkowników',
+			})
+		}
+
+		const requesterIsAdmin = hasAnyRole(requestingUser, ['Admin'])
+		const requesterIsHR = hasAnyRole(requestingUser, ['HR'])
+		const requesterIsSupervisor = hasAnyRole(requestingUser, ['Przełożony (Supervisor)'])
+		const settings = await Settings.getSettings(teamId)
+
+		if (wantsManagedOnly) {
+			if (!settings.allowManagedNoAccessUsers) {
+				return res.status(403).json({
+					success: false,
+					message: 'Dodawanie pracowników bez dostępu jest wyłączone w ustawieniach zespołu.',
+				})
+			}
+			if (!requesterIsAdmin && !requesterIsHR && !requesterIsSupervisor) {
+				return res.status(403).json({
+					success: false,
+					message: 'Brak uprawnień do dodawania pracowników bez dostępu.',
+				})
+			}
+			if (requesterIsSupervisor && !requesterIsAdmin && !requesterIsHR) {
+				const deptValidation = validateSupervisorManagedDepartments(requestingUser, normalizedDepartments)
+				if (!deptValidation.ok) {
+					return res.status(403).json({ success: false, message: deptValidation.message })
+				}
+			}
+			roles = [WORKER_ROLE]
+			username = await generateUniqueManagedUsername(teamId)
+			department = normalizedDepartments
+		} else if (!req.user.roles.includes('Admin')) {
 			return res.status(403).json({ 
 				success: false, 
 				message: 'Brak uprawnień do dodawania użytkowników' 
 			})
+		}
+
+		if (!firstName || !lastName) {
+			return res.status(400).json({
+				success: false,
+				message: 'Imię i nazwisko są wymagane',
+			})
+		}
+		if (!wantsManagedOnly && !username) {
+			return res.status(400).json({
+				success: false,
+				message: 'Email użytkownika jest wymagany',
+			})
+		}
+		if (!wantsManagedOnly) {
+			username = String(username).trim().toLowerCase()
+			roles = requestedRoles
+			department = normalizedDepartments
 		}
 
 		
@@ -141,7 +286,7 @@ exports.register = async (req, res) => {
 		}
 
 		// Walidacja wzajemnie wykluczających się ról
-		const roleValidation = validateMutuallyExclusiveRoles(roles, t)
+		const roleValidation = validateMutuallyExclusiveRoles(Array.isArray(roles) ? roles : [], t)
 		if (!roleValidation.valid) {
 			return res.status(400).json({
 				success: false,
@@ -158,10 +303,17 @@ exports.register = async (req, res) => {
 			teamId,
 			roles,
 			department,
+			position: normalizedPosition.value,
+			appAccessEnabled: !wantsManagedOnly,
+			managedOnly: wantsManagedOnly,
+			createdBy: req.user.userId,
 			...(vacationDays !== undefined && vacationDays !== null && vacationDays !== '' ? { vacationDays: Number(vacationDays) } : {})
 		})
 
 		await newUser.save()
+		if (wantsManagedOnly) {
+			await addCreatedManagedEmployeeToSupervisorScope(requestingUser, newUser._id)
+		}
 
 		// Create channels, boards, and schedules for user's departments if they don't exist
 		if (department && Array.isArray(department) && department.length > 0) {
@@ -201,20 +353,22 @@ exports.register = async (req, res) => {
 			}
 		}
 
-		// Sync general channel members to include the new user
-		try {
-			await syncGeneralChannelMembers(teamId)
-		} catch (error) {
-			console.error('Error syncing general channel members:', error)
-			// Don't fail the request if sync fails
-		}
+		if (!wantsManagedOnly) {
+			// Sync general channel members to include the new user
+			try {
+				await syncGeneralChannelMembers(teamId)
+			} catch (error) {
+				console.error('Error syncing general channel members:', error)
+				// Don't fail the request if sync fails
+			}
 
-		// Sync team board members to include the new user
-		try {
-			await createTeamBoard(teamId)
-		} catch (error) {
-			console.error('Error syncing team board members:', error)
-			// Don't fail the request if sync fails
+			// Sync team board members to include the new user
+			try {
+				await createTeamBoard(teamId)
+			} catch (error) {
+				console.error('Error syncing team board members:', error)
+				// Don't fail the request if sync fails
+			}
 		}
 
 		// Policz rzeczywistą liczbę użytkowników i zaktualizuj currentUserCount
@@ -277,44 +431,55 @@ exports.register = async (req, res) => {
 			}
 		}
 
-		
-		const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
-			expiresIn: '24h',
-		})
+		if (!wantsManagedOnly) {
+			const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+				expiresIn: '24h',
+			})
+
+			const link = `${appUrl}/set-password/${token}`
+
+			const subject = t('email.welcome.subject')
+			const content = `
+				<p style="margin: 0 0 16px 0;">${t('email.welcome.greeting', { firstName: escapeHtml(firstName) })}</p>
+				<p style="margin: 0 0 16px 0;">${t('email.welcome.teamAdded', { teamName: escapeHtml(team.name) })}</p>
+				<p style="margin: 0 0 24px 0;">${t('email.welcome.setPassword')}</p>
+				<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.welcome.linkExpires')}</p>
+			`
+			const body = getEmailTemplate(
+				t('email.welcome.title'),
+				content,
+				t('email.welcome.buttonText'),
+				link,
+				t
+			)
+
+			await sendEmail(username, link, subject, body)
+		}
 
 		
-		const link = `${appUrl}/set-password/${token}`
-
-		const subject = t('email.welcome.subject')
-		const content = `
-			<p style="margin: 0 0 16px 0;">${t('email.welcome.greeting', { firstName: escapeHtml(firstName) })}</p>
-			<p style="margin: 0 0 16px 0;">${t('email.welcome.teamAdded', { teamName: escapeHtml(team.name) })}</p>
-			<p style="margin: 0 0 24px 0;">${t('email.welcome.setPassword')}</p>
-			<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.welcome.linkExpires')}</p>
-		`
-		const body = getEmailTemplate(
-			t('email.welcome.title'),
-			content,
-			t('email.welcome.buttonText'),
-			link,
-			t
+		await createLog(
+			req.user.userId,
+			wantsManagedOnly ? 'MANAGED_USER_CREATED' : 'USER_CREATED',
+			wantsManagedOnly
+				? `Managed no-access user ${firstName} ${lastName} created in team ${team.name}`
+				: `User ${username} created in team ${team.name}`
 		)
-
-		await sendEmail(username, link, subject, body)
-
-		
-		await createLog(req.user.userId, 'USER_CREATED', `User ${username} created in team ${team.name}`)
 
 		res.status(201).json({
 			success: true,
-			message: 'Użytkownik został utworzony pomyślnie. Email z linkiem do ustawienia hasła został wysłany.',
+			message: wantsManagedOnly
+				? 'Pracownik bez dostępu został dodany.'
+				: 'Użytkownik został utworzony pomyślnie. Email z linkiem do ustawienia hasła został wysłany.',
 			user: {
 				id: newUser._id,
 				username: newUser.username,
 				firstName: newUser.firstName,
 				lastName: newUser.lastName,
 				roles: newUser.roles,
-				department: newUser.department
+				department: newUser.department,
+				appAccessEnabled: newUser.appAccessEnabled,
+				managedOnly: newUser.managedOnly,
+				displayUsername: newUser.appAccessEnabled === false ? '' : newUser.username,
 			},
 			teamInfo: {
 				currentUserCount: team.currentUserCount,
@@ -351,6 +516,9 @@ exports.setPassword = async (req, res) => {
 		const user = await User.findById(decoded.userId)
 
 		if (!user) return res.status(404).send('User not found')
+		if (user.appAccessEnabled === false) {
+			return res.status(403).send('To konto nie ma dostępu do aplikacji')
+		}
 
 		user.password = await bcrypt.hash(password, 12)
 		user.position = position
@@ -387,6 +555,9 @@ exports.resetPassword = async (req, res) => {
 		if (!user) {
 			return res.status(404).send('Użytkownik nie znaleziony')
 		}
+		if (user.appAccessEnabled === false) {
+			return res.status(403).send('To konto nie ma dostępu do aplikacji')
+		}
 
 		user.password = await bcrypt.hash(newPassword, 12)
 		await user.save()
@@ -417,6 +588,9 @@ exports.resetPasswordRequest = async (req, res) => {
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 		})
 		if (!user) {
+			return res.send('If a user with that email is registered, a password reset link has been sent.')
+		}
+		if (user.appAccessEnabled === false) {
 			return res.send('If a user with that email is registered, a password reset link has been sent.')
 		}
 
@@ -532,7 +706,7 @@ exports.getAllUsers = async (req, res) => {
 			return res.status(400).send('Brak przypisanego zespołu')
 		}
 
-		const users = await User.find(query).select('username firstName lastName roles')
+		const users = await User.find(query).select('username firstName lastName roles appAccessEnabled managedOnly')
 		res.json(users)
 	} catch (error) {
 		console.error('Error retrieving users:', error)
@@ -572,7 +746,7 @@ exports.getAllVisibleUsers = async (req, res) => {
             // Super admin widzi wszystkich aktywnych użytkowników ze wszystkich zespołów (bez soft-deleted)
             const users = await User.find({
                 $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-            }).select('username firstName lastName roles position department teamId password').lean();
+            }).select('username firstName lastName roles position department teamId password appAccessEnabled managedOnly').lean();
             
             // Pobierz informacje o zespołach dla każdego użytkownika
             const usersWithTeams = await Promise.all(
@@ -606,14 +780,14 @@ exports.getAllVisibleUsers = async (req, res) => {
         // Sprawdź najpierw Admin
         const isAdmin = currentUser.roles && currentUser.roles.includes('Admin');
         if (isAdmin) {
-            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean()
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password appAccessEnabled managedOnly').lean()
             return res.json(addTeamMetaList(users.map(user => toVisibleUserListRow(user))))
         }
         
         // Potem sprawdź HR
         const isHR = currentUser.roles && currentUser.roles.includes('HR');
         if (isHR) {
-            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password').lean()
+            const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId password appAccessEnabled managedOnly').lean()
             return res.json(addTeamMetaList(users.map(user => toVisibleUserListRow(user))))
         }
         
@@ -624,7 +798,7 @@ exports.getAllVisibleUsers = async (req, res) => {
             const config = await SupervisorConfig.findOne({ supervisorId: currentUser._id });
             
             // Pobierz wszystkich aktywnych użytkowników ze swojego zespołu (bez soft-deleted)
-            const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId').lean();
+            const allTeamUsers = await User.find(teamFilter).select('username firstName lastName roles position department teamId appAccessEnabled managedOnly').lean();
             
             // Jeśli nie ma konfiguracji, domyślnie pokazuj użytkowników z działu
             if (!config) {
@@ -665,7 +839,7 @@ exports.getAllVisibleUsers = async (req, res) => {
         }
         
         // Zwykły użytkownik (nie admin) - bez informacji o haśle (tylko aktywni)
-        const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId');
+        const users = await User.find(teamFilter).select('username firstName lastName roles position department teamId appAccessEnabled managedOnly');
         return res.json(addTeamMetaList(users));
 
     } catch (error) {
@@ -730,7 +904,7 @@ exports.getAllUserPlans = async (req, res) => {
 		const users = await User.find({ 
 			teamId: currentUser.teamId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('username firstName lastName roles position department teamId')
+		}).select('username firstName lastName roles position department teamId appAccessEnabled managedOnly')
 		res.json(users)
 	} catch (error) {
 		console.error('Error fetching users:', error)
@@ -768,7 +942,7 @@ exports.getUserById = async (req, res) => {
 		const user = await User.findOne({
 			_id: userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username roles position department leaveTypeDays')
+		}).select('firstName lastName username roles position department leaveTypeDays appAccessEnabled managedOnly')
 		if (!user) {
 			return res.status(404).send('User not found')
 		}
@@ -783,7 +957,7 @@ exports.getUserById = async (req, res) => {
 
 exports.updateUserRoles = async (req, res) => {
 	const { userId } = req.params;
-	const { roles, department } = req.body;
+	const { roles, department, position } = req.body;
 
 	const allowedRoles = ['Admin'];
 	if (!allowedRoles.some(role => req.user.roles.includes(role))) {
@@ -819,10 +993,20 @@ exports.updateUserRoles = async (req, res) => {
 			}
 
 		const oldDepartment = user.department;
+		const normalizedPosition = normalizeOptionalPosition(position)
+		if (!normalizedPosition.ok) {
+			return res.status(400).json({
+				success: false,
+				message: normalizedPosition.message,
+			})
+		}
 		user.roles = roles;
 		// Dla wielu działów - upewnij się, że department to tablica
 		if (department !== undefined) {
 			user.department = Array.isArray(department) ? department : (department ? [department] : [])
+		}
+		if (position !== undefined) {
+			user.position = normalizedPosition.value
 		}
 		await user.save();
 
@@ -1220,6 +1404,9 @@ exports.login = async (req, res) => {
 	try {
 		const user = await User.findOne({ username })
 		if (!user) return res.status(401).send(INVALID_LOGIN_MESSAGE)
+		if (user.appAccessEnabled === false || !user.password) {
+			return res.status(401).send(INVALID_LOGIN_MESSAGE)
+		}
 
 		const passwordIsValid = await bcrypt.compare(password, user.password)
 		if (!passwordIsValid) return res.status(401).send(INVALID_LOGIN_MESSAGE)
@@ -1330,6 +1517,9 @@ exports.resendPasswordLink = async (req, res) => {
 		// Jeśli użytkownik już ma hasło, nie można regenerować linku
 		if (user.password) {
 			return res.status(400).json({ message: 'Użytkownik już ma ustawione hasło' })
+		}
+		if (user.appAccessEnabled === false) {
+			return res.status(400).json({ message: 'Ten pracownik nie ma dostępu do aplikacji.' })
 		}
 
 		// Pobierz informacje o zespole
@@ -1498,7 +1688,7 @@ exports.getDeletedUsers = async (req, res) => {
 			teamId: currentUser.teamId,
 			isActive: false,
 			deletedAt: { $ne: null }
-		}).select('username firstName lastName roles position department deletedAt').sort({ deletedAt: -1 }).lean()
+		}).select('username firstName lastName roles position department deletedAt appAccessEnabled managedOnly').sort({ deletedAt: -1 }).lean()
 
 		res.json(deletedUsers)
 	} catch (error) {

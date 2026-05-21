@@ -647,7 +647,7 @@ const sendAnnouncementPushNotification = async ({ announcement, createdByName, r
  * @param {Object} updatedByUser - User who updated/cancelled (optional)
  * @param {Function} t - Translation function
  */
-const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUserIds, notificationType, updatedByUser = null, t = null) => {
+const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUserIds, notificationType, updatedByUser = null, t = null, options = {}) => {
 	console.log(`[Push] Sending leave request ${notificationType} notification to ${recipientUserIds.length} users`)
 	console.log(`[Push] Recipient user IDs:`, recipientUserIds)
 	
@@ -695,6 +695,10 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	const userName = user?.firstName && user?.lastName
 		? `${user.firstName} ${user.lastName}`
 		: 'Pracownik'
+	const submittedByUser = options?.submittedByUser || null
+	const submittedByName = submittedByUser?.firstName && submittedByUser?.lastName
+		? `${submittedByUser.firstName} ${submittedByUser.lastName}`
+		: null
 
 	const language = t && t('email.leaveRequest.footerNotification')?.includes('automatycznie') ? 'pl' : 'en'
 	const dateLocale = language === 'pl' ? 'pl-PL' : 'en-US'
@@ -740,6 +744,9 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 						...i18nPlainText,
 					})
 				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
+			if (submittedByName) {
+				body += ` · Zgłoszono przez: ${submittedByName}`
+			}
 			break
 		case 'statusChanged':
 			const statusText = leaveRequest.status

@@ -36,6 +36,11 @@ async function findLeaveRequestsForUser(userId) {
 			select: 'firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
 		})
+		.populate({
+			path: 'submittedBy',
+			select: 'firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
+		})
 	return leaveRequests.filter((request) => request.userId !== null)
 }
 
@@ -137,7 +142,7 @@ async function getSupervisorVisibleLeaveUsers(supervisor) {
 	const teamUsers = await User.find({
 		teamId: supervisor.teamId,
 		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
-	}).select('username firstName lastName roles position department teamId')
+	}).select('username firstName lastName roles position department teamId appAccessEnabled managedOnly')
 
 	const visibleUsers = []
 	for (const user of teamUsers) {
@@ -224,6 +229,10 @@ exports.getOwnLeaveRequests = async (req, res) => {
 	try {
 		const leaveRequests = await LeaveRequest.find({ userId: req.user.userId }).populate({
 			path: 'updatedBy',
+			select: 'firstName lastName',
+			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+		}).populate({
+			path: 'submittedBy',
 			select: 'firstName lastName',
 			match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 		})
@@ -643,6 +652,11 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 					select: 'firstName lastName',
 					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				})
+				.populate({
+					path: 'submittedBy',
+					select: 'firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
 				.sort({ startDate: 1 })
 		} else {
 			// Workerzy i inne role widzą wszystkich z zespołu (tylko zaakceptowane wnioski)
@@ -740,6 +754,11 @@ exports.getAllLeaveRequests = async (req, res) => {
 						select: 'firstName lastName',
 						match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 					})
+					.populate({
+						path: 'submittedBy',
+						select: 'firstName lastName',
+						match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+					})
 					.sort({ startDate: 1 })
 			} else {
 				allLeaveRequests = []
@@ -762,6 +781,11 @@ exports.getAllLeaveRequests = async (req, res) => {
 				})
 				.populate({
 					path: 'updatedBy',
+					select: 'firstName lastName',
+					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+				})
+				.populate({
+					path: 'submittedBy',
 					select: 'firstName lastName',
 					match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
 				})
@@ -793,7 +817,7 @@ exports.getVisibleLeaveUsers = async (req, res) => {
 
 		if (isAdmin || isHR) {
 			const users = await User.find(teamFilter).select(
-				'username firstName lastName roles position department teamId'
+				'username firstName lastName roles position department teamId appAccessEnabled managedOnly'
 			)
 			return res.status(200).json(users)
 		}

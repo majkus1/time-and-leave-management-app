@@ -102,6 +102,21 @@ export const useUserLeaveRequests = (userId) => {
 	})
 }
 
+export const useVisibleLeaveUsers = ({ enabled = true } = {}) => {
+	return useQuery({
+		queryKey: ['leaveRequests', 'visibleUsers'],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/leaveworks/visible-users`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		enabled,
+		staleTime: 2 * 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+	})
+}
+
 // Query hook - pobieranie zaakceptowanych wniosków
 export const useAcceptedLeaveRequests = ({ enabled = true } = {}) => {
 	const queryClient = useQueryClient()

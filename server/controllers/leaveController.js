@@ -12,6 +12,15 @@ const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestCo
 const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const {
+	isSameTeam,
+	isSelfUser,
+	hasAdminOrHrRole,
+} = require('../utils/vacationAccessPolicy')
+
+const ACTIVE_USER_FILTER = {
+	$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+}
 
 // Funkcja pomocnicza do zbierania unikalnych odbiorców emaili (bez duplikatów)
 async function getUniqueEmailRecipients(user, teamId, t) {
@@ -173,15 +182,79 @@ async function generateDateRange(startDate, endDate, teamId) {
 	return dates
 }
 
+async function resolveLeaveRequestSubmitTarget({ requestingUserId, targetUserId, settings }) {
+	const requestingUser = await User.findOne({
+		_id: requestingUserId,
+		...ACTIVE_USER_FILTER,
+	})
+	if (!requestingUser || requestingUser.appAccessEnabled === false) {
+		return { error: { status: 404, message: 'Użytkownik nie znaleziony' } }
+	}
+
+	const effectiveTargetUserId = targetUserId || requestingUserId
+	const targetUser = await User.findOne({
+		_id: effectiveTargetUserId,
+		...ACTIVE_USER_FILTER,
+	})
+	if (!targetUser) {
+		return { error: { status: 404, message: 'Pracownik nie został znaleziony' } }
+	}
+
+	const self = isSelfUser(requestingUser._id, targetUser._id)
+	if (self) return { requestingUser, targetUser }
+
+	if (!isSameTeam(requestingUser.teamId, targetUser.teamId)) {
+		return { error: { status: 404, message: 'Pracownik nie został znaleziony' } }
+	}
+	if (settings.allowManagedLeaveRequests !== true) {
+		return { error: { status: 403, message: 'Zgłaszanie urlopu za pracownika jest wyłączone w ustawieniach zespołu.' } }
+	}
+	if (targetUser.appAccessEnabled !== false) {
+		return { error: { status: 403, message: 'Wniosek za pracownika można złożyć tylko dla pracownika bez dostępu do aplikacji.' } }
+	}
+	if (hasAdminOrHrRole(requestingUser)) {
+		return { requestingUser, targetUser }
+	}
+
+	const { canSupervisorApproveLeaves } = require('../services/roleService')
+	const canApprove = await canSupervisorApproveLeaves(requestingUser, targetUser)
+	if (canApprove) {
+		return { requestingUser, targetUser }
+	}
+
+	return { error: { status: 403, message: 'Brak uprawnień do zgłoszenia urlopu za tego pracownika.' } }
+}
+
 exports.submitLeaveRequest = async (req, res) => {
-	const { type, startDate, endDate, daysRequested, replacement, additionalInfo } = req.body
-	const userId = req.user.userId
-	const teamId = req.user.teamId
+	const { type, startDate, endDate, daysRequested, replacement, additionalInfo, targetUserId } = req.body
 	const t = req.t
 
 	try {
+		const requestingUser = await User.findOne({
+			_id: req.user.userId,
+			...ACTIVE_USER_FILTER,
+		})
+		if (!requestingUser) {
+			return res.status(404).send('Użytkownik nie znaleziony')
+		}
+		const teamId = requestingUser.teamId
+
 		// Pobierz ustawienia zespołu
 		const settings = await Settings.getSettings(teamId)
+		const targetAccess = await resolveLeaveRequestSubmitTarget({
+			requestingUserId: req.user.userId,
+			targetUserId,
+			settings,
+		})
+		if (targetAccess.error) {
+			return res.status(targetAccess.error.status).json({ message: targetAccess.error.message })
+		}
+		const user = targetAccess.targetUser
+		const userId = user._id
+		const submittedByUser =
+			targetAccess.requestingUser && targetAccess.requestingUser._id.toString() !== user._id.toString()
+				? targetAccess.requestingUser
+				: null
 		
 		// Walidacja typu wniosku
 		if (!isLeaveRequestTypeValid(settings, type)) {
@@ -227,6 +300,7 @@ exports.submitLeaveRequest = async (req, res) => {
 		
 		const leaveRequest = new LeaveRequest({
 			userId,
+			...(submittedByUser ? { submittedBy: submittedByUser._id } : {}),
 			type,
 			startDate: trimmedStartDate, // Użyj przyciętych dat
 			endDate: trimmedEndDate, // Użyj przyciętych dat
@@ -236,12 +310,6 @@ exports.submitLeaveRequest = async (req, res) => {
 			status,
 		})
 		await leaveRequest.save()
-
-		const user = await User.findOne({
-			_id: userId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName roles department username')
-		if (!user) return res.status(404).send('Użytkownik nie znaleziony lub nieaktywny.')
 
 		// Zbierz odbiorców emaili:
 		// - Jeśli nie wymaga zatwierdzenia (jak L4): przełożeni + HR/Admin (tylko powiadomienie)
@@ -337,6 +405,12 @@ exports.submitLeaveRequest = async (req, res) => {
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 140px;">${t('email.leaveform.employee')}:</td>
 						<td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
 					</tr>
+					${submittedByUser ? `
+					<tr>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Zgłoszono przez:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(submittedByUser.firstName || '')} ${escapeHtml(submittedByUser.lastName || '')}</td>
+					</tr>
+					` : ''}
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.type')}:</td>
 						<td style="padding: 8px 0; color: #1f2937;">${typeText}</td>
@@ -387,7 +461,9 @@ exports.submitLeaveRequest = async (req, res) => {
 				.map(r => r._id.toString())
 			
 			if (recipientUserIds.length > 0) {
-				sendLeaveRequestPushNotification(leaveRequest, user, recipientUserIds, 'new', null, t)
+				sendLeaveRequestPushNotification(leaveRequest, user, recipientUserIds, 'new', null, t, {
+					submittedByUser,
+				})
 					.catch(error => {
 						console.error('Error sending leave request push notifications:', error)
 					})

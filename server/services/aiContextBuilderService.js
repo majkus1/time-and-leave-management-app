@@ -399,6 +399,10 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		leaveCalculationMode: settingsLean.leaveCalculationMode || 'days',
 		leaveHoursPerDay: settingsLean.leaveHoursPerDay,
 		timerEnabled: settingsLean.timerEnabled !== false,
+		allowManagedNoAccessUsers: !!settingsLean.allowManagedNoAccessUsers,
+		allowManagedWorkdayEntries: !!settingsLean.allowManagedWorkdayEntries,
+		allowManagedLeaveRequests: !!settingsLean.allowManagedLeaveRequests,
+		workdayEntriesOnlyToday: !!settingsLean.workdayEntriesOnlyToday,
 	}
 
 	const boards = await Board.find({ teamId, isActive: true })
@@ -441,6 +445,9 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 	parts.push(`workOnWeekends=${settingsForAi.workOnWeekends} (if false, team policy treats weekends as non-working for timer / some checks)`)
 	parts.push(`includePolishHolidays=${settingsForAi.includePolishHolidays} | includeCustomHolidays=${settingsForAi.includeCustomHolidays}`)
 	parts.push(`timerEnabled=${settingsForAi.timerEnabled} | leaveCalculationMode=${settingsForAi.leaveCalculationMode} | leaveHoursPerDay=${settingsForAi.leaveHoursPerDay}`)
+	parts.push(
+		`managedNoAccessUsers=${settingsForAi.allowManagedNoAccessUsers} | managedWorkdayEntries=${settingsForAi.allowManagedWorkdayEntries} | managedLeaveRequests=${settingsForAi.allowManagedLeaveRequests} | workdayEntriesOnlyToday=${settingsForAi.workdayEntriesOnlyToday}`
+	)
 	parts.push(`standardWorkHoursSlots: ${JSON.stringify(settingsForAi.workHours)}`)
 	if (settingsForAi.customHolidays.length) {
 		parts.push(`customHolidays: ${JSON.stringify(settingsForAi.customHolidays)}`)
@@ -501,12 +508,15 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	const staticSnapshot = await buildStaticTeamSnapshot(teamId, locale)
 
 	const users = await User.find({ _id: { $in: detailedUserIds } })
-		.select('firstName lastName department roles')
+		.select('firstName lastName department roles appAccessEnabled managedOnly position')
 		.lean()
 
 	const userLines = users.map(u => {
 		const depts = Array.isArray(u.department) ? u.department.join(', ') : u.department || ''
-		return `- id:${u._id} | ${u.firstName} ${u.lastName} | departments:[${depts}] | roles:${(u.roles || []).join(',')}`
+		const accessLabel = u.appAccessEnabled === false ? 'no-app-access' : 'app-access'
+		const managedLabel = u.managedOnly === true ? 'managedOnly:true' : 'managedOnly:false'
+		const position = u.position ? ` | position:${String(u.position).slice(0, 120)}` : ''
+		return `- id:${u._id} | ${u.firstName} ${u.lastName} | access:${accessLabel} | ${managedLabel}${position} | departments:[${depts}] | roles:${(u.roles || []).join(',')}`
 	})
 
 	const displayNameByUserId = new Map(
@@ -519,13 +529,19 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 
 	// Leave planner shows all team members' requests — mirror that in AI context (names for all active team users).
 	const teamUsersForLeaveNames = await User.find({ _id: { $in: teamUserIds } })
-		.select('firstName lastName')
+		.select('firstName lastName appAccessEnabled managedOnly')
 		.lean()
 	const leaveDisplayNameByUserId = new Map(
 		teamUsersForLeaveNames.map(u => {
 			const id = u._id?.toString?.() || String(u._id)
 			const n = `${u.firstName || ''} ${u.lastName || ''}`.trim()
-			return [id, n]
+			const noAccess = u.appAccessEnabled === false || u.managedOnly === true
+			const suffix = noAccess
+				? String(locale || '').toLowerCase().startsWith('en')
+					? ' (no app access)'
+					: ' (bez dostępu do aplikacji)'
+				: ''
+			return [id, `${n}${suffix}`.trim()]
 		})
 	)
 

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import Modal from 'react-modal'
 import Sidebar from '../dashboard/Sidebar'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -11,8 +12,8 @@ import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useUser } from '../../hooks/useUsers'
-import { useUserWorkdays } from '../../hooks/useWorkdays'
-import { useCalendarConfirmation } from '../../hooks/useCalendar'
+import { useCreateWorkdayForUser, useDeleteWorkdayForUser, useReviewWorkdayForUser, useUpdateWorkdayForUser, useUserWorkdays } from '../../hooks/useWorkdays'
+import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { useActiveTimer } from '../../hooks/useTimer'
@@ -20,6 +21,7 @@ import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useAlert } from '../../context/AlertContext'
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -33,9 +35,19 @@ function UserCalendar() {
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [additionalHours, setAdditionalHours] = useState(0)
 	const [isExportingExcel, setIsExportingExcel] = useState(false)
+	const [modalIsOpen, setModalIsOpen] = useState(false)
+	const [selectedDate, setSelectedDate] = useState('')
+	const [editingWorkday, setEditingWorkday] = useState(null)
+	const [hoursWorked, setHoursWorked] = useState('')
+	const [additionalWorked, setAdditionalWorked] = useState('')
+	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
+	const [absenceType, setAbsenceType] = useState('')
+	const [notes, setNotes] = useState('')
+	const [formError, setFormError] = useState('')
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
+	const { showAlert, showConfirm } = useAlert()
 	const { isLoading: freemiumEntLoading, freemiumTier } = useFreemiumAccess({ enabled: true })
 	const allowTimerLeaveApis = !freemiumEntLoading && !freemiumTier
 
@@ -165,6 +177,12 @@ function UserCalendar() {
 	)
 	const { data: settings } = useSettings()
 	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
+	const createWorkdayForUserMutation = useCreateWorkdayForUser(userId)
+	const updateWorkdayForUserMutation = useUpdateWorkdayForUser(userId)
+	const deleteWorkdayForUserMutation = useDeleteWorkdayForUser(userId)
+	const reviewWorkdayForUserMutation = useReviewWorkdayForUser(userId)
+	const toggleConfirmationMutation = useToggleCalendarConfirmation()
+	const canEditManagedWorkdays = settings?.allowManagedWorkdayEntries === true && user?.appAccessEnabled === false
 
 	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
 
@@ -414,6 +432,179 @@ function UserCalendar() {
 	const goToSelectedDate = (month, year) => {
 		const calendarApi = calendarRef.current.getApi()
 		calendarApi.gotoDate(new Date(year, month, 1))
+	}
+
+	const formatDateLocal = (date) => {
+		const d = new Date(date)
+		if (isNaN(d.getTime())) return ''
+		const year = d.getFullYear()
+		const month = String(d.getMonth() + 1).padStart(2, '0')
+		const day = String(d.getDate()).padStart(2, '0')
+		return `${year}-${month}-${day}`
+	}
+
+	const findWorkdayForDate = (dateStr) => {
+		return workdays.find(day => formatDateLocal(day.date) === dateStr) || null
+	}
+
+	const reviewedWorkdayBackgroundEvents = React.useMemo(() => {
+		if (!canEditManagedWorkdays) return []
+		return workdays
+			.filter(day => day.reviewStatus === 'approved' || day.reviewStatus === 'rejected')
+			.map(day => ({
+				start: day.date,
+				allDay: true,
+				display: 'background',
+				backgroundColor: day.reviewStatus === 'approved' ? 'rgba(34, 197, 94, 0.34)' : 'rgba(239, 68, 68, 0.32)',
+				classNames: day.reviewStatus === 'approved' ? 'workday-review-bg-approved' : 'workday-review-bg-rejected',
+				extendedProps: {
+					type: 'workdayReviewBackground',
+				},
+			}))
+	}, [canEditManagedWorkdays, workdays])
+
+	const currentMonthWorkdaysForReview = React.useMemo(() => {
+		if (!canEditManagedWorkdays) return []
+		return workdays
+			.filter(day => {
+				const eventDate = new Date(day.date)
+				const hasEntry =
+					(day.hoursWorked != null && day.hoursWorked !== '') ||
+					(day.additionalWorked != null && day.additionalWorked !== '') ||
+					!!day.realTimeDayWorked ||
+					!!day.absenceType ||
+					!!day.notes
+
+				return hasEntry && eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+			})
+			.sort((a, b) => new Date(a.date) - new Date(b.date))
+	}, [canEditManagedWorkdays, currentMonth, currentYear, workdays])
+
+	const formatReviewerName = (reviewedBy) => {
+		if (!reviewedBy) return ''
+		const name = `${reviewedBy.firstName || ''} ${reviewedBy.lastName || ''}`.trim()
+		return name || reviewedBy.email || ''
+	}
+
+	const resetManagedForm = () => {
+		setEditingWorkday(null)
+		setHoursWorked('')
+		setAdditionalWorked('')
+		setRealTimeDayWorked('')
+		setAbsenceType('')
+		setNotes('')
+		setFormError('')
+	}
+
+	const openManagedWorkdayModal = (dateStr) => {
+		if (!canEditManagedWorkdays) return
+		if (settings?.workdayEntriesOnlyToday === true && dateStr !== formatDateLocal(new Date())) {
+			showAlert('Wpisy można dodawać tylko dla dzisiejszego dnia.')
+			return
+		}
+		const existing = findWorkdayForDate(dateStr)
+		setSelectedDate(dateStr)
+		setEditingWorkday(existing)
+		setHoursWorked(existing?.hoursWorked != null ? String(existing.hoursWorked) : '')
+		setAdditionalWorked(existing?.additionalWorked != null ? String(existing.additionalWorked) : '')
+		setRealTimeDayWorked(existing?.realTimeDayWorked || '')
+		setAbsenceType(existing?.absenceType || '')
+		setNotes(existing?.notes || '')
+		setFormError('')
+
+		if (!existing && Array.isArray(settings?.workHours) && settings.workHours.length > 0) {
+			const firstHours = settings.workHours[0]
+			if (firstHours?.timeFrom && firstHours?.timeTo) {
+				setRealTimeDayWorked(`${firstHours.timeFrom}-${firstHours.timeTo}`)
+				if (firstHours.hours) setHoursWorked(String(firstHours.hours))
+			}
+		}
+
+		setModalIsOpen(true)
+	}
+
+	const handleManagedDateClick = (info) => {
+		if (
+			info.event?.extendedProps?.type === 'leaveRequest' ||
+			info.event?.extendedProps?.type === 'holiday' ||
+			info.event?.extendedProps?.type === 'workdayReviewBackground'
+		) {
+			return
+		}
+		const clickedDate = info.dateStr || info.event?.startStr
+		if (clickedDate) openManagedWorkdayModal(clickedDate.slice(0, 10))
+	}
+
+	const handleManagedSubmit = async (e) => {
+		e.preventDefault()
+		const payload = {
+			date: selectedDate,
+			hoursWorked: hoursWorked.trim(),
+			additionalWorked: additionalWorked.trim(),
+			realTimeDayWorked: realTimeDayWorked.trim(),
+			absenceType: absenceType.trim(),
+			notes: notes.trim(),
+		}
+		if (payload.hoursWorked && payload.absenceType) {
+			setFormError('Wybierz godziny pracy albo nieobecność, nie oba pola naraz.')
+			return
+		}
+		if (!payload.hoursWorked && !payload.additionalWorked && !payload.realTimeDayWorked && !payload.absenceType && !payload.notes) {
+			setFormError('Uzupełnij przynajmniej jedno pole.')
+			return
+		}
+		try {
+			if (editingWorkday?._id) {
+				await updateWorkdayForUserMutation.mutateAsync({ id: editingWorkday._id, updatedWorkday: payload })
+			} else {
+				await createWorkdayForUserMutation.mutateAsync(payload)
+			}
+			setModalIsOpen(false)
+			resetManagedForm()
+			await showAlert('Wpis zapisany.')
+		} catch (error) {
+			setFormError(error.response?.data?.message || 'Nie udało się zapisać wpisu.')
+		}
+	}
+
+	const handleManagedDelete = async () => {
+		if (!editingWorkday?._id) return
+		const confirmed = await showConfirm('Usunąć ten wpis z kalendarza?')
+		if (!confirmed) return
+		try {
+			await deleteWorkdayForUserMutation.mutateAsync(editingWorkday._id)
+			setModalIsOpen(false)
+			resetManagedForm()
+			await showAlert('Wpis usunięty.')
+		} catch (error) {
+			setFormError(error.response?.data?.message || 'Nie udało się usunąć wpisu.')
+		}
+	}
+
+	const handleManagedMonthConfirmationToggle = async () => {
+		if (!canEditManagedWorkdays) return
+
+		try {
+			await toggleConfirmationMutation.mutateAsync({
+				month: currentMonth,
+				year: currentYear,
+				isConfirmed: !isConfirmed,
+				userId,
+			})
+			await showAlert(!isConfirmed ? 'Miesiąc potwierdzony.' : 'Potwierdzenie miesiąca cofnięte.')
+		} catch (error) {
+			await showAlert(error.response?.data?.message || 'Nie udało się zmienić potwierdzenia miesiąca.')
+		}
+	}
+
+	const handleReviewWorkday = async (workdayId, status) => {
+		if (!canEditManagedWorkdays) return
+
+		try {
+			await reviewWorkdayForUserMutation.mutateAsync({ id: workdayId, status })
+		} catch (error) {
+			await showAlert(error.response?.data?.message || 'Nie udało się zapisać zatwierdzenia dnia.')
+		}
 	}
 
 	const renderEventContent = eventInfo => {
@@ -791,6 +982,24 @@ function UserCalendar() {
 					&gt;
 				</button>
 				</div>
+				{canEditManagedWorkdays && (
+					<div className={`managed-month-confirmation ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
+						<div>
+							<p className="managed-month-confirmation__label">Potwierdzenie miesiąca</p>
+							<p className={`managed-month-confirmation__status ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
+								{isConfirmed ? 'Miesiąc potwierdzony' : 'Miesiąc niepotwierdzony'}
+							</p>
+						</div>
+						<button
+							type="button"
+							className={`btn ${isConfirmed ? 'btn-secondary' : 'btn-success'}`}
+							onClick={handleManagedMonthConfirmationToggle}
+							disabled={toggleConfirmationMutation.isPending}
+						>
+							{isConfirmed ? 'Cofnij' : 'Potwierdź'}
+						</button>
+					</div>
+				)}
 				</div>
 				<div ref={pdfRef} style={{ 
 					marginTop: '15px',
@@ -804,7 +1013,7 @@ function UserCalendar() {
 							backgroundColor: '#f8fafc',
 							borderRadius: '6px',
 							borderLeft: '4px solid #3b82f6',
-							marginLeft: '5px',
+							marginLeft: '10px',
 							maxWidth: '700px'
 						}}>
 							<h3 style={{ 
@@ -861,6 +1070,7 @@ function UserCalendar() {
 								firstDay={1}
 								showNonCurrentDates={false}
 								events={[
+									...reviewedWorkdayBackgroundEvents,
 									...workdays.map(day => {
 										// Określ tytuł w zależności od typu wpisu
 										let title = ''
@@ -974,6 +1184,8 @@ function UserCalendar() {
 								]}
 								ref={calendarRef}
 								eventContent={renderEventContent}
+								dateClick={handleManagedDateClick}
+								eventClick={handleManagedDateClick}
 								displayEventTime={false}
 								datesSet={handleMonthChange}
 								height="auto"
@@ -1011,6 +1223,88 @@ function UserCalendar() {
 					</div>
 				</div>
 
+			{canEditManagedWorkdays && (
+				<div className="managed-workday-review-panel col-xl-9">
+					<div className="managed-workday-review-panel__header">
+						<div>
+							<h3>Zatwierdzanie dni</h3>
+							<p>Sprawdź wpisy w bieżącym miesiącu i oznacz decyzję.</p>
+						</div>
+						<span>{currentMonthWorkdaysForReview.length}</span>
+					</div>
+					{currentMonthWorkdaysForReview.length === 0 ? (
+						<div className="managed-workday-review-empty">Brak wpisów do zatwierdzenia w tym miesiącu.</div>
+					) : (
+						<div className="managed-workday-review-list">
+							{currentMonthWorkdaysForReview.map(day => {
+								const reviewerName = formatReviewerName(day.reviewedBy)
+								const reviewLabel = day.reviewStatus === 'approved'
+									? 'Zatwierdzono'
+									: day.reviewStatus === 'rejected'
+										? 'Odrzucono'
+										: 'Bez decyzji'
+								return (
+									<div key={day._id} className={`managed-workday-review-item ${day.reviewStatus ? `is-${day.reviewStatus}` : ''}`}>
+										<div className="managed-workday-review-item__main">
+											<div className="managed-workday-review-item__date">
+												{new Date(day.date).toLocaleDateString(i18n.resolvedLanguage, {
+													day: '2-digit',
+													month: 'long',
+													year: 'numeric',
+												})}
+											</div>
+											<div className="managed-workday-review-item__details">
+												{day.hoursWorked != null && day.hoursWorked !== '' && (
+													<span>{formatHours(roundToHalfHour(day.hoursWorked))} godz.</span>
+												)}
+												{day.additionalWorked != null && day.additionalWorked !== '' && (
+													<span>Nadgodziny: {formatHours(roundToHalfHour(day.additionalWorked))}</span>
+												)}
+												{day.realTimeDayWorked && <span>Czas: {day.realTimeDayWorked}</span>}
+												{day.absenceType && <span>Nieobecność: {day.absenceType}</span>}
+												{day.notes && <span>Uwagi: {day.notes}</span>}
+											</div>
+											<div className="managed-workday-review-item__meta">
+												<span>{reviewLabel}</span>
+												{reviewerName && <span>przez: {reviewerName}</span>}
+											</div>
+										</div>
+										<div className="managed-workday-review-actions">
+											<button
+												type="button"
+												className={`managed-review-action approve ${day.reviewStatus === 'approved' ? 'is-active' : ''}`}
+												onClick={() => handleReviewWorkday(day._id, 'approved')}
+												disabled={reviewWorkdayForUserMutation.isPending}
+											>
+												Zatwierdź
+											</button>
+											<button
+												type="button"
+												className={`managed-review-action reject ${day.reviewStatus === 'rejected' ? 'is-active' : ''}`}
+												onClick={() => handleReviewWorkday(day._id, 'rejected')}
+												disabled={reviewWorkdayForUserMutation.isPending}
+											>
+												Odrzuć
+											</button>
+											{day.reviewStatus && (
+												<button
+													type="button"
+													className="managed-review-action clear"
+													onClick={() => handleReviewWorkday(day._id, null)}
+													disabled={reviewWorkdayForUserMutation.isPending}
+												>
+													Wyczyść
+												</button>
+											)}
+										</div>
+									</div>
+								)
+							})}
+						</div>
+					)}
+				</div>
+			)}
+
 			{/* Work Session List */}
 			<div className="work-session-list-mobile col-xl-9">
 				{settings?.timerEnabled !== false && allowTimerLeaveApis && (
@@ -1024,6 +1318,157 @@ function UserCalendar() {
 			</div>
 			</div>
 					)}
+			<Modal
+				isOpen={modalIsOpen}
+				onRequestClose={() => {
+					setModalIsOpen(false)
+					resetManagedForm()
+				}}
+				className="monthly-calendar-modal managed-workday-modal"
+				overlayClassName="managed-workday-modal-overlay"
+				style={{
+					overlay: {
+						position: 'fixed',
+						inset: 0,
+						zIndex: 100000,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						padding: '24px',
+						backgroundColor: 'rgba(15, 23, 42, 0.38)',
+						overflowY: 'auto',
+					},
+					content: {
+						position: 'relative',
+						inset: 'auto',
+						width: 'min(620px, calc(100vw - 32px))',
+						maxHeight: 'calc(100vh - 48px)',
+						margin: 0,
+						marginLeft: 0,
+						padding: 0,
+						border: 0,
+						borderRadius: '12px',
+						background: '#fff',
+						boxShadow: '0 24px 70px rgba(15, 23, 42, 0.24)',
+						overflow: 'auto',
+					},
+				}}
+				contentLabel="Wpis czasu pracy za pracownika"
+			>
+				<form onSubmit={handleManagedSubmit} style={{ display: 'grid', gap: '14px' }}>
+					<div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
+						<div>
+							<h2 style={{ margin: 0, fontSize: '20px', color: '#2c3e50' }}>
+								{editingWorkday ? 'Edytuj wpis' : 'Dodaj wpis'}
+							</h2>
+							<p style={{ margin: '4px 0 0', color: '#6c757d', fontSize: '14px' }}>
+								{user?.firstName} {user?.lastName} · {selectedDate}
+							</p>
+						</div>
+						<button
+							type="button"
+							onClick={() => {
+								setModalIsOpen(false)
+								resetManagedForm()
+							}}
+							className="monthly-calendar-modal__close"
+						>
+							×
+						</button>
+					</div>
+
+					{formError && (
+						<div style={{ backgroundColor: '#fff5f5', color: '#c0392b', border: '1px solid #f5c6cb', borderRadius: '6px', padding: '10px 12px', fontSize: '14px' }}>
+							{formError}
+						</div>
+					)}
+
+					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+						<label>
+							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Godziny</span>
+							<input
+								type="number"
+								step="0.5"
+								min="0"
+								max="24"
+								value={hoursWorked}
+								onChange={(e) => setHoursWorked(e.target.value)}
+								className="w-full border border-gray-300 rounded-md px-4 py-2"
+							/>
+						</label>
+						<label>
+							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Nadgodziny</span>
+							<input
+								type="number"
+								step="0.5"
+								min="0"
+								value={additionalWorked}
+								onChange={(e) => setAdditionalWorked(e.target.value)}
+								className="w-full border border-gray-300 rounded-md px-4 py-2"
+							/>
+						</label>
+					</div>
+
+					<label>
+						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Zakres godzin</span>
+						<input
+							type="text"
+							placeholder="07:00-15:00"
+							value={realTimeDayWorked}
+							onChange={(e) => setRealTimeDayWorked(e.target.value)}
+							className="w-full border border-gray-300 rounded-md px-4 py-2"
+						/>
+					</label>
+
+					<label>
+						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Nieobecność</span>
+						<input
+							type="text"
+							placeholder="np. nieobecność usprawiedliwiona"
+							value={absenceType}
+							onChange={(e) => setAbsenceType(e.target.value)}
+							className="w-full border border-gray-300 rounded-md px-4 py-2"
+						/>
+					</label>
+
+					<label>
+						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Uwagi</span>
+						<textarea
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							rows={3}
+							className="w-full border border-gray-300 rounded-md px-4 py-2"
+						/>
+					</label>
+
+					<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+						{editingWorkday && (
+							<button type="button" className="btn btn-danger" onClick={handleManagedDelete} disabled={deleteWorkdayForUserMutation.isPending}>
+								Usuń
+							</button>
+						)}
+						<div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
+							<button
+								type="button"
+								className="btn btn-secondary"
+								onClick={() => {
+									setModalIsOpen(false)
+									resetManagedForm()
+								}}
+							>
+								Anuluj
+							</button>
+							<button
+								type="submit"
+								className="btn btn-primary"
+								disabled={createWorkdayForUserMutation.isPending || updateWorkdayForUserMutation.isPending}
+							>
+								Zapisz
+							</button>
+						</div>
+					</div>
+				</form>
+			</Modal>
 		</>
 	)
 }

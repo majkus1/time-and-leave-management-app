@@ -7,6 +7,9 @@ import { useAlert } from '../../context/AlertContext'
 import { useDepartments, useCreateDepartment } from '../../hooks/useDepartments'
 import { useTeamInfo } from '../../hooks/useTeam'
 import { useCreateUser } from '../../hooks/useUsers'
+import { useSettings } from '../../hooks/useSettings'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
+import Loader from '../Loader'
 
 const availableRoles = [
     'Admin',
@@ -19,19 +22,35 @@ function CreateUser() {
     const [username, setUsername] = useState('')
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
+    const [position, setPosition] = useState('')
     const [selectedRoles, setSelectedRoles] = useState([])
     const [selectedDepartments, setSelectedDepartments] = useState([]) // Tablica wybranych działów
     const [newDepartmentName, setNewDepartmentName] = useState('') // Nowy dział do dodania
     const [departmentMode, setDepartmentMode] = useState('choose')
+    const [managedOnly, setManagedOnly] = useState(false)
     const { t } = useTranslation()
-    const { teamId } = useAuth()
+    const { teamId, role } = useAuth()
     const { showAlert } = useAlert()
+    const isAdminRole = isAdmin(role)
+    const isHRRole = isHR(role)
+    const isSupervisorRole = isSupervisor(role)
 
     // TanStack Query hooks
     const { data: departments = [], refetch: refetchDepartments } = useDepartments(teamId)
     const { data: teamInfo } = useTeamInfo(teamId)
+    const { data: settings, isLoading: loadingSettings } = useSettings()
     const createDepartmentMutation = useCreateDepartment()
     const createUserMutation = useCreateUser()
+    const managedUsersEnabled = settings?.allowManagedNoAccessUsers === true
+    const forcedManagedMode = !isAdminRole && (isHRRole || isSupervisorRole)
+    const effectiveManagedOnly = forcedManagedMode || managedOnly
+
+    useEffect(() => {
+        if (forcedManagedMode) {
+            setManagedOnly(true)
+            setSelectedRoles(['Pracownik (Worker)'])
+        }
+    }, [forcedManagedMode])
 
     const handleRoleClick = role => {
         setSelectedRoles(prev => prev.includes(role)
@@ -124,25 +143,29 @@ function CreateUser() {
             }
 
             const newUser = { 
-                username, 
+                ...(effectiveManagedOnly ? {} : { username }),
                 firstName, 
                 lastName, 
-                roles: selectedRoles, 
+                roles: effectiveManagedOnly ? ['Pracownik (Worker)'] : selectedRoles,
                 department: selectedDepartments, // Wyślij tablicę działów
-                teamId // Przekaż teamId dla invalidacji cache
+                teamId, // Przekaż teamId dla invalidacji cache
+                ...(effectiveManagedOnly && position.trim() ? { position: position.trim() } : {}),
+                ...(effectiveManagedOnly ? { managedOnly: true, appAccessEnabled: false } : {})
             }
             const response = await createUserMutation.mutateAsync(newUser)
             
             if (response?.success) {
-                await showAlert(t('newuser.successMessage', { email: username }))
+                await showAlert(response.message || (effectiveManagedOnly ? 'Pracownik został dodany.' : t('newuser.successMessage', { email: username })))
                 
                 setUsername('')
                 setFirstName('')
                 setLastName('')
+                setPosition('')
                 setSelectedRoles([])
                 setSelectedDepartments([])
                 setNewDepartmentName('')
                 setDepartmentMode('choose')
+                setManagedOnly(forcedManagedMode)
             }
         } catch (error) {
             const code = error.response?.data?.code
@@ -157,6 +180,27 @@ function CreateUser() {
                 await showAlert(error.response?.data?.message || t('newuser.errorGeneric'))
             }
         }
+    }
+
+    if (loadingSettings) return (
+        <>
+            <Sidebar />
+            <div className="content-with-loader"><Loader /></div>
+        </>
+    )
+
+    if (!isAdminRole && !managedUsersEnabled) {
+        return (
+            <>
+                <Sidebar />
+                <div className="container my-5 d-flex justify-content-center align-items-center newboxuser">
+                    <div className="card-body editformbox" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', maxWidth: '720px' }}>
+                        <h4>Dodawanie pracowników jest wyłączone</h4>
+                        <p style={{ color: '#6c757d', margin: 0 }}>Administrator może włączyć dodawanie pracowników bez dostępu w ustawieniach zespołu.</p>
+                    </div>
+                </div>
+            </>
+        )
     }
 
     return (
@@ -194,6 +238,29 @@ function CreateUser() {
                                 )}
                                 <form onSubmit={handleSubmit} className="max-w-2xl space-y-6" id="addusers">
                                     
+                                    {(isAdminRole || isHRRole) && managedUsersEnabled && (
+                                        <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                                            <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', margin: 0 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={managedOnly}
+                                                    onChange={(e) => {
+                                                        setManagedOnly(e.target.checked)
+                                                        if (e.target.checked) setSelectedRoles(['Pracownik (Worker)'])
+                                                    }}
+                                                    style={{ marginTop: '4px' }}
+                                                />
+                                                <span>
+                                                    <strong>Pracownik bez dostępu do aplikacji</strong>
+                                                    <span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+                                                        Wlicza się do limitu miejsc. Nie dostanie emaila ani linku do hasła.
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {!effectiveManagedOnly && (
                                     <div>
 										<label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
 											{t('newuser.email')}
@@ -205,10 +272,11 @@ function CreateUser() {
 											id="username"
 											value={username}
 											onChange={handleUsernameChange}
-											required
+											required={!effectiveManagedOnly}
 											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
+                                    )}
 
 									<div>
 										<label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -241,6 +309,27 @@ function CreateUser() {
 											className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 									</div>
+
+                                    {effectiveManagedOnly && (
+                                        <div>
+                                            <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Stanowisko <span style={{ color: '#6c757d', fontSize: '12px' }}>(opcjonalnie)</span>
+                                            </label>
+                                            <br></br>
+                                            <input
+                                                type="text"
+                                                id="position"
+                                                placeholder="np. brygadzista, operator, pomocnik"
+                                                value={position}
+                                                onChange={e => setPosition(e.target.value)}
+                                                maxLength={100}
+                                                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span style={{ display: 'block', color: '#6c757d', fontSize: '13px', marginTop: '6px' }}>
+                                                Stanowisko będzie widoczne w danych pracownika i można je później edytować w zarządzaniu zespołem.
+                                            </span>
+                                        </div>
+                                    )}
 
                                     <div className="mt-8">
                                         <label className="block text-sm font-medium text-gray-700 mr-3">
@@ -308,6 +397,7 @@ function CreateUser() {
                                             </>
                                         )}
                                     </div>
+                                    {!effectiveManagedOnly && (
                                     <div className="mt-8">
                                         <label className="block text-sm font-medium text-gray-700">{t('newuser.giverole')}</label>
                                         <div className="flex flex-wrap gap-2">
@@ -320,6 +410,7 @@ function CreateUser() {
                                             ))}
                                         </div>
                                     </div>
+                                    )}
 
                                     <button 
                                         type="submit" 

@@ -22,7 +22,21 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
 	try {
-		const { workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays, workHours, leaveRequestTypes, leaveCalculationMode, leaveHoursPerDay, timerEnabled } = req.body
+		const {
+			workOnWeekends,
+			includePolishHolidays,
+			includeCustomHolidays,
+			customHolidays,
+			workHours,
+			leaveRequestTypes,
+			leaveCalculationMode,
+			leaveHoursPerDay,
+			timerEnabled,
+			allowManagedNoAccessUsers,
+			allowManagedWorkdayEntries,
+			allowManagedLeaveRequests,
+			workdayEntriesOnlyToday,
+		} = req.body
 		
 		// Sprawdź uprawnienia - tylko Admin i HR
 		const requestingUser = await require('../models/user')(firmDb).findById(req.user.userId)
@@ -192,6 +206,28 @@ exports.updateSettings = async (req, res) => {
 				}
 			}
 			settings.timerEnabled = timerEnabled
+		}
+
+		if (allowManagedNoAccessUsers !== undefined && typeof allowManagedNoAccessUsers === 'boolean') {
+			settings.allowManagedNoAccessUsers = allowManagedNoAccessUsers
+			if (!allowManagedNoAccessUsers) {
+				settings.allowManagedWorkdayEntries = false
+				settings.allowManagedLeaveRequests = false
+			}
+		}
+		if (allowManagedWorkdayEntries !== undefined && typeof allowManagedWorkdayEntries === 'boolean') {
+			settings.allowManagedWorkdayEntries = allowManagedWorkdayEntries
+		}
+		if (allowManagedLeaveRequests !== undefined && typeof allowManagedLeaveRequests === 'boolean') {
+			settings.allowManagedLeaveRequests = allowManagedLeaveRequests
+		}
+		if (workdayEntriesOnlyToday !== undefined && typeof workdayEntriesOnlyToday === 'boolean') {
+			settings.workdayEntriesOnlyToday = workdayEntriesOnlyToday
+		}
+
+		if (!settings.allowManagedNoAccessUsers) {
+			settings.allowManagedWorkdayEntries = false
+			settings.allowManagedLeaveRequests = false
 		}
 
 		await settings.save()

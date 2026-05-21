@@ -25,6 +25,20 @@ const workdaySchema = new mongoose.Schema({
 	notes: {
 		type: String,
 	},
+	reviewStatus: {
+		type: String,
+		enum: ['approved', 'rejected'],
+		default: null,
+	},
+	reviewedBy: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		default: null,
+	},
+	reviewedAt: {
+		type: Date,
+		default: null,
+	},
 	timeEntries: [{
 		startTime: {
 			type: Date,
