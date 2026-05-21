@@ -3,7 +3,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
@@ -16,6 +16,8 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	const [daysRequested, setDaysRequested] = useState(0)
 	const [replacement, setReplacement] = useState('')
 	const [additionalInfo, setAdditionalInfo] = useState('')
+	const [submitForEmployee, setSubmitForEmployee] = useState(false)
+	const [targetUserId, setTargetUserId] = useState('')
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
 
@@ -23,6 +25,15 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const { data: settings } = useSettings()
+	const managedLeaveEnabled = settings?.allowManagedLeaveRequests === true
+	const { data: visibleLeaveUsers = [], isLoading: loadingVisibleLeaveUsers } = useVisibleLeaveUsers({
+		enabled: managedLeaveEnabled,
+	})
+	const managedLeaveUsers = React.useMemo(
+		() => visibleLeaveUsers.filter(user => user?.appAccessEnabled === false),
+		[visibleLeaveUsers]
+	)
+	const effectiveTargetUserId = submitForEmployee ? targetUserId : ''
 	
 	const availableLeaveDays = vacationData?.vacationDays || 0
 	const leaveTypeDays = vacationData?.leaveTypeDays || {}
@@ -206,7 +217,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	const [editAdditionalInfo, setEditAdditionalInfo] = useState('')
 	const [showCancelModal, setShowCancelModal] = useState(null)
 
-	const loading = loadingRequests || loadingVacation
+	const loading = loadingRequests || loadingVacation || (managedLeaveEnabled && loadingVisibleLeaveUsers)
 	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
 	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
 
@@ -366,13 +377,26 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		}
 		
 		// Sprawdź kolizję z istniejącymi wnioskami
-		if (hasDateConflict(startDate, endDate)) {
+		if (!effectiveTargetUserId && hasDateConflict(startDate, endDate)) {
 			await showAlert(t('leaveform.dateConflictError'))
+			return
+		}
+
+		if (submitForEmployee && !targetUserId) {
+			await showAlert('Wybierz pracownika.')
 			return
 		}
 		
 		try {
-			const data = { type, startDate, endDate, daysRequested, replacement, additionalInfo }
+			const data = {
+				type,
+				startDate,
+				endDate,
+				daysRequested,
+				replacement,
+				additionalInfo,
+				...(effectiveTargetUserId ? { targetUserId: effectiveTargetUserId } : {}),
+			}
 			await createLeaveRequestMutation.mutateAsync(data)
 			await showAlert(t('leaveform.alertsucces'))
 			setType(enabledLeaveTypes.length > 0 ? enabledLeaveTypes[0].id : '')
@@ -381,9 +405,10 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 			setDaysRequested(0)
 			setReplacement('')
 			setAdditionalInfo('')
+			setTargetUserId('')
 		} catch (error) {
 			console.error('Błąd podczas wysyłania wniosku:', error)
-			await showAlert(t('leaveform.alertfail'))
+			await showAlert(error.response?.data?.message || t('leaveform.alertfail'))
 		}
 	}
 
@@ -554,7 +579,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 						marginBottom: '30px',
 						marginTop: '20px'
 					}}>
-						{leaveTypesWithDays.length > 0 ? (
+						{!submitForEmployee && leaveTypesWithDays.length > 0 ? (
 							<div style={{ marginBottom: '20px' }}>
 								<p style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
 									{t('leaveform.availableday') || 'Dostępne dni urlopu'}:
@@ -585,7 +610,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 									})}
 								</div>
 							</div>
-						) : (
+						) : !submitForEmployee ? (
 							<p style={{ marginBottom: '20px' }}>
 								{t('leaveform.availableday')}{' '}
 								{availableLeaveDays === 0 ? (
@@ -594,7 +619,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 									availableLeaveDays
 								)}
 							</p>
-						)}
+						) : null}
 
 						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6" style={{ width: '100%', maxWidth: '780px' }}>
 							<div style={{
@@ -605,6 +630,44 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 								display: 'grid',
 								gap: '14px'
 							}}>
+								{managedLeaveEnabled && managedLeaveUsers.length > 0 && (
+									<div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px' }}>
+										<label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', marginBottom: submitForEmployee ? '12px' : 0 }}>
+											<input
+												type="checkbox"
+												checked={submitForEmployee}
+												onChange={(e) => {
+													setSubmitForEmployee(e.target.checked)
+													if (!e.target.checked) setTargetUserId('')
+												}}
+												style={{ marginTop: '4px' }}
+											/>
+											<span>
+												<strong>Zgłoś urlop za pracownika</strong>
+												<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+													Dostępne tylko dla pracowników bez dostępu do aplikacji.
+												</span>
+											</span>
+										</label>
+										{submitForEmployee && (
+											<select
+												value={targetUserId}
+												onChange={(e) => setTargetUserId(e.target.value)}
+												className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												required={submitForEmployee}
+											>
+												<option value="">Wybierz pracownika</option>
+												{managedLeaveUsers.map(user => (
+													<option key={user._id} value={user._id}>
+														{`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+														{Array.isArray(user.department) && user.department.length > 0 ? ` · ${user.department.join(', ')}` : ''}
+													</option>
+												))}
+											</select>
+										)}
+									</div>
+								)}
+
 								<div>
 									<label className="block text-gray-700 font-medium mb-1">{t('leaveform.type')}</label>
 									<select

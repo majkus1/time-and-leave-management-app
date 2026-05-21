@@ -22,6 +22,7 @@ const leaveRequestSchema = new mongoose.Schema({
 		default: 'status.pending'
 	  },	  
 	createdAt: { type: Date, default: Date.now },
+	submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 	updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 	isProcessed: { type: Boolean, default: false },
 })

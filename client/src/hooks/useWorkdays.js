@@ -79,6 +79,24 @@ export const useCreateWorkday = () => {
 	})
 }
 
+export const useCreateWorkdayForUser = (userId) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (data) => {
+			const response = await axios.post(`${API_URL}/api/workdays/user/${userId}`, data, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+		},
+	})
+}
+
 // Mutation - aktualizacja workday
 export const useUpdateWorkday = () => {
 	const queryClient = useQueryClient()
@@ -122,6 +140,24 @@ export const useUpdateWorkday = () => {
 	})
 }
 
+export const useUpdateWorkdayForUser = (userId) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ id, updatedWorkday }) => {
+			const response = await axios.put(`${API_URL}/api/workdays/user/${userId}/${id}`, updatedWorkday, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+		},
+	})
+}
+
 // Mutation - usuwanie workday
 export const useDeleteWorkday = () => {
 	const queryClient = useQueryClient()
@@ -159,6 +195,42 @@ export const useDeleteWorkday = () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			// Also invalidate timer sessions queries to update the session list immediately
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+		},
+	})
+}
+
+export const useDeleteWorkdayForUser = (userId) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (id) => {
+			const response = await axios.delete(`${API_URL}/api/workdays/user/${userId}/${id}`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+		},
+	})
+}
+
+export const useReviewWorkdayForUser = (userId) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ id, status }) => {
+			const response = await axios.patch(`${API_URL}/api/workdays/user/${userId}/${id}/review`, { status }, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 		},
 	})
 }

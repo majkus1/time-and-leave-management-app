@@ -107,6 +107,26 @@ const settingsSchema = new mongoose.Schema({
 		type: Boolean,
 		default: false, // Domyślnie wyłączone (dla nowych zespołów)
 		required: true
+	},
+	allowManagedNoAccessUsers: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	allowManagedWorkdayEntries: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	allowManagedLeaveRequests: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	workdayEntriesOnlyToday: {
+		type: Boolean,
+		default: false,
+		required: true
 	}
 }, {
 	timestamps: true
@@ -139,6 +159,10 @@ settingsSchema.statics.getSettings = async function(teamId) {
 			customHolidays: [],
 			leaveRequestTypes: getDefaultSystemLeaveTypes(),
 			timerEnabled: false,
+			allowManagedNoAccessUsers: false,
+			allowManagedWorkdayEntries: false,
+			allowManagedLeaveRequests: false,
+			workdayEntriesOnlyToday: false,
 		})
 	} else {
 		// Migracja: jeśli istnieje stary dokument z includeHolidays, zamień na includePolishHolidays
@@ -194,6 +218,11 @@ settingsSchema.statics.getSettings = async function(teamId) {
 			settings.workHours = []
 			await settings.save()
 		}
+
+		if (settings.allowManagedNoAccessUsers === undefined) settings.allowManagedNoAccessUsers = false
+		if (settings.allowManagedWorkdayEntries === undefined) settings.allowManagedWorkdayEntries = false
+		if (settings.allowManagedLeaveRequests === undefined) settings.allowManagedLeaveRequests = false
+		if (settings.workdayEntriesOnlyToday === undefined) settings.workdayEntriesOnlyToday = false
 		
 		await settings.save()
 	}

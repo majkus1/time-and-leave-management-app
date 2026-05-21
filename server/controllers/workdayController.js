@@ -5,6 +5,10 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
+const {
+	resolveTeamScopedTimesheetWriteAccess,
+	sendTeamScopedTimesheetWriteAccessError,
+} = require('../utils/timesheetWriteAccess')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -110,11 +114,14 @@ exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 	}
 }
 
-exports.addWorkday = async (req, res) => {
+function isTodayInWarsaw(dateYmd) {
+	return dateYmd === toWarsawYmd(new Date())
+}
+
+async function createWorkdayForTarget({ req, res, targetUser, settings }) {
 	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 	try {
-		const user = await User.findById(req.user.userId)
-		if (!user || !user.teamId) {
+		if (!targetUser || !targetUser.teamId) {
 			return res.status(403).json({ message: 'Użytkownik nie znaleziony lub brak zespołu', code: 'USER_INVALID' })
 		}
 
@@ -128,13 +135,21 @@ exports.addWorkday = async (req, res) => {
 			return res.status(400).json({ message: 'Nieprawidłowa data', code: 'INVALID_DATE' })
 		}
 
+		const teamSettings = settings || await Settings.getSettings(targetUser.teamId)
+		if (teamSettings.workdayEntriesOnlyToday === true && !isTodayInWarsaw(dateYmd)) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono dodawanie wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
+
 		const normalized = normalizeWorkdayPayload({ hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes })
 		const v = await validateNewWorkdayEntry({
 			WorkdayModel: Workday,
 			LeaveRequestModel: LeaveRequest,
 			getSettings: tid => Settings.getSettings(tid),
-			userId: req.user.userId,
-			teamId: user.teamId,
+			userId: targetUser._id,
+			teamId: targetUser.teamId,
 			dateYmd,
 			normalized,
 			locale: 'pl',
@@ -145,14 +160,42 @@ exports.addWorkday = async (req, res) => {
 		}
 
 		const workday = new Workday({
-			userId: req.user.userId,
+			userId: targetUser._id,
 			date: date != null ? date : new Date(`${dateYmd}T12:00:00.000Z`),
 			...v.sanitized,
 		})
 		await workday.save()
-		res.status(201).send('Workday added successfully.')
+		return res.status(201).json(workday)
 	} catch (error) {
 		console.error('Error adding workday:', error)
+		return res.status(500).send('Failed to add workday.')
+	}
+}
+
+exports.addWorkday = async (req, res) => {
+	try {
+		const user = await User.findById(req.user.userId)
+		return createWorkdayForTarget({ req, res, targetUser: user })
+	} catch (error) {
+		console.error('Error adding workday:', error)
+		res.status(500).send('Failed to add workday.')
+	}
+}
+
+exports.addWorkdayForUser = async (req, res) => {
+	try {
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+		return createWorkdayForTarget({
+			req,
+			res,
+			targetUser: access.targetUser,
+			settings: access.settings,
+		})
+	} catch (error) {
+		console.error('Error adding workday for user:', error)
 		res.status(500).send('Failed to add workday.')
 	}
 }
@@ -172,6 +215,14 @@ exports.updateWorkday = async (req, res) => {
 		const { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 		const workday = await Workday.findOne({ _id: req.params.id, userId: req.user.userId })
 		if (!workday) return res.status(404).send('Workday not found or unauthorized')
+		const user = await User.findById(req.user.userId)
+		const settings = user?.teamId ? await Settings.getSettings(user.teamId) : null
+		if (settings?.workdayEntriesOnlyToday === true && !isTodayInWarsaw(toWarsawYmd(workday.date))) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono edycję wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
 		
 		// Funkcja pomocnicza do parsowania godzin z obsługą liczb dziesiętnych (np. 8.5)
 		const parseHoursValue = (value) => {
@@ -195,14 +246,120 @@ exports.updateWorkday = async (req, res) => {
 	}
 }
 
+exports.updateWorkdayForUser = async (req, res) => {
+	try {
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+
+		const { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
+		const workday = await Workday.findOne({ _id: req.params.id, userId: access.targetUser._id })
+		if (!workday) return res.status(404).json({ message: 'Workday not found or unauthorized' })
+		if (access.settings?.workdayEntriesOnlyToday === true && !isTodayInWarsaw(toWarsawYmd(workday.date))) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono edycję wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
+
+		const parseHoursValue = (value) => {
+			if (value === null || value === undefined || value === '') return null
+			const parsed = parseFloat(value)
+			return isNaN(parsed) ? null : parsed
+		}
+
+		if (hoursWorked !== undefined) workday.hoursWorked = parseHoursValue(hoursWorked)
+		if (additionalWorked !== undefined) workday.additionalWorked = parseHoursValue(additionalWorked)
+		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
+		if (absenceType !== undefined) workday.absenceType = absenceType || null
+		if (notes !== undefined) workday.notes = notes || null
+		workday.reviewStatus = null
+		workday.reviewedBy = null
+		workday.reviewedAt = null
+
+		await workday.save()
+		res.json(workday)
+	} catch (error) {
+		console.error('Error updating workday for user:', error)
+		res.status(500).json({ message: 'Failed to update workday.' })
+	}
+}
+
 exports.deleteWorkday = async (req, res) => {
 	try {
+		const workday = await Workday.findOne({ _id: req.params.id, userId: req.user.userId })
+		if (!workday) return res.status(404).send('Workday not found or unauthorized')
+		const user = await User.findById(req.user.userId)
+		const settings = user?.teamId ? await Settings.getSettings(user.teamId) : null
+		if (settings?.workdayEntriesOnlyToday === true && !isTodayInWarsaw(toWarsawYmd(workday.date))) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono usuwanie wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
 		const result = await Workday.deleteOne({ _id: req.params.id, userId: req.user.userId })
 		if (result.deletedCount === 0) return res.status(404).send('Workday not found or unauthorized')
 		res.send('Workday deleted successfully.')
 	} catch (error) {
 		console.error('Error deleting workday:', error)
 		res.status(500).send('Failed to delete workday.')
+	}
+}
+
+exports.deleteWorkdayForUser = async (req, res) => {
+	try {
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+		const workday = await Workday.findOne({ _id: req.params.id, userId: access.targetUser._id })
+		if (!workday) return res.status(404).json({ message: 'Workday not found or unauthorized' })
+		if (access.settings?.workdayEntriesOnlyToday === true && !isTodayInWarsaw(toWarsawYmd(workday.date))) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono usuwanie wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
+		await Workday.deleteOne({ _id: req.params.id, userId: access.targetUser._id })
+		res.json({ message: 'Workday deleted successfully.' })
+	} catch (error) {
+		console.error('Error deleting workday for user:', error)
+		res.status(500).json({ message: 'Failed to delete workday.' })
+	}
+}
+
+exports.reviewWorkdayForUser = async (req, res) => {
+	try {
+		const { status } = req.body
+		if (!['approved', 'rejected', null, ''].includes(status)) {
+			return res.status(400).json({ message: 'Nieprawidłowy status zatwierdzenia.' })
+		}
+
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+
+		const workday = await Workday.findOne({ _id: req.params.id, userId: access.targetUser._id })
+		if (!workday) return res.status(404).json({ message: 'Workday not found or unauthorized' })
+
+		if (status === 'approved' || status === 'rejected') {
+			workday.reviewStatus = status
+			workday.reviewedBy = access.requestingUser._id
+			workday.reviewedAt = new Date()
+		} else {
+			workday.reviewStatus = null
+			workday.reviewedBy = null
+			workday.reviewedAt = null
+		}
+
+		await workday.save()
+		const populated = await Workday.findById(workday._id).populate('reviewedBy', 'firstName lastName')
+		res.json(populated)
+	} catch (error) {
+		console.error('Error reviewing workday for user:', error)
+		res.status(500).json({ message: 'Failed to update workday review.' })
 	}
 }
 
@@ -244,7 +401,7 @@ exports.getUserWorkdays = async (req, res) => {
 			return sendTeamScopedTimesheetViewAccessError(res, access.error)
 		}
 
-		const workdays = await Workday.find({ userId });
+		const workdays = await Workday.find({ userId }).populate('reviewedBy', 'firstName lastName');
 		res.json(workdays);
 	} catch (error) {
 		console.error('Error fetching workdays for user:', error);
@@ -309,7 +466,7 @@ exports.getAllTeamWorkdays = async (req, res) => {
 		// Pobierz workdays dla dozwolonych użytkowników
 		const workdays = await Workday.find({ 
 			userId: { $in: allowedUserIds }
-		}).populate('userId', 'firstName lastName').sort({ date: 1 });
+		}).populate('userId', 'firstName lastName').populate('reviewedBy', 'firstName lastName').sort({ date: 1 });
 
 		res.json(workdays);
 	} catch (error) {

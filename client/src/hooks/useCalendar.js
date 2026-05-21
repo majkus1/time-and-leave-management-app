@@ -59,18 +59,27 @@ export const useToggleCalendarConfirmation = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ month, year, isConfirmed }) => {
+		mutationFn: async ({ month, year, isConfirmed, userId }) => {
 			const response = await axios.post(
 				`${API_URL}/api/calendar/confirm`,
-				{ month, year, isConfirmed },
+				{ month, year, isConfirmed, userId },
 				{ withCredentials: true }
 			)
 			return response.data
 		},
 		onSuccess: (data, variables) => {
+			queryClient.setQueryData(
+				['calendar', 'confirmation', variables.month, variables.year, variables.userId || null],
+				!!variables.isConfirmed
+			)
 			queryClient.invalidateQueries({
 				queryKey: ['calendar', 'confirmation', variables.month, variables.year],
 			})
+			if (variables.userId) {
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', variables.userId] })
+				queryClient.invalidateQueries({ queryKey: ['workdays'] })
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			}
 		},
 	})
 }

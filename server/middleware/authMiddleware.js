@@ -14,7 +14,7 @@ const authenticateToken = async (req, res, next) => {
     // Verify user exists and is active (not soft-deleted)
     // Allow records without isActive field (treat as active) or isActive !== false
     const user = await User.findById(decoded.userId);
-    if (!user || user.isActive === false) {
+    if (!user || user.isActive === false || user.appAccessEnabled === false) {
       return res.status(401).send('Unauthorized - user account is inactive');
     }
     

@@ -10,8 +10,12 @@ const { freemiumWorkdayTimerGuard } = require('../middleware/freemiumWorkdayTime
 
 // Trasy dla ewidencji czasu pracy
 router.post('/', authenticateToken, workdayController.addWorkday) // POST /api/workdays
+router.post('/user/:userId', authenticateToken, workdayController.addWorkdayForUser)
 router.get('/', authenticateToken, workdayController.getWorkdays) // GET /api/workdays (własne)
+router.patch('/user/:userId/:id/review', authenticateToken, workdayController.reviewWorkdayForUser)
+router.put('/user/:userId/:id', authenticateToken, workdayController.updateWorkdayForUser)
 router.put('/:id', authenticateToken, workdayController.updateWorkday) // PUT /api/workdays/:id
+router.delete('/user/:userId/:id', authenticateToken, workdayController.deleteWorkdayForUser)
 router.delete('/:id', authenticateToken, workdayController.deleteWorkday) // DELETE /api/workdays/:id
 router.get('/user/:userId', authenticateToken, workdayController.getUserWorkdays) // GET /api/workdays/user/:userId
 router.get('/team', authenticateToken, workdayController.getAllTeamWorkdays) // GET /api/workdays/team

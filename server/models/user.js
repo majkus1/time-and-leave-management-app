@@ -31,6 +31,21 @@ const userSchema = new mongoose.Schema({
     vacationDays: { type: Number, default: 0 }, // DEPRECATED - zostawiamy dla kompatybilności wstecznej, ale nowe dane w leaveTypeDays
     leaveTypeDays: { type: mongoose.Schema.Types.Mixed, default: {} }, // Object: { 'leaveform.option1': 26, 'custom-xxx': 10, ... }
     isTeamAdmin: { type: Boolean, default: false },
+    appAccessEnabled: {
+        type: Boolean,
+        default: true,
+        index: true
+    },
+    managedOnly: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
     isActive: {
         type: Boolean,
         default: true,

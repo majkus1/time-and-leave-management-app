@@ -30,6 +30,7 @@ function Logs() {
 	const [expandedLogs, setExpandedLogs] = useState([])
 	const [editingUser, setEditingUser] = useState(null)
 	const [editedRoles, setEditedRoles] = useState([])
+	const [editedPosition, setEditedPosition] = useState('')
 	const [error, setError] = useState('')
 	const { t, i18n } = useTranslation()
 	const [editedDepartments, setEditedDepartments] = useState([]) // Tablica działów - użytkownik może być w wielu działach
@@ -240,6 +241,7 @@ function Logs() {
 		
 		setEditingUser(editingUser?._id === user._id ? null : user)
 		setEditedRoles(user.roles || [])
+		setEditedPosition(user.position || '')
 		
 		// Dla wielu działów - upewnij się, że to tablica
 		const userDepartments = Array.isArray(user.department) 
@@ -425,6 +427,13 @@ function Logs() {
 				await showAlert('Niektóre działy mają nieprawidłową długość (minimum 2, maksimum 100 znaków)')
 				return
 			}
+
+			const canEditManagedPosition = editingUser?.appAccessEnabled === false
+			const normalizedPosition = canEditManagedPosition ? editedPosition.trim() : undefined
+			if (normalizedPosition !== undefined && normalizedPosition.length > 100) {
+				await showAlert('Stanowisko może mieć maksimum 100 znaków')
+				return
+			}
 			
 			// Sprawdź czy są nowe działy, które nie istnieją w liście działów
 			const newDepartments = editedDepartments.filter(dept => !departments.includes(dept))
@@ -449,6 +458,7 @@ function Logs() {
 				userId,
 				roles: editedRoles,
 				department: editedDepartments, // Wyślij tablicę działów
+				...(normalizedPosition !== undefined ? { position: normalizedPosition } : {}),
 			})
 			
 			// Jeśli zmieniamy role zalogowanego użytkownika, odśwież AuthContext
@@ -1152,7 +1162,7 @@ function Logs() {
 												fontWeight: 'bold',
 												marginRight: '15px'
 											}}>
-												{user.username.charAt(0).toUpperCase()}
+												{(user.firstName || user.username || '?').charAt(0).toUpperCase()}
 											</div>
 											<div>
 												<div style={{ 
@@ -1160,7 +1170,9 @@ function Logs() {
 													color: '#2c3e50', 
 													marginBottom: '5px'
 												}}>
-													{user.username}
+													{user.appAccessEnabled === false
+														? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+														: user.username}
 												</div>
 												{(user.firstName || user.lastName) && (
 													<div style={{ 
@@ -1182,7 +1194,16 @@ function Logs() {
 														{user.position}
 													</div>
 												)}
-												{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+												{user.appAccessEnabled === false ? (
+													<div style={{
+														fontSize: '12px',
+														color: '#6c757d',
+														marginTop: '3px',
+														fontWeight: '600'
+													}}>
+														Bez dostępu do aplikacji
+													</div>
+												) : (isSuperAdmin || isAdmin) && !user.hasPassword && (
 													<div style={{ 
 														fontSize: '12px', 
 														color: '#dc3545', 
@@ -1233,7 +1254,7 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
-										{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+										{user.appAccessEnabled !== false && (isSuperAdmin || isAdmin) && !user.hasPassword && (
 											<button
 												onClick={() => handleResendPasswordLink(user._id)}
 												disabled={resendingLink}
@@ -1445,6 +1466,30 @@ function Logs() {
 															))}
 														</div>
 													</div>
+
+													{editingUser?.appAccessEnabled === false && (
+														<div style={{ marginBottom: '30px' }}>
+															<h5 style={{ color: '#34495e', marginBottom: '12px' }}>Stanowisko:</h5>
+															<input
+																type="text"
+																value={editedPosition}
+																onChange={(e) => setEditedPosition(e.target.value)}
+																maxLength={100}
+																placeholder="np. brygadzista, operator, pomocnik"
+																style={{
+																	width: '100%',
+																	padding: '12px',
+																	border: '1px solid #bdc3c7',
+																	borderRadius: '8px',
+																	backgroundColor: 'white',
+																	fontSize: '15px',
+																}}
+															/>
+															<small style={{ color: '#6c757d', display: 'block', marginTop: '6px' }}>
+																Pole opcjonalne dla pracownika bez dostępu do aplikacji.
+															</small>
+														</div>
+													)}
 
 													{/* Dział */}
 													<div style={{ marginBottom: '30px' }}>
@@ -1794,7 +1839,7 @@ function Logs() {
 											marginRight: '15px',
 											flexShrink: 0
 										}}>
-											{user.username.charAt(0).toUpperCase()}
+											{(user.firstName || user.username || '?').charAt(0).toUpperCase()}
 										</div>
 										<div style={{ flex: 1, minWidth: 0 }}>
 											<div style={{ 
@@ -1806,7 +1851,9 @@ function Logs() {
 												overflowWrap: 'break-word',
 												hyphens: 'auto'
 											}}>
-												{user.username}
+												{user.appAccessEnabled === false
+													? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+													: user.username}
 											</div>
 											{(user.firstName || user.lastName) && (
 												<div style={{ 
@@ -1832,7 +1879,16 @@ function Logs() {
 													{user.position}
 												</div>
 											)}
-											{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+											{user.appAccessEnabled === false ? (
+												<div style={{
+													fontSize: '12px',
+													color: '#6c757d',
+													fontWeight: '600',
+													marginTop: '3px'
+												}}>
+													Bez dostępu do aplikacji
+												</div>
+											) : (isSuperAdmin || isAdmin) && !user.hasPassword && (
 												<div style={{ 
 													fontSize: '12px', 
 													color: '#dc3545',
@@ -1883,7 +1939,7 @@ function Logs() {
 											}}>
 											{t('logs.actionbtn')}
 										</button>
-										{(isSuperAdmin || isAdmin) && !user.hasPassword && (
+										{user.appAccessEnabled !== false && (isSuperAdmin || isAdmin) && !user.hasPassword && (
 											<button
 												onClick={() => handleResendPasswordLink(user._id)}
 												disabled={resendingLink}
@@ -2116,6 +2172,34 @@ function Logs() {
 												))}
 											</div>
 										</div>
+
+										{editingUser?.appAccessEnabled === false && (
+											<div style={{ marginBottom: '25px' }}>
+												<h5 style={{
+													color: '#34495e',
+													marginBottom: '12px',
+													fontSize: '16px'
+												}}>Stanowisko:</h5>
+												<input
+													type="text"
+													value={editedPosition}
+													onChange={(e) => setEditedPosition(e.target.value)}
+													maxLength={100}
+													placeholder="np. brygadzista, operator, pomocnik"
+													style={{
+														width: '100%',
+														padding: '12px',
+														border: '1px solid #bdc3c7',
+														borderRadius: '8px',
+														backgroundColor: 'white',
+														fontSize: '16px',
+													}}
+												/>
+												<small style={{ color: '#6c757d', display: 'block', marginTop: '6px' }}>
+													Pole opcjonalne dla pracownika bez dostępu do aplikacji.
+												</small>
+											</div>
+										)}
 
 										{/* Dział */}
 										<div style={{ marginBottom: '25px' }}>

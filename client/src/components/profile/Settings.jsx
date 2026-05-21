@@ -51,6 +51,10 @@ function Settings() {
 	const [leaveCalculationMode, setLeaveCalculationMode] = useState('days')
 	const [leaveHoursPerDay, setLeaveHoursPerDay] = useState(8)
 	const [timerEnabled, setTimerEnabled] = useState(true)
+	const [allowManagedNoAccessUsers, setAllowManagedNoAccessUsers] = useState(false)
+	const [allowManagedWorkdayEntries, setAllowManagedWorkdayEntries] = useState(false)
+	const [allowManagedLeaveRequests, setAllowManagedLeaveRequests] = useState(false)
+	const [workdayEntriesOnlyToday, setWorkdayEntriesOnlyToday] = useState(false)
 	
 	// State for work hours (tablica konfiguracji)
 	const [workHoursList, setWorkHoursList] = useState([])
@@ -130,6 +134,10 @@ function Settings() {
 			setLeaveCalculationMode(settings.leaveCalculationMode || 'days')
 			setLeaveHoursPerDay(settings.leaveHoursPerDay || 8)
 			setTimerEnabled(settings.timerEnabled !== undefined ? settings.timerEnabled : true)
+			setAllowManagedNoAccessUsers(settings.allowManagedNoAccessUsers === true)
+			setAllowManagedWorkdayEntries(settings.allowManagedWorkdayEntries === true)
+			setAllowManagedLeaveRequests(settings.allowManagedLeaveRequests === true)
+			setWorkdayEntriesOnlyToday(settings.workdayEntriesOnlyToday === true)
 			
 			// Initialize work hours (obsługa starego formatu dla kompatybilności wstecznej)
 			if (settings.workHours) {
@@ -234,6 +242,10 @@ function Settings() {
 					leaveCalculationMode,
 					leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
 					...(showTimerQrSettings ? { timerEnabled } : {}),
+					allowManagedNoAccessUsers,
+					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
+					allowManagedLeaveRequests: allowManagedNoAccessUsers && allowManagedLeaveRequests,
+					workdayEntriesOnlyToday,
 				})
 			}
 			await showAlert(t('settings.saveSuccess'))
@@ -2618,7 +2630,124 @@ function Settings() {
 								)
 							)}
 						</div>
-					</div>
+						</div>
+						)}
+
+						{canEditSettings && !freemiumSlimSettings && (
+							<div style={{
+								backgroundColor: 'white',
+								borderRadius: '12px',
+								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+								padding: '20px',
+								marginTop: '20px'
+							}}>
+								<h3 style={{
+									fontSize: '18px',
+									fontWeight: '600',
+									color: '#2c3e50',
+									marginBottom: '8px'
+								}}>
+									Ewidencja czasu
+								</h3>
+								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
+									Ustaw zasady dodawania wpisów czasu pracy dla całego zespołu.
+								</p>
+								<label style={{
+									display: 'flex',
+									alignItems: 'flex-start',
+									gap: '12px',
+									cursor: 'pointer',
+									margin: 0
+								}}>
+									<input
+										type="checkbox"
+										checked={workdayEntriesOnlyToday}
+										onChange={(e) => setWorkdayEntriesOnlyToday(e.target.checked)}
+										style={{ marginTop: '4px' }}
+									/>
+									<span>
+										<strong>Wpisy w ewidencji tylko dzisiaj</strong>
+										<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+											Blokuje dodawanie i edycję wpisów dla dni wcześniejszych oraz przyszłych.
+										</span>
+									</span>
+								</label>
+							</div>
+						)}
+
+						{canEditSettings && !freemiumSlimSettings && (
+							<div style={{
+								backgroundColor: 'white',
+								borderRadius: '12px',
+								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+								padding: '20px',
+								marginTop: '20px'
+							}}>
+								<h3 style={{
+									fontSize: '18px',
+									fontWeight: '600',
+									color: '#2c3e50',
+									marginBottom: '8px'
+								}}>
+									Pracownicy bez dostępu
+								</h3>
+								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
+									Włącz, gdy brygadziści lub kadra mają prowadzić ewidencję i wnioski za pracowników, którzy nie logują się do aplikacji.
+								</p>
+								<div style={{ display: 'grid', gap: '14px' }}>
+									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+										<input
+											type="checkbox"
+											checked={allowManagedNoAccessUsers}
+											onChange={(e) => {
+												const enabled = e.target.checked
+												setAllowManagedNoAccessUsers(enabled)
+												if (!enabled) {
+													setAllowManagedWorkdayEntries(false)
+													setAllowManagedLeaveRequests(false)
+												}
+											}}
+											style={{ marginTop: '4px' }}
+										/>
+										<span>
+											<strong>Dodawanie pracowników bez dostępu</strong>
+											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+												Taki pracownik wlicza się do limitu miejsc, ale nie dostaje linku do hasła i nie może się zalogować.
+											</span>
+										</span>
+									</label>
+									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+										<input
+											type="checkbox"
+											checked={allowManagedWorkdayEntries}
+											disabled={!allowManagedNoAccessUsers}
+											onChange={(e) => setAllowManagedWorkdayEntries(e.target.checked)}
+											style={{ marginTop: '4px' }}
+										/>
+										<span>
+											<strong>Wpisy czasu pracy za pracownika</strong>
+											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+												Admin, HR i uprawniony przełożony mogą dodać wpis w kalendarzu pracownika bez dostępu.
+											</span>
+										</span>
+									</label>
+									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+										<input
+											type="checkbox"
+											checked={allowManagedLeaveRequests}
+											disabled={!allowManagedNoAccessUsers}
+											onChange={(e) => setAllowManagedLeaveRequests(e.target.checked)}
+											style={{ marginTop: '4px' }}
+										/>
+										<span>
+											<strong>Wnioski urlopowe za pracownika</strong>
+											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+												Formularz urlopu pozwoli wybrać pracownika bez dostępu z listy widocznych osób.
+											</span>
+										</span>
+									</label>
+								</div>
+							</div>
 						)}
 
 						{/* Przycisk zapisu - na całą szerokość */}

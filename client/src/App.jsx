@@ -161,7 +161,7 @@ function AppContent() {
 					<Route path="/chat" element={<Chat />} />
 					<Route path="/ai-assistant" element={<AIAssistant />} />
 					<Route path="/announcements" element={<Announcements />} />
-					<Route path="/create-user" element={isAdmin(role) ? <CreateUser /> : <Navigate to="/" />} />
+					<Route path="/create-user" element={isAdminRole || isHRRole || isSupervisorRole ? <CreateUser /> : <Navigate to="/" />} />
 						<Route path="/leave-request" element={<LeaveRequestForm />} />
 					<Route
 						path="/calendars-list"
