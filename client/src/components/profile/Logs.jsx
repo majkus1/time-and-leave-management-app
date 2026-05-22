@@ -141,6 +141,17 @@ function Logs() {
 
 	const loading = loadingUsers
 
+	const getUserDisplayName = user => {
+		const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim()
+		if (fullName) return fullName
+
+		if (user?.appAccessEnabled === false || user?.managedOnly === true) {
+			return isEnglish ? 'No-access employee' : 'Pracownik bez dostępu'
+		}
+
+		return user?.username || (isEnglish ? 'Unknown user' : 'Nieznany użytkownik')
+	}
+
 	const handleExpandLogs = userId => {
 		if (expandedLogs.includes(userId)) {
 			setExpandedLogs(expandedLogs.filter(id => id !== userId))
@@ -1065,7 +1076,7 @@ function Logs() {
 													<tr key={log._id || `${log.timestamp}-${index}`} style={{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa' }}>
 														<td style={{ padding: '14px 16px', fontSize: '14px', color: '#6c757d' }}>{new Date(log.timestamp).toLocaleString()}</td>
 														<td style={{ padding: '14px 16px', fontWeight: '600', color: '#2c3e50' }}>{log.action}</td>
-														<td style={{ padding: '14px 16px' }}>{log.user?.username || (isEnglish ? 'Unknown user' : 'Nieznany użytkownik')}</td>
+														<td style={{ padding: '14px 16px' }}>{getUserDisplayName(log.user)}</td>
 														<td style={{ padding: '14px 16px' }}>{log.user?.teamId?.name || (isEnglish ? 'No team' : 'Brak zespołu')}</td>
 													</tr>
 												))}
@@ -1090,7 +1101,7 @@ function Logs() {
 													{isEnglish ? 'Log name' : 'Nazwa logu'}: {log.action}
 												</div>
 												<div style={{ fontSize: '14px', color: '#495057' }}>
-													{isEnglish ? 'User' : 'Użytkownik'}: {log.user?.username || (isEnglish ? 'Unknown user' : 'Nieznany użytkownik')}
+													{isEnglish ? 'User' : 'Użytkownik'}: {getUserDisplayName(log.user)}
 												</div>
 												<div style={{ fontSize: '14px', color: '#495057' }}>
 													{isEnglish ? 'Team' : 'Zespół'}: {log.user?.teamId?.name || (isEnglish ? 'No team' : 'Brak zespołu')}
@@ -1162,7 +1173,7 @@ function Logs() {
 												fontWeight: 'bold',
 												marginRight: '15px'
 											}}>
-												{(user.firstName || user.username || '?').charAt(0).toUpperCase()}
+												{getUserDisplayName(user).charAt(0).toUpperCase()}
 											</div>
 											<div>
 												<div style={{ 
@@ -1170,9 +1181,7 @@ function Logs() {
 													color: '#2c3e50', 
 													marginBottom: '5px'
 												}}>
-													{user.appAccessEnabled === false
-														? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-														: user.username}
+													{getUserDisplayName(user)}
 												</div>
 												{(user.firstName || user.lastName) && (
 													<div style={{ 
@@ -1753,7 +1762,7 @@ function Logs() {
 													paddingBottom: '10px',
 													borderBottom: '2px solid #3498db'
 												}}>
-													{t('logs.userl')} - {user.username}
+													{t('logs.userl')} - {getUserDisplayName(user)}
 												</h4>
 												<div style={{ 
 													backgroundColor: 'white',
@@ -1839,7 +1848,7 @@ function Logs() {
 											marginRight: '15px',
 											flexShrink: 0
 										}}>
-											{(user.firstName || user.username || '?').charAt(0).toUpperCase()}
+											{getUserDisplayName(user).charAt(0).toUpperCase()}
 										</div>
 										<div style={{ flex: 1, minWidth: 0 }}>
 											<div style={{ 
@@ -1851,9 +1860,7 @@ function Logs() {
 												overflowWrap: 'break-word',
 												hyphens: 'auto'
 											}}>
-												{user.appAccessEnabled === false
-													? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-													: user.username}
+												{getUserDisplayName(user)}
 											</div>
 											{(user.firstName || user.lastName) && (
 												<div style={{ 
@@ -2467,7 +2474,7 @@ function Logs() {
 											borderBottom: '2px solid #3498db',
 											fontSize: '18px'
 										}}>
-											{t('logs.userl')} - {user.username}
+											{t('logs.userl')} - {getUserDisplayName(user)}
 										</h4>
 										<div style={{ 
 											backgroundColor: 'white',
@@ -2629,7 +2636,7 @@ function Logs() {
 							fontSize: '16px',
 							lineHeight: '1.6'
 						}}>
-							{t('logs.deleteConfirmMessage', { username: deleteModal.user.username })}
+							{t('logs.deleteConfirmMessage', { username: getUserDisplayName(deleteModal.user) })}
 						</p>
 						<div style={{
 							display: 'flex',
@@ -2778,7 +2785,7 @@ function Logs() {
 														fontSize: '18px',
 														marginBottom: '5px'
 													}}>
-														{user.username}
+														{getUserDisplayName(user)}
 													</div>
 													{(user.firstName || user.lastName) && (
 														<div style={{
@@ -2840,7 +2847,8 @@ function Logs() {
 											}}>
 												<button
 													onClick={async () => {
-														const confirmed = await showConfirm(t('logs.restoreUserConfirm', { username: user.username }) || `Czy na pewno chcesz przywrócić użytkownika ${user.username}?`)
+														const userDisplayName = getUserDisplayName(user)
+														const confirmed = await showConfirm(t('logs.restoreUserConfirm', { username: userDisplayName }) || `Czy na pewno chcesz przywrócić użytkownika ${userDisplayName}?`)
 														if (!confirmed) return
 														
 														try {
@@ -2875,7 +2883,8 @@ function Logs() {
 												</button>
 												<button
 													onClick={async () => {
-														const confirmed = await showConfirm(t('logs.permanentDeleteConfirm', { username: user.username }) || `Czy na pewno chcesz trwale usunąć użytkownika ${user.username}? Ta operacja jest nieodwracalna.`)
+														const userDisplayName = getUserDisplayName(user)
+														const confirmed = await showConfirm(t('logs.permanentDeleteConfirm', { username: userDisplayName }) || `Czy na pewno chcesz trwale usunąć użytkownika ${userDisplayName}? Ta operacja jest nieodwracalna.`)
 														if (!confirmed) return
 														
 														try {
