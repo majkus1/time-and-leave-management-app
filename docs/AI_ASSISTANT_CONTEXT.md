@@ -89,7 +89,7 @@ Nie ujawniaj danych spoza DATA CONTEXT. Jeśli użytkownik pyta o osoby poza zak
 
 ## Pracownicy bez dostępu do aplikacji
 
-Planopia ma opcjonalną funkcję **Pracownicy bez dostępu**. Jest przydatna np. na budowach, gdy brygadzista, kierownik, Admin lub HR prowadzą ewidencję i wnioski za osoby, które same nie korzystają z aplikacji.
+Planopia ma opcjonalną funkcję **Pracownicy bez dostępu**. Jest przydatna, gdy uprawnione osoby prowadzą ewidencję i wnioski za pracowników, którzy sami nie korzystają z aplikacji.
 
 **Najważniejsze zasady:**
 

@@ -24,6 +24,18 @@ function respondLeaveUserViewAccessError(res, error) {
 	return sendTeamScopedLeaveViewAccessError(res, error)
 }
 
+async function canManageManagedNoAccessLeaveRequest({ leaveRequest, requestingUser, targetUser }) {
+	if (!leaveRequest || !requestingUser || !targetUser) return false
+	if (targetUser.appAccessEnabled !== false) return false
+	const requesterId = requestingUser._id.toString()
+	if (requestingUser.roles.includes('Admin') || requestingUser.roles.includes('HR')) return true
+	if (leaveRequest.submittedBy?.toString?.() === requesterId) {
+		return true
+	}
+	const { canSupervisorApproveLeaves } = require('../services/roleService')
+	return canSupervisorApproveLeaves(requestingUser, targetUser)
+}
+
 async function findLeaveRequestsForUser(userId) {
 	const leaveRequests = await LeaveRequest.find({ userId })
 		.populate({
@@ -951,7 +963,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 		const user = await User.findOne({
 			_id: leaveRequest.userId,
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username department roles teamId')
+		}).select('firstName lastName username department roles teamId appAccessEnabled')
 		if (!user) {
 			return res.status(404).send('User not found or inactive.')
 		}
@@ -960,12 +972,15 @@ exports.cancelLeaveRequest = async (req, res) => {
 			return res.status(404).send('Leave request not found.')
 		}
 
-		// Sprawdź uprawnienia - tylko właściciel wniosku lub admin może anulować
 		const isOwner = leaveRequest.userId.toString() === req.user.userId
 		const isAdmin = requestingUser.roles.includes('Admin')
-
-		if (!isOwner && !isAdmin) {
-			return res.status(403).send('Access denied. Only the request owner or admin can cancel the request.')
+		const canManageManaged = await canManageManagedNoAccessLeaveRequest({
+			leaveRequest,
+			requestingUser,
+			targetUser: user,
+		})
+		if (!isOwner && !isAdmin && !canManageManaged) {
+			return res.status(403).send('Access denied.')
 		}
 
 		const teamId = user.teamId || requestingUser.teamId
@@ -1081,23 +1096,31 @@ exports.updateLeaveRequest = async (req, res) => {
 			return res.status(404).send('User not found.')
 		}
 
-		// Sprawdź uprawnienia - tylko właściciel wniosku może edytować
+		const user = await User.findOne({
+			_id: leaveRequest.userId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select('firstName lastName username department roles teamId appAccessEnabled')
+		if (!user) {
+			return res.status(404).send('User not found or inactive.')
+		}
+
+		if (requestingUser.teamId.toString() !== user.teamId.toString()) {
+			return res.status(404).send('Leave request not found.')
+		}
+
 		const isOwner = leaveRequest.userId.toString() === req.user.userId
-		if (!isOwner) {
-			return res.status(403).send('Access denied. Only the request owner can edit the request.')
+		const canManageManaged = await canManageManagedNoAccessLeaveRequest({
+			leaveRequest,
+			requestingUser,
+			targetUser: user,
+		})
+		if (!isOwner && !canManageManaged) {
+			return res.status(403).send('Access denied.')
 		}
 
 		// Sprawdź czy wniosek może być edytowany (tylko jeśli status to pending)
 		if (leaveRequest.status !== 'status.pending') {
 			return res.status(400).send('Only pending requests can be edited.')
-		}
-
-		const user = await User.findOne({
-			_id: leaveRequest.userId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('firstName lastName username department roles teamId')
-		if (!user) {
-			return res.status(404).send('User not found or inactive.')
 		}
 
 		const teamId = user.teamId || requestingUser.teamId
