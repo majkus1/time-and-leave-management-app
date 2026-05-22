@@ -1475,7 +1475,7 @@ function Logs() {
 																value={editedPosition}
 																onChange={(e) => setEditedPosition(e.target.value)}
 																maxLength={100}
-																placeholder="np. brygadzista, operator, pomocnik"
+																placeholder="np. specjalista, koordynator, pracownik"
 																style={{
 																	width: '100%',
 																	padding: '12px',
@@ -2185,7 +2185,7 @@ function Logs() {
 													value={editedPosition}
 													onChange={(e) => setEditedPosition(e.target.value)}
 													maxLength={100}
-													placeholder="np. brygadzista, operator, pomocnik"
+													placeholder="np. specjalista, koordynator, pracownik"
 													style={{
 														width: '100%',
 														padding: '12px',

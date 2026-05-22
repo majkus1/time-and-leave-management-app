@@ -18,16 +18,16 @@ export const useOwnVacationDays = () => {
 }
 
 // Query hook - pobieranie dni urlopowych użytkownika
-export const useVacationDays = (userId) => {
+export const useVacationDays = (userId, { enabled: queryEnabled = true } = {}) => {
 	return useQuery({
 		queryKey: ['vacation', 'days', userId],
 		queryFn: async () => {
 			const response = await axios.get(`${API_URL}/api/vacations/${userId}/vacation-days`, {
 				withCredentials: true,
 			})
-			return response.data.vacationDays
+			return response.data
 		},
-		enabled: !!userId,
+		enabled: queryEnabled && !!userId,
 		staleTime: 2 * 60 * 1000, // 2 minuty
 		cacheTime: 5 * 60 * 1000,
 	})

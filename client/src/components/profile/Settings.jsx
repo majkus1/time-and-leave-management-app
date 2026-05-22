@@ -2692,7 +2692,7 @@ function Settings() {
 									Pracownicy bez dostępu
 								</h3>
 								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									Włącz, gdy brygadziści lub kadra mają prowadzić ewidencję i wnioski za pracowników, którzy nie logują się do aplikacji.
+									Włącz, gdy uprawnione osoby mają prowadzić ewidencję i wnioski za pracowników, którzy nie logują się do aplikacji.
 								</p>
 								<div style={{ display: 'grid', gap: '14px' }}>
 									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>

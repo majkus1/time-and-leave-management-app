@@ -319,7 +319,7 @@ function CreateUser() {
                                             <input
                                                 type="text"
                                                 id="position"
-                                                placeholder="np. brygadzista, operator, pomocnik"
+                                                placeholder="np. specjalista, koordynator, pracownik"
                                                 value={position}
                                                 onChange={e => setPosition(e.target.value)}
                                                 maxLength={100}
