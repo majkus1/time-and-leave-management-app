@@ -1571,7 +1571,18 @@ function MonthlyCalendar() {
 					if (!selectedDate) return null
 					const selectedDayKey = new Date(selectedDate).toDateString()
 					const hasExistingEntries = workdays.some((day) => new Date(day.date).toDateString() === selectedDayKey)
-					if (hasExistingEntries) return null
+					const hasAcceptedLeaveRequest = Array.isArray(acceptedLeaveRequests) && acceptedLeaveRequests.some((request) => {
+						if (!request.startDate || !request.endDate) return false
+						const selected = new Date(selectedDate)
+						const selectedDay = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate())
+						const start = new Date(request.startDate)
+						const end = new Date(request.endDate)
+						const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+						const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+						return selectedDay >= startDay && selectedDay <= endDay
+					})
+					const notesOnlyMode = hasAcceptedLeaveRequest || isHolidayDay || isWeekendDay
+					if (hasExistingEntries || notesOnlyMode) return null
 					return (
 						<p style={{ margin: '-8px 0 14px', color: '#64748b', fontSize: '13px' }}>
 							{t('workcalendar.entryHint') || 'Wpisz godziny pracy albo nieobecność.'}
