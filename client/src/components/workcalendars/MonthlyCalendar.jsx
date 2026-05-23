@@ -1567,9 +1567,17 @@ function MonthlyCalendar() {
 						×
 					</button>
 				</div>
-				<p style={{ margin: '-8px 0 14px', color: '#64748b', fontSize: '13px' }}>
-					{t('workcalendar.entryHint') || 'Wpisz godziny pracy albo nieobecność.'}
-				</p>
+				{(() => {
+					if (!selectedDate) return null
+					const selectedDayKey = new Date(selectedDate).toDateString()
+					const hasExistingEntries = workdays.some((day) => new Date(day.date).toDateString() === selectedDayKey)
+					if (hasExistingEntries) return null
+					return (
+						<p style={{ margin: '-8px 0 14px', color: '#64748b', fontSize: '13px' }}>
+							{t('workcalendar.entryHint') || 'Wpisz godziny pracy albo nieobecność.'}
+						</p>
+					)
+				})()}
 				{isConfirmed && (
 					<div style={{
 						marginBottom: '14px',
