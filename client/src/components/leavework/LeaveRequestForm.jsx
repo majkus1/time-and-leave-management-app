@@ -397,7 +397,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 		}
 
 		if (submitForEmployee && !targetUserId) {
-			await showAlert('Wybierz pracownika.')
+			await showAlert(t('leaveform.selectEmployeeRequired'))
 			return
 		}
 		
@@ -659,9 +659,9 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 												style={{ marginTop: '4px' }}
 											/>
 											<span>
-												<strong>Zgłoś urlop za pracownika</strong>
+												<strong>{t('leaveform.submitForEmployeeTitle')}</strong>
 												<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-													Dostępne tylko dla pracowników bez dostępu do aplikacji.
+													{t('leaveform.submitForEmployeeDescription')}
 												</span>
 											</span>
 										</label>
@@ -673,7 +673,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 													required={submitForEmployee}
 												>
-													<option value="">Wybierz pracownika</option>
+													<option value="">{t('leaveform.selectEmployee')}</option>
 													{managedLeaveUsers.map(user => (
 														<option key={user._id} value={user._id}>
 															{`${user.firstName || ''} ${user.lastName || ''}`.trim()}
@@ -690,7 +690,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 														color: '#0f3b67',
 														fontSize: '14px'
 													}}>
-														Wybrano pracownika bez dostępu: <strong>{`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}</strong>
+														{t('leaveform.selectedNoAccessEmployee')}: <strong>{`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}</strong>
 													</div>
 												)}
 											</div>
@@ -821,7 +821,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 							backgroundColor: '#f0f7ff',
 							color: '#0f3b67'
 						}}>
-							Pokazujesz wnioski pracownika bez dostępu: <strong>{`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}</strong>
+							{t('leaveform.showingNoAccessEmployeeRequests')}: <strong>{`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}</strong>
 						</div>
 					)}
 					<div>
@@ -834,7 +834,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 								backgroundColor: '#fff',
 								color: '#6b7280'
 							}}>
-								{selectedManagedUser ? 'Ten pracownik nie ma jeszcze wniosków.' : 'Nie masz jeszcze wniosków.'}
+								{selectedManagedUser ? t('leaveform.noRequestsForSelectedEmployee') : t('leaveform.noRequestsYet')}
 							</div>
 						)}
 						{displayedLeaveRequests.map((request) => {
@@ -911,7 +911,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 										</p>
 										{request.submittedBy && (
 											<p style={{ margin: 0, color: '#4b5563' }}>
-												<strong>Zgłoszono przez:</strong> {request.submittedBy.firstName} {request.submittedBy.lastName}
+												<strong>{t('leaveform.submittedByLabel')}:</strong> {request.submittedBy.firstName} {request.submittedBy.lastName}
 											</p>
 										)}
 										<p className="leave-request-status-mobile" style={{ margin: 0 }}>

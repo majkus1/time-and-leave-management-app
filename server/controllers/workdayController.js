@@ -3,12 +3,14 @@ const Workday = require('../models/Workday')(firmDb)
 const User = require('../models/user')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
+const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
 const {
 	resolveTeamScopedTimesheetWriteAccess,
 	sendTeamScopedTimesheetWriteAccessError,
 } = require('../utils/timesheetWriteAccess')
+const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -200,6 +202,61 @@ exports.addWorkdayForUser = async (req, res) => {
 	}
 }
 
+exports.bulkFillWorkdays = async (req, res) => {
+	try {
+		const targetUser = await User.findById(req.user.userId)
+		if (!targetUser || !targetUser.teamId) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony.' })
+		}
+		const settings = await Settings.getSettings(targetUser.teamId)
+		const result = await bulkFillWorkdays({
+			WorkdayModel: Workday,
+			LeaveRequestModel: LeaveRequest,
+			CalendarConfirmationModel: CalendarConfirmation,
+			targetUser,
+			settings,
+			body: req.body,
+		})
+		if (result.error) {
+			return res.status(result.error.status).json({
+				message: result.error.message,
+				code: result.error.code,
+			})
+		}
+		return res.status(201).json(result)
+	} catch (error) {
+		console.error('Error bulk filling workdays:', error)
+		return res.status(500).json({ message: 'Nie udało się uzupełnić ewidencji.' })
+	}
+}
+
+exports.bulkFillWorkdaysForUser = async (req, res) => {
+	try {
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+		const result = await bulkFillWorkdays({
+			WorkdayModel: Workday,
+			LeaveRequestModel: LeaveRequest,
+			CalendarConfirmationModel: CalendarConfirmation,
+			targetUser: access.targetUser,
+			settings: access.settings,
+			body: req.body,
+		})
+		if (result.error) {
+			return res.status(result.error.status).json({
+				message: result.error.message,
+				code: result.error.code,
+			})
+		}
+		return res.status(201).json(result)
+	} catch (error) {
+		console.error('Error bulk filling workdays for user:', error)
+		return res.status(500).json({ message: 'Nie udało się uzupełnić ewidencji.' })
+	}
+}
+
 exports.getWorkdays = async (req, res) => {
 	try {
 		const workdays = await Workday.find({ userId: req.user.userId })
@@ -304,6 +361,85 @@ exports.deleteWorkday = async (req, res) => {
 	} catch (error) {
 		console.error('Error deleting workday:', error)
 		res.status(500).send('Failed to delete workday.')
+	}
+}
+
+exports.clearWorkdaysForMonth = async (req, res) => {
+	try {
+		const month = Number.parseInt(req.body?.month, 10)
+		const year = Number.parseInt(req.body?.year, 10)
+		if (!Number.isInteger(month) || month < 0 || month > 11 || !Number.isInteger(year) || year < 2000 || year > 2100) {
+			return res.status(400).json({ message: 'Nieprawidłowy miesiąc lub rok.', code: 'INVALID_MONTH_RANGE' })
+		}
+
+		const user = await User.findById(req.user.userId)
+		if (!user || !user.teamId) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony.' })
+		}
+
+		const settings = await Settings.getSettings(user.teamId)
+		if (settings?.workdayEntriesOnlyToday === true) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono edycję wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
+
+		const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
+		const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
+
+		const result = await Workday.deleteMany({
+			userId: req.user.userId,
+			date: { $gte: startDate, $lte: endDate },
+		})
+
+		return res.json({
+			deletedCount: result.deletedCount || 0,
+			month,
+			year,
+		})
+	} catch (error) {
+		console.error('Error clearing workdays for month:', error)
+		return res.status(500).json({ message: 'Nie udało się wyczyścić wpisów z miesiąca.' })
+	}
+}
+
+exports.clearWorkdaysForUserMonth = async (req, res) => {
+	try {
+		const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, req.params.userId)
+		if (access.error) {
+			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+		}
+
+		const month = Number.parseInt(req.body?.month, 10)
+		const year = Number.parseInt(req.body?.year, 10)
+		if (!Number.isInteger(month) || month < 0 || month > 11 || !Number.isInteger(year) || year < 2000 || year > 2100) {
+			return res.status(400).json({ message: 'Nieprawidłowy miesiąc lub rok.', code: 'INVALID_MONTH_RANGE' })
+		}
+
+		if (access.settings?.workdayEntriesOnlyToday === true) {
+			return res.status(400).json({
+				message: 'W ustawieniach zespołu włączono edycję wpisów tylko dla dzisiejszego dnia.',
+				code: 'ONLY_TODAY_ALLOWED',
+			})
+		}
+
+		const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
+		const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
+
+		const result = await Workday.deleteMany({
+			userId: access.targetUser._id,
+			date: { $gte: startDate, $lte: endDate },
+		})
+
+		return res.json({
+			deletedCount: result.deletedCount || 0,
+			month,
+			year,
+		})
+	} catch (error) {
+		console.error('Error clearing workdays for user month:', error)
+		return res.status(500).json({ message: 'Nie udało się wyczyścić wpisów z miesiąca.' })
 	}
 }
 

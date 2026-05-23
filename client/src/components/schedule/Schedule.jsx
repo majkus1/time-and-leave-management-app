@@ -38,6 +38,19 @@ function capitalizeMonthName(locale, monthIndexZeroBased) {
 	return raw.charAt(0).toUpperCase() + raw.slice(1)
 }
 
+const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
+	const totalMinutes = index * 30
+	const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
+	const minutes = String(totalMinutes % 60).padStart(2, '0')
+	return `${hours}:${minutes}`
+})
+
+const normalizeHalfHourTime = (time) => {
+	const match = String(time || '').trim().match(/^(\d{1,2}):([0-5]\d)$/)
+	if (!match) return ''
+	return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+}
+
 /** Ustawienia zespołu: workHours jako tablica lub pojedynczy obiekt (kompatybilność). */
 function normalizedTeamWorkHoursList(workHours) {
 	if (!workHours) return []
@@ -52,8 +65,8 @@ function buildAutoShiftRowsFromTeamSettings(workHours) {
 	if (list.length === 0) return null
 	return list.map((wh, idx) => ({
 		id: `shift-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 8)}`,
-		timeFrom: wh.timeFrom,
-		timeTo: wh.timeTo,
+		timeFrom: normalizeHalfHourTime(wh.timeFrom),
+		timeTo: normalizeHalfHourTime(wh.timeTo),
 		minEmployees: 2,
 		weekdays: [1, 2, 3, 4, 5]
 	}))
@@ -671,8 +684,8 @@ function Schedule() {
 			}
 			
 			if (workHoursToUse && workHoursToUse.timeFrom && workHoursToUse.timeTo) {
-				setTimeFrom(workHoursToUse.timeFrom)
-				setTimeTo(workHoursToUse.timeTo)
+				setTimeFrom(normalizeHalfHourTime(workHoursToUse.timeFrom))
+				setTimeTo(normalizeHalfHourTime(workHoursToUse.timeTo))
 			} else {
 				setTimeFrom('08:00')
 				setTimeTo('16:00')
@@ -1337,8 +1350,8 @@ function Schedule() {
 				}
 				
 				if (workHoursToUse && workHoursToUse.timeFrom && workHoursToUse.timeTo) {
-					setTimeFrom(workHoursToUse.timeFrom)
-					setTimeTo(workHoursToUse.timeTo)
+					setTimeFrom(normalizeHalfHourTime(workHoursToUse.timeFrom))
+					setTimeTo(normalizeHalfHourTime(workHoursToUse.timeTo))
 				} else {
 					setTimeFrom('08:00')
 					setTimeTo('16:00')
@@ -2954,8 +2967,8 @@ function Schedule() {
 											checked={selectedWorkHoursIndex === index}
 											onChange={() => {
 												setSelectedWorkHoursIndex(index)
-												setTimeFrom(workHours.timeFrom)
-												setTimeTo(workHours.timeTo)
+												setTimeFrom(normalizeHalfHourTime(workHours.timeFrom))
+												setTimeTo(normalizeHalfHourTime(workHours.timeTo))
 											}}
 											style={{
 												marginRight: '10px',
@@ -2990,8 +3003,7 @@ function Schedule() {
 							}}>
 								{t('schedule.timeFrom') || 'Od'}
 							</label>
-							<input
-								type="text"
+							<select
 								value={timeFrom}
 								onChange={(e) => {
 									setTimeFrom(e.target.value)
@@ -3000,10 +3012,8 @@ function Schedule() {
 										setSelectedWorkHoursIndex(null)
 									}
 								}}
-								placeholder="08:00"
 								required
 								disabled={isNonWorkingScheduleDayBlocked}
-								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
 									padding: '12px',
@@ -3011,7 +3021,12 @@ function Schedule() {
 									borderRadius: '6px',
 									fontSize: '16px'
 								}}
-							/>
+							>
+								<option value="">{t('schedule.selectOption') || t('settings.selectOption')}</option>
+								{halfHourOptions.map(option => (
+									<option key={`schedule-from-${option}`} value={option}>{option}</option>
+								))}
+							</select>
 						</div>
 						<div>
 							<label style={{
@@ -3022,8 +3037,7 @@ function Schedule() {
 							}}>
 								{t('schedule.timeTo') || 'Do'}
 							</label>
-							<input
-								type="text"
+							<select
 								value={timeTo}
 								onChange={(e) => {
 									setTimeTo(e.target.value)
@@ -3032,10 +3046,8 @@ function Schedule() {
 										setSelectedWorkHoursIndex(null)
 									}
 								}}
-								placeholder="16:00"
 								required
 								disabled={isNonWorkingScheduleDayBlocked}
-								pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
 								style={{
 									width: '100%',
 									padding: '12px',
@@ -3043,7 +3055,12 @@ function Schedule() {
 									borderRadius: '6px',
 									fontSize: '16px'
 								}}
-							/>
+							>
+								<option value="">{t('schedule.selectOption') || t('settings.selectOption')}</option>
+								{halfHourOptions.map(option => (
+									<option key={`schedule-to-${option}`} value={option}>{option}</option>
+								))}
+							</select>
 						</div>
 					</div>
 
