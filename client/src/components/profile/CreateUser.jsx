@@ -250,12 +250,12 @@ function CreateUser() {
                                                     }}
                                                     style={{ marginTop: '4px' }}
                                                 />
-                                                <span>
-                                                    <strong>Pracownik bez dostępu do aplikacji</strong>
-                                                    <span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-                                                        Wlicza się do limitu miejsc. Nie dostanie emaila ani linku do hasła.
-                                                    </span>
-                                                </span>
+												<span>
+													<strong>{t('newuser.managedNoAccessTitle')}</strong>
+													<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+														{t('newuser.managedNoAccessDescription')}
+													</span>
+												</span>
                                             </label>
                                         </div>
                                     )}
@@ -310,26 +310,26 @@ function CreateUser() {
 										/>
 									</div>
 
-                                    {effectiveManagedOnly && (
-                                        <div>
-                                            <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
-                                                Stanowisko <span style={{ color: '#6c757d', fontSize: '12px' }}>(opcjonalnie)</span>
-                                            </label>
+									{effectiveManagedOnly && (
+										<div>
+											<label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+												{t('newuser.managedPositionLabel')} <span style={{ color: '#6c757d', fontSize: '12px' }}>({t('newuser.optional')})</span>
+											</label>
                                             <br></br>
                                             <input
                                                 type="text"
                                                 id="position"
-                                                placeholder="np. specjalista, koordynator, pracownik"
+												placeholder={t('newuser.managedPositionPlaceholder')}
                                                 value={position}
                                                 onChange={e => setPosition(e.target.value)}
                                                 maxLength={100}
                                                 className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
-                                            <span style={{ display: 'block', color: '#6c757d', fontSize: '13px', marginTop: '6px' }}>
-                                                Stanowisko będzie widoczne w danych pracownika i można je później edytować w zarządzaniu zespołem.
-                                            </span>
-                                        </div>
-                                    )}
+											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px', marginTop: '6px' }}>
+												{t('newuser.managedPositionHint')}
+											</span>
+										</div>
+									)}
 
                                     <div className="mt-8">
                                         <label className="block text-sm font-medium text-gray-700 mr-3">

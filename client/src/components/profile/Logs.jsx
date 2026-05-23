@@ -26,6 +26,12 @@ const PAID_PLAN_LABELS = {
 	enterprise: 'Enterprise',
 }
 
+const WORKER_ROLE = 'Pracownik (Worker)'
+const isManagedNoAccessUser = user =>
+	user?.appAccessEnabled === false ||
+	user?.managedOnly === true ||
+	String(user?.username || '').endsWith('@no-access.planopia.local')
+
 function Logs() {
 	const [expandedLogs, setExpandedLogs] = useState([])
 	const [editingUser, setEditingUser] = useState(null)
@@ -88,7 +94,7 @@ function Logs() {
 
 	const availableRoles = [
 		'Admin',
-		'Pracownik (Worker)',
+		WORKER_ROLE,
 		'Przełożony (Supervisor)',
 		'HR',
 	]
@@ -251,7 +257,7 @@ function Logs() {
 		// console.log('user.department === undefined:', user.department === undefined)
 		
 		setEditingUser(editingUser?._id === user._id ? null : user)
-		setEditedRoles(user.roles || [])
+		setEditedRoles(isManagedNoAccessUser(user) ? [WORKER_ROLE] : (user.roles || []))
 		setEditedPosition(user.position || '')
 		
 		// Dla wielu działów - upewnij się, że to tablica
@@ -265,6 +271,10 @@ function Logs() {
 	}
 
 	const handleRoleChange = role => {
+		if (isManagedNoAccessUser(editingUser)) {
+			setEditedRoles([WORKER_ROLE])
+			return
+		}
 		setEditedRoles(prevRoles => (prevRoles.includes(role) ? prevRoles.filter(r => r !== role) : [...prevRoles, role]))
 	}
 
@@ -439,7 +449,7 @@ function Logs() {
 				return
 			}
 
-			const canEditManagedPosition = editingUser?.appAccessEnabled === false
+			const canEditManagedPosition = isManagedNoAccessUser(editingUser)
 			const normalizedPosition = canEditManagedPosition ? editedPosition.trim() : undefined
 			if (normalizedPosition !== undefined && normalizedPosition.length > 100) {
 				await showAlert('Stanowisko może mieć maksimum 100 znaków')
@@ -467,7 +477,7 @@ function Logs() {
 			// Zaktualizuj użytkownika z nowymi rolami i działami (tablica)
 			await updateUserRolesMutation.mutateAsync({
 				userId,
-				roles: editedRoles,
+				roles: isManagedNoAccessUser(editingUser) ? [WORKER_ROLE] : editedRoles,
 				department: editedDepartments, // Wyślij tablicę działów
 				...(normalizedPosition !== undefined ? { position: normalizedPosition } : {}),
 			})
@@ -1210,7 +1220,7 @@ function Logs() {
 														marginTop: '3px',
 														fontWeight: '600'
 													}}>
-														Bez dostępu do aplikacji
+														{t('logs.noAppAccess')}
 													</div>
 												) : (isSuperAdmin || isAdmin) && !user.hasPassword && (
 													<div style={{ 
@@ -1365,7 +1375,16 @@ function Logs() {
 													
 													{/* Role */}
 													<div style={{ marginBottom: '30px' }}>
-														<h5 style={{ color: '#34495e', marginBottom: '15px' }}>Role użytkownika:</h5>
+														<h5 style={{ color: '#34495e', marginBottom: '15px' }}>{t('logs.userRolesLabel')}</h5>
+														{isManagedNoAccessUser(editingUser) && (
+															<p style={{
+																margin: '0 0 12px',
+																color: '#6b7280',
+																fontSize: '14px',
+															}}>
+																{t('logs.managedOnlyWorkerRole')}
+															</p>
+														)}
 														<div style={{ 
 															display: 'grid', 
 															gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -1384,13 +1403,15 @@ function Logs() {
 																		backgroundColor: 'white',
 																		borderRadius: '6px',
 																		border: '1px solid #dee2e6',
-																		cursor: 'pointer',
+																		cursor: isManagedNoAccessUser(editingUser) ? 'not-allowed' : 'pointer',
 																		transition: 'all 0.2s',
-																		boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+																		boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+																		opacity: isManagedNoAccessUser(editingUser) && role !== WORKER_ROLE ? 0.55 : 1,
 																	}}>
 																		<input
 																			type="checkbox"
-																			checked={editedRoles.includes(role)}
+																			checked={isManagedNoAccessUser(editingUser) ? role === WORKER_ROLE : editedRoles.includes(role)}
+																			disabled={isManagedNoAccessUser(editingUser)}
 																			onChange={() => handleRoleChange(role)}
 																			style={{ 
 																				marginRight: '10px',
@@ -1399,7 +1420,7 @@ function Logs() {
 																		/>
 																		<span style={{ fontSize: '14px', flex: 1 }}>{role}</span>
 																	</label>
-																	{role === 'Przełożony (Supervisor)' && editedRoles.includes(role) && editingUser?._id && (
+																	{role === 'Przełożony (Supervisor)' && !isManagedNoAccessUser(editingUser) && editedRoles.includes(role) && editingUser?._id && (
 																		<div style={{ 
 																			display: 'flex', 
 																			gap: '10px',
@@ -1476,7 +1497,7 @@ function Logs() {
 														</div>
 													</div>
 
-													{editingUser?.appAccessEnabled === false && (
+													{isManagedNoAccessUser(editingUser) && (
 														<div style={{ marginBottom: '30px' }}>
 															<h5 style={{ color: '#34495e', marginBottom: '12px' }}>Stanowisko:</h5>
 															<input
@@ -1893,7 +1914,7 @@ function Logs() {
 													fontWeight: '600',
 													marginTop: '3px'
 												}}>
-													Bez dostępu do aplikacji
+													{t('logs.noAppAccess')}
 												</div>
 											) : (isSuperAdmin || isAdmin) && !user.hasPassword && (
 												<div style={{ 
@@ -2068,7 +2089,16 @@ function Logs() {
 												color: '#34495e', 
 												marginBottom: '15px',
 												fontSize: '16px'
-											}}>Role użytkownika:</h5>
+											}}>{t('logs.userRolesLabel')}</h5>
+											{isManagedNoAccessUser(editingUser) && (
+												<p style={{
+													margin: '0 0 12px',
+													color: '#6b7280',
+													fontSize: '14px',
+												}}>
+													{t('logs.managedOnlyWorkerRole')}
+												</p>
+											)}
 											<div style={{ 
 												display: 'flex',
 												flexDirection: 'column',
@@ -2087,13 +2117,15 @@ function Logs() {
 															backgroundColor: 'white',
 															borderRadius: '8px',
 															border: '1px solid #dee2e6',
-															cursor: 'pointer',
+															cursor: isManagedNoAccessUser(editingUser) ? 'not-allowed' : 'pointer',
 															transition: 'all 0.2s',
-															boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+															boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+															opacity: isManagedNoAccessUser(editingUser) && role !== WORKER_ROLE ? 0.55 : 1,
 														}}>
 															<input
 																type="checkbox"
-																checked={editedRoles.includes(role)}
+																checked={isManagedNoAccessUser(editingUser) ? role === WORKER_ROLE : editedRoles.includes(role)}
+																disabled={isManagedNoAccessUser(editingUser)}
 																onChange={() => handleRoleChange(role)}
 																style={{ 
 																	marginRight: '12px',
@@ -2104,7 +2136,7 @@ function Logs() {
 															/>
 															<span style={{ fontSize: '14px', lineHeight: '1.4', flex: 1 }}>{role}</span>
 														</label>
-														{role === 'Przełożony (Supervisor)' && editedRoles.includes(role) && editingUser?._id && (
+														{role === 'Przełożony (Supervisor)' && !isManagedNoAccessUser(editingUser) && editedRoles.includes(role) && editingUser?._id && (
 															<div style={{ 
 																display: 'flex', 
 																gap: '10px',
@@ -2180,7 +2212,7 @@ function Logs() {
 											</div>
 										</div>
 
-										{editingUser?.appAccessEnabled === false && (
+										{isManagedNoAccessUser(editingUser) && (
 											<div style={{ marginBottom: '25px' }}>
 												<h5 style={{
 													color: '#34495e',

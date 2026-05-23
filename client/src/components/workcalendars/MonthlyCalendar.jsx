@@ -6,7 +6,7 @@ import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useWorkdays, useCreateWorkday, useDeleteWorkday, useUpdateWorkday } from '../../hooks/useWorkdays'
+import { useWorkdays, useBulkFillWorkdays, useClearWorkdaysForMonth, useCreateWorkday, useDeleteWorkday, useUpdateWorkday } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
@@ -16,6 +16,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import TimerPanel from './TimerPanel'
 import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import BulkFillWorkdaysModal from './BulkFillWorkdaysModal'
 
 /** Zgodne z media query w style.css (szeroki miesięczny grid ~800px). */
 const MOBILE_CALENDAR_MAX_WIDTH = 900
@@ -41,6 +42,38 @@ function scrollMonthlyCalendarToTodayInView() {
 	scrollHost.scrollLeft = Math.max(0, Math.min(nextLeft, scrollHost.scrollWidth - scrollHost.clientWidth))
 }
 
+const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
+	const totalMinutes = index * 30
+	const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
+	const minutes = String(totalMinutes % 60).padStart(2, '0')
+	return `${hours}:${minutes}`
+})
+
+const parseWorkTimeRange = (value) => {
+	const normalizeTime = (time) => {
+		const match = String(time || '').trim().match(/^(\d{1,2}):([0-5]\d)$/)
+		if (!match) return ''
+		return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+	}
+	const match = String(value || '').trim().match(/^(\d{1,2}:[0-5]\d)\s*-\s*(\d{1,2}:[0-5]\d)$/)
+	return {
+		timeFrom: match ? normalizeTime(match[1]) : '',
+		timeTo: match ? normalizeTime(match[2]) : '',
+	}
+}
+
+const calculateHoursFromRange = (timeFrom, timeTo) => {
+	if (!timeFrom || !timeTo) return ''
+	const [fromH, fromM] = timeFrom.split(':').map(Number)
+	const [toH, toM] = timeTo.split(':').map(Number)
+	if ([fromH, fromM, toH, toM].some(Number.isNaN)) return ''
+	let minutes = (toH * 60 + toM) - (fromH * 60 + fromM)
+	if (minutes < 0) minutes += 24 * 60
+	if (minutes === 0) return ''
+	const hours = Math.round((minutes / 60) * 2) / 2
+	return Number.isInteger(hours) ? String(hours) : String(hours)
+}
+
 function MonthlyCalendar() {
 	const [modalIsOpen, setModalIsOpen] = useState(false)
 	const [selectedDate, setSelectedDate] = useState(null)
@@ -57,11 +90,14 @@ function MonthlyCalendar() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
 	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
+	const [workTimeFrom, setWorkTimeFrom] = useState('')
+	const [workTimeTo, setWorkTimeTo] = useState('')
 	const [notes, setNotes] = useState('')
 	const [errorMessage, setErrorMessage] = useState('')
 	const [isHolidayDay, setIsHolidayDay] = useState(false)
 	const [isWeekendDay, setIsWeekendDay] = useState(false)
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
+	const [bulkFillModalOpen, setBulkFillModalOpen] = useState(false)
 	const calendarRef = useRef(null)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -214,11 +250,97 @@ function MonthlyCalendar() {
 	const { data: settings } = useSettings()
 	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
 	const createWorkdayMutation = useCreateWorkday()
+	const bulkFillWorkdaysMutation = useBulkFillWorkdays()
+	const clearWorkdaysForMonthMutation = useClearWorkdaysForMonth()
 	const deleteWorkdayMutation = useDeleteWorkday()
 	const updateWorkdayMutation = useUpdateWorkday()
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
 	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+
+	useEffect(() => {
+		const parsed = parseWorkTimeRange(realTimeDayWorked)
+		if (parsed.timeFrom || parsed.timeTo) {
+			setWorkTimeFrom(parsed.timeFrom)
+			setWorkTimeTo(parsed.timeTo)
+		} else if (!realTimeDayWorked) {
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
+		}
+	}, [realTimeDayWorked])
+
+	const updateWorkTimeRange = (field, value) => {
+		const nextFrom = field === 'from' ? value : workTimeFrom
+		const nextTo = field === 'to' ? value : workTimeTo
+		const findMatchingWorkHoursIndex = () => {
+			if (!nextFrom || !nextTo) return -1
+			if (Array.isArray(settings?.workHours) && settings.workHours.length > 0) {
+				return settings.workHours.findIndex(
+					(workHours) => workHours?.timeFrom === nextFrom && workHours?.timeTo === nextTo
+				)
+			}
+			if (settings?.workHours?.timeFrom && settings?.workHours?.timeTo) {
+				return settings.workHours.timeFrom === nextFrom && settings.workHours.timeTo === nextTo ? 0 : -1
+			}
+			return -1
+		}
+		setWorkTimeFrom(nextFrom)
+		setWorkTimeTo(nextTo)
+		setAbsenceType('')
+		setSelectedWorkHoursIndex(findMatchingWorkHoursIndex())
+		if (!nextFrom || !nextTo) return
+		setRealTimeDayWorked(`${nextFrom}-${nextTo}`)
+		const calculatedHours = calculateHoursFromRange(nextFrom, nextTo)
+		setHoursWorked(calculatedHours || '')
+	}
+
+	const handleAbsenceChange = (value) => {
+		setAbsenceType(value)
+		if (value.trim()) {
+			setHoursWorked('')
+			setAdditionalWorked('')
+			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
+			setSelectedWorkHoursIndex(-1)
+		}
+	}
+
+	const renderWorkTimeRangeSelects = (disabled = false) => (
+		<div>
+			<label style={{ display: 'block', marginBottom: '6px', fontSize: '15px', fontWeight: 600, color: '#334155' }}>
+				Zakres godzin
+			</label>
+			<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+				<label>
+					<select
+						value={workTimeFrom}
+						onChange={e => updateWorkTimeRange('from', e.target.value)}
+						disabled={disabled}
+						className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+					>
+						<option value="">--:--</option>
+						{halfHourOptions.map(option => (
+							<option key={`from-${option}`} value={option}>{option}</option>
+						))}
+					</select>
+				</label>
+				<label>
+					<select
+						value={workTimeTo}
+						onChange={e => updateWorkTimeRange('to', e.target.value)}
+						disabled={disabled}
+						className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+					>
+						<option value="">--:--</option>
+						{halfHourOptions.map(option => (
+							<option key={`to-${option}`} value={option}>{option}</option>
+						))}
+					</select>
+				</label>
+			</div>
+		</div>
+	)
 
 	// Mobile: po załadowaniu / zmianie miesiąca — pokaż w poziomie dzisiejszy dzień (odświeżenie strony)
 	useEffect(() => {
@@ -516,6 +638,8 @@ function MonthlyCalendar() {
 			setHoursWorked('')
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
 			setAbsenceType('')
 		}
 		
@@ -771,11 +895,15 @@ function MonthlyCalendar() {
 		if (absenceTypeValue) {
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
 		}
 
 		if (hoursWorkedValue && !additionalWorked && !realTimeDayWorked) {
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
 		}
 
 		// Sprawdź czy istnieje wpis z tylko uwagami
@@ -835,6 +963,8 @@ function MonthlyCalendar() {
 			setHoursWorked('')
 			setAdditionalWorked('')
 			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
 			setAbsenceType('')
 			setNotes('')
 			setErrorMessage('')
@@ -857,6 +987,69 @@ function MonthlyCalendar() {
 			// Optimistic update już zaktualizował UI, invalidateQueries w onSuccess zadba o synchronizację z serwerem
 		} catch (error) {
 			console.error('Failed to delete workday:', error)
+		}
+	}
+
+	const formatBulkFillSummary = (result) => {
+		const skipped = result?.skipped || {}
+		const skippedTotal = Object.values(skipped).reduce((sum, value) => sum + (Number(value) || 0), 0)
+		const skippedParts = [
+			skipped.weekend ? `${t('workcalendar.bulkFill.summary.weekends')}: ${skipped.weekend}` : null,
+			skipped.holiday ? `${t('workcalendar.bulkFill.summary.holidays')}: ${skipped.holiday}` : null,
+			skipped.leave ? `${t('workcalendar.bulkFill.summary.leaves')}: ${skipped.leave}` : null,
+			skipped.existing ? `${t('workcalendar.bulkFill.summary.existing')}: ${skipped.existing}` : null,
+			skipped.confirmed ? `${t('workcalendar.bulkFill.summary.confirmedMonths')}: ${skipped.confirmed}` : null,
+		].filter(Boolean)
+		return t('workcalendar.bulkFill.summary.message', {
+			created: result?.createdCount || 0,
+			skipped: skippedTotal,
+			details: skippedParts.length ? ` (${skippedParts.join(', ')})` : '',
+		})
+	}
+
+	const handleBulkFillSubmit = async (payload) => {
+		try {
+			const result = await bulkFillWorkdaysMutation.mutateAsync(payload)
+			setBulkFillModalOpen(false)
+			await refetchWorkdays()
+			await showAlert(formatBulkFillSummary(result))
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('workcalendar.bulkFill.errors.submitError'))
+		}
+	}
+
+	const handleClearCurrentMonthEntries = async () => {
+		const tSafe = (key, fallback) => {
+			const value = t(key)
+			return value === key ? fallback : value
+		}
+		const monthEntries = workdays.filter((day) => {
+			const date = new Date(day.date)
+			return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+		})
+
+		if (monthEntries.length === 0) {
+			await showAlert(tSafe('workcalendar.noEntriesThisMonth', 'Brak wpisów do usunięcia w tym miesiącu.'))
+			return
+		}
+
+		const confirmed = await showConfirm(
+			tSafe(
+				'workcalendar.clearMonthConfirm',
+				'Czy na pewno chcesz usunąć wszystkie wpisy z widocznego miesiąca? Tej operacji nie da się cofnąć. Jeśli chcesz usunąć pojedynczy wpis, kliknij dzień w kalendarzu.'
+			)
+		)
+		if (!confirmed) return
+
+		try {
+			const result = await clearWorkdaysForMonthMutation.mutateAsync({
+				month: currentMonth,
+				year: currentYear,
+			})
+			const deletedCount = Number(result?.deletedCount || 0)
+			await showAlert(tSafe('workcalendar.clearMonthSuccess', 'Usunięto wpisy: {{count}}.').replace('{{count}}', String(deletedCount)))
+		} catch (error) {
+			await showAlert(error.response?.data?.message || tSafe('workcalendar.clearMonthError', 'Nie udało się wyczyścić wpisów z miesiąca.'))
 		}
 	}
 
@@ -898,6 +1091,8 @@ function MonthlyCalendar() {
 		setHoursWorked('')
 		setAdditionalWorked('')
 		setRealTimeDayWorked('')
+		setWorkTimeFrom('')
+		setWorkTimeTo('')
 		setAbsenceType('')
 		setNotes('')
 		setErrorMessage('')
@@ -917,7 +1112,7 @@ function MonthlyCalendar() {
 				{/* Timer Panel */}
 			{settings?.timerEnabled !== false && allowTimerLeaveApis && <TimerPanel />}
 
-			<div className="calendar-controls flex flex-wrap items-center" style={{ gap: '5px' }}>
+			<div className="calendar-controls flex flex-wrap items-center" style={{ columnGap: '10px', rowGap: '8px' }}>
 					<select
 						value={currentMonth}
 						onChange={handleMonthSelect}
@@ -949,7 +1144,7 @@ function MonthlyCalendar() {
 					<button
 						type="button"
 						onClick={handlePrevMonth}
-						style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+						style={{ marginLeft: 0, padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
 						onMouseOver={(e) => {
 							e.target.style.backgroundColor = '#f8f9fa'
 							e.target.style.borderColor = '#adb5bd'
@@ -976,6 +1171,27 @@ function MonthlyCalendar() {
 					>
 						&gt;
 					</button>
+					<div className="workday-toolbar-actions">
+						<button
+							type="button"
+							onClick={() => setBulkFillModalOpen(true)}
+							className="workday-bulk-fill-button"
+						>
+							{t('workcalendar.bulkFill.fill')}
+						</button>
+						<button
+							type="button"
+							onClick={handleClearCurrentMonthEntries}
+							disabled={clearWorkdaysForMonthMutation.isPending}
+							title={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+							aria-label={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+							className="workday-clear-month-button"
+						>
+							{clearWorkdaysForMonthMutation.isPending
+								? (t('workcalendar.clearingShort') || '...')
+								: <img src="/img/trash.png" alt={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'} className="workday-clear-month-icon" />}
+						</button>
+					</div>
 				</div>
 
 				<div className="shadow-md monthly-calendar-fc-wrap">
@@ -1293,7 +1509,7 @@ function MonthlyCalendar() {
 						position: 'relative',
 						inset: 'unset',
 						margin: '0',
-						maxWidth: '680px',
+						maxWidth: '480px',
 						width: '90%',
 						maxHeight: '92vh',
 						overflowY: 'auto',
@@ -1869,23 +2085,19 @@ function MonthlyCalendar() {
 														</div>
 													</div>
 												)}
-												<input
-													type="text"
-													placeholder={t('workcalendar.placeholder3')}
-													value={realTimeDayWorked}
-													onChange={e => setRealTimeDayWorked(e.target.value)}
-													disabled={isHolidayDay || isWeekendDay}
-													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-												/>
+												{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
 											</div>
 
-											<div>
-												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+											<div className="bulk-fill-absence-card">
+												<h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#13294b' }}>{t('workcalendar.h2modalabsence')}</h2>
+												<p style={{ margin: '-4px 0 0', color: '#64748b', fontSize: '13px' }}>
+													Wypełnij tylko wtedy, gdy zamiast godzin chcesz dodać nieobecność.
+												</p>
 												<input
 													type="text"
 													placeholder={t('workcalendar.placeholder4')}
 													value={absenceType}
-													onChange={e => setAbsenceType(e.target.value)}
+													onChange={e => handleAbsenceChange(e.target.value)}
 													disabled={isHolidayDay || isWeekendDay}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 												/>
@@ -2135,23 +2347,19 @@ function MonthlyCalendar() {
 											</div>
 										</div>
 									)}
-									<input
-										type="text"
-										placeholder={t('workcalendar.placeholder3')}
-										value={realTimeDayWorked}
-										onChange={e => setRealTimeDayWorked(e.target.value)}
-										disabled={isHolidayDay || isWeekendDay}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-									/>
+									{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
 								</div>
 
-								<div>
-									<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modalabsence')}</h2>
+								<div className="bulk-fill-absence-card">
+									<h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#13294b' }}>{t('workcalendar.h2modalabsence')}</h2>
+									<p style={{ margin: '-4px 0 0', color: '#64748b', fontSize: '13px' }}>
+										Wypełnij tylko wtedy, gdy zamiast godzin chcesz dodać nieobecność.
+									</p>
 									<input
 										type="text"
 										placeholder={t('workcalendar.placeholder4')}
 										value={absenceType}
-										onChange={e => setAbsenceType(e.target.value)}
+										onChange={e => handleAbsenceChange(e.target.value)}
 										disabled={isHolidayDay || isWeekendDay}
 										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
 									/>
@@ -2202,6 +2410,16 @@ function MonthlyCalendar() {
 					)
 				})()}
 			</Modal>
+			<BulkFillWorkdaysModal
+				isOpen={bulkFillModalOpen}
+				onClose={() => setBulkFillModalOpen(false)}
+				onSubmit={handleBulkFillSubmit}
+				settings={settings}
+				currentMonth={currentMonth}
+				currentYear={currentYear}
+				isPending={bulkFillWorkdaysMutation.isPending}
+				disabledReason={isConfirmed ? 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.' : ''}
+			/>
 		</div>
 	)
 }

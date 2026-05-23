@@ -12,7 +12,7 @@ import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useUser } from '../../hooks/useUsers'
-import { useCreateWorkdayForUser, useDeleteWorkdayForUser, useReviewWorkdayForUser, useUpdateWorkdayForUser, useUserWorkdays } from '../../hooks/useWorkdays'
+import { useBulkFillWorkdays, useClearWorkdaysForMonth, useCreateWorkdayForUser, useDeleteWorkdayForUser, useReviewWorkdayForUser, useUpdateWorkdayForUser, useUserWorkdays } from '../../hooks/useWorkdays'
 import { useCalendarConfirmation, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
@@ -22,6 +22,39 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useAlert } from '../../context/AlertContext'
+import BulkFillWorkdaysModal from './BulkFillWorkdaysModal'
+
+const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
+	const totalMinutes = index * 30
+	const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
+	const minutes = String(totalMinutes % 60).padStart(2, '0')
+	return `${hours}:${minutes}`
+})
+
+const parseWorkTimeRange = (value) => {
+	const normalizeTime = (time) => {
+		const match = String(time || '').trim().match(/^(\d{1,2}):([0-5]\d)$/)
+		if (!match) return ''
+		return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+	}
+	const match = String(value || '').trim().match(/^(\d{1,2}:[0-5]\d)\s*-\s*(\d{1,2}:[0-5]\d)$/)
+	return {
+		timeFrom: match ? normalizeTime(match[1]) : '',
+		timeTo: match ? normalizeTime(match[2]) : '',
+	}
+}
+
+const calculateHoursFromRange = (timeFrom, timeTo) => {
+	if (!timeFrom || !timeTo) return ''
+	const [fromH, fromM] = timeFrom.split(':').map(Number)
+	const [toH, toM] = timeTo.split(':').map(Number)
+	if ([fromH, fromM, toH, toM].some(Number.isNaN)) return ''
+	let minutes = (toH * 60 + toM) - (fromH * 60 + fromM)
+	if (minutes < 0) minutes += 24 * 60
+	if (minutes === 0) return ''
+	const hours = Math.round((minutes / 60) * 2) / 2
+	return Number.isInteger(hours) ? String(hours) : String(hours)
+}
 
 function UserCalendar() {
 	const { userId } = useParams()
@@ -41,9 +74,13 @@ function UserCalendar() {
 	const [hoursWorked, setHoursWorked] = useState('')
 	const [additionalWorked, setAdditionalWorked] = useState('')
 	const [realTimeDayWorked, setRealTimeDayWorked] = useState('')
+	const [workTimeFrom, setWorkTimeFrom] = useState('')
+	const [workTimeTo, setWorkTimeTo] = useState('')
 	const [absenceType, setAbsenceType] = useState('')
 	const [notes, setNotes] = useState('')
 	const [formError, setFormError] = useState('')
+	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
+	const [bulkFillModalOpen, setBulkFillModalOpen] = useState(false)
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
@@ -177,6 +214,8 @@ function UserCalendar() {
 	)
 	const { data: settings } = useSettings()
 	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
+	const bulkFillWorkdaysMutation = useBulkFillWorkdays(userId)
+	const clearWorkdaysForMonthMutation = useClearWorkdaysForMonth(userId)
 	const createWorkdayForUserMutation = useCreateWorkdayForUser(userId)
 	const updateWorkdayForUserMutation = useUpdateWorkdayForUser(userId)
 	const deleteWorkdayForUserMutation = useDeleteWorkdayForUser(userId)
@@ -185,6 +224,88 @@ function UserCalendar() {
 	const canEditManagedWorkdays = settings?.allowManagedWorkdayEntries === true && user?.appAccessEnabled === false
 
 	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+
+	useEffect(() => {
+		const parsed = parseWorkTimeRange(realTimeDayWorked)
+		if (parsed.timeFrom || parsed.timeTo) {
+			setWorkTimeFrom(parsed.timeFrom)
+			setWorkTimeTo(parsed.timeTo)
+		} else if (!realTimeDayWorked) {
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
+		}
+	}, [realTimeDayWorked])
+
+	const updateWorkTimeRange = (field, value) => {
+		const nextFrom = field === 'from' ? value : workTimeFrom
+		const nextTo = field === 'to' ? value : workTimeTo
+		const findMatchingWorkHoursIndex = () => {
+			if (!nextFrom || !nextTo) return -1
+			if (Array.isArray(settings?.workHours) && settings.workHours.length > 0) {
+				return settings.workHours.findIndex(
+					(workHours) => workHours?.timeFrom === nextFrom && workHours?.timeTo === nextTo
+				)
+			}
+			if (settings?.workHours?.timeFrom && settings?.workHours?.timeTo) {
+				return settings.workHours.timeFrom === nextFrom && settings.workHours.timeTo === nextTo ? 0 : -1
+			}
+			return -1
+		}
+		setWorkTimeFrom(nextFrom)
+		setWorkTimeTo(nextTo)
+		setAbsenceType('')
+		setSelectedWorkHoursIndex(findMatchingWorkHoursIndex())
+		if (!nextFrom || !nextTo) return
+		setRealTimeDayWorked(`${nextFrom}-${nextTo}`)
+		const calculatedHours = calculateHoursFromRange(nextFrom, nextTo)
+		setHoursWorked(calculatedHours || '')
+	}
+
+	const handleAbsenceChange = (value) => {
+		setAbsenceType(value)
+		if (value.trim()) {
+			setHoursWorked('')
+			setAdditionalWorked('')
+			setRealTimeDayWorked('')
+			setWorkTimeFrom('')
+			setWorkTimeTo('')
+			setSelectedWorkHoursIndex(-1)
+		}
+	}
+
+	const renderWorkTimeRangeSelects = () => (
+		<div>
+			<label style={{ display: 'block', marginBottom: '6px', fontSize: '15px', fontWeight: 600, color: '#334155' }}>
+				Zakres godzin
+			</label>
+			<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+				<label>
+					<select
+						value={workTimeFrom}
+						onChange={e => updateWorkTimeRange('from', e.target.value)}
+						className="w-full border border-gray-300 rounded-md px-4 py-2"
+					>
+						<option value="">--:--</option>
+						{halfHourOptions.map(option => (
+							<option key={`from-${option}`} value={option}>{option}</option>
+						))}
+					</select>
+				</label>
+				<label>
+					<select
+						value={workTimeTo}
+						onChange={e => updateWorkTimeRange('to', e.target.value)}
+						className="w-full border border-gray-300 rounded-md px-4 py-2"
+					>
+						<option value="">--:--</option>
+						{halfHourOptions.map(option => (
+							<option key={`to-${option}`} value={option}>{option}</option>
+						))}
+					</select>
+				</label>
+			</div>
+		</div>
+	)
 
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
@@ -491,15 +612,18 @@ function UserCalendar() {
 		setHoursWorked('')
 		setAdditionalWorked('')
 		setRealTimeDayWorked('')
+		setWorkTimeFrom('')
+		setWorkTimeTo('')
 		setAbsenceType('')
 		setNotes('')
 		setFormError('')
+		setSelectedWorkHoursIndex(0)
 	}
 
 	const openManagedWorkdayModal = (dateStr) => {
 		if (!canEditManagedWorkdays) return
 		if (settings?.workdayEntriesOnlyToday === true && dateStr !== formatDateLocal(new Date())) {
-			showAlert('Wpisy można dodawać tylko dla dzisiejszego dnia.')
+			showAlert(t('workcalendar.bulkFill.errors.onlyToday'))
 			return
 		}
 		const existing = findWorkdayForDate(dateStr)
@@ -512,11 +636,17 @@ function UserCalendar() {
 		setNotes(existing?.notes || '')
 		setFormError('')
 
-		if (!existing && Array.isArray(settings?.workHours) && settings.workHours.length > 0) {
-			const firstHours = settings.workHours[0]
-			if (firstHours?.timeFrom && firstHours?.timeTo) {
-				setRealTimeDayWorked(`${firstHours.timeFrom}-${firstHours.timeTo}`)
-				if (firstHours.hours) setHoursWorked(String(firstHours.hours))
+		if (!existing && settings?.workHours) {
+			let workHoursToUse = null
+			if (Array.isArray(settings.workHours) && settings.workHours.length > 0) {
+				workHoursToUse = settings.workHours[0]
+				setSelectedWorkHoursIndex(0)
+			} else if (settings.workHours.timeFrom && settings.workHours.timeTo) {
+				workHoursToUse = settings.workHours
+			}
+			if (workHoursToUse?.timeFrom && workHoursToUse?.timeTo) {
+				setRealTimeDayWorked(`${workHoursToUse.timeFrom}-${workHoursToUse.timeTo}`)
+				if (workHoursToUse.hours) setHoursWorked(String(workHoursToUse.hours))
 			}
 		}
 
@@ -546,11 +676,11 @@ function UserCalendar() {
 			notes: notes.trim(),
 		}
 		if (payload.hoursWorked && payload.absenceType) {
-			setFormError('Wybierz godziny pracy albo nieobecność, nie oba pola naraz.')
+			setFormError(t('workcalendar.formalerttwo'))
 			return
 		}
 		if (!payload.hoursWorked && !payload.additionalWorked && !payload.realTimeDayWorked && !payload.absenceType && !payload.notes) {
-			setFormError('Uzupełnij przynajmniej jedno pole.')
+			setFormError(t('workcalendar.formalertone'))
 			return
 		}
 		try {
@@ -561,23 +691,87 @@ function UserCalendar() {
 			}
 			setModalIsOpen(false)
 			resetManagedForm()
-			await showAlert('Wpis zapisany.')
+			await showAlert(t('workcalendar.managedMessages.entrySaved'))
 		} catch (error) {
-			setFormError(error.response?.data?.message || 'Nie udało się zapisać wpisu.')
+			setFormError(error.response?.data?.message || t('workcalendar.managedMessages.entrySaveError'))
 		}
 	}
 
 	const handleManagedDelete = async () => {
 		if (!editingWorkday?._id) return
-		const confirmed = await showConfirm('Usunąć ten wpis z kalendarza?')
+		const confirmed = await showConfirm(t('workcalendar.managedMessages.deleteConfirm'))
 		if (!confirmed) return
 		try {
 			await deleteWorkdayForUserMutation.mutateAsync(editingWorkday._id)
 			setModalIsOpen(false)
 			resetManagedForm()
-			await showAlert('Wpis usunięty.')
+			await showAlert(t('workcalendar.managedMessages.entryDeleted'))
 		} catch (error) {
-			setFormError(error.response?.data?.message || 'Nie udało się usunąć wpisu.')
+			setFormError(error.response?.data?.message || t('workcalendar.managedMessages.entryDeleteError'))
+		}
+	}
+
+	const formatBulkFillSummary = (result) => {
+		const skipped = result?.skipped || {}
+		const skippedTotal = Object.values(skipped).reduce((sum, value) => sum + (Number(value) || 0), 0)
+		const skippedParts = [
+			skipped.weekend ? `${t('workcalendar.bulkFill.summary.weekends')}: ${skipped.weekend}` : null,
+			skipped.holiday ? `${t('workcalendar.bulkFill.summary.holidays')}: ${skipped.holiday}` : null,
+			skipped.leave ? `${t('workcalendar.bulkFill.summary.leaves')}: ${skipped.leave}` : null,
+			skipped.existing ? `${t('workcalendar.bulkFill.summary.existing')}: ${skipped.existing}` : null,
+			skipped.confirmed ? `${t('workcalendar.bulkFill.summary.confirmedMonths')}: ${skipped.confirmed}` : null,
+		].filter(Boolean)
+		return t('workcalendar.bulkFill.summary.message', {
+			created: result?.createdCount || 0,
+			skipped: skippedTotal,
+			details: skippedParts.length ? ` (${skippedParts.join(', ')})` : '',
+		})
+	}
+
+	const handleBulkFillSubmit = async (payload) => {
+		if (!canEditManagedWorkdays) return
+		try {
+			const result = await bulkFillWorkdaysMutation.mutateAsync(payload)
+			setBulkFillModalOpen(false)
+			await showAlert(formatBulkFillSummary(result))
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('workcalendar.bulkFill.errors.submitError'))
+		}
+	}
+
+	const handleClearManagedCurrentMonthEntries = async () => {
+		if (!canEditManagedWorkdays) return
+		const tSafe = (key, fallback) => {
+			const value = t(key)
+			return value === key ? fallback : value
+		}
+
+		const monthEntries = workdays.filter((day) => {
+			const date = new Date(day.date)
+			return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+		})
+		if (monthEntries.length === 0) {
+			await showAlert(tSafe('workcalendar.noEntriesThisMonth', 'Brak wpisów do usunięcia w tym miesiącu.'))
+			return
+		}
+
+		const confirmed = await showConfirm(
+			tSafe(
+				'workcalendar.clearMonthConfirm',
+				'Czy na pewno chcesz usunąć wszystkie wpisy z widocznego miesiąca? Tej operacji nie da się cofnąć. Jeśli chcesz usunąć pojedynczy wpis, kliknij dzień w kalendarzu.'
+			)
+		)
+		if (!confirmed) return
+
+		try {
+			const result = await clearWorkdaysForMonthMutation.mutateAsync({
+				month: currentMonth,
+				year: currentYear,
+			})
+			const deletedCount = Number(result?.deletedCount || 0)
+			await showAlert(tSafe('workcalendar.clearMonthSuccess', 'Usunięto wpisy: {{count}}.').replace('{{count}}', String(deletedCount)))
+		} catch (error) {
+			await showAlert(error.response?.data?.message || tSafe('workcalendar.clearMonthError', 'Nie udało się wyczyścić wpisów z miesiąca.'))
 		}
 	}
 
@@ -591,9 +785,9 @@ function UserCalendar() {
 				isConfirmed: !isConfirmed,
 				userId,
 			})
-			await showAlert(!isConfirmed ? 'Miesiąc potwierdzony.' : 'Potwierdzenie miesiąca cofnięte.')
+			await showAlert(!isConfirmed ? t('workcalendar.managedMessages.monthConfirmed') : t('workcalendar.managedMessages.monthReverted'))
 		} catch (error) {
-			await showAlert(error.response?.data?.message || 'Nie udało się zmienić potwierdzenia miesiąca.')
+			await showAlert(error.response?.data?.message || t('workcalendar.managedMessages.monthToggleError'))
 		}
 	}
 
@@ -603,7 +797,7 @@ function UserCalendar() {
 		try {
 			await reviewWorkdayForUserMutation.mutateAsync({ id: workdayId, status })
 		} catch (error) {
-			await showAlert(error.response?.data?.message || 'Nie udało się zapisać zatwierdzenia dnia.')
+			await showAlert(error.response?.data?.message || t('workcalendar.managedMessages.reviewSaveError'))
 		}
 	}
 
@@ -929,7 +1123,7 @@ function UserCalendar() {
 						)}
 					</button>
 				</div>
-				<div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+				<div style={{ display: 'flex', columnGap: '10px', rowGap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
 					<select value={currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px', marginLeft: '10px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
 						{Array.from({ length: 12 }, (_, i) => {
 							const monthName = new Date(0, i).toLocaleString(i18n.resolvedLanguage, { month: 'long' })
@@ -954,7 +1148,7 @@ function UserCalendar() {
 					<button
 					type="button"
 					onClick={handlePrevMonth}
-					style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+					style={{ marginLeft: 0, padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
 					onMouseOver={(e) => {
 						e.target.style.backgroundColor = '#f8f9fa'
 						e.target.style.borderColor = '#adb5bd'
@@ -981,13 +1175,36 @@ function UserCalendar() {
 				>
 					&gt;
 				</button>
+					{canEditManagedWorkdays && (
+						<div className="workday-toolbar-actions">
+							<button
+								type="button"
+								onClick={() => setBulkFillModalOpen(true)}
+								className="workday-bulk-fill-button"
+							>
+								{t('workcalendar.bulkFill.fill')}
+							</button>
+							<button
+								type="button"
+								onClick={handleClearManagedCurrentMonthEntries}
+								disabled={clearWorkdaysForMonthMutation.isPending}
+								title={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+								aria-label={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+								className="workday-clear-month-button"
+							>
+								{clearWorkdaysForMonthMutation.isPending
+									? (t('workcalendar.clearingShort') || '...')
+									: <img src="/img/trash.png" alt={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'} className="workday-clear-month-icon" />}
+							</button>
+						</div>
+					)}
 				</div>
 				{canEditManagedWorkdays && (
 					<div className={`managed-month-confirmation ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
 						<div>
-							<p className="managed-month-confirmation__label">Potwierdzenie miesiąca</p>
+							<p className="managed-month-confirmation__label">{t('workcalendar.managedMonthConfirmation.title')}</p>
 							<p className={`managed-month-confirmation__status ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
-								{isConfirmed ? 'Miesiąc potwierdzony' : 'Miesiąc niepotwierdzony'}
+								{isConfirmed ? t('workcalendar.managedMonthConfirmation.confirmed') : t('workcalendar.managedMonthConfirmation.notConfirmed')}
 							</p>
 						</div>
 						<button
@@ -996,7 +1213,7 @@ function UserCalendar() {
 							onClick={handleManagedMonthConfirmationToggle}
 							disabled={toggleConfirmationMutation.isPending}
 						>
-							{isConfirmed ? 'Cofnij' : 'Potwierdź'}
+							{isConfirmed ? t('workcalendar.managedMonthConfirmation.revert') : t('workcalendar.managedMonthConfirmation.confirm')}
 						</button>
 					</div>
 				)}
@@ -1227,22 +1444,22 @@ function UserCalendar() {
 				<div className="managed-workday-review-panel col-xl-9">
 					<div className="managed-workday-review-panel__header">
 						<div>
-							<h3>Zatwierdzanie dni</h3>
-							<p>Sprawdź wpisy w bieżącym miesiącu i oznacz decyzję.</p>
+							<h3>{t('workcalendar.dayReview.title')}</h3>
+							<p>{t('workcalendar.dayReview.description')}</p>
 						</div>
 						<span>{currentMonthWorkdaysForReview.length}</span>
 					</div>
 					{currentMonthWorkdaysForReview.length === 0 ? (
-						<div className="managed-workday-review-empty">Brak wpisów do zatwierdzenia w tym miesiącu.</div>
+						<div className="managed-workday-review-empty">{t('workcalendar.dayReview.empty')}</div>
 					) : (
 						<div className="managed-workday-review-list">
 							{currentMonthWorkdaysForReview.map(day => {
 								const reviewerName = formatReviewerName(day.reviewedBy)
 								const reviewLabel = day.reviewStatus === 'approved'
-									? 'Zatwierdzono'
-									: day.reviewStatus === 'rejected'
-										? 'Odrzucono'
-										: 'Bez decyzji'
+										? t('workcalendar.dayReview.statusApproved')
+										: day.reviewStatus === 'rejected'
+											? t('workcalendar.dayReview.statusRejected')
+											: t('workcalendar.dayReview.statusNone')
 								return (
 									<div key={day._id} className={`managed-workday-review-item ${day.reviewStatus ? `is-${day.reviewStatus}` : ''}`}>
 										<div className="managed-workday-review-item__main">
@@ -1255,18 +1472,18 @@ function UserCalendar() {
 											</div>
 											<div className="managed-workday-review-item__details">
 												{day.hoursWorked != null && day.hoursWorked !== '' && (
-													<span>{formatHours(roundToHalfHour(day.hoursWorked))} godz.</span>
+													<span>{formatHours(roundToHalfHour(day.hoursWorked))} {t('workcalendar.allfrommonthhours')}</span>
 												)}
 												{day.additionalWorked != null && day.additionalWorked !== '' && (
-													<span>Nadgodziny: {formatHours(roundToHalfHour(day.additionalWorked))}</span>
+													<span>{t('workcalendar.bulkFill.overtime')}: {formatHours(roundToHalfHour(day.additionalWorked))}</span>
 												)}
-												{day.realTimeDayWorked && <span>Czas: {day.realTimeDayWorked}</span>}
-												{day.absenceType && <span>Nieobecność: {day.absenceType}</span>}
-												{day.notes && <span>Uwagi: {day.notes}</span>}
+												{day.realTimeDayWorked && <span>{t('workcalendar.worktime')} {day.realTimeDayWorked}</span>}
+												{day.absenceType && <span>{t('workcalendar.h2modalabsence')} {day.absenceType}</span>}
+												{day.notes && <span>{t('workcalendar.notes')}: {day.notes}</span>}
 											</div>
 											<div className="managed-workday-review-item__meta">
 												<span>{reviewLabel}</span>
-												{reviewerName && <span>przez: {reviewerName}</span>}
+												{reviewerName && <span>{t('leaveform.updatedBy')}: {reviewerName}</span>}
 											</div>
 										</div>
 										<div className="managed-workday-review-actions">
@@ -1276,7 +1493,7 @@ function UserCalendar() {
 												onClick={() => handleReviewWorkday(day._id, 'approved')}
 												disabled={reviewWorkdayForUserMutation.isPending}
 											>
-												Zatwierdź
+												{t('workcalendar.dayReview.approve')}
 											</button>
 											<button
 												type="button"
@@ -1284,7 +1501,7 @@ function UserCalendar() {
 												onClick={() => handleReviewWorkday(day._id, 'rejected')}
 												disabled={reviewWorkdayForUserMutation.isPending}
 											>
-												Odrzuć
+												{t('workcalendar.dayReview.reject')}
 											</button>
 											{day.reviewStatus && (
 												<button
@@ -1293,7 +1510,7 @@ function UserCalendar() {
 													onClick={() => handleReviewWorkday(day._id, null)}
 													disabled={reviewWorkdayForUserMutation.isPending}
 												>
-													Wyczyść
+													{t('workcalendar.dayReview.clear')}
 												</button>
 											)}
 										</div>
@@ -1341,7 +1558,8 @@ function UserCalendar() {
 					content: {
 						position: 'relative',
 						inset: 'auto',
-						width: 'min(620px, calc(100vw - 32px))',
+						width: 'min(480px, calc(100vw - 32px))',
+						maxWidth: '480px',
 						maxHeight: 'calc(100vh - 48px)',
 						margin: 0,
 						marginLeft: 0,
@@ -1409,27 +1627,74 @@ function UserCalendar() {
 						</label>
 					</div>
 
-					<label>
-						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Zakres godzin</span>
-						<input
-							type="text"
-							placeholder="07:00-15:00"
-							value={realTimeDayWorked}
-							onChange={(e) => setRealTimeDayWorked(e.target.value)}
-							className="w-full border border-gray-300 rounded-md px-4 py-2"
-						/>
-					</label>
+					{settings && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
+						<div style={{
+							padding: '12px',
+							backgroundColor: '#e3f2fd',
+							border: '1px solid #90caf9',
+							borderRadius: '6px'
+						}}>
+							<label style={{
+								display: 'block',
+								marginBottom: '10px',
+								fontWeight: '600',
+								color: '#2c3e50',
+								fontSize: '14px'
+							}}>
+								{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
+							</label>
+							<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+								{settings.workHours.map((workHours, index) => (
+									<label
+										key={index}
+										style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											padding: '8px',
+											borderRadius: '4px',
+											backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
+											border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
+											transition: 'all 0.2s'
+										}}
+									>
+										<input
+											type="radio"
+											name="managedWorkHours"
+											checked={selectedWorkHoursIndex === index}
+											onChange={() => {
+												setSelectedWorkHoursIndex(index)
+												setRealTimeDayWorked(`${workHours.timeFrom}-${workHours.timeTo}`)
+												if (workHours.hours) setHoursWorked(workHours.hours.toString())
+											}}
+											style={{ marginRight: '10px', cursor: 'pointer' }}
+										/>
+										<span style={{ fontSize: '14px', color: '#2c3e50', flex: 1 }}>
+											{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
+										</span>
+									</label>
+								))}
+							</div>
+						</div>
+					)}
 
-					<label>
-						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Nieobecność</span>
+					{renderWorkTimeRangeSelects()}
+
+					<div className="bulk-fill-absence-card">
+						<label>
+							<span style={{ display: 'block', fontWeight: 700, marginBottom: '4px', color: '#13294b' }}>{t('workcalendar.bulkFill.absence')}</span>
+							<span style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '13px' }}>
+								{t('workcalendar.bulkFill.absenceHint')}
+							</span>
 						<input
 							type="text"
-							placeholder="np. nieobecność usprawiedliwiona"
+							placeholder={t('workcalendar.bulkFill.absencePlaceholder')}
 							value={absenceType}
-							onChange={(e) => setAbsenceType(e.target.value)}
+							onChange={(e) => handleAbsenceChange(e.target.value)}
 							className="w-full border border-gray-300 rounded-md px-4 py-2"
 						/>
-					</label>
+						</label>
+					</div>
 
 					<label>
 						<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Uwagi</span>
@@ -1444,7 +1709,7 @@ function UserCalendar() {
 					<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
 						{editingWorkday && (
 							<button type="button" className="btn btn-danger" onClick={handleManagedDelete} disabled={deleteWorkdayForUserMutation.isPending}>
-								Usuń
+								{t('workcalendar.delete')}
 							</button>
 						)}
 						<div style={{ marginLeft: 'auto', display: 'flex', gap: '10px' }}>
@@ -1456,19 +1721,29 @@ function UserCalendar() {
 									resetManagedForm()
 								}}
 							>
-								Anuluj
+								{t('workcalendar.cancel')}
 							</button>
 							<button
 								type="submit"
 								className="btn btn-primary"
 								disabled={createWorkdayForUserMutation.isPending || updateWorkdayForUserMutation.isPending}
 							>
-								Zapisz
+								{t('workcalendar.save')}
 							</button>
 						</div>
 					</div>
 				</form>
 			</Modal>
+			<BulkFillWorkdaysModal
+				isOpen={bulkFillModalOpen}
+				onClose={() => setBulkFillModalOpen(false)}
+				onSubmit={handleBulkFillSubmit}
+				settings={settings}
+				currentMonth={currentMonth}
+				currentYear={currentYear}
+				isPending={bulkFillWorkdaysMutation.isPending}
+				disabledReason={isConfirmed ? t('workcalendar.bulkFill.errors.monthConfirmed') : ''}
+			/>
 		</>
 	)
 }

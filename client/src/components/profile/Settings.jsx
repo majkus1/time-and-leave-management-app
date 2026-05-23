@@ -23,6 +23,19 @@ const NOTIFICATION_MODULE_REQUIREMENTS = {
 	schedulePublished: 'schedules_ai',
 }
 
+const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
+	const totalMinutes = index * 30
+	const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
+	const minutes = String(totalMinutes % 60).padStart(2, '0')
+	return `${hours}:${minutes}`
+})
+
+const normalizeHalfHourTime = (time) => {
+	const match = String(time || '').trim().match(/^(\d{1,2}):([0-5]\d)$/)
+	if (!match) return ''
+	return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`
+}
+
 function Settings() {
 	const { t, i18n } = useTranslation()
 	const { role } = useAuth()
@@ -146,8 +159,8 @@ function Settings() {
 				} else if (settings.workHours.timeFrom && settings.workHours.timeTo) {
 					// Stary format - zamień na tablicę
 					setWorkHoursList([{
-						timeFrom: settings.workHours.timeFrom,
-						timeTo: settings.workHours.timeTo,
+						timeFrom: normalizeHalfHourTime(settings.workHours.timeFrom),
+						timeTo: normalizeHalfHourTime(settings.workHours.timeTo),
 						hours: settings.workHours.hours || 0
 					}])
 			} else {
@@ -168,8 +181,8 @@ function Settings() {
 		}
 		const calculatedHours = calculateHours(newWorkHours.timeFrom, newWorkHours.timeTo)
 		const newEntry = {
-			timeFrom: newWorkHours.timeFrom,
-			timeTo: newWorkHours.timeTo,
+			timeFrom: normalizeHalfHourTime(newWorkHours.timeFrom),
+			timeTo: normalizeHalfHourTime(newWorkHours.timeTo),
 			hours: calculatedHours
 		}
 		setWorkHoursList([...workHoursList, newEntry])
@@ -185,8 +198,8 @@ function Settings() {
 		const calculatedHours = calculateHours(newWorkHours.timeFrom, newWorkHours.timeTo)
 		const updatedList = [...workHoursList]
 		updatedList[index] = {
-			timeFrom: newWorkHours.timeFrom,
-			timeTo: newWorkHours.timeTo,
+			timeFrom: normalizeHalfHourTime(newWorkHours.timeFrom),
+			timeTo: normalizeHalfHourTime(newWorkHours.timeTo),
 			hours: calculatedHours
 		}
 		setWorkHoursList(updatedList)
@@ -198,8 +211,8 @@ function Settings() {
 	const handleEditWorkHours = (index) => {
 		const workHours = workHoursList[index]
 		setNewWorkHours({
-			timeFrom: workHours.timeFrom,
-			timeTo: workHours.timeTo,
+			timeFrom: normalizeHalfHourTime(workHours.timeFrom),
+			timeTo: normalizeHalfHourTime(workHours.timeTo),
 			hours: workHours.hours
 		})
 		setEditingWorkHoursIndex(index)
@@ -1611,9 +1624,7 @@ function Settings() {
 											}}>
 												{t('settings.workHoursFrom') || 'Od'}
 											</label>
-											<input
-												type="text"
-												inputMode="numeric"
+											<select
 												value={newWorkHours.timeFrom}
 												onChange={(e) => {
 													const timeFrom = e.target.value
@@ -1623,7 +1634,6 @@ function Settings() {
 														hours: newWorkHours.timeTo ? calculateHours(timeFrom, newWorkHours.timeTo) : 0
 													})
 												}}
-												placeholder="09:00"
 												style={{
 													width: '100%',
 													padding: '16px',
@@ -1636,7 +1646,12 @@ function Settings() {
 													WebkitAppearance: 'none',
 													MozAppearance: 'textfield'
 												}}
-											/>
+											>
+												<option value="">{t('settings.selectOption')}</option>
+												{halfHourOptions.map(option => (
+													<option key={`settings-from-${option}`} value={option}>{option}</option>
+												))}
+											</select>
 										</div>
 										<div>
 											<label style={{
@@ -1648,9 +1663,7 @@ function Settings() {
 											}}>
 												{t('settings.workHoursTo') || 'Do'}
 											</label>
-											<input
-												type="text"
-												inputMode="numeric"
+											<select
 												value={newWorkHours.timeTo}
 												onChange={(e) => {
 													const timeTo = e.target.value
@@ -1660,7 +1673,6 @@ function Settings() {
 														hours: newWorkHours.timeFrom ? calculateHours(newWorkHours.timeFrom, timeTo) : 0
 													})
 												}}
-												placeholder="17:00"
 												style={{
 													width: '100%',
 													padding: '16px',
@@ -1673,7 +1685,12 @@ function Settings() {
 													WebkitAppearance: 'none',
 													MozAppearance: 'textfield'
 												}}
-											/>
+											>
+												<option value="">{t('settings.selectOption')}</option>
+												{halfHourOptions.map(option => (
+													<option key={`settings-to-${option}`} value={option}>{option}</option>
+												))}
+											</select>
 										</div>
 										<div>
 											<label style={{
@@ -2647,10 +2664,10 @@ function Settings() {
 									color: '#2c3e50',
 									marginBottom: '8px'
 								}}>
-									Ewidencja czasu
+									{t('settings.workdayEntriesTitle')}
 								</h3>
 								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									Ustaw zasady dodawania wpisów czasu pracy dla całego zespołu.
+									{t('settings.workdayEntriesDescription')}
 								</p>
 								<label style={{
 									display: 'flex',
@@ -2666,9 +2683,9 @@ function Settings() {
 										style={{ marginTop: '4px' }}
 									/>
 									<span>
-										<strong>Wpisy w ewidencji tylko dzisiaj</strong>
+										<strong>{t('settings.workdayEntriesOnlyTodayTitle')}</strong>
 										<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-											Blokuje dodawanie i edycję wpisów dla dni wcześniejszych oraz przyszłych.
+											{t('settings.workdayEntriesOnlyTodayDescription')}
 										</span>
 									</span>
 								</label>
@@ -2689,10 +2706,10 @@ function Settings() {
 									color: '#2c3e50',
 									marginBottom: '8px'
 								}}>
-									Pracownicy bez dostępu
+									{t('settings.noAccessUsersTitle')}
 								</h3>
 								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									Włącz, gdy uprawnione osoby mają prowadzić ewidencję i wnioski za pracowników, którzy nie logują się do aplikacji.
+									{t('settings.noAccessUsersDescription')}
 								</p>
 								<div style={{ display: 'grid', gap: '14px' }}>
 									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
@@ -2710,9 +2727,9 @@ function Settings() {
 											style={{ marginTop: '4px' }}
 										/>
 										<span>
-											<strong>Dodawanie pracowników bez dostępu</strong>
+											<strong>{t('settings.allowManagedNoAccessUsersTitle')}</strong>
 											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												Taki pracownik wlicza się do limitu miejsc, ale nie dostaje linku do hasła i nie może się zalogować.
+												{t('settings.allowManagedNoAccessUsersDescription')}
 											</span>
 										</span>
 									</label>
@@ -2725,9 +2742,9 @@ function Settings() {
 											style={{ marginTop: '4px' }}
 										/>
 										<span>
-											<strong>Wpisy czasu pracy za pracownika</strong>
+											<strong>{t('settings.allowManagedWorkdayEntriesTitle')}</strong>
 											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												Admin, HR i uprawniony przełożony mogą dodać wpis w kalendarzu pracownika bez dostępu.
+												{t('settings.allowManagedWorkdayEntriesDescription')}
 											</span>
 										</span>
 									</label>
@@ -2740,9 +2757,9 @@ function Settings() {
 											style={{ marginTop: '4px' }}
 										/>
 										<span>
-											<strong>Wnioski urlopowe za pracownika</strong>
+											<strong>{t('settings.allowManagedLeaveRequestsTitle')}</strong>
 											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												Formularz urlopu pozwoli wybrać pracownika bez dostępu z listy widocznych osób.
+												{t('settings.allowManagedLeaveRequestsDescription')}
 											</span>
 										</span>
 									</label>

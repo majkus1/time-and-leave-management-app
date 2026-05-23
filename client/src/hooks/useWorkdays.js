@@ -97,6 +97,30 @@ export const useCreateWorkdayForUser = (userId) => {
 	})
 }
 
+export const useBulkFillWorkdays = (userId = null) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async (data) => {
+			const url = userId
+				? `${API_URL}/api/workdays/user/${userId}/bulk-fill`
+				: `${API_URL}/api/workdays/bulk-fill`
+			const response = await axios.post(url, data, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			if (userId) {
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			}
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+		},
+	})
+}
+
 // Mutation - aktualizacja workday
 export const useUpdateWorkday = () => {
 	const queryClient = useQueryClient()
@@ -194,6 +218,31 @@ export const useDeleteWorkday = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			// Also invalidate timer sessions queries to update the session list immediately
+			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+		},
+	})
+}
+
+export const useClearWorkdaysForMonth = (userId = null) => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ month, year }) => {
+			const url = userId
+				? `${API_URL}/api/workdays/user/${userId}/month/clear`
+				: `${API_URL}/api/workdays/month/clear`
+			const response = await axios.delete(url, {
+				data: { month, year },
+				withCredentials: true,
+			})
+			return response.data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			if (userId) {
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			}
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 		},
 	})

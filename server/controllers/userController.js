@@ -79,6 +79,14 @@ const ACTIVE_USER_FILTER = {
 
 const WORKER_ROLE = 'Pracownik (Worker)'
 
+function isManagedNoAccessUser(user) {
+	return (
+		user?.appAccessEnabled === false ||
+		user?.managedOnly === true ||
+		String(user?.username || '').endsWith('@no-access.planopia.local')
+	)
+}
+
 function normalizeDepartments(department) {
 	if (Array.isArray(department)) {
 		return department.map(dep => String(dep || '').trim()).filter(Boolean)
@@ -964,16 +972,6 @@ exports.updateUserRoles = async (req, res) => {
 		return res.status(403).send('Access denied');
 	}
 
-		// Walidacja wzajemnie wykluczających się ról
-		const roleValidation = validateMutuallyExclusiveRoles(roles, req.t)
-		if (!roleValidation.valid) {
-			return res.status(400).json({
-				success: false,
-				message: roleValidation.message,
-				code: roleValidation.code
-			})
-		}
-
 		try {
 			const requestingUser = await User.findById(req.user.userId)
 			if (!requestingUser) {
@@ -993,6 +991,18 @@ exports.updateUserRoles = async (req, res) => {
 			}
 
 		const oldDepartment = user.department;
+		const nextRoles = isManagedNoAccessUser(user) ? [WORKER_ROLE] : (Array.isArray(roles) ? roles : [])
+
+		// Walidacja wzajemnie wykluczających się ról
+		const roleValidation = validateMutuallyExclusiveRoles(nextRoles, req.t)
+		if (!roleValidation.valid) {
+			return res.status(400).json({
+				success: false,
+				message: roleValidation.message,
+				code: roleValidation.code
+			})
+		}
+
 		const normalizedPosition = normalizeOptionalPosition(position)
 		if (!normalizedPosition.ok) {
 			return res.status(400).json({
@@ -1000,7 +1010,7 @@ exports.updateUserRoles = async (req, res) => {
 				message: normalizedPosition.message,
 			})
 		}
-		user.roles = roles;
+		user.roles = nextRoles;
 		// Dla wielu działów - upewnij się, że department to tablica
 		if (department !== undefined) {
 			user.department = Array.isArray(department) ? department : (department ? [department] : [])
