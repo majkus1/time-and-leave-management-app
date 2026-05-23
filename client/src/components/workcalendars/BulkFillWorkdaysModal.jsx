@@ -61,21 +61,29 @@ function BulkFillWorkdaysModal({
 	isPending = false,
 	disabledReason = '',
 }) {
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const firstWorkHours = useMemo(() => getFirstWorkHours(settings), [settings])
 	const workHoursOptions = useMemo(() => getWorkHoursOptions(settings), [settings])
-	const monthStart = useMemo(() => formatDateLocal(new Date(currentYear, currentMonth, 1)), [currentMonth, currentYear])
-	const monthEnd = useMemo(() => formatDateLocal(new Date(currentYear, currentMonth + 1, 0)), [currentMonth, currentYear])
+	const calendarMonthStart = useMemo(
+		() => formatDateLocal(new Date(currentYear, currentMonth, 1)),
+		[currentMonth, currentYear]
+	)
+	const calendarMonthEnd = useMemo(
+		() => formatDateLocal(new Date(currentYear, currentMonth + 1, 0)),
+		[currentMonth, currentYear]
+	)
 	const today = formatDateLocal(new Date())
 	const defaultWeekDate = useMemo(() => {
-		return today >= monthStart && today <= monthEnd ? today : monthStart
-	}, [monthEnd, monthStart, today])
+		return today >= calendarMonthStart && today <= calendarMonthEnd ? today : calendarMonthStart
+	}, [calendarMonthEnd, calendarMonthStart, today])
 
 	const [rangeType, setRangeType] = useState('month')
+	const [pickMonth, setPickMonth] = useState(currentMonth)
+	const [pickYear, setPickYear] = useState(currentYear)
 	const [dayDate, setDayDate] = useState(today)
 	const [weekDate, setWeekDate] = useState(today)
-	const [customStart, setCustomStart] = useState(monthStart)
-	const [customEnd, setCustomEnd] = useState(monthEnd)
+	const [customStart, setCustomStart] = useState(calendarMonthStart)
+	const [customEnd, setCustomEnd] = useState(calendarMonthEnd)
 	const [timeFrom, setTimeFrom] = useState('')
 	const [timeTo, setTimeTo] = useState('')
 	const [hoursWorked, setHoursWorked] = useState('')
@@ -88,10 +96,12 @@ function BulkFillWorkdaysModal({
 	useEffect(() => {
 		if (!isOpen) return
 		setRangeType(settings?.workdayEntriesOnlyToday === true ? 'day' : 'month')
+		setPickMonth(currentMonth)
+		setPickYear(currentYear)
 		setDayDate(today)
 		setWeekDate(defaultWeekDate)
-		setCustomStart(monthStart)
-		setCustomEnd(monthEnd)
+		setCustomStart(calendarMonthStart)
+		setCustomEnd(calendarMonthEnd)
 		setTimeFrom(firstWorkHours?.timeFrom || '')
 		setTimeTo(firstWorkHours?.timeTo || '')
 		setHoursWorked(firstWorkHours?.hours != null ? String(firstWorkHours.hours) : '')
@@ -100,7 +110,16 @@ function BulkFillWorkdaysModal({
 		setNotes('')
 		setError('')
 		setSelectedWorkHoursIndex(0)
-	}, [isOpen, firstWorkHours, monthStart, monthEnd, defaultWeekDate, settings?.workdayEntriesOnlyToday, today])
+	}, [isOpen, firstWorkHours, calendarMonthStart, calendarMonthEnd, currentMonth, currentYear, defaultWeekDate, settings?.workdayEntriesOnlyToday, today])
+
+	const fillMonthStart = useMemo(
+		() => formatDateLocal(new Date(pickYear, pickMonth, 1)),
+		[pickMonth, pickYear]
+	)
+	const fillMonthEnd = useMemo(
+		() => formatDateLocal(new Date(pickYear, pickMonth + 1, 0)),
+		[pickMonth, pickYear]
+	)
 
 	const selectedRange = useMemo(() => {
 		if (rangeType === 'day') return { startDate: dayDate, endDate: dayDate }
@@ -118,8 +137,8 @@ function BulkFillWorkdaysModal({
 			}
 		}
 		if (rangeType === 'custom') return { startDate: customStart, endDate: customEnd }
-		return { startDate: monthStart, endDate: monthEnd }
-	}, [customEnd, customStart, dayDate, monthEnd, monthStart, rangeType, weekDate])
+		return { startDate: fillMonthStart, endDate: fillMonthEnd }
+	}, [customEnd, customStart, dayDate, fillMonthEnd, fillMonthStart, rangeType, weekDate])
 
 	const selectedRangeLabel = selectedRange.startDate === selectedRange.endDate
 		? selectedRange.startDate
@@ -272,6 +291,10 @@ function BulkFillWorkdaysModal({
 									setRangeType(value)
 									if (value === 'day') setDayDate(today)
 									if (value === 'week') setWeekDate(defaultWeekDate)
+									if (value === 'month') {
+										setPickMonth(currentMonth)
+										setPickYear(currentYear)
+									}
 								}}
 								style={{
 									border: rangeType === value ? '2px solid #0d6efd' : '1px solid #d7dde5',
@@ -315,9 +338,59 @@ function BulkFillWorkdaysModal({
 					</div>
 				)}
 
-				<div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', color: '#334155' }}>
-					{t('workcalendar.bulkFill.targetRange')}: <strong>{selectedRangeLabel}</strong>
-				</div>
+				{rangeType === 'month' && (
+					<div className="bulk-fill-month-pick">
+						<select
+							value={pickMonth}
+							onChange={(e) => setPickMonth(Number(e.target.value))}
+							className="bulk-fill-month-pick__select"
+							aria-label={t('workcalendar.bulkFill.month')}
+						>
+							{Array.from({ length: 12 }, (_, i) => (
+								<option key={i} value={i}>
+									{new Date(0, i)
+										.toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+										.replace(/^./, (str) => str.toUpperCase())}
+								</option>
+							))}
+						</select>
+						<select
+							value={pickYear}
+							onChange={(e) => setPickYear(Number(e.target.value))}
+							className="bulk-fill-month-pick__select bulk-fill-month-pick__select--year"
+							aria-label={t('workcalendar.bulkFill.year')}
+						>
+							{Array.from({ length: 20 }, (_, i) => {
+								const year = new Date().getFullYear() - 10 + i
+								return (
+									<option key={year} value={year}>
+										{year}
+									</option>
+								)
+							})}
+						</select>
+					</div>
+				)}
+
+				{rangeType === 'week' && (
+					<div
+						className="bulk-fill-target-range"
+						style={{
+							background: '#f8fafc',
+							border: '1px solid #e2e8f0',
+							borderRadius: '8px',
+							padding: '12px',
+							color: '#334155',
+							fontSize: '14px',
+							lineHeight: 1.45,
+						}}
+					>
+						<span className="bulk-fill-target-range__label" style={{ fontWeight: 600, marginRight: '6px' }}>
+							{t('workcalendar.bulkFill.targetRange')}:
+						</span>
+						<strong className="bulk-fill-target-range__dates">{selectedRangeLabel}</strong>
+					</div>
+				)}
 
 				<div className="bulk-fill-entry-card">
 					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>

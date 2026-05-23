@@ -1112,7 +1112,8 @@ function MonthlyCalendar() {
 				{/* Timer Panel */}
 			{settings?.timerEnabled !== false && allowTimerLeaveApis && <TimerPanel />}
 
-			<div className="calendar-controls flex flex-wrap items-center" style={{ columnGap: '10px', rowGap: '8px' }}>
+			<div className="calendar-controls monthly-calendar-toolbar flex flex-wrap items-center" style={{ columnGap: '10px', rowGap: '8px' }}>
+					<div className="monthly-calendar-toolbar__nav">
 					<select
 						value={currentMonth}
 						onChange={handleMonthSelect}
@@ -1171,7 +1172,8 @@ function MonthlyCalendar() {
 					>
 						&gt;
 					</button>
-					<div className="workday-toolbar-actions">
+					</div>
+					<div className="workday-toolbar-actions monthly-calendar-toolbar__actions">
 						<button
 							type="button"
 							onClick={() => setBulkFillModalOpen(true)}

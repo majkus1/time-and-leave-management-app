@@ -4749,6 +4749,32 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	margin-left: 50px;
 }
 
+/* MonthlyCalendar (dashboard): nawigacja miesiąca — odstępy także na mobile */
+.calendar-my-work .monthly-calendar-toolbar__nav {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+/* Desktop: Uzupełnij + kosz po prawej krawędzi */
+@media (min-width: 641px) {
+	.calendar-my-work .monthly-calendar-toolbar {
+		width: 100%;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.calendar-my-work .monthly-calendar-toolbar__actions {
+		margin-left: 0;
+		flex-shrink: 0;
+	}
+
+	.calendar-my-work .monthly-calendar-toolbar__actions .workday-bulk-fill-button {
+		margin-left: 0;
+	}
+}
+
 .workday-clear-month-button {
 	background: #ffffff;
 	border: 1px solid #bdc3c7;
@@ -4783,7 +4809,48 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	opacity: 0.65;
 }
 
+.bulk-fill-target-range__dates {
+	word-break: break-word;
+}
+
+.bulk-fill-month-pick {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.bulk-fill-month-pick__select {
+	padding: 8px 12px;
+	border: 1px solid #d7dde5;
+	border-radius: 6px;
+	font-size: 15px;
+	color: #13294b;
+	background: #fff;
+	min-width: 0;
+}
+
+.bulk-fill-month-pick__select--year {
+	width: 5.5rem;
+	flex: 0 0 auto;
+}
+
+.bulk-fill-month-pick__select:not(.bulk-fill-month-pick__select--year) {
+	flex: 1 1 8rem;
+	max-width: 100%;
+}
+
 @media (max-width: 640px) {
+	.bulk-fill-target-range {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.bulk-fill-target-range__label {
+		margin-right: 0 !important;
+	}
+
 	.bulk-fill-range-options {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
@@ -5037,5 +5104,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 @media (min-width: 667px) {
 	.workday-bulk-fill-button {
 		margin-left: 50px;
+	}
+
+	.calendar-my-work .monthly-calendar-toolbar .workday-bulk-fill-button {
+		margin-left: 0;
 	}
 }
