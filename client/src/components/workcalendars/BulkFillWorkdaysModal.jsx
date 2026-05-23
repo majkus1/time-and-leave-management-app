@@ -322,7 +322,7 @@ function BulkFillWorkdaysModal({
 				<div className="bulk-fill-entry-card">
 					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
 						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.hoursWorked')}</span>
+							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.hoursWorkedPerDay')}</span>
 							<input
 								type="number"
 								step="0.5"
@@ -337,7 +337,7 @@ function BulkFillWorkdaysModal({
 							/>
 						</label>
 						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.overtime')}</span>
+							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.overtimePerDay')}</span>
 							<input
 								type="number"
 								step="0.5"
