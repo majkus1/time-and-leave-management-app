@@ -39,6 +39,11 @@ const workdaySchema = new mongoose.Schema({
 		type: Date,
 		default: null,
 	},
+	lastChangedBy: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		default: null,
+	},
 	timeEntries: [{
 		startTime: {
 			type: Date,
@@ -123,6 +128,6 @@ const workdaySchema = new mongoose.Schema({
 			default: null
 		}
 	}
-})
+}, { timestamps: true })
 
 module.exports = conn => conn.models.Workday || conn.model('Workday', workdaySchema)

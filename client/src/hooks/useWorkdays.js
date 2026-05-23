@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
+import { useSocket } from '../context/SocketContext'
 
 // Query hook - pobieranie workdays (wszystkie, filtrowanie po stronie klienta)
 export const useWorkdays = () => {
@@ -19,7 +21,9 @@ export const useWorkdays = () => {
 
 // Query hook - pobieranie workdays dla konkretnego użytkownika
 export const useUserWorkdays = (userId) => {
-	return useQuery({
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+	const query = useQuery({
 		queryKey: ['workdays', 'user', userId],
 		queryFn: async () => {
 			const response = await axios.get(`${API_URL}/api/workdays/user/${userId}`, {
@@ -31,6 +35,19 @@ export const useUserWorkdays = (userId) => {
 		staleTime: 2 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
+
+	useEffect(() => {
+		if (!socket || !userId) return
+		const handleRealtimeWorkdaysUpdate = (payload) => {
+			if (!payload?.userId) return
+			if (String(payload.userId) !== String(userId)) return
+			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
+		}
+		socket.on('workdays-updated', handleRealtimeWorkdaysUpdate)
+		return () => socket.off('workdays-updated', handleRealtimeWorkdaysUpdate)
+	}, [socket, userId, queryClient])
+
+	return query
 }
 
 // Mutation - dodawanie workday

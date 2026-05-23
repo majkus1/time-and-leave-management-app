@@ -54,6 +54,50 @@ export const useCalendarConfirmation = (month, year, userId = null) => {
 	return query
 }
 
+export const useCalendarConfirmationDetails = (month, year, userId = null) => {
+	const queryClient = useQueryClient()
+	const { socket } = useSocket()
+	const { userId: currentUserId } = useAuth()
+	const query = useQuery({
+		queryKey: ['calendar', 'confirmation-details', month, year, userId],
+		queryFn: async () => {
+			const url = userId
+				? `${API_URL}/api/calendar/confirmation-details/${userId}`
+				: `${API_URL}/api/calendar/confirmation-details`
+			const response = await axios.get(url, {
+				params: { month, year },
+				withCredentials: true,
+			})
+			return response.data
+		},
+		staleTime: 1 * 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+		enabled: Number.isInteger(month) && Number.isInteger(year),
+	})
+
+	useEffect(() => {
+		if (!socket) return
+		const requestedUserId = userId || currentUserId
+		if (!requestedUserId) return
+
+		const handleWorkdaysRealtimeUpdate = (payload) => {
+			if (!payload?.userId) return
+			if (String(payload.userId) !== String(requestedUserId)) return
+			if (payload.month != null && payload.year != null) {
+				if (Number(payload.month) !== Number(month) || Number(payload.year) !== Number(year)) return
+			}
+			queryClient.invalidateQueries({
+				queryKey: ['calendar', 'confirmation-details', month, year, userId],
+			})
+		}
+
+		socket.on('workdays-updated', handleWorkdaysRealtimeUpdate)
+		return () => socket.off('workdays-updated', handleWorkdaysRealtimeUpdate)
+	}, [socket, userId, currentUserId, month, year, queryClient])
+
+	return query
+}
+
 // Mutation - przełączanie statusu potwierdzenia
 export const useToggleCalendarConfirmation = () => {
 	const queryClient = useQueryClient()
@@ -75,10 +119,16 @@ export const useToggleCalendarConfirmation = () => {
 			queryClient.invalidateQueries({
 				queryKey: ['calendar', 'confirmation', variables.month, variables.year],
 			})
+			queryClient.invalidateQueries({
+				queryKey: ['calendar', 'confirmation-details', variables.month, variables.year],
+			})
 			if (variables.userId) {
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', variables.userId] })
 				queryClient.invalidateQueries({ queryKey: ['workdays'] })
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+				queryClient.invalidateQueries({
+					queryKey: ['calendar', 'confirmation-details', variables.month, variables.year, variables.userId],
+				})
 			}
 		},
 	})

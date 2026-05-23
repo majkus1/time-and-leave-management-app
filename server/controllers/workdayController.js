@@ -10,6 +10,23 @@ const {
 	resolveTeamScopedTimesheetWriteAccess,
 	sendTeamScopedTimesheetWriteAccessError,
 } = require('../utils/timesheetWriteAccess')
+
+const emitWorkdaysUpdated = (req, userId, dateValue) => {
+	const io = req.app?.io
+	if (!io || !userId) return
+	const date = dateValue ? new Date(dateValue) : null
+	const payload = {
+		userId: String(userId),
+		teamId: req.user?.teamId ? String(req.user.teamId) : null,
+		month: date && !Number.isNaN(date.getTime()) ? date.getMonth() : null,
+		year: date && !Number.isNaN(date.getTime()) ? date.getFullYear() : null,
+		at: new Date().toISOString(),
+	}
+	io.to(`user:${userId}`).emit('workdays-updated', payload)
+	if (req.user?.teamId) {
+		io.to(`team:${req.user.teamId}`).emit('workdays-updated', payload)
+	}
+}
 const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
 
 // Helper function to check if day is weekend
@@ -165,8 +182,10 @@ async function createWorkdayForTarget({ req, res, targetUser, settings }) {
 			userId: targetUser._id,
 			date: date != null ? date : new Date(`${dateYmd}T12:00:00.000Z`),
 			...v.sanitized,
+			lastChangedBy: req.user.userId,
 		})
 		await workday.save()
+		emitWorkdaysUpdated(req, targetUser._id, workday.date)
 		return res.status(201).json(workday)
 	} catch (error) {
 		console.error('Error adding workday:', error)
@@ -216,6 +235,7 @@ exports.bulkFillWorkdays = async (req, res) => {
 			targetUser,
 			settings,
 			body: req.body,
+			actorUserId: req.user.userId,
 		})
 		if (result.error) {
 			return res.status(result.error.status).json({
@@ -223,6 +243,7 @@ exports.bulkFillWorkdays = async (req, res) => {
 				code: result.error.code,
 			})
 		}
+		emitWorkdaysUpdated(req, targetUser._id, `${req.body.startDate}T12:00:00.000Z`)
 		return res.status(201).json(result)
 	} catch (error) {
 		console.error('Error bulk filling workdays:', error)
@@ -243,6 +264,7 @@ exports.bulkFillWorkdaysForUser = async (req, res) => {
 			targetUser: access.targetUser,
 			settings: access.settings,
 			body: req.body,
+			actorUserId: req.user.userId,
 		})
 		if (result.error) {
 			return res.status(result.error.status).json({
@@ -250,6 +272,7 @@ exports.bulkFillWorkdaysForUser = async (req, res) => {
 				code: result.error.code,
 			})
 		}
+		emitWorkdaysUpdated(req, access.targetUser._id, `${req.body.startDate}T12:00:00.000Z`)
 		return res.status(201).json(result)
 	} catch (error) {
 		console.error('Error bulk filling workdays for user:', error)
@@ -294,8 +317,10 @@ exports.updateWorkday = async (req, res) => {
 		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
 		if (absenceType !== undefined) workday.absenceType = absenceType || null
 		if (notes !== undefined) workday.notes = notes || null
+		workday.lastChangedBy = req.user.userId
 		
 		await workday.save()
+		emitWorkdaysUpdated(req, req.user.userId, workday.date)
 		res.send('Workday updated successfully.')
 	} catch (error) {
 		console.error('Error updating workday:', error)
@@ -331,11 +356,13 @@ exports.updateWorkdayForUser = async (req, res) => {
 		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
 		if (absenceType !== undefined) workday.absenceType = absenceType || null
 		if (notes !== undefined) workday.notes = notes || null
+		workday.lastChangedBy = req.user.userId
 		workday.reviewStatus = null
 		workday.reviewedBy = null
 		workday.reviewedAt = null
 
 		await workday.save()
+		emitWorkdaysUpdated(req, access.targetUser._id, workday.date)
 		res.json(workday)
 	} catch (error) {
 		console.error('Error updating workday for user:', error)
@@ -357,6 +384,7 @@ exports.deleteWorkday = async (req, res) => {
 		}
 		const result = await Workday.deleteOne({ _id: req.params.id, userId: req.user.userId })
 		if (result.deletedCount === 0) return res.status(404).send('Workday not found or unauthorized')
+		emitWorkdaysUpdated(req, req.user.userId, workday.date)
 		res.send('Workday deleted successfully.')
 	} catch (error) {
 		console.error('Error deleting workday:', error)
@@ -393,6 +421,7 @@ exports.clearWorkdaysForMonth = async (req, res) => {
 			date: { $gte: startDate, $lte: endDate },
 		})
 
+		emitWorkdaysUpdated(req, req.user.userId, new Date(Date.UTC(year, month, 1, 12, 0, 0, 0)))
 		return res.json({
 			deletedCount: result.deletedCount || 0,
 			month,
@@ -432,6 +461,7 @@ exports.clearWorkdaysForUserMonth = async (req, res) => {
 			date: { $gte: startDate, $lte: endDate },
 		})
 
+		emitWorkdaysUpdated(req, access.targetUser._id, new Date(Date.UTC(year, month, 1, 12, 0, 0, 0)))
 		return res.json({
 			deletedCount: result.deletedCount || 0,
 			month,
@@ -458,6 +488,7 @@ exports.deleteWorkdayForUser = async (req, res) => {
 			})
 		}
 		await Workday.deleteOne({ _id: req.params.id, userId: access.targetUser._id })
+		emitWorkdaysUpdated(req, access.targetUser._id, workday.date)
 		res.json({ message: 'Workday deleted successfully.' })
 	} catch (error) {
 		console.error('Error deleting workday for user:', error)
@@ -492,6 +523,7 @@ exports.reviewWorkdayForUser = async (req, res) => {
 
 		await workday.save()
 		const populated = await Workday.findById(workday._id).populate('reviewedBy', 'firstName lastName')
+		emitWorkdaysUpdated(req, access.targetUser._id, workday.date)
 		res.json(populated)
 	} catch (error) {
 		console.error('Error reviewing workday for user:', error)
@@ -537,7 +569,9 @@ exports.getUserWorkdays = async (req, res) => {
 			return sendTeamScopedTimesheetViewAccessError(res, access.error)
 		}
 
-		const workdays = await Workday.find({ userId }).populate('reviewedBy', 'firstName lastName');
+		const workdays = await Workday.find({ userId })
+			.populate('reviewedBy', 'firstName lastName')
+			.populate('lastChangedBy', 'firstName lastName');
 		res.json(workdays);
 	} catch (error) {
 		console.error('Error fetching workdays for user:', error);

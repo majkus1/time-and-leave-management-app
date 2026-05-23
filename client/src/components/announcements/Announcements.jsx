@@ -13,6 +13,7 @@ import {
 import { useTeamMembers } from '../../hooks/useChat'
 import { useDepartments } from '../../hooks/useDepartments'
 import { API_URL } from '../../config'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -34,7 +35,8 @@ function Announcements() {
 	const createAnnouncementMutation = useCreateAnnouncement()
 	const deleteAnnouncementMutation = useDeleteAnnouncement()
 	const markAnnouncementsSeenMutation = useMarkAnnouncementsSeen()
-	const isAdmin = Array.isArray(role) && role.includes('Admin')
+	const canCreateAnnouncements = isAdmin(role) || isHR(role) || isSupervisor(role)
+	const canDeleteAnyAnnouncement = isAdmin(role) || isHR(role)
 
 	const [title, setTitle] = useState('')
 	const [content, setContent] = useState('')
@@ -190,6 +192,7 @@ function Announcements() {
 						<hr />
 					</div>
 
+					{canCreateAnnouncements && (
 					<div
 						style={{
 							backgroundColor: 'white',
@@ -425,6 +428,7 @@ function Announcements() {
 							</form>
 						)}
 					</div>
+					)}
 
 					<div style={{ display: 'grid', gap: '16px' }}>
 						{announcements.map((announcement) => {
@@ -458,7 +462,7 @@ function Announcements() {
 									<div style={{ marginTop: '4px', fontSize: '13px', color: '#475569' }}>
 										<strong>{t('announcements.recipients') || 'Odbiorcy'}:</strong> {getAudienceLabel(announcement)}
 									</div>
-									{isAuthor && (
+									{(canDeleteAnyAnnouncement || isAuthor) && (
 										<div style={{ marginTop: '10px' }}>
 											<button
 												type="button"
@@ -517,7 +521,7 @@ function Announcements() {
 								borderRadius: '12px',
 							}}
 						>
-							{isAdmin
+							{canCreateAnnouncements
 								? t('announcements.emptyAdmin') || 'Brak komunikatów w zespole.'
 								: t('announcements.emptyUser') || 'Brak komunikatów dla Ciebie.'}
 						</div>

@@ -8,6 +8,10 @@ const { appUrl } = require('../config')
 const fs = require('fs').promises
 const path = require('path')
 const mongoose = require('mongoose')
+const {
+	hasAnnouncementManagerRole,
+	canDeleteTeamAnnouncement,
+} = require('../utils/announcementAccess')
 
 const parseTargetUsers = (value) => {
 	if (!value) return []
@@ -181,6 +185,14 @@ exports.markAnnouncementsSeen = async (req, res) => {
 exports.createAnnouncement = async (req, res) => {
 	const uploadedFiles = Array.isArray(req.files) ? req.files : []
 	try {
+		const roles = Array.isArray(req.user?.roles) ? req.user.roles : []
+		if (!hasAnnouncementManagerRole(roles)) {
+			await cleanupUploadedFiles(uploadedFiles)
+			return res.status(403).json({
+				message: 'Wymagana rola Administrator, HR lub Przełożony.',
+			})
+		}
+
 		const { teamId, userId } = req.user
 		const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : ''
 		const rawContent = typeof req.body?.content === 'string' ? req.body.content.trim() : ''
@@ -383,8 +395,17 @@ exports.deleteAnnouncement = async (req, res) => {
 			return res.status(403).json({ message: 'Access denied' })
 		}
 
-		if (announcement.createdBy.toString() !== userId.toString()) {
-			return res.status(403).json({ message: 'Only the author can delete this announcement' })
+		const roles = Array.isArray(req.user?.roles) ? req.user.roles : []
+		if (
+			!canDeleteTeamAnnouncement({
+				roles,
+				userId,
+				createdBy: announcement.createdBy,
+			})
+		) {
+			return res.status(403).json({
+				message: 'Brak uprawnień do usunięcia tego komunikatu.',
+			})
 		}
 
 		const attachments = Array.isArray(announcement.attachments) ? announcement.attachments : []

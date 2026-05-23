@@ -257,6 +257,11 @@ function MonthlyCalendar() {
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
 	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+	const hasHoursEntryInput =
+		String(hoursWorked || '').trim() !== '' ||
+		String(additionalWorked || '').trim() !== '' ||
+		String(realTimeDayWorked || '').trim() !== ''
+	const hasAbsenceEntryInput = String(absenceType || '').trim() !== ''
 
 	useEffect(() => {
 		const parsed = parseWorkTimeRange(realTimeDayWorked)
@@ -697,6 +702,10 @@ function MonthlyCalendar() {
 
 	const handleSubmit = async e => {
 		e.preventDefault()
+		if (isConfirmed) {
+			setErrorMessage(t('workcalendar.bulkFill.errors.monthConfirmed'))
+			return
+		}
 
 		// Normalizuj wartości - usuń białe znaki i sprawdź czy są puste
 		const hoursWorkedValue = hoursWorked && hoursWorked.trim() !== '' ? hoursWorked.trim() : ''
@@ -802,6 +811,10 @@ function MonthlyCalendar() {
 
 		if (hoursWorkedValue && absenceTypeValue) {
 			setErrorMessage(t('workcalendar.formalerttwo'))
+			return
+		}
+		if (!hoursWorkedValue && additionalWorkedValue && !absenceTypeValue && !notesValue) {
+			setErrorMessage(t('workcalendar.overtimeNeedsHours'))
 			return
 		}
 
@@ -1554,6 +1567,21 @@ function MonthlyCalendar() {
 						×
 					</button>
 				</div>
+				<p style={{ margin: '-8px 0 14px', color: '#64748b', fontSize: '13px' }}>
+					{t('workcalendar.entryHint') || 'Wpisz godziny pracy albo nieobecność.'}
+				</p>
+				{isConfirmed && (
+					<div style={{
+						marginBottom: '14px',
+						padding: '10px 12px',
+						backgroundColor: '#fff7ed',
+						border: '1px solid #fed7aa',
+						color: '#9a3412',
+						borderRadius: '8px',
+					}}>
+						{t('workcalendar.bulkFill.errors.monthConfirmed')}
+					</div>
+				)}
 
 				{selectedDate && (() => {
 					const clickedDateObj = new Date(selectedDate)
@@ -1697,7 +1725,7 @@ function MonthlyCalendar() {
 										<div className="flex justify-end gap-3 pt-4">
 											<button
 												type="submit"
-												disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+												disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 												{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 													<span className="flex items-center">
@@ -1765,7 +1793,7 @@ function MonthlyCalendar() {
 									<div className="flex justify-end gap-3 pt-4">
 										<button
 											type="submit"
-											disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+											disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 											className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 											{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 												<span className="flex items-center">
@@ -1929,7 +1957,7 @@ function MonthlyCalendar() {
 										<div className="flex justify-end gap-3 pt-4">
 											<button
 												type="submit"
-												disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+												disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 												className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 												{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 													<span className="flex items-center">
@@ -1991,7 +2019,12 @@ function MonthlyCalendar() {
 									)}
 									{hasOnlyNotesInExisting && !hasAcceptedRequest ? (
 										<form onSubmit={handleSubmit} className="space-y-4">
-											<div>
+											<div
+												style={{
+													opacity: hasAbsenceEntryInput ? 0.55 : 1,
+													transition: 'opacity 0.2s ease',
+												}}
+											>
 												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
 												<input
 													type="number"
@@ -2090,7 +2123,13 @@ function MonthlyCalendar() {
 												{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
 											</div>
 
-											<div className="bulk-fill-absence-card">
+											<div
+												className="bulk-fill-absence-card"
+												style={{
+													opacity: hasHoursEntryInput ? 0.55 : 1,
+													transition: 'opacity 0.2s ease',
+												}}
+											>
 												<h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#13294b' }}>{t('workcalendar.h2modalabsence')}</h2>
 												<p style={{ margin: '-4px 0 0', color: '#64748b', fontSize: '13px' }}>
 													Wypełnij tylko wtedy, gdy zamiast godzin chcesz dodać nieobecność.
@@ -2121,7 +2160,7 @@ function MonthlyCalendar() {
 											<div className="flex justify-end gap-3 pt-4">
 												<button
 													type="submit"
-													disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+													disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 													{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 														<span className="flex items-center">
@@ -2162,7 +2201,7 @@ function MonthlyCalendar() {
 											<div className="flex justify-end gap-3 pt-4">
 												<button
 													type="submit"
-													disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+													disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 													className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 													{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 														<span className="flex items-center">
@@ -2210,7 +2249,12 @@ function MonthlyCalendar() {
 								{t('workcalendar.notesOnlyForLeave') || 'W tym dniu jest zaakceptowany wniosek urlopowy/nieobecność. Możesz dodać tylko uwagi.'}
 							</div>
 							<form onSubmit={handleSubmit} className="space-y-4">
-								<div>
+								<div
+									style={{
+										opacity: hasAbsenceEntryInput ? 0.55 : 1,
+										transition: 'opacity 0.2s ease',
+									}}
+								>
 									<label className="text-lg font-semibold mb-2 text-gray-800 block">{t('workcalendar.notes') || 'Uwagi'}</label>
 									<textarea
 										placeholder={t('workcalendar.notesPlaceholder') || 'Dodaj uwagi...'}
@@ -2224,7 +2268,7 @@ function MonthlyCalendar() {
 								<div className="flex justify-end gap-3 pt-4">
 									<button
 										type="submit"
-										disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+										disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 										{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 											<span className="flex items-center">
@@ -2352,7 +2396,13 @@ function MonthlyCalendar() {
 									{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
 								</div>
 
-								<div className="bulk-fill-absence-card">
+								<div
+									className="bulk-fill-absence-card"
+									style={{
+										opacity: hasHoursEntryInput ? 0.55 : 1,
+										transition: 'opacity 0.2s ease',
+									}}
+								>
 									<h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#13294b' }}>{t('workcalendar.h2modalabsence')}</h2>
 									<p style={{ margin: '-4px 0 0', color: '#64748b', fontSize: '13px' }}>
 										Wypełnij tylko wtedy, gdy zamiast godzin chcesz dodać nieobecność.
@@ -2383,7 +2433,7 @@ function MonthlyCalendar() {
 								<div className="flex justify-end gap-3 pt-4">
 									<button
 										type="submit"
-										disabled={createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
+										disabled={isConfirmed || createWorkdayMutation.isPending || updateWorkdayMutation.isPending}
 										className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600">
 										{createWorkdayMutation.isPending || updateWorkdayMutation.isPending ? (
 											<span className="flex items-center">

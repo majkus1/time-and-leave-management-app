@@ -4,6 +4,7 @@ const path = require('path')
 const crypto = require('crypto')
 const multer = require('multer')
 const { authenticateToken } = require('../middleware/authMiddleware')
+const requireAnnouncementManagerRole = require('../middleware/requireAnnouncementManagerRole')
 const announcementController = require('../controllers/announcementController')
 
 const MAX_ANNOUNCEMENT_ATTACHMENTS = 5
@@ -58,6 +59,7 @@ router.post('/mark-seen', authenticateToken, announcementController.markAnnounce
 router.post(
 	'/',
 	authenticateToken,
+	requireAnnouncementManagerRole,
 	(req, res, next) => {
 		announcementUpload.array('attachments', MAX_ANNOUNCEMENT_ATTACHMENTS)(req, res, (err) => {
 			if (!err) return next()

@@ -87,7 +87,7 @@ function BulkFillWorkdaysModal({
 	const [timeFrom, setTimeFrom] = useState('')
 	const [timeTo, setTimeTo] = useState('')
 	const [hoursWorked, setHoursWorked] = useState('')
-	const [additionalWorked, setAdditionalWorked] = useState('0')
+	const [additionalWorked, setAdditionalWorked] = useState('')
 	const [absenceType, setAbsenceType] = useState('')
 	const [notes, setNotes] = useState('')
 	const [error, setError] = useState('')
@@ -105,7 +105,7 @@ function BulkFillWorkdaysModal({
 		setTimeFrom(firstWorkHours?.timeFrom || '')
 		setTimeTo(firstWorkHours?.timeTo || '')
 		setHoursWorked(firstWorkHours?.hours != null ? String(firstWorkHours.hours) : '')
-		setAdditionalWorked('0')
+		setAdditionalWorked('')
 		setAbsenceType('')
 		setNotes('')
 		setError('')
@@ -163,7 +163,7 @@ function BulkFillWorkdaysModal({
 		setTimeFrom(option.timeFrom || '')
 		setTimeTo(option.timeTo || '')
 		setHoursWorked(option.hours != null ? String(option.hours) : '')
-		setAdditionalWorked('0')
+		setAdditionalWorked('')
 		setAbsenceType('')
 	}
 
@@ -171,7 +171,7 @@ function BulkFillWorkdaysModal({
 		setAbsenceType(value)
 		if (value.trim()) {
 			setHoursWorked('')
-			setAdditionalWorked('0')
+			setAdditionalWorked('')
 			setTimeFrom('')
 			setTimeTo('')
 			setSelectedWorkHoursIndex(-1)
@@ -401,6 +401,7 @@ function BulkFillWorkdaysModal({
 								step="0.5"
 								min="0"
 								max="24"
+								placeholder={t('workcalendar.bulkFill.hoursPlaceholderShort') || 'np. 10'}
 								value={hoursWorked}
 								onChange={(e) => {
 									setHoursWorked(e.target.value)
@@ -415,6 +416,7 @@ function BulkFillWorkdaysModal({
 								type="number"
 								step="0.5"
 								min="0"
+								placeholder={t('workcalendar.bulkFill.overtimePlaceholderShort') || 'np. 2'}
 								value={additionalWorked}
 								onChange={(e) => {
 									setAdditionalWorked(e.target.value)

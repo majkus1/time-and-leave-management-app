@@ -114,6 +114,7 @@ async function bulkFillWorkdays({
 	targetUser,
 	settings,
 	body,
+	actorUserId = null,
 }) {
 	if (!targetUser?._id || !targetUser.teamId) {
 		return { error: { status: 404, code: 'USER_INVALID', message: 'Użytkownik nie znaleziony.' } }
@@ -209,6 +210,7 @@ async function bulkFillWorkdays({
 			realTimeDayWorked: normalized.hasHours ? normalized.realTimeDayWorked || null : null,
 			absenceType: normalized.hasAbsence ? normalized.absenceType : null,
 			notes: normalized.notes || null,
+			lastChangedBy: actorUserId,
 		})
 	}
 
