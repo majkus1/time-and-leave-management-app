@@ -18,6 +18,7 @@ const FREEMIUM_APP_PATHS = new Set([
 function isFreemiumAppPathAllowed(pathname, { staffBilling, userIsAdmin }) {
 	if (pathname === TEAM_ACCESS_NOTICE_PATH) return true
 	if (pathname === '/settings') return true
+	if (pathname === '/helpcenter') return userIsAdmin
 	if (pathname === '/packages') return staffBilling
 	if (FREEMIUM_APP_PATHS.has(pathname)) {
 		if (
@@ -82,7 +83,7 @@ export default function FreemiumRouteSync() {
 			if (p === '/edit-profile') return
 			if (staffBilling && p === '/packages') return
 			if (p === '/settings') return
-			if (userIsAdmin && (p === '/team-management' || p === '/documents')) return
+			if (userIsAdmin && (p === '/team-management' || p === '/documents' || p === '/helpcenter')) return
 			if (
 				canFreemiumCalendars &&
 				(p === '/calendars-list' || p.startsWith('/work-calendars/'))

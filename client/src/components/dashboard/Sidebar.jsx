@@ -587,7 +587,7 @@ function Sidebar() {
 							</NavLink>
 							)}
 
-							{isAdmin(role) && showPremiumModules && (
+							{isAdmin(role) && (
 								<NavLink
 									to="/helpcenter"
 									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

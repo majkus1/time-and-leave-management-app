@@ -129,14 +129,14 @@ Skrót **ścieżek użytkownika + backendu** — szczegóły implementacji w wym
 
 ### Tickety (centrum pomocy)
 
-- Osobna baza opcjonalna; API `/api/tickets`. Widok `/helpcenter` (Admin/HR w `App.jsx`).
+- Osobna baza opcjonalna; API `/api/tickets` (rola Admin). Widok `/helpcenter` (tylko Admin w `App.jsx`, także freemium).
 
 ---
 
 ## Role i uprawnienia (klient + serwer)
 
 - **Enum w Mongo:** `Admin`, `Pracownik (Worker)`, `Przełożony (Supervisor)`, `HR` — tablica `roles` na użytkowniku (`server/models/user.js`). Użytkownik może mieć **wiele ról** naraz.
-- **UI (`App.jsx`):** Admin i HR mają szerszy dostęp do tras (urlopy, ewidencja zespołu, Pakiety, helpcenter). Pracownik bez roli kierowniczej: głównie dashboard własnej ewidencji, własny wniosek urlopowy, ograniczone moduły w sidebarze (`Sidebar.jsx` + `moduleNavAccess.js` + entitlementy).
+- **UI (`App.jsx`):** Admin i HR mają szerszy dostęp do tras (urlopy, ewidencja zespołu, Pakiety); **Centrum pomocy** (`/helpcenter`) — tylko Admin. Pracownik bez roli kierowniczej: głównie dashboard własnej ewidencji, własny wniosek urlopowy, ograniczone moduły w sidebarze (`Sidebar.jsx` + `moduleNavAccess.js` + entitlementy).
 - **Przełożony:** uprawnienia **nie tylko z roli** — model **`SupervisorConfig`** (`supervisorId`, `permissions`, wybrane pracownicy / dział) odczytywany w **`server/services/roleService.js`** (`canSupervisorApproveLeaves`, analogicznie podgląd ewidencji po stronie klienta w `App.jsx` / `useSupervisor`).
 - **Super-admin platformy:** helper `isPlatformSuperAdmin` + `requireSuperAdmin` — m.in. `/api/super/activity`, dostęp do `/team-management` jako `Logs` (nadzór billingowy).
 

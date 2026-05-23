@@ -1,6 +1,20 @@
 const { firmDb } = require('../db/db')
 const Settings = require('../models/Settings')(firmDb)
+const Team = require('../models/Team')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
+
+async function loadTeamForEntitlements(teamId) {
+	if (!teamId) return null
+	return Team.findById(teamId).select(
+		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+	)
+}
+
+/** Freemium: pracownicy bez dostępu + ewidencja tak; wnioski urlopowe za pracownika — nie. */
+function applyFreemiumManagedNoAccessPolicy(team, settings) {
+	if (!settings || !entitlementsService.isFreemiumTierTeam(team)) return
+	settings.allowManagedLeaveRequests = false
+}
 
 exports.getSettings = async (req, res) => {
 	try {
@@ -13,6 +27,8 @@ exports.getSettings = async (req, res) => {
 		await entitlementsService.syncTimerEnabledSettingForTeam(requestingUser.teamId)
 
 		const settings = await Settings.getSettings(requestingUser.teamId)
+		const team = await loadTeamForEntitlements(requestingUser.teamId)
+		applyFreemiumManagedNoAccessPolicy(team, settings)
 		res.json(settings)
 	} catch (error) {
 		console.error('Error retrieving settings:', error)
@@ -229,6 +245,9 @@ exports.updateSettings = async (req, res) => {
 			settings.allowManagedWorkdayEntries = false
 			settings.allowManagedLeaveRequests = false
 		}
+
+		const team = await loadTeamForEntitlements(requestingUser.teamId)
+		applyFreemiumManagedNoAccessPolicy(team, settings)
 
 		await settings.save()
 		

@@ -4,6 +4,8 @@ const User = require('../models/user')(firmDb)
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const LeavePlan = require('../models/LeavePlan')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
+const Team = require('../models/Team')(firmDb)
+const entitlementsService = require('../services/entitlementsService')
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
 const { findSupervisorsForDepartment } = require('../services/roleService')
@@ -202,6 +204,21 @@ async function resolveLeaveRequestSubmitTarget({ requestingUserId, targetUserId,
 
 	const self = isSelfUser(requestingUser._id, targetUser._id)
 	if (self) return { requestingUser, targetUser }
+
+	if (targetUser.appAccessEnabled === false) {
+		const team = await Team.findById(requestingUser.teamId).select(
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+		)
+		if (entitlementsService.isFreemiumTierTeam(team)) {
+			return {
+				error: {
+					status: 403,
+					message:
+						'W planie darmowym nie można składać wniosków urlopowych za pracownika bez dostępu do aplikacji.',
+				},
+			}
+		}
+	}
 
 	if (!isSameTeam(requestingUser.teamId, targetUser.teamId)) {
 		return { error: { status: 404, message: 'Pracownik nie został znaleziony' } }

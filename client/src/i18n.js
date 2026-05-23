@@ -1558,7 +1558,7 @@ i18n
 						saveSuccess: 'Settings have been saved successfully',
 						saveError: 'Error saving settings',
 						freemiumSlimNotice:
-							'On the free plan, this page only includes weekend work and holiday settings. Save your changes with the button at the bottom. Full team settings are available after you upgrade your plan.',
+							'On the free plan: weekends & holidays, work hours (timesheet), and no-access employees. Schedules, leave, timer, and other options unlock after upgrading. Save with the button at the bottom.',
 						freemiumPushBrief:
 							'Push notifications are not used on the free plan: in the app they are tied to modules such as chat, tasks, leave and announcements, which are not available in this tier.',
 						freemiumPushUnavailable:
@@ -1593,6 +1593,8 @@ i18n
 						holidayDateExists: 'A holiday for this date already exists',
 						workHoursTitle: 'Work hours configuration',
 						workHoursDescription: 'Configure standard work hours for your team. These hours will be immediately available as quick selection options in work time records forms and schedule entry forms, making data entry faster and more convenient.',
+						workHoursDescriptionFreemium:
+							'Configure standard work hours for your team. On the free plan they are available as quick picks in the timesheet calendar (schedules unlock after upgrading).',
 						workHoursCommonTitle: 'Common work hours for all days',
 						selectOption: 'Select',
 						workdayEntriesTitle: 'Work time records',
@@ -1601,6 +1603,8 @@ i18n
 						workdayEntriesOnlyTodayDescription: 'Blocks adding and editing entries for past and future dates.',
 						noAccessUsersTitle: 'Employees without app access',
 						noAccessUsersDescription: 'Enable this when authorized users should manage records and leave requests for employees who do not log in to the app.',
+						noAccessUsersDescriptionFreemium:
+							'On the free plan you can add employees without login and manage their timesheets. Leave requests for them unlock after upgrading your plan.',
 						allowManagedNoAccessUsersTitle: 'Allow adding employees without app access',
 						allowManagedNoAccessUsersDescription: 'Such an employee counts toward the seat limit, but does not receive a password link and cannot log in.',
 						allowManagedWorkdayEntriesTitle: 'Allow work time entries for employee',
@@ -3360,7 +3364,7 @@ i18n
 						saveSuccess: 'Ustawienia zostały zapisane pomyślnie',
 						saveError: 'Błąd podczas zapisywania ustawień',
 						freemiumSlimNotice:
-							'W planie darmowym na tej stronie są dostępne wyłącznie ustawienia pracy w weekendy oraz dni świąteczne. Zapisz zmiany przyciskiem na dole. Pełna konfiguracja zespołu jest dostępna po rozszerzeniu planu.',
+							'W planie darmowym: weekendy i święta, godziny pracy (ewidencja) oraz pracownicy bez dostępu. Grafik, urlopy, licznik i pozostałe opcje — po rozszerzeniu planu. Zapisz zmiany przyciskiem na dole.',
 						freemiumPushBrief:
 							'Powiadomienia push w planie darmowym nie są używane — w aplikacji wiążą się z modułami takimi jak czat, zadania, urlopy czy komunikaty, których w tym planie nie ma.',
 						freemiumPushUnavailable:
@@ -3398,6 +3402,8 @@ i18n
 						holidayDateExists: 'Święto dla tej daty już istnieje',
 						workHoursTitle: 'Konfiguracja godzin pracy',
 						workHoursDescription: 'Skonfiguruj standardowe godziny pracy dla Twojego zespołu. Te godziny będą od razu dostępne jako szybki wybór w formularzach ewidencji czasu pracy oraz w formularzach dodawania wpisów do grafiku, co znacznie przyspieszy wprowadzanie danych.',
+						workHoursDescriptionFreemium:
+							'Skonfiguruj standardowe godziny pracy dla zespołu. W planie darmowym będą dostępne jako szybki wybór w kalendarzu ewidencji czasu pracy (grafik — po rozszerzeniu planu).',
 						workHoursCommonTitle: 'Wspólne godziny pracy dla wszystkich dni',
 						selectOption: 'Wybierz',
 						workdayEntriesTitle: 'Ewidencja czasu',
@@ -3406,6 +3412,8 @@ i18n
 						workdayEntriesOnlyTodayDescription: 'Blokuje dodawanie i edycję wpisów dla dni wcześniejszych oraz przyszłych.',
 						noAccessUsersTitle: 'Pracownicy bez dostępu',
 						noAccessUsersDescription: 'Włącz, gdy uprawnione osoby mają prowadzić ewidencję i wnioski za pracowników, którzy nie logują się do aplikacji.',
+						noAccessUsersDescriptionFreemium:
+							'W planie darmowym możesz dodać pracowników bez logowania i prowadzić za nich ewidencję czasu pracy. Wnioski urlopowe za takich pracowników są dostępne po rozszerzeniu planu.',
 						allowManagedNoAccessUsersTitle: 'Dodawanie pracowników bez dostępu',
 						allowManagedNoAccessUsersDescription: 'Taki pracownik wlicza się do limitu miejsc, ale nie dostaje linku do hasła i nie może się zalogować.',
 						allowManagedWorkdayEntriesTitle: 'Wpisy czasu pracy za pracownika',

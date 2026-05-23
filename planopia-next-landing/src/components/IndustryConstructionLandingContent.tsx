@@ -18,6 +18,9 @@ const COPY: Record<
 		videoHref: string
 		problemsTitle: string
 		problems: string[]
+		fieldCrewTitle: string
+		fieldCrewLead: string
+		fieldCrewBullets: string[]
 		solutionTitle: string
 		solutionIntro: string
 		features: string[]
@@ -52,10 +55,19 @@ const COPY: Record<
 			'Brak jednego widoku: kto był na jakiej budowie i ile faktycznie przepracował.',
 			'Urlopy i nieobecności „na słowo” — trudno zaplanować brygady i uniknąć kolizji.',
 		],
+		fieldCrewTitle: 'Ewidencja brygad i pracowników budowlanych — bez logowania całej ekipy',
+		fieldCrewLead:
+			'Nie każdy na budowie musi mieć konto w aplikacji. Brygadzista lub kierownik może dodawać pracowników bez dostępu i prowadzić rozliczanie brygady oraz raportowanie czasu pracy na budowie z jednego miejsca — także w planie darmowym (ewidencja czasu pracy).',
+		fieldCrewBullets: [
+			'Dodawanie pracowników bez dostępu do aplikacji — wliczają się do limitu miejsc, bez hasła i maila z zaproszeniem.',
+			'Ewidencja czasu pracy za ekipę — kalendarz, nadgodziny, raporty PDF i Excel do biura lub klienta.',
+			'Grafiki, urlopy i nieobecności za pracowników terenowych — w planie płatnym (po rozszerzeniu konta).',
+		],
 		solutionTitle: 'Planopia dla budowlanki — porządek w jednym miejscu',
 		solutionIntro:
 			'Planopia to nie tylko urlopy i ewidencja — to narzędzie, z którego zespół korzysta codziennie: planuje pracę, komunikuje się i domyka zadania.',
 		features: [
+			'Idealne dla brygad budowlanych — brygadzista lub kierownik dodaje pracowników bez logowania i prowadzi ich ewidencję czasu pracy; w planie płatnym także grafiki, urlopy i nieobecności całej ekipy.',
 			'Ewidencja czasu pracy — szybkie wpisy, kalendarz miesięczny, raporty i eksport PDF / Excel.',
 			'Grafiki i zmiany — planowanie pracy brygad i podgląd obłożenia.',
 			'Urlopy i nieobecności — wnioski i akceptacje w systemie, zamiast łańcuchów wiadomości.',
@@ -72,11 +84,15 @@ const COPY: Record<
 		stepsTitle: 'Jak zacząć — 3 krótkie kroki',
 		steps: [
 			'Załóż darmowy zespół w Planopii (do 5 osób w okresie próbnym).',
-			'Dodaj pracowników i ustal role (kto wpisuje czas, kto akceptuje urlopy).',
+			'Dodaj pracowników z kontem lub bez dostępu do aplikacji — ustal role: kto prowadzi ewidencję brygady, kto akceptuje urlopy.',
 			'Uruchom ewidencję, grafik i — jeśli chcesz — tablice zadań oraz czaty pod konkretne budowy.',
 		],
 		faqTitle: 'Częste pytania',
 		faqs: [
+			{
+				q: 'Czy każdy pracownik musi mieć dostęp do aplikacji?',
+				a: 'Nie. W Planopii brygadzista, kierownik budowy lub HR może dodać pracowników bez dostępu do aplikacji i samodzielnie uzupełniać ich ewidencję czasu pracy — to ułatwia rozliczanie brygad i raportowanie godzin z placu budowy. W planie darmowym dostępna jest ewidencja za takich pracowników; grafiki, wnioski urlopowe i nieobecności za ekipę — po rozszerzeniu planu. Rozwiązanie szczególnie dobrze sprawdza się w budowlance i pracy terenowej.',
+			},
 			{
 				q: 'Czy działa na telefonie na budowie?',
 				a: 'Tak. Planopia działa w przeglądarce jako PWA — możesz dodać skrót na ekran telefonu i korzystać wygodnie w terenie.',
@@ -119,10 +135,19 @@ const COPY: Record<
 			'No single view of who was on which site and how many hours they worked.',
 			'Leave and absences agreed “verbally” — hard to staff crews and avoid clashes.',
 		],
+		fieldCrewTitle: 'Crew time tracking without every worker logging in',
+		fieldCrewLead:
+			'Not everyone on site needs an app account. A foreman or site manager can add no-access workers and run crew time tracking and field reporting from one login — including timesheets on the free plan.',
+		fieldCrewBullets: [
+			'Add employees without app access — they count toward your seat limit, with no password email or login.',
+			'Timesheets on their behalf — monthly calendar, overtime, PDF and Excel exports for the office or client.',
+			'Schedules, leave, and absences for field staff — on paid plans (after upgrading your account).',
+		],
 		solutionTitle: 'Planopia for construction — one place for the team',
 		solutionIntro:
 			'Planopia is not only leave and time tracking — it is a tool your team uses daily to plan work, communicate, and close out jobs.',
 		features: [
+			'Built for construction crews — foreman or manager adds no-access workers and logs their time; paid plans add schedules, leave, and absences for the whole crew.',
 			'Time tracking — fast entries, monthly calendar, reports, PDF / Excel export.',
 			'Schedules and shifts — plan crews and see coverage at a glance.',
 			'Leave and absences — requests and approvals in the app instead of message threads.',
@@ -139,11 +164,15 @@ const COPY: Record<
 		stepsTitle: 'Get started in three steps',
 		steps: [
 			'Create your free team — 30 days with every module, then a free time tracking tier for up to 5 active accounts or an upgrade.',
-			'Add people and roles (who logs time, who approves leave).',
+			'Add people with or without app access — set roles: who runs crew timesheets, who approves leave.',
 			'Turn on time tracking and schedules — and optionally boards and chats per site.',
 		],
 		faqTitle: 'FAQ',
 		faqs: [
+			{
+				q: 'Does every employee need access to the app?',
+				a: 'No. In Planopia a foreman, site manager, or HR user can add employees without app access and maintain their timesheets — ideal for crew payroll and construction site reporting. On the free plan you can manage timesheets for them; schedules, leave requests, and absences on their behalf unlock on a paid plan. Especially popular in construction and field work.',
+			},
 			{
 				q: 'Does it work on phones on site?',
 				a: 'Yes. Planopia runs in the browser as a PWA — add it to your home screen and use it comfortably in the field.',
@@ -340,6 +369,29 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 										!
 									</span>
 									<span>{p}</span>
+								</li>
+							))}
+						</ul>
+					</section>
+
+					<section
+						className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 via-white to-orange-50/40 p-6 shadow-md ring-1 ring-amber-100/70 md:p-8"
+						aria-labelledby="field-crew-heading"
+					>
+						<h2 id="field-crew-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
+							{c.fieldCrewTitle}
+						</h2>
+						<p className="text-gray-700 mb-5 leading-relaxed">{c.fieldCrewLead}</p>
+						<ul className="list-none space-y-2.5 m-0 p-0 text-gray-800">
+							{c.fieldCrewBullets.map((b, i) => (
+								<li
+									key={i}
+									className="flex gap-3 rounded-xl border border-amber-100/80 bg-white/80 px-4 py-2.5 shadow-sm"
+								>
+									<span className="text-amber-700 font-bold shrink-0" aria-hidden>
+										✓
+									</span>
+									<span>{b}</span>
 								</li>
 							))}
 						</ul>

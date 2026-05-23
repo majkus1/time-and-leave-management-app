@@ -296,8 +296,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Team settings configuration',
 			path: '/settings',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.'
-				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push notifications are configured individually by each user in their profile settings.'
+				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.\n\nPracownicy bez dostępu do aplikacji: włącz dodawanie takich kont (wliczają się do limitu miejsc — bez logowania i bez maila z hasłem). Opcjonalnie zezwól na wpisy czasu pracy i wnioski urlopowe składane za nich przez Admina, HR lub uprawnionego przełożonego — w kalendarzu ewidencji i w formularzu urlopu.'
+				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push notifications are configured individually by each user in their profile settings.\n\nEmployees without app access: enable adding such accounts (they count toward the seat limit — no login and no password email). Optionally allow timesheet entries and leave requests submitted on their behalf by Admin, HR, or an authorized supervisor — in the timesheet calendar and leave form.'
 		},
 		{
 			id: 'create-user',
@@ -464,17 +464,17 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 
 		if (isAdmin || isHR) {
 			const adminFreemium = adminHRSections
-				.filter((s) => s.id !== 'leave-approval' && s.id !== 'help-center')
+				.filter((s) => s.id !== 'leave-approval' && (isAdmin || s.id !== 'help-center'))
 				.map((s) => {
 					if (s.id === 'settings') {
 						return {
 							...s,
 							description: pl
-								? 'W freemium: weekendy i święta (reszta po rozszerzeniu planu)'
-								: 'On freemium: weekends & holidays (more after upgrade)',
+								? 'W freemium: weekendy, święta, godziny pracy i pracownicy bez dostępu'
+								: 'On freemium: weekends, holidays, work hours, no-access workers',
 							content: pl
-								? 'W planie darmowym Administrator i HR mogą zmieniać wyłącznie pracę w weekendy oraz dni świąteczne (polskie i własne). Pozostałe ustawienia zespołu, typy urlopów, godziny pracy, QR i licznik są dostępne po rozszerzeniu planu. Powiadomienia push skonfigurujesz na pełnej stronie ustawień, jeśli Twoja rola ma do niej dostęp.'
-								: 'On the free plan, Admin and HR can only change weekend work and public/custom holidays. Other team settings (leave types, work hours, QR and counter) unlock after upgrading. Configure push notifications on the full Settings page when your role can open it.',
+								? 'W planie darmowym Administrator i HR mogą zmieniać: pracę w weekendy, dni świąteczne, standardowe godziny pracy (szybki wybór w ewidencji) oraz pracowników bez dostępu do aplikacji. Typy urlopów, QR, licznik i pełny grafik — po rozszerzeniu planu.\n\nPracownicy bez dostępu: włącz dodawanie kont i wpisy czasu pracy za nich w kalendarzu ewidencji. Wnioski urlopowe za takiego pracownika — w planie płatnym.'
+								: 'On the free plan, Admin and HR can configure: weekend work, holidays, standard work hours (quick picks in the timesheet), and employees without app access. Leave types, QR, timer, and full schedules unlock after upgrading.\n\nNo-access workers: enable adding accounts and timesheet entries on their behalf. Leave requests for them — on paid plans.',
 						}
 					}
 					if (s.id === 'create-user' && isAdmin) {
@@ -495,7 +495,9 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	} else {
 		sections = [
 			...baseSections,
-			...(isAdmin || isHR ? adminHRSections : nonAdminHRSections),
+			...(isAdmin || isHR
+				? adminHRSections.filter((s) => isAdmin || s.id !== 'help-center')
+				: nonAdminHRSections),
 		]
 	}
 

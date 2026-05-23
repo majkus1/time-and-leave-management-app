@@ -275,6 +275,18 @@ function ENProductPromotion() {
 										<p className="text-sm text-gray-600">Calendar, overtime, and work summaries.</p>
 									</div>
 								</div>
+								<div className="flex gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50/60 sm:col-span-2">
+									<img src="/img/add-group.png" className="icon-landing-about" alt="Employees without app access" loading="lazy" />
+									<div>
+										<p className="font-semibold text-gray-900">No-access workers — crews and field teams</p>
+										<p className="text-sm text-gray-600">
+											A foreman or manager adds people without logins and runs their timesheets from one account.{' '}
+											<Link href="/en/for-construction-industry" className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">
+												See construction solution →
+											</Link>
+										</p>
+									</div>
+								</div>
 								{/* Timer */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="/img/timer.png" className="icon-landing-about" alt='icon in section' loading="eager" />

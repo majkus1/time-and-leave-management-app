@@ -30,7 +30,7 @@ W kontekście technicznym zawsze jest też **zrzut danych zespołu** w sekcji �
 | Urlopy (zatwierdzanie list) | `/leave-list` | Admin / HR / przełożony (wg uprawnień) |
 | Dokumenty prawne | `/documents` | często tylko Admin |
 | **Pakiety i rozliczenia** | `/packages` | zwykle **Admin** (zakup / podgląd planu; **wykorzystanie AI zespołu** widoczne wg uprawnień na tej stronie) |
-| Pomoc / zgłoszenia | `/helpcenter` | wg roli |
+| Pomoc / zgłoszenia | `/helpcenter` | Admin |
 | Zarządzanie zespołem / logi | `/team-management` | ograniczone |
 
 ---

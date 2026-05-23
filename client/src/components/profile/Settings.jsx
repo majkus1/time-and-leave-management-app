@@ -236,11 +236,16 @@ function Settings() {
 	const handleSave = async () => {
 		try {
 			if (freemiumSlimSettings) {
+				const workHoursData = workHoursList.length > 0 ? workHoursList : null
 				await updateSettingsMutation.mutateAsync({
 					workOnWeekends,
 					includePolishHolidays,
 					includeCustomHolidays,
 					customHolidays,
+					workHours: workHoursData,
+					allowManagedNoAccessUsers,
+					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
+					allowManagedLeaveRequests: false,
 				})
 			} else {
 				// Zapisz workHours jako tablicę (lub null jeśli pusta)
@@ -257,7 +262,8 @@ function Settings() {
 					...(showTimerQrSettings ? { timerEnabled } : {}),
 					allowManagedNoAccessUsers,
 					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
-					allowManagedLeaveRequests: allowManagedNoAccessUsers && allowManagedLeaveRequests,
+					allowManagedLeaveRequests:
+						!freemiumTier && allowManagedNoAccessUsers && allowManagedLeaveRequests,
 					workdayEntriesOnlyToday,
 				})
 			}
@@ -842,8 +848,8 @@ function Settings() {
 					</div>
 				)}
 
-				{/* Komunikat przypominający o zapisywaniu zmian - tylko dla Admin i HR (pełny plan) */}
-				{canEditSettings && !freemiumSlimSettings && (
+				{/* Komunikat przypominający o zapisywaniu zmian - Admin i HR */}
+				{canEditSettings && (
 					<div style={{ 
 						backgroundColor: '#fff3e0',
 						borderLeft: '4px solid #ff9800',
@@ -1484,8 +1490,8 @@ function Settings() {
 						</div>
 						)}
 
-						{/* Sekcja konfiguracji godzin pracy */}
-						{!freemiumSlimSettings && (
+						{/* Sekcja konfiguracji godzin pracy — także freemium (ewidencja) */}
+						{canEditSettings && (
 							<>
 								<h3 style={{ 
 									color: '#2c3e50',
@@ -1508,7 +1514,9 @@ function Settings() {
 									color: '#1565c0'
 								}}>
 									<p style={{ margin: 0, lineHeight: '1.6' }}>
-										{t('settings.workHoursDescription') || 'Skonfiguruj standardowe godziny pracy dla Twojego zespołu. Te godziny będą automatycznie wypełniane w formularzu kalendarza w ewidencji czasu pracy, co znacznie przyspieszy wprowadzanie danych.'}
+										{freemiumTier
+											? t('settings.workHoursDescriptionFreemium')
+											: t('settings.workHoursDescription')}
 									</p>
 								</div>
 
@@ -2692,7 +2700,7 @@ function Settings() {
 							</div>
 						)}
 
-						{canEditSettings && !freemiumSlimSettings && (
+						{canEditSettings && (
 							<div style={{
 								backgroundColor: 'white',
 								borderRadius: '12px',
@@ -2709,7 +2717,9 @@ function Settings() {
 									{t('settings.noAccessUsersTitle')}
 								</h3>
 								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									{t('settings.noAccessUsersDescription')}
+									{freemiumTier
+										? t('settings.noAccessUsersDescriptionFreemium')
+										: t('settings.noAccessUsersDescription')}
 								</p>
 								<div style={{ display: 'grid', gap: '14px' }}>
 									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
@@ -2748,21 +2758,23 @@ function Settings() {
 											</span>
 										</span>
 									</label>
-									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
-										<input
-											type="checkbox"
-											checked={allowManagedLeaveRequests}
-											disabled={!allowManagedNoAccessUsers}
-											onChange={(e) => setAllowManagedLeaveRequests(e.target.checked)}
-											style={{ marginTop: '4px' }}
-										/>
-										<span>
-											<strong>{t('settings.allowManagedLeaveRequestsTitle')}</strong>
-											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												{t('settings.allowManagedLeaveRequestsDescription')}
+									{!freemiumTier && (
+										<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+											<input
+												type="checkbox"
+												checked={allowManagedLeaveRequests}
+												disabled={!allowManagedNoAccessUsers}
+												onChange={(e) => setAllowManagedLeaveRequests(e.target.checked)}
+												style={{ marginTop: '4px' }}
+											/>
+											<span>
+												<strong>{t('settings.allowManagedLeaveRequestsTitle')}</strong>
+												<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+													{t('settings.allowManagedLeaveRequestsDescription')}
+												</span>
 											</span>
-										</span>
-									</label>
+										</label>
+									)}
 								</div>
 							</div>
 						)}

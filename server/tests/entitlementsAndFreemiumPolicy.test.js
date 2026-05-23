@@ -39,6 +39,11 @@ describe('freemiumApiPolicyService', () => {
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/users/me', 'GET'), true)
 	})
 
+	it('freemium active tier: centrum pomocy (tickets API)', () => {
+		assert.equal(policy.isFreemiumActiveTierAllowed('/api/tickets/my-tickets', 'GET'), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed('/api/tickets/create', 'POST'), true)
+	})
+
 	it('freemium active tier: typowy moduł premium bez prefiksu — blok', () => {
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/schedules', 'GET'), false)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/boards', 'GET'), false)

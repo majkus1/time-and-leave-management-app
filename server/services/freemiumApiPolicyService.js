@@ -56,7 +56,7 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 	}
 
 	/** Lista kalendarzy i podgląd ewidencji — Admin / HR / przełożony muszą móc pracować przy przycinaniu zespołu. */
-	if (
+		if (
 		pathStartsWithAny(path, [
 			'/api/workdays',
 			'/api/time-entry',
@@ -69,7 +69,7 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 		return true
 	}
 
-	if (pathStartsWithAny(path, ['/api/settings', '/api/email-notifications'])) return true
+	if (pathStartsWithAny(path, ['/api/settings', '/api/email-notifications', '/api/tickets'])) return true
 
 	return false
 }
@@ -88,6 +88,8 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/qr',
 	'/api/push',
 	'/api/notifications',
+	/** Centrum pomocy — zgłoszenia wsparcia (UI tylko Admin). */
+	'/api/tickets',
 ]
 
 function pathStartsWithAny(path, prefixes) {

@@ -1450,13 +1450,15 @@ export default function PackagesPage() {
 									<p className="packages-enterprise-strip__body">{t('billingPackages.enterpriseStripBody')}</p>
 								</div>
 								<div className="packages-enterprise-strip__cta">
-									<button
-										type="button"
-										className="packages-enterprise-strip__btn"
-										onClick={() => navigate('/helpcenter')}
-									>
-										{t('billingPackages.enterpriseCta')}
-									</button>
+									{isAdmin(role) && (
+										<button
+											type="button"
+											className="packages-enterprise-strip__btn"
+											onClick={() => navigate('/helpcenter')}
+										>
+											{t('billingPackages.enterpriseCta')}
+										</button>
+									)}
 								</div>
 							</section>
 						</>

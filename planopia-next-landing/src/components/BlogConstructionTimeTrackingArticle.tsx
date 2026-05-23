@@ -29,6 +29,11 @@ const COPY: Record<
 		aiParas: string[]
 		dailyTitle: string
 		dailyParas: string[]
+		crewTitle: string
+		crewLead: string
+		crewBullets: string[]
+		faqTitle: string
+		faqs: { q: string; a: string }[]
 		ctaTitle: string
 		ctaBody: string
 		ctaButton: string
@@ -76,6 +81,29 @@ const COPY: Record<
 		dailyTitle: 'Dlaczego warto myśleć „aplikacja na co dzień”, a nie tylko „do ewidencji”',
 		dailyParas: [
 			'Firmy, które wygrywają z wdrożeniami HR i operacyjnymi, zwykle wybierają jedno spójne narzędzie: tam, gdzie pracownik i tak spędza czas (zadania, komunikacja), pojawia się też prawidłowo uzupełniany czas pracy. Dlatego w Planopii obok ewidencji są tablice zadań i czaty — żeby zespół nie musiał skakać między pięcioma aplikacjami.',
+		],
+		crewTitle: 'Brygadzista, ewidencja czasu pracy i pracownicy bez konta',
+		crewLead:
+			'W wielu firmach budowlanych nie każdy członek ekipy ma smartfon z aplikacją — a i tak trzeba rozliczyć brygadę i mieć raport czasu pracy na budowie. W Planopii kierownik lub brygadzista może dodać pracowników bez dostępu do aplikacji i prowadzić za nich ewidencję (także w planie darmowym).',
+		crewBullets: [
+			'Rozliczanie brygad bez wymuszania logowania na każdego — jedno konto kierownika zamiast dziesiątek haseł.',
+			'Ewidencja pracowników budowlanych w kalendarzu miesięcznym, z nadgodzinami i eksportem PDF/Excel.',
+			'Grafiki i urlopy za ekipę — po rozszerzeniu planu, gdy potrzebujesz pełnego HR na budowie.',
+		],
+		faqTitle: 'Najczęstsze pytania (budowa)',
+		faqs: [
+			{
+				q: 'Czy każdy pracownik musi mieć dostęp do aplikacji?',
+				a: 'Nie. Brygadzista lub kierownik może dodać pracowników bez dostępu do aplikacji i samodzielnie prowadzić ich ewidencję czasu pracy — to ułatwia rozliczanie brygad na budowie. W planie darmowym: ewidencja; grafiki i wnioski urlopowe za ekipę — w planie płatnym.',
+			},
+			{
+				q: 'Czy ewidencję na budowie da się prowadzić z telefonu?',
+				a: 'Tak — Planopia działa w przeglądarce jako PWA. Brygadzista może wpisywać godziny z placu budowy lub korzystać z Asystenta AI przy podsumowaniach.',
+			},
+			{
+				q: 'Czy Planopia to tylko urlopy?',
+				a: 'Nie — to ewidencja, grafiki, tablice zadań, czat i AI w jednym narzędziu. Dla budowlanki szczególnie ważna jest ewidencja brygad i pracowników terenowych.',
+			},
 		],
 		ctaTitle: 'Porządek na budowie i w biurze?',
 		ctaBody:
@@ -125,6 +153,29 @@ const COPY: Record<
 		dailyParas: [
 			'Teams adopt tools that sit where work already happens. When tasks and chat live next to time tracking, data stays fresher and the team jumps between fewer apps. That is why Planopia combines boards and chat with schedules and time tracking.',
 		],
+		crewTitle: 'Foreman time tracking when not everyone has an app account',
+		crewLead:
+			'On many sites not every crew member logs in — you still need crew payroll and construction time reporting. In Planopia a foreman or manager adds no-access workers and maintains their timesheets (including on the free plan).',
+		crewBullets: [
+			'Crew settlement without forcing every worker to install and log in.',
+			'Construction worker timesheets in a monthly calendar, with overtime and PDF/Excel exports.',
+			'Schedules and leave on behalf of the crew — on paid plans when you need full HR on site.',
+		],
+		faqTitle: 'FAQ (construction)',
+		faqs: [
+			{
+				q: 'Does every employee need access to the app?',
+				a: 'No. A foreman or manager can add no-access workers and maintain their timesheets — ideal for crew time tracking on site. Free plan: timesheets; schedules and leave on their behalf — on paid plans.',
+			},
+			{
+				q: 'Can crews log time from a phone?',
+				a: 'Yes — Planopia runs as a browser PWA. Foremen can enter hours on site or use the AI assistant for summaries.',
+			},
+			{
+				q: 'Is Planopia only for leave?',
+				a: 'No — time tracking, schedules, boards, chat, and AI in one product. Construction teams especially value crew timesheets without universal logins.',
+			},
+		],
 		ctaTitle: 'Site and office under control?',
 		ctaBody:
 			'30 days full access; then free time tracking (5 accounts) or a paid plan — leave, schedules, chat, AI.',
@@ -162,38 +213,19 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 		wordCount: 1200,
 		keywords:
 			locale === 'pl'
-				? 'ewidencja czasu pracy na budowie, firma budowlana, nadgodziny, Planopia, grafik brygad, Kanban, czat zespołowy'
-				: 'construction time tracking, building company, overtime, Planopia, crew schedule, Kanban, team chat',
+				? 'ewidencja czasu pracy na budowie, brygadzista ewidencja czasu pracy, rozliczanie brygad, ewidencja pracowników budowlanych, raportowanie czasu pracy na budowie, firma budowlana, Planopia'
+				: 'construction time tracking, foreman time tracking, crew payroll, construction workers timesheet, site time reporting, Planopia',
 		mainEntityOfPage: { '@type': 'WebPage', '@id': url },
 	}
 
 	const faqSchema = {
 		'@context': 'https://schema.org',
 		'@type': 'FAQPage',
-		mainEntity: [
-			{
-				'@type': 'Question',
-				name: locale === 'pl' ? 'Czy ewidencję na budowie da się prowadzić z telefonu?' : 'Can crews log time from a phone?',
-				acceptedAnswer: {
-					'@type': 'Answer',
-					text:
-						locale === 'pl'
-							? 'Tak — Planopia działa w przeglądarce jako PWA, więc na placu budowy można wygodnie wpisywać czas lub korzystać z podpowiedzi Asystenta AI.'
-							: 'Yes — Planopia runs as a browser PWA, so people can log time on site or use the AI assistant where it helps.',
-				},
-			},
-			{
-				'@type': 'Question',
-				name: locale === 'pl' ? 'Czy Planopia to tylko urlopy?' : 'Is Planopia only for leave?',
-				acceptedAnswer: {
-					'@type': 'Answer',
-					text:
-						locale === 'pl'
-							? 'Nie — to także tablice zadań, czaty, grafiki i ewidencja czasu w jednym narzędziu dla firmy.'
-							: 'No — it also includes boards, chat, schedules, and time tracking in one product.',
-				},
-			},
-		],
+		mainEntity: c.faqs.map((f) => ({
+			'@type': 'Question',
+			name: f.q,
+			acceptedAnswer: { '@type': 'Answer', text: f.a },
+		})),
 	}
 
 	return (
@@ -285,6 +317,44 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 							{c.dailyTitle}
 						</h2>
 						<p className="text-gray-700">{c.dailyParas[0]}</p>
+					</section>
+
+					<section
+						className="mb-10 rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/90 to-white px-5 py-6 md:px-7 md:py-7"
+						aria-labelledby="crew-h"
+					>
+						<h2 id="crew-h" className="text-2xl font-bold text-gray-900 mb-3">
+							{c.crewTitle}
+						</h2>
+						<p className="text-gray-700 mb-4 leading-relaxed">{c.crewLead}</p>
+						<ul className="list-disc pl-5 space-y-2 text-gray-700 m-0">
+							{c.crewBullets.map((b, i) => (
+								<li key={i}>{b}</li>
+							))}
+						</ul>
+						<p className="text-gray-700 mt-4 mb-0">
+							<Link href={landingPath} className="text-blue-600 font-semibold hover:underline">
+								{landingLabel}
+							</Link>
+							{locale === 'pl' ? ' — pełny opis funkcji i FAQ.' : ' — full feature overview and FAQ.'}
+						</p>
+					</section>
+
+					<section className="mb-10" aria-labelledby="blog-faq-h">
+						<h2 id="blog-faq-h" className="text-2xl font-bold text-gray-900 mb-5">
+							{c.faqTitle}
+						</h2>
+						<div className="space-y-4">
+							{c.faqs.map((f, i) => (
+								<div
+									key={i}
+									className="rounded-xl border border-slate-200 bg-slate-50/80 p-5 md:p-6"
+								>
+									<h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
+									<p className="text-gray-700 m-0 leading-relaxed">{f.a}</p>
+								</div>
+							))}
+						</div>
 					</section>
 
 					<LandingAppScreenshotGallery locale={locale} title={c.galleryTitle} images={LANDING_APP_GALLERY_IMAGES} />

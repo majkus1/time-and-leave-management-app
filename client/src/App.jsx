@@ -222,9 +222,7 @@ function AppContent() {
 						/>
 						<Route
 							path="/helpcenter"
-							element={
-								isAdminRole || isHRRole ? <HelpTicket /> : <Navigate to="/dashboard" replace />
-							}
+							element={isAdminRole ? <HelpTicket /> : <Navigate to="/dashboard" replace />}
 						/>
 						<Route
 							path="/packages"
