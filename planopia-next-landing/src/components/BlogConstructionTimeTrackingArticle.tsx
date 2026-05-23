@@ -45,10 +45,10 @@ const COPY: Record<
 			'Ewidencja czasu pracy na budowie to jeden z najczęstszych problemów w firmach budowlanych. Godziny lądują na kartkach, w SMS-ach albo w arkuszach — stąd błędy, spory i brak pewności przy rozliczeniach. Poniżej: jak to uprościć i jednocześnie dać zespołowi narzędzie na co dzień (nie tylko „do urlopów”).',
 		galleryTitle: 'Planopia w praktyce — zrzuty z aplikacji (desktop i telefon)',
 		videoEyebrow: 'Instrukcja wideo',
-		videoTitle: 'Wolisz zobaczyć kliknięcia w aplikacji?',
+		videoTitle: 'Zobacz Planopię w działaniu',
 		videoBody:
-			'Mamy krótkie poradniki wideo z Planopii — m.in. jak ręcznie dodać godziny w ewidencji. Obejrzysz na telefonie lub komputerze.',
-		videoCta: 'Otwórz instrukcję wideo Planopii',
+			'Krótkie nagrania prosto z aplikacji — m.in. jak dodać godziny w ewidencji czasu pracy. Świetny start zaraz po założeniu zespołu.',
+		videoCta: 'Otwórz instrukcję wideo',
 		videoHref: '/blog/instrukcja-wideo-planopia',
 		problemTitle: 'Jak to wygląda w praktyce',
 		problemBullets: [
@@ -116,10 +116,10 @@ const COPY: Record<
 			'Construction time tracking is one of the messiest operational topics for building companies. Hours end up on paper, in texts, or in spreadsheets — which means errors, disputes, and weak audit trails. Here is a simpler approach that also gives your team an everyday tool (not “only for leave”).',
 		galleryTitle: 'Planopia in practice — desktop and mobile screenshots',
 		videoEyebrow: 'Video tutorials',
-		videoTitle: 'Prefer to watch clicks inside the app?',
+		videoTitle: 'See Planopia in action',
 		videoBody:
-			'We publish short Planopia tutorials — for example, how to manually add hours in the time log. Watch on your phone or desktop.',
-		videoCta: 'Open Planopia video tutorials',
+			'Short clips recorded inside the app — for example, how to add hours in the time log. A great first step right after you create a team.',
+		videoCta: 'Open video tutorials',
 		videoHref: '/en/blog/video-tutorials',
 		problemTitle: 'What it looks like in the real world',
 		problemBullets: [
@@ -240,25 +240,6 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 						<p className="text-gray-600 text-lg leading-relaxed">{c.intro}</p>
 					</header>
 
-					<section
-						className="construction-video-card mb-10 rounded-2xl border border-blue-100/90 bg-gradient-to-b from-blue-50/90 to-slate-50 px-5 py-6 shadow-sm md:px-7 md:py-7"
-						aria-labelledby="blog-construction-video">
-						<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
-							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-800/90">{c.videoEyebrow}</p>
-							<h2 id="blog-construction-video" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
-								{c.videoTitle}
-							</h2>
-							<p className="text-sm leading-relaxed text-gray-600 md:text-base">{c.videoBody}</p>
-							<div className="pt-1">
-								<Link
-									href={c.videoHref}
-									className="construction-solid-btn construction-solid-btn--blue inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold shadow-md transition hover:bg-blue-700 sm:w-auto sm:px-6">
-									{c.videoCta}
-								</Link>
-							</div>
-						</div>
-					</section>
-
 					<section className="mb-10" aria-labelledby="problem-h">
 						<h2 id="problem-h" className="text-2xl font-bold text-gray-900 mb-4">
 							{c.problemTitle}
@@ -374,6 +355,27 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 								className="inline-block bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn text-center max-w-full">
 								{c.ctaButton}
 							</Link>
+						</div>
+					</section>
+
+					<section
+						className="construction-video-card mb-10 rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/70 px-5 py-7 shadow-md ring-1 ring-slate-200/60 md:px-8 md:py-8"
+						aria-labelledby="blog-construction-video"
+					>
+						<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
+							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{c.videoEyebrow}</p>
+							<h2 id="blog-construction-video" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
+								{c.videoTitle}
+							</h2>
+							<p className="text-sm leading-relaxed text-gray-600 md:text-base">{c.videoBody}</p>
+							<div className="pt-1">
+								<Link
+									href={c.videoHref}
+									className="construction-solid-btn construction-solid-btn--blue inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold shadow-md transition hover:bg-blue-700 sm:w-auto sm:px-6"
+								>
+									{c.videoCta}
+								</Link>
+							</div>
 						</div>
 					</section>
 

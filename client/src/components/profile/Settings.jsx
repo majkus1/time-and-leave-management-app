@@ -246,6 +246,7 @@ function Settings() {
 					allowManagedNoAccessUsers,
 					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
 					allowManagedLeaveRequests: false,
+					workdayEntriesOnlyToday,
 				})
 			} else {
 				// Zapisz workHours jako tablicę (lub null jeśli pusta)
@@ -2658,7 +2659,7 @@ function Settings() {
 						</div>
 						)}
 
-						{canEditSettings && !freemiumSlimSettings && (
+						{canEditSettings && (
 							<div style={{
 								backgroundColor: 'white',
 								borderRadius: '12px',

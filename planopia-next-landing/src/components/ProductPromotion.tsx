@@ -278,19 +278,6 @@ function ProductPromotion() {
               <p className="text-sm text-gray-600">Kalendarz, nadgodziny i podsumowania pracy.</p>
             </div>
           </div>
-          {/* Brygady / pracownicy bez dostępu */}
-          <div className="flex gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50/60 sm:col-span-2">
-            <img src="/img/add-group.png" className="icon-landing-about" alt="Pracownicy bez dostępu do aplikacji" loading="lazy" />
-            <div>
-              <p className="font-semibold text-gray-900">Pracownicy bez dostępu — brygady i praca terenowa</p>
-              <p className="text-sm text-gray-600">
-                Brygadzista lub kierownik dodaje osoby bez logowania i prowadzi ich ewidencję czasu pracy z jednego konta.{' '}
-                <Link href="/dla-branzy-budowlanej" className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950">
-                  Zobacz rozwiązanie dla budowlanki →
-                </Link>
-              </p>
-            </div>
-          </div>
           {/* Timer */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
             <img src="/img/timer.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />

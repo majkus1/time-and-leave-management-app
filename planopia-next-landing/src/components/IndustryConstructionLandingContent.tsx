@@ -336,25 +336,6 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 					</section>
 
 					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
-					<section
-						className="construction-video-card rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/70 px-5 py-7 shadow-md ring-1 ring-slate-200/60 md:px-8 md:py-8"
-						aria-labelledby="construction-video-teaser">
-						<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
-							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{c.videoEyebrow}</p>
-							<h2 id="construction-video-teaser" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
-								{c.videoTitle}
-							</h2>
-							<p className="text-sm leading-relaxed text-gray-600 md:text-base">{c.videoBody}</p>
-							<div className="pt-1">
-								<Link
-									href={c.videoHref}
-									className="construction-solid-btn construction-solid-btn--blue inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold shadow-md transition hover:bg-blue-700 sm:w-auto sm:px-6">
-									{c.videoCta}
-								</Link>
-							</div>
-						</div>
-					</section>
-
 					<section aria-labelledby="problems-heading">
 						<h2 id="problems-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
 							{c.problemsTitle}
@@ -508,6 +489,27 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 							>
 								{c.ctaButton}
 							</a>
+						</div>
+					</section>
+
+					<section
+						className="construction-video-card rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/70 px-5 py-7 shadow-md ring-1 ring-slate-200/60 md:px-8 md:py-8"
+						aria-labelledby="construction-video-teaser"
+					>
+						<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
+							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{c.videoEyebrow}</p>
+							<h2 id="construction-video-teaser" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
+								{c.videoTitle}
+							</h2>
+							<p className="text-sm leading-relaxed text-gray-600 md:text-base">{c.videoBody}</p>
+							<div className="pt-1">
+								<Link
+									href={c.videoHref}
+									className="construction-solid-btn construction-solid-btn--blue inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold shadow-md transition hover:bg-blue-700 sm:w-auto sm:px-6"
+								>
+									{c.videoCta}
+								</Link>
+							</div>
 						</div>
 					</section>
 					</div>
