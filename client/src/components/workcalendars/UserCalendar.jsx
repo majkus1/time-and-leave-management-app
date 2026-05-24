@@ -201,15 +201,15 @@ function UserCalendar() {
 	}, [])
 
 	// TanStack Query hooks
-	const { data: user, isLoading: loadingUser } = useUser(userId)
-	const { data: workdays = [], isLoading: loadingWorkdays } = useUserWorkdays(userId)
-	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
+	const { data: user, isPending: userPending } = useUser(userId)
+	const { data: workdays = [], isPending: workdaysPending } = useUserWorkdays(userId)
+	const { data: isConfirmed = false, isPending: confirmationPending } = useCalendarConfirmation(
 		currentMonth,
 		currentYear,
 		userId
 	)
 	const { data: confirmationDetails } = useCalendarConfirmationDetails(currentMonth, currentYear, userId)
-	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useUserAcceptedLeaveRequests(
+	const { data: acceptedLeaveRequests = [], isPending: leaveRequestsPending } = useUserAcceptedLeaveRequests(
 		userId,
 		{ enabled: allowTimerLeaveApis }
 	)
@@ -224,7 +224,11 @@ function UserCalendar() {
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 	const canEditManagedWorkdays = settings?.allowManagedWorkdayEntries === true && user?.appAccessEnabled === false
 
-	const loading = loadingUser || loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+	const isCalendarInitialLoading =
+		userPending ||
+		workdaysPending ||
+		confirmationPending ||
+		(allowTimerLeaveApis && leaveRequestsPending)
 	const hasManagedHoursEntryInput =
 		String(hoursWorked || '').trim() !== '' ||
 		String(additionalWorked || '').trim() !== '' ||
@@ -646,6 +650,122 @@ function UserCalendar() {
 				},
 			}))
 	}, [canEditManagedWorkdays, workdays])
+
+	const calendarEvents = React.useMemo(() => {
+		const workdayEvents = workdays
+			.map(day => {
+				let title = ''
+				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+				const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
+
+				if (hasHoursWorked) {
+					const roundedHours = roundToHalfHour(day.hoursWorked)
+					title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
+					if (day.additionalWorked) {
+						const roundedAdditional = roundToHalfHour(day.additionalWorked)
+						title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
+					}
+					if (day.notes) {
+						title += ` | ${day.notes}`
+					}
+				} else if (hasAbsenceType) {
+					title = day.absenceType
+					if (day.notes) {
+						title += ` | ${day.notes}`
+					}
+				} else if (day.notes) {
+					title = day.notes
+				}
+
+				if (!title || title.trim() === '') {
+					return null
+				}
+
+				let backgroundColor = 'green'
+				let classNames = 'event-absence'
+
+				if (hasHoursWorked) {
+					backgroundColor = 'blue'
+					classNames = 'event-workday'
+				} else if (hasAbsenceType) {
+					backgroundColor = 'green'
+					classNames = 'event-absence'
+				} else if (hasOnlyNotes) {
+					backgroundColor = '#8B0000'
+					classNames = 'event-notes'
+				}
+
+				return {
+					title,
+					start: day.date,
+					backgroundColor,
+					textColor: 'white',
+					id: day._id,
+					classNames,
+					extendedProps: {
+						isWorkday: !!hasHoursWorked,
+						isAbsence: hasAbsenceType,
+						isNotes: hasOnlyNotes,
+						notes: day.notes,
+					},
+				}
+			})
+			.filter(event => event !== null)
+
+		const realTimeEvents = workdays
+			.filter(day => day.realTimeDayWorked)
+			.map(day => ({
+				title: `${t('workcalendar.worktime')} ${day.realTimeDayWorked}`,
+				start: day.date,
+				backgroundColor: 'yellow',
+				textColor: 'black',
+				id: `${day._id}-realTime`,
+				classNames: 'event-real-time',
+			}))
+
+		const leaveEvents = acceptedLeaveRequests
+			.filter(request => request.startDate && request.endDate)
+			.flatMap(request => {
+				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+				return dates.map(date => ({
+					title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+					start: date,
+					allDay: true,
+					textColor: 'white',
+					classNames: 'event-absence',
+					extendedProps: {
+						type: 'leaveRequest',
+						requestId: request._id,
+						isAbsence: true,
+					},
+				}))
+			})
+
+		const holidayEvents = holidaysForMonth.map(holiday => ({
+			title: holiday.name,
+			start: holiday.date,
+			allDay: true,
+			backgroundColor: 'green',
+			borderColor: 'darkgreen',
+			textColor: 'white',
+			classNames: 'event-absence',
+			extendedProps: {
+				type: 'holiday',
+				holidayName: holiday.name,
+			},
+		}))
+
+		return [...reviewedWorkdayBackgroundEvents, ...workdayEvents, ...realTimeEvents, ...leaveEvents, ...holidayEvents]
+	}, [
+		reviewedWorkdayBackgroundEvents,
+		workdays,
+		acceptedLeaveRequests,
+		holidaysForMonth,
+		settings,
+		t,
+		i18n.resolvedLanguage,
+	])
 
 	const currentMonthWorkdaysForReview = React.useMemo(() => {
 		if (!canEditManagedWorkdays) return []
@@ -1155,7 +1275,7 @@ function UserCalendar() {
 	return (
 		<>
 			<Sidebar />
-			{loading ? (
+			{isCalendarInitialLoading ? (
 				<div className="content-with-loader">
 					<Loader />
 				</div>
@@ -1357,119 +1477,7 @@ function UserCalendar() {
 								locale={i18n.resolvedLanguage}
 								firstDay={1}
 								showNonCurrentDates={false}
-								events={[
-									...reviewedWorkdayBackgroundEvents,
-									...workdays.map(day => {
-										// Określ tytuł w zależności od typu wpisu
-										let title = ''
-										const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
-										const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
-										const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
-										
-										if (hasHoursWorked) {
-											// Wpis z godzinami pracy - zaokrąglamy do pół godziny dla eventów kalendarza
-											const roundedHours = roundToHalfHour(day.hoursWorked)
-											title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
-											if (day.additionalWorked) {
-												const roundedAdditional = roundToHalfHour(day.additionalWorked)
-												title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
-											}
-											if (day.notes) {
-												title += ` | ${day.notes}`
-											}
-										} else if (hasAbsenceType) {
-											// Wpis z typem nieobecności
-											title = day.absenceType
-											if (day.notes) {
-												title += ` | ${day.notes}`
-											}
-										} else if (day.notes) {
-											// Tylko uwagi (bez hoursWorked i bez absenceType)
-											title = day.notes
-										}
-										
-										// Jeśli nie ma tytułu (np. tylko activeTimer bez innych danych), nie tworz eventu
-										if (!title || title.trim() === '') {
-											return null
-										}
-										
-										// Określ kolor tła - uwagi zawsze mają swój kolor
-										let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
-										let classNames = 'event-absence' // Domyślnie event-absence
-										
-										if (hasHoursWorked) {
-											// Godziny pracy - niebieski (priorytet najwyższy)
-											backgroundColor = 'blue'
-											classNames = 'event-workday'
-										} else if (hasAbsenceType) {
-											// Nieobecność - zielony
-											backgroundColor = 'green'
-											classNames = 'event-absence'
-										} else if (hasOnlyNotes) {
-											// Tylko uwagi - ciemno czerwony (tylko gdy nie ma hoursWorked i absenceType)
-											backgroundColor = '#8B0000'
-											classNames = 'event-notes'
-										}
-										
-										return {
-											title,
-											start: day.date,
-											backgroundColor,
-											textColor: 'white',
-											id: day._id,
-											classNames,
-											extendedProps: {
-												isWorkday: !!hasHoursWorked,
-												isAbsence: hasAbsenceType,
-												isNotes: hasOnlyNotes,
-												notes: day.notes,
-											},
-										}
-									})
-									.filter(event => event !== null), // Usuń null eventy (dni z tylko activeTimer)
-									...workdays
-										.filter(day => day.realTimeDayWorked)
-										.map(day => ({
-											title: `${t('workcalendar.worktime')} ${day.realTimeDayWorked}`,
-											start: day.date,
-											backgroundColor: 'yellow',
-											textColor: 'black',
-											id: `${day._id}-realTime`,
-											classNames: 'event-real-time',
-										})),
-									// Zaakceptowane wnioski urlopowe
-									...acceptedLeaveRequests
-										.filter(request => request.startDate && request.endDate)
-										.flatMap(request => {
-											const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
-											return dates.map(date => ({
-												title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
-												start: date,
-												allDay: true,
-												textColor: 'white',
-												classNames: 'event-absence',
-												extendedProps: { 
-													type: 'leaveRequest', 
-													requestId: request._id,
-													isAbsence: true
-												}
-											}))
-										}),
-									// Dni świąteczne
-									...holidaysForMonth.map(holiday => ({
-										title: holiday.name,
-										start: holiday.date,
-										allDay: true,
-										backgroundColor: 'green',
-										borderColor: 'darkgreen',
-										textColor: 'white',
-										classNames: 'event-absence',
-										extendedProps: {
-											type: 'holiday',
-											holidayName: holiday.name
-										}
-									})),
-								]}
+								events={calendarEvents}
 								ref={calendarRef}
 								eventContent={renderEventContent}
 								dateClick={handleManagedDateClick}

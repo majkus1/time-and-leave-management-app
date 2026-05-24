@@ -4,6 +4,9 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 import { useSocket } from '../context/SocketContext'
 
+/** Podczas refetch zachowaj poprzednie dane — kalendarz nie traci stanu UI. */
+const keepPreviousQueryData = (previousData) => previousData
+
 // Query hook - pobieranie workdays (wszystkie, filtrowanie po stronie klienta)
 export const useWorkdays = () => {
 	return useQuery({
@@ -16,6 +19,7 @@ export const useWorkdays = () => {
 		},
 		staleTime: 2 * 60 * 1000, // 2 minuty
 		cacheTime: 5 * 60 * 1000, // 5 minut
+		placeholderData: keepPreviousQueryData,
 	})
 }
 
@@ -34,6 +38,7 @@ export const useUserWorkdays = (userId) => {
 		enabled: !!userId,
 		staleTime: 2 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
+		placeholderData: keepPreviousQueryData,
 	})
 
 	useEffect(() => {

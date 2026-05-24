@@ -239,12 +239,12 @@ function MonthlyCalendar() {
 	}
 
 	// TanStack Query hooks
-	const { data: workdays = [], isLoading: loadingWorkdays, refetch: refetchWorkdays } = useWorkdays()
-	const { data: isConfirmed = false, isLoading: loadingConfirmation } = useCalendarConfirmation(
+	const { data: workdays = [], isPending: workdaysPending, refetch: refetchWorkdays } = useWorkdays()
+	const { data: isConfirmed = false, isPending: confirmationPending } = useCalendarConfirmation(
 		currentMonth,
 		currentYear
 	)
-	const { data: acceptedLeaveRequests = [], isLoading: loadingLeaveRequests } = useAcceptedLeaveRequests({
+	const { data: acceptedLeaveRequests = [], isPending: leaveRequestsPending } = useAcceptedLeaveRequests({
 		enabled: allowTimerLeaveApis,
 	})
 	const { data: settings } = useSettings()
@@ -256,7 +256,10 @@ function MonthlyCalendar() {
 	const updateWorkdayMutation = useUpdateWorkday()
 	const toggleConfirmationMutation = useToggleCalendarConfirmation()
 
-	const loading = loadingWorkdays || loadingConfirmation || loadingLeaveRequests
+	const isCalendarInitialLoading =
+		workdaysPending ||
+		confirmationPending ||
+		(allowTimerLeaveApis && leaveRequestsPending)
 	const hasHoursEntryInput =
 		String(hoursWorked || '').trim() !== '' ||
 		String(additionalWorked || '').trim() !== '' ||
@@ -349,12 +352,12 @@ function MonthlyCalendar() {
 
 	// Mobile: po załadowaniu / zmianie miesiąca — pokaż w poziomie dzisiejszy dzień (odświeżenie strony)
 	useEffect(() => {
-		if (loading) return
+		if (isCalendarInitialLoading) return
 		const now = new Date()
 		if (currentMonth !== now.getMonth() || currentYear !== now.getFullYear()) return
 		const id = window.setTimeout(() => scrollMonthlyCalendarToTodayInView(), 180)
 		return () => window.clearTimeout(id)
-	}, [loading, currentMonth, currentYear])
+	}, [isCalendarInitialLoading, currentMonth, currentYear])
 
 	// Pobierz święta dla aktualnego miesiąca (uwzględnia niestandardowe święta nawet gdy includeHolidays jest wyłączone)
 	const holidaysForMonth = React.useMemo(() => {
@@ -412,6 +415,128 @@ function MonthlyCalendar() {
 		
 		return dates
 	}
+
+	const calendarEvents = React.useMemo(() => {
+		const workdayEvents = workdays
+			.filter(day => {
+				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+				const hasAdditionalWorked = day.additionalWorked && day.additionalWorked > 0
+				const hasRealTimeDayWorked = day.realTimeDayWorked && day.realTimeDayWorked.trim() !== ''
+				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+				const hasNotes = day.notes && day.notes.trim() !== ''
+				const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
+				const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
+
+				return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
+			})
+			.map(day => {
+				let title = ''
+				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
+				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+				const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
+
+				if (hasHoursWorked) {
+					title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
+					if (day.additionalWorked) {
+						title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
+					}
+					if (day.notes) {
+						title += ` | ${day.notes}`
+					}
+				} else if (hasAbsenceType) {
+					title = day.absenceType
+					if (day.notes) {
+						title += ` | ${day.notes}`
+					}
+				} else if (day.notes) {
+					title = day.notes
+				}
+
+				if (!title || title.trim() === '') {
+					return null
+				}
+
+				let backgroundColor = 'green'
+				let classNames = 'event-absence'
+
+				if (hasHoursWorked) {
+					backgroundColor = 'blue'
+					classNames = 'event-workday'
+				} else if (hasAbsenceType) {
+					backgroundColor = 'green'
+					classNames = 'event-absence'
+				} else if (hasOnlyNotes) {
+					backgroundColor = '#8B0000'
+					classNames = 'event-notes'
+				}
+
+				return {
+					title,
+					start: day.date,
+					backgroundColor,
+					textColor: 'white',
+					id: day._id,
+					classNames,
+					extendedProps: {
+						isWorkday: !!hasHoursWorked,
+						isAbsence: hasAbsenceType,
+						isNotes: hasOnlyNotes,
+						notes: day.notes,
+					},
+				}
+			})
+			.filter(event => event !== null)
+
+		const realTimeEvents = workdays
+			.map(day => {
+				const timeFromEntries = buildRealTimeFromEntries(day.timeEntries)
+				const timeLabel = mergeTimeRanges(day.realTimeDayWorked, timeFromEntries)
+				if (!timeLabel) return null
+				return {
+					title: `${t('workcalendar.worktime')} ${timeLabel}`,
+					start: day.date,
+					backgroundColor: 'yellow',
+					textColor: 'black',
+					id: `${day._id}-realTime`,
+					classNames: 'event-real-time',
+				}
+			})
+			.filter(event => event !== null)
+
+		const leaveEvents = acceptedLeaveRequests
+			.filter(request => request.startDate && request.endDate)
+			.flatMap(request => {
+				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
+				return dates.map(date => ({
+					title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
+					start: date,
+					allDay: true,
+					textColor: 'white',
+					classNames: 'event-absence',
+					extendedProps: {
+						type: 'leaveRequest',
+						requestId: request._id,
+						isAbsence: true,
+					},
+				}))
+			})
+
+		const holidayEvents = holidaysForMonth.map(holiday => ({
+			title: holiday.name,
+			start: holiday.date,
+			allDay: true,
+			backgroundColor: 'green',
+			borderColor: 'darkgreen',
+			textColor: 'white',
+			classNames: 'event-absence',
+			extendedProps: {
+				type: 'holiday',
+				holidayName: holiday.name,
+			},
+		}))
+
+		return [...workdayEvents, ...realTimeEvents, ...leaveEvents, ...holidayEvents]
+	}, [workdays, acceptedLeaveRequests, holidaysForMonth, settings, t, i18n.resolvedLanguage])
 
 	useEffect(() => {
 		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
@@ -1114,7 +1239,7 @@ function MonthlyCalendar() {
 		setSelectedWorkHoursIndex(0)
 	}
 
-	if (loading) return <Loader />
+	if (isCalendarInitialLoading) return <Loader />
 
 	return (
 		<div className="row calendar-my-work">
@@ -1226,137 +1351,7 @@ function MonthlyCalendar() {
 							cellDate.getFullYear() === today.getFullYear()
 						return isToday ? 'fc-day-today-highlight' : ''
 					}}
-					events={[
-						...workdays
-							.filter(day => {
-								// Filter out empty workdays (no data at all)
-								// Also filter out days with only active timer (timer is running but no data saved yet)
-								const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
-								const hasAdditionalWorked = day.additionalWorked && day.additionalWorked > 0
-								const hasRealTimeDayWorked = day.realTimeDayWorked && day.realTimeDayWorked.trim() !== ''
-								const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
-								const hasNotes = day.notes && day.notes.trim() !== ''
-								const hasTimeEntries = day.timeEntries && day.timeEntries.length > 0
-								const hasActiveTimer = day.activeTimer && day.activeTimer.startTime
-								
-								// Only show workdays that have some data (but exclude days with only active timer)
-								// Active timer alone should not create an event in the calendar
-								return (hasHoursWorked || hasAdditionalWorked || hasRealTimeDayWorked || hasAbsenceType || hasNotes || hasTimeEntries) && !(hasActiveTimer && !hasHoursWorked && !hasAdditionalWorked && !hasRealTimeDayWorked && !hasAbsenceType && !hasNotes && !hasTimeEntries)
-							})
-							.map(day => {
-							// Określ tytuł w zależności od typu wpisu
-							let title = ''
-							const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
-							const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
-							const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
-							
-							if (hasHoursWorked) {
-								// Keep the same precision as in "Istniejące wpisy" to avoid mismatched values
-								title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
-								if (day.additionalWorked) {
-									title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
-								}
-								if (day.notes) {
-									title += ` | ${day.notes}`
-								}
-							} else if (hasAbsenceType) {
-								// Wpis z typem nieobecności
-								title = day.absenceType
-								if (day.notes) {
-									title += ` | ${day.notes}`
-								}
-							} else if (day.notes) {
-								// Tylko uwagi (bez hoursWorked i bez absenceType)
-								title = day.notes
-							}
-							
-							// Jeśli nie ma tytułu (np. tylko activeTimer bez innych danych), nie tworz eventu
-							if (!title || title.trim() === '') {
-								return null
-							}
-							
-							// Określ kolor tła - uwagi zawsze mają swój kolor
-							let backgroundColor = 'green' // Domyślnie zielony dla nieobecności
-							let classNames = 'event-absence' // Domyślnie event-absence
-							
-							if (hasHoursWorked) {
-								// Godziny pracy - niebieski (priorytet najwyższy)
-								backgroundColor = 'blue'
-								classNames = 'event-workday'
-							} else if (hasAbsenceType) {
-								// Nieobecność - zielony
-								backgroundColor = 'green'
-								classNames = 'event-absence'
-							} else if (hasOnlyNotes) {
-								// Tylko uwagi - ciemno czerwony (tylko gdy nie ma hoursWorked i absenceType)
-								backgroundColor = '#8B0000'
-								classNames = 'event-notes'
-							}
-							
-							return {
-								title,
-							start: day.date,
-								backgroundColor,
-							textColor: 'white',
-								id: day._id,
-								classNames,
-							extendedProps: {
-									isWorkday: !!hasHoursWorked,
-									isAbsence: hasAbsenceType,
-									isNotes: hasOnlyNotes,
-								notes: day.notes,
-							},
-							}
-						})
-						.filter(event => event !== null), // Usuń null eventy (dni z tylko activeTimer)
-						...workdays
-							.map(day => {
-								const timeFromEntries = buildRealTimeFromEntries(day.timeEntries)
-								const timeLabel = mergeTimeRanges(day.realTimeDayWorked, timeFromEntries)
-								if (!timeLabel) return null
-								return {
-									title: `${t('workcalendar.worktime')} ${timeLabel}`,
-									start: day.date,
-									backgroundColor: 'yellow',
-									textColor: 'black',
-									id: `${day._id}-realTime`,
-									classNames: 'event-real-time',
-								}
-							})
-							.filter(event => event !== null),
-						// Zaakceptowane wnioski urlopowe - generuj osobne eventy dla każdego dnia (z pominięciem weekendów i świąt)
-						...acceptedLeaveRequests
-							.filter(request => request.startDate && request.endDate)
-							.flatMap(request => {
-								const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
-								return dates.map(date => ({
-									title: `${getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}`,
-									start: date,
-									allDay: true,
-									textColor: 'white',
-									classNames: 'event-absence',
-									extendedProps: { 
-										type: 'leaveRequest', 
-										requestId: request._id,
-										isAbsence: true
-									}
-								}))
-							}),
-						// Dni świąteczne
-						...holidaysForMonth.map(holiday => ({
-							title: holiday.name,
-							start: holiday.date,
-							allDay: true,
-							backgroundColor: 'green',
-							borderColor: 'darkgreen',
-							textColor: 'white',
-							classNames: 'event-absence',
-							extendedProps: {
-								type: 'holiday',
-								holidayName: holiday.name
-							}
-						})),
-					]}
+					events={calendarEvents}
 					ref={calendarRef}
 					dateClick={handleDateClick}
 					eventClick={handleDateClick}

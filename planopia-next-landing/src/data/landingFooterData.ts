@@ -37,7 +37,7 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 		websiteLabel: 'Strona',
 		complaintsIntro: 'Reklamacje:',
 		complaintsLink: 'procedura reklamacji',
-		brandLine: 'Ewidencja czasu pracy i HR w jednym miejscu.',
+		brandLine: 'Czas pracy, urlopy i zadania — w jednym systemie.',
 	},
 	en: {
 		legalHeading: 'Legal',
@@ -49,7 +49,7 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 		websiteLabel: 'Website',
 		complaintsIntro: 'Complaints:',
 		complaintsLink: 'complaints procedure',
-		brandLine: 'Time tracking and HR in one place.',
+		brandLine: 'Time tracking, leave, and tasks — in one system.',
 	},
 }
 

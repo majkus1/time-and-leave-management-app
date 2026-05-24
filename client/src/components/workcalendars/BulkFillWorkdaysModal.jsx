@@ -77,7 +77,7 @@ function BulkFillWorkdaysModal({
 		return today >= calendarMonthStart && today <= calendarMonthEnd ? today : calendarMonthStart
 	}, [calendarMonthEnd, calendarMonthStart, today])
 
-	const [rangeType, setRangeType] = useState('month')
+	const [rangeType, setRangeType] = useState('day')
 	const [pickMonth, setPickMonth] = useState(currentMonth)
 	const [pickYear, setPickYear] = useState(currentYear)
 	const [dayDate, setDayDate] = useState(today)
@@ -95,7 +95,7 @@ function BulkFillWorkdaysModal({
 
 	useEffect(() => {
 		if (!isOpen) return
-		setRangeType(settings?.workdayEntriesOnlyToday === true ? 'day' : 'month')
+		setRangeType('day')
 		setPickMonth(currentMonth)
 		setPickYear(currentYear)
 		setDayDate(today)
@@ -110,7 +110,7 @@ function BulkFillWorkdaysModal({
 		setNotes('')
 		setError('')
 		setSelectedWorkHoursIndex(0)
-	}, [isOpen, firstWorkHours, calendarMonthStart, calendarMonthEnd, currentMonth, currentYear, defaultWeekDate, settings?.workdayEntriesOnlyToday, today])
+	}, [isOpen, firstWorkHours, calendarMonthStart, calendarMonthEnd, currentMonth, currentYear, defaultWeekDate, today])
 
 	const fillMonthStart = useMemo(
 		() => formatDateLocal(new Date(pickYear, pickMonth, 1)),
