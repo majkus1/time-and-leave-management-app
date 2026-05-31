@@ -235,6 +235,26 @@ function Blog() {
 							</Link>
 						</div>
 
+						{/* Karta — program do urlopów dla małej firmy */}
+						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-emerald-100/90">
+							<img
+								src="/img/plans-urlopnew.webp"
+								alt="Program do urlopów dla małej firmy — Planopia"
+								className="rounded-md mb-4 h-48 object-cover"
+							/>
+							<h3 className="text-xl font-semibold text-gray-800 mb-2">
+								Program do urlopów dla małej firmy — jak wybrać (2026)
+							</h3>
+							<p className="text-gray-600 flex-1">
+								Kryteria wyboru, realnie przydatne funkcje, koszt i odpowiedź na pytanie, czy istnieje darmowy program do urlopów. Praktyczny przewodnik dla małych zespołów.
+							</p>
+							<Link
+								href="/blog/program-do-urlopow-dla-malej-firmy"
+								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
+								Czytaj więcej
+							</Link>
+						</div>
+
 						{/* Karta wpisu - Dni wolne 2026 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
 							<img src="/img/dni wolnes.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />

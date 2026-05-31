@@ -16,6 +16,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
 
+    // Commercial landing pages (transactional intent)
+    {
+      url: 'https://planopia.pl/program-do-urlopow',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: 'https://planopia.pl/en/leave-management-software',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+    {
+      url: 'https://planopia.pl/program-do-ewidencji-czasu-pracy',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: 'https://planopia.pl/en/time-tracking-software',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+
     // Industry landings
     {
       url: 'https://planopia.pl/dla-branzy-budowlanej',
@@ -186,6 +212,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+
+    // Blog — leave software for small business (supporting cluster article)
+    {
+      url: 'https://planopia.pl/blog/program-do-urlopow-dla-malej-firmy',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.75,
     },
 
     // Blog — annual leave Excel/PDF vs app (GSC pillar)

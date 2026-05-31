@@ -11,6 +11,7 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import LeaveTemplateBanner from './LeaveTemplateBanner'
 
 function BlogSix() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -471,7 +472,11 @@ function BlogSix() {
 									Czym różni się program do urlopów od prowadzenia urlopów w Excelu?
 								</h3>
 								<p className="text-gray-700">
-									W dedykowanym programie urlopowym wnioski, akceptacje i salda są w jednym systemie z historią i powiadomieniami. Arkusz Excel przy większym zespole wymaga ręcznej synchronizacji i łatwiej o pomyłki oraz konflikt wersji pliku.
+									W dedykowanym{' '}
+									<Link href="/program-do-urlopow" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+										programie do urlopów
+									</Link>{' '}
+									wnioski, akceptacje i salda są w jednym systemie z historią i powiadomieniami. Arkusz Excel przy większym zespole wymaga ręcznej synchronizacji i łatwiej o pomyłki oraz konflikt wersji pliku.
 								</p>
 							</div>
 							<div className="bg-gray-50 p-6 rounded-lg">
@@ -500,6 +505,8 @@ function BlogSix() {
 							Wypróbuj Planopię za darmo
 						</Link>
 					</div>
+
+					<LeaveTemplateBanner className="mt-10" />
 
 					<BlogRelatedLinks slug="zarzadzanie-urlopami" className="mt-10" />
 				</div>

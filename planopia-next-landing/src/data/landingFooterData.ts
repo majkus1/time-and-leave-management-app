@@ -56,6 +56,25 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 export type FooterLegalLink = { href: string; label: string }
 export type FooterBlogLink = { href: string; label: string }
 
+/** Strony produktowe (intencja komercyjna) — linkowane sitewide w stopce. */
+export const FOOTER_SOLUTIONS_HEADING: Record<LandingLocale, string> = {
+	pl: 'Rozwiązania',
+	en: 'Solutions',
+}
+
+export const FOOTER_SOLUTIONS: Record<LandingLocale, FooterLegalLink[]> = {
+	pl: [
+		{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
+		{ href: '/program-do-urlopow', label: 'Program do urlopów' },
+		{ href: '/dla-branzy-budowlanej', label: 'Dla firm budowlanych' },
+	],
+	en: [
+		{ href: '/en/time-tracking-software', label: 'Time tracking software' },
+		{ href: '/en/leave-management-software', label: 'Leave management software' },
+		{ href: '/en/for-construction-industry', label: 'For construction' },
+	],
+}
+
 export const FOOTER_LEGAL: Record<LandingLocale, FooterLegalLink[]> = {
 	pl: [
 		{ href: '/terms', label: 'Regulamin' },

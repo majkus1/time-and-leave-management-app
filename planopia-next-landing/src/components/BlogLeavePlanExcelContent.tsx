@@ -12,6 +12,7 @@ const UI: Record<
 		h1: string
 		lead: string
 		trialCard: ReactNode
+		downloadCard: ReactNode
 		h2Why: string
 		pWhy: string
 		h2Structure: string
@@ -49,6 +50,12 @@ const UI: Record<
 			<>
 				<span className="font-semibold text-emerald-900">Urlopy i ewidencja w jednym koncie</span> — 30 dni pełnej
 				aplikacji (do 5 osób); potem darmowa ewidencja do 5 kont lub pakiety z urlopami.
+			</>
+		),
+		downloadCard: (
+			<>
+				<span className="font-semibold text-slate-900">Gotowy szablon Excel:</span> pracownicy, wnioski, dni
+				robocze, roczny widok i podsumowanie obłożenia.
 			</>
 		),
 		h2Why: 'Dlaczego szukamy „rocznego planu urlopów” w Excelu lub PDF?',
@@ -99,11 +106,13 @@ const UI: Record<
 				a: blogArticleOfferLine.pl,
 			},
 		],
-		ctaTitle: 'Przetestuj plan urlopów i ewidencję w jednym miejscu',
-		ctaLead: 'Załóż darmowy zespół i oceń moduły w okresie próbnym — bez zobowiązań przed poznaniem interfejsu.',
-		ctaBtn: 'Załóż darmowy zespół',
+		ctaTitle: 'Pobierz gotowy roczny plan urlopów w Excelu',
+		ctaLead:
+			'Darmowy szablon XLSX zawiera listę pracowników, wnioski urlopowe, automatyczne liczenie dni roboczych, roczny widok i podsumowanie obłożenia.',
+		ctaBtn: 'Pobierz szablon Excel',
 		relatedTitle: 'Powiązane artykuły',
 		related: [
+			{ href: '/program-do-urlopow', label: 'Program do urlopów — wnioski i kalendarz' },
 			{ href: '/blog/dni-wolne-2026', label: 'Dni wolne 2026 — kalendarz świąt' },
 			{ href: '/blog/planowanie-urlopow', label: 'Planowanie urlopów pracowników' },
 			{ href: '/blog/zarzadzanie-urlopami', label: 'Zarządzanie urlopami w firmie' },
@@ -122,6 +131,12 @@ const UI: Record<
 			<>
 				<span className="font-semibold text-emerald-900">Leave and time tracking in one account</span> — 30-day full
 				trial (up to 5 users); then free time tracking for 5 accounts or paid plans with leave.
+			</>
+		),
+		downloadCard: (
+			<>
+				<span className="font-semibold text-slate-900">Ready Excel template:</span> employees, requests, working
+				days, annual view, and workload summary.
 			</>
 		),
 		h2Why: 'Why people search for an “annual leave plan” in Excel or PDF',
@@ -172,11 +187,13 @@ const UI: Record<
 				a: blogArticleOfferLine.en,
 			},
 		],
-		ctaTitle: 'Try leave and time tracking in one place',
-		ctaLead: 'Create a free team and explore the trial — no commitment before you test the UI.',
-		ctaBtn: 'Create your free team',
+		ctaTitle: 'Download an annual leave plan spreadsheet',
+		ctaLead:
+			'The free XLSX template includes employees, leave requests, working-day formulas, annual view, and a workload summary.',
+		ctaBtn: 'Download Excel template',
 		relatedTitle: 'Related articles',
 		related: [
+			{ href: '/en/leave-management-software', label: 'Leave management software' },
 			{ href: '/en/blog/leave-planning', label: 'Leave planning — tools and practices' },
 			{ href: '/en/blog/leave-management', label: 'Leave management guide' },
 			{ href: '/en/blog/free-time-tracking-app', label: 'Free time tracking after the trial' },
@@ -218,6 +235,7 @@ function stripBoldMarkersForJsonLd(s: string): string {
 
 export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }) {
 	const t = UI[locale]
+	const downloadHref = '/downloads/roczny-plan-urlopow-2026-planopia.xlsx'
 	const url =
 		locale === 'pl'
 			? 'https://planopia.pl/blog/roczny-plan-urlopow-excel-pdf-aplikacja'
@@ -324,7 +342,16 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 							<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">{t.h1}</h1>
 							<LeadRich text={t.lead} />
 							<div className="mt-6">
-								<BlogHeroDualCtaCards locale={locale} trial={t.trialCard} />
+								<BlogHeroDualCtaCards
+									locale={locale}
+									trial={t.downloadCard}
+									trialCtaLabel={locale === 'pl' ? 'Pobierz szablon Excel' : 'Download Excel template'}
+									trialHref={downloadHref}
+									trialDownload
+									enterprise={t.trialCard}
+									pricingCtaLabel={locale === 'pl' ? 'Załóż darmowy zespół' : 'Create your free team'}
+									pricingHref="https://app.planopia.pl/team-registration"
+								/>
 							</div>
 						</div>
 						<AnimatedBlogImages
@@ -450,12 +477,13 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 					<section className="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 via-white to-sky-50/30 p-6 md:p-8 shadow-sm ring-1 ring-emerald-100/50 mb-10">
 						<h3 className="text-xl md:text-2xl font-bold text-gray-900 m-0">{t.ctaTitle}</h3>
 						<p className="mt-2 text-gray-600 leading-relaxed mb-6">{t.ctaLead}</p>
-						<Link
-							href="https://app.planopia.pl/team-registration"
+						<a
+							href={downloadHref}
+							download
 							className="blog-leave-excel-cta inline-flex min-h-[48px] items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-base font-semibold shadow-md transition hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
 						>
 							{t.ctaBtn}
-						</Link>
+						</a>
 					</section>
 
 					<nav className="border-t border-slate-200 pt-8" aria-label={t.relatedTitle}>

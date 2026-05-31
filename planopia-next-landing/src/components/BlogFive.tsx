@@ -28,7 +28,7 @@ function BlogFive() {
 						"headline": "Elektroniczna ewidencja czasu pracy - kompletny przewodnik | Planopia",
 						"url": "https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy",
 						"datePublished": "2024-10-18",
-						"dateModified": "2026-03-27",
+						"dateModified": "2026-05-31",
 						"author": {
 							"@type": "Person",
 							"name": "Michał Lipka"
@@ -231,6 +231,77 @@ function BlogFive() {
 							{' · '}
 							<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
 								darmowa aplikacja do ewidencji czasu pracy po okresie próbnym
+							</Link>
+							.
+						</p>
+					</div>
+
+					{/* Comparison table */}
+					<div className="mb-12">
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">
+							Papier, Excel czy program do ewidencji — porównanie
+						</h2>
+						<p className="text-lg text-gray-700 mb-6">
+							Krótkie zestawienie najczęstszych metod prowadzenia ewidencji czasu pracy — od papierowej listy obecności,
+							przez arkusz Excel, po program online taki jak Planopia.
+						</p>
+						<div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+							<table className="w-full text-left text-sm md:text-base">
+								<caption className="sr-only">
+									Porównanie metod ewidencji czasu pracy: papier, Excel i program online
+								</caption>
+								<thead>
+									<tr className="bg-slate-50 border-b border-slate-200">
+										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Funkcja</th>
+										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Papier</th>
+										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Excel</th>
+										<th scope="col" className="px-4 py-3 font-semibold text-emerald-800">Program (Planopia)</th>
+									</tr>
+								</thead>
+								<tbody className="text-gray-700">
+									<tr className="border-b border-slate-100">
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Liczenie godzin i nadgodzin</th>
+										<td className="px-4 py-3">ręcznie</td>
+										<td className="px-4 py-3">formuły, łatwo o błąd</td>
+										<td className="px-4 py-3 bg-emerald-50/40">automatyczne</td>
+									</tr>
+									<tr className="border-b border-slate-100">
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Jedna aktualna wersja danych</th>
+										<td className="px-4 py-3">nie</td>
+										<td className="px-4 py-3">trudne przy kilku osobach</td>
+										<td className="px-4 py-3 bg-emerald-50/40">tak, centralnie</td>
+									</tr>
+									<tr className="border-b border-slate-100">
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Dostęp z telefonu</th>
+										<td className="px-4 py-3">nie</td>
+										<td className="px-4 py-3">ograniczony</td>
+										<td className="px-4 py-3 bg-emerald-50/40">tak (PWA w przeglądarce)</td>
+									</tr>
+									<tr className="border-b border-slate-100">
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Raporty PDF / Excel</th>
+										<td className="px-4 py-3">ręcznie</td>
+										<td className="px-4 py-3">ręcznie</td>
+										<td className="px-4 py-3 bg-emerald-50/40">eksport jednym kliknięciem</td>
+									</tr>
+									<tr className="border-b border-slate-100">
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Urlopy i nieobecności</th>
+										<td className="px-4 py-3">osobno</td>
+										<td className="px-4 py-3">osobny arkusz</td>
+										<td className="px-4 py-3 bg-emerald-50/40">w tym samym koncie (plan płatny)</td>
+									</tr>
+									<tr>
+										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Koszt na start</th>
+										<td className="px-4 py-3">niski</td>
+										<td className="px-4 py-3">niski</td>
+										<td className="px-4 py-3 bg-emerald-50/40">30 dni za darmo, potem darmowa ewidencja do 5 kont</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<p className="text-sm text-gray-500 mt-3">
+							Szukasz gotowego narzędzia? Zobacz{' '}
+							<Link href="/program-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+								program do ewidencji czasu pracy
 							</Link>
 							.
 						</p>

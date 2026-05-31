@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import {
 	FOOTER_BLOG_HIGHLIGHTS,
 	FOOTER_LEGAL,
+	FOOTER_SOLUTIONS,
+	FOOTER_SOLUTIONS_HEADING,
 	FOOTER_UI,
 	LANDING_SELLER,
 	type LandingLocale,
@@ -42,6 +44,24 @@ export default function LandingSiteFooter() {
 							/>
 						</Link>
 						<p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-600">{t.brandLine}</p>
+
+						<nav className="mt-5" aria-label={FOOTER_SOLUTIONS_HEADING[locale]}>
+							<h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+								{FOOTER_SOLUTIONS_HEADING[locale]}
+							</h2>
+							<ul className="mt-3 space-y-2.5">
+								{FOOTER_SOLUTIONS[locale].map(item => (
+									<li key={item.href}>
+										<Link
+											href={item.href}
+											className="text-sm font-medium text-slate-700 transition hover:text-emerald-700 hover:underline underline-offset-4"
+										>
+											{item.label}
+										</Link>
+									</li>
+								))}
+							</ul>
+						</nav>
 					</div>
 
 					{/* Legal */}

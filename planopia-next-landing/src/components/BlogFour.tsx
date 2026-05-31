@@ -182,6 +182,21 @@ function BlogFour() {
 							zaprojektowana z myślą o małych i średnich firmach. Aplikacja działa w przeglądarce internetowej,
 							więc nie wymaga instalacji oprogramowania na komputerach pracowników.
 						</p>
+						<p className="text-lg text-gray-700 mb-4">
+							Chcesz zobaczyć gotowe rozwiązanie? Sprawdź dedykowany{' '}
+							<Link href="/program-do-ewidencji-czasu-pracy" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+								program do ewidencji czasu pracy
+							</Link>{' '}
+							albo pogłębione przewodniki:{' '}
+							<Link href="/blog/ewidencja-czasu-pracy-online" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+								ewidencja czasu pracy online
+							</Link>{' '}
+							oraz{' '}
+							<Link href="/blog/elektroniczna-ewidencja-czasu-pracy" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+								elektroniczna ewidencja — Excel czy program
+							</Link>
+							.
+						</p>
 						<div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
 							<p className="text-lg text-blue-800 font-semibold">
 								✅ Pierwszy miesiąc za darmo — do 5 użytkowników, pełna funkcjonalność

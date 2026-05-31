@@ -23,6 +23,7 @@ export const BLOG_TOPICS_PL = [
 		description: 'Program online, przewodnik elektroniczny, darmowy plan po próbie.',
 		links: [
 			{ href: BLOG_PILLAR_PL.href, label: '★ Główny przewodnik (pillar)' },
+			{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 			{ href: '/blog/ewidencja-czasu-pracy-online', label: 'Ewidencja online — aplikacja web' },
 			{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja — Excel vs program' },
 		],
@@ -32,6 +33,8 @@ export const BLOG_TOPICS_PL = [
 		title: 'Urlopy i planowanie',
 		description: 'Kalendarz, wnioski, Excel/PDF i święta w Polsce.',
 		links: [
+			{ href: '/program-do-urlopow', label: 'Program do urlopów — wnioski i kalendarz' },
+			{ href: '/blog/program-do-urlopow-dla-malej-firmy', label: 'Program do urlopów dla małej firmy' },
 			{ href: '/blog/planowanie-urlopow', label: 'Aplikacja do urlopów — planowanie' },
 			{ href: '/blog/zarzadzanie-urlopami', label: 'Zarządzanie urlopami w firmie' },
 			{ href: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja', label: 'Plan urlopów 2026: Excel, PDF, aplikacja' },
@@ -98,30 +101,40 @@ const L = {
 	pwa: { href: '/blog/jak-zainstalowac-planopie-jako-pwa', label: 'Instalacja Planopii jako PWA' },
 	wideo: { href: '/blog/instrukcja-wideo-planopia', label: 'Instrukcja wideo Planopia' },
 	cennik: { href: '/#cennik', label: 'Cennik Planopii' },
+	programUrlopow: { href: '/program-do-urlopow', label: 'Program do urlopów' },
+	programEwidencja: { href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
+	programUrlopowMalaFirma: {
+		href: '/blog/program-do-urlopow-dla-malej-firmy',
+		label: 'Program do urlopów dla małej firmy',
+	},
 } as const
 
 /** Konfiguracja powiązań per slug (ścieżka bez /blog/). */
 export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
 	'darmowa-aplikacja-do-ewidencji-czasu-pracy': {
 		relatedTitle: 'Więcej o ewidencji i urlopach',
-		related: [L.online, L.elektroniczna, L.budowa, L.planowanie, L.rocznyPlan],
+		related: [L.programEwidencja, L.online, L.elektroniczna, L.programUrlopow, L.budowa, L.rocznyPlan],
 	},
 	'ewidencja-czasu-pracy-online': {
 		showPillarBanner: true,
-		related: [L.pillar, L.elektroniczna, L.budowa, L.kompleksowa],
+		related: [L.programEwidencja, L.pillar, L.elektroniczna, L.budowa, L.kompleksowa],
 	},
 	'elektroniczna-ewidencja-czasu-pracy': {
 		showPillarBanner: true,
-		related: [L.pillar, L.online, L.budowa, L.planowanie],
+		related: [L.programEwidencja, L.pillar, L.online, L.budowa, L.planowanie],
+	},
+	'program-do-urlopow-dla-malej-firmy': {
+		relatedTitle: 'Więcej o urlopach',
+		related: [L.programUrlopow, L.rocznyPlan, L.planowanie, L.zarzadzanie, L.dniWolne, L.pillar],
 	},
 	'planowanie-urlopow': {
-		related: [L.pillar, L.zarzadzanie, L.rocznyPlan, L.dniWolne, L.online],
+		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.zarzadzanie, L.rocznyPlan, L.dniWolne],
 	},
 	'zarzadzanie-urlopami': {
-		related: [L.pillar, L.planowanie, L.rocznyPlan, L.kompleksowa],
+		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.planowanie, L.rocznyPlan, L.kompleksowa],
 	},
 	'roczny-plan-urlopow-excel-pdf-aplikacja': {
-		related: [L.pillar, L.dniWolne, L.planowanie, L.zarzadzanie],
+		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.dniWolne, L.planowanie, L.zarzadzanie],
 	},
 	'dni-wolne-2026': {
 		related: [L.rocznyPlan, L.planowanie, L.pillar, L.zarzadzanie],
@@ -154,11 +167,13 @@ const L_EN = {
 	},
 	constructionLanding: { href: '/en/for-construction-industry', label: 'Planopia for construction' },
 	pwa: { href: '/en/blog/how-to-install-planopia-as-pwa', label: 'Install Planopia as PWA' },
+	leaveSoftware: { href: '/en/leave-management-software', label: 'Leave management software' },
+	timeSoftware: { href: '/en/time-tracking-software', label: 'Time tracking software' },
 } as const
 
 export const BLOG_ARTICLE_LINKS_EN: Record<string, BlogArticleLinkConfig> = {
 	'time-tracking-on-construction-sites': {
-		related: [L_EN.constructionLanding, L_EN.pillar, L_EN.online],
+		related: [L_EN.constructionLanding, L_EN.timeSoftware, L_EN.pillar, L_EN.online],
 	},
 	'video-tutorials': {
 		related: [L_EN.pillar, L_EN.online, L_EN.pwa, L_EN.leave],

@@ -4,10 +4,10 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
 	title: {
 		absolute:
-			'Elektroniczna ewidencja czasu pracy: Excel vs program | Planopia',
+			'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
 	},
 	description:
-		'Papier, Excel czy program? Porównanie metod elektronicznej ewidencji czasu pracy, wymogi i wybór systemu z raportami PDF. 30 dni pełnej Planopii za darmo.',
+		'Papier, Excel czy program? Porównanie metod ewidencji czasu pracy w 2026 (z tabelą), wymogi prawne i wybór systemu z raportami PDF/XLSX. 30 dni Planopii za darmo, potem darmowy plan.',
 	keywords: [
 		'elektroniczna ewidencja czasu pracy',
 		'elektroniczna ewidencja czasu pracy program',
@@ -37,9 +37,9 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Elektroniczna ewidencja czasu pracy: Excel vs program | Planopia',
+		title: 'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
 		description:
-			'Kompletny przewodnik: kiedy przejść z papieru i arkusza na elektroniczną ewidencję i jaki program wybrać. Trial Planopii — 30 dni bez opłat.',
+			'Kompletny przewodnik na 2026: kiedy przejść z papieru i Excela na elektroniczną ewidencję, tabela porównawcza i jaki program wybrać. Trial Planopii — 30 dni bez opłat.',
 		url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
 		siteName: 'Planopia',
 		images: [
@@ -53,14 +53,14 @@ export const metadata: Metadata = {
 		locale: 'pl_PL',
 		type: 'article',
 		publishedTime: '2024-10-18T00:00:00.000Z',
-		modifiedTime: '2026-05-17T12:00:00.000Z',
+		modifiedTime: '2026-05-31T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Elektroniczna ewidencja czasu pracy: Excel vs program | Planopia',
+		title: 'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
 		description:
-			'Porównanie papieru, Excela i programu do ewidencji — wymogi i wybór narzędzia. Wypróbuj Planopię przez 30 dni.',
+			'Papier, Excel czy program do ewidencji? Tabela porównawcza i wybór narzędzia na 2026. Wypróbuj Planopię przez 30 dni za darmo.',
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

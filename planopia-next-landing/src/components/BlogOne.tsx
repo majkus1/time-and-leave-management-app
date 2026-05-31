@@ -43,7 +43,7 @@ function BlogOne() {
 						},
 						"url": "https://planopia.pl/blog/ewidencja-czasu-pracy-online",
 						"datePublished": "2025-08-25",
-						"dateModified": "2026-03-27"
+						"dateModified": "2026-05-31"
 					})
 				}}
 			/>
@@ -198,6 +198,15 @@ function BlogOne() {
 									</>
 								}
 							/>
+
+							<div className="mt-5">
+								<Link
+									href="/program-do-ewidencji-czasu-pracy"
+									className="inline-flex items-center text-base font-semibold text-blue-700 underline-offset-4 hover:text-blue-800 hover:underline"
+								>
+									Zobacz program do ewidencji czasu pracy →
+								</Link>
+							</div>
 						</div>
 
 						<img
@@ -252,7 +261,11 @@ function BlogOne() {
 				<h2 className="text-2xl font-semibold mb-3">Program do ewidencji czasu pracy – co powinien mieć?</h2>
 				<p className="mb-4 text-gray-700">
 					Nowoczesne aplikacje do ewidencji czasu pracy powinny być dostępne z dowolnego miejsca, 
-					proste w obsłudze i bezpieczne. Oto kluczowe funkcje:
+					proste w obsłudze i bezpieczne. Jeśli szukasz gotowego rozwiązania, zobacz nasz{' '}
+					<Link href="/program-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
+						program do ewidencji czasu pracy
+					</Link>
+					. Oto kluczowe funkcje:
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
 					<li>Intuicyjny kalendarz pracy z możliwością wpisu godzin i nadgodzin.</li>

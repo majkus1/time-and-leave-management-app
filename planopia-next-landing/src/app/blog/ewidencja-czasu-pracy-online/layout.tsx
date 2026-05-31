@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     description:
       'Rejestracja godzin online, nadgodziny i eksport PDF/Excel — bez wysyłania arkuszy mailem. Wypróbuj Planopię: 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 osób.',
     publishedTime: '2025-08-25T12:00:00.000Z',
-    modifiedTime: '2026-05-17T12:00:00.000Z',
+    modifiedTime: '2026-05-31T12:00:00.000Z',
     images: [
       {
         url: 'https://planopia.pl/img/desktop.png',

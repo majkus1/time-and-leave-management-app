@@ -12,6 +12,7 @@ import {
 } from '../data/landingNav'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import LeaveTemplateBanner from './LeaveTemplateBanner'
 
 function BlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -196,6 +197,15 @@ function BlogThree() {
 				<p className="mb-4 text-gray-700">
 					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong> 
 					z planowaniem urlopów. Przez pierwszy miesiąc (30 dni) masz pełne moduły w zespole do 5 osób; po próbie urlopy i pozostałe funkcje HR są w pakietach płatnych, a ewidencję czasu możesz prowadzić dalej bezpłatnie (do 5 aktywnych kont).
+					Jeśli szukasz gotowego narzędzia, zobacz nasz{' '}
+					<Link href="/program-do-urlopow" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+						program do urlopów
+					</Link>{' '}
+					— a wybór dla mniejszego zespołu ułatwi przewodnik{' '}
+					<Link href="/blog/program-do-urlopow-dla-malej-firmy" className="text-blue-700 underline-offset-2 hover:underline font-medium">
+						program do urlopów dla małej firmy
+					</Link>
+					.
 				</p>
 				<ul className="list-disc pl-6 mb-4 text-gray-700">
 					<li>Pracownicy składają wnioski urlopowe online</li>
@@ -214,6 +224,8 @@ function BlogThree() {
 				<p className="mt-8 font-medium text-blue-600">
 					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij planować urlopy online</Link>.
 				</p>
+
+				<LeaveTemplateBanner className="mt-10" />
 
 				<BlogRelatedLinks slug="planowanie-urlopow" className="mt-10" />
 			</article>
