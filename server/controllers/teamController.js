@@ -126,7 +126,7 @@ exports.registerTeam = async (req, res) => {
 		const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
 		// Special names: 11 seats. OficjalnyAdminowy — brak trialu (AI nielimit. w entitlementach).
-		// Halo Rental System — Starter aktywny, rozliczenia ręczne (bez daty końca w UI).
+		// Halo Rental System — Core S (15 miejsc), rozliczenia ręczne poza listą 11 miejsc (patrz specialTeams).
 		// Pozostałe: 5 miejsc + 30-dniowy trial.
 		const isSpecial = SPECIAL_TEAM_NAMES.includes(teamName)
 		const isManualBillingStarter = SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(teamName)

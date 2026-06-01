@@ -1,8 +1,7 @@
-/** Teams with 11 seats (register + startup sync). */
+/** Teams with 11 seats (register + startup sync). Halo Rental System: 15 miejsc (Core S), rozliczenia ręczne — poza tą listą. */
 const SPECIAL_ELEVATED_SEAT_TEAM_NAMES = [
 	'OficjalnyAdminowy',
-	'Halo Rental System',
-	/** Testowy zespół — ta sama logika co Halo (11 miejsc, Starter, rozliczenia ręczne). */
+	/** Testowy zespół — 11 miejsc, Starter, rozliczenia ręczne. */
 	'testokresprobny',
 	'vxvxvxv',
 	'qwd',
