@@ -8,7 +8,10 @@ import { useQuery } from '@tanstack/react-query'
 import { getTimerSessionDisplayName } from '../../utils/timerSessionSelect'
 import { filterGroupedSessionsByActivities } from '../../utils/workActivityAggregation'
 import { filterGroupedSessionsByTasks } from '../../utils/workTaskAggregation'
-import { formatHoursClock } from '../../utils/formatWorkDuration'
+import {
+	formatMinutesAsClock,
+	getDurationMinutes,
+} from '../../utils/formatWorkDuration'
 
 // Session item component with mobile expand/collapse
 function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, formatOvertimeTime, onDelete, deleteSession, t, i18n }) {
@@ -408,8 +411,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			let groupUnit = group.unit || ''
 			filteredSessions.forEach(session => {
 				if (session.startTime && session.endTime) {
-					const diff = (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60)
-					groupMinutes += Math.round(diff)
+					groupMinutes += getDurationMinutes(session.startTime, session.endTime)
 				}
 				if (Number(session.quantity) > 0) {
 					groupQuantity += Number(session.quantity)
@@ -448,7 +450,11 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 		}
 	}, [selectedDate, filteredGroups, filteredTotalMinutes])
 
-	const formatHours = formatHoursClock
+	const calculateDuration = (startTime, endTime) =>
+		formatMinutesAsClock(getDurationMinutes(startTime, endTime))
+
+	const formatSessionGroupHours = (totalMinutes) =>
+		formatMinutesAsClock(totalMinutes || 0)
 
 	const formatDate = (dateString) => {
 		if (!dateString) return ''
@@ -480,16 +486,6 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 		const hours = String(date.getHours()).padStart(2, '0')
 		const minutes = String(date.getMinutes()).padStart(2, '0')
 		return `${hours}:${minutes}`
-	}
-
-	const calculateDuration = (startTime, endTime) => {
-		if (!startTime || !endTime) return '0:00'
-		const start = new Date(startTime)
-		const end = new Date(endTime)
-		const diff = (end - start) / 1000 / 60 // minutes
-		const hours = Math.floor(diff / 60)
-		const minutes = Math.floor(diff % 60)
-		return `${hours}:${minutes.toString().padStart(2, '0')}`
 	}
 
 	const formatBreakTime = (breakTimeSeconds) => {
@@ -759,7 +755,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 										color: '#27ae60',
 										marginBottom: '5px'
 									}}>
-										{formatHours(group.totalHours)} {t('sessions.hours') || 'godz.'}
+										{formatSessionGroupHours(group.totalMinutes)} {t('sessions.hours') || 'godz.'}
 										{totalOvertimeFormatted && (
 											<span style={{
 												fontSize: '12px',
@@ -878,7 +874,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 					color: '#2c3e50',
 					fontWeight: '500'
 				}}>
-					{t('sessions.totalTime') || 'Łączny czas'}: <strong>{formatHours(displayTotalMinutes / 60)} {t('sessions.hours') || 'godz.'}</strong>
+					{t('sessions.totalTime') || 'Łączny czas'}: <strong>{formatSessionGroupHours(displayTotalMinutes)} {t('sessions.hours') || 'godz.'}</strong>
 				</div>
 			)}
 		</div>

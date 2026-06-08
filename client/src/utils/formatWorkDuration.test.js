@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
 	formatHoursClock,
 	formatHoursDecimal,
+	formatMinutesAsClock,
+	formatBreakdownHours,
 	formatWorkDuration,
+	getDurationMinutes,
+	hoursFromDurationMinutes,
 	roundHours,
 	roundToHalfHour,
 } from './formatWorkDuration'
@@ -10,6 +14,22 @@ import {
 describe('formatWorkDuration', () => {
 	it('roundHours keeps two decimal places', () => {
 		expect(roundHours(0.1167)).toBe(0.12)
+	})
+
+	it('getDurationMinutes matches server Math.round rule', () => {
+		const start = '2026-06-08T19:40:00.000Z'
+		const end = '2026-06-08T19:47:30.000Z'
+		expect(getDurationMinutes(start, end)).toBe(8)
+	})
+
+	it('formatMinutesAsClock avoids float drift', () => {
+		expect(formatMinutesAsClock(8)).toBe('0:08')
+		expect(formatMinutesAsClock(7)).toBe('0:07')
+	})
+
+	it('formatBreakdownHours uses clock under 1h', () => {
+		expect(formatBreakdownHours(0.12)).toBe('0:07')
+		expect(formatBreakdownHours(8)).toBe('8 h')
 	})
 
 	it('roundToHalfHour keeps manual ewidencja steps', () => {

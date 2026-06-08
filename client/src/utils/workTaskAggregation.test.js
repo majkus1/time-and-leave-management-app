@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	aggregateTaskHours,
 	flattenWorkdayTaskRows,
+	formatTaskBreakdown,
 	getFilteredTimerTaskHours,
 } from './workTaskAggregation'
 
@@ -28,5 +29,17 @@ describe('workTaskAggregation', () => {
 			taskName: 'test',
 			hours: 0.12,
 		}))
+	})
+
+	it('formats task breakdown on calendar tile with clock under 1h', () => {
+		const workday = {
+			timeEntries: [{
+				taskId: 'task-1',
+				startTime: '2026-06-08T19:40:00.000Z',
+				endTime: '2026-06-08T19:47:00.000Z',
+				isBreak: false,
+			}],
+		}
+		expect(formatTaskBreakdown(workday, { 'task-1': 'test' }, ['task-1'])).toBe('test 0:07')
 	})
 })

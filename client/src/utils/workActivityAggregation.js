@@ -1,5 +1,5 @@
 import { findWorkActivityById, getWorkActivityName } from './workActivities'
-import { roundHours } from './formatWorkDuration'
+import { roundHours, getDurationMinutes, hoursFromDurationMinutes, formatBreakdownHours } from './formatWorkDuration'
 
 function formatEntryTimeLocal(dateValue) {
 	if (!dateValue) return ''
@@ -52,7 +52,7 @@ export function filterGroupedSessionsByActivities(groupedSessions = [], selected
 			let unit = group.unit || ''
 			filteredSessions.forEach(session => {
 				if (session.startTime && session.endTime) {
-					groupMinutes += Math.round((new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60))
+					groupMinutes += getDurationMinutes(session.startTime, session.endTime)
 				}
 				if (Number(session.quantity) > 0) {
 					quantity += Number(session.quantity)
@@ -82,9 +82,7 @@ function isTimerWorkEntry(entry) {
 
 function getTimerEntryHours(entry) {
 	if (!isTimerWorkEntry(entry) || !entry.activityId) return 0
-	const hours = (new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60 * 60)
-	if (hours <= 0) return 0
-	return roundHours(hours)
+	return hoursFromDurationMinutes(getDurationMinutes(entry.startTime, entry.endTime))
 }
 
 function getSessionHours(entry) {
@@ -196,7 +194,7 @@ export function formatActivityBreakdown(workday, activities, locale = 'pl', sele
 		.map(([activityId, hours]) => {
 			const activity = findWorkActivityById(activities, activityId)
 			const name = getWorkActivityName(activity, locale) || activityId
-			return `${name} ${roundHours(hours)}h`
+			return `${name} ${formatBreakdownHours(hours)}`
 		})
 		.join(', ')
 }

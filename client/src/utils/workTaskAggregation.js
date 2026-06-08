@@ -1,4 +1,4 @@
-import { roundHours } from './formatWorkDuration'
+import { roundHours, getDurationMinutes, hoursFromDurationMinutes, formatBreakdownHours } from './formatWorkDuration'
 
 function formatEntryTimeLocal(dateValue) {
 	if (!dateValue) return ''
@@ -19,9 +19,7 @@ function isTimerWorkEntry(entry) {
 
 function getTimerEntryTaskHours(entry) {
 	if (!isTimerWorkEntry(entry) || !entry.taskId) return 0
-	const hours = (new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60 * 60)
-	if (hours <= 0) return 0
-	return roundHours(hours)
+	return hoursFromDurationMinutes(getDurationMinutes(entry.startTime, entry.endTime))
 }
 
 function collectManualTaskHoursMap(workday, selectedTaskIds = []) {
@@ -119,7 +117,7 @@ export function formatTaskBreakdown(workday, taskTitlesById = {}, selectedTaskId
 		.filter(([, hours]) => hours >= 1 / 60)
 		.map(([taskId, hours]) => {
 			const name = taskTitlesById[taskId] || taskId
-			return `${name} ${roundHours(hours)}h`
+			return `${name} ${formatBreakdownHours(hours)}`
 		})
 		.join(', ')
 }
@@ -189,7 +187,7 @@ export function filterGroupedSessionsByTasks(groupedSessions = [], selectedTaskI
 			let unit = group.unit || ''
 			filteredSessions.forEach(session => {
 				if (session.startTime && session.endTime) {
-					groupMinutes += Math.round((new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60))
+					groupMinutes += getDurationMinutes(session.startTime, session.endTime)
 				}
 				if (Number(session.quantity) > 0) {
 					quantity += Number(session.quantity)
