@@ -4222,11 +4222,19 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	overflow-wrap: normal;
 }
 
+.calendar-my-work .newbutton-confirmmonth.is-confirmed,
 #calendars-works-review .newbutton-confirmmonth.is-confirmed {
 	background: #9ca3af !important;
-	box-shadow: 0 12px 22px rgba(107, 114, 128, 0.14);
+	box-shadow: none;
+	font-weight: 600;
 }
 
+.calendar-my-work .newbutton-confirmmonth.is-confirmed:hover,
+#calendars-works-review .newbutton-confirmmonth.is-confirmed:hover {
+	background: #6b7280 !important;
+}
+
+.calendar-my-work .newbutton-confirmmonth:disabled,
 #calendars-works-review .newbutton-confirmmonth:disabled {
 	background: #95a5a6 !important;
 	cursor: not-allowed;

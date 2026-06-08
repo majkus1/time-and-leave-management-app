@@ -1600,31 +1600,12 @@ function MonthlyCalendar() {
 </h3> */}
 
 <button
+  type="button"
   onClick={async () => {
     await toggleConfirmationStatus()
   }}
   disabled={toggleConfirmationMutation.isPending}
-  style={{
-    marginTop: '20px',
-    marginBottom: '35px',
-    padding: '10px 20px',
-    fontSize: '16px',
-    cursor: toggleConfirmationMutation.isPending ? 'not-allowed' : 'pointer',
-    border: 'none',
-    borderRadius: '6px',
-    color: '#fff',
-    backgroundColor: toggleConfirmationMutation.isPending 
-      ? '#95a5a6' 
-      : (isConfirmed ? '#9ca3af' : '#22c55e'), // szary lub zielony
-    opacity: toggleConfirmationMutation.isPending ? 0.7 : 1,
-    transition: 'all 0.2s',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    minWidth: '200px'
-  }}
-  className='newbutton-confirmmonth'
+  className={`newbutton-confirmmonth ${isConfirmed ? 'is-confirmed' : 'is-open'}`}
 >
   {toggleConfirmationMutation.isPending ? (
     <>
