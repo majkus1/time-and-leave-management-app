@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\przelewy24\p24Config.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\przelewy24\p24Config.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">55.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">72</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">22.03</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.47</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { appUrl } = require(&#039;../../config&#039;)
+
+function parseBool(v) {
+	return v === &#039;true&#039; || v === &#039;1&#039;
+}
+
+/**
+ * @returns {{
+ *   merchantId: number,
+ *   posId: number,
+ *   crc: string,
+ *   apiKey: string,
+ *   sandbox: boolean,
+ *   apiBase: string,
+ *   trnHost: string,
+ *   appPublicUrl: string,
+ *   webhookUrl: string,
+ *   credsOk: boolean,
+ *   webhookOk: boolean,
+ *   ready: boolean,
+ * }}
+ */
+function getP24Config() {
+	const merchantId = parseInt(process.env.P24_MERCHANT_ID, 10)
+	const posId = parseInt(process.env.P24_POS_ID, 10)
+	const crc = (process.env.P24_CRC || &#039;&#039;).trim()
+	const apiKey = (process.env.P24_API_KEY || &#039;&#039;).trim()
+	const sandbox = parseBool(process.env.P24_SANDBOX)
+
+	const appPublicUrl = (process.env.P24_APP_PUBLIC_URL || appUrl || &#039;&#039;).replace(/\/$/, &#039;&#039;)
+
+	let webhookUrl = (process.env.P24_WEBHOOK_URL || &#039;&#039;).trim()
+	if (!webhookUrl) {
+		const apiPublic = (process.env.API_PUBLIC_URL || &#039;&#039;).trim().replace(/\/$/, &#039;&#039;)
+		if (apiPublic) {
+			webhookUrl = `${apiPublic}/api/billing/webhooks/przelewy24`
+		}
+	}
+
+	const credsOk =
+		Number.isFinite(merchantId) &amp;&amp;
+		merchantId &gt; 0 &amp;&amp;
+		Number.isFinite(posId) &amp;&amp;
+		posId &gt; 0 &amp;&amp;
+		crc.length &gt; 0 &amp;&amp;
+		apiKey.length &gt; 0
+
+	const webhookOk = /^https:\/\/.+/i.test(webhookUrl) &amp;&amp; webhookUrl.length &lt;= 500
+
+	const apiBase = sandbox
+		? &#039;https://sandbox.przelewy24.pl/api/v1&#039;
+		: &#039;https://secure.przelewy24.pl/api/v1&#039;
+
+	const trnHost = sandbox ? &#039;https://sandbox.przelewy24.pl&#039; : &#039;https://secure.przelewy24.pl&#039;
+
+	return {
+		merchantId,
+		posId,
+		crc,
+		apiKey,
+		sandbox,
+		apiBase,
+		trnHost,
+		appPublicUrl,
+		webhookUrl,
+		credsOk,
+		webhookOk,
+		ready: credsOk &amp;&amp; webhookOk,
+	}
+}
+
+module.exports = { getP24Config }</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

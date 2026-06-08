@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\qrService.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\qrService.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">55.37</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">159</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">28.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.96</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const QRCode = require(&#039;../models/QRCode&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const crypto = require(&#039;crypto&#039;)
+
+/**
+ * Check if user has permission to manage QR codes (Admin or HR)
+ * @param {string} userId - User ID
+ * @returns {Promise&lt;{hasPermission: boolean, user: Object|null}&gt;}
+ */
+exports.checkQRCodePermission = async (userId) =&gt; {
+	try {
+		const user = await User.findById(userId)
+		if (!user) {
+			return { hasPermission: false, user: null }
+		}
+
+		const isAdmin = user.roles.includes(&#039;Admin&#039;)
+		const isHR = user.roles.includes(&#039;HR&#039;)
+
+		return {
+			hasPermission: isAdmin || isHR,
+			user
+		}
+	} catch (error) {
+		console.error(&#039;Error checking QR code permission:&#039;, error)
+		throw new Error(&#039;Błąd podczas sprawdzania uprawnień&#039;)
+	}
+}
+
+/**
+ * Generate unique QR code for team
+ * @param {string} teamId - Team ID
+ * @param {string} name - QR code name
+ * @param {string} createdBy - User ID who created the code
+ * @returns {Promise&lt;Object&gt;} Created QR code
+ */
+exports.generateQRCode = async (teamId, name, createdBy) =&gt; {
+	try {
+		if (!name || !name.trim()) {
+			throw new Error(&#039;Nazwa kodu QR jest wymagana&#039;)
+		}
+
+		// Generate unique code
+		let code
+		let isUnique = false
+		let attempts = 0
+		const maxAttempts = 10 // Prevent infinite loop
+
+		// Ensure code is unique
+		while (!isUnique &amp;&amp; attempts &lt; maxAttempts) {
+			const randomString = crypto.randomBytes(8).toString(&#039;hex&#039;)
+			code = `${teamId.toString().slice(-6)}-${randomString}`
+
+			const existing = await QRCode.findOne({ code })
+			if (!existing) {
+				isUnique = true
+			}
+			attempts++
+		}
+
+		if (!isUnique) {
+			throw new Error(&#039;Nie udało się wygenerować unikalnego kodu QR. Spróbuj ponownie.&#039;)
+		}
+
+		// Create QR code
+		const qrCode = new QRCode({
+			teamId,
+			code,
+			name: name.trim(),
+			createdBy
+		})
+
+		await qrCode.save()
+
+		return {
+			_id: qrCode._id,
+			code: qrCode.code,
+			name: qrCode.name,
+			teamId: qrCode.teamId,
+			isActive: qrCode.isActive,
+			createdAt: qrCode.createdAt
+		}
+	} catch (error) {
+		console.error(&#039;Error generating QR code:&#039;, error)
+		throw error
+	}
+}
+
+/**
+ * Get all active QR codes for team
+ * @param {string} teamId - Team ID
+ * @returns {Promise&lt;Array&gt;} Array of QR codes
+ */
+exports.getTeamQRCodes = async (teamId) =&gt; {
+	try {
+		const qrCodes = await QRCode.find({ teamId, isActive: true })
+			.populate(&#039;createdBy&#039;, &#039;firstName lastName&#039;)
+			.sort({ createdAt: -1 })
+
+		return qrCodes
+	} catch (error) {
+		console.error(&#039;Error getting QR codes:&#039;, error)
+		throw new Error(&#039;Błąd podczas pobierania kodów QR&#039;)
+	}
+}
+
+/**
+ * Delete (soft delete) QR code
+ * @param {string} qrCodeId - QR code ID
+ * @param {string} teamId - Team ID
+ * @returns {Promise&lt;Object&gt;} Deleted QR code
+ */
+exports.deleteQRCode = async (qrCodeId, teamId) =&gt; {
+	try {
+		const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId })
+		if (!qrCode) {
+			throw new Error(&#039;Kod QR nie znaleziony&#039;)
+		}
+
+		qrCode.isActive = false
+		await qrCode.save()
+
+		return { message: &#039;Kod QR został usunięty&#039; }
+	} catch (error) {
+		console.error(&#039;Error deleting QR code:&#039;, error)
+		throw error
+	}
+}
+
+/**
+ * Verify QR code (public - no auth required)
+ * @param {string} code - QR code string
+ * @returns {Promise&lt;Object&gt;} QR code verification result
+ */
+exports.verifyQRCode = async (code) =&gt; {
+	try {
+		const qrCode = await QRCode.findOne({ code, isActive: true })
+			.populate(&#039;teamId&#039;, &#039;name&#039;)
+
+		if (!qrCode) {
+			return {
+				valid: false,
+				message: &#039;Nieprawidłowy kod QR&#039;
+			}
+		}
+
+		return {
+			valid: true,
+			code: qrCode.code,
+			name: qrCode.name,
+			teamId: qrCode.teamId._id,
+			teamName: qrCode.teamId.name
+		}
+	} catch (error) {
+		console.error(&#039;Error verifying QR code:&#039;, error)
+		throw new Error(&#039;Błąd podczas weryfikacji kodu QR&#039;)
+	}
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '../../hooks/useSettings'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { buildReportFilename } from '../../utils/export/reportFilename'
 
 function LeaveRequestPDFPreview() {
 	const location = useLocation()
@@ -61,7 +62,16 @@ function LeaveRequestPDFPreview() {
 		
 		pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight)
 		
-		pdf.save(`${t('pdf.filename2')}_${leaveRequest.userId.lastName}.pdf`)
+		pdf.save(buildReportFilename({
+			locale: i18n.resolvedLanguage,
+			pl: 'wniosek-urlopowy',
+			en: 'leave-request',
+			parts: [
+				`${leaveRequest.userId.firstName || ''} ${leaveRequest.userId.lastName || ''}`.trim(),
+				`${formatDate(leaveRequest.startDate)}-${formatDate(leaveRequest.endDate)}`,
+			],
+			extension: 'pdf',
+		}))
 	}
 
 	const formatDate = date => {

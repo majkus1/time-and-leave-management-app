@@ -21,11 +21,38 @@ import {
 	buildPdfDocument,
 	downloadPdf,
 	pdfDataTable,
-	pdfLabelValueLines,
-	pdfTitleBlock,
 } from '../../utils/export/pdfDownload'
 import { computeTeamTotalsForMonth, aggregateYearTeamTotals } from '../../utils/teamWorkCalendarSummary'
 import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
+import { buildReportFilename } from '../../utils/export/reportFilename'
+import { useWorkActivities } from '../../hooks/useWorkActivities'
+import { getEnabledWorkActivities, teamHasWorkActivities } from '../../utils/workActivities'
+import {
+	filterWorkdaysByActivities,
+	flattenWorkdayActivityRows,
+	aggregateActivityHours,
+	formatActivityBreakdown,
+	getFilteredActivityHours,
+	workdayMatchesActivityFilter,
+	getActivityFilterLabel,
+} from '../../utils/workActivityAggregation'
+import {
+	getFilteredCalendarHours,
+	formatCalendarBreakdown,
+	isCalendarFilterActive,
+} from '../../utils/workCalendarFilters'
+import {
+	collectTasksFromWorkdays,
+	buildTaskTitlesMap,
+	flattenWorkdayTaskRows,
+	aggregateTaskHours,
+	workdayMatchesTaskFilter,
+	getTaskFilterLabel,
+} from '../../utils/workTaskAggregation'
+import ActivityFilterBar from '../workcalendars/ActivityFilterBar'
+import TaskFilterBar from '../workcalendars/TaskFilterBar'
+import { useBillingEntitlements } from '../../hooks/useBilling'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 
 function workdayUserIdString(day) {
 	if (!day?.userId) return ''
@@ -56,6 +83,10 @@ function AdminUserList() {
 	const [selectedUserIds, setSelectedUserIds] = useState([])
 	const [expandedDepartments, setExpandedDepartments] = useState({})
 	const [calendarView, setCalendarView] = useState('single') // 'single' | 'all-months'
+	const [selectedActivityIds, setSelectedActivityIds] = useState([])
+	const [selectedTaskIds, setSelectedTaskIds] = useState([])
+	const { data: entitlements, isPending: entitlementsLoading } = useBillingEntitlements()
+	const tasksModuleEnabled = canShowBillingModuleNav(entitlements, 'tasks', entitlementsLoading)
 	
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
@@ -70,6 +101,8 @@ function AdminUserList() {
 	const { data: allTeamWorkdays = [], isLoading: loadingWorkdays, error: workdaysError } = useAllTeamWorkdays()
 	const { data: allAcceptedRequests = [], isLoading: loadingRequests, error: requestsError } = useAllAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
+	const { data: workActivities = [] } = useWorkActivities()
+	const enabledWorkActivities = useMemo(() => getEnabledWorkActivities(workActivities), [workActivities])
 	const { data: departments = [] } = useDepartments(teamId)
 
 	const priorityEmployeeIds = useMemo(() => {
@@ -221,6 +254,21 @@ function AdminUserList() {
 		})
 	}, [allTeamWorkdays, filteredUsers])
 
+	const filterableTasks = useMemo(
+		() => collectTasksFromWorkdays(filteredWorkdays, currentMonth, currentYear),
+		[filteredWorkdays, currentMonth, currentYear]
+	)
+	const taskTitlesById = useMemo(
+		() => buildTaskTitlesMap(filterableTasks.map(task => ({ _id: task.id, title: task.title }))),
+		[filterableTasks]
+	)
+
+	const activityFilterIds = selectedActivityIds
+	const scopedWorkdays = useMemo(
+		() => filterWorkdaysByActivities(filteredWorkdays, activityFilterIds),
+		[filteredWorkdays, selectedActivityIds]
+	)
+
 	/** Zaakceptowane wnioski urlopowe tylko dla wyfiltrowanych użytkowników (do podsumowań). */
 	const filteredAcceptedRequests = useMemo(() => {
 		const filteredUserIds = new Set(filteredUsers.map((u) => u._id))
@@ -251,12 +299,12 @@ function AdminUserList() {
 
 	// Formatuj wpisy ewidencji - grupowanie po dacie i użytkowniku
 	const formattedWorkdayEvents = useMemo(() => {
-		if (!filteredWorkdays || filteredWorkdays.length === 0) return []
+		if (!scopedWorkdays || scopedWorkdays.length === 0) return []
 
 		// Grupuj workdays po dacie i użytkowniku
 		const workdaysByDateAndUser = {}
 		
-		filteredWorkdays.forEach(workday => {
+		scopedWorkdays.forEach(workday => {
 			if (!workday.userId || !workday.userId.firstName) return
 			
 			const dateKey = normalizeDate(workday.date)
@@ -274,8 +322,19 @@ function AdminUserList() {
 			}
 			
 			// Zbierz wszystkie części wpisu dla tego workday - dodaj bezpośrednio do allParts
-			if (workday.hoursWorked && workday.hoursWorked > 0) {
-				workdaysByDateAndUser[key].allParts.push(`${formatHours(workday.hoursWorked)}h`)
+			const displayHours = getFilteredCalendarHours(workday, selectedActivityIds, selectedTaskIds)
+			if (displayHours > 0) {
+				workdaysByDateAndUser[key].allParts.push(`${formatHours(displayHours)}h`)
+			}
+			const breakdown = formatCalendarBreakdown(workday, {
+				workActivities,
+				taskTitlesById,
+				locale: i18n.language,
+				selectedActivityIds,
+				selectedTaskIds,
+			})
+			if (breakdown) {
+				workdaysByDateAndUser[key].allParts.push(breakdown)
 			}
 			
 			if (workday.additionalWorked && workday.additionalWorked > 0) {
@@ -328,7 +387,76 @@ function AdminUserList() {
 				}
 			}
 		})
-	}, [filteredWorkdays])
+	}, [scopedWorkdays, selectedActivityIds, selectedTaskIds, workActivities, taskTitlesById, i18n.language])
+
+	const workdaysForTotals = useMemo(() => {
+		if (!isCalendarFilterActive(selectedActivityIds, selectedTaskIds)) return scopedWorkdays
+		return scopedWorkdays
+			.map(workday => {
+				const hours = getFilteredCalendarHours(workday, selectedActivityIds, selectedTaskIds)
+				if (!hours) return null
+				return { ...workday, hoursWorked: hours, additionalWorked: 0 }
+			})
+			.filter(Boolean)
+	}, [scopedWorkdays, selectedActivityIds, selectedTaskIds])
+
+	const usersById = useMemo(
+		() => new Map(filteredUsers.map(user => [userIdString(user._id), user])),
+		[filteredUsers]
+	)
+
+	const teamActivityRows = useMemo(() => {
+		const monthWorkdays = scopedWorkdays.filter(workday => {
+			const eventDate = new Date(workday.date)
+			if (calendarView === 'single') {
+				return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+			}
+			return eventDate.getFullYear() === currentYear
+		})
+		return flattenWorkdayActivityRows(
+			monthWorkdays.filter(workday => workdayMatchesActivityFilter(workday, activityFilterIds)),
+			workActivities,
+			usersById,
+			i18n.language,
+			activityFilterIds,
+			{ deletedActivityLabel: t('workcalendar.activities.deletedLabel') }
+		)
+	}, [scopedWorkdays, workActivities, usersById, i18n.language, calendarView, currentMonth, currentYear, activityFilterIds, t])
+
+	const teamActivitySummary = useMemo(
+		() => aggregateActivityHours(teamActivityRows, { groupByUser: true }),
+		[teamActivityRows]
+	)
+
+	const teamTaskRows = useMemo(() => {
+		if (!tasksModuleEnabled) return []
+		const monthWorkdays = scopedWorkdays.filter(workday => {
+			const eventDate = new Date(workday.date)
+			if (calendarView === 'single') {
+				return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+			}
+			return eventDate.getFullYear() === currentYear
+		})
+		return flattenWorkdayTaskRows(
+			monthWorkdays.filter(workday => workdayMatchesTaskFilter(workday, selectedTaskIds)),
+			taskTitlesById,
+			usersById,
+			selectedTaskIds,
+			{ deletedTaskLabel: t('workcalendar.tasks.deletedLabel') }
+		)
+	}, [scopedWorkdays, taskTitlesById, usersById, selectedTaskIds, tasksModuleEnabled, calendarView, currentMonth, currentYear, t])
+
+	const teamTaskSummary = useMemo(
+		() => aggregateTaskHours(teamTaskRows, { groupByUser: true }),
+		[teamTaskRows]
+	)
+
+	const hasActivityFilter = selectedActivityIds.length > 0
+	const hasTaskFilter = selectedTaskIds.length > 0
+	const showOperationalActivities = !hasTaskFilter || hasActivityFilter
+	const showOperationalTasks = tasksModuleEnabled && (!hasActivityFilter || hasTaskFilter)
+	const visibleActivitySummary = showOperationalActivities ? teamActivitySummary : []
+	const visibleTaskSummary = showOperationalTasks ? teamTaskSummary : []
 
 	const buildLeaveEventsForMonth = useCallback(
 		(month, year) => {
@@ -368,7 +496,7 @@ function AdminUserList() {
 	const teamSummaryCurrentMonth = useMemo(() => {
 		if (!settings) return null
 		return computeTeamTotalsForMonth({
-			workdays: filteredWorkdays,
+			workdays: workdaysForTotals,
 			acceptedLeaveRequests: filteredAcceptedRequests,
 			month: currentMonth,
 			year: currentYear,
@@ -379,7 +507,7 @@ function AdminUserList() {
 		})
 	}, [
 		settings,
-		filteredWorkdays,
+		workdaysForTotals,
 		filteredAcceptedRequests,
 		currentMonth,
 		currentYear,
@@ -393,7 +521,7 @@ function AdminUserList() {
 		if (!settings) return { months: [], yearTotals: null }
 		const months = Array.from({ length: 12 }, (_, month) =>
 			computeTeamTotalsForMonth({
-				workdays: filteredWorkdays,
+				workdays: workdaysForTotals,
 				acceptedLeaveRequests: filteredAcceptedRequests,
 				month,
 				year: currentYear,
@@ -404,7 +532,7 @@ function AdminUserList() {
 			})
 		)
 		return { months, yearTotals: aggregateYearTeamTotals(months) }
-	}, [settings, filteredWorkdays, filteredAcceptedRequests, currentYear, t, i18n, generateDateRangeForCalendar])
+	}, [settings, workdaysForTotals, filteredAcceptedRequests, currentYear, t, i18n, generateDateRangeForCalendar])
 
 	/** Podsumowanie skrócone per pracownik (te same filtry i okres co powyżej). */
 	const perUserSummaryRows = useMemo(() => {
@@ -412,7 +540,7 @@ function AdminUserList() {
 		return filteredUsers.map((user) => {
 			const uid = user._id.toString()
 			const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || uid
-			const userWds = filteredWorkdays.filter((w) => workdayUserIdString(w) === uid)
+			const userWds = workdaysForTotals.filter((w) => workdayUserIdString(w) === uid)
 			const userLeaves = filteredAcceptedRequests.filter((r) => {
 				const rid =
 					typeof r.userId === 'object' && r.userId?._id ? r.userId._id.toString() : String(r.userId)
@@ -450,7 +578,7 @@ function AdminUserList() {
 	}, [
 		settings,
 		filteredUsers,
-		filteredWorkdays,
+		workdaysForTotals,
 		filteredAcceptedRequests,
 		calendarView,
 		currentMonth,
@@ -507,13 +635,622 @@ function AdminUserList() {
 	}, [calendarView, currentYear, currentMonth, i18n.resolvedLanguage])
 
 	const exportFileNameBase = () => {
-		if (calendarView === 'single') {
-			return `team_timesheet_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`
-		}
-		return `team_timesheet_year_${currentYear}`
+		return buildReportFilename({
+			locale: i18n.resolvedLanguage,
+			pl: 'raport-ewidencja-zespolu',
+			en: 'team-timesheet-report',
+			parts: [exportPeriodLabel],
+		})
 	}
 
-	const exportFileNameBasePerUser = () => `${exportFileNameBase()}_per_user`
+	const exportFileNameBasePerUser = () => buildReportFilename({
+		locale: i18n.resolvedLanguage,
+		pl: 'raport-ewidencja-wedlug-osob',
+		en: 'timesheet-report-by-person',
+		parts: [exportPeriodLabel],
+	})
+
+	const exportFileNameBaseOperational = () => buildReportFilename({
+		locale: i18n.resolvedLanguage,
+		pl: 'raport-zadania-i-czynnosci',
+		en: 'tasks-and-activities-report',
+		parts: [exportPeriodLabel],
+	})
+
+	const getCurrentSummaryTotals = () => {
+		if (calendarView === 'single') return teamSummaryCurrentMonth
+		return teamYearBreakdown.yearTotals
+	}
+
+	const getLeaveDisplay = (summary, compact = false) => {
+		if (!summary) return ''
+		if (settings?.leaveCalculationMode === 'hours') {
+			return `${Number(summary.leaveHours || 0).toFixed(1)} ${compact ? 'h' : t('workcalendar.allfrommonthhours')}`
+		}
+		return compact
+			? `${summary.leaveDays} dni / ${Number(summary.leaveHours || 0).toFixed(1)} h`
+			: `${summary.leaveDays} (${Number(summary.leaveHours || 0).toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
+	}
+
+	const reportTheme = {
+		navy: '#0b2442',
+		blue: '#2563eb',
+		cyan: '#38bdf8',
+		green: '#16a34a',
+		amber: '#f59e0b',
+		purple: '#7c3aed',
+		red: '#dc2626',
+		ink: '#0f2746',
+		muted: '#64748b',
+		line: '#dbe7f2',
+		soft: '#f5f9fd',
+	}
+
+	const safeNumber = (value) => {
+		const number = Number(value || 0)
+		return Number.isFinite(number) ? number : 0
+	}
+
+	const formatPercent = (value) => `${safeNumber(value).toFixed(1)}%`
+
+	const getReportInsights = (summary) => {
+		if (!summary) return []
+		const totalHours = safeNumber(summary.totalHours)
+		const totalWorkDays = safeNumber(summary.totalWorkDays)
+		const overtime = safeNumber(summary.overtime)
+		const leaveHours = safeNumber(summary.leaveHours)
+		const avgHoursPerWorkDay = totalWorkDays > 0 ? totalHours / totalWorkDays : 0
+		const overtimeShare = totalHours > 0 ? (overtime / totalHours) * 100 : 0
+		const absenceLoad = totalHours + leaveHours > 0 ? (leaveHours / (totalHours + leaveHours)) * 100 : 0
+		return [
+			{
+				label: 'Średnio na dzień pracy',
+				value: `${formatHours(avgHoursPerWorkDay)} h`,
+				note: avgHoursPerWorkDay >= 8 ? 'Wysokie obciążenie operacyjne' : 'Stabilny poziom wykorzystania czasu',
+			},
+			{
+				label: 'Udział nadgodzin',
+				value: formatPercent(overtimeShare),
+				note: overtimeShare > 8 ? 'Warto sprawdzić obszary przeciążenia' : 'Nadgodziny pod kontrolą',
+			},
+			{
+				label: 'Udział urlopów',
+				value: formatPercent(absenceLoad),
+				note: absenceLoad > 15 ? 'Istotny wpływ nieobecności na dostępność' : 'Dostępność zespołu stabilna',
+			},
+		]
+	}
+
+	const pdfSectionTitle = (text, subtitle = '') => ({
+		stack: [
+			{ text, style: 'sectionTitle' },
+			subtitle ? { text: subtitle, style: 'sectionSubtitle', margin: [0, 2, 0, 0] } : null,
+		].filter(Boolean),
+		margin: [0, 15, 0, 8],
+	})
+
+	const pdfExecutiveHeader = (summary, generatedAt) => ({
+		table: {
+			widths: ['*', 175],
+			body: [[
+				{
+					stack: [
+						{ text: 'PLANOPIA · RAPORT EWIDENCJI', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1.2 },
+						{ text: 'Podsumowanie ewidencji', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 7, 0, 0] },
+						{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: '#dbeafe', margin: [0, 5, 0, 0] },
+					],
+					border: [false, false, false, false],
+					margin: [18, 16, 12, 16],
+				},
+				{
+					stack: [
+						{ text: 'Szybki obraz', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: `${formatHours(summary.totalHours)} h`, fontSize: 24, bold: true, color: '#ffffff', margin: [0, 5, 0, 0] },
+						{ text: `${summary.totalWorkDays} dni pracy · ${formatHours(summary.overtime)} h nadgodzin`, fontSize: 8, color: '#dbeafe', margin: [0, 4, 0, 0] },
+						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
+					],
+					border: [false, false, false, false],
+					margin: [12, 14, 16, 14],
+				},
+			]],
+		},
+		layout: {
+			hLineWidth: () => 0,
+			vLineWidth: () => 0,
+			fillColor: () => reportTheme.navy,
+		},
+		margin: [0, 0, 0, 12],
+	})
+
+	const pdfReportHeader = ({ title, subtitle, eyebrow = 'PLANOPIA · RAPORT EWIDENCJI', side = [] }) => ({
+		table: {
+			widths: ['*', 190],
+			body: [[
+				{
+					stack: [
+						{ text: eyebrow, fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1.2 },
+						{ text: title, fontSize: 22, bold: true, color: '#ffffff', margin: [0, 7, 0, 0] },
+						{ text: subtitle, fontSize: 11, color: '#dbeafe', margin: [0, 5, 0, 0] },
+					],
+					border: [false, false, false, false],
+					margin: [18, 16, 12, 16],
+				},
+				{
+					stack: side,
+					border: [false, false, false, false],
+					margin: [12, 14, 16, 14],
+				},
+			]],
+		},
+		layout: {
+			hLineWidth: () => 0,
+			vLineWidth: () => 0,
+			fillColor: () => reportTheme.navy,
+		},
+		margin: [0, 0, 0, 12],
+	})
+
+	const pdfMiniProgress = (value, max, color = reportTheme.blue, width = 74) => ({
+		canvas: [
+			{ type: 'rect', x: 0, y: 0, w: width, h: 4, r: 2, color: '#e6eef7' },
+			{ type: 'rect', x: 0, y: 0, w: Math.max(2, Math.min(width, Math.round((safeNumber(value) / Math.max(safeNumber(max), 1)) * width))), h: 4, r: 2, color },
+		],
+		margin: [0, 7, 0, 0],
+	})
+
+	const pdfKpiCards = (summary) => {
+		if (!summary) return []
+		const maxForBars = Math.max(safeNumber(summary.totalHours), safeNumber(summary.overtime), safeNumber(summary.leaveHours), safeNumber(summary.totalWorkDays), 1)
+		const cards = [
+			{ label: 'Dni pracy', value: String(summary.totalWorkDays), detail: 'aktywnych dni w okresie', color: reportTheme.blue, raw: summary.totalWorkDays },
+			{ label: 'Godziny pracy', value: `${formatHours(summary.totalHours)} h`, detail: 'łączny czas operacyjny', color: reportTheme.green, raw: summary.totalHours },
+			{ label: 'Nadgodziny', value: `${formatHours(summary.overtime)} h`, detail: `${formatPercent(safeNumber(summary.totalHours) ? (safeNumber(summary.overtime) / safeNumber(summary.totalHours)) * 100 : 0)} czasu pracy`, color: reportTheme.amber, raw: summary.overtime },
+			{ label: 'Urlopy', value: getLeaveDisplay(summary, true), detail: 'zaakceptowane nieobecności', color: reportTheme.purple, raw: summary.leaveHours },
+			{ label: 'Inne absencje', value: String(summary.otherAbsences || 0), detail: 'poza urlopami', color: reportTheme.red, raw: summary.otherAbsences },
+		]
+		return [{
+			table: {
+				widths: cards.map(() => '*'),
+				body: [[
+					...cards.map(card => ({
+						stack: [
+							{ text: card.label, fontSize: 8, bold: true, color: reportTheme.muted },
+							{ text: card.value, fontSize: 16, bold: true, color: reportTheme.ink, margin: [0, 5, 0, 0] },
+							{ text: card.detail, fontSize: 7, color: reportTheme.muted, margin: [0, 3, 0, 0] },
+							pdfMiniProgress(card.raw, maxForBars, card.color),
+						],
+						fillColor: '#ffffff',
+						border: [false, false, false, false],
+						margin: [9, 9, 9, 9],
+					})),
+				]],
+			},
+			layout: {
+				hLineWidth: () => 1,
+				vLineWidth: () => 1,
+				hLineColor: () => reportTheme.line,
+				vLineColor: () => reportTheme.line,
+			},
+			margin: [0, 0, 0, 10],
+		}]
+	}
+
+	const pdfInsightStrip = (summary) => {
+		const insights = getReportInsights(summary)
+		if (!insights.length) return []
+		return [{
+			table: {
+				widths: insights.map(() => '*'),
+				body: [[
+					...insights.map(item => ({
+						stack: [
+							{ text: item.label, fontSize: 8, bold: true, color: reportTheme.muted },
+							{ text: item.value, fontSize: 14, bold: true, color: reportTheme.ink, margin: [0, 4, 0, 0] },
+							{ text: item.note, fontSize: 7, color: reportTheme.muted, margin: [0, 4, 0, 0] },
+						],
+						margin: [10, 8, 10, 8],
+						border: [false, false, false, false],
+					})),
+				]],
+			},
+			layout: {
+				hLineWidth: () => 0,
+				vLineWidth: () => 0,
+				fillColor: () => reportTheme.soft,
+			},
+			margin: [0, 0, 0, 8],
+		}]
+	}
+
+	const aggregateRowsBy = (rows, keyName, valueName = 'hours') => {
+		const map = new Map()
+		rows.forEach(row => {
+			const key = row[keyName] || '-'
+			const current = map.get(key) || { name: key, hours: 0, quantity: 0, unit: row.unit || '' }
+			current.hours += safeNumber(row[valueName])
+			current.quantity += safeNumber(row.quantity)
+			if (!current.unit && row.unit) current.unit = row.unit
+			map.set(key, current)
+		})
+		return [...map.values()].sort((a, b) => b.hours - a.hours)
+	}
+
+	const pdfHorizontalBars = (title, rows, { subtitle = '', color = reportTheme.blue, valueSuffix = 'h', limit = 7 } = {}) => {
+		const topRows = rows.slice(0, limit)
+		if (!topRows.length) return []
+		const max = Math.max(...topRows.map(row => safeNumber(row.hours)), 1)
+		return [
+			pdfSectionTitle(title, subtitle),
+			{
+				table: {
+					widths: [125, '*', 55],
+					body: topRows.map((row, index) => [
+						{ text: row.name, bold: index < 3, color: reportTheme.ink, fontSize: 8, margin: [0, 3, 0, 3] },
+						{
+							canvas: [
+								{ type: 'rect', x: 0, y: 5, w: 220, h: 8, r: 4, color: '#e8f1f8' },
+								{ type: 'rect', x: 0, y: 5, w: Math.max(4, Math.round((safeNumber(row.hours) / max) * 220)), h: 8, r: 4, color },
+							],
+							margin: [0, 1, 0, 0],
+						},
+						{ text: `${formatHours(row.hours)} ${valueSuffix}`, alignment: 'right', bold: index < 3, color: reportTheme.ink, fontSize: 8, margin: [0, 3, 0, 3] },
+					]),
+				},
+				layout: {
+					hLineWidth: () => 0.5,
+					vLineWidth: () => 0,
+					hLineColor: () => '#edf2f7',
+				},
+				margin: [0, 0, 0, 4],
+			},
+		]
+	}
+
+	const pdfTimeStructure = (summary) => {
+		if (!summary) return []
+		const work = Math.max(safeNumber(summary.totalHours) - safeNumber(summary.overtime), 0)
+		const overtime = safeNumber(summary.overtime)
+		const leave = safeNumber(summary.leaveHours)
+		const total = Math.max(work + overtime + leave, 1)
+		const width = 520
+		const workW = Math.round((work / total) * width)
+		const overtimeW = Math.round((overtime / total) * width)
+		const leaveW = Math.max(0, width - workW - overtimeW)
+		return [
+			pdfSectionTitle('Struktura czasu', 'Szybkie rozbicie czasu pracy, nadgodzin i urlopów w wybranym okresie.'),
+			{
+				canvas: [
+					{ type: 'rect', x: 0, y: 0, w: width, h: 15, r: 7, color: '#e8f1f8' },
+					{ type: 'rect', x: 0, y: 0, w: workW, h: 15, r: 7, color: reportTheme.green },
+					{ type: 'rect', x: workW, y: 0, w: overtimeW, h: 15, color: reportTheme.amber },
+					{ type: 'rect', x: workW + overtimeW, y: 0, w: leaveW, h: 15, r: 7, color: reportTheme.purple },
+				],
+				margin: [0, 0, 0, 7],
+			},
+			{
+				columns: [
+					{ text: `Praca: ${formatHours(work)} h`, color: reportTheme.green, bold: true, fontSize: 8 },
+					{ text: `Nadgodziny: ${formatHours(overtime)} h`, color: '#b45309', bold: true, fontSize: 8 },
+					{ text: `Urlopy: ${formatHours(leave)} h`, color: reportTheme.purple, bold: true, fontSize: 8 },
+				],
+				margin: [0, 0, 0, 6],
+			},
+		]
+	}
+
+	const pdfMonthlyBars = () => {
+		if (calendarView !== 'all-months' || !teamYearBreakdown.months.length) return []
+		const rows = teamYearBreakdown.months.map((m, idx) => ({
+			name: new Date(currentYear, idx).toLocaleString(i18n.resolvedLanguage, { month: 'short' }),
+			hours: safeNumber(m.totalHours),
+		}))
+		return pdfHorizontalBars(
+			'Trend roczny',
+			rows,
+			{ subtitle: 'Miesięczny rozkład godzin pracy. Pomaga szybko zobaczyć sezonowość i piki obciążenia.', color: reportTheme.cyan, limit: 12 }
+		)
+	}
+
+	const pdfTopPerUserTable = () => {
+		if (!perUserSummaryRows.length) return []
+		const chartRows = [...perUserSummaryRows]
+			.sort((a, b) => safeNumber(b.totals.totalHours) - safeNumber(a.totals.totalHours))
+			.slice(0, 8)
+			.map(row => ({ name: row.name, hours: safeNumber(row.totals.totalHours) }))
+		return [
+			...pdfHorizontalBars('Największe wykorzystanie czasu', chartRows, {
+				subtitle: 'Top pracowników według łącznej liczby godzin w okresie.',
+				color: reportTheme.blue,
+				limit: 8,
+			}),
+		]
+	}
+
+	const pdfActivitySummaryTable = () => {
+		const sections = []
+		const activitiesByName = aggregateRowsBy(teamActivityRows, 'activityName')
+		const tasksByName = aggregateRowsBy(teamTaskRows, 'taskName')
+		sections.push(...pdfHorizontalBars('Godziny według czynności', activitiesByName, {
+			subtitle: 'Największe obszary operacyjne i czynności konsumujące czas zespołu.',
+			color: reportTheme.green,
+			limit: 8,
+		}))
+		sections.push(...pdfHorizontalBars('Godziny według zadań', tasksByName, {
+			subtitle: 'Widok pracy przypisanej do zadań z tablic.',
+			color: reportTheme.purple,
+			limit: 8,
+		}))
+		if (teamActivitySummary.length) {
+			const rows = [...teamActivitySummary]
+				.sort((a, b) => safeNumber(b.hours) - safeNumber(a.hours))
+				.slice(0, 12)
+				.map(row => [
+					row.userName,
+					row.activityName,
+					`${formatHours(row.hours)} h`,
+					row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '-',
+					row.efficiency ? `${row.efficiency} ${row.unit}/h` : '-',
+				])
+			sections.push(
+				pdfSectionTitle('Wydajność czynności', 'Szczegóły ilości i wydajności tam, gdzie pomiar wykonania jest włączony.'),
+				pdfDataTableStyled(
+					[
+						t('workcalendar.activities.excel.employee'),
+						t('workcalendar.activities.excel.activity'),
+						t('workcalendar.activities.excel.hours'),
+						t('workcalendar.activities.excel.quantity'),
+						t('workcalendar.activities.excel.efficiency'),
+					],
+					rows,
+					[64, 60, 30, 38, 40]
+				)
+			)
+		}
+		return sections
+	}
+
+	const pdfExecutiveConclusion = (summary) => {
+		if (!summary) return []
+		const overtimeShare = safeNumber(summary.totalHours) ? (safeNumber(summary.overtime) / safeNumber(summary.totalHours)) * 100 : 0
+		const dominantActivity = aggregateRowsBy(teamActivityRows, 'activityName')[0]
+		const dominantTask = aggregateRowsBy(teamTaskRows, 'taskName')[0]
+		const bullets = [
+			`Łączne obciążenie zespołu: ${formatHours(summary.totalHours)} h przy ${summary.totalWorkDays} dniach pracy.`,
+			`Nadgodziny stanowią ${formatPercent(overtimeShare)} czasu pracy${overtimeShare > 8 ? ' - warto sprawdzić przyczynę piku.' : ' - poziom wygląda stabilnie.'}`,
+			dominantActivity ? `Największa czynność: ${dominantActivity.name} (${formatHours(dominantActivity.hours)} h).` : null,
+			dominantTask ? `Największe zadanie: ${dominantTask.name} (${formatHours(dominantTask.hours)} h).` : null,
+		].filter(Boolean)
+		return [{
+			table: {
+				widths: ['*'],
+				body: [[{
+					stack: [
+						{ text: 'Najważniejsze wnioski', fontSize: 12, bold: true, color: reportTheme.ink, margin: [0, 0, 0, 6] },
+						...bullets.map(text => ({ text: `• ${text}`, fontSize: 8, color: '#334155', margin: [0, 2, 0, 0] })),
+					],
+					margin: [12, 10, 12, 10],
+					border: [false, false, false, false],
+				}]],
+			},
+			layout: {
+				hLineWidth: () => 0,
+				vLineWidth: () => 0,
+				fillColor: () => '#f8fbff',
+			},
+			margin: [0, 0, 0, 8],
+		}]
+	}
+
+	const pdfTableLayout = {
+		hLineColor: () => '#e5edf5',
+		vLineColor: () => '#e5edf5',
+		fillColor: (rowIndex) => rowIndex === 0 ? reportTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+	}
+
+	const pdfDataTableStyled = (headers, rows, widths, footerRow) => {
+		const table = pdfDataTable(headers, rows, widths, footerRow)
+		if (Array.isArray(table.table?.body?.[0])) {
+			table.table.body[0] = table.table.body[0].map(cell => ({
+				...(typeof cell === 'object' ? cell : { text: String(cell ?? '') }),
+				color: '#ffffff',
+				bold: true,
+			}))
+		}
+		return {
+			...table,
+			layout: pdfTableLayout,
+			fontSize: 8,
+		}
+	}
+
+	const buildExecutiveExcelRows = (summary, generatedAt) => {
+		const insights = getReportInsights(summary)
+		const topEmployees = [...perUserSummaryRows]
+			.sort((a, b) => safeNumber(b.totals.totalHours) - safeNumber(a.totals.totalHours))
+			.slice(0, 5)
+		const topActivities = aggregateRowsBy(teamActivityRows, 'activityName').slice(0, 5)
+		return [
+			['Obszar', 'Wskaźnik', 'Wartość', 'Komentarz'],
+			['KPI', 'Dni pracy', summary.totalWorkDays, 'Aktywne dni pracy w wybranym okresie'],
+			['KPI', 'Godziny pracy', `${formatHours(summary.totalHours)} h`, 'Łączny czas operacyjny'],
+			['KPI', 'Nadgodziny', `${formatHours(summary.overtime)} h`, 'Kontrola przeciążenia i pików obciążenia'],
+			['KPI', 'Urlopy', getLeaveDisplay(summary, true), 'Wpływ absencji na dostępność zespołu'],
+			...insights.map(item => ['Wniosek', item.label, item.value, item.note]),
+			['', '', '', ''],
+			['Top pracownicy', 'Pracownik', 'Godziny', 'Komentarz'],
+			...topEmployees.map((row, index) => ['Top pracownicy', row.name, `${formatHours(row.totals.totalHours)} h`, index === 0 ? 'Największy udział czasu w okresie' : '']),
+			['', '', '', ''],
+			['Top czynności', 'Czynność', 'Godziny', 'Komentarz'],
+			...topActivities.map((row, index) => ['Top czynności', row.name, `${formatHours(row.hours)} h`, index === 0 ? 'Główne źródło obciążenia operacyjnego' : '']),
+			['Metadane', 'Wygenerowano', generatedAt, 'Planopia'],
+		]
+	}
+
+	const getTopPerUserMetrics = () => {
+		const rows = [...perUserSummaryRows]
+		const byHours = [...rows].sort((a, b) => safeNumber(b.totals.totalHours) - safeNumber(a.totals.totalHours))[0]
+		const byOvertime = [...rows].sort((a, b) => safeNumber(b.totals.overtime) - safeNumber(a.totals.overtime))[0]
+		const byLeave = [...rows].sort((a, b) => safeNumber(b.totals.leaveHours) - safeNumber(a.totals.leaveHours))[0]
+		const activePeople = rows.filter(row => safeNumber(row.totals.totalHours) > 0 || safeNumber(row.totals.totalWorkDays) > 0).length
+		return { byHours, byOvertime, byLeave, activePeople }
+	}
+
+	const pdfPeopleKpiCards = () => {
+		const { byHours, byOvertime, byLeave, activePeople } = getTopPerUserMetrics()
+		const cards = [
+			{ label: 'Osoby w raporcie', value: String(perUserSummaryRows.length), detail: `${activePeople} aktywnych w okresie`, color: reportTheme.blue },
+			{ label: 'Najwięcej godzin', value: byHours?.name || '-', detail: byHours ? `${formatHours(byHours.totals.totalHours)} h` : '-', color: reportTheme.green },
+			{ label: 'Najwięcej nadgodzin', value: byOvertime?.name || '-', detail: byOvertime ? `${formatHours(byOvertime.totals.overtime)} h` : '-', color: reportTheme.amber },
+			{ label: 'Najwięcej urlopu', value: byLeave?.name || '-', detail: byLeave ? getLeaveDisplay(byLeave.totals, true) : '-', color: reportTheme.purple },
+		]
+		return [{
+			table: {
+				widths: cards.map(() => '*'),
+				body: [[
+					...cards.map(card => ({
+						stack: [
+							{ text: card.label, fontSize: 8, bold: true, color: reportTheme.muted },
+							{ text: card.value, fontSize: 12, bold: true, color: reportTheme.ink, margin: [0, 5, 0, 0] },
+							{ text: card.detail, fontSize: 8, color: reportTheme.muted, margin: [0, 4, 0, 0] },
+							pdfMiniProgress(1, 1, card.color, 72),
+						],
+						border: [false, false, false, false],
+						margin: [9, 9, 9, 9],
+					})),
+				]],
+			},
+			layout: {
+				hLineWidth: () => 1,
+				vLineWidth: () => 1,
+				hLineColor: () => reportTheme.line,
+				vLineColor: () => reportTheme.line,
+			},
+			margin: [0, 0, 0, 10],
+		}]
+	}
+
+	const getActivityQuantitySummary = (rows = visibleActivitySummary) => {
+		const quantitiesByUnit = new Map()
+		let measuredHours = 0
+		rows.forEach(row => {
+			const quantity = safeNumber(row.quantity)
+			if (quantity <= 0 || !row.unit) return
+			const current = quantitiesByUnit.get(row.unit) || 0
+			quantitiesByUnit.set(row.unit, current + quantity)
+			measuredHours += safeNumber(row.hours)
+		})
+		const parts = [...quantitiesByUnit.entries()].map(([unit, quantity]) => `${formatHours(quantity)} ${unit}`)
+		const single = quantitiesByUnit.size === 1 ? [...quantitiesByUnit.entries()][0] : null
+		const efficiency = single && measuredHours > 0
+			? `${formatHours(single[1] / measuredHours)} ${single[0]}/h`
+			: ''
+		return {
+			text: parts.length ? parts.join(', ') : '-',
+			efficiency: efficiency || '-',
+			measuredHours,
+		}
+	}
+
+	const getOperationalTotals = () => {
+		const taskHours = visibleTaskSummary.reduce((sum, row) => sum + safeNumber(row.hours), 0)
+		const activityHours = visibleActivitySummary.reduce((sum, row) => sum + safeNumber(row.hours), 0)
+		const quantity = getActivityQuantitySummary()
+		return {
+			taskRows: visibleTaskSummary.length,
+			activityRows: visibleActivitySummary.length,
+			taskHours,
+			activityHours,
+			quantityText: quantity.text,
+			efficiencyText: quantity.efficiency,
+		}
+	}
+
+	const pdfOperationalKpiCards = () => {
+		const totals = getOperationalTotals()
+		const cards = [
+			...(showOperationalTasks ? [{ label: 'Zadania', value: `${formatHours(totals.taskHours)} h`, detail: `${totals.taskRows} pozycji`, color: reportTheme.purple }] : []),
+			...(showOperationalActivities ? [
+				{ label: 'Czynności', value: `${formatHours(totals.activityHours)} h`, detail: `${totals.activityRows} pozycji`, color: reportTheme.green },
+				{ label: 'Wykonanie', value: totals.quantityText, detail: 'suma zmierzonej pracy', color: reportTheme.blue },
+				{ label: 'Wydajność', value: totals.efficiencyText, detail: 'dla jednej jednostki wykonania', color: reportTheme.amber },
+			] : []),
+		]
+		return [{
+			table: {
+				widths: cards.map(() => '*'),
+				body: [[
+					...cards.map(card => ({
+						stack: [
+							{ text: card.label, fontSize: 8, bold: true, color: reportTheme.muted },
+							{ text: card.value, fontSize: 13, bold: true, color: reportTheme.ink, margin: [0, 5, 0, 0] },
+							{ text: card.detail, fontSize: 7, color: reportTheme.muted, margin: [0, 4, 0, 0] },
+							pdfMiniProgress(1, 1, card.color, 72),
+						],
+						border: [false, false, false, false],
+						margin: [9, 9, 9, 9],
+					})),
+				]],
+			},
+			layout: {
+				hLineWidth: () => 1,
+				vLineWidth: () => 1,
+				hLineColor: () => reportTheme.line,
+				vLineColor: () => reportTheme.line,
+			},
+			margin: [0, 0, 0, 10],
+		}]
+	}
+
+	const pdfOperationalTables = () => {
+		const sections = []
+		if (visibleTaskSummary.length > 0) {
+			const taskRows = [...visibleTaskSummary]
+				.sort((a, b) => safeNumber(b.hours) - safeNumber(a.hours))
+				.map(row => [
+					row.userName,
+					row.taskName,
+					`${formatHours(row.hours)} h`,
+				])
+			sections.push(
+				pdfSectionTitle('Zadania', 'Godziny według zadań z tablic dla wybranego okresu.'),
+				pdfDataTableStyled(
+					[
+						t('workcalendar.activities.excel.employee'),
+						t('workcalendar.tasks.taskLabel'),
+						t('workcalendar.activities.excel.hours'),
+					],
+					taskRows,
+					['*', '*', 70]
+				)
+			)
+		}
+		if (visibleActivitySummary.length > 0) {
+			const activityRows = [...visibleActivitySummary]
+				.sort((a, b) => safeNumber(b.hours) - safeNumber(a.hours))
+				.map(row => [
+					row.userName,
+					row.activityName,
+					`${formatHours(row.hours)} h`,
+					row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '-',
+					row.efficiency ? `${row.efficiency} ${row.unit}/h` : '-',
+				])
+			sections.push(
+				pdfSectionTitle('Czynności', 'Godziny, ilości i wydajność według czynności dla wybranego okresu.'),
+				pdfDataTableStyled(
+					[
+						t('workcalendar.activities.excel.employee'),
+						t('workcalendar.activities.excel.activity'),
+						t('workcalendar.activities.excel.hours'),
+						t('workcalendar.activities.excel.quantity'),
+						t('workcalendar.activities.excel.efficiency'),
+					],
+					activityRows,
+					['*', '*', 62, 75, 78]
+				)
+			)
+		}
+		return sections
+	}
 
 	const handleExportSummaryExcel = async () => {
 		try {
@@ -563,13 +1300,35 @@ function AdminUserList() {
 				}
 			}
 
-			const sheets = [
-				{
-					name: t('planslist.teamSummarySheetSummary') || 'Podsumowanie',
-					rows: [header, ...rows],
-					colWidths: [40, 28],
-				},
-			]
+			const summary = getCurrentSummaryTotals()
+			const generatedAt = new Date().toLocaleString(i18n.resolvedLanguage)
+			const sheets = summary
+				? [
+					{
+						name: 'Najważniejsze',
+						rows: buildExecutiveExcelRows(summary, generatedAt),
+						colWidths: [18, 28, 18, 46],
+						title: 'Planopia · raport ewidencji',
+						subtitle: `Okres: ${exportPeriodLabel} · ${generatedAt}`,
+						executive: true,
+					},
+					{
+						name: t('planslist.teamSummarySheetSummary') || 'Podsumowanie',
+						rows: [header, ...rows],
+						colWidths: [40, 28],
+						title: 'Podsumowanie ewidencji',
+						subtitle: `Okres: ${exportPeriodLabel}`,
+					},
+				]
+				: [
+					{
+						name: t('planslist.teamSummarySheetSummary') || 'Podsumowanie',
+						rows: [header, ...rows],
+						colWidths: [40, 28],
+						title: 'Podsumowanie ewidencji',
+						subtitle: `Okres: ${exportPeriodLabel}`,
+					},
+				]
 
 			if (calendarView === 'all-months' && teamYearBreakdown.months.length) {
 				const th = [
@@ -612,6 +1371,53 @@ function AdminUserList() {
 					name: t('planslist.teamSummarySheetMonths') || 'Miesiące',
 					rows: [th, ...monthRows],
 					colWidths: [14, 12, 12, 12, 22, 14],
+					title: t('planslist.teamMonthlyTableTitle'),
+					subtitle: `Okres: ${exportPeriodLabel}`,
+				})
+			}
+
+			if (teamActivityRows.length > 0) {
+				sheets.push({
+					name: t('workcalendar.activities.excel.sheetActivities'),
+					rows: [
+						[
+							t('workcalendar.activities.excel.date'),
+							t('workcalendar.activities.excel.employee'),
+							t('workcalendar.activities.excel.activity'),
+							t('workcalendar.activities.excel.hours'),
+							t('workcalendar.activities.excel.quantity'),
+							t('workcalendar.activities.excel.efficiency'),
+							t('workcalendar.activities.excel.timeRange'),
+						],
+						...teamActivityRows.map(row => [
+							row.date ? new Date(row.date).toLocaleDateString(i18n.resolvedLanguage) : '',
+							row.userName,
+							row.activityName,
+							formatHours(row.hours),
+							row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '',
+							row.quantity > 0 && row.unit && row.hours > 0 ? `${Math.round((row.quantity / row.hours) * 100) / 100} ${row.unit}/h` : '',
+							row.timeFrom && row.timeTo ? `${row.timeFrom}-${row.timeTo}` : '',
+						]),
+					],
+					colWidths: [14, 22, 24, 10, 14, 14, 14],
+					title: t('workcalendar.activities.excel.sheetActivities'),
+					subtitle: `Okres: ${exportPeriodLabel}`,
+				})
+				sheets.push({
+					name: t('workcalendar.activities.excel.summarySheet'),
+					rows: [
+						[t('workcalendar.activities.excel.employee'), t('workcalendar.activities.excel.activity'), t('workcalendar.activities.excel.hours'), t('workcalendar.activities.excel.quantity'), t('workcalendar.activities.excel.efficiency')],
+						...teamActivitySummary.map(row => [
+							row.userName,
+							row.activityName,
+							formatHours(row.hours),
+							row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '',
+							row.efficiency ? `${row.efficiency} ${row.unit}/h` : '',
+						]),
+					],
+					colWidths: [22, 24, 10, 14, 14],
+					title: t('workcalendar.activities.summaryTitle'),
+					subtitle: `Okres: ${exportPeriodLabel}`,
 				})
 			}
 
@@ -623,95 +1429,48 @@ function AdminUserList() {
 
 	const handleExportSummaryPdf = async () => {
 		try {
-			const content = [
-				...pdfTitleBlock(
-					t('planslist.teamSummaryTitle'),
-					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
-				),
-			]
-
-			if (calendarView === 'single' && teamSummaryCurrentMonth) {
-				const s = teamSummaryCurrentMonth
-				const lines = [
-					{ label: t('workcalendar.allfrommonth1'), value: s.totalWorkDays },
-					{
-						label: t('workcalendar.allfrommonth2'),
-						value: `${formatHours(s.totalHours)} ${t('workcalendar.allfrommonthhours')}`,
-					},
-					{
-						label: t('workcalendar.allfrommonth3'),
-						value: `${formatHours(s.overtime)} ${getOvertimeWord(s.overtime)}`,
-					},
-					{
-						label:
-							settings?.leaveCalculationMode === 'hours'
-								? t('workcalendar.allfrommonth4hours')
-								: t('workcalendar.allfrommonth4'),
-						value:
-							settings?.leaveCalculationMode === 'hours'
-								? `${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-								: `${s.leaveDays} (${s.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
-					},
-					{ label: t('workcalendar.allfrommonth5'), value: s.otherAbsences },
-				]
-				if (s.holidaysCount > 0) {
-					lines.push({ label: t('workcalendar.allfrommonth6'), value: s.holidaysCount })
-				}
-				content.push(...pdfLabelValueLines(lines))
-			} else if (calendarView === 'all-months' && teamYearBreakdown.yearTotals) {
-				const ytot = teamYearBreakdown.yearTotals
-				const lines = [
-					{ label: t('workcalendar.allfrommonth1'), value: ytot.totalWorkDays },
-					{
-						label: t('workcalendar.allfrommonth2'),
-						value: `${formatHours(ytot.totalHours)} ${t('workcalendar.allfrommonthhours')}`,
-					},
-					{
-						label: t('workcalendar.allfrommonth3'),
-						value: `${formatHours(ytot.overtime)} ${getOvertimeWord(ytot.overtime)}`,
-					},
-					{
-						label:
-							settings?.leaveCalculationMode === 'hours'
-								? t('workcalendar.allfrommonth4hours')
-								: t('workcalendar.allfrommonth4'),
-						value:
-							settings?.leaveCalculationMode === 'hours'
-								? `${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
-								: `${ytot.leaveDays} (${ytot.leaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`,
-					},
-					{ label: t('workcalendar.allfrommonth5'), value: ytot.otherAbsences },
-				]
-				if (ytot.holidaysCount > 0) {
-					lines.push({ label: t('workcalendar.allfrommonth6'), value: ytot.holidaysCount })
-				}
-				content.push(...pdfLabelValueLines(lines))
-				content.push({ text: t('planslist.teamMonthlyTableTitle'), fontSize: 11, bold: true, margin: [0, 10, 0, 4] })
-				const headers = [
-					t('workcalendar.monthlabel'),
-					t('planslist.teamColShortWorkDays'),
-					t('planslist.teamColShortHours'),
-					t('planslist.teamColShortOt'),
-					t('planslist.teamColShortLeave'),
-					t('planslist.teamColShortOther'),
-				]
-				const tableRows = teamYearBreakdown.months.map((m, idx) => {
-					const monthName = new Date(currentYear, idx).toLocaleString(i18n.resolvedLanguage, {
-						month: 'short',
-					})
-					return [
-						monthName,
-						String(m.totalWorkDays),
-						formatHours(m.totalHours),
-						formatHours(m.overtime),
-						settings?.leaveCalculationMode === 'hours' ? m.leaveHours.toFixed(1) : String(m.leaveDays),
-						String(m.otherAbsences),
-					]
-				})
-				content.push(pdfDataTable(headers, tableRows, [22, 14, 14, 14, 24, 16]))
+			const summary = getCurrentSummaryTotals()
+			if (!summary) {
+				window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+				return
 			}
 
-			await downloadPdf(buildPdfDocument({ content }), `${exportFileNameBase()}.pdf`)
+			const generatedAt = new Date().toLocaleString(i18n.resolvedLanguage)
+			const content = [
+				pdfExecutiveHeader(summary, generatedAt),
+				...pdfKpiCards(summary),
+				...pdfExecutiveConclusion(summary),
+				...pdfInsightStrip(summary),
+				...pdfTimeStructure(summary),
+				...pdfMonthlyBars(),
+				...pdfTopPerUserTable(),
+				...pdfActivitySummaryTable(),
+			]
+
+			await downloadPdf(
+				buildPdfDocument({
+					content,
+					pageOrientation: 'landscape',
+					pageMargins: [28, 28, 28, 34],
+					styles: {
+						sectionTitle: { fontSize: 13, bold: true, color: reportTheme.ink },
+						sectionSubtitle: { fontSize: 8, color: reportTheme.muted },
+					},
+					footer: (currentPage, pageCount) => ({
+						columns: [
+							{ text: 'Planopia', color: '#5d7186', fontSize: 8 },
+							{ text: `${currentPage}/${pageCount}`, alignment: 'right', color: '#5d7186', fontSize: 8 },
+						],
+						margin: [28, 0, 28, 0],
+					}),
+					info: {
+						title: 'Podsumowanie ewidencji',
+						author: 'Planopia',
+						subject: exportPeriodLabel,
+					},
+				}),
+				`${exportFileNameBase()}.pdf`
+			)
 		} catch (e) {
 			console.error('handleExportSummaryPdf:', e)
 		}
@@ -751,14 +1510,13 @@ function AdminUserList() {
 					{
 						name: t('planslist.teamPerUserSheetName') || 'Wg osób',
 						rows: [
-							[t('planslist.teamPerUserTitle')],
-							[`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`],
-							[],
 							th,
 							...rows,
 							...(footerRow ? [footerRow] : []),
 						],
 						colWidths: [28, 12, 12, 12, 22, 14],
+						title: 'Według osób',
+						subtitle: `Okres: ${exportPeriodLabel}`,
 					},
 				],
 				`${exportFileNameBasePerUser()}.xlsx`
@@ -774,6 +1532,8 @@ function AdminUserList() {
 			return
 		}
 		try {
+			const generatedAt = new Date().toLocaleString(i18n.resolvedLanguage)
+			const { byHours } = getTopPerUserMetrics()
 			const headers = [
 				t('planslist.columnEmployee'),
 				t('planslist.teamColShortWorkDays'),
@@ -787,27 +1547,217 @@ function AdminUserList() {
 			const tableRows = perUserSummaryRows.map(({ name, totals: s }) => [
 				name,
 				String(s.totalWorkDays),
-				formatHours(s.totalHours),
-				formatHours(s.overtime),
+				`${formatHours(s.totalHours)} h`,
+				`${formatHours(s.overtime)} h`,
 				settings?.leaveCalculationMode === 'hours'
-					? s.leaveHours.toFixed(1)
-					: String(s.leaveDays),
+					? `${s.leaveHours.toFixed(1)} h`
+					: `${s.leaveDays} (${s.leaveHours.toFixed(1)} h)`,
 				String(s.otherAbsences),
 			])
-			const footerRow = buildPerUserTotalsRow(perUserTableTotals, { compact: true })
+			const footerRow = buildPerUserTotalsRow(perUserTableTotals, { compact: false })
 			const content = [
-				...pdfTitleBlock(
-					t('planslist.teamPerUserTitle'),
-					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
+				pdfReportHeader({
+					title: 'Według osób',
+					subtitle: `Okres: ${exportPeriodLabel}`,
+					side: [
+						{ text: 'Największy udział czasu', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: byHours?.name || '-', fontSize: 15, color: '#ffffff', bold: true, margin: [0, 5, 0, 0] },
+						{ text: byHours ? `${formatHours(byHours.totals.totalHours)} h pracy` : 'Brak godzin w okresie', fontSize: 8, color: '#dbeafe', margin: [0, 4, 0, 0] },
+						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
+					],
+				}),
+				...pdfPeopleKpiCards(),
+				...pdfHorizontalBars(
+					'Największe wykorzystanie czasu',
+					[...perUserSummaryRows]
+						.sort((a, b) => safeNumber(b.totals.totalHours) - safeNumber(a.totals.totalHours))
+						.slice(0, 8)
+						.map(row => ({ name: row.name, hours: safeNumber(row.totals.totalHours) })),
+					{ subtitle: 'Ranking osób według liczby godzin w wybranym okresie.', color: reportTheme.blue, limit: 8 }
 				),
-				pdfDataTable(headers, tableRows, [52, 22, 28, 28, 40, 24], footerRow),
+				pdfSectionTitle('Tabela osób', 'Pełne zestawienie osób dla wybranego okresu.'),
+				pdfDataTableStyled(headers, tableRows, ['*', 48, 62, 62, 88, 54], footerRow),
 			]
 			await downloadPdf(
-				buildPdfDocument({ content, pageOrientation: 'landscape' }),
+				buildPdfDocument({
+					content,
+					pageOrientation: 'landscape',
+					pageMargins: [28, 28, 28, 34],
+					styles: {
+						sectionTitle: { fontSize: 13, bold: true, color: reportTheme.ink },
+						sectionSubtitle: { fontSize: 8, color: reportTheme.muted },
+					},
+					footer: (currentPage, pageCount) => ({
+						columns: [
+							{ text: 'Planopia', color: '#5d7186', fontSize: 8 },
+							{ text: `${currentPage}/${pageCount}`, alignment: 'right', color: '#5d7186', fontSize: 8 },
+						],
+						margin: [28, 0, 28, 0],
+					}),
+					info: {
+						title: 'Według osób',
+						author: 'Planopia',
+						subject: exportPeriodLabel,
+					},
+				}),
 				`${exportFileNameBasePerUser()}.pdf`
 			)
 		} catch (e) {
 			console.error('handleExportPerUserPdf:', e)
+		}
+	}
+
+	const handleExportOperationalExcel = async () => {
+		if (visibleTaskSummary.length === 0 && visibleActivitySummary.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
+		}
+		try {
+			const summary = getCurrentSummaryTotals()
+			const generatedAt = new Date().toLocaleString(i18n.resolvedLanguage)
+			const operationalTotals = getOperationalTotals()
+			const sheets = []
+			if (summary) {
+				sheets.push({
+					name: 'Najważniejsze',
+					rows: buildExecutiveExcelRows(summary, generatedAt),
+					colWidths: [18, 28, 18, 46],
+					title: 'Planopia · raport operacyjny',
+					subtitle: `Okres: ${exportPeriodLabel} · ${generatedAt}`,
+					executive: true,
+				})
+			}
+			sheets.push({
+				name: 'Podsumowanie',
+				rows: [
+					['Wskaźnik', 'Wartość', 'Komentarz'],
+					...(showOperationalTasks ? [['Godziny zadań', `${formatHours(operationalTotals.taskHours)} h`, `${operationalTotals.taskRows} pozycji według filtrów`]] : []),
+					...(showOperationalActivities ? [
+						['Godziny czynności', `${formatHours(operationalTotals.activityHours)} h`, `${operationalTotals.activityRows} pozycji według filtrów`],
+						['Wykonanie', operationalTotals.quantityText, 'Suma zmierzonej pracy w czynnościach'],
+						['Wydajność', operationalTotals.efficiencyText, 'Liczona, gdy występuje jedna jednostka wykonania'],
+					] : []),
+				],
+				colWidths: [24, 24, 46],
+				title: 'Podsumowanie zadań i czynności',
+				subtitle: `Okres: ${exportPeriodLabel}`,
+			})
+			if (visibleTaskSummary.length > 0) {
+				sheets.push({
+					name: 'Zadania',
+					rows: [
+						[
+							t('workcalendar.activities.excel.employee'),
+							t('workcalendar.tasks.taskLabel'),
+							t('workcalendar.activities.excel.hours'),
+						],
+						...[...visibleTaskSummary]
+							.sort((a, b) => safeNumber(b.hours) - safeNumber(a.hours))
+							.map(row => [
+								row.userName,
+								row.taskName,
+								formatHours(row.hours),
+							]),
+					],
+					colWidths: [26, 36, 12],
+					title: 'Godziny według zadań',
+					subtitle: `Okres: ${exportPeriodLabel}`,
+				})
+			}
+			if (visibleActivitySummary.length > 0) {
+				sheets.push({
+					name: 'Czynności',
+					rows: [
+						[
+							t('workcalendar.activities.excel.employee'),
+							t('workcalendar.activities.excel.activity'),
+							t('workcalendar.activities.excel.hours'),
+							t('workcalendar.activities.excel.quantity'),
+							t('workcalendar.activities.excel.efficiency'),
+						],
+						...[...visibleActivitySummary]
+							.sort((a, b) => safeNumber(b.hours) - safeNumber(a.hours))
+							.map(row => [
+								row.userName,
+								row.activityName,
+								formatHours(row.hours),
+								row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '',
+								row.efficiency ? `${row.efficiency} ${row.unit}/h` : '',
+							]),
+					],
+					colWidths: [26, 32, 12, 16, 16],
+					title: 'Godziny według czynności',
+					subtitle: `Okres: ${exportPeriodLabel}`,
+				})
+			}
+			await downloadExcelWorkbook(sheets, `${exportFileNameBaseOperational()}.xlsx`)
+		} catch (e) {
+			console.error('handleExportOperationalExcel:', e)
+		}
+	}
+
+	const handleExportOperationalPdf = async () => {
+		if (visibleTaskSummary.length === 0 && visibleActivitySummary.length === 0) {
+			window.alert(t('planslist.exportEmpty') || 'Brak danych.')
+			return
+		}
+		try {
+			const summary = getCurrentSummaryTotals()
+			const generatedAt = new Date().toLocaleString(i18n.resolvedLanguage)
+			const operationalTotals = getOperationalTotals()
+			const content = [
+				pdfReportHeader({
+					title: 'Raport operacyjny',
+					subtitle: `Okres: ${exportPeriodLabel}`,
+					side: [
+						{ text: 'Zakres danych', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: `${formatHours(operationalTotals.taskHours)} h zadań`, fontSize: 12, color: '#ffffff', bold: true, margin: [0, 6, 0, 0] },
+						{ text: `${formatHours(operationalTotals.activityHours)} h czynności`, fontSize: 12, color: '#ffffff', bold: true, margin: [0, 3, 0, 0] },
+						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
+					],
+				}),
+				...(summary ? pdfKpiCards(summary) : []),
+				...pdfOperationalKpiCards(),
+				...(summary ? pdfInsightStrip(summary) : []),
+				...(summary ? pdfTimeStructure(summary) : []),
+				...pdfHorizontalBars('Godziny według czynności', visibleActivitySummary.map(row => ({ name: row.activityName, hours: row.hours })), {
+					subtitle: 'Największe obszary operacyjne i czynności konsumujące czas zespołu.',
+					color: reportTheme.green,
+					limit: 8,
+				}),
+				...pdfHorizontalBars('Godziny według zadań', visibleTaskSummary.map(row => ({ name: row.taskName, hours: row.hours })), {
+					subtitle: 'Widok pracy przypisanej do zadań z tablic.',
+					color: reportTheme.purple,
+					limit: 8,
+				}),
+				...pdfOperationalTables(),
+			]
+			await downloadPdf(
+				buildPdfDocument({
+					content,
+					pageOrientation: 'landscape',
+					pageMargins: [28, 28, 28, 34],
+					styles: {
+						sectionTitle: { fontSize: 13, bold: true, color: reportTheme.ink },
+						sectionSubtitle: { fontSize: 8, color: reportTheme.muted },
+					},
+					footer: (currentPage, pageCount) => ({
+						columns: [
+							{ text: 'Planopia', color: '#5d7186', fontSize: 8 },
+							{ text: `${currentPage}/${pageCount}`, alignment: 'right', color: '#5d7186', fontSize: 8 },
+						],
+						margin: [28, 0, 28, 0],
+					}),
+					info: {
+						title: 'Raport operacyjny',
+						author: 'Planopia',
+						subject: exportPeriodLabel,
+					},
+				}),
+				`${exportFileNameBaseOperational()}.pdf`
+			)
+		} catch (e) {
+			console.error('handleExportOperationalPdf:', e)
 		}
 	}
 
@@ -893,7 +1843,12 @@ function AdminUserList() {
 	}, [])
 
 	const handleMonthSelect = event => {
+		if (event.target.value === 'all-months') {
+			setCalendarView('all-months')
+			return
+		}
 		const newMonth = parseInt(event.target.value, 10)
+		setCalendarView('single')
 		setCurrentMonth(newMonth)
 		goToSelectedDate(newMonth, currentYear)
 	}
@@ -901,7 +1856,7 @@ function AdminUserList() {
 	const handleYearSelect = event => {
 		const newYear = parseInt(event.target.value, 10)
 		setCurrentYear(newYear)
-		goToSelectedDate(currentMonth, newYear)
+		if (calendarView === 'single') goToSelectedDate(currentMonth, newYear)
 	}
 
 	const handlePrevMonth = () => {
@@ -1086,13 +2041,13 @@ function AdminUserList() {
 
 					{/* Kalendarz z ewidencjami */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
-						{calendarView === 'single' && (
 						<select
-							value={currentMonth}
+							value={calendarView === 'all-months' ? 'all-months' : currentMonth}
 							onChange={handleMonthSelect}
 							style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
 								className="focus:outline-none focus:ring-2 focus:ring-blue-500"
 							>
+							<option value="all-months">{t('planslist.allMonths') || 'Wszystkie miesiące'}</option>
 							{Array.from({ length: 12 }, (_, i) => (
 								<option key={i} value={i}>
 									{new Date(0, i)
@@ -1101,7 +2056,6 @@ function AdminUserList() {
 								</option>
 							))}
 						</select>
-						)}
 						<select
 							value={currentYear}
 							onChange={handleYearSelect}
@@ -1277,7 +2231,7 @@ function AdminUserList() {
 						{calendarView === 'single' && teamSummaryCurrentMonth && renderSummaryBlock(teamSummaryCurrentMonth)}
 						{calendarView === 'all-months' && teamYearBreakdown.yearTotals && (
 							<>
-								<p style={{ margin: '0 0 10px 0', fontSize: '15px', fontWeight: 600, color: '#2c3e50' }}>
+								<p style={{ margin: '24px 0 10px 0', fontSize: '15px', fontWeight: 600, color: '#2c3e50' }}>
 									{t('planslist.teamYearTotalsIntro', { year: currentYear })}
 								</p>
 								{renderSummaryBlock(teamYearBreakdown.yearTotals)}
@@ -1493,6 +2447,164 @@ function AdminUserList() {
 								</div>
 							</>
 						)}
+						{(visibleTaskSummary.length > 0 || visibleActivitySummary.length > 0) && (
+							<div
+								style={{
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									gap: '12px',
+									marginTop: '28px',
+									paddingTop: '18px',
+									borderTop: '1px solid #e5e7eb',
+									flexWrap: 'wrap',
+								}}>
+								<div>
+									<h4 style={{ margin: 0, color: '#0f2746', fontSize: '18px', fontWeight: 700 }}>
+										Raport zadań i czynności
+									</h4>
+									<p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>
+										Eksportuje poniższe dane dla okresu: <strong>{exportPeriodLabel}</strong>.
+									</p>
+								</div>
+								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+									<button type="button" onClick={handleExportOperationalExcel} style={exportExcelButtonStyle}>
+										Eksport do Excel
+									</button>
+									<button type="button" onClick={handleExportOperationalPdf} style={exportPdfButtonStyle}>
+										Eksport do PDF
+									</button>
+								</div>
+							</div>
+						)}
+						{(teamHasWorkActivities({ workActivities }) || (tasksModuleEnabled && filterableTasks.length > 0)) && (
+							<div
+								style={{
+									marginTop: '14px',
+									padding: '14px',
+									border: '1px solid #e5edf5',
+									borderRadius: '10px',
+									background: '#fbfdff',
+								}}>
+								<h5 style={{ margin: '0 0 10px', color: '#0f2746', fontSize: '15px', fontWeight: 700 }}>
+									Filtry zadań i czynności
+								</h5>
+								{teamHasWorkActivities({ workActivities }) && (
+									<ActivityFilterBar
+										activities={enabledWorkActivities}
+										selectedIds={selectedActivityIds}
+										onChange={setSelectedActivityIds}
+									/>
+								)}
+								{tasksModuleEnabled && filterableTasks.length > 0 && (
+									<TaskFilterBar
+										tasks={filterableTasks}
+										selectedIds={selectedTaskIds}
+										onChange={setSelectedTaskIds}
+									/>
+								)}
+							</div>
+						)}
+						{(visibleTaskSummary.length > 0 || visibleActivitySummary.length > 0) && (() => {
+							const totals = getOperationalTotals()
+							const cards = [
+								...(showOperationalTasks ? [{ label: 'Godziny zadań', value: `${formatHours(totals.taskHours)} h`, hint: `${totals.taskRows} pozycji` }] : []),
+								...(showOperationalActivities ? [
+									{ label: 'Godziny czynności', value: `${formatHours(totals.activityHours)} h`, hint: `${totals.activityRows} pozycji` },
+									{ label: 'Wykonanie', value: totals.quantityText, hint: 'zmierzona praca' },
+									{ label: 'Wydajność', value: totals.efficiencyText, hint: 'łączna dla jednostki' },
+								] : []),
+							]
+							return (
+								<div
+									style={{
+										display: 'grid',
+										gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+										gap: '10px',
+										marginTop: '14px',
+									}}>
+									{cards.map(card => (
+										<div
+											key={card.label}
+											style={{
+												padding: '12px',
+												border: '1px solid #dbe7f2',
+												borderRadius: '10px',
+												background: '#fff',
+												boxShadow: '0 4px 14px rgba(15, 42, 74, 0.04)',
+											}}>
+											<div style={{ color: '#64748b', fontSize: '12px', fontWeight: 700 }}>{card.label}</div>
+											<div style={{ marginTop: '5px', color: '#0f2746', fontSize: '18px', fontWeight: 800 }}>{card.value}</div>
+											<div style={{ marginTop: '3px', color: '#64748b', fontSize: '12px' }}>{card.hint}</div>
+										</div>
+									))}
+								</div>
+							)
+						})()}
+						{visibleTaskSummary.length > 0 && (
+							<div style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+								<h5 style={{ margin: '0 0 10px', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
+									{t('workcalendar.tasks.summaryTitle')}
+									{selectedTaskIds.length > 0
+										? ` · ${getTaskFilterLabel(selectedTaskIds, filterableTasks, t)}`
+										: ''}
+								</h5>
+								<div style={{ overflowX: 'auto' }}>
+									<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+										<thead>
+											<tr style={{ borderBottom: '1px solid #dee2e6' }}>
+												<th style={{ textAlign: 'left', padding: '6px 8px' }}>{t('workcalendar.activities.excel.employee')}</th>
+												<th style={{ textAlign: 'left', padding: '6px 8px' }}>{t('workcalendar.tasks.taskLabel')}</th>
+												<th style={{ textAlign: 'right', padding: '6px 8px' }}>{t('workcalendar.activities.excel.hours')}</th>
+											</tr>
+										</thead>
+										<tbody>
+											{visibleTaskSummary.map(row => (
+												<tr key={`${row.userId}-${row.taskId}`}>
+													<td style={{ padding: '6px 8px' }}>{row.userName}</td>
+													<td style={{ padding: '6px 8px' }}>{row.taskName}</td>
+													<td style={{ padding: '6px 8px', textAlign: 'right' }}>{formatHours(row.hours)}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						)}
+						{visibleActivitySummary.length > 0 && (
+							<div style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+								<h5 style={{ margin: '0 0 10px', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
+									{t('workcalendar.activities.summaryTitle')}
+									{selectedActivityIds.length > 0
+										? ` · ${getActivityFilterLabel(selectedActivityIds, enabledWorkActivities, i18n.language, t)}`
+										: ''}
+								</h5>
+								<div style={{ overflowX: 'auto' }}>
+									<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+										<thead>
+											<tr style={{ borderBottom: '1px solid #dee2e6' }}>
+												<th style={{ textAlign: 'left', padding: '6px 8px' }}>{t('workcalendar.activities.excel.employee')}</th>
+												<th style={{ textAlign: 'left', padding: '6px 8px' }}>{t('workcalendar.activities.excel.activity')}</th>
+												<th style={{ textAlign: 'right', padding: '6px 8px' }}>{t('workcalendar.activities.excel.hours')}</th>
+												<th style={{ textAlign: 'right', padding: '6px 8px' }}>{t('workcalendar.activities.excel.quantity')}</th>
+												<th style={{ textAlign: 'right', padding: '6px 8px' }}>{t('workcalendar.activities.excel.efficiency')}</th>
+											</tr>
+										</thead>
+										<tbody>
+											{visibleActivitySummary.map(row => (
+												<tr key={`${row.userId}-${row.activityId}`}>
+													<td style={{ padding: '6px 8px' }}>{row.userName}</td>
+													<td style={{ padding: '6px 8px' }}>{row.activityName}</td>
+													<td style={{ padding: '6px 8px', textAlign: 'right' }}>{formatHours(row.hours)}</td>
+													<td style={{ padding: '6px 8px', textAlign: 'right' }}>{row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '—'}</td>
+													<td style={{ padding: '6px 8px', textAlign: 'right' }}>{row.efficiency ? `${row.efficiency} ${row.unit}/h` : '—'}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						)}
 					</div>
 
 					{/* Modal filtrowania — Admin, HR, Przełożony (lista z API) */}
@@ -1604,6 +2716,21 @@ function AdminUserList() {
 									</label>
 								</div>
 							</div>
+
+							{teamHasWorkActivities({ workActivities }) && (
+								<ActivityFilterBar
+									activities={enabledWorkActivities}
+									selectedIds={selectedActivityIds}
+									onChange={setSelectedActivityIds}
+								/>
+							)}
+							{tasksModuleEnabled && filterableTasks.length > 0 && (
+								<TaskFilterBar
+									tasks={filterableTasks}
+									selectedIds={selectedTaskIds}
+									onChange={setSelectedTaskIds}
+								/>
+							)}
 
 							{/* Filtrowanie użytkowników */}
 							<div style={{ marginBottom: '20px' }}>

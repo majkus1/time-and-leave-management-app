@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - client\src\hooks\useTimer.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>client\src\hooks\useTimer.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">71.48</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">172</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">36.22</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.38</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">import { useQuery, useMutation, useQueryClient } from &#039;@tanstack/react-query&#039;
+import axios from &#039;axios&#039;
+import { API_URL } from &#039;../config.js&#039;
+import {
+	resolveActiveTimerRefetchInterval,
+	resolveActiveTimerStaleTime,
+} from &#039;./activeTimerQueryPolicy.js&#039;
+
+// Get active timer status
+export const useActiveTimer = ({ enabled = true } = {}) =&gt; {
+	return useQuery({
+		queryKey: [&#039;timer&#039;, &#039;active&#039;],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/workdays/timer/active`, {
+				withCredentials: true,
+			})
+			return response.data
+		},
+		enabled,
+		staleTime: (query) =&gt; resolveActiveTimerStaleTime(query.state.data),
+		refetchInterval: (query) =&gt; resolveActiveTimerRefetchInterval(query.state.data, enabled),
+		refetchIntervalInBackground: false,
+		refetchOnWindowFocus: enabled,
+	})
+}
+
+// Start timer
+export const useStartTimer = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime }) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/workdays/timer/start`,
+				{ workDescription, taskId, activityId, isOvertime },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;active&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;sessions&#039;] })
+		},
+	})
+}
+
+// Pause/Resume timer
+export const usePauseTimer = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async () =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/workdays/timer/pause`,
+				{},
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;active&#039;] })
+		},
+	})
+}
+
+// Stop timer
+export const useStopTimer = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ quantity } = {}) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/workdays/timer/stop`,
+				{ quantity },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;active&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;sessions&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;workdays&#039;] })
+		},
+	})
+}
+
+// Update active timer description
+export const useUpdateActiveTimer = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime }) =&gt; {
+			const response = await axios.put(
+				`${API_URL}/api/workdays/timer/update`,
+				{ workDescription, taskId, activityId, isOvertime },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;active&#039;] })
+		},
+	})
+}
+
+// Split session - save current session and continue with new description
+export const useSplitSession = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime, quantity }) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/workdays/timer/split`,
+				{ workDescription, taskId, activityId, isOvertime, quantity },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;active&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;sessions&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;workdays&#039;] })
+		},
+	})
+}
+
+// Get sessions for a specific month (or today if no month/year provided)
+export const useTodaySessions = (month, year, { enabled: queryEnabled = true } = {}) =&gt; {
+	return useQuery({
+		queryKey: [&#039;timer&#039;, &#039;sessions&#039;, month, year],
+		queryFn: async () =&gt; {
+			const params = {}
+			if (month !== undefined &amp;&amp; month !== null) {
+				params.month = month
+			}
+			if (year !== undefined &amp;&amp; year !== null) {
+				params.year = year
+			}
+			const response = await axios.get(`${API_URL}/api/workdays/timer/sessions`, {
+				params,
+				withCredentials: true,
+			})
+			return response.data
+		},
+		enabled: queryEnabled &amp;&amp; month !== undefined &amp;&amp; year !== undefined,
+		staleTime: 30 * 1000, // 30 seconds
+	})
+}
+
+// Delete a session
+export const useDeleteSession = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ workdayId, sessionId }) =&gt; {
+			const response = await axios.delete(
+				`${API_URL}/api/workdays/timer/sessions/${workdayId}/${sessionId}`,
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			// Invalidate all related queries to ensure calendar and session list update immediately
+			queryClient.invalidateQueries({ queryKey: [&#039;timer&#039;, &#039;sessions&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;workdays&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;workdays&#039;, &#039;team&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;workdays&#039;, &#039;user&#039;] })
+			// Force refetch to ensure immediate update
+			queryClient.refetchQueries({ queryKey: [&#039;workdays&#039;] })
+		},
+	})
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

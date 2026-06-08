@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react'
+import Modal from 'react-modal'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useUserLeaveRequests, useAllLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays, useVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filterLeaveRequestsByPeriod, filterLeaveRequestsByStatuses } from '../../utils/leaveRequestPeriod'
+import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
+import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
+import LeaveRequestStatusFilterModal from './LeaveRequestStatusFilterModal'
+import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 
 	function LeaveRequestForm() {
 	const [type, setType] = useState('')
@@ -18,11 +24,18 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	const [additionalInfo, setAdditionalInfo] = useState('')
 	const [submitForEmployee, setSubmitForEmployee] = useState(false)
 	const [targetUserId, setTargetUserId] = useState('')
+	const [selectedRequestYear, setSelectedRequestYear] = useState(new Date().getFullYear())
+	const [selectedRequestMonth, setSelectedRequestMonth] = useState('all')
+	const [insightsOpen, setInsightsOpen] = useState(false)
+	const [statusFiltersOpen, setStatusFiltersOpen] = useState(false)
+	const [availabilityAssistantOpen, setAvailabilityAssistantOpen] = useState(false)
+	const [statusFilters, setStatusFilters] = useState(createDefaultLeaveRequestStatusFilters)
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
 
 	// TanStack Query hooks
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
+	const { data: allTeamLeaveRequests = [] } = useAllLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const { data: settings } = useSettings()
 	const managedLeaveEnabled = settings?.allowManagedLeaveRequests === true
@@ -45,6 +58,30 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 	
 	const activeVacationData = effectiveTargetUserId ? targetVacationData : vacationData
 	const displayedLeaveRequests = effectiveTargetUserId ? targetLeaveRequests : leaveRequests
+	const periodDisplayedLeaveRequests = React.useMemo(
+		() => filterLeaveRequestsByPeriod(displayedLeaveRequests, selectedRequestYear, selectedRequestMonth),
+		[displayedLeaveRequests, selectedRequestYear, selectedRequestMonth]
+	)
+	const filteredDisplayedLeaveRequests = React.useMemo(
+		() => filterLeaveRequestsByStatuses(periodDisplayedLeaveRequests, statusFilters),
+		[periodDisplayedLeaveRequests, statusFilters]
+	)
+	const activeStatusFilterCount = React.useMemo(
+		() => LEAVE_REQUEST_STATUS_KEYS.filter(status => statusFilters[status] !== false).length,
+		[statusFilters]
+	)
+	const availabilityCheckerRequests = React.useMemo(() => {
+		if (!Array.isArray(allTeamLeaveRequests)) return []
+		const visibleStatuses = new Set([
+			'status.accepted',
+			'accepted',
+			'status.sent',
+			'sent',
+			'status.pending',
+			'pending',
+		])
+		return allTeamLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
+	}, [allTeamLeaveRequests])
 	const availableLeaveDays = activeVacationData?.vacationDays || 0
 	const leaveTypeDays = activeVacationData?.leaveTypeDays || {}
 	
@@ -583,7 +620,19 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 				</div>
 			) : (
 				<div id="leave-request-form">
-					<h2 style={{ marginTop: '0px' }}><img src="img/sunbed.png" alt="ikonka w sidebar" />{t('leaveform.header')}</h2>
+					<div className="leave-request-form-header">
+						<h2 style={{ marginTop: '0px' }}><img src="img/sunbed.png" alt="ikonka w sidebar" />{t('leaveform.header')}</h2>
+						<button
+							type="button"
+							className="leave-request-date-assistant-button"
+							onClick={() => setAvailabilityAssistantOpen(true)}
+						>
+							<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path d="M8 2v3M16 2v3M4 9h16M7 13h4M7 17h7M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+							</svg>
+							{t('leaveform.dateAssistantButton') || 'Asystent terminu'}
+						</button>
+					</div>
 					<hr />
 					<div className="card-body editformbox" style={{ 
 						backgroundColor: 'white',
@@ -824,6 +873,17 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 							{t('leaveform.showingNoAccessEmployeeRequests')}: <strong>{`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}</strong>
 						</div>
 					)}
+					<LeaveRequestPeriodFilter
+						requests={displayedLeaveRequests}
+						selectedYear={selectedRequestYear}
+						selectedMonth={selectedRequestMonth}
+						onYearChange={setSelectedRequestYear}
+						onMonthChange={setSelectedRequestMonth}
+						resultCount={filteredDisplayedLeaveRequests.length}
+						onOpenInsights={() => setInsightsOpen(true)}
+						onOpenStatusFilters={() => setStatusFiltersOpen(true)}
+						activeStatusCount={activeStatusFilterCount}
+					/>
 					<div>
 						{displayedLeaveRequests.length === 0 && (
 							<div style={{
@@ -837,7 +897,12 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 								{selectedManagedUser ? t('leaveform.noRequestsForSelectedEmployee') : t('leaveform.noRequestsYet')}
 							</div>
 						)}
-						{displayedLeaveRequests.map((request) => {
+						{displayedLeaveRequests.length > 0 && filteredDisplayedLeaveRequests.length === 0 && (
+							<div className="leave-request-period-empty">
+								{t('leaveRequestFilter.noResults')}
+							</div>
+						)}
+						{filteredDisplayedLeaveRequests.map((request) => {
 							const translatedType = getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)
 							const canEdit = request.status === 'status.pending'
 							const managedRequest = !!selectedManagedUser
@@ -851,15 +916,7 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 									: 'status-rejected'
 
 							return (
-								<div key={request._id} style={{
-									marginBottom: '14px',
-									padding: '16px',
-									border: managedRequest ? '1px solid #bfdbfe' : '1px solid #e5e7eb',
-									borderLeft: managedRequest ? '4px solid #2563eb' : '1px solid #e5e7eb',
-									borderRadius: '10px',
-									backgroundColor: managedRequest ? '#fbfdff' : '#fff',
-									maxWidth: '650px'
-								}}>
+								<div key={request._id} className={`leave-request-card ${statusClass} ${managedRequest ? 'is-managed-request' : ''}`}>
 									<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
 										<div>
 											<strong style={{ fontSize: '16px' }}>
@@ -947,6 +1004,58 @@ import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 						})}
 					</div>
 					</div>
+					<LeaveRequestInsightsModal
+						isOpen={insightsOpen}
+						onRequestClose={() => setInsightsOpen(false)}
+						requests={displayedLeaveRequests}
+						periodRequests={periodDisplayedLeaveRequests}
+						selectedYear={selectedRequestYear}
+						selectedMonth={selectedRequestMonth}
+						onYearChange={setSelectedRequestYear}
+						onMonthChange={setSelectedRequestMonth}
+						settings={settings}
+						leaveTypeDays={leaveTypeDays}
+						reportSubject={selectedManagedUser
+							? `${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()
+							: (i18n.resolvedLanguage === 'pl' ? 'Moje wnioski urlopowe' : 'My leave requests')}
+						statusFilters={statusFilters}
+					/>
+					<LeaveRequestStatusFilterModal
+						isOpen={statusFiltersOpen}
+						onRequestClose={() => setStatusFiltersOpen(false)}
+						periodRequests={periodDisplayedLeaveRequests}
+						statusFilters={statusFilters}
+						onStatusFiltersChange={setStatusFilters}
+					/>
+					<Modal
+						isOpen={availabilityAssistantOpen}
+						onRequestClose={() => setAvailabilityAssistantOpen(false)}
+						overlayClassName="leave-insights-modal-overlay"
+						className="leave-date-assistant-modal"
+						contentLabel={t('leaveplanner.availabilityChecker.title')}
+					>
+						<div className="leave-insights-modal__header">
+							<div>
+								<h2>{t('leaveplanner.availabilityChecker.title')}</h2>
+								<p>{t('leaveplanner.availabilityChecker.description')}</p>
+							</div>
+							<button
+								type="button"
+								onClick={() => setAvailabilityAssistantOpen(false)}
+								aria-label={t('leaveform.closeDateAssistant') || 'Zamknij asystenta terminu'}
+							>
+								×
+							</button>
+						</div>
+						<LeaveAvailabilityChecker
+							requests={availabilityCheckerRequests}
+							settings={settings}
+							showUserName={true}
+							scopeHint={t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół'}
+							initialCollapsed={false}
+							variant="modal"
+						/>
+					</Modal>
 
 					{/* Modal anulowania */}
 					{showCancelModal && (

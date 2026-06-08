@@ -44,6 +44,72 @@ const workdaySchema = new mongoose.Schema({
 		ref: 'User',
 		default: null,
 	},
+	manualActivityBlocks: [{
+		activityId: {
+			type: String,
+			required: true,
+		},
+		activityName: {
+			type: String,
+			default: '',
+		},
+		activityNameEn: {
+			type: String,
+			default: '',
+		},
+		activityGroup: {
+			type: String,
+			default: '',
+		},
+		hours: {
+			type: Number,
+			required: true,
+			min: 0,
+			max: 24,
+		},
+		timeFrom: {
+			type: String,
+			default: null,
+		},
+		timeTo: {
+			type: String,
+			default: null,
+		},
+		quantity: {
+			type: Number,
+			default: null,
+			min: 0,
+		},
+		unit: {
+			type: String,
+			default: '',
+		},
+	}],
+	manualTaskBlocks: [{
+		taskId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'Task',
+			required: true,
+		},
+		taskTitle: {
+			type: String,
+			default: '',
+		},
+		hours: {
+			type: Number,
+			required: true,
+			min: 0,
+			max: 24,
+		},
+		timeFrom: {
+			type: String,
+			default: null,
+		},
+		timeTo: {
+			type: String,
+			default: null,
+		},
+	}],
 	timeEntries: [{
 		startTime: {
 			type: Date,
@@ -82,6 +148,31 @@ const workdaySchema = new mongoose.Schema({
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'QRCode',
 			default: null
+		},
+		activityId: {
+			type: String,
+			default: null
+		},
+		activityName: {
+			type: String,
+			default: ''
+		},
+		activityNameEn: {
+			type: String,
+			default: ''
+		},
+		activityGroup: {
+			type: String,
+			default: ''
+		},
+		quantity: {
+			type: Number,
+			default: null,
+			min: 0
+		},
+		unit: {
+			type: String,
+			default: ''
 		}
 	}],
 	activeTimer: {
@@ -125,6 +216,10 @@ const workdaySchema = new mongoose.Schema({
 		qrCodeId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'QRCode',
+			default: null
+		},
+		activityId: {
+			type: String,
 			default: null
 		}
 	}

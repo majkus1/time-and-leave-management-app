@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\billingRequestService.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\billingRequestService.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">61.70</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">104</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">23.26</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.95</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { escapeHtml, getEmailTemplate, sendEmail } = require(&#039;./emailService&#039;)
+const {
+	MONTHLY_NET_PRICES_PLN,
+	AI_ADDON_PACKS,
+} = require(&#039;../constants/planCatalog&#039;)
+const { validateBillingPurchaseIntent } = require(&#039;./billingPurchaseIntentValidator&#039;)
+
+const MAX_NOTE_LEN = 2000
+
+function salesInboxEmail() {
+	return process.env.BILLING_SALES_EMAIL || process.env.EMAIL_USER || &#039;&#039;
+}
+
+const BILLING_ALWAYS_CC = &#039;michalipka1@gmail.com&#039;
+
+/** Skrzynka z BILLING_SALES_EMAIL / EMAIL_USER + zawsze michalipka1@gmail.com (bez duplikatów). */
+function billingSalesRecipients() {
+	const primary = (salesInboxEmail() || &#039;&#039;).trim()
+	const out = []
+	if (primary) out.push(primary)
+	const lower = new Set(out.map((e) =&gt; e.toLowerCase()))
+	if (!lower.has(BILLING_ALWAYS_CC.toLowerCase())) out.push(BILLING_ALWAYS_CC)
+	if (out.length === 0) {
+		const err = new Error(&#039;BILLING_SALES_EMAIL / EMAIL_USER is not configured&#039;)
+		err.code = &#039;CONFIG&#039;
+		throw err
+	}
+	return out
+}
+
+function sanitizeNote(note) {
+	if (note == null) return &#039;&#039;
+	const s = String(note).trim()
+	return s.slice(0, MAX_NOTE_LEN)
+}
+
+/**
+ * @param {object} params
+ * @param {string} params.teamId
+ * @param {string} params.requestingUserId
+ * @param {&#039;plan&#039;|&#039;addon&#039;} params.kind
+ * @param {string} [params.planKey]
+ * @param {string} [params.addonId]
+ * @param {&#039;monthly&#039;|&#039;annual&#039;} [params.billingCycle]
+ * @param {string} [params.note]
+ */
+async function createPurchaseMailRequest(params) {
+	const to = billingSalesRecipients()
+
+	const { team, requester } = await validateBillingPurchaseIntent({
+		teamId: params.teamId,
+		requestingUserId: params.requestingUserId,
+		kind: params.kind,
+		planKey: params.planKey,
+		addonId: params.addonId,
+		billingCycle: params.billingCycle,
+	})
+
+	const kind = params.kind
+	const note = sanitizeNote(params.note)
+	let subject
+	let lines
+
+	if (kind === &#039;plan&#039;) {
+		const price = MONTHLY_NET_PRICES_PLN[params.planKey]
+		subject = `[Planopia] Zamówienie: plan ${params.planKey} (${params.billingCycle}) — ${team.name}`
+		lines = [
+			`&lt;p&gt;&lt;strong&gt;Typ:&lt;/strong&gt; subskrypcja&lt;/p&gt;`,
+			`&lt;p&gt;&lt;strong&gt;Plan:&lt;/strong&gt; ${escapeHtml(params.planKey)}&lt;/p&gt;`,
+			`&lt;p&gt;&lt;strong&gt;Rozliczenie:&lt;/strong&gt; ${escapeHtml(params.billingCycle)}&lt;/p&gt;`,
+			`&lt;p&gt;&lt;strong&gt;Cena katalogowa (netto mies.):&lt;/strong&gt; ${price} PLN&lt;/p&gt;`,
+		]
+	} else {
+		const pack = AI_ADDON_PACKS[params.addonId]
+		subject = `[Planopia] Zamówienie: pakiet AI ${params.addonId} — ${team.name}`
+		lines = [
+			`&lt;p&gt;&lt;strong&gt;Typ:&lt;/strong&gt; pakiet wiadomości AI&lt;/p&gt;`,
+			`&lt;p&gt;&lt;strong&gt;Pakiet:&lt;/strong&gt; ${escapeHtml(params.addonId)} (+${pack.messages} wiadomości)&lt;/p&gt;`,
+			`&lt;p&gt;&lt;strong&gt;Cena katalogowa (netto):&lt;/strong&gt; ${pack.pricePlnNet} PLN&lt;/p&gt;`,
+		]
+	}
+
+	const body = [
+		`&lt;p&gt;Nowe zgłoszenie zakupu z aplikacji Planopia.&lt;/p&gt;`,
+		...lines,
+		`&lt;p&gt;&lt;strong&gt;Zespół:&lt;/strong&gt; ${escapeHtml(team.name)} (id: ${escapeHtml(team._id.toString())})&lt;/p&gt;`,
+		`&lt;p&gt;&lt;strong&gt;E-mail admina zespołu:&lt;/strong&gt; ${escapeHtml(team.adminEmail || &#039;&#039;)}&lt;/p&gt;`,
+		`&lt;p&gt;&lt;strong&gt;Zgłaszający:&lt;/strong&gt; ${escapeHtml(requester.firstName || &#039;&#039;)} ${escapeHtml(requester.lastName || &#039;&#039;)} &amp;lt;${escapeHtml(requester.username)}&amp;gt;&lt;/p&gt;`,
+		note ? `&lt;p&gt;&lt;strong&gt;Wiadomość od klienta:&lt;/strong&gt;&lt;br/&gt;${escapeHtml(note).replace(/\n/g, &#039;&lt;br/&gt;&#039;)}&lt;/p&gt;` : &#039;&#039;,
+		`&lt;p&gt;&lt;em&gt;Po potwierdzeniu płatności użyj endpointu aktywacji z kluczem BILLING_ADMIN_SECRET (idempotencyKey = unikalny identyfikator płatności).&lt;/em&gt;&lt;/p&gt;`,
+	].join(&#039;&#039;)
+
+	const html = getEmailTemplate(&#039;Zamówienie Planopia — weryfikacja ręczna&#039;, body, null, null, null)
+
+	await sendEmail(to, &#039;https://app.planopia.pl&#039;, subject, html)
+
+	return { ok: true }
+}
+
+module.exports = {
+	createPurchaseMailRequest,
+	salesInboxEmail,
+	billingSalesRecipients,
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

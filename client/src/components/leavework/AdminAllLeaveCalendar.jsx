@@ -31,6 +31,7 @@ function AdminAllLeaveCalendar() {
 	const [selectedUserIds, setSelectedUserIds] = useState([])
 	const [calendarView, setCalendarView] = useState('single') // 'single' lub 'all-months'
 	const [expandedDepartments, setExpandedDepartments] = useState({})
+	const [availabilityAssistantOpen, setAvailabilityAssistantOpen] = useState(false)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
 	useEffect(() => {
@@ -262,6 +263,12 @@ function AdminAllLeaveCalendar() {
 		return filteredUsers[0]
 	}, [filteredUsers])
 
+	const availabilityScopeHint = showAllTeam
+		? (t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół')
+		: (singleFilteredUser
+			? `${t('leaveplanner.availabilityChecker.scopeUser') || 'Zakres'}: ${singleFilteredUser.firstName} ${singleFilteredUser.lastName}`
+			: (t('leaveplanner.availabilityChecker.scopeCurrentFilter') || 'Zakres: aktualny filtr'))
+
 	// Generate stable color based on user name (deterministic) - same as in Schedule
 	const getColorForUser = useCallback((userIdentifier) => {
 		if (!userIdentifier) return '#3498db'
@@ -284,7 +291,12 @@ function AdminAllLeaveCalendar() {
 	}, [])
 
 	const handleMonthSelect = event => {
+		if (event.target.value === 'all-months') {
+			setCalendarView('all-months')
+			return
+		}
 		const newMonth = parseInt(event.target.value, 10)
+		setCalendarView('single')
 		setCurrentMonth(newMonth)
 		goToSelectedDate(newMonth, currentYear)
 	}
@@ -292,7 +304,7 @@ function AdminAllLeaveCalendar() {
 	const handleYearSelect = event => {
 		const newYear = parseInt(event.target.value, 10)
 		setCurrentYear(newYear)
-		goToSelectedDate(currentMonth, newYear)
+		if (calendarView === 'single') goToSelectedDate(currentMonth, newYear)
 	}
 
 	const handlePrevMonth = () => {
@@ -499,7 +511,19 @@ function AdminAllLeaveCalendar() {
 				</div>
 			) : (
 			<div id='all-leaveplans'>
-				<h3><img src="img/schedule.png" alt="ikonka w sidebar" /> {t('planslist.h3')}</h3>
+				<div className="leave-page-heading-with-action">
+					<h3><img src="img/schedule.png" alt="ikonka w sidebar" /> {t('planslist.h3')}</h3>
+					<button
+						type="button"
+						className="leave-request-date-assistant-button"
+						onClick={() => setAvailabilityAssistantOpen(true)}
+					>
+						<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<path d="M8 2v3M16 2v3M4 9h16M7 13h4M7 17h7M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+						</svg>
+						{t('leaveform.dateAssistantButton') || 'Asystent terminu'}
+					</button>
+				</div>
 				<hr />
 				{error && <p style={{ color: 'red' }}>{error.message || t('planslist.error')}</p>}
                 <p>{t('planslist.emplo')}</p>
@@ -520,22 +544,18 @@ function AdminAllLeaveCalendar() {
 						</li>
 					))}
 				</ul>
-				<LeaveAvailabilityChecker
-					requests={acceptedLeaveRequests}
-					settings={settings}
-					showUserName={true}
-					scopeHint={
-						showAllTeam
-							? (t('leaveplanner.availabilityChecker.scopeTeam') || 'Zakres: cały zespół')
-							: (singleFilteredUser
-								? `${t('leaveplanner.availabilityChecker.scopeUser') || 'Zakres'}: ${singleFilteredUser.firstName} ${singleFilteredUser.lastName}`
-								: (t('leaveplanner.availabilityChecker.scopeCurrentFilter') || 'Zakres: aktualny filtr'))
-					}
-				/>
+				<div className="leave-availability-checker-mobile-only">
+					<LeaveAvailabilityChecker
+						requests={acceptedLeaveRequests}
+						settings={settings}
+						showUserName={true}
+						scopeHint={availabilityScopeHint}
+					/>
+				</div>
 				<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '20px', gap: '5px', alignItems: 'center' }}>
-					{calendarView === 'single' && (
 						<>
-							<select value={currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+							<select value={calendarView === 'all-months' ? 'all-months' : currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+								<option value="all-months">{t('planslist.allMonths') || 'Wszystkie miesiące'}</option>
 								{Array.from({ length: 12 }, (_, i) => (
 									<option key={i} value={i}>
 										{new Date(0, i)
@@ -554,6 +574,8 @@ function AdminAllLeaveCalendar() {
 									)
 								})}
 							</select>
+							{calendarView === 'single' && (
+								<>
 							<button
 								type="button"
 								onClick={handlePrevMonth}
@@ -584,20 +606,9 @@ function AdminAllLeaveCalendar() {
 							>
 								&gt;
 							</button>
+								</>
+							)}
 						</>
-					)}
-					{calendarView === 'all-months' && (
-						<select value={currentYear} onChange={handleYearSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-							{Array.from({ length: 20 }, (_, i) => {
-								const year = new Date().getFullYear() - 10 + i
-								return (
-									<option key={year} value={year}>
-										{year}
-									</option>
-								)
-							})}
-						</select>
-					)}
 					<button
 						type="button"
 						onClick={() => setFilterModalOpen(true)}
@@ -729,6 +740,36 @@ function AdminAllLeaveCalendar() {
 					</div>
 				)}
 				
+				<Modal
+					isOpen={availabilityAssistantOpen}
+					onRequestClose={() => setAvailabilityAssistantOpen(false)}
+					overlayClassName="leave-insights-modal-overlay"
+					className="leave-date-assistant-modal"
+					contentLabel={t('leaveplanner.availabilityChecker.title')}
+				>
+					<div className="leave-insights-modal__header">
+						<div>
+							<h2>{t('leaveplanner.availabilityChecker.title')}</h2>
+							<p>{t('leaveplanner.availabilityChecker.description')}</p>
+						</div>
+						<button
+							type="button"
+							onClick={() => setAvailabilityAssistantOpen(false)}
+							aria-label={t('leaveform.closeDateAssistant') || 'Zamknij asystenta terminu'}
+						>
+							×
+						</button>
+					</div>
+					<LeaveAvailabilityChecker
+						requests={acceptedLeaveRequests}
+						settings={settings}
+						showUserName={true}
+						scopeHint={availabilityScopeHint}
+						initialCollapsed={false}
+						variant="modal"
+					/>
+				</Modal>
+
 				{/* Modal filtrowania */}
 				<Modal
 					isOpen={filterModalOpen}

@@ -30,9 +30,12 @@ function LeaveAvailabilityChecker({
 	showUserName = true,
 	scopeHint,
 	titleKey = 'leaveplanner.availabilityChecker.title',
+	initialCollapsed = true,
+	variant = 'panel',
 }) {
 	const { t, i18n } = useTranslation()
-	const [isCollapsed, setIsCollapsed] = useState(true)
+	const isModalVariant = variant === 'modal'
+	const [isCollapsed, setIsCollapsed] = useState(initialCollapsed)
 	const [mode, setMode] = useState('single')
 	const [startDate, setStartDate] = useState('')
 	const [endDate, setEndDate] = useState('')
@@ -98,7 +101,7 @@ function LeaveAvailabilityChecker({
 	}, [mode, startDate, endDate, analysis.state, analysis.totalConflicts, analysis.holidays?.length, requests, settings])
 
 	return (
-		<div style={{
+		<div className={isModalVariant ? 'leave-availability-checker leave-availability-checker--modal' : 'leave-availability-checker'} style={{
 			marginTop: '16px',
 			marginBottom: '18px',
 			padding: '16px',
@@ -106,86 +109,91 @@ function LeaveAvailabilityChecker({
 			border: '1px solid #dbeafe',
 			backgroundColor: '#f8fbff',
             maxWidth: '1000px',
-			cursor: isCollapsed ? 'pointer' : 'default',
+			cursor: !isModalVariant && isCollapsed ? 'pointer' : 'default',
 		}}
 		onClick={(e) => {
+			if (isModalVariant) return
 			if (!isCollapsed) return
 			if (e.target.closest('button')) return
 			setIsCollapsed(false)
 		}}>
-			<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-				<h4 style={{ margin: 0, color: '#0f172a', fontSize: '18px' }}>
-					{t(titleKey) || 'Asystent terminu urlopu'}
-				</h4>
-				<div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
-					<button
-						type="button"
-						onClick={(e) => {
-							e.stopPropagation()
-							setIsCollapsed(prev => !prev)
-						}}
-						aria-expanded={!isCollapsed}
-						aria-label={isCollapsed ? 'Rozwiń asystenta terminu urlopu' : 'Zwiń asystenta terminu urlopu'}
-						title={isCollapsed ? 'Rozwiń' : 'Zwiń'}
-						style={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							width: '34px',
-							height: '34px',
-							borderRadius: '8px',
-							border: '1px solid #86efac',
-							backgroundColor: isCollapsed ? '#dcfce7' : '#bbf7d0',
-							color: '#15803d',
-							cursor: 'pointer',
-							boxShadow: isCollapsed ? '0 1px 6px rgba(34, 197, 94, 0.18)' : '0 2px 8px rgba(34, 197, 94, 0.25)',
-							transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
-							transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.backgroundColor = '#bbf7d0'
-							e.currentTarget.style.borderColor = '#22c55e'
-							e.currentTarget.style.boxShadow = '0 3px 10px rgba(34, 197, 94, 0.3)'
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.backgroundColor = isCollapsed ? '#dcfce7' : '#bbf7d0'
-							e.currentTarget.style.borderColor = '#86efac'
-							e.currentTarget.style.boxShadow = isCollapsed
-								? '0 1px 6px rgba(34, 197, 94, 0.18)'
-								: '0 2px 8px rgba(34, 197, 94, 0.25)'
-						}}
-						onFocus={(e) => {
-							e.currentTarget.style.outline = '2px solid #22c55e'
-							e.currentTarget.style.outlineOffset = '2px'
-						}}
-						onBlur={(e) => {
-							e.currentTarget.style.outline = 'none'
-						}}
-					>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-							<path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-						</svg>
-					</button>
+			{!isModalVariant && (
+				<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+					<h4 style={{ margin: 0, color: '#0f172a', fontSize: '18px' }}>
+						{t(titleKey) || 'Asystent terminu urlopu'}
+					</h4>
+					<div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+						<button
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation()
+								setIsCollapsed(prev => !prev)
+							}}
+							aria-expanded={!isCollapsed}
+							aria-label={isCollapsed ? 'Rozwiń asystenta terminu urlopu' : 'Zwiń asystenta terminu urlopu'}
+							title={isCollapsed ? 'Rozwiń' : 'Zwiń'}
+							style={{
+								display: 'inline-flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: '34px',
+								height: '34px',
+								borderRadius: '8px',
+								border: '1px solid #86efac',
+								backgroundColor: isCollapsed ? '#dcfce7' : '#bbf7d0',
+								color: '#15803d',
+								cursor: 'pointer',
+								boxShadow: isCollapsed ? '0 1px 6px rgba(34, 197, 94, 0.18)' : '0 2px 8px rgba(34, 197, 94, 0.25)',
+								transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
+								transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+							}}
+							onMouseEnter={(e) => {
+								e.currentTarget.style.backgroundColor = '#bbf7d0'
+								e.currentTarget.style.borderColor = '#22c55e'
+								e.currentTarget.style.boxShadow = '0 3px 10px rgba(34, 197, 94, 0.3)'
+							}}
+							onMouseLeave={(e) => {
+								e.currentTarget.style.backgroundColor = isCollapsed ? '#dcfce7' : '#bbf7d0'
+								e.currentTarget.style.borderColor = '#86efac'
+								e.currentTarget.style.boxShadow = isCollapsed
+									? '0 1px 6px rgba(34, 197, 94, 0.18)'
+									: '0 2px 8px rgba(34, 197, 94, 0.25)'
+							}}
+							onFocus={(e) => {
+								e.currentTarget.style.outline = '2px solid #22c55e'
+								e.currentTarget.style.outlineOffset = '2px'
+							}}
+							onBlur={(e) => {
+								e.currentTarget.style.outline = 'none'
+							}}
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+								<path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+							</svg>
+						</button>
+					</div>
 				</div>
-			</div>
-			{scopeHint && !isCollapsed ? (
+			)}
+			{scopeHint && (isModalVariant || !isCollapsed) ? (
 				<div style={{ marginTop: '6px', marginBottom: '2px' }}>
 					<span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>{scopeHint}</span>
 				</div>
 			) : null}
 			<div
 				style={{
-					maxHeight: isCollapsed ? '0px' : `${contentHeight}px`,
-					opacity: isCollapsed ? 0 : 1,
+					maxHeight: isModalVariant ? 'none' : (isCollapsed ? '0px' : `${contentHeight}px`),
+					opacity: isModalVariant || !isCollapsed ? 1 : 0,
 					overflow: 'hidden',
 					transition: 'max-height 0.28s ease, opacity 0.2s ease, margin-top 0.2s ease',
-					marginTop: isCollapsed ? '0px' : '8px',
+					marginTop: isModalVariant || !isCollapsed ? '8px' : '0px',
 				}}
 			>
 				<div ref={contentRef}>
-					<p style={{ margin: '0 0 14px 0', color: '#64748b', fontSize: '14px' }}>
-						{t('leaveplanner.availabilityChecker.description') || 'Wybierz datę lub zakres, a system automatycznie sprawdzi konflikty nieobecności.'}
-					</p>
+					{!isModalVariant && (
+						<p style={{ margin: '0 0 14px 0', color: '#64748b', fontSize: '14px' }}>
+							{t('leaveplanner.availabilityChecker.description') || 'Wybierz datę lub zakres, a system automatycznie sprawdzi konflikty nieobecności.'}
+						</p>
+					)}
 
 					<div>
 						<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', alignItems: 'end' }}>

@@ -14,6 +14,7 @@ import { getPolishHolidaysForYear } from '../../utils/holidays'
 import { calculateHours } from '../../utils/timeHelpers'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import QRCodeGenerator from '../qr/QRCodeGenerator'
+import WorkActivitiesSettingsSection from './WorkActivitiesSettingsSection'
 
 const NOTIFICATION_MODULE_REQUIREMENTS = {
 	chat: 'chat',
@@ -1811,6 +1812,87 @@ function Settings() {
 							</>
 						)}
 
+						{/* Ewidencja czasu — zasady wpisów i czynności */}
+						{canEditSettings && (
+							<>
+								<h3 style={{
+									color: '#2c3e50',
+									marginTop: '40px',
+									marginBottom: '20px',
+									fontSize: '20px',
+									fontWeight: '600',
+									paddingBottom: '10px',
+									borderBottom: '2px solid #3498db',
+								}}>
+									{t('settings.workdayEntriesTitle')}
+								</h3>
+
+								<div style={{
+									backgroundColor: '#e3f2fd',
+									border: '1px solid #90caf9',
+									borderRadius: '8px',
+									padding: '15px',
+									marginBottom: '20px',
+									color: '#1565c0',
+								}}>
+									<p style={{ margin: 0, lineHeight: '1.6' }}>
+										{t('settings.workdayEntriesDescription')}
+									</p>
+								</div>
+
+								<div style={{
+									backgroundColor: '#f8f9fa',
+									border: '1px solid #dee2e6',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px',
+								}}>
+									<div style={{ flex: 1 }}>
+										<label style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											fontSize: '16px',
+											fontWeight: '500',
+											color: '#2c3e50',
+										}}>
+											<input
+												type="checkbox"
+												checked={workdayEntriesOnlyToday}
+												onChange={(e) => setWorkdayEntriesOnlyToday(e.target.checked)}
+												style={{
+													width: '24px',
+													height: '24px',
+													marginRight: '12px',
+													cursor: 'pointer',
+													accentColor: '#3498db',
+												}}
+											/>
+											<span>{t('settings.workdayEntriesOnlyTodayTitle')}</span>
+										</label>
+										<div style={{
+											marginTop: '8px',
+											fontSize: '14px',
+											color: '#7f8c8d',
+											marginLeft: '36px',
+										}}>
+											{t('settings.workdayEntriesOnlyTodayDescription')}
+										</div>
+									</div>
+								</div>
+
+								<div style={{
+									backgroundColor: '#f8f9fa',
+									border: '1px solid #dee2e6',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px',
+								}}>
+									<WorkActivitiesSettingsSection canEditSettings={canEditSettings} embedded />
+								</div>
+							</>
+						)}
+
 						{/* Sekcja konfiguracji obliczania urlopów */}
 						{!freemiumSlimSettings && (
 							<div style={{ 
@@ -2659,125 +2741,156 @@ function Settings() {
 						</div>
 						)}
 
+						{/* Pracownicy bez dostępu */}
 						{canEditSettings && (
-							<div style={{
-								backgroundColor: 'white',
-								borderRadius: '12px',
-								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-								padding: '20px',
-								marginTop: '20px'
-							}}>
+							<>
 								<h3 style={{
-									fontSize: '18px',
-									fontWeight: '600',
 									color: '#2c3e50',
-									marginBottom: '8px'
-								}}>
-									{t('settings.workdayEntriesTitle')}
-								</h3>
-								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									{t('settings.workdayEntriesDescription')}
-								</p>
-								<label style={{
-									display: 'flex',
-									alignItems: 'flex-start',
-									gap: '12px',
-									cursor: 'pointer',
-									margin: 0
-								}}>
-									<input
-										type="checkbox"
-										checked={workdayEntriesOnlyToday}
-										onChange={(e) => setWorkdayEntriesOnlyToday(e.target.checked)}
-										style={{ marginTop: '4px' }}
-									/>
-									<span>
-										<strong>{t('settings.workdayEntriesOnlyTodayTitle')}</strong>
-										<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-											{t('settings.workdayEntriesOnlyTodayDescription')}
-										</span>
-									</span>
-								</label>
-							</div>
-						)}
-
-						{canEditSettings && (
-							<div style={{
-								backgroundColor: 'white',
-								borderRadius: '12px',
-								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-								padding: '20px',
-								marginTop: '20px'
-							}}>
-								<h3 style={{
-									fontSize: '18px',
+									marginTop: '40px',
+									marginBottom: '20px',
+									fontSize: '20px',
 									fontWeight: '600',
-									color: '#2c3e50',
-									marginBottom: '8px'
+									paddingBottom: '10px',
+									borderBottom: '2px solid #3498db',
 								}}>
 									{t('settings.noAccessUsersTitle')}
 								</h3>
-								<p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '18px' }}>
-									{freemiumTier
-										? t('settings.noAccessUsersDescriptionFreemium')
-										: t('settings.noAccessUsersDescription')}
-								</p>
-								<div style={{ display: 'grid', gap: '14px' }}>
-									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
-										<input
-											type="checkbox"
-											checked={allowManagedNoAccessUsers}
-											onChange={(e) => {
-												const enabled = e.target.checked
-												setAllowManagedNoAccessUsers(enabled)
-												if (!enabled) {
-													setAllowManagedWorkdayEntries(false)
-													setAllowManagedLeaveRequests(false)
-												}
-											}}
-											style={{ marginTop: '4px' }}
-										/>
-										<span>
-											<strong>{t('settings.allowManagedNoAccessUsersTitle')}</strong>
-											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												{t('settings.allowManagedNoAccessUsersDescription')}
-											</span>
-										</span>
-									</label>
-									<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
-										<input
-											type="checkbox"
-											checked={allowManagedWorkdayEntries}
-											disabled={!allowManagedNoAccessUsers}
-											onChange={(e) => setAllowManagedWorkdayEntries(e.target.checked)}
-											style={{ marginTop: '4px' }}
-										/>
-										<span>
-											<strong>{t('settings.allowManagedWorkdayEntriesTitle')}</strong>
-											<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-												{t('settings.allowManagedWorkdayEntriesDescription')}
-											</span>
-										</span>
-									</label>
-									{!freemiumTier && (
-										<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed', opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+
+								<div style={{
+									backgroundColor: '#e3f2fd',
+									border: '1px solid #90caf9',
+									borderRadius: '8px',
+									padding: '15px',
+									marginBottom: '20px',
+									color: '#1565c0',
+								}}>
+									<p style={{ margin: 0, lineHeight: '1.6' }}>
+										{freemiumTier
+											? t('settings.noAccessUsersDescriptionFreemium')
+											: t('settings.noAccessUsersDescription')}
+									</p>
+								</div>
+
+								<div style={{
+									backgroundColor: '#f8f9fa',
+									border: '1px solid #dee2e6',
+									borderRadius: '8px',
+									padding: '20px',
+									marginBottom: '20px',
+									display: 'grid',
+									gap: '20px',
+								}}>
+									<div>
+										<label style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: 'pointer',
+											fontSize: '16px',
+											fontWeight: '500',
+											color: '#2c3e50',
+										}}>
 											<input
 												type="checkbox"
-												checked={allowManagedLeaveRequests}
-												disabled={!allowManagedNoAccessUsers}
-												onChange={(e) => setAllowManagedLeaveRequests(e.target.checked)}
-												style={{ marginTop: '4px' }}
+												checked={allowManagedNoAccessUsers}
+												onChange={(e) => {
+													const enabled = e.target.checked
+													setAllowManagedNoAccessUsers(enabled)
+													if (!enabled) {
+														setAllowManagedWorkdayEntries(false)
+														setAllowManagedLeaveRequests(false)
+													}
+												}}
+												style={{
+													width: '24px',
+													height: '24px',
+													marginRight: '12px',
+													cursor: 'pointer',
+													accentColor: '#3498db',
+												}}
 											/>
-											<span>
-												<strong>{t('settings.allowManagedLeaveRequestsTitle')}</strong>
-												<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
-													{t('settings.allowManagedLeaveRequestsDescription')}
-												</span>
-											</span>
+											<span>{t('settings.allowManagedNoAccessUsersTitle')}</span>
 										</label>
+										<div style={{
+											marginTop: '8px',
+											fontSize: '14px',
+											color: '#7f8c8d',
+											marginLeft: '36px',
+										}}>
+											{t('settings.allowManagedNoAccessUsersDescription')}
+										</div>
+									</div>
+
+									<div style={{ opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+										<label style={{
+											display: 'flex',
+											alignItems: 'center',
+											cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
+											fontSize: '16px',
+											fontWeight: '500',
+											color: '#2c3e50',
+										}}>
+											<input
+												type="checkbox"
+												checked={allowManagedWorkdayEntries}
+												disabled={!allowManagedNoAccessUsers}
+												onChange={(e) => setAllowManagedWorkdayEntries(e.target.checked)}
+												style={{
+													width: '24px',
+													height: '24px',
+													marginRight: '12px',
+													cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
+													accentColor: '#3498db',
+												}}
+											/>
+											<span>{t('settings.allowManagedWorkdayEntriesTitle')}</span>
+										</label>
+										<div style={{
+											marginTop: '8px',
+											fontSize: '14px',
+											color: '#7f8c8d',
+											marginLeft: '36px',
+										}}>
+											{t('settings.allowManagedWorkdayEntriesDescription')}
+										</div>
+									</div>
+
+									{!freemiumTier && (
+										<div style={{ opacity: allowManagedNoAccessUsers ? 1 : 0.55 }}>
+											<label style={{
+												display: 'flex',
+												alignItems: 'center',
+												cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
+												fontSize: '16px',
+												fontWeight: '500',
+												color: '#2c3e50',
+											}}>
+												<input
+													type="checkbox"
+													checked={allowManagedLeaveRequests}
+													disabled={!allowManagedNoAccessUsers}
+													onChange={(e) => setAllowManagedLeaveRequests(e.target.checked)}
+													style={{
+														width: '24px',
+														height: '24px',
+														marginRight: '12px',
+														cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
+														accentColor: '#3498db',
+													}}
+												/>
+												<span>{t('settings.allowManagedLeaveRequestsTitle')}</span>
+											</label>
+											<div style={{
+												marginTop: '8px',
+												fontSize: '14px',
+												color: '#7f8c8d',
+												marginLeft: '36px',
+											}}>
+												{t('settings.allowManagedLeaveRequestsDescription')}
+											</div>
+										</div>
 									)}
 								</div>
-							</div>
+							</>
 						)}
 
 						{/* Przycisk zapisu - na całą szerokość */}

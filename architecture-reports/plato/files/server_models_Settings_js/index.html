@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\models\Settings.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\models\Settings.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">54.24</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">247</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">49.19</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.43</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const mongoose = require(&#039;mongoose&#039;)
+
+const customHolidaySchema = new mongoose.Schema({
+	date: {
+		type: String, // Format: YYYY-MM-DD
+		required: true
+	},
+	name: {
+		type: String,
+		required: true
+	}
+}, { _id: false })
+
+// Schemat dla typu wniosku urlopowego/nieobecności
+const leaveRequestTypeSchema = new mongoose.Schema({
+	id: { type: String, required: true }, // Unikalny identyfikator (dla systemowych: &#039;leaveform.option1&#039;, dla niestandardowych: &#039;custom-xxx&#039;)
+	name: { type: String, required: true }, // Nazwa typu (w języku zespołu)
+	nameEn: { type: String }, // Nazwa w języku angielskim (opcjonalna)
+	isSystem: { type: Boolean, default: false }, // Czy to typ systemowy
+	isEnabled: { type: Boolean, default: true }, // Czy typ jest włączony dla zespołu
+	requireApproval: { type: Boolean, default: true }, // Czy wymaga zatwierdzenia (false = automatycznie akceptowany jak L4)
+	allowDaysLimit: { type: Boolean, default: false }, // Czy można ustawiać limit dni dla usera (dla systemowych: można włączyć/wyłączyć, dla custom: zawsze jeśli true)
+	minDaysBefore: { type: Number, default: null }, // Minimalna liczba dni przed urlopem, na ile trzeba złożyć wniosek (null = brak limitu, np. 5 = trzeba złożyć minimum 5 dni przed)
+}, { _id: false })
+
+const workActivitySchema = new mongoose.Schema({
+	id: { type: String, required: true },
+	name: { type: String, required: true },
+	nameEn: { type: String },
+	group: { type: String, enum: [&#039;line&#039;, &#039;task&#039;, &#039;other&#039;], default: &#039;other&#039; },
+	trackQuantity: { type: Boolean, default: false },
+	unit: { type: String, default: &#039;&#039; },
+	isEnabled: { type: Boolean, default: true },
+}, { _id: false })
+
+const settingsSchema = new mongoose.Schema({
+	teamId: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: &#039;Team&#039;,
+		required: true,
+		unique: true,
+		index: true
+	},
+	workOnWeekends: {
+		type: Boolean,
+		default: true, // Domyślnie pracuje się w weekendy
+		required: true
+	},
+	includePolishHolidays: {
+		type: Boolean,
+		default: true, // Domyślnie włączone (dla nowych zespołów)
+		required: true
+	},
+	includeCustomHolidays: {
+		type: Boolean,
+		default: true, // Domyślnie włączone (dla nowych zespołów)
+		required: true
+	},
+	customHolidays: {
+		type: [customHolidaySchema],
+		default: []
+	},
+	// Wspólne godziny pracy dla wszystkich dni roboczych (tablica konfiguracji)
+	workHours: {
+		type: [{
+			timeFrom: {
+				type: String, // Format: HH:mm (e.g., &quot;09:00&quot;)
+				required: true,
+				validate: {
+					validator: function(v) {
+						return v &amp;&amp; /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
+					},
+					message: &#039;timeFrom must be in HH:mm format&#039;
+				}
+			},
+			timeTo: {
+				type: String, // Format: HH:mm (e.g., &quot;17:00&quot;)
+				required: true,
+				validate: {
+					validator: function(v) {
+						return v &amp;&amp; /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v)
+					},
+					message: &#039;timeTo must be in HH:mm format&#039;
+				}
+			},
+			hours: {
+				type: Number, // Obliczone godziny (e.g., 8 dla 09:00-17:00)
+				required: true,
+				min: 0,
+				max: 24
+			}
+		}],
+		default: []
+	},
+	// Konfiguracja typów wniosków urlopowych/nieobecności
+	leaveRequestTypes: {
+		type: [leaveRequestTypeSchema],
+		default: []
+	},
+	workActivities: {
+		type: [workActivitySchema],
+		default: [],
+	},
+	// Konfiguracja obliczania urlopów: &#039;days&#039; lub &#039;hours&#039;
+	leaveCalculationMode: {
+		type: String,
+		enum: [&#039;days&#039;, &#039;hours&#039;],
+		default: &#039;days&#039;,
+		required: true
+	},
+	// Liczba godzin na jeden dzień urlopu (używane gdy leaveCalculationMode === &#039;hours&#039;)
+	leaveHoursPerDay: {
+		type: Number,
+		default: 8,
+		min: 0.5,
+		max: 24,
+		required: true
+	},
+	// Włącz/wyłącz funkcję QR i licznika czasu pracy
+	timerEnabled: {
+		type: Boolean,
+		default: false, // Domyślnie wyłączone (dla nowych zespołów)
+		required: true
+	},
+	allowManagedNoAccessUsers: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	allowManagedWorkdayEntries: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	allowManagedLeaveRequests: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
+	workdayEntriesOnlyToday: {
+		type: Boolean,
+		default: false,
+		required: true
+	}
+}, {
+	timestamps: true
+})
+
+// Domyślne typy systemowe wniosków urlopowych
+const getDefaultSystemLeaveTypes = () =&gt; [
+	{ id: &#039;leaveform.option1&#039;, name: &#039;Urlop wypoczynkowy&#039;, nameEn: &#039;Paid Vacation&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: true },
+	{ id: &#039;leaveform.option2&#039;, name: &#039;Urlop okolicznościowy&#039;, nameEn: &#039;Special Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option3&#039;, name: &#039;Urlop na żądanie&#039;, nameEn: &#039;On-Demand Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option4&#039;, name: &#039;Urlop bezpłatny&#039;, nameEn: &#039;Unpaid Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option5&#039;, name: &#039;Inna nieobecność&#039;, nameEn: &#039;Other Absence&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option6&#039;, name: &#039;Zwolnienie Lekarskie (L4)&#039;, nameEn: &#039;Sick Leave (L4)&#039;, isSystem: true, isEnabled: true, requireApproval: false, allowDaysLimit: false } // L4 - automatycznie akceptowany
+]
+
+// Pobierz ustawienia dla danego zespołu (jeden dokument na zespół)
+settingsSchema.statics.getSettings = async function(teamId) {
+	if (!teamId) {
+		throw new Error(&#039;teamId is required&#039;)
+	}
+	
+	let settings = await this.findOne({ teamId })
+	if (!settings) {
+		// Utwórz domyślne ustawienia dla zespołu z domyślnymi typami systemowymi
+		settings = await this.create({ 
+			teamId,
+			workOnWeekends: true,
+			includePolishHolidays: true,
+			includeCustomHolidays: true,
+			customHolidays: [],
+			leaveRequestTypes: getDefaultSystemLeaveTypes(),
+			timerEnabled: false,
+			allowManagedNoAccessUsers: false,
+			allowManagedWorkdayEntries: false,
+			allowManagedLeaveRequests: false,
+			workdayEntriesOnlyToday: false,
+		})
+	} else {
+		// Migracja: jeśli istnieje stary dokument z includeHolidays, zamień na includePolishHolidays
+		if (settings.includeHolidays !== undefined &amp;&amp; settings.includePolishHolidays === undefined) {
+			settings.includePolishHolidays = settings.includeHolidays
+			settings.includeCustomHolidays = false
+			delete settings.includeHolidays
+			await settings.save()
+		}
+		// Migracja: jeśli brakuje teamId, ustaw go (dla starych dokumentów)
+		if (!settings.teamId) {
+			settings.teamId = teamId
+			await settings.save()
+		}
+		// Upewnij się, że nowe pola istnieją
+		if (settings.includePolishHolidays === undefined) settings.includePolishHolidays = false
+		if (settings.includeCustomHolidays === undefined) settings.includeCustomHolidays = false
+		if (settings.customHolidays === undefined) settings.customHolidays = []
+		
+		// Migracja: inicjalizuj leaveRequestTypes jeśli nie istnieje
+		if (!settings.leaveRequestTypes || settings.leaveRequestTypes.length === 0) {
+			settings.leaveRequestTypes = getDefaultSystemLeaveTypes()
+			await settings.save()
+		} else {
+			// Upewnij się, że wszystkie typy systemowe są obecne (mogły zostać usunięte)
+			const defaultTypes = getDefaultSystemLeaveTypes()
+			const existingTypeIds = new Set(settings.leaveRequestTypes.map(t =&gt; t.id))
+			const systemTypesToAdd = defaultTypes.filter(dt =&gt; !existingTypeIds.has(dt.id))
+			if (systemTypesToAdd.length &gt; 0) {
+				settings.leaveRequestTypes.push(...systemTypesToAdd)
+				await settings.save()
+			}
+		}
+		
+		// Migracja: jeśli workHours jest starym formatem (obiekt), zamień na tablicę
+		if (settings.workHours &amp;&amp; !Array.isArray(settings.workHours)) {
+			// Stary format: { timeFrom, timeTo, hours }
+			if (settings.workHours.timeFrom &amp;&amp; settings.workHours.timeTo &amp;&amp; settings.workHours.hours) {
+				settings.workHours = [{
+					timeFrom: settings.workHours.timeFrom,
+					timeTo: settings.workHours.timeTo,
+					hours: settings.workHours.hours
+				}]
+				await settings.save()
+			} else {
+				// Jeśli stary format jest pusty/null, ustaw jako pustą tablicę
+				settings.workHours = []
+				await settings.save()
+			}
+		}
+		// Upewnij się, że workHours jest tablicą
+		if (!Array.isArray(settings.workHours)) {
+			settings.workHours = []
+			await settings.save()
+		}
+
+		if (settings.allowManagedNoAccessUsers === undefined) settings.allowManagedNoAccessUsers = false
+		if (settings.allowManagedWorkdayEntries === undefined) settings.allowManagedWorkdayEntries = false
+		if (settings.allowManagedLeaveRequests === undefined) settings.allowManagedLeaveRequests = false
+		if (settings.workdayEntriesOnlyToday === undefined) settings.workdayEntriesOnlyToday = false
+		if (!Array.isArray(settings.workActivities)) settings.workActivities = []
+		
+		await settings.save()
+	}
+	return settings
+}
+
+module.exports = conn =&gt; (conn.models.Settings || conn.model(&#039;Settings&#039;, settingsSchema))</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

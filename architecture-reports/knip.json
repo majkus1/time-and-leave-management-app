@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "architecture-reports/**",
+    "client/dist/**",
+    "planopia-next-landing/**",
+    "node_modules/**"
+  ]
+}

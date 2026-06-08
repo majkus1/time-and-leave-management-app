@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\controllers\taskNotificationController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\controllers\taskNotificationController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">57.94</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">289</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">57.34</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.53</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const Board = require(&#039;../models/Board&#039;)(firmDb)
+const Task = require(&#039;../models/Task&#039;)(firmDb)
+const TaskComment = require(&#039;../models/TaskComment&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const BoardViewState = require(&#039;../models/BoardViewState&#039;)(firmDb)
+const TaskViewState = require(&#039;../models/TaskViewState&#039;)(firmDb)
+const { isAdminUser, canUserAccessTask, normalizeObjectIdString } = require(&#039;../utils/taskAccess&#039;)
+const { resolveBoardAccessForUser } = require(&#039;../utils/boardAccess&#039;)
+
+const getUserDepartments = (user) =&gt; {
+	if (!user) return []
+	return Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
+}
+
+const buildAccessibleBoardQuery = ({ user, userId, isAdmin }) =&gt; {
+	const boardQuery = {
+		teamId: user.teamId,
+		isActive: true,
+	}
+
+	if (isAdmin) {
+		return boardQuery
+	}
+
+	const userDepartments = getUserDepartments(user)
+	const orConditions = [
+		{ members: userId },
+		{ isTeamBoard: true },
+	]
+
+	if (userDepartments.length &gt; 0) {
+		orConditions.push({
+			type: &#039;department&#039;,
+			departmentName: { $in: userDepartments },
+		})
+	}
+
+	boardQuery.$or = orConditions
+	return boardQuery
+}
+
+const buildVisibleTaskQuery = ({ boardIds, userId, isAdmin }) =&gt; {
+	const query = {
+		boardId: { $in: boardIds },
+		isActive: true,
+	}
+
+	if (!isAdmin) {
+		query.$or = [
+			{ assignedScope: &#039;all-members&#039; },
+			{ assignedTo: userId },
+		]
+	}
+
+	return query
+}
+
+const buildLatestCommentMap = (comments) =&gt; {
+	const latestCommentMap = new Map()
+	comments.forEach((comment) =&gt; {
+		const taskId = normalizeObjectIdString(comment.taskId)
+		if (!taskId) return
+		const createdAtTs = new Date(comment.createdAt).getTime()
+		const previousTs = latestCommentMap.get(taskId) || 0
+		if (createdAtTs &gt; previousTs) {
+			latestCommentMap.set(taskId, createdAtTs)
+		}
+	})
+	return latestCommentMap
+}
+
+const getTaskActivityTimestamp = ({ task, currentUserId, latestCommentMap }) =&gt; {
+	const normalizedUserId = normalizeObjectIdString(currentUserId)
+	const taskCreatorId = normalizeObjectIdString(task.createdBy)
+	const taskId = normalizeObjectIdString(task._id)
+
+	let latestTs = 0
+	if (taskCreatorId &amp;&amp; normalizedUserId &amp;&amp; taskCreatorId !== normalizedUserId) {
+		latestTs = Math.max(latestTs, new Date(task.createdAt).getTime())
+	}
+
+	const latestCommentTs = latestCommentMap.get(taskId) || 0
+	latestTs = Math.max(latestTs, latestCommentTs)
+	return latestTs
+}
+
+const ensureBoardAccess = async ({ boardId, reqUser }) =&gt; {
+	return resolveBoardAccessForUser({ boardId, reqUser })
+}
+
+exports.getBoardsUnreadSummary = async (req, res) =&gt; {
+	try {
+		const userId = req.user.userId
+		const user = await User.findById(userId).select(&#039;teamId department roles&#039;)
+		if (!user || !user.teamId) {
+			return res.json({ totalUnread: 0, unreadBoardsCount: 0, byBoard: {} })
+		}
+
+		const isAdmin = isAdminUser(req.user)
+		const boardQuery = buildAccessibleBoardQuery({ user, userId, isAdmin })
+		const boards = await Board.find(boardQuery).select(&#039;_id&#039;).lean()
+		const boardIds = boards.map((board) =&gt; board._id)
+		if (boardIds.length === 0) {
+			return res.json({ totalUnread: 0, unreadBoardsCount: 0, byBoard: {} })
+		}
+
+		const tasks = await Task.find(buildVisibleTaskQuery({ boardIds, userId, isAdmin }))
+			.select(&#039;_id boardId createdAt createdBy&#039;)
+			.lean()
+		if (tasks.length === 0) {
+			return res.json({ totalUnread: 0, unreadBoardsCount: 0, byBoard: {} })
+		}
+
+		const taskIds = tasks.map((task) =&gt; task._id)
+		const comments = await TaskComment.find({
+			taskId: { $in: taskIds },
+			isActive: true,
+			createdBy: { $ne: userId },
+		})
+			.select(&#039;taskId createdAt&#039;)
+			.lean()
+
+		const latestCommentMap = buildLatestCommentMap(comments)
+		const taskViews = await TaskViewState.find({
+			userId,
+			taskId: { $in: taskIds },
+		})
+			.select(&#039;taskId lastModalViewedAt lastViewedAt&#039;)
+			.lean()
+		const taskViewMap = new Map(
+			taskViews.map((view) =&gt; [
+				normalizeObjectIdString(view.taskId),
+				new Date(view.lastModalViewedAt || view.lastViewedAt).getTime(),
+			])
+		)
+
+		let totalUnread = 0
+		const byBoard = {}
+		tasks.forEach((task) =&gt; {
+			const activityTs = getTaskActivityTimestamp({ task, currentUserId: userId, latestCommentMap })
+			if (!activityTs) return
+
+			const taskId = normalizeObjectIdString(task._id)
+			const taskSeenTs = taskViewMap.get(taskId) || 0
+			if (activityTs &gt; taskSeenTs) {
+				const boardId = normalizeObjectIdString(task.boardId)
+				byBoard[boardId] = (byBoard[boardId] || 0) + 1
+				totalUnread += 1
+			}
+		})
+
+		const unreadBoardsCount = Object.values(byBoard).filter((count) =&gt; count &gt; 0).length
+		res.json({ totalUnread, unreadBoardsCount, byBoard })
+	} catch (error) {
+		console.error(&#039;Error getting boards unread summary:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to get unread summary&#039; })
+	}
+}
+
+exports.getBoardUnreadSummary = async (req, res) =&gt; {
+	try {
+		const { boardId } = req.params
+		const userId = req.user.userId
+		const boardAccess = await ensureBoardAccess({ boardId, reqUser: req.user })
+		if (boardAccess.error) {
+			return res.status(boardAccess.error.status).json({ message: boardAccess.error.message })
+		}
+
+		const isAdmin = isAdminUser(req.user)
+		const tasks = await Task.find(buildVisibleTaskQuery({ boardIds: [boardId], userId, isAdmin }))
+			.select(&#039;_id boardId createdAt createdBy&#039;)
+			.lean()
+
+		if (tasks.length === 0) {
+			return res.json({ boardId, unreadCount: 0, unreadByTask: {} })
+		}
+
+		const taskIds = tasks.map((task) =&gt; task._id)
+		const comments = await TaskComment.find({
+			taskId: { $in: taskIds },
+			isActive: true,
+			createdBy: { $ne: userId },
+		})
+			.select(&#039;taskId createdAt&#039;)
+			.lean()
+
+		const latestCommentMap = buildLatestCommentMap(comments)
+		const taskViews = await TaskViewState.find({
+			userId,
+			taskId: { $in: taskIds },
+		})
+			.select(&#039;taskId lastModalViewedAt&#039;)
+			.lean()
+		const taskViewMap = new Map(
+			taskViews.map((view) =&gt; [normalizeObjectIdString(view.taskId), new Date(view.lastModalViewedAt || view.lastViewedAt).getTime()])
+		)
+
+		const unreadByTask = {}
+		let unreadCount = 0
+		tasks.forEach((task) =&gt; {
+			const taskId = normalizeObjectIdString(task._id)
+			const activityTs = getTaskActivityTimestamp({ task, currentUserId: userId, latestCommentMap })
+			if (!activityTs) {
+				unreadByTask[taskId] = 0
+				return
+			}
+
+			const taskSeenTs = taskViewMap.get(taskId) || 0
+			const isUnread = activityTs &gt; taskSeenTs
+			unreadByTask[taskId] = isUnread ? 1 : 0
+			if (isUnread) unreadCount += 1
+		})
+
+		res.json({ boardId, unreadCount, unreadByTask })
+	} catch (error) {
+		console.error(&#039;Error getting board unread summary:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to get board unread summary&#039; })
+	}
+}
+
+exports.markBoardViewed = async (req, res) =&gt; {
+	try {
+		const { boardId } = req.params
+		const userId = req.user.userId
+		const boardAccess = await ensureBoardAccess({ boardId, reqUser: req.user })
+		if (boardAccess.error) {
+			return res.status(boardAccess.error.status).json({ message: boardAccess.error.message })
+		}
+
+		const now = new Date()
+		await BoardViewState.findOneAndUpdate(
+			{ userId, boardId },
+			{ $set: { lastViewedAt: now } },
+			{ upsert: true, new: true, setDefaultsOnInsert: true }
+		)
+
+		res.json({ success: true, boardId, lastViewedAt: now })
+	} catch (error) {
+		console.error(&#039;Error marking board as viewed:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to mark board as viewed&#039; })
+	}
+}
+
+exports.markTaskViewed = async (req, res) =&gt; {
+	try {
+		const { taskId } = req.params
+		const userId = req.user.userId
+		const task = await Task.findById(taskId)
+		if (!task) {
+			return res.status(404).json({ message: &#039;Task not found&#039; })
+		}
+
+		const boardAccess = await ensureBoardAccess({ boardId: task.boardId, reqUser: req.user })
+		if (boardAccess.error) {
+			return res.status(boardAccess.error.status).json({ message: boardAccess.error.message })
+		}
+
+		const isAdmin = isAdminUser(req.user)
+		if (!canUserAccessTask(task, userId, isAdmin)) {
+			return res.status(403).json({ message: &#039;Access denied&#039; })
+		}
+
+		const now = new Date()
+		await TaskViewState.findOneAndUpdate(
+			{ userId, taskId },
+			{
+				$set: {
+					boardId: task.boardId,
+					lastViewedAt: now,
+					lastModalViewedAt: now,
+				},
+			},
+			{ upsert: true, new: true, setDefaultsOnInsert: true }
+		)
+
+		// Mark board as viewed too, so board-level badge clears when user explores the board.
+		await BoardViewState.findOneAndUpdate(
+			{ userId, boardId: task.boardId },
+			{ $set: { lastViewedAt: now } },
+			{ upsert: true, new: true, setDefaultsOnInsert: true }
+		)
+
+		res.json({ success: true, taskId, lastViewedAt: now })
+	} catch (error) {
+		console.error(&#039;Error marking task as viewed:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to mark task as viewed&#039; })
+	}
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

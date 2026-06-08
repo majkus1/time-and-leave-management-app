@@ -1,5 +1,7 @@
 const { isHoliday } = require('../utils/holidays')
 const { normalizeWorkdayPayload, toWarsawYmd } = require('../utils/workdayEntryValidation')
+const { mergeWorkBlocksIntoPayload } = require('../services/workdayPayloadService')
+const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
 
 const MAX_BULK_FILL_DAYS = 62
 
@@ -47,6 +49,8 @@ function hasExistingEntry(workday) {
 		(workday.realTimeDayWorked && String(workday.realTimeDayWorked).trim() !== '') ||
 		(workday.absenceType && String(workday.absenceType).trim() !== '' && String(workday.absenceType).trim().toLowerCase() !== 'null') ||
 		(workday.notes && String(workday.notes).trim() !== '') ||
+		(Array.isArray(workday.manualActivityBlocks) && workday.manualActivityBlocks.some(b => b && b.hours > 0)) ||
+		(Array.isArray(workday.manualTaskBlocks) && workday.manualTaskBlocks.some(b => b && b.hours > 0)) ||
 		(Array.isArray(workday.timeEntries) && workday.timeEntries.length > 0) ||
 		(workday.activeTimer && workday.activeTimer.startTime)
 	)
@@ -65,7 +69,7 @@ function isHalfHourStep(value) {
 	return Number.isFinite(doubled) && Math.abs(doubled - Math.round(doubled)) < 0.01
 }
 
-function ensureValidBulkPayload(body) {
+async function ensureValidBulkPayload(body, settings, allowedTasksById = new Map()) {
 	const startDate = parseYmd(body?.startDate)
 	const endDate = parseYmd(body?.endDate)
 	if (!startDate || !endDate || startDate > endDate) {
@@ -77,13 +81,20 @@ function ensureValidBulkPayload(body) {
 		return { error: { status: 400, code: 'RANGE_TOO_LONG', message: 'Zakres może obejmować maksymalnie 62 dni.' } }
 	}
 
-	const normalized = normalizeWorkdayPayload({
-		hoursWorked: body.hoursWorked,
-		additionalWorked: body.additionalWorked,
-		realTimeDayWorked: body.realTimeDayWorked,
-		absenceType: body.absenceType,
-		notes: body.notes,
-	})
+	const merged = mergeWorkBlocksIntoPayload(body, settings, allowedTasksById, { locale: 'pl' })
+	if (merged.error) {
+		return {
+			error: {
+				status: 400,
+				code: merged.error.code,
+				message: merged.error.message,
+			},
+		}
+	}
+
+	const normalized = merged.normalized
+	const manualActivityBlocks = merged.manualActivityBlocks
+	const manualTaskBlocks = merged.manualTaskBlocks
 
 	if (!normalized.hasHours && !normalized.hasAbsence) {
 		return { error: { status: 400, code: 'ENTRY_REQUIRED', message: 'Podaj godziny pracy albo typ nieobecności.' } }
@@ -104,7 +115,7 @@ function ensureValidBulkPayload(body) {
 		return { error: { status: 400, code: 'INVALID_OVERTIME', message: 'Nadgodziny muszą być od 0 do 100 co 0,5 h.' } }
 	}
 
-	return { startDate, endDate, dates, normalized }
+	return { startDate, endDate, dates, normalized, manualActivityBlocks, manualTaskBlocks }
 }
 
 async function bulkFillWorkdays({
@@ -123,10 +134,13 @@ async function bulkFillWorkdays({
 		return { error: { status: 400, code: 'NO_SETTINGS', message: 'Brak ustawień zespołu.' } }
 	}
 
-	const parsed = ensureValidBulkPayload(body)
+	const allowedTasks = await fetchTimesheetTasksForUser(targetUser._id, targetUser.teamId, targetUser)
+	const allowedTasksById = tasksToAllowedMap(allowedTasks)
+
+	const parsed = await ensureValidBulkPayload(body, settings, allowedTasksById)
 	if (parsed.error) return parsed
 
-	const { startDate, endDate, dates, normalized } = parsed
+	const { startDate, endDate, dates, normalized, manualActivityBlocks, manualTaskBlocks } = parsed
 	const todayYmd = toWarsawYmd(new Date())
 
 	if (settings.workdayEntriesOnlyToday === true && (dates.length !== 1 || dates[0] !== todayYmd)) {
@@ -210,6 +224,8 @@ async function bulkFillWorkdays({
 			realTimeDayWorked: normalized.hasHours ? normalized.realTimeDayWorked || null : null,
 			absenceType: normalized.hasAbsence ? normalized.absenceType : null,
 			notes: normalized.notes || null,
+			manualActivityBlocks: normalized.hasHours && manualActivityBlocks.length ? manualActivityBlocks : [],
+			manualTaskBlocks: normalized.hasHours && manualTaskBlocks.length ? manualTaskBlocks : [],
 			lastChangedBy: actorUserId,
 		})
 	}

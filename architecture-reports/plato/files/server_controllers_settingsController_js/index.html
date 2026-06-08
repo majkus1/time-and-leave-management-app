@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\controllers\settingsController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\controllers\settingsController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">62.50</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">259</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">69.11</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.93</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const Settings = require(&#039;../models/Settings&#039;)(firmDb)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const entitlementsService = require(&#039;../services/entitlementsService&#039;)
+
+async function loadTeamForEntitlements(teamId) {
+	if (!teamId) return null
+	return Team.findById(teamId).select(
+		&#039;name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive&#039;
+	)
+}
+
+/** Freemium: pracownicy bez dostępu + ewidencja tak; wnioski urlopowe za pracownika — nie. */
+function applyFreemiumManagedNoAccessPolicy(team, settings) {
+	if (!settings || !entitlementsService.isFreemiumTierTeam(team)) return
+	settings.allowManagedLeaveRequests = false
+}
+
+exports.getSettings = async (req, res) =&gt; {
+	try {
+		// Pobierz teamId z użytkownika
+		const requestingUser = await require(&#039;../models/user&#039;)(firmDb).findById(req.user.userId)
+		if (!requestingUser || !requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+
+		await entitlementsService.syncTimerEnabledSettingForTeam(requestingUser.teamId)
+
+		const settings = await Settings.getSettings(requestingUser.teamId)
+		const team = await loadTeamForEntitlements(requestingUser.teamId)
+		applyFreemiumManagedNoAccessPolicy(team, settings)
+		res.json(settings)
+	} catch (error) {
+		console.error(&#039;Error retrieving settings:&#039;, error)
+		res.status(500).send(&#039;Failed to retrieve settings.&#039;)
+	}
+}
+
+exports.updateSettings = async (req, res) =&gt; {
+	try {
+		const {
+			workOnWeekends,
+			includePolishHolidays,
+			includeCustomHolidays,
+			customHolidays,
+			workHours,
+			leaveRequestTypes,
+			leaveCalculationMode,
+			leaveHoursPerDay,
+			timerEnabled,
+			allowManagedNoAccessUsers,
+			allowManagedWorkdayEntries,
+			allowManagedLeaveRequests,
+			workdayEntriesOnlyToday,
+		} = req.body
+		
+		// Sprawdź uprawnienia - tylko Admin i HR
+		const requestingUser = await require(&#039;../models/user&#039;)(firmDb).findById(req.user.userId)
+		if (!requestingUser) {
+			return res.status(403).send(&#039;Access denied&#039;)
+		}
+		
+		const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+		const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+		
+		if (!isAdmin &amp;&amp; !isHR) {
+			return res.status(403).send(&#039;Access denied. Only Admin and HR can update settings.&#039;)
+		}
+		
+		// Pobierz teamId z użytkownika
+		if (!requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+		
+		// Pobierz lub utwórz ustawienia dla zespołu
+		let settings = await Settings.getSettings(requestingUser.teamId)
+		if (workOnWeekends !== undefined) {
+			settings.workOnWeekends = workOnWeekends
+		}
+		if (includePolishHolidays !== undefined) {
+			settings.includePolishHolidays = includePolishHolidays
+		}
+		if (includeCustomHolidays !== undefined) {
+			settings.includeCustomHolidays = includeCustomHolidays
+		}
+		if (Array.isArray(customHolidays)) {
+			// Walidacja customHolidays - każdy element musi mieć date i name
+			const validCustomHolidays = customHolidays
+				.filter(h =&gt; h &amp;&amp; h.date &amp;&amp; h.name &amp;&amp; typeof h.date === &#039;string&#039; &amp;&amp; typeof h.name === &#039;string&#039;)
+				.map(h =&gt; ({
+					date: h.date,
+					name: h.name.trim()
+				}))
+			settings.customHolidays = validCustomHolidays
+		}
+
+		// Obsługa workHours (tablica konfiguracji godzin pracy)
+		if (workHours !== undefined) {
+			// Helper function to calculate hours from time range
+			const calculateHours = (timeFrom, timeTo) =&gt; {
+				if (!timeFrom || !timeTo) return null
+				const parseTime = (timeStr) =&gt; {
+					const [hours, minutes] = timeStr.split(&#039;:&#039;).map(Number)
+					return hours + minutes / 60
+				}
+				const from = parseTime(timeFrom)
+				const to = parseTime(timeTo)
+				let hours = to - from
+				if (hours &lt; 0) hours += 24 // Handle overnight shifts
+				return Math.round(hours * 100) / 100
+			}
+
+			if (workHours === null) {
+				// Usuń wszystkie workHours jeśli null
+				settings.workHours = []
+			} else if (Array.isArray(workHours)) {
+				// Walidacja i przetwarzanie tablicy konfiguracji
+				const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+				const validWorkHours = workHours
+					.filter(wh =&gt; wh &amp;&amp; wh.timeFrom &amp;&amp; wh.timeTo)
+					.map(wh =&gt; {
+						// Walidacja formatu czasu
+						if (!timeRegex.test(wh.timeFrom) || !timeRegex.test(wh.timeTo)) {
+							return null
+						}
+						const calculatedHours = calculateHours(wh.timeFrom, wh.timeTo)
+						return {
+							timeFrom: wh.timeFrom,
+							timeTo: wh.timeTo,
+							hours: calculatedHours
+						}
+					})
+					.filter(wh =&gt; wh !== null) // Usuń nieprawidłowe wpisy
+				
+				settings.workHours = validWorkHours
+			} else {
+				// Kompatybilność wsteczna: jeśli przysłano stary format (obiekt), zamień na tablicę
+				if (workHours.timeFrom &amp;&amp; workHours.timeTo) {
+					const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+					if (!timeRegex.test(workHours.timeFrom) || !timeRegex.test(workHours.timeTo)) {
+						return res.status(400).send(&#039;Invalid time format for work hours. Use HH:mm.&#039;)
+					}
+					const calculatedHours = calculateHours(workHours.timeFrom, workHours.timeTo)
+					settings.workHours = [{
+						timeFrom: workHours.timeFrom,
+						timeTo: workHours.timeTo,
+						hours: calculatedHours
+					}]
+				} else {
+					settings.workHours = []
+				}
+			}
+		}
+
+		// Obsługa leaveRequestTypes - tylko Admin i HR mogą modyfikować
+		if (leaveRequestTypes !== undefined &amp;&amp; Array.isArray(leaveRequestTypes)) {
+			// Walidacja typów
+			const validTypes = leaveRequestTypes.filter(type =&gt; {
+				return type &amp;&amp; 
+					typeof type.id === &#039;string&#039; &amp;&amp; type.id.trim() !== &#039;&#039; &amp;&amp;
+					typeof type.name === &#039;string&#039; &amp;&amp; type.name.trim() !== &#039;&#039; &amp;&amp;
+					typeof type.isSystem === &#039;boolean&#039; &amp;&amp;
+					typeof type.isEnabled === &#039;boolean&#039; &amp;&amp;
+					typeof type.requireApproval === &#039;boolean&#039; &amp;&amp;
+				typeof type.allowDaysLimit === &#039;boolean&#039; &amp;&amp;
+				(type.minDaysBefore === null || type.minDaysBefore === undefined || (typeof type.minDaysBefore === &#039;number&#039; &amp;&amp; type.minDaysBefore &gt; 0))
+		}).map(type =&gt; ({
+			id: type.id.trim(),
+			name: type.name.trim(),
+			nameEn: type.nameEn ? type.nameEn.trim() : undefined,
+			isSystem: type.isSystem,
+			isEnabled: type.isEnabled,
+			requireApproval: type.requireApproval,
+			allowDaysLimit: type.allowDaysLimit,
+			minDaysBefore: type.minDaysBefore !== null &amp;&amp; type.minDaysBefore !== undefined &amp;&amp; type.minDaysBefore &gt; 0 ? type.minDaysBefore : null
+			}))
+			
+			// Nie można usuwać typów systemowych, tylko je włączać/wyłączać
+			// Zachowaj istniejące typy systemowe, które nie są w nowej liście (mogły być wyłączone)
+			const systemTypeIds = new Set([&#039;leaveform.option1&#039;, &#039;leaveform.option2&#039;, &#039;leaveform.option3&#039;, &#039;leaveform.option4&#039;, &#039;leaveform.option5&#039;, &#039;leaveform.option6&#039;])
+			const existingSystemTypes = (settings.leaveRequestTypes || []).filter(t =&gt; t.isSystem &amp;&amp; systemTypeIds.has(t.id))
+			const newSystemTypes = validTypes.filter(t =&gt; t.isSystem &amp;&amp; systemTypeIds.has(t.id))
+			const customTypes = validTypes.filter(t =&gt; !t.isSystem)
+			
+			// Połącz typy systemowe z nowych z istniejącymi (aby zachować te, które nie zostały przesłane)
+			const finalSystemTypes = existingSystemTypes.map(existing =&gt; {
+				const updated = newSystemTypes.find(n =&gt; n.id === existing.id)
+				return updated || existing
+			})
+			
+			// Dodaj nowe typy systemowe, które nie były w istniejących
+			newSystemTypes.forEach(newType =&gt; {
+				if (!finalSystemTypes.find(t =&gt; t.id === newType.id)) {
+					finalSystemTypes.push(newType)
+				}
+			})
+			
+			settings.leaveRequestTypes = [...finalSystemTypes, ...customTypes]
+		}
+
+		// Obsługa leaveCalculationMode i leaveHoursPerDay
+		if (leaveCalculationMode !== undefined &amp;&amp; [&#039;days&#039;, &#039;hours&#039;].includes(leaveCalculationMode)) {
+			settings.leaveCalculationMode = leaveCalculationMode
+		}
+		if (leaveHoursPerDay !== undefined &amp;&amp; typeof leaveHoursPerDay === &#039;number&#039; &amp;&amp; leaveHoursPerDay &gt;= 0.5 &amp;&amp; leaveHoursPerDay &lt;= 24) {
+			settings.leaveHoursPerDay = leaveHoursPerDay
+		}
+		
+		// Obsługa timerEnabled — zgodnie z mayEnableTimerQrByBilling (jak planModuleApiGuard)
+		if (timerEnabled !== undefined &amp;&amp; typeof timerEnabled === &#039;boolean&#039;) {
+			if (timerEnabled === true) {
+				const Team = require(&#039;../models/Team&#039;)(firmDb)
+				const team = await Team.findById(requestingUser.teamId).select(
+					&#039;name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive&#039;
+				)
+				if (!entitlementsService.mayEnableTimerQrByBilling(team, new Date())) {
+					return res.status(400).json({
+						success: false,
+						message:
+							&#039;Włączenie licznika i QR wymaga modułu Timer + QR albo pakietu PRO / BUSINESS / ENTERPRISE.&#039;,
+					})
+				}
+			}
+			settings.timerEnabled = timerEnabled
+		}
+
+		if (allowManagedNoAccessUsers !== undefined &amp;&amp; typeof allowManagedNoAccessUsers === &#039;boolean&#039;) {
+			settings.allowManagedNoAccessUsers = allowManagedNoAccessUsers
+			if (!allowManagedNoAccessUsers) {
+				settings.allowManagedWorkdayEntries = false
+				settings.allowManagedLeaveRequests = false
+			}
+		}
+		if (allowManagedWorkdayEntries !== undefined &amp;&amp; typeof allowManagedWorkdayEntries === &#039;boolean&#039;) {
+			settings.allowManagedWorkdayEntries = allowManagedWorkdayEntries
+		}
+		if (allowManagedLeaveRequests !== undefined &amp;&amp; typeof allowManagedLeaveRequests === &#039;boolean&#039;) {
+			settings.allowManagedLeaveRequests = allowManagedLeaveRequests
+		}
+		if (workdayEntriesOnlyToday !== undefined &amp;&amp; typeof workdayEntriesOnlyToday === &#039;boolean&#039;) {
+			settings.workdayEntriesOnlyToday = workdayEntriesOnlyToday
+		}
+
+		if (!settings.allowManagedNoAccessUsers) {
+			settings.allowManagedWorkdayEntries = false
+			settings.allowManagedLeaveRequests = false
+		}
+
+		const team = await loadTeamForEntitlements(requestingUser.teamId)
+		applyFreemiumManagedNoAccessPolicy(team, settings)
+
+		await settings.save()
+		
+		res.json(settings)
+	} catch (error) {
+		console.error(&#039;Error updating settings:&#039;, error)
+		res.status(500).send(&#039;Failed to update settings.&#039;)
+	}
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

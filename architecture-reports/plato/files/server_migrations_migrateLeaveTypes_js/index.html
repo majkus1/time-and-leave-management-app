@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\migrations\migrateLeaveTypes.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\migrations\migrateLeaveTypes.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">49.85</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">149</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">35.96</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.70</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+ * Migracja danych dla nowego systemu typów wniosków urlopowych
+ * 
+ * 1. Inicjalizuje domyślne typy systemowe w Settings dla wszystkich zespołów
+ * 2. Przenosi vacationDays użytkowników na leaveTypeDays dla typu &#039;leaveform.option1&#039; (Urlop wypoczynkowy)
+ * 
+ * Użycie:
+ *   node server/migrations/migrateLeaveTypes.js
+ */
+
+const path = require(&#039;path&#039;);
+const fs = require(&#039;fs&#039;);
+
+// Załaduj .env z folderu server/
+const envPath = path.join(__dirname, &#039;..&#039;, &#039;.env&#039;);
+if (fs.existsSync(envPath)) {
+	require(&#039;dotenv&#039;).config({ path: envPath });
+} else {
+	console.error(`❌ Nie znaleziono pliku .env w: ${envPath}`);
+	console.error(&#039;   Upewnij się, że plik server/.env istnieje&#039;);
+	process.exit(1);
+}
+
+const mongoose = require(&#039;mongoose&#039;);
+const { firmDb } = require(&#039;../db/db&#039;);
+const Settings = require(&#039;../models/Settings&#039;)(firmDb);
+const User = require(&#039;../models/user&#039;)(firmDb);
+const Team = require(&#039;../models/Team&#039;)(firmDb);
+
+// Domyślne typy systemowe (taki sam jak w Settings.js)
+const getDefaultSystemLeaveTypes = () =&gt; [
+	{ id: &#039;leaveform.option1&#039;, name: &#039;Urlop wypoczynkowy&#039;, nameEn: &#039;Paid Vacation&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: true },
+	{ id: &#039;leaveform.option2&#039;, name: &#039;Urlop okolicznościowy&#039;, nameEn: &#039;Special Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option3&#039;, name: &#039;Urlop na żądanie&#039;, nameEn: &#039;On-Demand Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option4&#039;, name: &#039;Urlop bezpłatny&#039;, nameEn: &#039;Unpaid Leave&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option5&#039;, name: &#039;Inna nieobecność&#039;, nameEn: &#039;Other Absence&#039;, isSystem: true, isEnabled: true, requireApproval: true, allowDaysLimit: false },
+	{ id: &#039;leaveform.option6&#039;, name: &#039;Zwolnienie Lekarskie (L4)&#039;, nameEn: &#039;Sick Leave (L4)&#039;, isSystem: true, isEnabled: true, requireApproval: false, allowDaysLimit: false }
+];
+
+async function migrateLeaveTypes() {
+	try {
+		console.log(&#039;🔄 Rozpoczynam migrację typów wniosków urlopowych...\n&#039;);
+
+		// Krok 1: Inicjalizuj domyślne typy systemowe w Settings dla wszystkich zespołów
+		console.log(&#039;📋 Krok 1: Inicjalizacja domyślnych typów systemowych w Settings...&#039;);
+		const teams = await Team.find({ 
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] 
+		}).select(&#039;_id name&#039;);
+		
+		let settingsUpdated = 0;
+		for (const team of teams) {
+			let settings = await Settings.findOne({ teamId: team._id });
+			
+			if (!settings) {
+				// Utwórz nowe ustawienia z domyślnymi typami
+				settings = await Settings.create({
+					teamId: team._id,
+					workOnWeekends: true,
+					includePolishHolidays: false,
+					includeCustomHolidays: false,
+					customHolidays: [],
+					leaveRequestTypes: getDefaultSystemLeaveTypes()
+				});
+				settingsUpdated++;
+				console.log(`   ✅ Utworzono Settings dla zespołu: ${team.name || team._id}`);
+			} else {
+				// Sprawdź czy leaveRequestTypes istnieje i czy zawiera wszystkie typy systemowe
+				if (!settings.leaveRequestTypes || settings.leaveRequestTypes.length === 0) {
+					settings.leaveRequestTypes = getDefaultSystemLeaveTypes();
+					await settings.save();
+					settingsUpdated++;
+					console.log(`   ✅ Zaktualizowano Settings dla zespołu: ${team.name || team._id} (dodano typy systemowe)`);
+				} else {
+					// Upewnij się, że wszystkie typy systemowe są obecne
+					const defaultTypes = getDefaultSystemLeaveTypes();
+					const existingTypeIds = new Set(settings.leaveRequestTypes.map(t =&gt; t.id));
+					const systemTypesToAdd = defaultTypes.filter(dt =&gt; !existingTypeIds.has(dt.id));
+					
+					if (systemTypesToAdd.length &gt; 0) {
+						settings.leaveRequestTypes.push(...systemTypesToAdd);
+						await settings.save();
+						settingsUpdated++;
+						console.log(`   ✅ Zaktualizowano Settings dla zespołu: ${team.name || team._id} (dodano brakujące typy systemowe)`);
+					}
+				}
+			}
+		}
+		
+		console.log(`\n✅ Zaktualizowano Settings dla ${settingsUpdated} zespołów\n`);
+
+		// Krok 2: Przenieś vacationDays na leaveTypeDays dla typu &#039;leaveform.option1&#039;
+		console.log(&#039;👥 Krok 2: Migracja vacationDays na leaveTypeDays...&#039;);
+		const users = await User.find({
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+		}).select(&#039;_id username firstName lastName vacationDays leaveTypeDays&#039;);
+		
+		let usersUpdated = 0;
+		for (const user of users) {
+			let needsUpdate = false;
+			
+			// Sprawdź czy użytkownik ma vacationDays i czy nie ma jeszcze leaveTypeDays dla option1
+			if (user.vacationDays &amp;&amp; user.vacationDays &gt; 0) {
+				// Inicjalizuj leaveTypeDays jeśli nie istnieje
+				if (!user.leaveTypeDays || typeof user.leaveTypeDays !== &#039;object&#039;) {
+					user.leaveTypeDays = {};
+				}
+				
+				// Sprawdź czy już ma leaveTypeDays dla option1
+				const currentValue = user.leaveTypeDays[&#039;leaveform.option1&#039;];
+				if (!currentValue || currentValue === 0) {
+					user.leaveTypeDays[&#039;leaveform.option1&#039;] = user.vacationDays;
+					needsUpdate = true;
+				}
+			}
+			
+			if (needsUpdate) {
+				// Oznacz pole jako zmodyfikowane, aby Mongoose zapisał zmiany (ważne dla Mixed type)
+				user.markModified(&#039;leaveTypeDays&#039;);
+				await user.save();
+				usersUpdated++;
+				console.log(`   ✅ Zaktualizowano użytkownika: ${user.firstName} ${user.lastName} (${user.username}) - przeniesiono ${user.vacationDays} dni urlopu`);
+			}
+		}
+		
+		console.log(`\n✅ Zaktualizowano ${usersUpdated} użytkowników\n`);
+
+		console.log(&#039;=&#039;.repeat(60));
+		console.log(&#039;📊 PODSUMOWANIE MIGRACJI&#039;);
+		console.log(&#039;=&#039;.repeat(60));
+		console.log(`✅ Zaktualizowano Settings: ${settingsUpdated} zespołów`);
+		console.log(`✅ Zaktualizowano użytkowników: ${usersUpdated}`);
+		console.log(&#039;=&#039;.repeat(60));
+		console.log(&#039;\n✅ Migracja zakończona pomyślnie!&#039;);
+		
+	} catch (error) {
+		console.error(&#039;\n❌ Błąd podczas migracji:&#039;, error);
+		process.exit(1);
+	} finally {
+		await mongoose.connection.close();
+		console.log(&#039;\n🔌 Zamknięto połączenie z bazą danych&#039;);
+		process.exit(0);
+	}
+}
+
+// Uruchom migrację
+migrateLeaveTypes().catch(error =&gt; {
+	console.error(&#039;❌ Nieoczekiwany błąd:&#039;, error);
+	process.exit(1);
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

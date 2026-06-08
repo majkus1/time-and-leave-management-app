@@ -1,6 +1,6 @@
 # Planopia — kontekst dla asystenta AI
 
-Planopia to aplikacja webowa (PWA) do ewidencji czasu pracy i timera, wniosków urlopowych, **grafików (harmonogramów)** — w tym **auto-uzupełniania miesiąca** oraz **osobnego panelu AI do szkicu grafiku** na stronie harmonogramu — tablic zadań (Kanban), czatu zespołowego, komunikatów, **globalnego AI Asystenta** (`/ai-assistant`), **pakietów i rozliczeń** (`/packages`: plany, limity, wykorzystanie AI zespołu, dokumenty prawne) oraz typowych modułów HR (ustawienia zespołu, listy urlopów, ewidencje, dokumenty, pomoc). Dane są izolowane per zespół (multi-tenant).
+Planopia to aplikacja webowa (PWA) do ewidencji czasu pracy i timera, wniosków urlopowych, **grafików (harmonogramów)** — w tym **auto-uzupełniania miesiąca** oraz **osobnego panelu AI do szkicu grafiku** na stronie harmonogramu — tablic zadań (Kanban), czatu zespołowego, komunikatów, **globalnego AI Asystenta** (`/ai-assistant`), **pakietów i rozliczeń** (`/packages`: plany, limity, wykorzystanie AI zespołu, dokumenty prawne) oraz typowych modułów HR (ustawienia zespołu, listy urlopów, ewidencje, raporty, dokumenty, pomoc). Dane są izolowane per zespół (multi-tenant).
 
 W kontekście technicznym zawsze jest też **zrzut danych zespołu** w sekcji „DATA CONTEXT”: m.in. konfiguracja (`workOnWeekends`, święta niestandardowe, sloty `workHours`, typy urlopów, timer, tablice, grafiki). **Pytania „ile godzin / kto / jaki status”** — odpowiadaj wyłącznie na podstawie DATA CONTEXT.
 
@@ -113,8 +113,18 @@ Planopia ma opcjonalną funkcję **Pracownicy bez dostępu**. Jest przydatna, gd
 
 - **Timer** (jeśli włączony w ustawieniach zespołu): rejestracja pracy z opisem sesji; wpływa na ewidencję dnia.
 - **Workdays**: dni ewidencji; godziny, notatki dnia, nieobecności, sesje timera z opisami.
+- **Zadania w ewidencji**: godziny dnia mogą być opcjonalnie przypisane do zadań z tablic Kanban. To jest rozbicie czasu w ewidencji, a nie to samo co lista kart Kanban.
+- **Czynności w ewidencji**: zespół może skonfigurować własne czynności pracy, np. produkcja, magazyn, montaż, transport. Przy wpisie ręcznym i przy zakończeniu timera użytkownik może przypisać czas do czynności.
+- **Mierzenie wykonania / wydajności**: dla wybranej czynności Admin może włączyć mierzenie wykonania i jednostkę, np. m², mb, szt., kg. Wtedy przy wpisie lub zakończeniu timera można podać ilość wykonania, a system może wyliczyć prostą wydajność, np. ilość / godziny. Nie każda czynność musi mieć mierzalny output.
+- **Snapshoty historii**: wpisy ewidencji przechowują kontekst czynności / zadania z momentu wpisu (np. nazwę czynności, jednostkę, tytuł zadania), żeby stare raporty zachowały sens także po zmianach konfiguracji.
 - Ustawienia typu **weekendy jako dni pracy** zależą od konfiguracji zespołu — opisuj je słowami, nie nazwami pól technicznych.
 - DATA CONTEXT może zawierać ustawienia `managedNoAccessUsers`, `managedWorkdayEntries`, `managedLeaveRequests`, `workdayEntriesOnlyToday`. W odpowiedzi dla użytkownika tłumacz je zwykłym językiem, np. „włączone dodawanie pracowników bez dostępu” albo „wpisy można dodawać tylko na dziś”.
+
+**Jak odpowiadać o wydajności:**
+
+- Traktuj ilość i wydajność jako dane operacyjne do planowania, kontroli procesu i raportowania, nie jako ocenę pracownika.
+- Jeśli brak ilości albo czynność nie ma włączonego mierzenia wykonania, nie wyliczaj wydajności na siłę.
+- Przy raportach pokazuj godziny, ilości, jednostki i wydajność tylko na podstawie DATA CONTEXT.
 
 ---
 
@@ -170,6 +180,7 @@ Ręczne dodawanie / edycja wpisów w siatce dni nadal jest dostępna (formularz 
 - Ścieżka: `/ai-assistant`.
 - Pytania o **Planopię** (funkcje, nawigacja, dane zespołu): **DATA CONTEXT** (dane za wybrany okres) oraz **ten dokument**. Pytania **ogólne** (nauka, zadania, programowanie, porady itd.): odpowiedź z wiedzy ogólnej — bez zmyślania liczb z kontekstu zespołu.
 - **Eksport Excel/PDF**: przyciski **pod** odpowiedzią asystenta (nie w treści czatu) uruchamiają pobranie z bazy — zgodnie z instrukcją systemową w prompcie.
+- **Raporty i podsumowania**: gdy użytkownik prosi o raport, asystent powinien myśleć biznesowo: KPI, obciążenie, trendy miesięczne/roczne, urlopy i ryzyka obsady, zadania, czynności, wykonanie i wydajność — ale tylko jeśli takie dane są w DATA CONTEXT i w zakresie roli użytkownika.
 - **Uwaga:** **szkic grafiku przez AI** jest w **module Grafiki** (osobny panel), nie w tym czacie — opis wyżej w sekcji „AI — szkic grafiku”.
 
 ---
@@ -185,6 +196,7 @@ Ręczne dodawanie / edycja wpisów w siatce dni nadal jest dostępna (formularz 
 ### Skrót: co Planopia potrafi (pytania „co to za apka / co oferujecie”)
 
 - **Czas pracy**: dashboard, timer (jeśli włączony), wpisy dnia, nadgodziny, nieobecności, eksporty / podsumowania przez AI w wybranym okresie.
+- **Czynności i wydajność**: opcjonalne rozbijanie godzin na czynności, mierzenie ilości wykonania w jednostkach i proste metryki wydajności, jeśli zespół to skonfigurował.
 - **Urlopy**: zgłaszanie, akceptacje, kalendarze, plany urlopowe, PDF podglądu wniosku.
 - **Pracownicy bez dostępu**: opcjonalne osoby bez logowania, liczone do limitu zespołu; ewidencja, wnioski, potwierdzanie miesiąca i zatwierdzanie dni przez Admina / HR / uprawnionego przełożonego.
 - **Grafiki**: widok miesiąca, ręczne wpisy, **auto-uzupełnienie miesiąca** (reguły), **panel AI szkicu** na stronie grafiku.
@@ -203,7 +215,9 @@ Jeśli w prompcie jest blok **POLSKIE ŚWIĘTA** / **POLISH PUBLIC HOLIDAYS**, t
 
 ## Słownik danych w kontekście (skrót)
 
-- **Workdays**: godziny, notatki, nieobecności, sesje timera.
+- **Workdays**: godziny, notatki, nieobecności, sesje timera, opcjonalne rozbicia godzin na czynności i zadania.
+- **Activity blocks / czynności**: nazwa czynności, grupa, godziny, opcjonalna ilość, jednostka i wydajność, jeśli mierzenie wykonania jest włączone.
+- **Task blocks / zadania w ewidencji**: godziny przypisane do zadań z tablic w konkretnych dniach; to uzupełnia, ale nie zastępuje listy kart Kanban.
 - **Leave requests**: typ, daty, statusy (pending, accepted, rejected, sent) — w Asystencie dla **całego aktywnego zespołu**.
 - **Users in scope**: przy użytkownikach może być `access:app-access` albo `access:no-app-access`; `managedOnly:true` oznacza pracownika bez dostępu do aplikacji.
 - **Tasks**: status Kanban, tablica, przypisania.

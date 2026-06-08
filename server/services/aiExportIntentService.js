@@ -27,7 +27,7 @@ function messageSuggestsDatabaseExport(text) {
 	// Uwaga: „podsumuj” nie zawiera podciągu „podsumow” — używamy szerszego `podsumu`.
 	// EN: summarize, period, database, overview.
 	const wantsData =
-		/(urlop|leave|wniosk|nieobec|ewidencj|work\s*day|czas\w*\s+pracy|time\s*sheet|godzin|hours|zadani|task|kanban|tablic|board|podsumu|okres|timer|sesj|raport|dane|summar|period|database|overview)/i.test(
+		/(urlop|leave|wniosk|nieobec|ewidencj|work\s*day|czas\w*\s+pracy|time\s*sheet|godzin|hours|zadani|task|kanban|tablic|board|czynno|activit|wydajn|produktyw|wykonan|iloś|ilosc|quantity|output|podsumu|okres|timer|sesj|raport|dane|summar|period|database|overview)/i.test(
 			text
 		)
 	const periodSummary =
@@ -56,11 +56,11 @@ function buildFallbackExportIntent(userMessage) {
 
 	const urlopOnly =
 		/(urlop|wniosk|leave|vacation|nieobecn)/i.test(t) &&
-		!/(podsumu|podsumow|okres|summar|overview|raport|ewidenc|czas|godzin|zadani|task|kanban|tablic)/i.test(t)
+		!/(podsumu|podsumow|okres|summar|overview|raport|ewidenc|czas|godzin|zadani|task|kanban|tablic|czynno|activit|wydajn|produktyw|wykonan|iloś|ilosc|quantity|output)/i.test(t)
 
 	const tasksOnly =
 		/(zadani|task|kanban|tablic|\bboard\b)/i.test(t) &&
-		!/czas\w*\s+pracy|godzin|ewidenc|timer|sesj|przeprac|podsumu|podsumow|okres|summar|overview|raport|urlop|wniosk/i.test(
+		!/czas\w*\s+pracy|godzin|ewidenc|timer|sesj|przeprac|podsumu|podsumow|okres|summar|overview|raport|urlop|wniosk|czynno|activit|wydajn|produktyw|wykonan|iloś|ilosc|quantity|output/i.test(
 			t
 		)
 
@@ -104,8 +104,8 @@ Reply with JSON only, no markdown:
 Rules:
 - wantsExport=true if they ask to generate/export/download a file, spreadsheet, report, excel, pdf of records.
 - wantsExport=false for normal questions without file request.
-- reportType: leaves = only leave requests; workdays = only time tracking / workdays; tasks = only Kanban tasks.
-- reportType combined = full period report: period summary stats + workdays + leave requests + tasks (use when they ask to summarize the period, full overview, or export everything for the period).
+- reportType: leaves = only leave requests; workdays = time tracking / workdays, including timesheet task-hour split, activity split, activity quantity and productivity/efficiency metrics when available; tasks = only Kanban cards/status/deadlines without time entries.
+- reportType combined = full period report: period summary stats + workdays + timesheet activities/task hours + leave requests + Kanban tasks (use when they ask to summarize the period, full overview, or export everything for the period).
 - leaveStatuses must use EXACTLY these strings if listed: status.pending, status.accepted, status.rejected, status.sent. Empty array means all statuses.
 - scopeTarget team = whole team / all employees they may see; department = filter by department name; self = only their own data.
 - departmentHint: short fragment of department name if mentioned, else null.

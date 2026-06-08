@@ -29,10 +29,10 @@ export const useStartTimer = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ workDescription, taskId, isOvertime }) => {
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime }) => {
 			const response = await axios.post(
 				`${API_URL}/api/workdays/timer/start`,
-				{ workDescription, taskId, isOvertime },
+				{ workDescription, taskId, activityId, isOvertime },
 				{ withCredentials: true }
 			)
 			return response.data
@@ -68,10 +68,10 @@ export const useStopTimer = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async () => {
+		mutationFn: async ({ quantity } = {}) => {
 			const response = await axios.post(
 				`${API_URL}/api/workdays/timer/stop`,
-				{},
+				{ quantity },
 				{ withCredentials: true }
 			)
 			return response.data
@@ -89,10 +89,10 @@ export const useUpdateActiveTimer = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ workDescription, taskId, isOvertime }) => {
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime }) => {
 			const response = await axios.put(
 				`${API_URL}/api/workdays/timer/update`,
-				{ workDescription, taskId, isOvertime },
+				{ workDescription, taskId, activityId, isOvertime },
 				{ withCredentials: true }
 			)
 			return response.data
@@ -108,10 +108,10 @@ export const useSplitSession = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ workDescription, taskId, isOvertime }) => {
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime, quantity }) => {
 			const response = await axios.post(
 				`${API_URL}/api/workdays/timer/split`,
-				{ workDescription, taskId, isOvertime },
+				{ workDescription, taskId, activityId, isOvertime, quantity },
 				{ withCredentials: true }
 			)
 			return response.data

@@ -59,6 +59,7 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 		if (
 		pathStartsWithAny(path, [
 			'/api/workdays',
+			'/api/work-activities',
 			'/api/time-entry',
 			'/api/calendar',
 			'/api/departments',
@@ -76,6 +77,8 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 
 const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/workdays',
+	/** Czynności ewidencji — konfiguracja (Admin/HR) i rozbicie wpisów w kalendarzu. */
+	'/api/work-activities',
 	'/api/time-entry',
 	'/api/calendar',
 	'/api/settings',

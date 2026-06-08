@@ -7,6 +7,9 @@ import { useTimerElapsed } from '../../hooks/useTimerElapsed'
 import { formatTimerClock } from '../../utils/timerDisplay'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
+import { useWorkActivities } from '../../hooks/useWorkActivities'
+import { teamHasWorkActivities, getEnabledWorkActivities, getWorkActivityName, findWorkActivityById } from '../../utils/workActivities'
+import { buildTimerSelectValue, parseTimerSelectValue } from '../../utils/timerSessionSelect'
 import { useWorkdays } from '../../hooks/useWorkdays'
 import { isHolidayDate } from '../../utils/holidays'
 import axios from 'axios'
@@ -14,7 +17,7 @@ import { API_URL } from '../../config'
 import Modal from 'react-modal'
 
 function TimerPanel() {
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
 	const { userId } = useAuth()
 	const { data: activeTimer, isLoading: loadingTimer } = useActiveTimer()
@@ -25,13 +28,21 @@ function TimerPanel() {
 	const splitSession = useSplitSession()
 	const { data: acceptedLeaveRequests = [] } = useUserAcceptedLeaveRequests(userId)
 	const { data: settings } = useSettings()
+	const { data: workActivities = [] } = useWorkActivities()
+	const enabledWorkActivities = useMemo(
+		() => getEnabledWorkActivities(workActivities),
+		[workActivities]
+	)
+	const activitiesEnabled = teamHasWorkActivities({ workActivities })
 	const { data: workdays = [] } = useWorkdays()
 	
 	const [workDescription, setWorkDescription] = useState('')
 	const [editingDescription, setEditingDescription] = useState('')
 	const [editingTaskId, setEditingTaskId] = useState('')
+	const [editingActivityId, setEditingActivityId] = useState('')
 	const [editingWorkDescription, setEditingWorkDescription] = useState('')
 	const [selectedTaskId, setSelectedTaskId] = useState('')
+	const [selectedActivityId, setSelectedActivityId] = useState('')
 	const [selectedWorkDescription, setSelectedWorkDescription] = useState('')
 	const [isOvertime, setIsOvertime] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
@@ -41,7 +52,9 @@ function TimerPanel() {
 	const [isSplitting, setIsSplitting] = useState(false)
 	const [newSessionDescription, setNewSessionDescription] = useState('')
 	const [newSessionTaskId, setNewSessionTaskId] = useState('')
+	const [newSessionActivityId, setNewSessionActivityId] = useState('')
 	const [newSessionWorkDescription, setNewSessionWorkDescription] = useState('')
+	const [closingSessionQuantity, setClosingSessionQuantity] = useState('')
 	const timerMetrics = useTimerElapsed(activeTimer)
 	const elapsedTime = timerMetrics?.elapsedSeconds ?? 0
 	const totalBreakTime = timerMetrics?.totalBreakTime ?? 0
@@ -105,6 +118,116 @@ function TimerPanel() {
 		return Array.from(descriptions).sort()
 	}, [sessionsData])
 
+	const applyParsedSessionSelection = (parsed, setters) => {
+		setters.setTaskId(parsed.taskId || '')
+		setters.setActivityId(parsed.activityId || '')
+		if (parsed.activityId || parsed.taskId) {
+			setters.setWorkDescriptionKey('')
+		} else {
+			setters.setWorkDescriptionKey(parsed.workDescription || '')
+		}
+		setters.setDescription(parsed.workDescription || '')
+	}
+
+	const renderSessionSelect = (valueParts, setters) => (
+		<select
+			value={buildTimerSelectValue(valueParts)}
+			onChange={(e) => applyParsedSessionSelection(
+				parseTimerSelectValue(e.target.value, {
+					allTasks,
+					workActivities: enabledWorkActivities,
+					locale: i18n.language,
+				}),
+				setters
+			)}
+			style={{
+				width: '100%',
+				padding: '10px 15px',
+				border: '1px solid #ddd',
+				borderRadius: '6px',
+				fontSize: '14px',
+				marginBottom: '10px',
+				...(setters.style || {}),
+			}}
+		>
+			<option value="">{t('timer.noTask') || '-- Brak wyboru --'}</option>
+			{activitiesEnabled && enabledWorkActivities.length > 0 && (
+				<optgroup label={t('timer.activitiesGroup') || 'Czynności'}>
+					{enabledWorkActivities.map(activity => (
+						<option key={`activity_${activity.id}`} value={`activity_${activity.id}`}>
+							{getWorkActivityName(activity, i18n.language)}
+						</option>
+					))}
+				</optgroup>
+			)}
+			{allTasks.length > 0 && (
+				<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
+					{allTasks.map(task => (
+						<option key={`task_${task._id}`} value={`task_${task._id}`}>
+							{task.title}
+						</option>
+					))}
+				</optgroup>
+			)}
+			{workDescriptions.length > 0 && (
+				<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
+					{workDescriptions.map((desc, idx) => (
+						<option key={`work_${idx}`} value={`work_${desc}`}>
+							{desc}
+						</option>
+					))}
+				</optgroup>
+			)}
+		</select>
+	)
+
+	const activeActivityLabel = useMemo(() => {
+		if (!activeTimer?.activityId) return ''
+		const activity = enabledWorkActivities.find(item => item.id === activeTimer.activityId)
+		return getWorkActivityName(activity, i18n.language)
+	}, [activeTimer?.activityId, enabledWorkActivities, i18n.language])
+
+	const activeMeasuredActivity = useMemo(() => {
+		const activity = findWorkActivityById(enabledWorkActivities, activeTimer?.activityId)
+		return activity?.trackQuantity ? activity : null
+	}, [enabledWorkActivities, activeTimer?.activityId])
+
+	const validateClosingQuantity = async () => {
+		if (!activeMeasuredActivity || closingSessionQuantity === '') return true
+		const quantity = Number(closingSessionQuantity)
+		if (!Number.isFinite(quantity) || quantity < 0) {
+			await showAlert(t('workcalendar.activities.errors.invalidQuantity', { row: 1 }))
+			return false
+		}
+		return true
+	}
+
+	const closingQuantityPayload = () => (
+		activeMeasuredActivity && closingSessionQuantity !== ''
+			? Number(closingSessionQuantity)
+			: null
+	)
+
+	const renderClosingQuantityField = () => {
+		if (!activeMeasuredActivity || activeTimer?.qrCodeId) return null
+		return (
+			<div className="timer-quantity-card">
+				<label>
+					<span>{t('workcalendar.activities.quantityLabel')} ({activeMeasuredActivity.unit})</span>
+					<input
+						type="number"
+						min="0"
+						step="0.01"
+						value={closingSessionQuantity}
+						onChange={(event) => setClosingSessionQuantity(event.target.value)}
+						placeholder="0"
+					/>
+				</label>
+				<small>{t('timer.quantityHint') || 'Uzupełnij po zakończeniu tej sesji, jeśli chcesz liczyć wydajność.'}</small>
+			</div>
+		)
+	}
+
 	// Anchor for total wall time since first Start in this run (split does not reset startTime anchor)
 	useEffect(() => {
 		if (activeTimer?.active && activeTimer.startTime) {
@@ -126,6 +249,10 @@ function TimerPanel() {
 			setEditingDescription('')
 		}
 	}, [activeTimer])
+
+	useEffect(() => {
+		setClosingSessionQuantity('')
+	}, [activeTimer?.activityId, activeTimer?.startTime])
 
 	const formatTime = formatTimerClock
 
@@ -200,10 +327,12 @@ function TimerPanel() {
 			await startTimer.mutateAsync({
 				workDescription: workDescription.trim() || '',
 				taskId: selectedTaskId || null,
+				activityId: selectedActivityId || null,
 				isOvertime
 			})
 			// Clear selections after starting
 			setSelectedTaskId('')
+			setSelectedActivityId('')
 			setSelectedWorkDescription('')
 			await showAlert(t('timer.started') || 'Miłej pracy!')
 		} catch (error) {
@@ -223,10 +352,13 @@ function TimerPanel() {
 
 	const handleStop = async () => {
 		try {
-			await stopTimer.mutateAsync()
+			if (!(await validateClosingQuantity())) return
+			await stopTimer.mutateAsync({ quantity: closingQuantityPayload() })
 			setWorkDescription('')
 			setEditingDescription('')
 			setSelectedTaskId('')
+			setSelectedActivityId('')
+			setClosingSessionQuantity('')
 			setIsOvertime(false)
 			setIsEditing(false)
 			await showAlert(t('timer.stopped') || 'Koniec pracy!')
@@ -248,7 +380,8 @@ function TimerPanel() {
 		try {
 			await updateTimer.mutateAsync({
 				workDescription: editingDescription.trim() || '',
-				taskId: selectedTaskId || null
+				taskId: editingTaskId || null,
+				activityId: editingActivityId || null,
 			})
 			setIsEditing(false)
 			await showAlert(t('timer.updated') || 'Opis zaktualizowany')
@@ -374,14 +507,14 @@ function TimerPanel() {
 								)
 							}
 						</div>
-						{!isEditing && activeTimer.workDescription && (
+						{!isEditing && (activeActivityLabel || activeTimer.workDescription) && (
 							<div style={{
 								marginTop: '10px',
 								fontSize: '14px',
 								color: '#495057',
 								fontStyle: 'italic'
 							}}>
-								{activeTimer.workDescription}
+								{activeActivityLabel || activeTimer.workDescription}
 							</div>
 						)}
 						{(totalBreakTime > 0 || (activeTimer.isOvertime && totalOvertimeTime > 0)) && (
@@ -479,67 +612,15 @@ function TimerPanel() {
 									marginBottom: '10px'
 								}}
 							/>
-							<select
-								value={editingTaskId ? `task_${editingTaskId}` : (editingWorkDescription ? `work_${editingWorkDescription}` : '')}
-								onChange={(e) => {
-									const value = e.target.value
-									
-									// Check if it's a task ID (starts with task_)
-									if (value.startsWith('task_')) {
-										const taskId = value.replace('task_', '')
-										setEditingTaskId(taskId)
-										setEditingWorkDescription('')
-										const task = allTasks.find(t => t._id === taskId)
-										if (task) {
-											setEditingDescription(task.title)
-										}
-									} 
-									// Check if it's a work description (starts with work_)
-									else if (value.startsWith('work_')) {
-										const workDesc = value.replace('work_', '')
-										setEditingWorkDescription(workDesc)
-										setEditingTaskId('')
-										setEditingDescription(workDesc)
-									}
-									// Empty selection
-									else {
-										setEditingTaskId('')
-										setEditingWorkDescription('')
-									}
-								}}
-								style={{
-									width: '100%',
-									padding: '10px 15px',
-									border: '1px solid #ddd',
-									borderRadius: '6px',
-									fontSize: '14px',
-									marginBottom: '10px'
-								}}
-							>
-								<option value="">{t('timer.noTask') || '-- Brak zadania --'}</option>
-								
-								{/* Tasks section */}
-								{allTasks.length > 0 && (
-									<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
-										{allTasks.map(task => (
-											<option key={`task_${task._id}`} value={`task_${task._id}`}>
-												{task.title}
-											</option>
-										))}
-									</optgroup>
-								)}
-								
-								{/* Work descriptions section */}
-								{workDescriptions.length > 0 && (
-									<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
-										{workDescriptions.map((desc, idx) => (
-											<option key={`work_${idx}`} value={`work_${desc}`}>
-												{desc}
-											</option>
-										))}
-									</optgroup>
-								)}
-							</select>
+							{renderSessionSelect(
+								{ activityId: editingActivityId, taskId: editingTaskId, workDescription: editingWorkDescription },
+								{
+									setTaskId: setEditingTaskId,
+									setActivityId: setEditingActivityId,
+									setWorkDescriptionKey: setEditingWorkDescription,
+									setDescription: setEditingDescription,
+								}
+							)}
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
 									onClick={handleUpdateDescription}
@@ -564,6 +645,7 @@ function TimerPanel() {
 										setIsEditing(false)
 										setEditingDescription(activeTimer.workDescription || '')
 										setEditingTaskId('')
+										setEditingActivityId('')
 										setEditingWorkDescription('')
 									}}
 									style={{
@@ -589,6 +671,7 @@ function TimerPanel() {
 									setIsEditing(true)
 									setEditingDescription(activeTimer.workDescription || '')
 									setEditingTaskId(activeTimer.taskId || '')
+									setEditingActivityId(activeTimer.activityId || '')
 									setEditingWorkDescription('')
 								}}
 								style={{
@@ -631,81 +714,35 @@ function TimerPanel() {
 											marginBottom: '10px'
 										}}
 									/>
-									<select
-										value={newSessionTaskId ? `task_${newSessionTaskId}` : (newSessionWorkDescription ? `work_${newSessionWorkDescription}` : '')}
-										onChange={(e) => {
-											const value = e.target.value
-											
-											// Check if it's a task ID (starts with task_)
-											if (value.startsWith('task_')) {
-												const taskId = value.replace('task_', '')
-												setNewSessionTaskId(taskId)
-												setNewSessionWorkDescription('')
-												const task = allTasks.find(t => t._id === taskId)
-												if (task) {
-													setNewSessionDescription(task.title)
-												}
-											} 
-											// Check if it's a work description (starts with work_)
-											else if (value.startsWith('work_')) {
-												const workDesc = value.replace('work_', '')
-												setNewSessionWorkDescription(workDesc)
-												setNewSessionTaskId('')
-												setNewSessionDescription(workDesc)
-											}
-											// Empty selection
-											else {
-												setNewSessionTaskId('')
-												setNewSessionWorkDescription('')
-											}
-										}}
-										style={{
-											width: '100%',
-											padding: '10px 15px',
-											border: '1px solid #ddd',
-											borderRadius: '6px',
-											fontSize: '14px',
-											marginBottom: '10px'
-										}}
-									>
-										<option value="">{t('timer.noTask') || '-- Brak zadania --'}</option>
-										
-										{/* Tasks section */}
-										{allTasks.length > 0 && (
-											<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
-												{allTasks.map(task => (
-													<option key={`task_${task._id}`} value={`task_${task._id}`}>
-														{task.title}
-													</option>
-												))}
-											</optgroup>
-										)}
-										
-										{/* Work descriptions section */}
-										{workDescriptions.length > 0 && (
-											<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
-												{workDescriptions.map((desc, idx) => (
-													<option key={`work_${idx}`} value={`work_${desc}`}>
-														{desc}
-													</option>
-												))}
-											</optgroup>
-										)}
-									</select>
+									{renderSessionSelect(
+										{ activityId: newSessionActivityId, taskId: newSessionTaskId, workDescription: newSessionWorkDescription },
+										{
+											setTaskId: setNewSessionTaskId,
+											setActivityId: setNewSessionActivityId,
+											setWorkDescriptionKey: setNewSessionWorkDescription,
+											setDescription: setNewSessionDescription,
+										}
+									)}
+									{renderClosingQuantityField()}
 									<div style={{ display: 'flex', gap: '10px' }}>
 										<button
 											onClick={async () => {
 												try {
+													if (!(await validateClosingQuantity())) return
 													await splitSession.mutateAsync({
 														workDescription: newSessionDescription.trim() || '',
 														taskId: newSessionTaskId || null,
-														isOvertime: activeTimer.isOvertime
+														activityId: newSessionActivityId || null,
+														isOvertime: activeTimer.isOvertime,
+														quantity: closingQuantityPayload(),
 													})
 													setHasSplitSessionInRun(true)
 													setIsSplitting(false)
 													setNewSessionDescription('')
 													setNewSessionTaskId('')
+													setNewSessionActivityId('')
 													setNewSessionWorkDescription('')
+													setClosingSessionQuantity('')
 													await showAlert(t('timer.sessionSaved') || 'Sesja zapisana, kontynuacja z nowym opisem')
 												} catch (error) {
 													console.error('Error splitting session:', error)
@@ -733,6 +770,7 @@ function TimerPanel() {
 												setIsSplitting(false)
 												setNewSessionDescription('')
 												setNewSessionTaskId('')
+												setNewSessionActivityId('')
 												setNewSessionWorkDescription('')
 											}}
 											style={{
@@ -813,6 +851,8 @@ function TimerPanel() {
 							</span>
 						</label>
 					</div>
+
+					{!isSplitting && renderClosingQuantityField()}
 
 					{/* Control buttons */}
 					<div style={{
@@ -898,69 +938,18 @@ function TimerPanel() {
 							fontWeight: '500',
 							color: '#2c3e50'
 						}}>
-							{t('timer.selectTask') || 'Lub wybierz zadanie lub opis pracy (opcjonalnie)'}
+							{t('timer.selectTask') || 'Lub wybierz czynność, zadanie lub opis (opcjonalnie)'}
 						</label>
-						<select
-							value={selectedTaskId ? `task_${selectedTaskId}` : (selectedWorkDescription ? `work_${selectedWorkDescription}` : '')}
-							onChange={(e) => {
-								const value = e.target.value
-								
-								// Check if it's a task ID (starts with task_)
-								if (value.startsWith('task_')) {
-									const taskId = value.replace('task_', '')
-									setSelectedTaskId(taskId)
-									setSelectedWorkDescription('')
-									const task = allTasks.find(t => t._id === taskId)
-									if (task) {
-										setWorkDescription(task.title)
-									}
-								} 
-								// Check if it's a work description (starts with work_)
-								else if (value.startsWith('work_')) {
-									const workDesc = value.replace('work_', '')
-									setSelectedWorkDescription(workDesc)
-									setSelectedTaskId('')
-									setWorkDescription(workDesc)
-								}
-								// Empty selection
-								else {
-									setSelectedTaskId('')
-									setSelectedWorkDescription('')
-									setWorkDescription('')
-								}
-							}}
-							style={{
-								width: '100%',
-								padding: '10px 15px',
-								border: '1px solid #ddd',
-								borderRadius: '6px',
-								fontSize: '14px'
-							}}
-						>
-							<option value="">{t('timer.noTask') || '-- Brak zadania --'}</option>
-							
-							{/* Tasks section */}
-							{allTasks.length > 0 && (
-								<optgroup label={t('timer.tasksGroup') || 'Zadania z tablic'}>
-									{allTasks.map(task => (
-										<option key={`task_${task._id}`} value={`task_${task._id}`}>
-											{task.title}
-										</option>
-									))}
-								</optgroup>
-							)}
-							
-							{/* Work descriptions section */}
-							{workDescriptions.length > 0 && (
-								<optgroup label={t('timer.workDescriptionsGroup') || 'Opisy pracy z tego miesiąca'}>
-									{workDescriptions.map((desc, idx) => (
-										<option key={`work_${idx}`} value={`work_${desc}`}>
-											{desc}
-										</option>
-									))}
-								</optgroup>
-							)}
-						</select>
+						{renderSessionSelect(
+							{ activityId: selectedActivityId, taskId: selectedTaskId, workDescription: selectedWorkDescription },
+							{
+								setTaskId: setSelectedTaskId,
+								setActivityId: setSelectedActivityId,
+								setWorkDescriptionKey: setSelectedWorkDescription,
+								setDescription: setWorkDescription,
+								style: { marginBottom: 0 },
+							}
+						)}
 					</div>
 
 					<div style={{ marginBottom: '20px' }}>

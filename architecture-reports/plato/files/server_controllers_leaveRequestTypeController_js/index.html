@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\controllers\leaveRequestTypeController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\controllers\leaveRequestTypeController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">62.05</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">231</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">57.20</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.65</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const Settings = require(&#039;../models/Settings&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+
+/**
+ * Pobierz wszystkie typy wniosków dla zespołu (włączone i wyłączone)
+ * GET /api/leave-request-types
+ */
+exports.getLeaveRequestTypes = async (req, res) =&gt; {
+	try {
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser || !requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+
+		const settings = await Settings.getSettings(requestingUser.teamId)
+		res.json(settings.leaveRequestTypes || [])
+	} catch (error) {
+		console.error(&#039;Error retrieving leave request types:&#039;, error)
+		res.status(500).send(&#039;Failed to retrieve leave request types.&#039;)
+	}
+}
+
+/**
+ * Aktualizuj typy wniosków dla zespołu
+ * PUT /api/leave-request-types
+ * Body: { leaveRequestTypes: [...] }
+ */
+exports.updateLeaveRequestTypes = async (req, res) =&gt; {
+	try {
+		const { leaveRequestTypes } = req.body
+
+		// Sprawdź uprawnienia - tylko Admin i HR
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) {
+			return res.status(403).send(&#039;Access denied&#039;)
+		}
+
+		const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+		const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+
+		if (!isAdmin &amp;&amp; !isHR) {
+			return res.status(403).send(&#039;Access denied. Only Admin and HR can update leave request types.&#039;)
+		}
+
+		if (!requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+
+		if (!Array.isArray(leaveRequestTypes)) {
+			return res.status(400).send(&#039;leaveRequestTypes must be an array&#039;)
+		}
+
+		const settings = await Settings.getSettings(requestingUser.teamId)
+
+		// Walidacja typów
+		const validTypes = leaveRequestTypes.filter(type =&gt; {
+			return type &amp;&amp; 
+				typeof type.id === &#039;string&#039; &amp;&amp; type.id.trim() !== &#039;&#039; &amp;&amp;
+				typeof type.name === &#039;string&#039; &amp;&amp; type.name.trim() !== &#039;&#039; &amp;&amp;
+				typeof type.isSystem === &#039;boolean&#039; &amp;&amp;
+				typeof type.isEnabled === &#039;boolean&#039; &amp;&amp;
+				typeof type.requireApproval === &#039;boolean&#039; &amp;&amp;
+				typeof type.allowDaysLimit === &#039;boolean&#039; &amp;&amp;
+				(type.minDaysBefore === null || type.minDaysBefore === undefined || (typeof type.minDaysBefore === &#039;number&#039; &amp;&amp; type.minDaysBefore &gt; 0))
+		}).map(type =&gt; ({
+			id: type.id.trim(),
+			name: type.name.trim(),
+			nameEn: type.nameEn ? type.nameEn.trim() : undefined,
+			isSystem: type.isSystem,
+			isEnabled: type.isEnabled,
+			requireApproval: type.requireApproval,
+			allowDaysLimit: type.allowDaysLimit,
+			minDaysBefore: type.minDaysBefore !== null &amp;&amp; type.minDaysBefore !== undefined &amp;&amp; type.minDaysBefore &gt; 0 ? type.minDaysBefore : null
+		}))
+
+		// Nie można usuwać typów systemowych, tylko je włączać/wyłączać
+		// Zachowaj istniejące typy systemowe, które nie są w nowej liście (mogły być wyłączone)
+		const systemTypeIds = new Set([&#039;leaveform.option1&#039;, &#039;leaveform.option2&#039;, &#039;leaveform.option3&#039;, &#039;leaveform.option4&#039;, &#039;leaveform.option5&#039;, &#039;leaveform.option6&#039;])
+		const existingSystemTypes = (settings.leaveRequestTypes || []).filter(t =&gt; t.isSystem &amp;&amp; systemTypeIds.has(t.id))
+		const newSystemTypes = validTypes.filter(t =&gt; t.isSystem &amp;&amp; systemTypeIds.has(t.id))
+		const customTypes = validTypes.filter(t =&gt; !t.isSystem)
+
+		// Połącz typy systemowe z nowych z istniejącymi (aby zachować te, które nie zostały przesłane)
+		const finalSystemTypes = existingSystemTypes.map(existing =&gt; {
+			const updated = newSystemTypes.find(n =&gt; n.id === existing.id)
+			return updated || existing
+		})
+
+		// Dodaj nowe typy systemowe, które nie były w istniejących
+		newSystemTypes.forEach(newType =&gt; {
+			if (!finalSystemTypes.find(t =&gt; t.id === newType.id)) {
+				finalSystemTypes.push(newType)
+			}
+		})
+
+		settings.leaveRequestTypes = [...finalSystemTypes, ...customTypes]
+		await settings.save()
+
+		res.json(settings.leaveRequestTypes)
+	} catch (error) {
+		console.error(&#039;Error updating leave request types:&#039;, error)
+		res.status(500).send(&#039;Failed to update leave request types.&#039;)
+	}
+}
+
+/**
+ * Dodaj niestandardowy typ wniosku
+ * POST /api/leave-request-types
+ * Body: { name, nameEn?, requireApproval, allowDaysLimit }
+ */
+exports.addCustomLeaveRequestType = async (req, res) =&gt; {
+	try {
+		const { name, nameEn, requireApproval, allowDaysLimit, minDaysBefore } = req.body
+
+		// Sprawdź uprawnienia - tylko Admin i HR
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) {
+			return res.status(403).send(&#039;Access denied&#039;)
+		}
+
+		const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+		const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+
+		if (!isAdmin &amp;&amp; !isHR) {
+			return res.status(403).send(&#039;Access denied. Only Admin and HR can add custom leave request types.&#039;)
+		}
+
+		if (!requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+
+		if (!name || typeof name !== &#039;string&#039; || name.trim() === &#039;&#039;) {
+			return res.status(400).send(&#039;name is required and must be a non-empty string&#039;)
+		}
+
+		if (typeof requireApproval !== &#039;boolean&#039;) {
+			return res.status(400).send(&#039;requireApproval is required and must be a boolean&#039;)
+		}
+
+		if (typeof allowDaysLimit !== &#039;boolean&#039;) {
+			return res.status(400).send(&#039;allowDaysLimit is required and must be a boolean&#039;)
+		}
+
+		// Walidacja minDaysBefore
+		if (minDaysBefore !== null &amp;&amp; minDaysBefore !== undefined) {
+			if (typeof minDaysBefore !== &#039;number&#039; || minDaysBefore &lt; 1) {
+				return res.status(400).send(&#039;minDaysBefore must be null or a positive number&#039;)
+			}
+		}
+
+		const settings = await Settings.getSettings(requestingUser.teamId)
+
+		// Generuj unikalne ID dla niestandardowego typu
+		const existingIds = (settings.leaveRequestTypes || []).map(t =&gt; t.id)
+		let customId = `custom-${Date.now()}`
+		while (existingIds.includes(customId)) {
+			customId = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+		}
+
+		const newType = {
+			id: customId,
+			name: name.trim(),
+			nameEn: nameEn ? nameEn.trim() : undefined,
+			isSystem: false,
+			isEnabled: true,
+			requireApproval: requireApproval,
+			allowDaysLimit: allowDaysLimit,
+			minDaysBefore: minDaysBefore !== null &amp;&amp; minDaysBefore !== undefined &amp;&amp; minDaysBefore &gt; 0 ? minDaysBefore : null
+		}
+
+		if (!settings.leaveRequestTypes) {
+			settings.leaveRequestTypes = []
+		}
+		settings.leaveRequestTypes.push(newType)
+		await settings.save()
+
+		res.status(201).json(newType)
+	} catch (error) {
+		console.error(&#039;Error adding custom leave request type:&#039;, error)
+		res.status(500).send(&#039;Failed to add custom leave request type.&#039;)
+	}
+}
+
+/**
+ * Usuń niestandardowy typ wniosku
+ * DELETE /api/leave-request-types/:id
+ */
+exports.deleteCustomLeaveRequestType = async (req, res) =&gt; {
+	try {
+		const { id } = req.params
+
+		// Sprawdź uprawnienia - tylko Admin i HR
+		const requestingUser = await User.findById(req.user.userId)
+		if (!requestingUser) {
+			return res.status(403).send(&#039;Access denied&#039;)
+		}
+
+		const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+		const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+
+		if (!isAdmin &amp;&amp; !isHR) {
+			return res.status(403).send(&#039;Access denied. Only Admin and HR can delete custom leave request types.&#039;)
+		}
+
+		if (!requestingUser.teamId) {
+			return res.status(403).send(&#039;Access denied. User team not found.&#039;)
+		}
+
+		const settings = await Settings.getSettings(requestingUser.teamId)
+
+		// Nie można usuwać typów systemowych
+		const systemTypeIds = new Set([&#039;leaveform.option1&#039;, &#039;leaveform.option2&#039;, &#039;leaveform.option3&#039;, &#039;leaveform.option4&#039;, &#039;leaveform.option5&#039;, &#039;leaveform.option6&#039;])
+		if (systemTypeIds.has(id)) {
+			return res.status(400).send(&#039;Cannot delete system leave request types&#039;)
+		}
+
+		const typeIndex = (settings.leaveRequestTypes || []).findIndex(t =&gt; t.id === id &amp;&amp; !t.isSystem)
+		if (typeIndex === -1) {
+			return res.status(404).send(&#039;Custom leave request type not found&#039;)
+		}
+
+		settings.leaveRequestTypes.splice(typeIndex, 1)
+		await settings.save()
+
+		res.json({ message: &#039;Custom leave request type deleted successfully&#039; })
+	} catch (error) {
+		console.error(&#039;Error deleting custom leave request type:&#039;, error)
+		res.status(500).send(&#039;Failed to delete custom leave request type.&#039;)
+	}
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

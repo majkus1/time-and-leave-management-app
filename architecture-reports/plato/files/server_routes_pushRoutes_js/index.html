@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\routes\pushRoutes.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\routes\pushRoutes.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">54.81</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">193</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">33.57</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.92</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const express = require(&#039;express&#039;)
+const router = express.Router()
+const { firmDb } = require(&#039;../db/db&#039;)
+const PushSubscription = require(&#039;../models/PushSubscription&#039;)(firmDb)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const { authenticateToken } = require(&#039;../middleware/authMiddleware&#039;)
+const entitlementsService = require(&#039;../services/entitlementsService&#039;)
+const { normalizePaidPlanKey, isCorePlanKey } = require(&#039;../constants/planCatalog&#039;)
+
+const DEFAULT_PUSH_PREFERENCES = {
+	chat: true,
+	tasks: true,
+	taskStatusChanges: true,
+	taskComments: true,
+	leaves: true,
+	announcements: true,
+	schedulePublished: true,
+}
+
+const PUSH_PREF_MODULE_REQUIREMENTS = {
+	chat: &#039;chat&#039;,
+	tasks: &#039;tasks&#039;,
+	taskStatusChanges: &#039;tasks&#039;,
+	taskComments: &#039;tasks&#039;,
+	schedulePublished: &#039;schedules_ai&#039;,
+}
+
+function canUsePushPreference(team, prefKey) {
+	const reqModule = PUSH_PREF_MODULE_REQUIREMENTS[prefKey]
+	if (!reqModule) return true
+	if (!team) return false
+	if (entitlementsService.isTrialActive(team)) return true
+	if (entitlementsService.isLegacyPreBillingTeam(team)) return true
+	if (entitlementsService.isSpecialNamedTeam(team)) return true
+	if (entitlementsService.isFreemiumTierTeam(team)) return false
+	if (!entitlementsService.isPaidSubscriptionActive(team)) return false
+	const nk = normalizePaidPlanKey(team.billingPlanKey)
+	if (!isCorePlanKey(nk)) return true
+	return entitlementsService.effectiveBillingModuleKeys(team).includes(reqModule)
+}
+
+function sanitizePushPreferencesByTeam(team, raw) {
+	const prefs = { ...DEFAULT_PUSH_PREFERENCES, ...(raw || {}) }
+	for (const key of Object.keys(PUSH_PREF_MODULE_REQUIREMENTS)) {
+		if (!canUsePushPreference(team, key)) prefs[key] = false
+	}
+	return prefs
+}
+
+// Register push subscription
+router.post(&#039;/register&#039;, authenticateToken, async (req, res) =&gt; {
+	try {
+		const { endpoint, keys, userAgent } = req.body
+		const userId = req.user.userId
+		const teamId = req.user.teamId
+
+		if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
+			return res.status(400).json({ message: &#039;Invalid subscription data&#039; })
+		}
+
+		// Check if subscription already exists
+		let subscription = await PushSubscription.findOne({ endpoint })
+
+		if (subscription) {
+			// Update existing subscription
+			subscription.userId = userId
+			subscription.teamId = teamId
+			subscription.keys = keys
+			subscription.userAgent = userAgent || req.headers[&#039;user-agent&#039;] || &#039;&#039;
+			subscription.enabled = true
+			subscription.lastUsed = new Date()
+			await subscription.save()
+		} else {
+			// Create new subscription
+			subscription = new PushSubscription({
+				userId,
+				teamId,
+				endpoint,
+				keys,
+				userAgent: userAgent || req.headers[&#039;user-agent&#039;] || &#039;&#039;,
+				enabled: true,
+			preferences: DEFAULT_PUSH_PREFERENCES
+			})
+			await subscription.save()
+		}
+
+		res.json({ 
+			message: &#039;Push subscription registered successfully&#039;,
+			subscriptionId: subscription._id
+		})
+	} catch (error) {
+		console.error(&#039;Error registering push subscription:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to register push subscription&#039; })
+	}
+})
+
+// Unregister push subscription
+router.post(&#039;/unregister&#039;, authenticateToken, async (req, res) =&gt; {
+	try {
+		const { endpoint } = req.body
+
+		if (!endpoint) {
+			return res.status(400).json({ message: &#039;Endpoint is required&#039; })
+		}
+
+		await PushSubscription.findOneAndDelete({ endpoint })
+
+		res.json({ message: &#039;Push subscription unregistered successfully&#039; })
+	} catch (error) {
+		console.error(&#039;Error unregistering push subscription:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to unregister push subscription&#039; })
+	}
+})
+
+// Update push notification preferences
+router.put(&#039;/preferences&#039;, authenticateToken, async (req, res) =&gt; {
+	try {
+		const userId = req.user.userId
+		const { preferences } = req.body
+		const team = await Team.findById(req.user.teamId).select(
+			&#039;name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt&#039;
+		)
+
+		if (!preferences || typeof preferences !== &#039;object&#039;) {
+			return res.status(400).json({ message: &#039;Invalid preferences data&#039; })
+		}
+		const sanitized = sanitizePushPreferencesByTeam(team, preferences)
+
+		// Update all user&#039;s subscriptions
+		const result = await PushSubscription.updateMany(
+			{ userId },
+			{
+				$set: {
+					&#039;preferences.chat&#039;: sanitized.chat !== false,
+					&#039;preferences.tasks&#039;: sanitized.tasks !== false,
+					&#039;preferences.taskStatusChanges&#039;: sanitized.taskStatusChanges !== false,
+					&#039;preferences.taskComments&#039;: sanitized.taskComments !== false,
+					&#039;preferences.leaves&#039;: sanitized.leaves !== false,
+					&#039;preferences.announcements&#039;: sanitized.announcements !== false,
+					&#039;preferences.schedulePublished&#039;: sanitized.schedulePublished !== false,
+				}
+			}
+		)
+
+		res.json({ 
+			message: &#039;Preferences updated successfully&#039;,
+			updated: result.modifiedCount
+		})
+	} catch (error) {
+		console.error(&#039;Error updating push preferences:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to update preferences&#039; })
+	}
+})
+
+// Get push notification preferences
+router.get(&#039;/preferences&#039;, authenticateToken, async (req, res) =&gt; {
+	try {
+		const userId = req.user.userId
+		const team = await Team.findById(req.user.teamId).select(
+			&#039;name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt&#039;
+		)
+
+		const subscription = await PushSubscription.findOne({ userId, enabled: true })
+
+		if (!subscription) {
+			return res.json({
+				enabled: false,
+				preferences: sanitizePushPreferencesByTeam(team, DEFAULT_PUSH_PREFERENCES)
+			})
+		}
+
+		const preferences = sanitizePushPreferencesByTeam(team, subscription.preferences)
+
+		res.json({
+			enabled: subscription.enabled,
+			preferences
+		})
+	} catch (error) {
+		console.error(&#039;Error getting push preferences:&#039;, error)
+		res.status(500).json({ message: &#039;Failed to get preferences&#039; })
+	}
+})
+
+// Get VAPID public key (needed for client-side subscription)
+router.get(&#039;/vapid-public-key&#039;, (req, res) =&gt; {
+	const publicKey = process.env.VAPID_PUBLIC_KEY
+	if (!publicKey) {
+		return res.status(500).json({ message: &#039;VAPID keys not configured&#039; })
+	}
+	res.json({ publicKey })
+})
+
+module.exports = router</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

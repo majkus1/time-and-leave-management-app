@@ -16,6 +16,57 @@ function assertChannelInUserTeam(channel, userTeamId) {
 	return channel && isSameTeam(channel.teamId, userTeamId)
 }
 
+const noAccessUsernamePattern = /@no-access\.planopia\.local$/i
+
+function chatEligibleUserQuery(extra = {}) {
+	return {
+		...extra,
+		appAccessEnabled: { $ne: false },
+		managedOnly: { $ne: true },
+		username: { $not: noAccessUsernamePattern },
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+	}
+}
+
+async function resolveChatEligibleMemberIds(teamId, memberIds = []) {
+	const uniqueIds = [...new Set(memberIds.map(id => id?.toString()).filter(Boolean))]
+
+	if (uniqueIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+		return null
+	}
+
+	if (uniqueIds.length === 0) {
+		return []
+	}
+
+	const users = await User.find(chatEligibleUserQuery({
+		teamId,
+		_id: { $in: uniqueIds }
+	})).select('_id')
+
+	if (users.length !== uniqueIds.length) {
+		return null
+	}
+
+	return users.map(user => user._id)
+}
+
+async function filterChatEligibleUserIds(teamId, userIds = []) {
+	const uniqueIds = [...new Set(userIds.map(id => id?.toString()).filter(Boolean))]
+	const validIds = uniqueIds.filter(id => mongoose.Types.ObjectId.isValid(id))
+
+	if (validIds.length === 0) {
+		return []
+	}
+
+	const users = await User.find(chatEligibleUserQuery({
+		teamId,
+		_id: { $in: validIds }
+	})).select('_id')
+
+	return users.map(user => user._id.toString())
+}
+
 const cleanupUploadedFiles = async (files = []) => {
 	if (!Array.isArray(files) || files.length === 0) return
 
@@ -95,11 +146,8 @@ exports.createGeneralChannel = async (teamId) => {
 			isActive: true
 		})
 		
-		// Get all active users in the team
-		const allUsers = await User.find({ 
-			teamId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('_id')
+		// Get active team users who can access the app
+		const allUsers = await User.find(chatEligibleUserQuery({ teamId })).select('_id')
 		const memberIds = allUsers.map(user => user._id)
 		
 		if (!existingChannel) {
@@ -162,11 +210,8 @@ exports.syncGeneralChannelMembers = async (teamId) => {
 			return await exports.createGeneralChannel(teamId)
 		}
 		
-		// Get all active users in the team
-		const allUsers = await User.find({ 
-			teamId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		}).select('_id')
+		// Get active team users who can access the app
+		const allUsers = await User.find(chatEligibleUserQuery({ teamId })).select('_id')
 		const memberIds = allUsers.map(user => user._id)
 		
 		// Update members list
@@ -418,11 +463,20 @@ exports.sendMessage = async (req, res) => {
 				// Get all users in the department
 				const departmentUsers = await User.find({
 					teamId: channel.teamId,
-					$or: [
-						{ department: channel.departmentName },
-						{ department: { $in: [channel.departmentName] } }
-					],
-					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+					appAccessEnabled: { $ne: false },
+					managedOnly: { $ne: true },
+					username: { $not: noAccessUsernamePattern },
+					$and: [
+						{
+							$or: [
+								{ department: channel.departmentName },
+								{ department: { $in: [channel.departmentName] } }
+							]
+						},
+						{
+							$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+						}
+					]
 				}).select('_id')
 				recipientUserIds = departmentUsers.map(u => u._id.toString())
 			} else if (channel.type === 'private') {
@@ -431,17 +485,16 @@ exports.sendMessage = async (req, res) => {
 			} else if (channel.type === 'general') {
 				if (channel.isTeamChannel) {
 					// Get all team members
-					const teamUsers = await User.find({
-						teamId: channel.teamId,
-						$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-					}).select('_id')
+					const teamUsers = await User.find(chatEligibleUserQuery({ teamId: channel.teamId })).select('_id')
 					recipientUserIds = teamUsers.map(u => u._id.toString())
 				} else {
 					// Custom general channel - get members
 					recipientUserIds = channel.members.map(m => m.toString())
 				}
 			}
-			
+
+			recipientUserIds = await filterChatEligibleUserIds(channel.teamId, recipientUserIds)
+
 			// Remove sender from recipients
 			recipientUserIds = recipientUserIds.filter(id => id !== req.user.userId.toString())
 			
@@ -663,11 +716,16 @@ exports.createChannel = async (req, res) => {
 			return res.status(400).json({ message: 'Channel with this name already exists' })
 		}
 
+		const requestedMemberIds = Array.isArray(memberIds) ? memberIds : []
+		const eligibleMemberIds = await resolveChatEligibleMemberIds(teamId, [req.user.userId, ...requestedMemberIds])
+
+		if (!eligibleMemberIds) {
+			return res.status(400).json({ message: 'Channels can include only active users with application access' })
+		}
+
 		// For private channels, members are required
 		// For general channels, always include creator, and add selected members if provided
-		const channelMembers = type === 'private' 
-			? [req.user.userId, ...(memberIds || [])]
-			: [req.user.userId, ...(memberIds || [])] // Always include creator for general channels
+		const channelMembers = eligibleMemberIds
 		
 		const newChannel = new Channel({
 			name: name.trim(),
@@ -726,9 +784,14 @@ exports.addMembersToChannel = async (req, res) => {
 			return res.status(403).json({ message: 'Only Admin or channel creator can add members to this channel' })
 		}
 
+		const eligibleMemberIds = await resolveChatEligibleMemberIds(channel.teamId, memberIds)
+		if (!eligibleMemberIds) {
+			return res.status(400).json({ message: 'Channels can include only active users with application access' })
+		}
+
 		// Add new members (avoid duplicates)
 		const existingMembers = new Set(channel.members.map(m => m.toString()))
-		const newMembers = memberIds.filter(id => !existingMembers.has(id.toString()))
+		const newMembers = eligibleMemberIds.filter(id => !existingMembers.has(id.toString()))
 
 		if (newMembers.length === 0) {
 			return res.status(400).json({ message: 'All users are already members of this channel' })
@@ -884,10 +947,7 @@ exports.deleteChannel = async (req, res) => {
 exports.getTeamMembers = async (req, res) => {
 	try {
 		const { teamId } = req.user
-		const users = await User.find({ 
-			teamId,
-			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-		})
+		const users = await User.find(chatEligibleUserQuery({ teamId }))
 			.select('firstName lastName username')
 			.sort({ firstName: 1, lastName: 1 })
 
@@ -916,10 +976,7 @@ exports.getChannelUsers = async (req, res) => {
 
 		// For team channels, all active team members have access
 		if (channel.isTeamChannel && channel.type === 'general') {
-			const users = await User.find({ 
-				teamId: channel.teamId,
-				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-			})
+			const users = await User.find(chatEligibleUserQuery({ teamId: channel.teamId }))
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
@@ -929,12 +986,19 @@ exports.getChannelUsers = async (req, res) => {
 		if (channel.type === 'department' && channel.departmentName) {
 			const users = await User.find({
 				teamId: channel.teamId,
-				$or: [
-					{ department: channel.departmentName },
-					{ department: { $in: [channel.departmentName] } }
-				],
+				appAccessEnabled: { $ne: false },
+				managedOnly: { $ne: true },
+				username: { $not: noAccessUsernamePattern },
 				$and: [
-					{ $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+					{
+						$or: [
+							{ department: channel.departmentName },
+							{ department: { $in: [channel.departmentName] } }
+						]
+					},
+					{
+						$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+					}
 				]
 			}).select('firstName lastName username position').sort({ firstName: 1, lastName: 1 })
 			return res.json(users)
@@ -949,7 +1013,7 @@ exports.getChannelUsers = async (req, res) => {
 		if (channel.members && channel.members.length > 0) {
 			const users = await User.find({ 
 				_id: { $in: channel.members },
-				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+				...chatEligibleUserQuery()
 			})
 				.select('firstName lastName username position')
 				.sort({ firstName: 1, lastName: 1 })
@@ -974,9 +1038,9 @@ exports.createPrivateChat = async (req, res) => {
 			return res.status(400).json({ message: 'User ID is required' })
 		}
 
-		// Check if other user exists and is in same team
-		const otherUser = await User.findById(userId)
-		if (!otherUser || otherUser.teamId.toString() !== teamId.toString()) {
+		// Check if other user exists, is in same team and can access the app
+		const otherUser = await User.findOne(chatEligibleUserQuery({ _id: userId, teamId }))
+		if (!otherUser) {
 			return res.status(404).json({ message: 'User not found or not in same team' })
 		}
 
@@ -1012,4 +1076,3 @@ exports.createPrivateChat = async (req, res) => {
 		res.status(500).json({ message: 'Failed to create private chat' })
 	}
 }
-

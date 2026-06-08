@@ -195,12 +195,22 @@ exports.exportFromIntent = async (req, res) => {
 			departmentHint: req.body.departmentHint,
 		})
 		const d = new Date().toISOString().slice(0, 10)
+		const locale = String(req.body.locale || 'pl').toLowerCase()
+		const reportType = String(req.body.reportType || '').toLowerCase()
+		const isPl = locale.startsWith('pl')
+		const reportName = (() => {
+			if (reportType.includes('leave')) return isPl ? 'raport-urlopy' : 'leave-report'
+			if (reportType.includes('task')) return isPl ? 'raport-zadania' : 'tasks-report'
+			if (reportType.includes('team')) return isPl ? 'raport-zespolu' : 'team-report'
+			if (reportType.includes('work') || reportType.includes('time')) return isPl ? 'raport-ewidencja-czasu-pracy' : 'timesheet-report'
+			return isPl ? 'raport-planopia' : 'planopia-report'
+		})()
 		if (format === 'pdf') {
 			res.setHeader('Content-Type', 'application/pdf')
-			res.setHeader('Content-Disposition', `attachment; filename="planopia-export-${d}.pdf"`)
+			res.setHeader('Content-Disposition', `attachment; filename="${reportName}-${d}.pdf"`)
 		} else {
 			res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-			res.setHeader('Content-Disposition', `attachment; filename="planopia-export-${d}.xlsx"`)
+			res.setHeader('Content-Disposition', `attachment; filename="${reportName}-${d}.xlsx"`)
 		}
 		res.send(buf)
 	} catch (err) {

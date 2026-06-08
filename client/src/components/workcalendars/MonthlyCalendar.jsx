@@ -17,6 +17,54 @@ import TimerPanel from './TimerPanel'
 import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import BulkFillWorkdaysModal from './BulkFillWorkdaysModal'
+import WorkdayHoursWithActivities from './WorkdayHoursWithActivities'
+import { useWorkActivities } from '../../hooks/useWorkActivities'
+import { teamHasWorkActivities, getEnabledWorkActivities } from '../../utils/workActivities'
+import {
+	createDefaultActivityBlock,
+	serializeActivityBlocks,
+	sumBlockHours,
+	validateActivityBlocksClient,
+	buildRealTimeFromBlocks,
+} from '../../utils/manualActivityBlocks'
+import {
+	createDefaultTaskBlock,
+	serializeTaskBlocks,
+	sumTaskBlockHours,
+	validateTaskBlocksClient,
+	buildRealTimeFromTaskBlocks,
+} from '../../utils/manualTaskBlocks'
+import {
+	isCalendarFilterActive,
+	workdayMatchesCalendarFilters,
+	getFilteredCalendarHours,
+	getFilteredManualCalendarHours,
+	buildFilteredRealTimeForCalendar,
+	formatCalendarBreakdown,
+} from '../../utils/workCalendarFilters'
+import {
+	collectTasksFromWorkdays,
+	getTaskFilterLabel,
+	buildTaskTitlesMap,
+	flattenWorkdayTaskRows,
+	aggregateTaskHours,
+	workdayMatchesTaskFilter,
+} from '../../utils/workTaskAggregation'
+import { useBillingEntitlements } from '../../hooks/useBilling'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
+import { useTimesheetTasks } from '../../hooks/useTimesheetTasks'
+import ActivityFilterBar from './ActivityFilterBar'
+import TaskFilterBar from './TaskFilterBar'
+import {
+	formatActivityBreakdown,
+	getFilteredActivityHours,
+	getFilteredManualActivityHours,
+	buildFilteredRealTimeFromEntries,
+	workdayMatchesActivityFilter,
+	flattenWorkdayActivityRows,
+	aggregateActivityHours,
+	getActivityFilterLabel,
+} from '../../utils/workActivityAggregation'
 
 /** Zgodne z media query w style.css (szeroki miesięczny grid ~800px). */
 const MOBILE_CALENDAR_MAX_WIDTH = 900
@@ -98,6 +146,12 @@ function MonthlyCalendar() {
 	const [isWeekendDay, setIsWeekendDay] = useState(false)
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
 	const [bulkFillModalOpen, setBulkFillModalOpen] = useState(false)
+	const [splitByActivity, setSplitByActivity] = useState(false)
+	const [activityBlocks, setActivityBlocks] = useState([createDefaultActivityBlock()])
+	const [selectedActivityIds, setSelectedActivityIds] = useState([])
+	const [splitByTask, setSplitByTask] = useState(false)
+	const [taskBlocks, setTaskBlocks] = useState([createDefaultTaskBlock()])
+	const [selectedTaskIds, setSelectedTaskIds] = useState([])
 	const calendarRef = useRef(null)
 	
 	// Odśwież kalendarz gdy sidebar się zmienia lub okno się zmienia
@@ -143,6 +197,9 @@ function MonthlyCalendar() {
 	const { showAlert, showConfirm } = useAlert()
 	const { isLoading: freemiumEntLoading, freemiumTier } = useFreemiumAccess({ enabled: true })
 	const allowTimerLeaveApis = !freemiumEntLoading && !freemiumTier
+	const { data: entitlements, isPending: entitlementsLoading } = useBillingEntitlements()
+	const tasksModuleEnabled = canShowBillingModuleNav(entitlements, 'tasks', entitlementsLoading)
+	const { data: timesheetTasks = [] } = useTimesheetTasks(undefined, { enabled: tasksModuleEnabled })
 
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
@@ -248,6 +305,26 @@ function MonthlyCalendar() {
 		enabled: allowTimerLeaveApis,
 	})
 	const { data: settings } = useSettings()
+	const { data: workActivities = [] } = useWorkActivities()
+	const enabledWorkActivities = React.useMemo(
+		() => getEnabledWorkActivities(workActivities),
+		[workActivities]
+	)
+	const taskTitleLookup = React.useMemo(
+		() => buildTaskTitlesMap(timesheetTasks),
+		[timesheetTasks]
+	)
+	const filterableTasks = React.useMemo(
+		() => collectTasksFromWorkdays(workdays, currentMonth, currentYear, taskTitleLookup),
+		[workdays, currentMonth, currentYear, taskTitleLookup]
+	)
+	const taskTitlesById = React.useMemo(
+		() => ({
+			...taskTitleLookup,
+			...buildTaskTitlesMap(filterableTasks.map(task => ({ _id: task.id, title: task.title }))),
+		}),
+		[taskTitleLookup, filterableTasks]
+	)
 	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
 	const createWorkdayMutation = useCreateWorkday()
 	const bulkFillWorkdaysMutation = useBulkFillWorkdays()
@@ -416,7 +493,43 @@ function MonthlyCalendar() {
 		return dates
 	}
 
+	const activitySummaryRows = React.useMemo(() => {
+		const monthWorkdays = workdays.filter(day => {
+			const eventDate = new Date(day.date)
+			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+		})
+		const rows = flattenWorkdayActivityRows(
+			monthWorkdays.filter(day => workdayMatchesActivityFilter(day, selectedActivityIds)),
+			workActivities,
+			null,
+			i18n.language,
+			selectedActivityIds,
+			{ deletedActivityLabel: t('workcalendar.activities.deletedLabel') }
+		)
+		return aggregateActivityHours(rows, { groupByUser: false })
+	}, [workdays, currentMonth, currentYear, selectedActivityIds, workActivities, i18n.language, t])
+
+	const taskSummaryRows = React.useMemo(() => {
+		if (!tasksModuleEnabled) return []
+		const monthWorkdays = workdays.filter(day => {
+			const eventDate = new Date(day.date)
+			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+		})
+		const rows = flattenWorkdayTaskRows(
+			monthWorkdays.filter(day => workdayMatchesTaskFilter(day, selectedTaskIds)),
+			taskTitleLookup,
+			null,
+			selectedTaskIds,
+			{ deletedTaskLabel: t('workcalendar.tasks.deletedLabel') }
+		)
+		return aggregateTaskHours(rows, { groupByUser: false })
+	}, [workdays, currentMonth, currentYear, selectedTaskIds, taskTitleLookup, tasksModuleEnabled, t])
+
+	const showActivitySummary = selectedTaskIds.length === 0 && activitySummaryRows.length > 0
+	const showTaskSummary = selectedActivityIds.length === 0 && tasksModuleEnabled && taskSummaryRows.length > 0
+
 	const calendarEvents = React.useMemo(() => {
+		const filterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
 		const workdayEvents = workdays
 			.filter(day => {
 				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
@@ -432,12 +545,29 @@ function MonthlyCalendar() {
 			.map(day => {
 				let title = ''
 				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
-				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+				const filteredHours = getFilteredCalendarHours(day, selectedActivityIds, selectedTaskIds)
+				const manualFilteredHours = filterActive
+					? getFilteredManualCalendarHours(day, selectedActivityIds, selectedTaskIds)
+					: filteredHours
+				const hasHoursWorked = filterActive ? manualFilteredHours > 0 : filteredHours > 0
 				const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 
+				if (filterActive) {
+					if (!hasHoursWorked && !hasAbsenceType && !hasOnlyNotes) return null
+					if (hasHoursWorked && !workdayMatchesCalendarFilters(day, selectedActivityIds, selectedTaskIds)) return null
+				}
+
 				if (hasHoursWorked) {
-					title = `${formatHours(day.hoursWorked)} ${t('workcalendar.allfrommonthhours')}`
-					if (day.additionalWorked) {
+					title = `${formatHours(filteredHours)} ${t('workcalendar.allfrommonthhours')}`
+					const breakdown = formatCalendarBreakdown(day, {
+						workActivities,
+						taskTitlesById,
+						locale: i18n.language,
+						selectedActivityIds,
+						selectedTaskIds,
+					})
+					if (breakdown) title += ` · ${breakdown}`
+					if (!filterActive && day.additionalWorked) {
 						title += ` ${t('workcalendar.include')} ${formatHours(day.additionalWorked)} ${getOvertimeWord(day.additionalWorked)}`
 					}
 					if (day.notes) {
@@ -489,8 +619,9 @@ function MonthlyCalendar() {
 
 		const realTimeEvents = workdays
 			.map(day => {
-				const timeFromEntries = buildRealTimeFromEntries(day.timeEntries)
-				const timeLabel = mergeTimeRanges(day.realTimeDayWorked, timeFromEntries)
+				const timeLabel = filterActive
+					? buildFilteredRealTimeForCalendar(day, selectedActivityIds, selectedTaskIds)
+					: mergeTimeRanges(day.realTimeDayWorked, buildRealTimeFromEntries(day.timeEntries))
 				if (!timeLabel) return null
 				return {
 					title: `${t('workcalendar.worktime')} ${timeLabel}`,
@@ -536,11 +667,11 @@ function MonthlyCalendar() {
 		}))
 
 		return [...workdayEvents, ...realTimeEvents, ...leaveEvents, ...holidayEvents]
-	}, [workdays, acceptedLeaveRequests, holidaysForMonth, settings, t, i18n.resolvedLanguage])
+	}, [workdays, acceptedLeaveRequests, holidaysForMonth, settings, workActivities, selectedActivityIds, selectedTaskIds, taskTitlesById, t, i18n.resolvedLanguage, i18n.language])
 
 	useEffect(() => {
-		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
-	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings])
+		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear, selectedActivityIds, selectedTaskIds)
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings, selectedActivityIds, selectedTaskIds])
 
 	const toggleConfirmationStatus = async () => {
 		try {
@@ -557,28 +688,30 @@ function MonthlyCalendar() {
 		}
 	}
 
-	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
+	const calculateTotals = (workdaysSource, acceptedLeaveRequests, month, year, activityFilterIds = [], taskFilterIds = []) => {
 		if (!settings) return // Czekaj na załadowanie ustawień
 		let hours = 0
 		let leaveDays = 0
 		let workDaysSet = new Set()
 		let otherAbsences = 0
 		let overtime = 0
+		const filterActive = isCalendarFilterActive(activityFilterIds, taskFilterIds)
 
-		const filteredWorkdays = workdays.filter(day => {
+		const filteredWorkdays = workdaysSource.filter(day => {
 			const eventDate = new Date(day.date)
 			return eventDate.getMonth() === month && eventDate.getFullYear() === year
 		})
 
 		filteredWorkdays.forEach(day => {
-			if (day.hoursWorked) {
-				hours += day.hoursWorked
+			const dayHours = getFilteredCalendarHours(day, activityFilterIds, taskFilterIds)
+			if (dayHours > 0) {
+				hours += dayHours
 				workDaysSet.add(new Date(day.date).toDateString())
 			}
-			if (day.additionalWorked) {
+			if (!filterActive && day.additionalWorked) {
 				overtime += day.additionalWorked
 			}
-			if (day.absenceType) {
+			if (!filterActive && day.absenceType) {
 				const absenceTypeLower = day.absenceType.toLowerCase()
 				if (absenceTypeLower.includes('urlop') || absenceTypeLower.includes('vacation') || absenceTypeLower.includes('leave')) {
 					leaveDays += 1
@@ -833,7 +966,28 @@ function MonthlyCalendar() {
 		}
 
 		// Normalizuj wartości - usuń białe znaki i sprawdź czy są puste
-		const hoursWorkedValue = hoursWorked && hoursWorked.trim() !== '' ? hoursWorked.trim() : ''
+		const useActivitySplit = teamHasWorkActivities({ workActivities }) && splitByActivity && !absenceType?.trim()
+		const useTaskSplit = tasksModuleEnabled && splitByTask && !absenceType?.trim()
+		let hoursWorkedValue = hoursWorked && hoursWorked.trim() !== '' ? hoursWorked.trim() : ''
+		if (useActivitySplit) {
+			const blockError = validateActivityBlocksClient(activityBlocks, t)
+			if (blockError) {
+				setErrorMessage(blockError)
+				return
+			}
+		}
+		if (useTaskSplit) {
+			const taskError = validateTaskBlocksClient(taskBlocks, t)
+			if (taskError) {
+				setErrorMessage(taskError)
+				return
+			}
+		}
+		if (useActivitySplit || useTaskSplit) {
+			const activityTotal = useActivitySplit ? sumBlockHours(activityBlocks) : 0
+			const taskTotal = useTaskSplit ? sumTaskBlockHours(taskBlocks) : 0
+			hoursWorkedValue = String(Math.round((activityTotal + taskTotal) * 2) / 2)
+		}
 		const additionalWorkedValue = additionalWorked && additionalWorked.trim() !== '' ? additionalWorked.trim() : ''
 		const absenceTypeValue = absenceType && absenceType.trim() !== '' ? absenceType.trim() : ''
 		const notesValue = notes && notes.trim() !== '' ? notes.trim() : ''
@@ -1064,10 +1218,14 @@ function MonthlyCalendar() {
 		const data = {
 			date: selectedDate,
 			hoursWorked: (isWeekendDay || isHolidayDay) ? null : parseHoursValue(hoursWorkedValue),
-			additionalWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && additionalWorked && additionalWorked.trim() !== '' ? parseHoursValue(additionalWorked) : null),
-			realTimeDayWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null),
+			additionalWorked: (isWeekendDay || isHolidayDay) ? null : (hoursWorkedValue && additionalWorkedValue && additionalWorkedValue.trim() !== '' ? parseHoursValue(additionalWorkedValue) : null),
+			realTimeDayWorked: (isWeekendDay || isHolidayDay) ? null : ((useActivitySplit || useTaskSplit)
+				? [useActivitySplit ? buildRealTimeFromBlocks(activityBlocks) : '', useTaskSplit ? buildRealTimeFromTaskBlocks(taskBlocks) : ''].filter(Boolean).join(', ') || null
+				: (hoursWorkedValue && realTimeDayWorked && realTimeDayWorked.trim() !== '' ? realTimeDayWorked : null)),
 			absenceType: (isWeekendDay || isHolidayDay) ? null : (absenceTypeValue ? absenceTypeValue : null),
 			notes: finalNotes,
+			manualActivityBlocks: (isWeekendDay || isHolidayDay || !useActivitySplit) ? [] : serializeActivityBlocks(activityBlocks),
+			manualTaskBlocks: (isWeekendDay || isHolidayDay || !useTaskSplit) ? [] : serializeTaskBlocks(taskBlocks),
 		}
 
 		try {
@@ -1237,13 +1395,46 @@ function MonthlyCalendar() {
 		setIsHolidayDay(false)
 		setIsWeekendDay(false)
 		setSelectedWorkHoursIndex(0)
+		setSplitByActivity(false)
+		setActivityBlocks([createDefaultActivityBlock(enabledWorkActivities[0]?.id || '')])
+		setSplitByTask(false)
+		setTaskBlocks([createDefaultTaskBlock(timesheetTasks[0]?._id ? String(timesheetTasks[0]._id) : '')])
+	}
+
+	const workdayHoursFieldProps = {
+		settings,
+		workActivities,
+		splitByActivity,
+		onSplitByActivityChange: setSplitByActivity,
+		activityBlocks,
+		onActivityBlocksChange: setActivityBlocks,
+		tasksModuleEnabled,
+		timesheetTasks,
+		splitByTask,
+		onSplitByTaskChange: setSplitByTask,
+		taskBlocks,
+		onTaskBlocksChange: setTaskBlocks,
+		hoursWorked,
+		onHoursWorkedChange: setHoursWorked,
+		additionalWorked,
+		onAdditionalWorkedChange: setAdditionalWorked,
+		realTimeDayWorked,
+		workTimeFrom,
+		workTimeTo,
+		onWorkTimeFromChange: setWorkTimeFrom,
+		onWorkTimeToChange: setWorkTimeTo,
+		onRealTimeDayWorkedChange: setRealTimeDayWorked,
+		selectedWorkHoursIndex,
+		onSelectedWorkHoursIndexChange: setSelectedWorkHoursIndex,
+		hasAbsenceEntryInput,
 	}
 
 	if (isCalendarInitialLoading) return <Loader />
 
 	return (
 		<div className="row calendar-my-work">
-			<div className="col-xl-9">
+			<div className="col-xl-9 calendar-my-work__main">
+				<div className="calendar-my-work__calendar-block">
 				<h3><img src="img/clock.png" alt="ikonka w sidebar" />{t('workcalendar.h3')}</h3>
 				<hr />
 				
@@ -1361,8 +1552,8 @@ function MonthlyCalendar() {
 					height="auto"
 				/>
 				</div>
-				
-				
+				</div>
+
 			</div>
 			<div
 				className={`col-xl-3 resume-month-work ${settings?.timerEnabled !== false && allowTimerLeaveApis ? 'resume-month-work--with-timer' : ''} ${allowTimerLeaveApis && activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}
@@ -1372,6 +1563,22 @@ function MonthlyCalendar() {
 						.toLocaleString(i18n.resolvedLanguage, { month: 'long', year: 'numeric' })
 						.replace(/^./, str => str.toUpperCase())}:
 				</h3>
+				{teamHasWorkActivities({ workActivities }) && (
+					<ActivityFilterBar
+						activities={enabledWorkActivities}
+						selectedIds={selectedActivityIds}
+						onChange={setSelectedActivityIds}
+						compact
+					/>
+				)}
+				{tasksModuleEnabled && filterableTasks.length > 0 && (
+					<TaskFilterBar
+						tasks={filterableTasks}
+						selectedIds={selectedTaskIds}
+						onChange={setSelectedTaskIds}
+						compact
+					/>
+				)}
 				{/* <h3 className="h3resume" style={{ marginBottom: '0px' }}>
 					{t('workcalendar.confirmmonth')}
 				</h3>
@@ -1485,14 +1692,52 @@ function MonthlyCalendar() {
 				<p className='allfrommonth-p'>
 				<img src="/img/dismiss.png" /> {t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>
-			</div>
-
-			{/* Work Session List */}
-			<div className="work-session-list-mobile col-xl-9">
-				{settings?.timerEnabled !== false && allowTimerLeaveApis && (
-					<WorkSessionList month={currentMonth} year={currentYear} timerQueriesEnabled={allowTimerLeaveApis} />
+				{showActivitySummary && (
+					<div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+						<h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>
+							{t('workcalendar.activities.summaryTitle')}
+							{selectedActivityIds.length > 0
+								? ` · ${getActivityFilterLabel(selectedActivityIds, enabledWorkActivities, i18n.language, t)}`
+								: ''}
+						</h4>
+						{activitySummaryRows.map(row => (
+							<p key={row.activityId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
+								{row.activityName}: <strong>{formatHours(row.hours)} h</strong>
+								{row.quantity > 0 && row.unit ? (
+									<span> · {row.quantity} {row.unit}{row.efficiency ? ` · ${row.efficiency} ${row.unit}/h` : ''}</span>
+								) : null}
+							</p>
+						))}
+					</div>
+				)}
+				{showTaskSummary && (
+					<div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+						<h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>
+							{t('workcalendar.tasks.summaryTitle')}
+							{selectedTaskIds.length > 0
+								? ` · ${getTaskFilterLabel(selectedTaskIds, filterableTasks, t)}`
+								: ''}
+						</h4>
+						{taskSummaryRows.map(row => (
+							<p key={row.taskId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
+								{row.taskName}: <strong>{formatHours(row.hours)} h</strong>
+							</p>
+						))}
+					</div>
 				)}
 			</div>
+
+			{settings?.timerEnabled !== false && allowTimerLeaveApis && (
+				<div className="work-session-list-mobile col-xl-9">
+					<WorkSessionList
+						month={currentMonth}
+						year={currentYear}
+						timerQueriesEnabled={allowTimerLeaveApis}
+						selectedActivityIds={selectedActivityIds}
+						selectedTaskIds={selectedTaskIds}
+					/>
+				</div>
+			)}
 
 			<Modal
 				isOpen={modalIsOpen}
@@ -1501,6 +1746,7 @@ function MonthlyCalendar() {
 					resetFormFields()
 				}}
 				className="monthly-calendar-modal"
+				overlayClassName="monthly-calendar-modal-overlay"
 				style={{
 					overlay: {
 						position: 'fixed',
@@ -1514,15 +1760,19 @@ function MonthlyCalendar() {
 						backgroundColor: 'rgba(15, 23, 42, 0.45)',
 						backdropFilter: 'blur(3px)',
 						WebkitBackdropFilter: 'blur(3px)',
+						width: '100vw',
+						maxWidth: '100vw',
+						overflowX: 'hidden',
 					},
 					content: {
 						position: 'relative',
 						inset: 'unset',
 						margin: '0',
-						maxWidth: '480px',
-						width: '90%',
+						width: 'min(820px, calc(100vw - 32px))',
+						maxWidth: 'min(820px, calc(100vw - 32px))',
 						maxHeight: '92vh',
 						overflowY: 'auto',
+						overflowX: 'hidden',
 						borderRadius: '14px',
 						padding: '24px',
 						backgroundColor: '#ffffff',
@@ -2033,109 +2283,10 @@ function MonthlyCalendar() {
 									)}
 									{hasOnlyNotesInExisting && !hasAcceptedRequest ? (
 										<form onSubmit={handleSubmit} className="space-y-4">
-											<div
-												style={{
-													opacity: hasAbsenceEntryInput ? 0.55 : 1,
-													transition: 'opacity 0.2s ease',
-												}}
-											>
-												<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
-												<input
-													type="number"
-													min="0"
-													max="24"
-													step="0.5"
-													placeholder={t('workcalendar.placeholder1') || 'np. 8 lub 8.5'}
-													value={hoursWorked}
-													onChange={e => setHoursWorked(e.target.value)}
-													disabled={isHolidayDay || isWeekendDay}
-													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-												/>
-											</div>
-
-											<div>
-												<input
-													type="number"
-													min="0"
-													step="0.5"
-													placeholder={t('workcalendar.placeholder2') || 'np. 1 lub 1.5'}
-													value={additionalWorked}
-													onChange={e => setAdditionalWorked(e.target.value)}
-													disabled={isHolidayDay || isWeekendDay}
-													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-												/>
-											</div>
-
-											<div>
-												{/* Checkboxy dla wielu konfiguracji godzin pracy */}
-												{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
-													<div style={{
-														marginBottom: '15px',
-														padding: '12px',
-														backgroundColor: '#e3f2fd',
-														border: '1px solid #90caf9',
-														borderRadius: '6px'
-													}}>
-														<label style={{
-															display: 'block',
-															marginBottom: '10px',
-															fontWeight: '600',
-															color: '#2c3e50',
-															fontSize: '14px'
-														}}>
-															{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
-														</label>
-														<div style={{
-															display: 'flex',
-															flexDirection: 'column',
-															gap: '8px'
-														}}>
-															{settings.workHours.map((workHours, index) => (
-																<label
-																	key={index}
-																	style={{
-																		display: 'flex',
-																		alignItems: 'center',
-																		cursor: 'pointer',
-																		padding: '8px',
-																		borderRadius: '4px',
-																		backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
-																		border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
-																		transition: 'all 0.2s'
-																	}}
-																>
-																	<input
-																		type="radio"
-																		name="workHours"
-																		checked={selectedWorkHoursIndex === index}
-																		onChange={() => {
-																			setSelectedWorkHoursIndex(index)
-																			const timeRange = `${workHours.timeFrom}-${workHours.timeTo}`
-																			setRealTimeDayWorked(timeRange)
-																			if (workHours.hours) {
-																				setHoursWorked(workHours.hours.toString())
-																			}
-																		}}
-																		disabled={isHolidayDay || isWeekendDay}
-																		style={{
-																			marginRight: '10px',
-																			cursor: isHolidayDay || isWeekendDay ? 'not-allowed' : 'pointer'
-																		}}
-																	/>
-																	<span style={{
-																		fontSize: '14px',
-																		color: '#2c3e50',
-																		flex: 1
-																	}}>
-																		{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
-																	</span>
-																</label>
-															))}
-														</div>
-													</div>
-												)}
-												{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
-											</div>
+											<WorkdayHoursWithActivities
+												{...workdayHoursFieldProps}
+												disabled={isHolidayDay || isWeekendDay}
+											/>
 
 											<div
 												className="bulk-fill-absence-card"
@@ -2311,104 +2462,10 @@ function MonthlyCalendar() {
 					) : (
 						<>
 							<form onSubmit={handleSubmit} className="space-y-4 firstformcalendar">
-								<div>
-									<h2 className="text-lg font-semibold mb-2 text-gray-800">{t('workcalendar.h2modal')}</h2>
-									<input
-										type="number"
-										min="0"
-										max="24"
-										step="0.5"
-										placeholder={t('workcalendar.placeholder1') || 'np. 8 lub 8.5'}
-										value={hoursWorked}
-										onChange={e => setHoursWorked(e.target.value)}
-										disabled={isHolidayDay || isWeekendDay}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-									/>
-								</div>
-
-								<div>
-									<input
-										type="number"
-										min="0"
-										step="0.5"
-										placeholder={t('workcalendar.placeholder2') || 'np. 1 lub 1.5'}
-										value={additionalWorked}
-										onChange={e => setAdditionalWorked(e.target.value)}
-										disabled={isHolidayDay || isWeekendDay}
-										className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-									/>
-								</div>
-
-								<div>
-									{/* Checkboxy dla wielu konfiguracji godzin pracy */}
-									{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
-										<div style={{
-											marginBottom: '15px',
-											padding: '12px',
-											backgroundColor: '#e3f2fd',
-											border: '1px solid #90caf9',
-											borderRadius: '6px'
-										}}>
-											<label style={{
-												display: 'block',
-												marginBottom: '10px',
-												fontWeight: '600',
-												color: '#2c3e50',
-												fontSize: '14px'
-											}}>
-												{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
-											</label>
-											<div style={{
-												display: 'flex',
-												flexDirection: 'column',
-												gap: '8px'
-											}}>
-												{settings.workHours.map((workHours, index) => (
-													<label
-														key={index}
-														style={{
-															display: 'flex',
-															alignItems: 'center',
-															cursor: 'pointer',
-															padding: '8px',
-															borderRadius: '4px',
-															backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
-															border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
-															transition: 'all 0.2s'
-														}}
-													>
-														<input
-															type="radio"
-															name="workHours"
-															checked={selectedWorkHoursIndex === index}
-															onChange={() => {
-																setSelectedWorkHoursIndex(index)
-																const timeRange = `${workHours.timeFrom}-${workHours.timeTo}`
-																setRealTimeDayWorked(timeRange)
-																if (workHours.hours) {
-																	setHoursWorked(workHours.hours.toString())
-																}
-															}}
-															disabled={isHolidayDay || isWeekendDay}
-															style={{
-																marginRight: '10px',
-																cursor: isHolidayDay || isWeekendDay ? 'not-allowed' : 'pointer'
-															}}
-														/>
-														<span style={{
-															fontSize: '14px',
-															color: '#2c3e50',
-															flex: 1
-														}}>
-															{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
-														</span>
-													</label>
-												))}
-											</div>
-										</div>
-									)}
-									{renderWorkTimeRangeSelects(isHolidayDay || isWeekendDay)}
-								</div>
+								<WorkdayHoursWithActivities
+									{...workdayHoursFieldProps}
+									disabled={isHolidayDay || isWeekendDay}
+								/>
 
 								<div
 									className="bulk-fill-absence-card"
@@ -2481,6 +2538,9 @@ function MonthlyCalendar() {
 				onClose={() => setBulkFillModalOpen(false)}
 				onSubmit={handleBulkFillSubmit}
 				settings={settings}
+				workActivities={workActivities}
+				timesheetTasks={timesheetTasks}
+				tasksModuleEnabled={tasksModuleEnabled}
 				currentMonth={currentMonth}
 				currentYear={currentYear}
 				isPending={bulkFillWorkdaysMutation.isPending}

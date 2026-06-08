@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - client\src\utils\leaveRequestPeriod.test.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>client\src\utils\leaveRequestPeriod.test.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">64.36</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">185</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">15.84</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.45</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">import { describe, expect, it } from &#039;vitest&#039;
+import {
+	createDefaultLeaveRequestStatusFilters,
+	filterLeaveRequestsByPeriod,
+	filterLeaveRequestsByStatuses,
+	getLeaveRequestDurationStats,
+	getLeaveRequestLimitUsageStats,
+	getLeaveRequestStatusStats,
+	getLeaveRequestTypeStats,
+	getLeaveRequestYears,
+} from &#039;./leaveRequestPeriod&#039;
+
+const request = (startDate, endDate) =&gt; ({ startDate, endDate })
+
+describe(&#039;leave request period filters&#039;, () =&gt; {
+	it(&#039;includes requests that overlap the selected month&#039;, () =&gt; {
+		const requests = [
+			request(&#039;2025-12-29T00:00:00.000Z&#039;, &#039;2026-01-03T00:00:00.000Z&#039;),
+			request(&#039;2026-02-01T00:00:00.000Z&#039;, &#039;2026-02-02T00:00:00.000Z&#039;),
+		]
+
+		expect(filterLeaveRequestsByPeriod(requests, 2026, 0)).toEqual([requests[0]])
+	})
+
+	it(&#039;includes requests that overlap the selected year&#039;, () =&gt; {
+		const requests = [
+			request(&#039;2025-12-29T00:00:00.000Z&#039;, &#039;2026-01-03T00:00:00.000Z&#039;),
+			request(&#039;2024-06-01T00:00:00.000Z&#039;, &#039;2024-06-02T00:00:00.000Z&#039;),
+		]
+
+		expect(filterLeaveRequestsByPeriod(requests, 2026)).toEqual([requests[0]])
+	})
+
+	it(&#039;returns all requests for the full history option&#039;, () =&gt; {
+		const requests = [request(&#039;2024-06-01&#039;, &#039;2024-06-02&#039;)]
+		expect(filterLeaveRequestsByPeriod(requests, &#039;all&#039;, &#039;all&#039;)).toBe(requests)
+	})
+
+	it(&#039;lists every year touched by a request and the current year&#039;, () =&gt; {
+		const requests = [request(&#039;2024-12-30&#039;, &#039;2026-01-02&#039;)]
+		expect(getLeaveRequestYears(requests, 2027)).toEqual([2027, 2026, 2025, 2024])
+	})
+
+	it(&#039;filters requests by normalized statuses&#039;, () =&gt; {
+		const requests = [
+			{ ...request(&#039;2026-01-01&#039;, &#039;2026-01-02&#039;), status: &#039;status.accepted&#039; },
+			{ ...request(&#039;2026-02-01&#039;, &#039;2026-02-02&#039;), status: &#039;pending&#039; },
+		]
+		const filters = { ...createDefaultLeaveRequestStatusFilters(), accepted: false }
+		expect(filterLeaveRequestsByStatuses(requests, filters)).toEqual([requests[1]])
+	})
+
+	it(&#039;calculates status statistics for the selected period&#039;, () =&gt; {
+		const requests = [
+			{ status: &#039;status.accepted&#039; },
+			{ status: &#039;accepted&#039; },
+			{ status: &#039;status.pending&#039; },
+			{ status: &#039;status.rejected&#039; },
+		]
+		expect(getLeaveRequestStatusStats(requests)).toEqual({
+			total: 4,
+			accepted: 2,
+			pending: 1,
+			rejected: 1,
+			sent: 0,
+		})
+	})
+
+	it(&#039;calculates only working days that fall inside the selected month&#039;, () =&gt; {
+		const requests = [{
+			...request(&#039;2026-01-29T00:00:00.000Z&#039;, &#039;2026-02-03T00:00:00.000Z&#039;),
+			status: &#039;status.accepted&#039;,
+			daysRequested: 4,
+		}]
+		const stats = getLeaveRequestDurationStats(requests, 2026, 1, { workOnWeekends: false })
+
+		expect(stats.accepted).toBe(2)
+		expect(stats.total).toBe(2)
+	})
+
+	it(&#039;converts selected-period days to hours in hours mode&#039;, () =&gt; {
+		const requests = [{
+			...request(&#039;2026-03-02T00:00:00.000Z&#039;, &#039;2026-03-03T00:00:00.000Z&#039;),
+			status: &#039;status.pending&#039;,
+			daysRequested: 2,
+		}]
+		const stats = getLeaveRequestDurationStats(requests, 2026, 2, {
+			workOnWeekends: false,
+			leaveCalculationMode: &#039;hours&#039;,
+			leaveHoursPerDay: 7.5,
+		})
+
+		expect(stats.pending).toBe(15)
+	})
+
+	it(&#039;groups selected-period duration by leave request type&#039;, () =&gt; {
+		const requests = [
+			{
+				...request(&#039;2026-04-01T00:00:00.000Z&#039;, &#039;2026-04-03T00:00:00.000Z&#039;),
+				status: &#039;status.accepted&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 3,
+			},
+			{
+				...request(&#039;2026-04-06T00:00:00.000Z&#039;, &#039;2026-04-06T00:00:00.000Z&#039;),
+				status: &#039;status.pending&#039;,
+				type: &#039;care&#039;,
+				daysRequested: 1,
+			},
+			{
+				...request(&#039;2026-04-07T00:00:00.000Z&#039;, &#039;2026-04-07T00:00:00.000Z&#039;),
+				status: &#039;status.rejected&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 1,
+			},
+		]
+
+		const stats = getLeaveRequestTypeStats(requests, 2026, 3, { workOnWeekends: false })
+
+		expect(stats).toEqual([
+			expect.objectContaining({ type: &#039;vacation&#039;, requests: 2, duration: 4, accepted: 3, rejected: 1 }),
+			expect.objectContaining({ type: &#039;care&#039;, requests: 1, duration: 1, pending: 1 }),
+		])
+	})
+
+	it(&#039;calculates leave type limit usage from accepted and sent requests with pending risk&#039;, () =&gt; {
+		const requests = [
+			{
+				...request(&#039;2026-05-04T00:00:00.000Z&#039;, &#039;2026-05-08T00:00:00.000Z&#039;),
+				status: &#039;status.accepted&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 5,
+			},
+			{
+				...request(&#039;2026-05-11T00:00:00.000Z&#039;, &#039;2026-05-12T00:00:00.000Z&#039;),
+				status: &#039;status.sent&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 2,
+			},
+			{
+				...request(&#039;2026-05-13T00:00:00.000Z&#039;, &#039;2026-05-15T00:00:00.000Z&#039;),
+				status: &#039;status.pending&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 3,
+			},
+			{
+				...request(&#039;2026-05-18T00:00:00.000Z&#039;, &#039;2026-05-18T00:00:00.000Z&#039;),
+				status: &#039;status.rejected&#039;,
+				type: &#039;vacation&#039;,
+				daysRequested: 1,
+			},
+		]
+		const settings = {
+			workOnWeekends: false,
+			leaveRequestTypes: [
+				{ id: &#039;vacation&#039;, allowDaysLimit: true },
+				{ id: &#039;care&#039;, allowDaysLimit: true },
+				{ id: &#039;remote&#039;, allowDaysLimit: false },
+			],
+		}
+
+		const stats = getLeaveRequestLimitUsageStats(requests, 2026, 4, settings, { vacation: 8, care: 2 })
+
+		expect(stats).toEqual([
+			expect.objectContaining({
+				type: &#039;vacation&#039;,
+				limit: 8,
+				used: 7,
+				pending: 3,
+				remaining: 1,
+				usagePercent: 87.5,
+				isAtRisk: true,
+				isExceeded: false,
+			}),
+			expect.objectContaining({
+				type: &#039;care&#039;,
+				limit: 2,
+				used: 0,
+				pending: 0,
+				remaining: 2,
+				usagePercent: 0,
+			}),
+		])
+	})
+})</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

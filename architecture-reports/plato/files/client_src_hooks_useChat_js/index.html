@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - client\src\hooks\useChat.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>client\src\hooks\useChat.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">71.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">257</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">54.14</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.05</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">import { useQuery, useMutation, useQueryClient } from &#039;@tanstack/react-query&#039;
+import axios from &#039;axios&#039;
+import { API_URL } from &#039;../config.js&#039;
+
+// Get user channels
+export const useChannels = () =&gt; {
+	return useQuery({
+		queryKey: [&#039;channels&#039;],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/chat/channels`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		staleTime: 30 * 1000, // 30 seconds
+		refetchInterval: 60 * 1000 // Refetch every minute
+	})
+}
+
+// Get messages for a channel
+export const useChannelMessages = (channelId, enabled = true) =&gt; {
+	return useQuery({
+		queryKey: [&#039;messages&#039;, channelId],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/chat/channels/${channelId}/messages`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		enabled: enabled &amp;&amp; !!channelId,
+		staleTime: 10 * 1000, // 10 seconds
+		refetchInterval: 30 * 1000 // Refetch every 30 seconds
+	})
+}
+
+// Get channel users
+export const useChannelUsers = (channelId, enabled = true) =&gt; {
+	return useQuery({
+		queryKey: [&#039;channelUsers&#039;, channelId],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/chat/channels/${channelId}/users`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		enabled: enabled &amp;&amp; !!channelId,
+		staleTime: 5 * 1000, // 5 seconds - users can change frequently
+		refetchInterval: 30 * 1000 // Refetch every 30 seconds for real-time updates
+	})
+}
+
+// Send message mutation
+export const useSendMessage = () =&gt; {
+	const queryClient = useQueryClient()
+	
+	return useMutation({
+		mutationFn: async ({ channelId, content, attachments = [] }) =&gt; {
+			const hasAttachments = Array.isArray(attachments) &amp;&amp; attachments.length &gt; 0
+			let response
+
+			if (hasAttachments) {
+				const formData = new FormData()
+				formData.append(&#039;channelId&#039;, channelId)
+				formData.append(&#039;content&#039;, content || &#039;&#039;)
+				attachments.forEach((file) =&gt; {
+					formData.append(&#039;attachments&#039;, file)
+				})
+				response = await axios.post(`${API_URL}/api/chat/messages`, formData, {
+					withCredentials: true,
+					headers: {
+						&#039;Content-Type&#039;: &#039;multipart/form-data&#039;
+					}
+				})
+			} else {
+				response = await axios.post(
+					`${API_URL}/api/chat/messages`,
+					{ channelId, content },
+					{ withCredentials: true }
+				)
+			}
+
+			return response.data
+		},
+		onSuccess: (data, variables) =&gt; {
+			// Invalidate messages query to refetch
+			queryClient.invalidateQueries({ queryKey: [&#039;messages&#039;, variables.channelId] })
+			// Also invalidate channels to update unread counts
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;unreadCount&#039;] })
+		}
+	})
+}
+
+// Update own message
+export const useUpdateMessage = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ messageId, content, channelId }) =&gt; {
+			const response = await axios.put(
+				`${API_URL}/api/chat/messages/${messageId}`,
+				{ content },
+				{ withCredentials: true }
+			)
+			return { ...response.data, channelId }
+		},
+		onSuccess: (_, variables) =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;messages&#039;, variables.channelId] })
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;unreadCount&#039;] })
+		}
+	})
+}
+
+// Delete own message
+export const useDeleteMessage = () =&gt; {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({ messageId, channelId }) =&gt; {
+			const response = await axios.delete(`${API_URL}/api/chat/messages/${messageId}`, {
+				withCredentials: true
+			})
+			return { ...response.data, channelId }
+		},
+		onSuccess: (_, variables) =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;messages&#039;, variables.channelId] })
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;unreadCount&#039;] })
+		}
+	})
+}
+
+// Get unread count
+export const useUnreadCount = ({ enabled = true } = {}) =&gt; {
+	return useQuery({
+		queryKey: [&#039;unreadCount&#039;],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/chat/unread-count`, {
+				withCredentials: true
+			})
+			return response.data.unreadCount || 0
+		},
+		enabled,
+		staleTime: 10 * 1000, // 10 seconds
+		refetchInterval: enabled ? 30 * 1000 : false,
+	})
+}
+
+// Get team members
+export const useTeamMembers = () =&gt; {
+	return useQuery({
+		queryKey: [&#039;teamMembers&#039;],
+		queryFn: async () =&gt; {
+			const response = await axios.get(`${API_URL}/api/chat/team-members`, {
+				withCredentials: true
+			})
+			return response.data
+		},
+		staleTime: 5 * 60 * 1000, // 5 minutes
+		cacheTime: 10 * 60 * 1000
+	})
+}
+
+// Create channel mutation
+export const useCreateChannel = () =&gt; {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ name, type, description, memberIds }) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/chat/channels`,
+				{ name, type, description, memberIds },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			// Invalidate and refetch channels immediately
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+			queryClient.refetchQueries({ queryKey: [&#039;channels&#039;] })
+		}
+	})
+}
+
+// Add members to channel mutation
+export const useAddMembersToChannel = () =&gt; {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ channelId, memberIds }) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/chat/channels/${channelId}/members`,
+				{ memberIds },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+		}
+	})
+}
+
+// Create private chat mutation
+export const useCreatePrivateChat = () =&gt; {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ userId }) =&gt; {
+			const response = await axios.post(
+				`${API_URL}/api/chat/private-chat`,
+				{ userId },
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+		}
+	})
+}
+
+// Remove members from channel mutation
+export const useRemoveMembersFromChannel = () =&gt; {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ channelId, memberIds }) =&gt; {
+			const response = await axios.delete(
+				`${API_URL}/api/chat/channels/${channelId}/members`,
+				{ 
+					data: { memberIds },
+					withCredentials: true 
+				}
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+		}
+	})
+}
+
+// Delete channel mutation
+export const useDeleteChannel = () =&gt; {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ channelId }) =&gt; {
+			const response = await axios.delete(
+				`${API_URL}/api/chat/channels/${channelId}`,
+				{ withCredentials: true }
+			)
+			return response.data
+		},
+		onSuccess: () =&gt; {
+			queryClient.invalidateQueries({ queryKey: [&#039;channels&#039;] })
+			queryClient.invalidateQueries({ queryKey: [&#039;unreadCount&#039;] })
+		}
+	})
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -19,8 +19,16 @@ import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
-import { buildPdfDocument, downloadPdf, pdfDataTable, pdfTitleBlock } from '../../utils/export/pdfDownload'
+import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
 import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
+import {
+	LEAVE_REQUEST_STATUS_KEYS,
+	countLeaveRequestDaysInPeriod,
+	getLeaveRequestDurationStats,
+	getLeaveRequestStatusStats,
+	getLeaveRequestTypeStats,
+} from '../../utils/leaveRequestPeriod'
+import { buildReportFilename } from '../../utils/export/reportFilename'
 
 /** Domyślne filtry statusów (jak wcześniej: oczekujące, zaakceptowane, wysłane/L4). */
 const DEFAULT_STATUS_FILTERS = {
@@ -43,6 +51,7 @@ function normalizeLeaveStatus(status) {
 }
 
 const STATUS_FILTER_KEYS = ['pending', 'accepted', 'sent', 'rejected']
+const REPORT_STATUS_KEYS = LEAVE_REQUEST_STATUS_KEYS
 
 const LEGACY_LEAVE_FORM_OPTION_IDS = [
 	'leaveform.option1',
@@ -618,7 +627,12 @@ function VacationListUser() {
 	}, [])
 
 	const handleMonthSelect = event => {
+		if (event.target.value === 'all-months') {
+			setCalendarView('all-months')
+			return
+		}
 		const newMonth = parseInt(event.target.value, 10)
+		setCalendarView('single')
 		setCurrentMonth(newMonth)
 		goToSelectedDate(newMonth, currentYear)
 	}
@@ -626,7 +640,7 @@ function VacationListUser() {
 	const handleYearSelect = event => {
 		const newYear = parseInt(event.target.value, 10)
 		setCurrentYear(newYear)
-		goToSelectedDate(currentMonth, newYear)
+		if (calendarView === 'single') goToSelectedDate(currentMonth, newYear)
 	}
 
 	const handlePrevMonth = () => {
@@ -674,50 +688,254 @@ function VacationListUser() {
 		return String(currentYear)
 	}, [calendarView, currentYear, currentMonth, i18n.resolvedLanguage])
 
-	const buildExportRows = () => {
+	const exportSelectedMonth = calendarView === 'single' ? currentMonth : 'all'
+	const exportDurationUnit = settings?.leaveCalculationMode === 'hours' ? 'godz.' : 'dni'
+	const exportDurationMultiplier = settings?.leaveCalculationMode === 'hours'
+		? Number(settings?.leaveHoursPerDay) || 8
+		: 1
+	const formatReportNumber = (value, digits = 1) => (
+		new Intl.NumberFormat(i18n.resolvedLanguage, { maximumFractionDigits: digits }).format(Number(value) || 0)
+	)
+	const formatReportDate = (value) => {
+		const date = new Date(value)
+		if (Number.isNaN(date.getTime())) return '-'
+		return date.toLocaleDateString(i18n.resolvedLanguage, { day: '2-digit', month: '2-digit', year: 'numeric' })
+	}
+	const formatReportMonthName = (month) => {
+		const name = new Date(Date.UTC(2020, month, 1)).toLocaleString(i18n.resolvedLanguage, {
+			month: 'long',
+			timeZone: 'UTC',
+		})
+		return name.charAt(0).toUpperCase() + name.slice(1)
+	}
+	const getActiveStatusKeysForReport = () => (
+		REPORT_STATUS_KEYS.filter(status => statusFilters[status] !== false)
+	)
+	const getReportStatusLabel = (status) => {
+		const info = getStatusInfo(`status.${status}`)
+		return info.text || status
+	}
+	const getRequestDurationForReport = (request, month = exportSelectedMonth) => (
+		countLeaveRequestDaysInPeriod(request, currentYear, month, settings) * exportDurationMultiplier
+	)
+	const getReportRequestRows = () => {
 		return filteredRequestsForTable.map((request) => {
 			const norm = normalizeLeaveStatus(request.status)
 			const statusLabel = norm
 				? getStatusInfo(`status.${norm}`).text
 				: getStatusInfo(request.status).text
-			return [
-				resolveEmployeeNameForRequest(request),
-				formatRequestDateRange(request),
-				getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage),
-				statusLabel,
-			]
+			return {
+				employee: resolveEmployeeNameForRequest(request),
+				dateRange: formatRequestDateRange(request),
+				startDate: request.startDate,
+				endDate: request.endDate,
+				type: getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage),
+				statusKey: norm,
+				status: statusLabel,
+				duration: getRequestDurationForReport(request),
+				replacement: request.replacement || request.substitute || 'Brak',
+				additionalInfo: request.additionalInfo || request.note || request.comment || 'Brak',
+			}
 		})
 	}
 
-	const exportFileNameBase = () => {
-		if (calendarView === 'single') {
-			return `leave_requests_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`
+	const getLeaveReportData = () => {
+		const activeStatusKeys = getActiveStatusKeysForReport()
+		const requestRows = getReportRequestRows()
+		const statusStats = getLeaveRequestStatusStats(filteredRequestsForTable)
+		const durationStats = getLeaveRequestDurationStats(filteredRequestsForTable, currentYear, exportSelectedMonth, settings)
+		const typeStats = getLeaveRequestTypeStats(filteredRequestsForTable, currentYear, exportSelectedMonth, settings)
+		const employeeMap = new Map()
+
+		for (const request of filteredRequestsForTable) {
+			const employee = resolveEmployeeNameForRequest(request)
+			const status = normalizeLeaveStatus(request.status)
+			const duration = getRequestDurationForReport(request)
+			const current = employeeMap.get(employee) || {
+				employee,
+				requests: 0,
+				total: 0,
+				accepted: 0,
+				pending: 0,
+				rejected: 0,
+				sent: 0,
+			}
+			current.requests += 1
+			current.total += duration
+			if (status) current[status] += duration
+			employeeMap.set(employee, current)
 		}
-		return `leave_requests_year_${currentYear}`
+
+		const employeeStats = [...employeeMap.values()].sort((a, b) => b.total - a.total || b.requests - a.requests)
+		const monthlySummaryRows = calendarView === 'all-months'
+			? Array.from({ length: 12 }, (_, month) => {
+				const totals = {
+					month,
+					requests: 0,
+					total: 0,
+					accepted: 0,
+					pending: 0,
+					rejected: 0,
+					sent: 0,
+				}
+				for (const request of filteredRequestsForTable) {
+					const duration = getRequestDurationForReport(request, month)
+					if (!duration) continue
+					const status = normalizeLeaveStatus(request.status)
+					totals.requests += 1
+					totals.total += duration
+					if (status) totals[status] += duration
+				}
+				return totals
+			})
+			: []
+		const topEmployee = employeeStats.find(row => row.total > 0) || employeeStats[0]
+		const topType = typeStats.find(row => row.duration > 0) || typeStats[0]
+		const topMonth = monthlySummaryRows.length
+			? monthlySummaryRows.reduce((best, row) => row.total > best.total ? row : best, monthlySummaryRows[0])
+			: null
+		const statusLabel = activeStatusKeys.length === REPORT_STATUS_KEYS.length
+			? 'Wszystkie statusy'
+			: activeStatusKeys.map(getReportStatusLabel).join(', ')
+
+		return {
+			activeStatusKeys,
+			requestRows,
+			statusStats,
+			durationStats,
+			typeStats,
+			employeeStats,
+			monthlySummaryRows,
+			topEmployee,
+			topType,
+			topMonth,
+			statusLabel,
+		}
+	}
+
+	const exportFileNameBase = () => {
+		return buildReportFilename({
+			locale: i18n.resolvedLanguage,
+			pl: 'raport-urlopy-zespolu',
+			en: 'team-leave-report',
+			parts: [exportPeriodLabel],
+		})
 	}
 
 	const handleExportExcel = async () => {
-		const rows = buildExportRows()
-		if (rows.length === 0) {
+		if (filteredRequestsForTable.length === 0) {
 			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
 			return
 		}
 		try {
-			const headers = [
-				t('planslist.columnEmployee'),
-				t('planslist.columnDates'),
-				t('planslist.columnType'),
-				t('planslist.columnStatus'),
-			]
+			const report = getLeaveReportData()
+			const typeRows = report.typeStats.map(row => [
+				getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
+				row.requests,
+				row.duration,
+				row.accepted,
+				row.pending,
+				row.rejected,
+				row.sent,
+			])
+			const employeeRows = report.employeeStats.map(row => [
+				row.employee,
+				row.requests,
+				row.total,
+				row.accepted,
+				row.pending,
+				row.rejected,
+				row.sent,
+			])
+			const requestRows = report.requestRows.map(row => [
+				row.employee,
+				formatReportDate(row.startDate),
+				formatReportDate(row.endDate),
+				row.type,
+				row.status,
+				row.duration,
+				row.replacement,
+				row.additionalInfo,
+			])
 			await downloadExcelWorkbook(
 				[
 					{
-						name: t('planslist.exportSheetName') || 'Wnioski',
-						rows: [headers, ...rows],
-						colWidths: [26, 22, 36, 20],
+						name: 'Podsumowanie',
+						title: 'Raport urlopów i nieobecności',
+						subtitle: `Okres: ${exportPeriodLabel}`,
+						executive: true,
+						colWidths: [24, 26, 18, 18],
+						rows: [
+							['Obszar', 'Wskaźnik', 'Wartość', 'Jednostka'],
+							['Metadane', 'Okres', exportPeriodLabel, ''],
+							['Metadane', 'Statusy', report.statusLabel, ''],
+							['KPI', 'Wnioski łącznie', report.statusStats.total, 'wnioski'],
+							...report.activeStatusKeys.map(status => ['KPI', getReportStatusLabel(status), report.statusStats[status], 'wnioski']),
+							['Czas', 'Łącznie', report.durationStats.total, exportDurationUnit],
+							...report.activeStatusKeys.map(status => ['Czas', getReportStatusLabel(status), report.durationStats[status], exportDurationUnit]),
+							...(report.topEmployee ? [['Pracownicy', 'Największa liczba dni/godzin', report.topEmployee.employee, `${formatReportNumber(report.topEmployee.total)} ${exportDurationUnit}`]] : []),
+							...(report.topType ? [['Typy urlopów', 'Najczęstszy typ wg czasu', getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage), `${formatReportNumber(report.topType.duration)} ${exportDurationUnit}`]] : []),
+							...(report.topMonth?.total > 0 ? [['Miesiące', 'Największe obciążenie', formatReportMonthName(report.topMonth.month), `${formatReportNumber(report.topMonth.total)} ${exportDurationUnit}`]] : []),
+						],
+					},
+					...(calendarView === 'all-months' ? [{
+						name: 'Miesiące',
+						title: `Podsumowanie miesięczne - ${exportPeriodLabel}`,
+						subtitle: `Statusy: ${report.statusLabel}`,
+						colWidths: [18, 12, 18, ...report.activeStatusKeys.map(() => 18)],
+						rows: [
+							[
+								'Miesiąc',
+								'Wnioski',
+								`Łącznie (${exportDurationUnit})`,
+								...report.activeStatusKeys.map(status => `${getReportStatusLabel(status)} (${exportDurationUnit})`),
+							],
+							...report.monthlySummaryRows.map(row => [
+								formatReportMonthName(row.month),
+								row.requests,
+								row.total,
+								...report.activeStatusKeys.map(status => row[status] || 0),
+							]),
+						],
+					}] : []),
+					{
+						name: 'Pracownicy',
+						title: `Urlopy według pracowników - ${exportPeriodLabel}`,
+						subtitle: 'Kto i w jakim wymiarze ma nieobecności w wybranym okresie.',
+						colWidths: [30, 12, 18, 18, 18, 18, 18],
+						rows: [
+							['Pracownik', 'Wnioski', `Łącznie (${exportDurationUnit})`, `Zaakceptowane (${exportDurationUnit})`, `Oczekujące (${exportDurationUnit})`, `Odrzucone (${exportDurationUnit})`, `Wysłane (${exportDurationUnit})`],
+							...employeeRows,
+						],
+					},
+					{
+						name: 'Typy urlopów',
+						title: `Urlopy według typu - ${exportPeriodLabel}`,
+						subtitle: 'Struktura typów nieobecności i ich wpływ na dostępność zespołu.',
+						colWidths: [34, 12, 18, 18, 18, 18, 18],
+						rows: [
+							['Typ', 'Wnioski', `Łącznie (${exportDurationUnit})`, `Zaakceptowane (${exportDurationUnit})`, `Oczekujące (${exportDurationUnit})`, `Odrzucone (${exportDurationUnit})`, `Wysłane (${exportDurationUnit})`],
+							...typeRows,
+						],
+					},
+					{
+						name: 'Wnioski',
+						title: `Lista wniosków - ${exportPeriodLabel}`,
+						subtitle: 'Konkretne terminy i statusy zgodne z aktualnym widokiem.',
+						colWidths: [28, 13, 13, 30, 18, 14, 22, 32],
+						rows: [
+							['Pracownik', 'Data od', 'Data do', 'Typ', 'Status', exportDurationUnit, 'Zastępstwo', 'Uwagi'],
+							...requestRows,
+						],
 					},
 				],
-				`${exportFileNameBase()}.xlsx`
+				buildReportFilename({
+					locale: i18n.resolvedLanguage,
+					pl: 'raport-urlopy-zespolu',
+					en: 'team-leave-report',
+					parts: [exportPeriodLabel],
+					extension: 'xlsx',
+				})
 			)
 		} catch (e) {
 			console.error('handleExportExcel:', e)
@@ -725,28 +943,261 @@ function VacationListUser() {
 	}
 
 	const handleExportPdf = async () => {
-		const rows = buildExportRows()
-		if (rows.length === 0) {
+		if (filteredRequestsForTable.length === 0) {
 			window.alert(t('planslist.exportEmpty') || 'Brak danych do eksportu.')
 			return
 		}
 		try {
-			const headers = [
-				t('planslist.columnEmployee'),
-				t('planslist.columnDates'),
-				t('planslist.columnType'),
-				t('planslist.columnStatus'),
+			const report = getLeaveReportData()
+			const theme = {
+				navy: '#0f2a4a',
+				blue: '#2563eb',
+				green: '#16a34a',
+				red: '#dc2626',
+				purple: '#7c3aed',
+				amber: '#d97706',
+				muted: '#64748b',
+				line: '#dbe7f2',
+				soft: '#f5f9fd',
+				white: '#ffffff',
+			}
+			const statusColors = {
+				accepted: theme.green,
+				pending: theme.blue,
+				rejected: theme.red,
+				sent: theme.purple,
+			}
+			const tableLayout = {
+				hLineColor: () => theme.line,
+				vLineColor: () => theme.line,
+				fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+			}
+			const kpiCards = [
+				{ label: 'Wnioski łącznie', value: report.statusStats.total, sub: `${formatReportNumber(report.durationStats.total)} ${exportDurationUnit}`, color: theme.navy },
+				...report.activeStatusKeys.map(status => ({
+					label: getReportStatusLabel(status),
+					value: report.statusStats[status],
+					sub: `${formatReportNumber(report.durationStats[status])} ${exportDurationUnit}`,
+					color: statusColors[status] || theme.blue,
+				})),
 			]
+			const maxTypeDuration = Math.max(...report.typeStats.map(row => row.duration), 0)
+			const maxEmployeeDuration = Math.max(...report.employeeStats.map(row => row.total), 0)
+			const maxMonthDuration = Math.max(...report.monthlySummaryRows.map(row => row.total), 0)
+			const insightLines = [
+				`Łącznie w wybranym okresie: ${report.statusStats.total} wniosków na ${formatReportNumber(report.durationStats.total)} ${exportDurationUnit}.`,
+			]
+			if (report.durationStats.accepted > 0) {
+				insightLines.push(`Zaakceptowane nieobecności obejmują ${formatReportNumber(report.durationStats.accepted)} ${exportDurationUnit}.`)
+			}
+			if (report.statusStats.pending > 0) {
+				insightLines.push(`Do decyzji pozostaje ${report.statusStats.pending} wniosków na ${formatReportNumber(report.durationStats.pending)} ${exportDurationUnit}.`)
+			}
+			if (report.topEmployee?.total > 0) {
+				insightLines.push(`Największe obciążenie po stronie pracownika: ${report.topEmployee.employee} (${formatReportNumber(report.topEmployee.total)} ${exportDurationUnit}).`)
+			}
+			if (report.topType?.duration > 0) {
+				insightLines.push(`Największy udział typu: ${getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage)} (${formatReportNumber(report.topType.duration)} ${exportDurationUnit}).`)
+			}
+			if (report.topMonth?.total > 0) {
+				insightLines.push(`Najbardziej obciążony miesiąc: ${formatReportMonthName(report.topMonth.month)} (${formatReportNumber(report.topMonth.total)} ${exportDurationUnit}).`)
+			}
 			const content = [
-				...pdfTitleBlock(
-					t('planslist.requestsListTitle'),
-					`${t('planslist.exportPeriod')}: ${exportPeriodLabel}`
-				),
-				pdfDataTable(headers, rows, [52, 68, 92, 58]),
+				{
+					table: {
+						widths: ['*', 190],
+						body: [[
+							{
+								stack: [
+									{ text: 'PLANOPIA · RAPORT URLOPÓW I NIEOBECNOŚCI', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1 },
+									{ text: 'Urlopy zespołu', fontSize: 22, bold: true, color: theme.white, margin: [0, 6, 0, 0] },
+									{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: '#e0f2fe', margin: [0, 5, 0, 0] },
+								],
+								border: [false, false, false, false],
+								margin: [16, 14, 12, 14],
+							},
+							{
+								stack: [
+									{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: '#dbeafe' },
+									{ text: `Jednostka: ${exportDurationUnit}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
+									{ text: `Statusy: ${report.statusLabel}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
+								],
+								border: [false, false, false, false],
+								alignment: 'right',
+								margin: [10, 18, 16, 10],
+							},
+						]],
+					},
+					layout: { fillColor: () => theme.navy, hLineWidth: () => 0, vLineWidth: () => 0 },
+					margin: [0, 0, 0, 18],
+				},
+				{
+					table: {
+						widths: kpiCards.map(() => '*'),
+						body: [[
+							...kpiCards.map(card => ({
+								stack: [
+									{ text: card.label, fontSize: 8, bold: true, color: theme.muted },
+									{ text: String(card.value), fontSize: 17, bold: true, color: theme.navy, margin: [0, 3, 0, 0] },
+									{ text: card.sub, fontSize: 8, bold: true, color: theme.navy, margin: [0, 2, 0, 0] },
+									{ canvas: [{ type: 'rect', x: 0, y: 0, w: 58, h: 3, r: 1.5, color: card.color }], margin: [0, 5, 0, 0] },
+								],
+								border: [false, false, false, false],
+								margin: [8, 7, 8, 7],
+							})),
+						]],
+					},
+					layout: { hLineColor: () => theme.line, vLineColor: () => theme.line },
+					margin: [0, 0, 0, 14],
+				},
+				{
+					stack: [
+						{ text: 'Najważniejsze informacje', style: 'sectionTitle' },
+						...insightLines.map(line => ({ text: `• ${line}`, margin: [0, 2, 0, 0] })),
+					],
+					fillColor: theme.soft,
+					margin: [0, 0, 0, 16],
+				},
 			]
+			if (calendarView === 'all-months') {
+				content.push(
+					{ text: 'Podsumowanie miesięczne', style: 'sectionTitle' },
+					{
+						table: {
+							headerRows: 1,
+							widths: ['*', 42, 58, '*'],
+							body: [
+								['Miesiąc', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
+								...report.monthlySummaryRows.map(row => {
+									const barWidth = maxMonthDuration > 0 ? Math.max(8, (row.total / maxMonthDuration) * 130) : 0
+									return [
+										formatReportMonthName(row.month),
+										row.requests,
+										formatReportNumber(row.total),
+										{ canvas: [
+											{ type: 'rect', x: 0, y: 3, w: 130, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.blue },
+										] },
+									]
+								}),
+							],
+						},
+						layout: tableLayout,
+						fontSize: 8,
+						margin: [0, 4, 0, 14],
+					}
+				)
+			}
+			if (report.typeStats.length > 0) {
+				content.push(
+					{ text: 'Urlopy według typu', style: 'sectionTitle' },
+					{
+						table: {
+							headerRows: 1,
+							widths: ['*', 48, 62, 58, 58, '*'],
+							body: [
+								['Typ', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Zaakcept.', 'Oczek.', 'Udział'].map(text => ({ text, bold: true, color: theme.white })),
+								...report.typeStats.map(row => {
+									const barWidth = maxTypeDuration > 0 ? Math.max(8, (row.duration / maxTypeDuration) * 100) : 0
+									return [
+										getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
+										row.requests,
+										formatReportNumber(row.duration),
+										formatReportNumber(row.accepted),
+										formatReportNumber(row.pending),
+										{ canvas: [
+											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.purple },
+										] },
+									]
+								}),
+							],
+						},
+						layout: tableLayout,
+						fontSize: 8,
+						margin: [0, 4, 0, 14],
+					}
+				)
+			}
+			if (report.employeeStats.length > 0) {
+				content.push(
+					{ text: 'Urlopy według pracowników', style: 'sectionTitle' },
+					{
+						table: {
+							headerRows: 1,
+							widths: ['*', 48, 62, 58, 58, '*'],
+							body: [
+								['Pracownik', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Zaakcept.', 'Oczek.', 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
+								...report.employeeStats.map(row => {
+									const barWidth = maxEmployeeDuration > 0 ? Math.max(8, (row.total / maxEmployeeDuration) * 100) : 0
+									return [
+										row.employee,
+										row.requests,
+										formatReportNumber(row.total),
+										formatReportNumber(row.accepted),
+										formatReportNumber(row.pending),
+										{ canvas: [
+											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.green },
+										] },
+									]
+								}),
+							],
+						},
+						layout: tableLayout,
+						fontSize: 8,
+						margin: [0, 4, 0, 14],
+					}
+				)
+			}
+			content.push(
+				{ text: 'Konkretne terminy wniosków', style: 'sectionTitle' },
+				{
+					table: {
+						headerRows: 1,
+						widths: [88, 48, 48, 82, 58, 42, '*'],
+						body: [
+							['Pracownik', 'Od', 'Do', 'Typ', 'Status', exportDurationUnit, 'Uwagi'].map(text => ({ text, bold: true, color: theme.white })),
+							...report.requestRows.map(row => [
+								row.employee,
+								formatReportDate(row.startDate),
+								formatReportDate(row.endDate),
+								row.type,
+								{ text: row.status, color: statusColors[row.statusKey] || theme.navy, bold: true },
+								formatReportNumber(row.duration),
+								row.additionalInfo,
+							]),
+						],
+					},
+					layout: tableLayout,
+					fontSize: 7.5,
+					margin: [0, 4, 0, 0],
+				}
+			)
 			await downloadPdf(
-				buildPdfDocument({ content, pageOrientation: 'landscape' }),
-				`${exportFileNameBase()}.pdf`
+				buildPdfDocument({
+					content,
+					pageOrientation: 'landscape',
+					pageMargins: [28, 28, 28, 34],
+					info: { title: `Raport urlopów - ${exportPeriodLabel}` },
+					styles: {
+						sectionTitle: { fontSize: 13, bold: true, color: theme.navy, margin: [0, 0, 0, 5] },
+					},
+					footer: (currentPage, pageCount) => ({
+						columns: [
+							{ text: 'Planopia', color: theme.muted, fontSize: 8 },
+							{ text: `${currentPage}/${pageCount}`, alignment: 'right', color: theme.muted, fontSize: 8 },
+						],
+						margin: [28, 0, 28, 0],
+					}),
+				}),
+				buildReportFilename({
+					locale: i18n.resolvedLanguage,
+					pl: 'raport-urlopy-zespolu',
+					en: 'team-leave-report',
+					parts: [exportPeriodLabel],
+					extension: 'pdf',
+				})
 			)
 		} catch (e) {
 			console.error('handleExportPdf:', e)
@@ -797,12 +1248,12 @@ function VacationListUser() {
 
 					{/* Kalendarz z wnioskami urlopowymi */}
 					<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '40px', gap: '5px', alignItems: 'center' }}>
-						{calendarView === 'single' && (
 							<select
-								value={currentMonth}
+								value={calendarView === 'all-months' ? 'all-months' : currentMonth}
 								onChange={handleMonthSelect}
 								style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
 								className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+								<option value="all-months">{t('planslist.allMonths') || 'Wszystkie miesiące'}</option>
 								{Array.from({ length: 12 }, (_, i) => (
 									<option key={i} value={i}>
 										{new Date(0, i)
@@ -811,7 +1262,6 @@ function VacationListUser() {
 									</option>
 								))}
 							</select>
-						)}
 						<select
 							value={currentYear}
 							onChange={handleYearSelect}

@@ -5,12 +5,16 @@ import { useAlert } from '../../context/AlertContext'
 import axios from 'axios'
 import { API_URL } from '../../config'
 import { useQuery } from '@tanstack/react-query'
+import { getTimerSessionDisplayName } from '../../utils/timerSessionSelect'
+import { filterGroupedSessionsByActivities } from '../../utils/workActivityAggregation'
+import { filterGroupedSessionsByTasks } from '../../utils/workTaskAggregation'
 
 // Session item component with mobile expand/collapse
 function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, formatOvertimeTime, onDelete, deleteSession, t, i18n }) {
 	const [isExpanded, setIsExpanded] = useState(false)
 	const sessionDate = session.date || session.startTime
 	const duration = session.endTime ? calculateDuration(session.startTime, session.endTime) : null
+	const hasQuantity = Number(session.quantity) > 0 && session.unit
 	
 	// Check if mobile (screen width < 768px)
 	const [isMobile, setIsMobile] = useState(() => {
@@ -90,6 +94,18 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							fontWeight: '500'
 						}}>
 							{session.qrCode?.name ? `${t('sessions.fromQR') || 'QR'}: ${session.qrCode.name}` : (t('sessions.fromQR') || 'QR')}
+						</span>
+					)}
+					{((!isMobile || isExpanded) && hasQuantity) && (
+						<span style={{
+							fontSize: '10px',
+							backgroundColor: '#ecfdf5',
+							color: '#047857',
+							padding: '2px 6px',
+							borderRadius: '10px',
+							fontWeight: '700'
+						}}>
+							{t('workcalendar.activities.quantityLabel')}: {session.quantity} {session.unit}
 						</span>
 					)}
 					{isMobile && (
@@ -266,13 +282,22 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							})()}
 						</div>
 					)}
+					{hasQuantity && (
+						<div style={{
+							color: '#047857',
+							fontSize: '12px',
+							fontWeight: '700'
+						}}>
+							{t('workcalendar.activities.quantityLabel')}: {session.quantity} {session.unit}
+						</div>
+					)}
 				</div>
 			)}
 		</div>
 	)
 }
 
-function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
+function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, selectedActivityIds = [], selectedTaskIds = [] }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
 	
@@ -307,6 +332,20 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 	const totalMinutes = sessionsData?.totalMinutes || 0
 	const dateRange = sessionsData?.dateRange
 
+	const activityFilteredGroups = useMemo(
+		() => filterGroupedSessionsByActivities(groupedSessions, selectedActivityIds),
+		[groupedSessions, selectedActivityIds]
+	)
+
+	const filteredGroups = useMemo(
+		() => filterGroupedSessionsByTasks(activityFilteredGroups, selectedTaskIds),
+		[activityFilteredGroups, selectedTaskIds]
+	)
+
+	const filteredTotalMinutes = useMemo(() => {
+		return filteredGroups.reduce((sum, group) => sum + (group.totalMinutes || 0), 0)
+	}, [filteredGroups])
+
 	// Helper function to normalize date to YYYY-MM-DD format without timezone issues
 	const normalizeDate = (dateInput) => {
 		if (!dateInput) return null
@@ -326,7 +365,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 	// Get unique dates from all sessions for filter
 	const availableDates = useMemo(() => {
 		const dates = new Set()
-		groupedSessions.forEach(group => {
+		filteredGroups.forEach(group => {
 			group.sessions.forEach(session => {
 				if (session.date) {
 					const dateStr = normalizeDate(session.date)
@@ -335,19 +374,25 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 			})
 		})
 		return Array.from(dates).sort().reverse() // Most recent first
-	}, [groupedSessions])
+	}, [filteredGroups])
 
 	// Filter sessions by selected date and recalculate percentages
 	const filteredData = useMemo(() => {
 		if (!selectedDate) {
+			const groupsWithPercentages = filteredGroups.map(group => ({
+				...group,
+				percentage: filteredTotalMinutes > 0
+					? ((group.totalMinutes / filteredTotalMinutes) * 100).toFixed(1)
+					: 0,
+			}))
 			return {
-				grouped: groupedSessions,
-				totalMinutes: totalMinutes
+				grouped: groupsWithPercentages,
+				totalMinutes: filteredTotalMinutes,
 			}
 		}
 
 		// Filter sessions by date
-		const filteredGroups = groupedSessions.map(group => {
+		const filteredGroupsByDate = filteredGroups.map(group => {
 			const filteredSessions = group.sessions.filter(session => {
 				if (!session.date) return false
 				const sessionDateStr = normalizeDate(session.date)
@@ -358,10 +403,16 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 
 			// Recalculate total minutes for this group on selected date
 			let groupMinutes = 0
+			let groupQuantity = 0
+			let groupUnit = group.unit || ''
 			filteredSessions.forEach(session => {
 				if (session.startTime && session.endTime) {
 					const diff = (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60)
 					groupMinutes += Math.round(diff)
+				}
+				if (Number(session.quantity) > 0) {
+					groupQuantity += Number(session.quantity)
+					if (!groupUnit && session.unit) groupUnit = session.unit
 				}
 			})
 
@@ -369,15 +420,20 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 				...group,
 				sessions: filteredSessions,
 				totalMinutes: groupMinutes,
-				totalHours: (groupMinutes / 60).toFixed(2)
+				totalHours: (groupMinutes / 60).toFixed(2),
+				quantity: Math.round(groupQuantity * 100) / 100,
+				unit: groupUnit,
+				efficiency: groupQuantity > 0 && groupMinutes > 0
+					? Math.round((groupQuantity / (groupMinutes / 60)) * 100) / 100
+					: null,
 			}
 		}).filter(Boolean)
 
 		// Calculate total minutes for selected date
-		const dayTotalMinutes = filteredGroups.reduce((sum, group) => sum + group.totalMinutes, 0)
+		const dayTotalMinutes = filteredGroupsByDate.reduce((sum, group) => sum + group.totalMinutes, 0)
 
 		// Recalculate percentages based on day total
-		const groupsWithPercentages = filteredGroups.map(group => ({
+		const groupsWithPercentages = filteredGroupsByDate.map(group => ({
 			...group,
 			percentage: dayTotalMinutes > 0 ? ((group.totalMinutes / dayTotalMinutes) * 100).toFixed(1) : 0
 		}))
@@ -389,7 +445,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 			grouped: groupsWithPercentages,
 			totalMinutes: dayTotalMinutes
 		}
-	}, [selectedDate, groupedSessions, totalMinutes])
+	}, [selectedDate, filteredGroups, filteredTotalMinutes])
 
 	const formatHours = (hours) => {
 		const num = parseFloat(hours)
@@ -509,7 +565,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 		)
 	}
 
-	if (!groupedSessions || groupedSessions.length === 0) {
+	if (!groupedSessions || groupedSessions.length === 0 || filteredGroups.length === 0) {
 		return (
 			<div style={{
 				backgroundColor: 'white',
@@ -552,7 +608,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 	const displayTotalMinutes = filteredData.totalMinutes || 0
 
 	return (
-		<div style={{
+		<div className="work-session-list" style={{
 			backgroundColor: 'white',
 			borderRadius: '12px',
 			boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -657,13 +713,12 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 						return sum + overtimeSeconds
 					}, 0)
 					const totalOvertimeFormatted = totalOvertimeSeconds > 0 ? formatOvertimeTime(totalOvertimeSeconds) : null
-					const displayName = group.task 
-						? group.task.title 
-						: (group.workDescription || t('sessions.noDescription') || 'Praca')
+					const displayName = getTimerSessionDisplayName(group, i18n.language, t)
 
 					return (
 						<div
 							key={index}
+							className="work-session-group"
 							style={{
 								border: '1px solid #e0e0e0',
 								borderRadius: '8px',
@@ -684,29 +739,13 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 								borderRadius: '8px 0 0 0'
 							}} />
 
-							<div style={{
-								display: 'flex',
-								justifyContent: 'space-between',
-								alignItems: 'flex-start',
-								marginBottom: '8px',
-								flexWrap: 'wrap',
-								gap: '10px'
-							}}>
-								<div style={{ flex: 1, minWidth: '200px' }}>
-									<div style={{
-										fontWeight: '600',
-										color: '#2c3e50',
-										marginBottom: '5px',
-										fontSize: '15px'
-									}}>
+							<div className="work-session-group__header" style={{ marginBottom: '8px' }}>
+								<div className="work-session-group__info">
+									<div className="work-session-group__title">
 										{displayName}
 									</div>
 									{group.task && group.workDescription && (
-										<div style={{
-											fontSize: '13px',
-											color: '#7f8c8d',
-											marginTop: '5px'
-										}}>
+										<div className="work-session-group__description">
 											{group.workDescription}
 										</div>
 									)}
@@ -718,11 +757,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 										{t('sessions.sessionCount') || 'Sesji'}: {group.sessions.length}
 									</div>
 								</div>
-								<div style={{
-									textAlign: 'right',
-									fontSize: '13px',
-									color: '#7f8c8d'
-								}}>
+								<div className="work-session-group__stats">
 									<div style={{
 										fontSize: '16px',
 										fontWeight: '600',
@@ -749,6 +784,17 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true }) {
 									}}>
 										{group.percentage}%
 									</div>
+									{group.quantity > 0 && group.unit && (
+										<div style={{
+											marginTop: '6px',
+											fontSize: '12px',
+											fontWeight: '700',
+											color: '#047857'
+										}}>
+											{group.quantity} {group.unit}
+											{group.efficiency ? ` · ${group.efficiency} ${group.unit}/h` : ''}
+										</div>
+									)}
 								</div>
 							</div>
 

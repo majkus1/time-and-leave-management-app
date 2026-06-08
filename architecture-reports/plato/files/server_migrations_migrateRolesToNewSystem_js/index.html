@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\migrations\migrateRolesToNewSystem.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\migrations\migrateRolesToNewSystem.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">59.18</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">182</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">39.00</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.67</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+ * Migracja ról do nowego systemu
+ * Zamienia stare role na nowe:
+ * - &quot;Może zatwierdzać urlopy swojego działu (Approve Leaves Department)&quot; → &quot;Przełożony (Supervisor)&quot;
+ * - &quot;Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)&quot; → &quot;Przełożony (Supervisor)&quot;
+ * - &quot;Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)&quot; → &quot;HR&quot;
+ */
+
+const path = require(&#039;path&#039;)
+require(&#039;dotenv&#039;).config({ path: path.join(__dirname, &#039;../.env&#039;) })
+
+if (!process.env.DB_URI) {
+	console.error(&#039;Error: DB_URI environment variable is not set!&#039;)
+	console.error(&#039;Please make sure .env file exists in the server folder and contains DB_URI&#039;)
+	process.exit(1)
+}
+
+const { firmDb } = require(&#039;../db/db&#039;);
+const User = require(&#039;../models/user&#039;)(firmDb);
+const SupervisorConfig = require(&#039;../models/SupervisorConfig&#039;)(firmDb);
+
+async function migrateRoles() {
+    try {
+        console.log(&#039;Rozpoczynam migrację ról...&#039;);
+
+        // Znajdź wszystkich użytkowników ze starymi rolami
+        const oldApproveRole = &#039;Może zatwierdzać urlopy swojego działu (Approve Leaves Department)&#039;;
+        const oldTimesheetRole = &#039;Może widzieć ewidencję czasu pracy i ustalać grafik swojego działu (View Timesheets Department)&#039;;
+        const oldHRRole = &#039;Może widzieć wszystkie wnioski i ewidencje (HR) (View All Leaves And Timesheets)&#039;;
+        const newSupervisorRole = &#039;Przełożony (Supervisor)&#039;;
+        const newHRRole = &#039;HR&#039;;
+
+        // Znajdź wszystkich użytkowników ze starymi rolami (używając $in dla wszystkich starych ról)
+        const allUsersWithOldRoles = await User.find({
+            $or: [
+                { roles: oldApproveRole },
+                { roles: oldTimesheetRole },
+                { roles: oldHRRole }
+            ]
+        }).lean();
+
+        // Podziel użytkowników na kategorie
+        const usersWithApproveRole = allUsersWithOldRoles.filter(user =&gt; 
+            Array.isArray(user.roles) &amp;&amp; user.roles.includes(oldApproveRole)
+        );
+        const usersWithTimesheetRole = allUsersWithOldRoles.filter(user =&gt; 
+            Array.isArray(user.roles) &amp;&amp; user.roles.includes(oldTimesheetRole)
+        );
+        const usersWithHRRole = allUsersWithOldRoles.filter(user =&gt; 
+            Array.isArray(user.roles) &amp;&amp; user.roles.includes(oldHRRole)
+        );
+
+        console.log(`Znaleziono ${usersWithApproveRole.length} użytkowników z rolą zatwierdzania urlopów`);
+        console.log(`Znaleziono ${usersWithTimesheetRole.length} użytkowników z rolą widzenia ewidencji`);
+        console.log(`Znaleziono ${usersWithHRRole.length} użytkowników z rolą HR`);
+
+        // Zbierz wszystkich unikalnych użytkowników, którzy będą przełożonymi
+        const supervisorUserIds = new Set();
+        const allUsersToUpdate = new Map(); // Map&lt;userId, user&gt; - aby uniknąć duplikatów
+        
+        // Dodaj użytkowników z rolą zatwierdzania urlopów
+        usersWithApproveRole.forEach(user =&gt; {
+            supervisorUserIds.add(user._id.toString());
+            allUsersToUpdate.set(user._id.toString(), user);
+        });
+        
+        // Dodaj użytkowników z rolą widzenia ewidencji
+        usersWithTimesheetRole.forEach(user =&gt; {
+            supervisorUserIds.add(user._id.toString());
+            allUsersToUpdate.set(user._id.toString(), user);
+        });
+
+        // Aktualizuj role dla wszystkich użytkowników używając updateMany (omija walidację Mongoose)
+        let updatedCount = 0;
+
+        // Aktualizuj wszystkich użytkowników, którzy mają stare role przełożonego
+        for (const [userId, user] of allUsersToUpdate) {
+            // Pobierz aktualne role z bazy danych (może się zmienić po poprzednich aktualizacjach)
+            const currentUser = await User.findById(user._id).lean();
+            if (!currentUser) continue;
+            
+            const currentRoles = Array.isArray(currentUser.roles) ? [...currentUser.roles] : [];
+            let newRoles = currentRoles.filter(role =&gt; 
+                role !== oldApproveRole &amp;&amp; 
+                role !== oldTimesheetRole
+            );
+            
+            // Dodaj nową rolę przełożonego jeśli nie ma
+            if (!newRoles.includes(newSupervisorRole)) {
+                newRoles.push(newSupervisorRole);
+            }
+            
+            // Użyj updateOne z runValidators: false aby ominąć walidację enum
+            await User.updateOne(
+                { _id: user._id },
+                { $set: { roles: newRoles } },
+                { runValidators: false }
+            );
+            updatedCount++;
+            console.log(`✓ Zaktualizowano użytkownika: ${user.username || currentUser.username} (${user.firstName || currentUser.firstName} ${user.lastName || currentUser.lastName}) - role: ${newRoles.join(&#039;, &#039;)}`);
+        }
+
+        // Aktualizuj użytkowników z rolą HR
+        for (const user of usersWithHRRole) {
+            // Pobierz aktualne role z bazy danych (może się zmienić po poprzednich aktualizacjach)
+            const currentUser = await User.findById(user._id).lean();
+            if (!currentUser) continue;
+            
+            const currentRoles = Array.isArray(currentUser.roles) ? [...currentUser.roles] : [];
+            let newRoles = currentRoles.filter(role =&gt; role !== oldHRRole);
+            if (!newRoles.includes(newHRRole)) {
+                newRoles.push(newHRRole);
+            }
+            // Użyj updateOne z runValidators: false aby ominąć walidację enum
+            await User.updateOne(
+                { _id: user._id },
+                { $set: { roles: newRoles } },
+                { runValidators: false }
+            );
+            updatedCount++;
+            console.log(`✓ Zaktualizowano użytkownika: ${user.username || currentUser.username} (${user.firstName || currentUser.firstName} ${user.lastName || currentUser.lastName}) - role: ${newRoles.join(&#039;, &#039;)}`);
+        }
+
+        console.log(`Zaktualizowano role dla ${updatedCount} użytkowników`);
+
+        // Utwórz domyślne konfiguracje dla przełożonych
+        let configsCreated = 0;
+        for (const supervisorId of supervisorUserIds) {
+            const user = await User.findById(supervisorId);
+            if (!user) continue;
+
+            // Sprawdź czy konfiguracja już istnieje
+            const existingConfig = await SupervisorConfig.findOne({ supervisorId });
+            if (existingConfig) continue;
+
+            // Utwórz domyślną konfigurację z wszystkimi uprawnieniami włączonymi
+            const supervisorConfig = new SupervisorConfig({
+                supervisorId: user._id,
+                teamId: user.teamId,
+                permissions: {
+                    canApproveLeaves: true,
+                    canApproveLeavesDepartment: true,
+                    canApproveLeavesSelectedEmployees: true,
+                    canViewTimesheets: true,
+                    canViewTimesheetsDepartment: true,
+                    canViewTimesheetsSelectedEmployees: true,
+                    canManageSchedule: true,
+                    canManageScheduleDepartment: true,
+                    canManageScheduleCustom: true
+                },
+                selectedEmployees: []
+            });
+
+            await supervisorConfig.save();
+            configsCreated++;
+        }
+
+        console.log(`Utworzono ${configsCreated} domyślnych konfiguracji przełożonych`);
+
+        console.log(&#039;Migracja zakończona pomyślnie!&#039;);
+        process.exit(0);
+    } catch (error) {
+        console.error(&#039;Błąd podczas migracji:&#039;, error);
+        process.exit(1);
+    }
+}
+
+// Uruchom migrację jeśli plik jest wykonywany bezpośrednio
+if (require.main === module) {
+	if (firmDb.readyState !== 1) {
+		console.log(&#039;Waiting for database connection...&#039;)
+		firmDb.once(&#039;connected&#039;, () =&gt; {
+			console.log(&#039;Połączono z bazą danych&#039;)
+			migrateRoles()
+		})
+	} else {
+		console.log(&#039;Połączono z bazą danych&#039;)
+		migrateRoles()
+	}
+}
+
+module.exports = { migrateRoles };</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

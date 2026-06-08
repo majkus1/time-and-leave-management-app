@@ -23,6 +23,16 @@ const leaveRequestTypeSchema = new mongoose.Schema({
 	minDaysBefore: { type: Number, default: null }, // Minimalna liczba dni przed urlopem, na ile trzeba złożyć wniosek (null = brak limitu, np. 5 = trzeba złożyć minimum 5 dni przed)
 }, { _id: false })
 
+const workActivitySchema = new mongoose.Schema({
+	id: { type: String, required: true },
+	name: { type: String, required: true },
+	nameEn: { type: String },
+	group: { type: String, enum: ['line', 'task', 'other'], default: 'other' },
+	trackQuantity: { type: Boolean, default: false },
+	unit: { type: String, default: '' },
+	isEnabled: { type: Boolean, default: true },
+}, { _id: false })
+
 const settingsSchema = new mongoose.Schema({
 	teamId: {
 		type: mongoose.Schema.Types.ObjectId,
@@ -86,6 +96,10 @@ const settingsSchema = new mongoose.Schema({
 	leaveRequestTypes: {
 		type: [leaveRequestTypeSchema],
 		default: []
+	},
+	workActivities: {
+		type: [workActivitySchema],
+		default: [],
 	},
 	// Konfiguracja obliczania urlopów: 'days' lub 'hours'
 	leaveCalculationMode: {
@@ -223,6 +237,7 @@ settingsSchema.statics.getSettings = async function(teamId) {
 		if (settings.allowManagedWorkdayEntries === undefined) settings.allowManagedWorkdayEntries = false
 		if (settings.allowManagedLeaveRequests === undefined) settings.allowManagedLeaveRequests = false
 		if (settings.workdayEntriesOnlyToday === undefined) settings.workdayEntriesOnlyToday = false
+		if (!Array.isArray(settings.workActivities)) settings.workActivities = []
 		
 		await settings.save()
 	}
@@ -230,4 +245,3 @@ settingsSchema.statics.getSettings = async function(teamId) {
 }
 
 module.exports = conn => (conn.models.Settings || conn.model('Settings', settingsSchema))
-

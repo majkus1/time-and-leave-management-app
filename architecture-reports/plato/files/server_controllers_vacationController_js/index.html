@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\controllers\vacationController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\controllers\vacationController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">53.64</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">108</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">36.03</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.22</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const { canSupervisorApproveLeaves } = require(&#039;../services/roleService&#039;)
+const { resolveVacationDaysAccess } = require(&#039;../utils/vacationAccess&#039;)
+const { formatVacationDaysPayload, isSameTeam } = require(&#039;../utils/vacationAccessPolicy&#039;)
+
+exports.updateVacationDays = async (req, res) =&gt; {
+	const { userId } = req.params
+	const { vacationDays, leaveTypeDays } = req.body
+
+	try {
+		const access = await resolveVacationDaysAccess(req.user.userId, userId)
+		if (access.error) {
+			return res.status(access.error.status).send(access.error.message)
+		}
+
+		const requestingUser = access.requestingUser
+		const user = access.targetUser
+
+		const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+		const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+		const canApprove = await canSupervisorApproveLeaves(requestingUser, user)
+
+		if (!isAdmin &amp;&amp; !isHR &amp;&amp; !canApprove) {
+			return res.status(403).send(&#039;Access denied&#039;)
+		}
+
+		// Jeśli przysłano leaveTypeDays, użyj tego (nowy system)
+		if (leaveTypeDays !== undefined &amp;&amp; leaveTypeDays !== null &amp;&amp; typeof leaveTypeDays === &#039;object&#039;) {
+			if (!user.leaveTypeDays || typeof user.leaveTypeDays !== &#039;object&#039;) {
+				user.leaveTypeDays = {}
+			}
+
+			Object.keys(leaveTypeDays).forEach((typeId) =&gt; {
+				const value = leaveTypeDays[typeId]
+				if (value !== null &amp;&amp; value !== undefined &amp;&amp; value !== &#039;&#039;) {
+					const numValue = Number(value)
+					if (!isNaN(numValue) &amp;&amp; numValue &gt;= 0) {
+						user.leaveTypeDays[typeId] = numValue
+					} else {
+						delete user.leaveTypeDays[typeId]
+					}
+				} else {
+					delete user.leaveTypeDays[typeId]
+				}
+			})
+
+			user.markModified(&#039;leaveTypeDays&#039;)
+
+			const savedUser = await user.save()
+
+			res.status(200).json({ message: &#039;Liczba dni urlopu zaktualizowana pomyślnie&#039;, user: savedUser })
+			return
+		}
+		if (vacationDays !== undefined) {
+			user.vacationDays = vacationDays
+			if (!user.leaveTypeDays || typeof user.leaveTypeDays !== &#039;object&#039;) {
+				user.leaveTypeDays = {}
+			}
+			user.leaveTypeDays[&#039;leaveform.option1&#039;] = vacationDays
+			user.markModified(&#039;leaveTypeDays&#039;)
+		}
+
+		await user.save()
+
+		res.status(200).json({ message: &#039;Liczba dni urlopu zaktualizowana pomyślnie&#039;, user })
+	} catch (error) {
+		console.error(&#039;Błąd podczas aktualizacji liczby dni urlopu:&#039;, error)
+		res.status(500).send(&#039;Błąd serwera&#039;)
+	}
+}
+
+exports.getVacationDays = async (req, res) =&gt; {
+	const { userId } = req.params
+	try {
+		const access = await resolveVacationDaysAccess(req.user.userId, userId)
+		if (access.error) {
+			return res.status(access.error.status).send(access.error.message)
+		}
+
+		const targetUser = await User.findById(access.targetUser._id).select(&#039;vacationDays leaveTypeDays&#039;)
+		if (!targetUser) {
+			return res.status(404).send(&#039;Użytkownik nie znaleziony&#039;)
+		}
+
+		res.status(200).json(formatVacationDaysPayload(targetUser))
+	} catch (error) {
+		console.error(&#039;Błąd podczas pobierania liczby dni urlopu:&#039;, error)
+		res.status(500).send(&#039;Błąd serwera&#039;)
+	}
+}
+
+exports.getMyVacationDays = async (req, res) =&gt; {
+	try {
+		const user = await User.findById(req.user.userId).select(&#039;vacationDays leaveTypeDays teamId&#039;)
+		if (!user || user.isActive === false) {
+			return res.status(404).send(&#039;Użytkownik nie znaleziony&#039;)
+		}
+		if (!isSameTeam(user.teamId, req.user.teamId)) {
+			return res.status(401).send(&#039;Unauthorized&#039;)
+		}
+
+		res.status(200).json(formatVacationDaysPayload(user))
+	} catch (error) {
+		console.error(&#039;Błąd podczas pobierania liczby dni urlopu:&#039;, error)
+		res.status(500).send(&#039;Błąd serwera&#039;)
+	}
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

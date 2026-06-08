@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\scripts\cleanupSoftDeletedRecords.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\scripts\cleanupSoftDeletedRecords.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">52.16</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">138</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">22.14</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.38</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">require(&#039;dotenv&#039;).config({ path: require(&#039;path&#039;).join(__dirname, &#039;..&#039;, &#039;.env&#039;) });
+const mongoose = require(&#039;mongoose&#039;);
+const { firmDb } = require(&#039;../db/db&#039;);
+
+// Import all models that support soft delete
+// NOTE: Users are hard-deleted immediately, only Teams use soft-delete with retention
+const Team = require(&#039;../models/Team&#039;)(firmDb);
+const User = require(&#039;../models/user&#039;)(firmDb);
+const Board = require(&#039;../models/Board&#039;)(firmDb);
+const Schedule = require(&#039;../models/Schedule&#039;)(firmDb);
+const Department = require(&#039;../models/Department&#039;)(firmDb);
+const Channel = require(&#039;../models/Channel&#039;)(firmDb);
+const SupervisorConfig = require(&#039;../models/SupervisorConfig&#039;)(firmDb);
+const teamService = require(&#039;../services/teamService&#039;);
+const { logTeamPermanentlyDeletedByRetention } = require(&#039;../services/teamDeletionAuditService&#039;);
+
+// Import historical records that should be cleaned up when user/team is deleted
+const Workday = require(&#039;../models/Workday&#039;)(firmDb);
+const LeaveRequest = require(&#039;../models/LeaveRequest&#039;)(firmDb);
+const LeavePlan = require(&#039;../models/LeavePlan&#039;)(firmDb);
+const CalendarConfirmation = require(&#039;../models/CalendarConfirmation&#039;)(firmDb);
+const Log = require(&#039;../models/log&#039;)(firmDb);
+const Message = require(&#039;../models/Message&#039;)(firmDb);
+
+const RETENTION_DAYS = 30; // Days after which soft-deleted records are permanently removed
+
+async function cleanupSoftDeletedRecords() {
+	console.log(`Starting cleanup of soft-deleted records older than ${RETENTION_DAYS} days...`);
+	const cutoffDate = new Date();
+	cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
+
+	// Find teams that should be permanently deleted
+	const teamsToDelete = await Team.find({
+		isActive: false,
+		deletedAt: { $ne: null, $lte: cutoffDate }
+	}).select(&#039;_id name adminEmail&#039;);
+
+	const teamIds = teamsToDelete.map(t =&gt; t._id);
+
+	for (const team of teamsToDelete) {
+		const teamId = team._id;
+		try {
+			await logTeamPermanentlyDeletedByRetention(team);
+			await teamService.permanentlyDeleteTeam(teamId);
+			console.log(`  ✅ Permanently deleted team ${teamId} (${team.name || &#039;—&#039;}) and all related data`);
+		} catch (error) {
+			console.error(`  ❌ Error deleting team ${teamId}:`, error.message);
+		}
+	}
+
+	// Find individual soft-deleted users (not in teams being deleted) that should be permanently deleted
+	const usersToDelete = await User.find({
+		isActive: false,
+		deletedAt: { $ne: null, $lte: cutoffDate },
+		teamId: { $nin: teamIds } // Don&#039;t delete users from teams that are already being deleted
+	}).select(&#039;_id&#039;);
+
+	for (const user of usersToDelete) {
+		try {
+			const userId = user._id;
+
+			// Delete historical records for this user
+			await Promise.all([
+				Workday.deleteMany({ userId }),
+				LeaveRequest.deleteMany({ userId }),
+				LeavePlan.deleteMany({ userId }),
+				CalendarConfirmation.deleteMany({ userId }),
+				Log.deleteMany({ user: userId }),
+				Message.deleteMany({ userId })
+			]);
+
+			// Delete the user
+			await User.deleteOne({ _id: userId });
+			console.log(`  ✅ Permanently deleted user ${userId} and related data`);
+		} catch (error) {
+			console.error(`  ❌ Error deleting user ${user._id}:`, error.message);
+		}
+	}
+
+	// Delete soft-deleted resources (boards, schedules, departments, channels, supervisor configs)
+	// that don&#039;t belong to teams/users being deleted
+	const modelsToCleanup = [
+		{ model: Board, name: &#039;Boards&#039; },
+		{ model: Schedule, name: &#039;Schedules&#039; },
+		{ model: Department, name: &#039;Departments&#039; },
+		{ model: Channel, name: &#039;Channels&#039; },
+		{ model: SupervisorConfig, name: &#039;SupervisorConfigs&#039; },
+	];
+
+	for (const { model, name } of modelsToCleanup) {
+		try {
+			// Only delete if teamId is not in teamIds (teams being deleted) or is null
+			const query = {
+				isActive: false,
+				deletedAt: { $ne: null, $lte: cutoffDate },
+				$or: [
+					{ teamId: { $exists: false } },
+					{ teamId: null },
+					{ teamId: { $nin: teamIds } }
+				]
+			};
+
+			const result = await model.deleteMany(query);
+			if (result.deletedCount &gt; 0) {
+				console.log(`  Deleted ${result.deletedCount} soft-deleted ${name}.`);
+			}
+		} catch (error) {
+			console.error(`  Error cleaning up ${name}:`, error.message);
+		}
+	}
+
+	console.log(&#039;✅ Cleanup finished.&#039;);
+}
+
+async function main() {
+	try {
+		await new Promise((resolve, reject) =&gt; {
+			firmDb.once(&#039;connected&#039;, resolve);
+			firmDb.once(&#039;error&#039;, reject);
+			if (firmDb.readyState === 1) resolve();
+		});
+		console.log(&#039;Connected to MongoDB for cleanup.&#039;);
+
+		await cleanupSoftDeletedRecords();
+
+		mongoose.connection.close();
+		firmDb.close();
+	} catch (error) {
+		console.error(&#039;Database connection or cleanup error:&#039;, error);
+		process.exit(1);
+	}
+}
+
+if (require.main === module) {
+	main();
+}
+
+module.exports = { cleanupSoftDeletedRecords };</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

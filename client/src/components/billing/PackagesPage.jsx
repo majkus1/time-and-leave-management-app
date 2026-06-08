@@ -1835,6 +1835,9 @@ export default function PackagesPage() {
 							>
 								{t('billingPackages.coreConfiguratorPayCard')}
 							</button>
+							<p className="packages-pay-note" role="note">
+								{t('billingPackages.stripeRecurringHint')}
+							</p>
 							<button
 								type="button"
 								className="packages-pay-btn packages-pay-btn--secondary"
@@ -1843,6 +1846,9 @@ export default function PackagesPage() {
 							>
 								{t('billingPackages.coreConfiguratorPayP24')}
 							</button>
+							<p className="packages-pay-note" role="note">
+								{t('billingPackages.p24OneTimeHint')}
+							</p>
 							{coreUpsellVsPro && proTier && (
 								<button
 									type="button"
@@ -1959,9 +1965,6 @@ export default function PackagesPage() {
 								×
 							</button>
 						</div>
-						<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">
-							{t('billingPackages.paymentChoiceIntro')}
-						</p>
 						<div className="packages-modal__actions packages-modal__actions--stack packages-modal__actions--pay">
 							<button
 								type="button"
@@ -1974,6 +1977,9 @@ export default function PackagesPage() {
 							>
 								{t('billingPackages.paymentChoiceStripeBtn')}
 							</button>
+							<p className="packages-pay-note" role="note">
+								{t('billingPackages.stripeRecurringHint')}
+							</p>
 							<button
 								type="button"
 								className="packages-pay-btn packages-pay-btn--secondary"
@@ -1985,6 +1991,9 @@ export default function PackagesPage() {
 							>
 								{t('billingPackages.paymentChoiceP24Btn')}
 							</button>
+							<p className="packages-pay-note" role="note">
+								{t('billingPackages.p24OneTimeHint')}
+							</p>
 							<button
 								type="button"
 								className="packages-pay-btn packages-pay-btn--ghost"

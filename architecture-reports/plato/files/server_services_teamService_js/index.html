@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\teamService.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\teamService.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">54.05</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">141</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">27.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.27</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const Board = require(&#039;../models/Board&#039;)(firmDb)
+const Schedule = require(&#039;../models/Schedule&#039;)(firmDb)
+const Department = require(&#039;../models/Department&#039;)(firmDb)
+const Channel = require(&#039;../models/Channel&#039;)(firmDb)
+const SupervisorConfig = require(&#039;../models/SupervisorConfig&#039;)(firmDb)
+const Workday = require(&#039;../models/Workday&#039;)(firmDb)
+const LeaveRequest = require(&#039;../models/LeaveRequest&#039;)(firmDb)
+const LeavePlan = require(&#039;../models/LeavePlan&#039;)(firmDb)
+const CalendarConfirmation = require(&#039;../models/CalendarConfirmation&#039;)(firmDb)
+const Log = require(&#039;../models/log&#039;)(firmDb)
+const Message = require(&#039;../models/Message&#039;)(firmDb)
+const { TEAM_DELETION_AUDIT_ACTIONS } = require(&#039;./teamDeletionAuditService&#039;)
+
+/**
+ * Soft delete a team and all related resources
+ * Data will be stored for 30 days retention period before permanent deletion
+ * @param {string} teamId - Team ID to delete
+ * @returns {Promise&lt;{success: boolean, message: string}&gt;}
+ * @throws {Error} If team not found or deletion fails
+ */
+exports.softDeleteTeam = async (teamId) =&gt; {
+	const team = await Team.findById(teamId)
+	if (!team) {
+		throw new Error(&#039;Zespół nie został znaleziony&#039;)
+	}
+
+	const deletedAt = new Date()
+
+	// Soft delete all users in the team
+	await User.updateMany(
+		{ teamId, $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] },
+		{ isActive: false, deletedAt }
+	)
+
+	// Soft delete team resources (boards, schedules, departments, channels, supervisor configs)
+	// Note: Workday, LeaveRequest, LeavePlan, CalendarConfirmation, Log, Message are historical
+	// and will remain in database - they will be deleted by cleanup job after 30 days
+	await Promise.all([
+		Board.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+		Schedule.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+		Department.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+		Channel.updateMany({ teamId, isActive: { $ne: false } }, { isActive: false, deletedAt }),
+		SupervisorConfig.updateMany({ teamId }, { isActive: false, deletedAt })
+	])
+
+	// Soft delete the team
+	await Team.findByIdAndUpdate(teamId, {
+		isActive: false,
+		deletedAt
+	})
+
+	return {
+		success: true,
+		message: &#039;Zespół i wszyscy użytkownicy zostali oznaczeni jako usunięci. Dane zostaną trwale usunięte po 30 dniach zgodnie z Regulaminem.&#039;
+	}
+}
+
+/**
+ * Permanently delete a team and all related data immediately (hard delete)
+ * This action cannot be undone - all data is deleted immediately without retention period
+ * @param {string} teamId - Team ID to permanently delete
+ * @returns {Promise&lt;{success: boolean, message: string}&gt;}
+ * @throws {Error} If team not found or deletion fails
+ */
+exports.permanentlyDeleteTeam = async (teamId) =&gt; {
+	const team = await Team.findById(teamId)
+	if (!team) {
+		throw new Error(&#039;Zespół nie został znaleziony&#039;)
+	}
+
+	// Get all users in this team (including soft-deleted)
+	const teamUsers = await User.find({ teamId }).select(&#039;_id&#039;)
+	const userIds = teamUsers.map(u =&gt; u._id)
+
+	// Delete historical records for all users in this team
+	if (userIds.length &gt; 0) {
+		await Promise.all([
+			Workday.deleteMany({ userId: { $in: userIds } }),
+			LeaveRequest.deleteMany({ userId: { $in: userIds } }),
+			LeavePlan.deleteMany({ userId: { $in: userIds } }),
+			CalendarConfirmation.deleteMany({ userId: { $in: userIds } }),
+			Log.deleteMany({
+				user: { $in: userIds },
+				action: { $nin: TEAM_DELETION_AUDIT_ACTIONS },
+			}),
+			Message.deleteMany({ userId: { $in: userIds } })
+		])
+	}
+
+	// Get all channels for this team and delete messages
+	const teamChannels = await Channel.find({ teamId }).select(&#039;_id&#039;)
+	const channelIds = teamChannels.map(c =&gt; c._id)
+	if (channelIds.length &gt; 0) {
+		await Message.deleteMany({ channelId: { $in: channelIds } })
+	}
+
+	// Delete team resources
+	await Promise.all([
+		Channel.deleteMany({ teamId }),
+		Board.deleteMany({ teamId }),
+		Schedule.deleteMany({ teamId }),
+		Department.deleteMany({ teamId }),
+		SupervisorConfig.deleteMany({ teamId }),
+		User.deleteMany({ teamId })
+	])
+
+	// Finally delete the team
+	await Team.deleteOne({ _id: teamId })
+
+	return {
+		success: true,
+		message: &#039;Zespół i wszystkie powiązane dane zostały trwale usunięte.&#039;
+	}
+}
+
+/**
+ * Check if user has permission to delete a team
+ * @param {Object} user - User object
+ * @param {string} teamId - Team ID to check
+ * @returns {Promise&lt;{hasPermission: boolean, error?: string}&gt;}
+ */
+exports.checkDeleteTeamPermission = async (user, teamId) =&gt; {
+	if (!user || !user.roles.includes(&#039;Admin&#039;)) {
+		return {
+			hasPermission: false,
+			error: &#039;Brak uprawnień do usunięcia zespołu&#039;
+		}
+	}
+
+	if (user.teamId.toString() !== teamId) {
+		return {
+			hasPermission: false,
+			error: &#039;Brak uprawnień do usunięcia tego zespołu&#039;
+		}
+	}
+
+	return { hasPermission: true }
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

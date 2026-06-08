@@ -47,6 +47,74 @@ function formatDate(d) {
 	return `${y}-${mo}-${day}`
 }
 
+function roundMetric(value, decimals = 2) {
+	const n = Number(value)
+	if (!Number.isFinite(n)) return null
+	const p = Math.pow(10, decimals)
+	return Math.round(n * p) / p
+}
+
+function objectIdToString(value) {
+	return value?.toString?.() || (value == null ? null : String(value))
+}
+
+function formatActivityNameForContext(source, locale) {
+	const isEn = String(locale || '').toLowerCase().startsWith('en')
+	const en = (source?.activityNameEn || source?.nameEn || '').trim()
+	const local = (source?.activityName || source?.name || '').trim()
+	return (isEn && en ? en : local || en || source?.activityId || source?.id || '').slice(0, 220)
+}
+
+function summarizeActivityBlockForContext(block, locale) {
+	const hours = block?.hours != null ? roundWorkHoursForDisplay(block.hours) : null
+	const quantity = block?.quantity != null ? roundMetric(block.quantity) : null
+	const efficiency = quantity != null && hours > 0 ? roundMetric(quantity / hours) : null
+	return {
+		activityId: block?.activityId || null,
+		name: formatActivityNameForContext(block, locale),
+		group: block?.activityGroup || null,
+		hours,
+		timeFrom: block?.timeFrom || null,
+		timeTo: block?.timeTo || null,
+		quantity,
+		unit: block?.unit || '',
+		efficiency,
+	}
+}
+
+function summarizeTaskBlockForContext(block) {
+	return {
+		taskId: objectIdToString(block?.taskId),
+		title: (block?.taskTitle || '').slice(0, 220),
+		hours: block?.hours != null ? roundWorkHoursForDisplay(block.hours) : null,
+		timeFrom: block?.timeFrom || null,
+		timeTo: block?.timeTo || null,
+	}
+}
+
+function summarizeTimerSessionForContext(te, locale) {
+	const quantity = te?.quantity != null ? roundMetric(te.quantity) : null
+	let hours = null
+	if (te?.startTime && te?.endTime) {
+		const ms = new Date(te.endTime).getTime() - new Date(te.startTime).getTime()
+		if (ms > 0) hours = roundMetric(ms / 3600000)
+	}
+	const efficiency = quantity != null && hours > 0 ? roundMetric(quantity / hours) : null
+	return {
+		start: te.startTime,
+		end: te.endTime,
+		break: te.isBreak,
+		desc: (te.workDescription || '').slice(0, 400),
+		taskId: objectIdToString(te.taskId),
+		activityId: te.activityId || null,
+		activityName: formatActivityNameForContext(te, locale),
+		activityGroup: te.activityGroup || null,
+		quantity,
+		unit: te.unit || '',
+		efficiency,
+	}
+}
+
 /**
  * Human-readable leave status for AI context (avoid raw codes like status.pending in assistant answers).
  * @param {string} [status]
@@ -389,6 +457,16 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		minDaysBefore: t.minDaysBefore ?? null,
 	}))
 
+	const workActivities = (settingsLean.workActivities || []).map(a => ({
+		id: a.id,
+		name: a.name,
+		nameEn: a.nameEn || null,
+		group: a.group || 'other',
+		trackQuantity: !!a.trackQuantity,
+		unit: a.unit || '',
+		isEnabled: a.isEnabled !== false,
+	}))
+
 	const settingsForAi = {
 		workOnWeekends: settingsLean.workOnWeekends !== false,
 		includePolishHolidays: !!settingsLean.includePolishHolidays,
@@ -396,6 +474,7 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		customHolidays: (settingsLean.customHolidays || []).slice(0, 80),
 		workHours: settingsLean.workHours || [],
 		leaveRequestTypes: leaveTypes,
+		workActivities,
 		leaveCalculationMode: settingsLean.leaveCalculationMode || 'days',
 		leaveHoursPerDay: settingsLean.leaveHoursPerDay,
 		timerEnabled: settingsLean.timerEnabled !== false,
@@ -431,6 +510,16 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		.map(t => `  - ${t.id} → "${t.name}"${t.nameEn ? ` (EN: "${t.nameEn}")` : ''}`)
 		.join('\n')
 
+	const activityLegend = workActivities
+		.filter(a => a.isEnabled)
+		.map(a => {
+			const measure = a.trackQuantity
+				? `measure:on${a.unit ? ` | unit:${a.unit}` : ''}`
+				: 'measure:off'
+			return `  - ${a.id} → "${a.name}"${a.nameEn ? ` (EN: "${a.nameEn}")` : ''} | group:${a.group} | ${measure}`
+		})
+		.join('\n')
+
 	const roleHelp =
 		locale === 'en'
 			? 'Roles: Leave rows in DATA CONTEXT always list **all active team members** (aligned with the in-app leave planner). Workdays, timer aggregates, and tasks still follow role scope: Admin/HR (full team), Supervisor (per config), Worker (own / supervised visibility as in “Users in scope”).'
@@ -455,6 +544,9 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 	parts.push('')
 	parts.push('LEAVE TYPE IDS → LABELS (use human names in answers, not only raw ids):')
 	parts.push(leaveLegend || '(none)')
+	parts.push('')
+	parts.push('WORK ACTIVITY IDS → LABELS (timesheet activity split; quantity/efficiency only when measure:on):')
+	parts.push(activityLegend || '(none)')
 	parts.push('')
 	parts.push(`Departments (model): ${deptNames.length ? deptNames.join(', ') : '(none or only on users)'}`)
 	parts.push('')
@@ -643,8 +735,34 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 				.map(te => (te.workDescription || '').slice(0, 120))
 				.filter(Boolean)
 				.slice(0, 2)
+			const activityHints = [
+				...(wd.manualActivityBlocks || []).map(b => summarizeActivityBlockForContext(b, locale)),
+				...(wd.timeEntries || [])
+					.filter(te => te.activityId || te.quantity != null)
+					.map(te => summarizeTimerSessionForContext(te, locale)),
+			].slice(0, 4)
+			const taskHints = [
+				...(wd.manualTaskBlocks || []).map(b => summarizeTaskBlockForContext(b)),
+				...(wd.timeEntries || [])
+					.filter(te => te.taskId)
+					.map(te => ({
+						taskId: objectIdToString(te.taskId),
+						title: '',
+						hours: null,
+						timeFrom: te.startTime || null,
+						timeTo: te.endTime || null,
+					})),
+			].slice(0, 4)
 			const hw = wd.hoursWorked != null ? roundWorkHoursForDisplay(wd.hoursWorked) : null
-			return { userId: uid, date: formatDate(wd.date), hoursWorked: hw, notes, sessionDescHints: descs }
+			return {
+				userId: uid,
+				date: formatDate(wd.date),
+				hoursWorked: hw,
+				notes,
+				sessionDescHints: descs,
+				activityHints,
+				taskHints,
+			}
 		})
 
 		workdayJson = JSON.stringify({
@@ -672,12 +790,9 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 
 		const workdaySummaries = workdays.map(wd => {
 			const uid = wd.userId?.toString?.() || String(wd.userId)
-			const sessions = (wd.timeEntries || []).map(te => ({
-				start: te.startTime,
-				end: te.endTime,
-				break: te.isBreak,
-				desc: (te.workDescription || '').slice(0, 400),
-			}))
+			const sessions = (wd.timeEntries || []).map(te => summarizeTimerSessionForContext(te, locale))
+			const activityBlocks = (wd.manualActivityBlocks || []).map(b => summarizeActivityBlockForContext(b, locale))
+			const taskBlocks = (wd.manualTaskBlocks || []).map(b => summarizeTaskBlockForContext(b))
 			return {
 				userId: uid,
 				date: formatDate(wd.date),
@@ -685,6 +800,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 				additionalWorked: wd.additionalWorked != null ? roundWorkHoursForDisplay(wd.additionalWorked) : null,
 				notes: (wd.notes || '').slice(0, 600),
 				absenceType: wd.absenceType || null,
+				activityBlocks,
+				taskBlocks,
 				sessions,
 			}
 		})
@@ -866,6 +983,11 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	parts.push((leaveLines.length ? leaveLines.join('\n') : '(none)') + leaveExtra)
 	parts.push('')
 	parts.push('--- Workdays & timer sessions ---')
+	parts.push(
+		isEnLocale
+			? 'Workday fields: `activityBlocks` = manual split of workday hours by configured activity, with stored name/unit snapshots; `taskBlocks` = manual split of workday hours by board tasks, with stored task title snapshot; `sessions` = timer entries and may also include activity/task/quantity. Quantity and efficiency are operational output metrics only when present and meaningful; do not treat them as a personal score.'
+			: 'Pola ewidencji: `activityBlocks` = ręczne rozbicie godzin dnia wg skonfigurowanych czynności, ze snapshotem nazwy/jednostki; `taskBlocks` = ręczne rozbicie godzin dnia wg zadań z tablic, ze snapshotem tytułu zadania; `sessions` = wpisy timera i też mogą mieć czynność/zadanie/ilość. Ilość i wydajność to metryki operacyjne tylko gdy są dostępne i sensowne; nie traktuj ich jako oceny pracownika.'
+	)
 	parts.push(workdayJson.slice(0, 120000))
 	parts.push('')
 	parts.push(timerAggregatesSectionHeader(locale))

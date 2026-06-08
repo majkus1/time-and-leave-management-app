@@ -28,6 +28,15 @@ const emitWorkdaysUpdated = (req, userId, dateValue) => {
 	}
 }
 const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
+const { validateAndSanitizeWorkdayCreate, applyWorkdayUpdateFields } = require('../services/workdayPayloadService')
+const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
+const { resolveTimerActivityId, getTimerActivitySnapshot, groupTimerSessions } = require('../utils/timerWorkActivity')
+
+async function loadAllowedTasksMapForUser(targetUser) {
+	if (!targetUser?._id || !targetUser?.teamId) return new Map()
+	const tasks = await fetchTimesheetTasksForUser(targetUser._id, targetUser.teamId, targetUser)
+	return tasksToAllowedMap(tasks)
+}
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -138,7 +147,7 @@ function isTodayInWarsaw(dateYmd) {
 }
 
 async function createWorkdayForTarget({ req, res, targetUser, settings }) {
-	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
+	const { date, hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes, manualActivityBlocks, manualTaskBlocks } = req.body
 	try {
 		if (!targetUser || !targetUser.teamId) {
 			return res.status(403).json({ message: 'Użytkownik nie znaleziony lub brak zespołu', code: 'USER_INVALID' })
@@ -162,15 +171,18 @@ async function createWorkdayForTarget({ req, res, targetUser, settings }) {
 			})
 		}
 
-		const normalized = normalizeWorkdayPayload({ hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes })
-		const v = await validateNewWorkdayEntry({
+		const allowedTasksById = await loadAllowedTasksMapForUser(targetUser)
+
+		const v = await validateAndSanitizeWorkdayCreate({
 			WorkdayModel: Workday,
 			LeaveRequestModel: LeaveRequest,
 			getSettings: tid => Settings.getSettings(tid),
 			userId: targetUser._id,
 			teamId: targetUser.teamId,
 			dateYmd,
-			normalized,
+			settings: teamSettings,
+			body: { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes, manualActivityBlocks, manualTaskBlocks },
+			allowedTasksById,
 			locale: 'pl',
 		})
 
@@ -292,7 +304,6 @@ exports.getWorkdays = async (req, res) => {
 
 exports.updateWorkday = async (req, res) => {
 	try {
-		const { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 		const workday = await Workday.findOne({ _id: req.params.id, userId: req.user.userId })
 		if (!workday) return res.status(404).send('Workday not found or unauthorized')
 		const user = await User.findById(req.user.userId)
@@ -303,22 +314,14 @@ exports.updateWorkday = async (req, res) => {
 				code: 'ONLY_TODAY_ALLOWED',
 			})
 		}
-		
-		// Funkcja pomocnicza do parsowania godzin z obsługą liczb dziesiętnych (np. 8.5)
-		const parseHoursValue = (value) => {
-			if (value === null || value === undefined || value === '') return null
-			const parsed = parseFloat(value)
-			return isNaN(parsed) ? null : parsed
+
+		const allowedTasksById = await loadAllowedTasksMapForUser(user)
+		const result = applyWorkdayUpdateFields(workday, req.body, settings, allowedTasksById, { locale: 'pl' })
+		if (!result.ok) {
+			return res.status(400).json({ message: result.message, code: result.code })
 		}
-		
-		// Aktualizuj wszystkie pola, jeśli są przekazane
-		if (hoursWorked !== undefined) workday.hoursWorked = parseHoursValue(hoursWorked)
-		if (additionalWorked !== undefined) workday.additionalWorked = parseHoursValue(additionalWorked)
-		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
-		if (absenceType !== undefined) workday.absenceType = absenceType || null
-		if (notes !== undefined) workday.notes = notes || null
 		workday.lastChangedBy = req.user.userId
-		
+
 		await workday.save()
 		emitWorkdaysUpdated(req, req.user.userId, workday.date)
 		res.send('Workday updated successfully.')
@@ -335,7 +338,6 @@ exports.updateWorkdayForUser = async (req, res) => {
 			return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
 		}
 
-		const { hoursWorked, additionalWorked, realTimeDayWorked, absenceType, notes } = req.body
 		const workday = await Workday.findOne({ _id: req.params.id, userId: access.targetUser._id })
 		if (!workday) return res.status(404).json({ message: 'Workday not found or unauthorized' })
 		if (access.settings?.workdayEntriesOnlyToday === true && !isTodayInWarsaw(toWarsawYmd(workday.date))) {
@@ -345,17 +347,11 @@ exports.updateWorkdayForUser = async (req, res) => {
 			})
 		}
 
-		const parseHoursValue = (value) => {
-			if (value === null || value === undefined || value === '') return null
-			const parsed = parseFloat(value)
-			return isNaN(parsed) ? null : parsed
+		const allowedTasksById = await loadAllowedTasksMapForUser(access.targetUser)
+		const result = applyWorkdayUpdateFields(workday, req.body, access.settings, allowedTasksById, { locale: 'pl' })
+		if (!result.ok) {
+			return res.status(400).json({ message: result.message, code: result.code })
 		}
-
-		if (hoursWorked !== undefined) workday.hoursWorked = parseHoursValue(hoursWorked)
-		if (additionalWorked !== undefined) workday.additionalWorked = parseHoursValue(additionalWorked)
-		if (realTimeDayWorked !== undefined) workday.realTimeDayWorked = realTimeDayWorked || null
-		if (absenceType !== undefined) workday.absenceType = absenceType || null
-		if (notes !== undefined) workday.notes = notes || null
 		workday.lastChangedBy = req.user.userId
 		workday.reviewStatus = null
 		workday.reviewedBy = null
@@ -648,8 +644,9 @@ exports.getAllTeamWorkdays = async (req, res) => {
 // Start timer
 exports.startTimer = async (req, res) => {
 	try {
-		const { workDescription, taskId, isOvertime, qrCodeId } = req.body
+		const { workDescription, taskId, activityId, isOvertime, qrCodeId } = req.body
 		const userId = req.user.userId
+		const resolvedActivityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId ?? null)
 
 		const today = new Date()
 		today.setHours(0, 0, 0, 0)
@@ -692,6 +689,7 @@ exports.startTimer = async (req, res) => {
 			totalOvertimeTime: 0,
 			workDescription: workDescription || '',
 			taskId: taskId || null,
+			activityId: resolvedActivityId,
 			qrCodeId: qrCodeId || null
 		}
 
@@ -760,6 +758,7 @@ exports.pauseTimer = async (req, res) => {
 exports.stopTimer = async (req, res) => {
 	try {
 		const userId = req.user.userId
+		const { quantity } = req.body || {}
 
 		const workday = await exports.findActiveTimerWorkday(userId)
 
@@ -818,8 +817,14 @@ exports.stopTimer = async (req, res) => {
 			overtimeTime: finalOvertimeTime, // Time in seconds spent in overtime mode
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
+			activityId: workday.activeTimer.activityId || null,
 			qrCodeId: workday.activeTimer.qrCodeId || null
 		}
+		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, quantity)
+		if (activitySnapshot.error === 'INVALID_QUANTITY') {
+			return res.status(400).json({ message: 'Ilość wykonania musi być równa 0 lub większa.' })
+		}
+		Object.assign(timeEntry, activitySnapshot)
 
 		if (!sessionWorkday.timeEntries) {
 			sessionWorkday.timeEntries = []
@@ -898,7 +903,8 @@ exports.getActiveTimer = async (req, res) => {
 			totalOvertimeTime: workday.activeTimer.totalOvertimeTime || 0, // Base overtime time (completed overtime periods only)
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
-			qrCodeId: workday.activeTimer.qrCodeId || null
+			qrCodeId: workday.activeTimer.qrCodeId || null,
+			activityId: workday.activeTimer.activityId || null
 		})
 	} catch (error) {
 		console.error('Error getting active timer:', error)
@@ -909,7 +915,7 @@ exports.getActiveTimer = async (req, res) => {
 // Update active timer description
 exports.updateActiveTimer = async (req, res) => {
 	try {
-		const { workDescription, taskId, isOvertime } = req.body
+		const { workDescription, taskId, activityId, isOvertime } = req.body
 		const userId = req.user.userId
 
 		const workday = await exports.findActiveTimerWorkday(userId)
@@ -924,6 +930,9 @@ exports.updateActiveTimer = async (req, res) => {
 		}
 		if (taskId !== undefined) {
 			workday.activeTimer.taskId = taskId || null
+		}
+		if (activityId !== undefined) {
+			workday.activeTimer.activityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId)
 		}
 		
 		// Handle overtime toggle - track overtime time separately
@@ -962,6 +971,7 @@ exports.updateActiveTimer = async (req, res) => {
 			message: 'Timer zaktualizowany',
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
+			activityId: workday.activeTimer.activityId || null,
 			isOvertime: workday.activeTimer.isOvertime
 		})
 	} catch (error) {
@@ -973,8 +983,11 @@ exports.updateActiveTimer = async (req, res) => {
 // Split session - save current session and continue with new description
 exports.splitSession = async (req, res) => {
 	try {
-		const { workDescription, taskId, isOvertime } = req.body
+		const { workDescription, taskId, activityId, isOvertime, quantity } = req.body
 		const userId = req.user.userId
+		const resolvedActivityId = activityId !== undefined
+			? await resolveTimerActivityId(Settings, req.user.teamId, activityId)
+			: undefined
 
 		const workday = await exports.findActiveTimerWorkday(userId)
 
@@ -1025,8 +1038,14 @@ exports.splitSession = async (req, res) => {
 			overtimeTime: finalOvertimeTime, // Time in seconds spent in overtime mode
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
+			activityId: workday.activeTimer.activityId || null,
 			qrCodeId: workday.activeTimer.qrCodeId || null
 		}
+		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, quantity)
+		if (activitySnapshot.error === 'INVALID_QUANTITY') {
+			return res.status(400).json({ message: 'Ilość wykonania musi być równa 0 lub większa.' })
+		}
+		Object.assign(timeEntry, activitySnapshot)
 
 		if (!sessionWorkday.timeEntries) {
 			sessionWorkday.timeEntries = []
@@ -1123,6 +1142,7 @@ exports.splitSession = async (req, res) => {
 			totalOvertimeTime: preservedOvertimeTime,
 			workDescription: workDescription || '',
 			taskId: taskId || null,
+			activityId: resolvedActivityId !== undefined ? resolvedActivityId : (workday.activeTimer.activityId || null),
 			qrCodeId: workday.activeTimer.qrCodeId || null // Keep QR code ID if it was from QR
 		}
 
@@ -1285,6 +1305,7 @@ exports.getTodaySessions = async (req, res) => {
 
 		// Collect all time entries from all workdays in the month
 		const Task = require('../models/Task')(firmDb)
+		const teamSettings = await Settings.getSettings(req.user.teamId)
 		const allSessions = []
 		let totalMinutes = 0
 
@@ -1324,36 +1345,8 @@ exports.getTodaySessions = async (req, res) => {
 			}
 		}
 
-		// Group sessions by workDescription (and taskId if exists)
-		const groupedSessions = {}
-		
-		for (const session of allSessions) {
-			// Skip break sessions in grouping
-			if (session.isBreak) continue
-
-			// Create a unique key for grouping: workDescription + taskId (if exists)
-			const groupKey = session.taskId 
-				? `task_${session.taskId.toString()}` 
-				: `desc_${(session.workDescription || '').trim().toLowerCase()}`
-
-			if (!groupedSessions[groupKey]) {
-				groupedSessions[groupKey] = {
-					workDescription: session.workDescription || '',
-					task: session.task,
-					taskId: session.taskId,
-					sessions: [],
-					totalMinutes: 0,
-					totalHours: 0,
-					percentage: 0
-				}
-			}
-
-			if (session.startTime && session.endTime) {
-				const minutes = calculateMinutes(session.startTime, session.endTime)
-				groupedSessions[groupKey].sessions.push(session)
-				groupedSessions[groupKey].totalMinutes += minutes
-			}
-		}
+		// Group sessions by activity, task or description
+		const groupedSessions = groupTimerSessions(allSessions, teamSettings, calculateMinutes)
 
 		// Convert to array and calculate percentages
 		const result = Object.values(groupedSessions).map(group => {
@@ -1434,6 +1427,7 @@ exports.getUserSessions = async (req, res) => {
 		}
 
 		const Task = require('../models/Task')(firmDb)
+		const teamSettings = await Settings.getSettings(req.user.teamId)
 		const allSessions = []
 		let totalMinutes = 0
 		const availableDatesSet = new Set()
@@ -1475,33 +1469,7 @@ exports.getUserSessions = async (req, res) => {
 			}
 		}
 
-		const groupedSessions = {}
-
-		for (const session of allSessions) {
-			if (session.isBreak) continue
-
-			const groupKey = session.taskId
-				? `task_${session.taskId.toString()}`
-				: `desc_${(session.workDescription || '').trim().toLowerCase()}`
-
-			if (!groupedSessions[groupKey]) {
-				groupedSessions[groupKey] = {
-					workDescription: session.workDescription || '',
-					task: session.task,
-					taskId: session.taskId,
-					sessions: [],
-					totalMinutes: 0,
-					totalHours: 0,
-					percentage: 0
-				}
-			}
-
-			if (session.startTime && session.endTime) {
-				const minutes = calculateMinutes(session.startTime, session.endTime)
-				groupedSessions[groupKey].sessions.push(session)
-				groupedSessions[groupKey].totalMinutes += minutes
-			}
-		}
+		const groupedSessions = groupTimerSessions(allSessions, teamSettings, calculateMinutes)
 
 		const result = Object.values(groupedSessions).map(group => {
 			group.totalHours = (group.totalMinutes / 60).toFixed(2)

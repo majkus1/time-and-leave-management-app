@@ -35,11 +35,25 @@ export async function downloadPdf(docDefinition, filename) {
 	})
 }
 
-export function buildPdfDocument({ content, pageOrientation = 'portrait', pageSize = 'A4' }) {
+export function buildPdfDocument({
+	content,
+	pageOrientation = 'portrait',
+	pageSize = 'A4',
+	pageMargins = [32, 32, 32, 38],
+	styles,
+	header,
+	footer,
+	info,
+}) {
 	return {
 		pageSize,
 		pageOrientation,
+		pageMargins,
+		info,
 		defaultStyle: { font: 'Roboto', fontSize: 10 },
+		styles,
+		header,
+		footer,
 		content: Array.isArray(content) ? content : [content],
 	}
 }

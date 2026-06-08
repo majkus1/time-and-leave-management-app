@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\utils\manualActivityBlocks.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\utils\manualActivityBlocks.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">53.32</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">188</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">53.28</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.04</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { validateHours } = require(&#039;./workdayEntryValidation&#039;)
+const { getEnabledWorkActivityMap } = require(&#039;./workActivities&#039;)
+
+const TIME_RE = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+const MAX_BLOCKS = 12
+
+function isValidTime(value) {
+	return value == null || value === &#039;&#039; || TIME_RE.test(String(value).trim())
+}
+
+function parseBlockHours(value) {
+	if (value === null || value === undefined || value === &#039;&#039;) return null
+	const parsed = parseFloat(value)
+	return Number.isNaN(parsed) ? null : parsed
+}
+
+function parseQuantity(value) {
+	if (value === null || value === undefined || value === &#039;&#039;) return null
+	const parsed = parseFloat(value)
+	return Number.isFinite(parsed) ? parsed : null
+}
+
+function calculateHoursFromRange(timeFrom, timeTo) {
+	if (!timeFrom || !timeTo) return null
+	const [fromH, fromM] = timeFrom.split(&#039;:&#039;).map(Number)
+	const [toH, toM] = timeTo.split(&#039;:&#039;).map(Number)
+	if ([fromH, fromM, toH, toM].some(Number.isNaN)) return null
+	let minutes = toH * 60 + toM - (fromH * 60 + fromM)
+	if (minutes &lt; 0) minutes += 24 * 60
+	if (minutes &lt;= 0) return null
+	const hours = minutes / 60
+	return Math.round(hours * 2) / 2
+}
+
+function buildRealTimeFromBlocks(blocks) {
+	const parts = blocks
+		.map(block =&gt; {
+			if (block.timeFrom &amp;&amp; block.timeTo) return `${block.timeFrom}-${block.timeTo}`
+			return null
+		})
+		.filter(Boolean)
+	return parts.length ? parts.join(&#039;, &#039;) : null
+}
+
+/**
+ * @param {unknown} rawBlocks
+ * @param {import(&#039;mongoose&#039;).Document|object|null} settings
+ * @param {{ locale?: string }} [options]
+ */
+function normalizeManualActivityBlocks(rawBlocks, settings, options = {}) {
+	const locale = options.locale === &#039;en&#039; ? &#039;en&#039; : &#039;pl&#039;
+	const msg = (pl, en) =&gt; (locale === &#039;en&#039; ? en : pl)
+
+	if (rawBlocks == null) {
+		return { ok: true, blocks: [], totalHours: 0, realTimeDayWorked: null }
+	}
+
+	if (!Array.isArray(rawBlocks)) {
+		return {
+			ok: false,
+			code: &#039;INVALID_ACTIVITY_BLOCKS&#039;,
+			message: msg(&#039;Nieprawidłowy format bloków czynności.&#039;, &#039;Invalid activity blocks format.&#039;),
+		}
+	}
+
+	if (rawBlocks.length === 0) {
+		return { ok: true, blocks: [], totalHours: 0, realTimeDayWorked: null }
+	}
+
+	if (rawBlocks.length &gt; MAX_BLOCKS) {
+		return {
+			ok: false,
+			code: &#039;TOO_MANY_ACTIVITY_BLOCKS&#039;,
+			message: msg(`Maksymalnie ${MAX_BLOCKS} czynności na dzień.`, `At most ${MAX_BLOCKS} activities per day.`),
+		}
+	}
+
+	const enabledActivitiesById = getEnabledWorkActivityMap(settings)
+	const blocks = []
+	let totalHours = 0
+
+	for (let i = 0; i &lt; rawBlocks.length; i += 1) {
+		const raw = rawBlocks[i] || {}
+		const activityId = typeof raw.activityId === &#039;string&#039; ? raw.activityId.trim() : &#039;&#039;
+		if (!activityId) {
+			return {
+				ok: false,
+				code: &#039;ACTIVITY_REQUIRED&#039;,
+				message: msg(`Wiersz ${i + 1}: wybierz czynność.`, `Row ${i + 1}: select an activity.`),
+			}
+		}
+		const activity = enabledActivitiesById.get(activityId)
+		if (!activity) {
+			return {
+				ok: false,
+				code: &#039;UNKNOWN_ACTIVITY&#039;,
+				message: msg(`Wiersz ${i + 1}: nieznana lub wyłączona czynność.`, `Row ${i + 1}: unknown or disabled activity.`),
+			}
+		}
+
+		const timeFrom = raw.timeFrom != null &amp;&amp; String(raw.timeFrom).trim() ? String(raw.timeFrom).trim() : null
+		const timeTo = raw.timeTo != null &amp;&amp; String(raw.timeTo).trim() ? String(raw.timeTo).trim() : null
+
+		if (!isValidTime(timeFrom) || !isValidTime(timeTo)) {
+			return {
+				ok: false,
+				code: &#039;INVALID_TIME&#039;,
+				message: msg(`Wiersz ${i + 1}: nieprawidłowy format czasu (HH:mm).`, `Row ${i + 1}: invalid time format (HH:mm).`),
+			}
+		}
+
+		if ((timeFrom &amp;&amp; !timeTo) || (!timeFrom &amp;&amp; timeTo)) {
+			return {
+				ok: false,
+				code: &#039;TIME_PAIR_REQUIRED&#039;,
+				message: msg(`Wiersz ${i + 1}: podaj oba czasy (od i do) albo zostaw oba puste.`, `Row ${i + 1}: provide both times or leave both empty.`),
+			}
+		}
+
+		let hours = parseBlockHours(raw.hours)
+		if (timeFrom &amp;&amp; timeTo) {
+			const fromRange = calculateHoursFromRange(timeFrom, timeTo)
+			if (fromRange == null) {
+				return {
+					ok: false,
+					code: &#039;INVALID_TIME_RANGE&#039;,
+					message: msg(`Wiersz ${i + 1}: nieprawidłowy zakres czasu.`, `Row ${i + 1}: invalid time range.`),
+				}
+			}
+			if (hours == null || hours &lt;= 0) hours = fromRange
+		}
+
+		if (hours == null || hours &lt;= 0 || !validateHours(String(hours), 24)) {
+			return {
+				ok: false,
+				code: &#039;INVALID_BLOCK_HOURS&#039;,
+				message: msg(`Wiersz ${i + 1}: godziny muszą być &gt; 0 i ≤ 24 (co 0,5 h).`, `Row ${i + 1}: hours must be &gt; 0 and ≤ 24 (0.5 h steps).`),
+			}
+		}
+
+		totalHours += hours
+		let quantity = null
+		if (activity.trackQuantity === true) {
+			quantity = parseQuantity(raw.quantity)
+			if (quantity != null &amp;&amp; quantity &lt; 0) {
+				return {
+					ok: false,
+					code: &#039;INVALID_ACTIVITY_QUANTITY&#039;,
+					message: msg(`Wiersz ${i + 1}: ilość wykonania nie może być ujemna.`, `Row ${i + 1}: quantity cannot be negative.`),
+				}
+			}
+		}
+		blocks.push({
+			activityId,
+			activityName: activity.name || &#039;&#039;,
+			activityNameEn: activity.nameEn || &#039;&#039;,
+			activityGroup: activity.group || &#039;&#039;,
+			hours,
+			timeFrom,
+			timeTo,
+			quantity,
+			unit: activity.trackQuantity === true ? activity.unit || &#039;&#039; : &#039;&#039;,
+		})
+	}
+
+	totalHours = Math.round(totalHours * 2) / 2
+	if (totalHours &gt; 24) {
+		return {
+			ok: false,
+			code: &#039;DAY_HOURS_EXCEEDED&#039;,
+			message: msg(&#039;Suma godzin ze wszystkich czynności nie może przekraczać 24 h.&#039;, &#039;Total hours from all activities cannot exceed 24 h.&#039;),
+		}
+	}
+
+	return {
+		ok: true,
+		blocks,
+		totalHours,
+		realTimeDayWorked: buildRealTimeFromBlocks(blocks),
+	}
+}
+
+module.exports = {
+	normalizeManualActivityBlocks,
+	buildRealTimeFromBlocks,
+	calculateHoursFromRange,
+	MAX_BLOCKS,
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

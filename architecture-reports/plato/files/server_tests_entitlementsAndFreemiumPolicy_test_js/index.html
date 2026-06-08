@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\tests\entitlementsAndFreemiumPolicy.test.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\tests\entitlementsAndFreemiumPolicy.test.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">65.65</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">377</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">43.63</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">4.23</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;
+
+/**
+ * Testy jednostkowe: polityka freemium API (bez Mongo) + entitlementsService (ładuje Mongo tylko przy DB_URI).
+ * Uruchom z katalogu głównego repo: npm run test:server
+ *
+ * Stałe daty ISO — regresje trial / paid lapse / legacy grace / FORCE_*.
+ */
+
+const { describe, it } = require(&#039;node:test&#039;)
+const assert = require(&#039;node:assert/strict&#039;)
+const path = require(&#039;path&#039;)
+
+const { LEGACY_PRE_BILLING_GRACE_UNTIL, TRIAL } = require(&#039;../constants/planCatalog&#039;)
+
+// --- Część 1: zero zależności od bazy ---
+const policy = require(&#039;../services/freemiumApiPolicyService&#039;)
+
+describe(&#039;freemiumApiPolicyService&#039;, () =&gt; {
+	it(&#039;freemiumMaxAppSeats zgadza się z TRIAL.maxUsers&#039;, () =&gt; {
+		assert.equal(policy.freemiumMaxAppSeats(), TRIAL.maxUsers)
+	})
+
+	it(&#039;timer API jest zablokowany w freemium (wąski tier)&#039;, () =&gt; {
+		assert.equal(policy.isFreemiumTimerPath(&#039;/api/workdays/timer/start&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/workdays/timer/foo&#039;, &#039;POST&#039;), false)
+	})
+
+	it(&#039;freemium active tier: workdays (bez timera), calendar, settings&#039;, () =&gt; {
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/workdays&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/workdays/123&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/calendar/foo&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/settings/team&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/email-notifications/preferences&#039;, &#039;GET&#039;), true)
+	})
+
+	it(&#039;freemium active tier: billing i users są dostępne&#039;, () =&gt; {
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/billing/entitlements&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/users/me&#039;, &#039;GET&#039;), true)
+	})
+
+	it(&#039;freemium active tier: centrum pomocy (tickets API)&#039;, () =&gt; {
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/tickets/my-tickets&#039;, &#039;GET&#039;), true)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/tickets/create&#039;, &#039;POST&#039;), true)
+	})
+
+	it(&#039;freemium active tier: typowy moduł premium bez prefiksu — blok&#039;, () =&gt; {
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/schedules&#039;, &#039;GET&#039;), false)
+		assert.equal(policy.isFreemiumActiveTierAllowed(&#039;/api/boards&#039;, &#039;GET&#039;), false)
+	})
+
+	it(&#039;seat overcapacity: POST /api/users/register zablokowany&#039;, () =&gt; {
+		const teamId = &#039;507f1f77bcf86cd799439011&#039;
+		assert.equal(
+			policy.isFreemiumSeatOverageAllowed(&#039;/api/users/register&#039;, &#039;POST&#039;, teamId),
+			false
+		)
+	})
+
+	it(&#039;seat overcapacity: GET team users dla własnego teamId dozwolone&#039;, () =&gt; {
+		const teamId = &#039;507f1f77bcf86cd799439011&#039;
+		assert.equal(
+			policy.isFreemiumSeatOverageAllowed(`/api/teams/${teamId}/users`, &#039;GET&#039;, teamId),
+			true
+		)
+	})
+
+	it(&#039;normalizeApiPath obcina query string&#039;, () =&gt; {
+		const req = { originalUrl: &#039;/api/workdays?x=1&#039;, url: &#039;/other&#039; }
+		assert.equal(policy.normalizeApiPath(req), &#039;/api/workdays&#039;)
+	})
+})
+
+// --- Część 2: entitlements (wymaga DB_URI — inaczej mongoose rzuci przy imporcie db) ---
+require(&#039;dotenv&#039;).config({ path: path.join(__dirname, &#039;../.env&#039;) })
+const HAS_DB_URI = typeof process.env.DB_URI === &#039;string&#039; &amp;&amp; process.env.DB_URI.length &gt; 0
+
+const entitlementsDescribe = HAS_DB_URI ? describe : describe.skip
+
+entitlementsDescribe(&#039;entitlementsService (stałe daty)&#039;, () =&gt; {
+	const e = require(&#039;../services/entitlementsService&#039;)
+
+	const T_2026 = new Date(&#039;2026-06-15T12:00:00.000Z&#039;)
+	const T_2027_AFTER_GRACE = new Date(&#039;2027-01-03T12:00:00.000Z&#039;)
+	const T_TRIAL_OK = new Date(&#039;2026-03-01T12:00:00.000Z&#039;)
+	const T_TRIAL_ENDED = new Date(&#039;2026-05-01T12:00:00.000Z&#039;)
+	const T_PAID_OK = new Date(&#039;2026-04-15T12:00:00.000Z&#039;)
+	const T_PAID_LAPSED = new Date(&#039;2026-08-01T12:00:00.000Z&#039;)
+
+	it(&#039;LEGACY_PRE_BILLING_GRACE_UNTIL jest zgodny z planCatalog (2.08.2026 00:00 Europe/Warsaw)&#039;, () =&gt; {
+		assert.equal(LEGACY_PRE_BILLING_GRACE_UNTIL.toISOString(), &#039;2026-08-01T22:00:00.000Z&#039;)
+	})
+
+	it(&#039;trial aktywny: nie freemium, subskrypcja płatna nieaktywna&#039;, () =&gt; {
+		const team = {
+			name: &#039;NormalnyZespol&#039;,
+			isActive: true,
+			maxUsers: 5,
+			billingPlanKey: &#039;trial&#039;,
+			billingStatus: &#039;trialing&#039;,
+			trialEndsAt: new Date(&#039;2026-12-31T23:59:59.000Z&#039;),
+		}
+		assert.equal(e.isTrialActive(team, T_TRIAL_OK), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_TRIAL_OK), false)
+		assert.equal(e.isPaidSubscriptionActive(team, T_TRIAL_OK), false)
+	})
+
+	it(&#039;trial wygasł, nie opłacony: freemium&#039;, () =&gt; {
+		const team = {
+			name: &#039;NormalnyZespol&#039;,
+			isActive: true,
+			maxUsers: 20,
+			billingPlanKey: &#039;trial&#039;,
+			billingStatus: &#039;expired&#039;,
+			trialEndsAt: new Date(&#039;2026-04-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isTrialExpiredUnpaid(team, T_TRIAL_ENDED), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_TRIAL_ENDED), true)
+	})
+
+	it(&#039;starter opłacony w okresie: pełna subskrypcja, nie freemium&#039;, () =&gt; {
+		const team = {
+			name: &#039;NormalnyZespol&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2026-12-31T23:59:59.000Z&#039;),
+		}
+		assert.equal(e.isPaidSubscriptionActive(team, T_PAID_OK), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_PAID_OK), false)
+		assert.equal(e.isPaidPlanPeriodLapsed(team, T_PAID_OK), false)
+	})
+
+	it(&#039;starter — koniec okresu: wygasły plan → freemium&#039;, () =&gt; {
+		const team = {
+			name: &#039;NormalnyZespol&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2026-07-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isPaidSubscriptionActive(team, T_PAID_LAPSED), false)
+		assert.equal(e.isPaidPlanPeriodLapsed(team, T_PAID_LAPSED), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_PAID_LAPSED), true)
+	})
+
+	it(&#039;pre-billing legacy (brak pól billing): przed końcem grace — grandfathered, nie freemium&#039;, () =&gt; {
+		const team = {
+			name: &#039;FirmaZMongoLegacy&#039;,
+			isActive: true,
+			maxUsers: 50,
+		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_2026), true)
+		assert.equal(e.isLegacyPreBillingTeam(team, T_2026), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_2026), false)
+	})
+
+	it(&#039;pre-billing legacy: 10 wiadomości AI jednorazowo na okres (bez resetu miesięcznego)&#039;, () =&gt; {
+		const team = {
+			name: &#039;FirmaZMongoLegacy&#039;,
+			isActive: true,
+			maxUsers: 50,
+			legacyOneOffAiMessagesUsed: 0,
+		}
+		const b = e.computeAiBuckets(team, T_2026)
+		assert.equal(b.hasAiAccess, true)
+		assert.equal(b.totalRemaining, 10)
+		const teamUsed = { ...team, legacyOneOffAiMessagesUsed: 10 }
+		const b2 = e.computeAiBuckets(teamUsed, T_2026)
+		assert.equal(b2.hasAiAccess, false)
+		assert.equal(b2.denyReason, &#039;quota&#039;)
+	})
+
+	it(&#039;pre-billing legacy: po dacie grace — freemium (legacy grace expired)&#039;, () =&gt; {
+		const team = {
+			name: &#039;FirmaZMongoLegacy&#039;,
+			isActive: true,
+			maxUsers: 50,
+		}
+		assert.equal(e.isLegacyPreBillingGraceExpired(team, T_2027_AFTER_GRACE), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_2027_AFTER_GRACE), true)
+	})
+
+	it(&#039;po pierwszym zakupie (billingPlanKey) + wygasły okres: nie structural legacy, freemium przez lapse&#039;, () =&gt; {
+		const team = {
+			name: &#039;FirmaZMongoLegacy&#039;,
+			isActive: true,
+			maxUsers: 100,
+			billingPlanKey: &#039;business&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2026-07-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_PAID_LAPSED), false)
+		assert.equal(e.isLegacyPreBillingTeam(team, T_PAID_LAPSED), false)
+		assert.equal(e.isPaidPlanPeriodLapsed(team, T_PAID_LAPSED), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_PAID_LAPSED), true)
+	})
+
+	it(&#039;FORCE_LEGACY nazwa + brak aktywnej subskrypcji + przed końcem grace: z powrotem grandfathered&#039;, () =&gt; {
+		const team = {
+			name: &#039;legacy&#039;,
+			isActive: true,
+			maxUsers: 20,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2026-07-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isPaidSubscriptionActive(team, T_PAID_LAPSED), false)
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_PAID_LAPSED), true)
+		assert.equal(e.isLegacyPreBillingTeam(team, T_PAID_LAPSED), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_PAID_LAPSED), false)
+	})
+
+	it(&#039;testleeegacy bez płatności: freemium test (nie grandfathered)&#039;, () =&gt; {
+		const team = {
+			name: &#039;testleeegacy&#039;,
+			isActive: true,
+			maxUsers: 11,
+			billingPlanKey: &#039;trial&#039;,
+			billingStatus: &#039;expired&#039;,
+			trialEndsAt: new Date(&#039;2020-01-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_2026), false)
+		assert.equal(e.isFreemiumTierTeam(team, T_2026), true)
+	})
+
+	it(&#039;testleeegacy ze aktywnym starterem: nie freemium&#039;, () =&gt; {
+		const team = {
+			name: &#039;testleeegacy&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2027-06-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isFreemiumTierTeam(team, T_2026), false)
+	})
+
+	const T_LIP420_INSIDE = new Date(&#039;2026-07-15T12:00:00.000Z&#039;)
+	const T_LIP420_AFTER_GRACE = new Date(&#039;2026-08-05T12:00:00.000Z&#039;)
+
+	it(&#039;lip420: legacy grandfathered do 1.08.2026, potem freemium&#039;, () =&gt; {
+		const team = { name: &#039;lip420&#039;, isActive: true, maxUsers: 10 }
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), true)
+		assert.equal(e.isLegacyPreBillingTeam(team, T_LIP420_INSIDE), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_LIP420_INSIDE), false)
+		assert.equal(e.isLegacyPreBillingGraceExpired(team, T_LIP420_AFTER_GRACE), true)
+		assert.equal(e.isFreemiumTierTeam(team, T_LIP420_AFTER_GRACE), true)
+	})
+
+	it(&#039;lip420: 10 wiadomości AI na cały okres legacy (wspólna pula)&#039;, () =&gt; {
+		const teamFresh = {
+			name: &#039;lip420&#039;,
+			isActive: true,
+			maxUsers: 10,
+			legacyOneOffAiMessagesUsed: 0,
+		}
+		const b1 = e.computeAiBuckets(teamFresh, T_LIP420_INSIDE)
+		assert.equal(b1.hasAiAccess, true)
+		assert.equal(b1.totalRemaining, 10)
+
+		const teamUsed = { ...teamFresh, legacyOneOffAiMessagesUsed: 10 }
+		const b2 = e.computeAiBuckets(teamUsed, T_LIP420_INSIDE)
+		assert.equal(b2.hasAiAccess, false)
+		assert.equal(b2.denyReason, &#039;quota&#039;)
+	})
+
+	it(&#039;lip420 ze Starterem aktywnym: nie legacy — limity jak pakiet&#039;, () =&gt; {
+		const team = {
+			name: &#039;lip420&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingModuleKeys: [&#039;ai_assistant&#039;],
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd: new Date(&#039;2027-06-01T00:00:00.000Z&#039;),
+			aiMessagesUsedInMonth: 0,
+			aiUsageMonthKey: &#039;2026-07&#039;,
+		}
+		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), false)
+		const b = e.computeAiBuckets(team, T_LIP420_INSIDE)
+		assert.equal(b.hasAiAccess, true)
+		assert.equal(b.monthlyRemaining, 50)
+	})
+
+	it(&#039;OficjalnyAdminowy (special): nigdy freemium tier w tym module&#039;, () =&gt; {
+		const team = {
+			name: &#039;OficjalnyAdminowy&#039;,
+			isActive: true,
+			maxUsers: 11,
+			billingPlanKey: &#039;trial&#039;,
+			billingStatus: &#039;expired&#039;,
+			trialEndsAt: new Date(&#039;2020-01-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.isFreemiumTierTeam(team, T_TRIAL_ENDED), false)
+	})
+
+	it(&#039;effectiveMaxUsers: wygasły trial → cap TRIAL.maxUsers&#039;, () =&gt; {
+		const team = {
+			name: &#039;X&#039;,
+			isActive: true,
+			maxUsers: 100,
+			billingPlanKey: &#039;trial&#039;,
+			billingStatus: &#039;expired&#039;,
+			trialEndsAt: new Date(&#039;2026-04-01T00:00:00.000Z&#039;),
+		}
+		assert.equal(e.effectiveMaxUsers(team, T_TRIAL_ENDED), TRIAL.maxUsers)
+	})
+
+	it(&#039;buildClientEntitlements: freemium + 50 miejsc → freemiumSeatBlocked (okres w przeszłości względem „teraz”)&#039;, () =&gt; {
+		// buildClientEntitlements() używa wewnątrz new Date(), nie parametru — koniec planu musi być w przeszłości realnego czasu testu.
+		const billingPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: &#039;X&#039;,
+			isActive: true,
+			maxUsers: 100,
+			billingPlanKey: &#039;business&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd,
+		}
+		const ent = e.buildClientEntitlements(team, { activeSeatCount: 50 })
+		assert.equal(ent.freemiumTier, true)
+		assert.equal(ent.freemiumSeatBlocked, true)
+		assert.equal(ent.freemiumMaxSeats, TRIAL.maxUsers)
+	})
+
+	it(&#039;buildClientEntitlements: freemium w limicie 5 miejsc → seat not blocked&#039;, () =&gt; {
+		const billingPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: &#039;X&#039;,
+			isActive: true,
+			maxUsers: 100,
+			billingPlanKey: &#039;business&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd,
+		}
+		const ent = e.buildClientEntitlements(team, { activeSeatCount: 5 })
+		assert.equal(ent.freemiumTier, true)
+		assert.equal(ent.freemiumSeatBlocked, false)
+	})
+
+	it(&#039;buildClientEntitlements: wygasły plan + billingHadPaidPlan — dokup AI zablokowany (canPurchaseAddon false)&#039;, () =&gt; {
+		const billingPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: &#039;X&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd,
+			billingHadPaidPlan: true,
+			aiPackBalance: 50,
+		}
+		const ent = e.buildClientEntitlements(team, {})
+		assert.equal(ent.billingHadPaidPlan, true)
+		assert.equal(ent.freemiumTier, true)
+		assert.equal(ent.ai.canPurchaseAddon, false)
+	})
+
+	it(&#039;buildClientEntitlements: aktywny starter — dokup AI dozwolony&#039;, () =&gt; {
+		const billingPeriodEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+		const team = {
+			name: &#039;X&#039;,
+			isActive: true,
+			maxUsers: 10,
+			billingPlanKey: &#039;starter&#039;,
+			billingStatus: &#039;active&#039;,
+			billingPeriodEnd,
+			billingHadPaidPlan: true,
+		}
+		const ent = e.buildClientEntitlements(team, {})
+		assert.equal(ent.ai.canPurchaseAddon, true)
+		assert.equal(ent.freemiumTier, false)
+	})
+})</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

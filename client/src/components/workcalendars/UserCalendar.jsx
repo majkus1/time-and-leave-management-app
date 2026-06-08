@@ -5,9 +5,9 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import Modal from 'react-modal'
 import Sidebar from '../dashboard/Sidebar'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
+import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
+import { buildReportFilename } from '../../utils/export/reportFilename'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
@@ -23,6 +23,57 @@ import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useAlert } from '../../context/AlertContext'
 import BulkFillWorkdaysModal from './BulkFillWorkdaysModal'
+import ActivityFilterBar from './ActivityFilterBar'
+import TaskFilterBar from './TaskFilterBar'
+import WorkdayHoursWithActivities from './WorkdayHoursWithActivities'
+import { useWorkActivities } from '../../hooks/useWorkActivities'
+import { teamHasWorkActivities, getEnabledWorkActivities } from '../../utils/workActivities'
+import {
+	blocksFromWorkday,
+	createDefaultActivityBlock,
+	serializeActivityBlocks,
+	sumBlockHours,
+	validateActivityBlocksClient,
+	buildRealTimeFromBlocks,
+} from '../../utils/manualActivityBlocks'
+import {
+	createDefaultTaskBlock,
+	blocksFromWorkdayTasks,
+	serializeTaskBlocks,
+	sumTaskBlockHours,
+	validateTaskBlocksClient,
+	buildRealTimeFromTaskBlocks,
+} from '../../utils/manualTaskBlocks'
+import {
+	isCalendarFilterActive,
+	workdayMatchesCalendarFilters,
+	getFilteredCalendarHours,
+	getFilteredManualCalendarHours,
+	buildFilteredRealTimeForCalendar,
+	formatCalendarBreakdown,
+} from '../../utils/workCalendarFilters'
+import {
+	collectTasksFromWorkdays,
+	getTaskFilterLabel,
+	buildTaskTitlesMap,
+	flattenWorkdayTaskRows,
+	aggregateTaskHours,
+	workdayMatchesTaskFilter,
+} from '../../utils/workTaskAggregation'
+import { useBillingEntitlements } from '../../hooks/useBilling'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
+import { useTimesheetTasks } from '../../hooks/useTimesheetTasks'
+import {
+	filterWorkdaysByActivities,
+	flattenWorkdayActivityRows,
+	aggregateActivityHours,
+	formatActivityBreakdown,
+	getFilteredActivityHours,
+	getFilteredManualActivityHours,
+	workdayMatchesActivityFilter,
+	buildFilteredRealTimeFromEntries,
+	getActivityFilterLabel,
+} from '../../utils/workActivityAggregation'
 
 const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
 	const totalMinutes = index * 30
@@ -81,12 +132,21 @@ function UserCalendar() {
 	const [formError, setFormError] = useState('')
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
 	const [bulkFillModalOpen, setBulkFillModalOpen] = useState(false)
+	const [splitByActivity, setSplitByActivity] = useState(false)
+	const [activityBlocks, setActivityBlocks] = useState([createDefaultActivityBlock()])
+	const [selectedActivityIds, setSelectedActivityIds] = useState([])
+	const [splitByTask, setSplitByTask] = useState(false)
+	const [taskBlocks, setTaskBlocks] = useState([createDefaultTaskBlock()])
+	const [selectedTaskIds, setSelectedTaskIds] = useState([])
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
 	const { isLoading: freemiumEntLoading, freemiumTier } = useFreemiumAccess({ enabled: true })
 	const allowTimerLeaveApis = !freemiumEntLoading && !freemiumTier
+	const { data: entitlements, isPending: entitlementsLoading } = useBillingEntitlements()
+	const tasksModuleEnabled = canShowBillingModuleNav(entitlements, 'tasks', entitlementsLoading)
+	const { data: timesheetTasks = [] } = useTimesheetTasks(userId, { enabled: tasksModuleEnabled && !!userId })
 
 	// Funkcja do poprawnej odmiany słowa "nadgodziny" w języku polskim
 	const getOvertimeWord = (count) => {
@@ -214,6 +274,26 @@ function UserCalendar() {
 		{ enabled: allowTimerLeaveApis }
 	)
 	const { data: settings } = useSettings()
+	const { data: workActivities = [] } = useWorkActivities()
+	const enabledWorkActivities = React.useMemo(
+		() => getEnabledWorkActivities(workActivities),
+		[workActivities]
+	)
+	const taskTitleLookup = React.useMemo(
+		() => buildTaskTitlesMap(timesheetTasks),
+		[timesheetTasks]
+	)
+	const filterableTasks = React.useMemo(
+		() => collectTasksFromWorkdays(workdays, currentMonth, currentYear, taskTitleLookup),
+		[workdays, currentMonth, currentYear, taskTitleLookup]
+	)
+	const taskTitlesById = React.useMemo(
+		() => ({
+			...taskTitleLookup,
+			...buildTaskTitlesMap(filterableTasks.map(task => ({ _id: task.id, title: task.title }))),
+		}),
+		[taskTitleLookup, filterableTasks]
+	)
 	const { data: activeTimer } = useActiveTimer({ enabled: allowTimerLeaveApis })
 	const bulkFillWorkdaysMutation = useBulkFillWorkdays(userId)
 	const clearWorkdaysForMonthMutation = useClearWorkdaysForMonth(userId)
@@ -230,7 +310,9 @@ function UserCalendar() {
 		confirmationPending ||
 		(allowTimerLeaveApis && leaveRequestsPending)
 	const hasManagedHoursEntryInput =
-		String(hoursWorked || '').trim() !== '' ||
+		(splitByActivity && teamHasWorkActivities({ workActivities }))
+		|| (splitByTask && tasksModuleEnabled)
+		|| String(hoursWorked || '').trim() !== '' ||
 		String(additionalWorked || '').trim() !== '' ||
 		String(realTimeDayWorked || '').trim() !== ''
 	const hasManagedAbsenceEntryInput = String(absenceType || '').trim() !== ''
@@ -250,9 +332,9 @@ function UserCalendar() {
 
 	const renderCalendarMetadata = () => (
 		<div
+			className="user-calendar-metadata"
 			style={{
 				marginTop: '10px',
-				marginLeft: '10px',
 				padding: '10px 14px',
 				border: '1px solid #e5e7eb',
 				borderRadius: '8px',
@@ -432,32 +514,40 @@ function UserCalendar() {
 		)
 	}, [settings, currentMonth, currentYear])
 
-	useEffect(() => {
-		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear)
-	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings])
+	const activityFilterIds = selectedActivityIds
+	const filteredWorkdaysForView = React.useMemo(
+		() => filterWorkdaysByActivities(workdays, activityFilterIds),
+		[workdays, selectedActivityIds]
+	)
 
-	const calculateTotals = (workdays, acceptedLeaveRequests, month, year) => {
+	useEffect(() => {
+		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear, selectedActivityIds, selectedTaskIds)
+	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings, selectedActivityIds, selectedTaskIds])
+
+	const calculateTotals = (workdaysSource, acceptedLeaveRequests, month, year, activityFilterIds = [], taskFilterIds = []) => {
 		if (!settings) return // Czekaj na załadowanie ustawień
 		let hours = 0
 		let leaveDays = 0
 		let overtime = 0
 		let workDaysSet = new Set()
 		let otherAbsences = 0
+		const filterActive = isCalendarFilterActive(activityFilterIds, taskFilterIds)
 
-		const filteredWorkdays = workdays.filter(day => {
+		const filteredWorkdays = workdaysSource.filter(day => {
 			const eventDate = new Date(day.date)
 			return eventDate.getMonth() === month && eventDate.getFullYear() === year
 		})
 
 		filteredWorkdays.forEach(day => {
-			if (day.hoursWorked) {
-				hours += day.hoursWorked
+			const dayHours = getFilteredCalendarHours(day, activityFilterIds, taskFilterIds)
+			if (dayHours > 0) {
+				hours += dayHours
 				workDaysSet.add(new Date(day.date).toDateString())
 			}
-			if (day.additionalWorked) {
+			if (!filterActive && day.additionalWorked) {
 				overtime += day.additionalWorked
 			}
-			if (day.absenceType) {
+			if (!filterActive && day.absenceType) {
 				const absenceTypeLower = day.absenceType.toLowerCase()
 				if (absenceTypeLower.includes('urlop') || absenceTypeLower.includes('vacation') || absenceTypeLower.includes('leave')) {
 					leaveDays += 1
@@ -652,17 +742,35 @@ function UserCalendar() {
 	}, [canEditManagedWorkdays, workdays])
 
 	const calendarEvents = React.useMemo(() => {
+		const filterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
 		const workdayEvents = workdays
 			.map(day => {
 				let title = ''
 				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
-				const hasHoursWorked = day.hoursWorked && day.hoursWorked > 0
+				const filteredHours = getFilteredCalendarHours(day, selectedActivityIds, selectedTaskIds)
+				const manualFilteredHours = filterActive
+					? getFilteredManualCalendarHours(day, selectedActivityIds, selectedTaskIds)
+					: filteredHours
+				const hasHoursWorked = filterActive ? manualFilteredHours > 0 : filteredHours > 0
 				const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 
+				if (filterActive) {
+					if (!hasHoursWorked && !hasAbsenceType && !hasOnlyNotes) return null
+					if (hasHoursWorked && !workdayMatchesCalendarFilters(day, selectedActivityIds, selectedTaskIds)) return null
+				}
+
 				if (hasHoursWorked) {
-					const roundedHours = roundToHalfHour(day.hoursWorked)
+					const roundedHours = roundToHalfHour(filteredHours)
 					title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
-					if (day.additionalWorked) {
+					const breakdown = formatCalendarBreakdown(day, {
+						workActivities,
+						taskTitlesById,
+						locale: i18n.language,
+						selectedActivityIds,
+						selectedTaskIds,
+					})
+					if (breakdown) title += ` · ${breakdown}`
+					if (!filterActive && day.additionalWorked) {
 						const roundedAdditional = roundToHalfHour(day.additionalWorked)
 						title += ` ${t('workcalendar.include')} ${formatHours(roundedAdditional)} ${getOvertimeWord(roundedAdditional)}`
 					}
@@ -714,15 +822,21 @@ function UserCalendar() {
 			.filter(event => event !== null)
 
 		const realTimeEvents = workdays
-			.filter(day => day.realTimeDayWorked)
-			.map(day => ({
-				title: `${t('workcalendar.worktime')} ${day.realTimeDayWorked}`,
-				start: day.date,
-				backgroundColor: 'yellow',
-				textColor: 'black',
-				id: `${day._id}-realTime`,
-				classNames: 'event-real-time',
-			}))
+			.map(day => {
+				const timeLabel = filterActive
+					? buildFilteredRealTimeForCalendar(day, selectedActivityIds, selectedTaskIds)
+					: day.realTimeDayWorked
+				if (!timeLabel) return null
+				return {
+					title: `${t('workcalendar.worktime')} ${timeLabel}`,
+					start: day.date,
+					backgroundColor: 'yellow',
+					textColor: 'black',
+					id: `${day._id}-realTime`,
+					classNames: 'event-real-time',
+				}
+			})
+			.filter(Boolean)
 
 		const leaveEvents = acceptedLeaveRequests
 			.filter(request => request.startDate && request.endDate)
@@ -760,12 +874,62 @@ function UserCalendar() {
 	}, [
 		reviewedWorkdayBackgroundEvents,
 		workdays,
+		selectedActivityIds,
+		selectedTaskIds,
+		taskTitlesById,
+		workActivities,
 		acceptedLeaveRequests,
 		holidaysForMonth,
 		settings,
 		t,
 		i18n.resolvedLanguage,
+		i18n.language,
 	])
+
+	const monthActivityRows = React.useMemo(() => {
+		const monthWorkdays = workdays.filter(day => {
+			const eventDate = new Date(day.date)
+			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+		})
+		const usersById = new Map([[String(userId), user]])
+		return flattenWorkdayActivityRows(
+			monthWorkdays.filter(day => workdayMatchesActivityFilter(day, activityFilterIds)),
+			workActivities,
+			usersById,
+			i18n.language,
+			activityFilterIds,
+			{ deletedActivityLabel: t('workcalendar.activities.deletedLabel') }
+		)
+	}, [workdays, currentMonth, currentYear, activityFilterIds, workActivities, userId, user, i18n.language, t])
+
+	const activitySummaryRows = React.useMemo(
+		() => aggregateActivityHours(monthActivityRows, { groupByUser: false }),
+		[monthActivityRows]
+	)
+
+	const monthTaskRows = React.useMemo(() => {
+		if (!tasksModuleEnabled) return []
+		const monthWorkdays = workdays.filter(day => {
+			const eventDate = new Date(day.date)
+			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
+		})
+		const usersById = new Map([[String(userId), user]])
+		return flattenWorkdayTaskRows(
+			monthWorkdays.filter(day => workdayMatchesTaskFilter(day, selectedTaskIds)),
+			taskTitleLookup,
+			usersById,
+			selectedTaskIds,
+			{ deletedTaskLabel: t('workcalendar.tasks.deletedLabel') }
+		)
+	}, [workdays, currentMonth, currentYear, selectedTaskIds, taskTitleLookup, tasksModuleEnabled, userId, user, t])
+
+	const taskSummaryRows = React.useMemo(
+		() => aggregateTaskHours(monthTaskRows, { groupByUser: false }),
+		[monthTaskRows]
+	)
+
+	const showActivitySummary = selectedTaskIds.length === 0 && activitySummaryRows.length > 0
+	const showTaskSummary = selectedActivityIds.length === 0 && tasksModuleEnabled && taskSummaryRows.length > 0
 
 	const currentMonthWorkdaysForReview = React.useMemo(() => {
 		if (!canEditManagedWorkdays) return []
@@ -801,6 +965,38 @@ function UserCalendar() {
 		setNotes('')
 		setFormError('')
 		setSelectedWorkHoursIndex(0)
+		setSplitByActivity(false)
+		setActivityBlocks([createDefaultActivityBlock(enabledWorkActivities[0]?.id || '')])
+		setSplitByTask(false)
+		setTaskBlocks([createDefaultTaskBlock(timesheetTasks[0]?._id ? String(timesheetTasks[0]._id) : '')])
+	}
+
+	const workdayHoursFieldProps = {
+		settings,
+		workActivities,
+		splitByActivity,
+		onSplitByActivityChange: setSplitByActivity,
+		activityBlocks,
+		onActivityBlocksChange: setActivityBlocks,
+		tasksModuleEnabled,
+		timesheetTasks,
+		splitByTask,
+		onSplitByTaskChange: setSplitByTask,
+		taskBlocks,
+		onTaskBlocksChange: setTaskBlocks,
+		hoursWorked,
+		onHoursWorkedChange: setHoursWorked,
+		additionalWorked,
+		onAdditionalWorkedChange: setAdditionalWorked,
+		realTimeDayWorked,
+		workTimeFrom,
+		workTimeTo,
+		onWorkTimeFromChange: setWorkTimeFrom,
+		onWorkTimeToChange: setWorkTimeTo,
+		onRealTimeDayWorkedChange: setRealTimeDayWorked,
+		selectedWorkHoursIndex,
+		onSelectedWorkHoursIndexChange: setSelectedWorkHoursIndex,
+		hasAbsenceEntryInput: hasManagedAbsenceEntryInput,
 	}
 
 	const openManagedWorkdayModal = (dateStr) => {
@@ -812,6 +1008,12 @@ function UserCalendar() {
 		const existing = findWorkdayForDate(dateStr)
 		setSelectedDate(dateStr)
 		setEditingWorkday(existing)
+		const existingBlocks = blocksFromWorkday(existing)
+		const existingTaskBlocks = blocksFromWorkdayTasks(existing)
+		setSplitByActivity(existingBlocks.length > 0)
+		setSplitByTask(existingTaskBlocks.length > 0)
+		setActivityBlocks(existingBlocks.length > 0 ? existingBlocks : [createDefaultActivityBlock(enabledWorkActivities[0]?.id || '')])
+		setTaskBlocks(existingTaskBlocks.length > 0 ? existingTaskBlocks : [createDefaultTaskBlock(timesheetTasks[0]?._id ? String(timesheetTasks[0]._id) : '')])
 		setHoursWorked(existing?.hoursWorked != null ? String(existing.hoursWorked) : '')
 		setAdditionalWorked(existing?.additionalWorked != null ? String(existing.additionalWorked) : '')
 		setRealTimeDayWorked(existing?.realTimeDayWorked || '')
@@ -854,13 +1056,36 @@ function UserCalendar() {
 			setFormError(t('workcalendar.bulkFill.errors.monthConfirmed'))
 			return
 		}
+		const useActivitySplit = teamHasWorkActivities({ workActivities }) && splitByActivity && !absenceType.trim()
+		const useTaskSplit = tasksModuleEnabled && splitByTask && !absenceType.trim()
+		if (useActivitySplit) {
+			const blockError = validateActivityBlocksClient(activityBlocks, t)
+			if (blockError) {
+				setFormError(blockError)
+				return
+			}
+		}
+		if (useTaskSplit) {
+			const taskError = validateTaskBlocksClient(taskBlocks, t)
+			if (taskError) {
+				setFormError(taskError)
+				return
+			}
+		}
+		const activityTotal = useActivitySplit ? sumBlockHours(activityBlocks) : 0
+		const taskTotal = useTaskSplit ? sumTaskBlockHours(taskBlocks) : 0
+		const splitTotal = Math.round((activityTotal + taskTotal) * 2) / 2
 		const payload = {
 			date: selectedDate,
-			hoursWorked: hoursWorked.trim(),
+			hoursWorked: (useActivitySplit || useTaskSplit) ? String(splitTotal) : hoursWorked.trim(),
 			additionalWorked: additionalWorked.trim(),
-			realTimeDayWorked: realTimeDayWorked.trim(),
+			realTimeDayWorked: (useActivitySplit || useTaskSplit)
+				? [useActivitySplit ? buildRealTimeFromBlocks(activityBlocks) : '', useTaskSplit ? buildRealTimeFromTaskBlocks(taskBlocks) : ''].filter(Boolean).join(', ')
+				: realTimeDayWorked.trim(),
 			absenceType: absenceType.trim(),
 			notes: notes.trim(),
+			manualActivityBlocks: useActivitySplit ? serializeActivityBlocks(activityBlocks) : [],
+			manualTaskBlocks: useTaskSplit ? serializeTaskBlocks(taskBlocks) : [],
 		}
 		if (payload.hoursWorked && payload.absenceType) {
 			setFormError(t('workcalendar.formalerttwo'))
@@ -1026,46 +1251,320 @@ function UserCalendar() {
 		)
 	}
 
-	const generatePDF = () => {
-		const input = pdfRef.current
-		
-		// Lepsze opcje dla html2canvas
-		html2canvas(input, { 
-			scale: 1.5,
-			useCORS: true,
-			allowTaint: true,
-			backgroundColor: '#ffffff'
-		}).then(canvas => {
-			const imgData = canvas.toDataURL('image/png')
-			const pdf = new jsPDF('l', 'mm', 'a4') // Orientacja pozioma (landscape)
-			
-			const imgProps = pdf.getImageProperties(imgData)
-			const pdfWidth = pdf.internal.pageSize.getWidth()
-			const pdfHeight = pdf.internal.pageSize.getHeight()
-			
-			// Oblicz optymalne wymiary żeby kalendarz zajmował całą stronę
-			const imgWidth = pdfWidth - 20 // Margines 10mm z każdej strony
-			const imgHeight = (imgProps.height * imgWidth) / imgProps.width
-			
-			// Jeśli obraz jest za wysoki, zmniejsz proporcjonalnie
-			let finalWidth = imgWidth
-			let finalHeight = imgHeight
-			
-			if (imgHeight > pdfHeight - 20) {
-				finalHeight = pdfHeight - 20
-				finalWidth = (imgProps.width * finalHeight) / imgProps.height
-			}
-			
-			// Wycentruj obraz na stronie
-			const x = (pdfWidth - finalWidth) / 2
-			const y = (pdfHeight - finalHeight) / 2
-			
-			pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight)
-			
-			
-			
-			pdf.save(`${t('pdf.filename')}_${user?.firstName}_${user?.lastName}_${currentMonth + 1}_${currentYear}.pdf`)
+	const pdfTheme = {
+		navy: '#0b2442',
+		blue: '#2563eb',
+		green: '#16a34a',
+		amber: '#d97706',
+		purple: '#7c3aed',
+		red: '#dc2626',
+		ink: '#0f2746',
+		muted: '#64748b',
+		line: '#dbe7f2',
+		soft: '#f5f9fd',
+	}
+
+	const pdfSafeNumber = value => {
+		const number = Number(value || 0)
+		return Number.isFinite(number) ? number : 0
+	}
+
+	const getReportMonthLabel = () => {
+		const raw = new Date(currentYear, currentMonth, 1).toLocaleDateString(i18n.resolvedLanguage, {
+			month: 'long',
+			year: 'numeric',
 		})
+		return raw.charAt(0).toUpperCase() + raw.slice(1)
+	}
+
+	const getFilterText = () => {
+		const activityLabel = selectedActivityIds.length > 0
+			? getActivityFilterLabel(selectedActivityIds, enabledWorkActivities, i18n.language, t)
+			: 'Wszystkie czynności'
+		const taskLabel = selectedTaskIds.length > 0
+			? getTaskFilterLabel(selectedTaskIds, filterableTasks, t)
+			: 'Wszystkie zadania'
+		return `${activityLabel} · ${taskLabel}`
+	}
+
+	const pdfKpiCards = () => {
+		const cards = [
+			{ label: 'Dni pracy', value: String(totalWorkDays), color: pdfTheme.blue },
+			{ label: 'Godziny pracy', value: `${formatHours(roundToHalfHour(totalHours))} h`, color: pdfTheme.green },
+			{ label: 'Nadgodziny', value: `${formatHours(roundToHalfHour(additionalHours))} h`, color: pdfTheme.amber },
+			{
+				label: settings?.leaveCalculationMode === 'hours' ? 'Urlop' : 'Dni urlopu',
+				value: settings?.leaveCalculationMode === 'hours'
+					? `${totalLeaveHours.toFixed(1)} h`
+					: `${totalLeaveDays} (${totalLeaveHours.toFixed(1)} h)`,
+				color: pdfTheme.purple,
+			},
+			{ label: 'Inne nieobecności', value: String(totalOtherAbsences), color: pdfTheme.red },
+		]
+		return {
+			table: {
+				widths: cards.map(() => '*'),
+				body: [[
+					...cards.map(card => ({
+						stack: [
+							{ text: card.label, fontSize: 7.2, bold: true, color: pdfTheme.muted },
+							{ text: card.value, fontSize: 12, bold: true, color: pdfTheme.ink, margin: [0, 3, 0, 0] },
+							{ canvas: [{ type: 'rect', x: 0, y: 0, w: 48, h: 2.4, r: 1.2, color: card.color }], margin: [0, 4, 0, 0] },
+						],
+						border: [false, false, false, false],
+						margin: [7, 6, 7, 6],
+					})),
+				]],
+			},
+			layout: {
+				hLineWidth: () => 1,
+				vLineWidth: () => 1,
+				hLineColor: () => pdfTheme.line,
+				vLineColor: () => pdfTheme.line,
+			},
+			margin: [0, 0, 0, 6],
+		}
+	}
+
+	const pdfSectionTitle = (title, subtitle = '') => ({
+		stack: [
+			{ text: title, style: 'sectionTitle' },
+			subtitle ? { text: subtitle, style: 'sectionSubtitle', margin: [0, 2, 0, 0] } : null,
+		].filter(Boolean),
+		margin: [0, 10, 0, 5],
+	})
+
+	const getCalendarEventsByDate = () => {
+		const map = new Map()
+		calendarEvents.forEach(event => {
+			if (!event?.start || event.display === 'background' || !event.title) return
+			const dateKey = formatDateLocal(event.start)
+			const eventDate = new Date(dateKey)
+			if (eventDate.getMonth() !== currentMonth || eventDate.getFullYear() !== currentYear) return
+			if (!map.has(dateKey)) map.set(dateKey, [])
+			const type = event.classNames?.includes?.('event-real-time')
+				? 'time'
+				: event.extendedProps?.type === 'holiday' || event.extendedProps?.type === 'leaveRequest' || event.extendedProps?.isAbsence || event.classNames?.includes?.('event-absence')
+					? 'absence'
+					: event.extendedProps?.isNotes || event.classNames?.includes?.('event-notes')
+						? 'note'
+						: 'work'
+			map.get(dateKey).push({ title: String(event.title), type })
+		})
+		return map
+	}
+
+	const buildPdfCalendarTable = () => {
+		const monthStart = new Date(currentYear, currentMonth, 1)
+		const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+		const firstWeekday = (monthStart.getDay() + 6) % 7
+		const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
+		const eventsByDate = getCalendarEventsByDate()
+		const dayHeaders = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
+		const body = [
+			dayHeaders.map(label => ({
+				text: label,
+				bold: true,
+				alignment: 'center',
+				color: '#ffffff',
+				fillColor: pdfTheme.navy,
+				margin: [0, 5, 0, 5],
+			})),
+		]
+		for (let cellIndex = 0; cellIndex < totalCells; cellIndex += 7) {
+			const row = []
+			for (let offset = 0; offset < 7; offset += 1) {
+				const dayNumber = cellIndex + offset - firstWeekday + 1
+				if (dayNumber < 1 || dayNumber > daysInMonth) {
+					row.push({ text: '', fillColor: '#f1f5f9', margin: [3, 3, 3, 3] })
+					continue
+				}
+				const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
+				const items = eventsByDate.get(dateKey) || []
+				row.push({
+					stack: [
+						{ text: String(dayNumber), alignment: 'right', bold: true, color: pdfTheme.ink, fontSize: 8, margin: [0, 0, 0, 3] },
+						...items.slice(0, 4).map(item => ({
+							text: item.title,
+							fontSize: 6.7,
+							color: item.type === 'work' ? pdfTheme.blue : item.type === 'time' ? '#92400e' : item.type === 'note' ? pdfTheme.red : pdfTheme.green,
+							margin: [0, 1, 0, 0],
+						})),
+						items.length > 4 ? { text: `+${items.length - 4} wpisów`, fontSize: 6.5, color: pdfTheme.muted, margin: [0, 2, 0, 0] } : null,
+					].filter(Boolean),
+					fillColor: offset >= 5 ? '#fbfdff' : '#ffffff',
+					margin: [4, 4, 4, 4],
+				})
+			}
+			body.push(row)
+		}
+		return {
+			unbreakable: true,
+			table: {
+				widths: Array(7).fill('*'),
+				body,
+				heights: rowIndex => rowIndex === 0 ? 15 : 43,
+				dontBreakRows: true,
+				keepWithHeaderRows: body.length - 1,
+			},
+			layout: {
+				hLineWidth: () => 0.7,
+				vLineWidth: () => 0.7,
+				hLineColor: () => pdfTheme.line,
+				vLineColor: () => pdfTheme.line,
+			},
+			fontSize: 7,
+		}
+	}
+
+	const pdfSummaryTables = () => {
+		const sections = []
+		if (showActivitySummary) {
+			sections.push(
+				pdfSectionTitle('Godziny wg czynności', selectedActivityIds.length > 0 ? getActivityFilterLabel(selectedActivityIds, enabledWorkActivities, i18n.language, t) : ''),
+				{
+					table: {
+						headerRows: 1,
+						widths: ['*', 45, 54, 58],
+						body: [
+							[
+								{ text: 'Czynność', bold: true, color: '#ffffff' },
+								{ text: 'Godz.', bold: true, color: '#ffffff', alignment: 'right' },
+								{ text: 'Ilość', bold: true, color: '#ffffff', alignment: 'right' },
+								{ text: 'Wydajność', bold: true, color: '#ffffff', alignment: 'right' },
+							],
+							...activitySummaryRows.map(row => [
+								row.activityName,
+								{ text: `${formatHours(row.hours)} h`, alignment: 'right' },
+								{ text: row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '-', alignment: 'right' },
+								{ text: row.efficiency ? `${row.efficiency} ${row.unit}/h` : '-', alignment: 'right' },
+							]),
+						],
+					},
+					layout: {
+						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+						hLineColor: () => pdfTheme.line,
+						vLineColor: () => pdfTheme.line,
+					},
+					fontSize: 8,
+				}
+			)
+		}
+		if (showTaskSummary) {
+			sections.push(
+				pdfSectionTitle('Godziny wg zadań', selectedTaskIds.length > 0 ? getTaskFilterLabel(selectedTaskIds, filterableTasks, t) : ''),
+				{
+					table: {
+						headerRows: 1,
+						widths: ['*', 55],
+						body: [
+							[
+								{ text: 'Zadanie', bold: true, color: '#ffffff' },
+								{ text: 'Godziny', bold: true, color: '#ffffff', alignment: 'right' },
+							],
+							...taskSummaryRows.map(row => [
+								row.taskName,
+								{ text: `${formatHours(row.hours)} h`, alignment: 'right' },
+							]),
+						],
+					},
+					layout: {
+						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+						hLineColor: () => pdfTheme.line,
+						vLineColor: () => pdfTheme.line,
+					},
+					fontSize: 8,
+				}
+			)
+		}
+		return sections
+	}
+
+	const generatePDF = async () => {
+		if (!user) return
+		setIsExportingExcel(true)
+		try {
+			const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+			const summarySections = pdfSummaryTables()
+			const content = [
+				{
+					table: {
+						widths: ['*', 160],
+						body: [[
+							{
+								stack: [
+									{ text: 'EWIDENCJA CZASU PRACY', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1 },
+									{ text: userName || 'Pracownik', fontSize: 17, bold: true, color: '#ffffff', margin: [0, 4, 0, 0] },
+									user?.position ? { text: user.position, fontSize: 8, color: '#bfdbfe', margin: [0, 2, 0, 0] } : null,
+								].filter(Boolean),
+								border: [false, false, false, false],
+								margin: [14, 9, 10, 9],
+							},
+							{
+								stack: [
+									{ text: `Okres: ${getReportMonthLabel()}`, fontSize: 9, color: '#dbeafe', alignment: 'right' },
+									{
+										text: isConfirmed ? 'Miesiąc potwierdzony' : 'Miesiąc niepotwierdzony',
+										fontSize: 10,
+										color: '#ffffff',
+										bold: true,
+										alignment: 'right',
+										margin: [0, 5, 0, 0],
+									},
+								],
+								border: [false, false, false, false],
+								margin: [10, 12, 14, 8],
+							},
+						]],
+					},
+					layout: {
+						hLineWidth: () => 0,
+						vLineWidth: () => 0,
+						fillColor: () => pdfTheme.navy,
+					},
+					margin: [0, 0, 0, 7],
+				},
+				pdfKpiCards(),
+				pdfSectionTitle('Kalendarz miesiąca'),
+				buildPdfCalendarTable(),
+				...(summarySections.length > 0 ? [{ text: '', pageBreak: 'after', margin: [0, 0, 0, 0] }, ...summarySections] : []),
+			]
+			await downloadPdf(
+				buildPdfDocument({
+					content,
+					pageOrientation: 'landscape',
+					pageMargins: [18, 18, 18, 24],
+					styles: {
+						sectionTitle: { fontSize: 13, bold: true, color: pdfTheme.ink },
+						sectionSubtitle: { fontSize: 8, color: pdfTheme.muted },
+					},
+					footer: (currentPage, pageCount) => ({
+						columns: [
+							{ text: 'Planopia', color: pdfTheme.muted, fontSize: 8 },
+							{ text: `${currentPage}/${pageCount}`, alignment: 'right', color: pdfTheme.muted, fontSize: 8 },
+						],
+						margin: [24, 0, 24, 0],
+					}),
+					info: {
+						title: `Ewidencja czasu pracy - ${userName}`,
+						author: 'Planopia',
+						subject: getReportMonthLabel(),
+					},
+				}),
+				buildReportFilename({
+					locale: i18n.resolvedLanguage,
+					pl: 'raport-ewidencja-pracownika',
+					en: 'employee-timesheet-report',
+					parts: [userName, getReportMonthLabel()],
+					extension: 'pdf',
+				})
+			)
+		} catch (error) {
+			console.error('generatePDF:', error)
+			await showAlert(t('workcalendar.exportError') || 'Nie udało się wygenerować PDF.')
+		} finally {
+			setIsExportingExcel(false)
+		}
 	}
 
 	const generateExcel = async () => {
@@ -1239,29 +1738,79 @@ function UserCalendar() {
 				})]
 			]
 
+			const activitySheetRows = [
+				[
+					t('workcalendar.activities.excel.date'),
+					t('workcalendar.activities.excel.activity'),
+					t('workcalendar.activities.excel.hours'),
+					t('workcalendar.activities.excel.quantity'),
+					t('workcalendar.activities.excel.efficiency'),
+					t('workcalendar.activities.excel.timeRange'),
+				],
+				...monthActivityRows.map(row => [
+					row.date ? new Date(row.date).toLocaleDateString(i18n.resolvedLanguage) : '',
+					row.activityName,
+					excelHoursValue(row.hours),
+					row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '',
+					row.quantity > 0 && row.unit && row.hours > 0 ? `${Math.round((row.quantity / row.hours) * 100) / 100} ${row.unit}/h` : '',
+					row.timeFrom && row.timeTo ? `${row.timeFrom}-${row.timeTo}` : '',
+				]),
+			]
+
+			const activitySummarySheetRows = [
+				[t('workcalendar.activities.excel.activity'), t('workcalendar.activities.excel.hours'), t('workcalendar.activities.excel.quantity'), t('workcalendar.activities.excel.efficiency')],
+				...activitySummaryRows.map(row => [
+					row.activityName,
+					excelHoursValue(row.hours),
+					row.quantity > 0 && row.unit ? `${row.quantity} ${row.unit}` : '',
+					row.efficiency ? `${row.efficiency} ${row.unit}/h` : '',
+				]),
+			]
+
+			const sheets = [
+				{
+					name: t('workcalendar.excel.sheetDetails'),
+					rows: detailedData,
+					colWidths: [30, 12, 15, 12, 15, 25, 25, 20],
+					columnNumFmt: { 2: '0.0', 3: '0.0' },
+					dataStartRow: 4,
+				},
+				{
+					name: t('workcalendar.excel.sheetSummary'),
+					rows: summaryData,
+					colWidths: [30, 20],
+				},
+			]
+
+			if (monthActivityRows.length > 0) {
+				sheets.push({
+					name: t('workcalendar.activities.excel.sheetActivities'),
+					rows: activitySheetRows,
+					colWidths: [14, 28, 10, 14, 14, 16],
+					columnNumFmt: { 3: '0.0' },
+					dataStartRow: 2,
+				})
+				sheets.push({
+					name: t('workcalendar.activities.excel.summarySheet'),
+					rows: activitySummarySheetRows,
+					colWidths: [28, 12, 14, 14],
+					columnNumFmt: { 2: '0.0' },
+					dataStartRow: 2,
+				})
+			}
+
 			const monthName = new Date(currentYear, currentMonth).toLocaleDateString(i18n.resolvedLanguage, {
 				month: 'long',
 			})
-			const filename = `${t('workcalendar.excel.filename')}_${user.firstName}_${user.lastName}_${monthName}_${currentYear}.xlsx`
+			const filename = buildReportFilename({
+				locale: i18n.resolvedLanguage,
+				pl: 'raport-ewidencja-pracownika',
+				en: 'employee-timesheet-report',
+				parts: [`${user.firstName} ${user.lastName}`, `${monthName} ${currentYear}`],
+				extension: 'xlsx',
+			})
 
-			await downloadExcelWorkbook(
-				[
-					{
-						name: t('workcalendar.excel.sheetDetails'),
-						rows: detailedData,
-						colWidths: [30, 12, 15, 12, 15, 25, 25, 20],
-						// kolumny B,C = godziny / nadgodziny (1-based); max 1 miejsce po przecinku
-						columnNumFmt: { 2: '0.0', 3: '0.0' },
-						dataStartRow: 4,
-					},
-					{
-						name: t('workcalendar.excel.sheetSummary'),
-						rows: summaryData,
-						colWidths: [30, 20],
-					},
-				],
-				filename
-			)
+			await downloadExcelWorkbook(sheets, filename)
 
 			setIsExportingExcel(false)
 		} catch (error) {
@@ -1271,6 +1820,119 @@ function UserCalendar() {
 			// For now, error is logged to console
 		}
 	}
+
+	const renderMonthToolbar = () => (
+		<div className="calendar-controls monthly-calendar-toolbar user-calendar-month-toolbar flex flex-wrap items-center" style={{ columnGap: '10px', rowGap: '8px' }}>
+			<div className="monthly-calendar-toolbar__nav">
+				<select value={currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+					{Array.from({ length: 12 }, (_, i) => {
+						const monthName = new Date(0, i).toLocaleString(i18n.resolvedLanguage, { month: 'long' })
+						const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
+						return (
+							<option key={i} value={i}>
+								{capitalizedMonth}
+							</option>
+						)
+					})}
+				</select>
+				<select value={currentYear} onChange={handleYearSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+					{Array.from({ length: 20 }, (_, i) => {
+						const year = new Date().getFullYear() - 10 + i
+						return (
+							<option key={year} value={year}>
+								{year}
+							</option>
+						)
+					})}
+				</select>
+				<button
+					type="button"
+					onClick={handlePrevMonth}
+					style={{ marginLeft: 0, padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+					onMouseOver={(e) => {
+						e.target.style.backgroundColor = '#f8f9fa'
+						e.target.style.borderColor = '#adb5bd'
+					}}
+					onMouseOut={(e) => {
+						e.target.style.backgroundColor = 'white'
+						e.target.style.borderColor = '#bdc3c7'
+					}}
+				>
+					&lt;
+				</button>
+				<button
+					type="button"
+					onClick={handleNextMonth}
+					style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
+					onMouseOver={(e) => {
+						e.target.style.backgroundColor = '#f8f9fa'
+						e.target.style.borderColor = '#adb5bd'
+					}}
+					onMouseOut={(e) => {
+						e.target.style.backgroundColor = 'white'
+						e.target.style.borderColor = '#bdc3c7'
+					}}
+				>
+					&gt;
+				</button>
+			</div>
+			{canEditManagedWorkdays && (
+				<div className="workday-toolbar-actions monthly-calendar-toolbar__actions">
+					<button
+						type="button"
+						onClick={() => setBulkFillModalOpen(true)}
+						className="workday-bulk-fill-button"
+					>
+						{t('workcalendar.bulkFill.fill')}
+					</button>
+					<button
+						type="button"
+						onClick={handleClearManagedCurrentMonthEntries}
+						disabled={clearWorkdaysForMonthMutation.isPending}
+						title={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+						aria-label={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
+						className="workday-clear-month-button"
+					>
+						{clearWorkdaysForMonthMutation.isPending
+							? (t('workcalendar.clearingShort') || '...')
+							: <img src="/img/trash.png" alt={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'} className="workday-clear-month-icon" />}
+					</button>
+				</div>
+			)}
+		</div>
+	)
+
+	const renderManagedMonthConfirmation = () => (
+		canEditManagedWorkdays ? (
+			<div className="managed-month-confirmation-summary">
+				<button
+					type="button"
+					className={`newbutton-confirmmonth ${isConfirmed ? 'is-confirmed' : 'is-open'}`}
+					onClick={handleManagedMonthConfirmationToggle}
+					disabled={toggleConfirmationMutation.isPending}
+				>
+					{toggleConfirmationMutation.isPending
+						? t('workcalendar.processing')
+						: (isConfirmed
+							? t('workcalendar.cancelconfirmation')
+							: t('workcalendar.confirmmonthbutton'))}
+				</button>
+				<span className={`confirm-border ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
+					<img
+						src="/img/check.png"
+						alt=""
+						style={{
+							width: '30px',
+							marginRight: '8px',
+							filter: isConfirmed ? 'none' : 'grayscale(100%)',
+							opacity: isConfirmed ? 1 : 0.6,
+						}}
+					/>
+					{isConfirmed ? t('workcalendar.confirmed') : t('workcalendar.notConfirmed')}
+				</span>
+			</div>
+		) : null
+	)
 
 	return (
 		<>
@@ -1314,100 +1976,6 @@ function UserCalendar() {
 						)}
 					</button>
 				</div>
-				<div style={{ display: 'flex', columnGap: '10px', rowGap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-					<select value={currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px', marginLeft: '10px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-						{Array.from({ length: 12 }, (_, i) => {
-							const monthName = new Date(0, i).toLocaleString(i18n.resolvedLanguage, { month: 'long' })
-							const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1)
-							return (
-								<option key={i} value={i}>
-									{capitalizedMonth}
-								</option>
-							)
-						})}
-					</select>
-					<select value={currentYear} onChange={handleYearSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
-						{Array.from({ length: 20 }, (_, i) => {
-							const year = new Date().getFullYear() - 10 + i
-							return (
-								<option key={year} value={year}>
-									{year}
-								</option>
-							)
-						})}
-					</select>
-					<button
-					type="button"
-					onClick={handlePrevMonth}
-					style={{ marginLeft: 0, padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-					onMouseOver={(e) => {
-						e.target.style.backgroundColor = '#f8f9fa'
-						e.target.style.borderColor = '#adb5bd'
-					}}
-					onMouseOut={(e) => {
-						e.target.style.backgroundColor = 'white'
-						e.target.style.borderColor = '#bdc3c7'
-					}}
-				>
-					&lt;
-				</button>
-					<button
-					type="button"
-					onClick={handleNextMonth}
-					style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
-					onMouseOver={(e) => {
-						e.target.style.backgroundColor = '#f8f9fa'
-						e.target.style.borderColor = '#adb5bd'
-					}}
-					onMouseOut={(e) => {
-						e.target.style.backgroundColor = 'white'
-						e.target.style.borderColor = '#bdc3c7'
-					}}
-				>
-					&gt;
-				</button>
-					{canEditManagedWorkdays && (
-						<div className="workday-toolbar-actions">
-							<button
-								type="button"
-								onClick={() => setBulkFillModalOpen(true)}
-								className="workday-bulk-fill-button"
-							>
-								{t('workcalendar.bulkFill.fill')}
-							</button>
-							<button
-								type="button"
-								onClick={handleClearManagedCurrentMonthEntries}
-								disabled={clearWorkdaysForMonthMutation.isPending}
-								title={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
-								aria-label={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'}
-								className="workday-clear-month-button"
-							>
-								{clearWorkdaysForMonthMutation.isPending
-									? (t('workcalendar.clearingShort') || '...')
-									: <img src="/img/trash.png" alt={t('workcalendar.clearMonthTooltip') || 'Wyczyść wpisy z miesiąca'} className="workday-clear-month-icon" />}
-							</button>
-						</div>
-					)}
-				</div>
-				{canEditManagedWorkdays && (
-					<div className={`managed-month-confirmation ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
-						<div>
-							<p className="managed-month-confirmation__label">{t('workcalendar.managedMonthConfirmation.title')}</p>
-							<p className={`managed-month-confirmation__status ${isConfirmed ? 'is-confirmed' : 'is-open'}`}>
-								{isConfirmed ? t('workcalendar.managedMonthConfirmation.confirmed') : t('workcalendar.managedMonthConfirmation.notConfirmed')}
-							</p>
-						</div>
-						<button
-							type="button"
-							className={`btn ${isConfirmed ? 'btn-secondary' : 'btn-success'}`}
-							onClick={handleManagedMonthConfirmationToggle}
-							disabled={toggleConfirmationMutation.isPending}
-						>
-							{isConfirmed ? t('workcalendar.managedMonthConfirmation.revert') : t('workcalendar.managedMonthConfirmation.confirm')}
-						</button>
-					</div>
-				)}
 				</div>
 				<div ref={pdfRef} style={{ 
 					marginTop: '15px',
@@ -1439,58 +2007,172 @@ function UserCalendar() {
 									 {user.firstName} {user.lastName} {user.position && `(${user.position})`}
 								</span>
 							</h3>
+							{user?.appAccessEnabled !== false && user?.appAccessEnabled != null && (
+								<div
+									style={{
+										marginTop: '14px',
+										color: isConfirmed ? '#166534' : '#92400e',
+										fontWeight: 500,
+									}}
+								>
+									{isConfirmed ? t('workcalendar.confirmed') : t('workcalendar.notConfirmed')}
+								</div>
+							)}
 						</div>
 					)}
 
-					<div className="calendar-controls" style={{ 
-						padding: '10px 15px',
-						// backgroundColor: isConfirmed ? '#dcfce7' : '#fef3c7',
-						borderRadius: '6px',
-						// border: `1px solid ${isConfirmed ? '#22c55e' : '#f59e0b'}`
-					}}>
-						<label style={{ 
-							display: 'flex', 
-							alignItems: 'center',
-							margin: '0',
-							color: isConfirmed ? '#166534' : '#92400e',
-							fontWeight: '500',
-							padding: '0'
-						}}>
-							{/* <input 
-								type="checkbox" 
-								checked={isConfirmed} 
-								readOnly 
-								style={{ 
-									marginRight: '8px',
-									transform: 'scale(1.2)'
-								}} 
-							/> */}
-							{isConfirmed ? t('workcalendar.confirmed') : t('workcalendar.notConfirmed')}
-						</label>
-					</div>
-
 					<div className="row">
-						<div className="col-xl-9">
-							<FullCalendar
-								plugins={[dayGridPlugin, interactionPlugin]}
-								initialView="dayGridMonth"
-								locale={i18n.resolvedLanguage}
-								firstDay={1}
-								showNonCurrentDates={false}
-								events={calendarEvents}
-								ref={calendarRef}
-								eventContent={renderEventContent}
-								dateClick={handleManagedDateClick}
-								eventClick={handleManagedDateClick}
-								displayEventTime={false}
-								datesSet={handleMonthChange}
-								height="auto"
-							/>
+						<div className="col-xl-9 user-calendar-main-col">
+							<div className="user-calendar-main-calendar">
+								{renderMonthToolbar()}
+								<FullCalendar
+									plugins={[dayGridPlugin, interactionPlugin]}
+									initialView="dayGridMonth"
+									locale={i18n.resolvedLanguage}
+									firstDay={1}
+									showNonCurrentDates={false}
+									events={calendarEvents}
+									ref={calendarRef}
+									eventContent={renderEventContent}
+									dateClick={handleManagedDateClick}
+									eventClick={handleManagedDateClick}
+									displayEventTime={false}
+									datesSet={handleMonthChange}
+									headerToolbar={false}
+									height="auto"
+								/>
+							</div>
+							<div className="user-calendar-under-calendar">
+								{(user?.appAccessEnabled === false || user?.appAccessEnabled == null) && (
+									renderCalendarMetadata()
+								)}
+								{user?.appAccessEnabled !== false && user?.appAccessEnabled != null && (
+									<div>
+										{renderCalendarMetadata()}
+									</div>
+								)}
+
+								{canEditManagedWorkdays && (
+									<div className="managed-workday-review-panel">
+										<div className="managed-workday-review-panel__header">
+											<div>
+												<h3>{t('workcalendar.dayReview.title')}</h3>
+												<p>{t('workcalendar.dayReview.description')}</p>
+											</div>
+											<span>{currentMonthWorkdaysForReview.length}</span>
+										</div>
+										{currentMonthWorkdaysForReview.length === 0 ? (
+											<div className="managed-workday-review-empty">{t('workcalendar.dayReview.empty')}</div>
+										) : (
+											<div className="managed-workday-review-list">
+												{currentMonthWorkdaysForReview.map(day => {
+													const reviewerName = formatReviewerName(day.reviewedBy)
+													const addedByName = formatReviewerName(day.lastChangedBy)
+													const reviewLabel = day.reviewStatus === 'approved'
+															? t('workcalendar.dayReview.statusApproved')
+															: day.reviewStatus === 'rejected'
+																? t('workcalendar.dayReview.statusRejected')
+																: t('workcalendar.dayReview.statusNone')
+													return (
+														<div key={day._id} className={`managed-workday-review-item ${day.reviewStatus ? `is-${day.reviewStatus}` : ''}`}>
+															<div className="managed-workday-review-item__main">
+																<div className="managed-workday-review-item__date">
+																	{new Date(day.date).toLocaleDateString(i18n.resolvedLanguage, {
+																		day: '2-digit',
+																		month: 'long',
+																		year: 'numeric',
+																	})}
+																</div>
+																<div className="managed-workday-review-item__details">
+																	{day.hoursWorked != null && day.hoursWorked !== '' && (
+																		<span>{formatHours(roundToHalfHour(day.hoursWorked))} {t('workcalendar.allfrommonthhours')}</span>
+																	)}
+																	{day.additionalWorked != null && day.additionalWorked !== '' && (
+																		<span>{t('workcalendar.bulkFill.overtime')}: {formatHours(roundToHalfHour(day.additionalWorked))}</span>
+																	)}
+																	{day.realTimeDayWorked && <span>{t('workcalendar.worktime')} {day.realTimeDayWorked}</span>}
+																	{day.absenceType && <span>{t('workcalendar.h2modalabsence')} {day.absenceType}</span>}
+																	{day.notes && <span>{t('workcalendar.notes')}: {day.notes}</span>}
+																</div>
+																<div className="managed-workday-review-item__meta">
+																	<span>
+																		{reviewerName
+																			? `${reviewLabel} ${t('workcalendar.dayReview.by')}: ${reviewerName}`
+																			: reviewLabel}
+																	</span>
+																	{addedByName && <span>{t('workcalendar.dayReview.addedBy')}: {addedByName}</span>}
+																</div>
+															</div>
+															<div className="managed-workday-review-actions">
+																<button
+																	type="button"
+																	className={`managed-review-action approve ${day.reviewStatus === 'approved' ? 'is-active' : ''}`}
+																	onClick={() => handleReviewWorkday(day._id, 'approved')}
+																	disabled={reviewWorkdayForUserMutation.isPending}
+																>
+																	{t('workcalendar.dayReview.approve')}
+																</button>
+																<button
+																	type="button"
+																	className={`managed-review-action reject ${day.reviewStatus === 'rejected' ? 'is-active' : ''}`}
+																	onClick={() => handleReviewWorkday(day._id, 'rejected')}
+																	disabled={reviewWorkdayForUserMutation.isPending}
+																>
+																	{t('workcalendar.dayReview.reject')}
+																</button>
+																{day.reviewStatus && (
+																	<button
+																		type="button"
+																		className="managed-review-action clear"
+																		onClick={() => handleReviewWorkday(day._id, null)}
+																		disabled={reviewWorkdayForUserMutation.isPending}
+																	>
+																		{t('workcalendar.dayReview.clear')}
+																	</button>
+																)}
+															</div>
+														</div>
+													)
+												})}
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+							<div className="work-session-list-mobile user-calendar-sessions-mobile">
+								{settings?.timerEnabled !== false && allowTimerLeaveApis && (
+									<WorkSessionList
+										month={currentMonth}
+										year={currentYear}
+										userId={userId}
+										timerQueriesEnabled={allowTimerLeaveApis}
+										selectedActivityIds={selectedActivityIds}
+										selectedTaskIds={selectedTaskIds}
+									/>
+								)}
+							</div>
 						</div>
 						<div
 							className={`col-xl-3 resume-month-work small-mt ${settings?.timerEnabled !== false && allowTimerLeaveApis ? 'resume-month-work--with-timer' : ''} ${allowTimerLeaveApis && activeTimer?.active && activeTimer.startTime ? 'resume-month-work--timer-active' : ''}`}
 						>
 				<h3 className="resumecales h3resume">{t('workcalendar.allfrommonth')}</h3>
+				{teamHasWorkActivities({ workActivities }) && (
+					<ActivityFilterBar
+						activities={enabledWorkActivities}
+						selectedIds={selectedActivityIds}
+						onChange={setSelectedActivityIds}
+						compact
+					/>
+				)}
+				{tasksModuleEnabled && filterableTasks.length > 0 && (
+					<TaskFilterBar
+						tasks={filterableTasks}
+						selectedIds={selectedTaskIds}
+						onChange={setSelectedTaskIds}
+						compact
+					/>
+				)}
+				{renderManagedMonthConfirmation()}
 				<p>
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
@@ -1515,122 +2197,43 @@ function UserCalendar() {
 				<p>
 					{t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>
-				{user?.appAccessEnabled !== false && (
-					<div className="d-xl-none">
-						{renderCalendarMetadata()}
+				{showActivitySummary && (
+					<div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+						<h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>
+							{t('workcalendar.activities.summaryTitle')}
+							{selectedActivityIds.length > 0
+								? ` · ${getActivityFilterLabel(selectedActivityIds, enabledWorkActivities, i18n.language, t)}`
+								: ''}
+						</h4>
+						{activitySummaryRows.map(row => (
+							<p key={row.activityId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
+								{row.activityName}: <strong>{formatHours(row.hours)} h</strong>
+								{row.quantity > 0 && row.unit ? (
+									<span> · {row.quantity} {row.unit}{row.efficiency ? ` · ${row.efficiency} ${row.unit}/h` : ''}</span>
+								) : null}
+							</p>
+						))}
+					</div>
+				)}
+				{showTaskSummary && (
+					<div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+						<h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>
+							{t('workcalendar.tasks.summaryTitle')}
+							{selectedTaskIds.length > 0
+								? ` · ${getTaskFilterLabel(selectedTaskIds, filterableTasks, t)}`
+								: ''}
+						</h4>
+						{taskSummaryRows.map(row => (
+							<p key={row.taskId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
+								{row.taskName}: <strong>{formatHours(row.hours)} h</strong>
+							</p>
+						))}
 					</div>
 				)}
 			</div>
 					</div>
 				</div>
 
-			{(user?.appAccessEnabled === false || user?.appAccessEnabled == null) && (
-				renderCalendarMetadata()
-			)}
-			{user?.appAccessEnabled !== false && (
-				<div className="d-none d-xl-block">
-					{renderCalendarMetadata()}
-				</div>
-			)}
-
-			{canEditManagedWorkdays && (
-				<div className="managed-workday-review-panel col-xl-9">
-					<div className="managed-workday-review-panel__header">
-						<div>
-							<h3>{t('workcalendar.dayReview.title')}</h3>
-							<p>{t('workcalendar.dayReview.description')}</p>
-						</div>
-						<span>{currentMonthWorkdaysForReview.length}</span>
-					</div>
-					{currentMonthWorkdaysForReview.length === 0 ? (
-						<div className="managed-workday-review-empty">{t('workcalendar.dayReview.empty')}</div>
-					) : (
-						<div className="managed-workday-review-list">
-							{currentMonthWorkdaysForReview.map(day => {
-								const reviewerName = formatReviewerName(day.reviewedBy)
-								const addedByName = formatReviewerName(day.lastChangedBy)
-								const reviewLabel = day.reviewStatus === 'approved'
-										? t('workcalendar.dayReview.statusApproved')
-										: day.reviewStatus === 'rejected'
-											? t('workcalendar.dayReview.statusRejected')
-											: t('workcalendar.dayReview.statusNone')
-								return (
-									<div key={day._id} className={`managed-workday-review-item ${day.reviewStatus ? `is-${day.reviewStatus}` : ''}`}>
-										<div className="managed-workday-review-item__main">
-											<div className="managed-workday-review-item__date">
-												{new Date(day.date).toLocaleDateString(i18n.resolvedLanguage, {
-													day: '2-digit',
-													month: 'long',
-													year: 'numeric',
-												})}
-											</div>
-											<div className="managed-workday-review-item__details">
-												{day.hoursWorked != null && day.hoursWorked !== '' && (
-													<span>{formatHours(roundToHalfHour(day.hoursWorked))} {t('workcalendar.allfrommonthhours')}</span>
-												)}
-												{day.additionalWorked != null && day.additionalWorked !== '' && (
-													<span>{t('workcalendar.bulkFill.overtime')}: {formatHours(roundToHalfHour(day.additionalWorked))}</span>
-												)}
-												{day.realTimeDayWorked && <span>{t('workcalendar.worktime')} {day.realTimeDayWorked}</span>}
-												{day.absenceType && <span>{t('workcalendar.h2modalabsence')} {day.absenceType}</span>}
-												{day.notes && <span>{t('workcalendar.notes')}: {day.notes}</span>}
-											</div>
-											<div className="managed-workday-review-item__meta">
-												<span>
-													{reviewerName
-														? `${reviewLabel} ${t('workcalendar.dayReview.by')}: ${reviewerName}`
-														: reviewLabel}
-												</span>
-												{addedByName && <span>{t('workcalendar.dayReview.addedBy')}: {addedByName}</span>}
-											</div>
-										</div>
-										<div className="managed-workday-review-actions">
-											<button
-												type="button"
-												className={`managed-review-action approve ${day.reviewStatus === 'approved' ? 'is-active' : ''}`}
-												onClick={() => handleReviewWorkday(day._id, 'approved')}
-												disabled={reviewWorkdayForUserMutation.isPending}
-											>
-												{t('workcalendar.dayReview.approve')}
-											</button>
-											<button
-												type="button"
-												className={`managed-review-action reject ${day.reviewStatus === 'rejected' ? 'is-active' : ''}`}
-												onClick={() => handleReviewWorkday(day._id, 'rejected')}
-												disabled={reviewWorkdayForUserMutation.isPending}
-											>
-												{t('workcalendar.dayReview.reject')}
-											</button>
-											{day.reviewStatus && (
-												<button
-													type="button"
-													className="managed-review-action clear"
-													onClick={() => handleReviewWorkday(day._id, null)}
-													disabled={reviewWorkdayForUserMutation.isPending}
-												>
-													{t('workcalendar.dayReview.clear')}
-												</button>
-											)}
-										</div>
-									</div>
-								)
-							})}
-						</div>
-					)}
-				</div>
-			)}
-
-			{/* Work Session List */}
-			<div className="work-session-list-mobile col-xl-9">
-				{settings?.timerEnabled !== false && allowTimerLeaveApis && (
-					<WorkSessionList
-						month={currentMonth}
-						year={currentYear}
-						userId={userId}
-						timerQueriesEnabled={allowTimerLeaveApis}
-					/>
-				)}
-			</div>
 			</div>
 					)}
 			<Modal
@@ -1656,8 +2259,8 @@ function UserCalendar() {
 					content: {
 						position: 'relative',
 						inset: 'auto',
-						width: 'min(560px, calc(100vw - 32px))',
-						maxWidth: '560px',
+						width: 'min(820px, calc(100vw - 32px))',
+						maxWidth: '820px',
 						maxHeight: 'calc(100vh - 48px)',
 						margin: 0,
 						marginLeft: 0,
@@ -1708,86 +2311,7 @@ function UserCalendar() {
 					)}
 
 					<div style={{ opacity: hasManagedAbsenceEntryInput ? 0.55 : 1, transition: 'opacity 0.2s ease' }}>
-						<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-							<label>
-								<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Godziny</span>
-								<input
-									type="number"
-									step="0.5"
-									min="0"
-									max="24"
-									placeholder={t('workcalendar.bulkFill.hoursPlaceholderShort') || 'np. 10'}
-									value={hoursWorked}
-									onChange={(e) => setHoursWorked(e.target.value)}
-									className="w-full border border-gray-300 rounded-md px-4 py-2"
-								/>
-							</label>
-							<label>
-								<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>Nadgodziny</span>
-								<input
-									type="number"
-									step="0.5"
-									min="0"
-									placeholder={t('workcalendar.bulkFill.overtimePlaceholderShort') || 'np. 2'}
-									value={additionalWorked}
-									onChange={(e) => setAdditionalWorked(e.target.value)}
-									className="w-full border border-gray-300 rounded-md px-4 py-2"
-								/>
-							</label>
-						</div>
-
-						{settings && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
-							<div style={{
-								padding: '12px',
-								backgroundColor: '#e3f2fd',
-								border: '1px solid #90caf9',
-								borderRadius: '6px'
-							}}>
-							<label style={{
-								display: 'block',
-								marginBottom: '10px',
-								fontWeight: '600',
-								color: '#2c3e50',
-								fontSize: '14px'
-							}}>
-								{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
-							</label>
-							<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-								{settings.workHours.map((workHours, index) => (
-									<label
-										key={index}
-										style={{
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											padding: '8px',
-											borderRadius: '4px',
-											backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
-											border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
-											transition: 'all 0.2s'
-										}}
-									>
-										<input
-											type="radio"
-											name="managedWorkHours"
-											checked={selectedWorkHoursIndex === index}
-											onChange={() => {
-												setSelectedWorkHoursIndex(index)
-												setRealTimeDayWorked(`${workHours.timeFrom}-${workHours.timeTo}`)
-												if (workHours.hours) setHoursWorked(workHours.hours.toString())
-											}}
-											style={{ marginRight: '10px', cursor: 'pointer' }}
-										/>
-										<span style={{ fontSize: '14px', color: '#2c3e50', flex: 1 }}>
-											{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
-										</span>
-									</label>
-								))}
-							</div>
-							</div>
-						)}
-
-						{renderWorkTimeRangeSelects()}
+						<WorkdayHoursWithActivities {...workdayHoursFieldProps} />
 					</div>
 
 					<div
@@ -1852,6 +2376,9 @@ function UserCalendar() {
 				onClose={() => setBulkFillModalOpen(false)}
 				onSubmit={handleBulkFillSubmit}
 				settings={settings}
+				workActivities={workActivities}
+				timesheetTasks={timesheetTasks}
+				tasksModuleEnabled={tasksModuleEnabled}
 				currentMonth={currentMonth}
 				currentYear={currentYear}
 				isPending={bulkFillWorkdaysMutation.isPending}

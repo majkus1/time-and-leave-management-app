@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\utils\polishPublicHolidays.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\utils\polishPublicHolidays.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">60.33</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">130</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">36.48</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.96</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+ * Polish public holidays for the assistant — dates computed in local calendar (aligned with Planopia UI).
+ * Includes **24 Dec (Wigilia)** like `client/src/utils/holidays.js` when Polish holidays are used in the app.
+ * Movable feasts: Easter (Gregorian computus), Corpus Christi = Easter Sunday + 60 days.
+ * Core statutory list follows ustawa o dniach wolnych od pracy; Wigilia matches product calendar behaviour.
+ */
+
+&#039;use strict&#039;
+
+/** @param {number} y */
+function easterSunday(y) {
+	const a = y % 19
+	const b = Math.floor(y / 100)
+	const c = y % 100
+	const d = Math.floor(b / 4)
+	const e = b % 4
+	const f = Math.floor((b + 8) / 25)
+	const g = Math.floor((b - f + 1) / 3)
+	const h = (19 * a + b - d - g + 15) % 30
+	const i = Math.floor(c / 4)
+	const k = c % 4
+	const l = (32 + 2 * e + 2 * i - h - k) % 7
+	const m = Math.floor((a + 11 * h + 22 * l) / 451)
+	const month = Math.floor((h + l - 7 * m + 114) / 31)
+	const day = ((h + l - 7 * m + 114) % 31) + 1
+	return new Date(y, month - 1, day)
+}
+
+/** @param {Date} d @param {number} n */
+function addDays(d, n) {
+	const x = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+	x.setDate(x.getDate() + n)
+	return x
+}
+
+const WD_PL = [&#039;niedziela&#039;, &#039;poniedziałek&#039;, &#039;wtorek&#039;, &#039;środa&#039;, &#039;czwartek&#039;, &#039;piątek&#039;, &#039;sobota&#039;]
+const WD_EN = [&#039;Sunday&#039;, &#039;Monday&#039;, &#039;Tuesday&#039;, &#039;Wednesday&#039;, &#039;Thursday&#039;, &#039;Friday&#039;, &#039;Saturday&#039;]
+
+/**
+ * @param {number} year
+ * @returns {Array&lt;{ date: Date, key: string, namePl: string, nameEn: string }&gt;}
+ */
+function getPolishPublicHolidays(year) {
+	const easter = easterSunday(year)
+	const easterMon = addDays(easter, 1)
+	const corpus = addDays(easter, 60)
+
+	const items = [
+		{ date: new Date(year, 0, 1), key: &#039;new_year&#039;, namePl: &#039;Nowy Rok&#039;, nameEn: &quot;New Year&#039;s Day&quot; },
+		{ date: new Date(year, 0, 6), key: &#039;epiphany&#039;, namePl: &#039;Święto Trzech Króli&#039;, nameEn: &#039;Epiphany&#039; },
+		{ date: easter, key: &#039;easter_sun&#039;, namePl: &#039;Niedziela Wielkanocna&#039;, nameEn: &#039;Easter Sunday&#039; },
+		{ date: easterMon, key: &#039;easter_mon&#039;, namePl: &#039;Poniedziałek Wielkanocny&#039;, nameEn: &#039;Easter Monday&#039; },
+		{ date: new Date(year, 4, 1), key: &#039;labour&#039;, namePl: &#039;Święto Pracy&#039;, nameEn: &#039;Labour Day&#039; },
+		{ date: new Date(year, 4, 3), key: &#039;constitution&#039;, namePl: &#039;Święto Narodowe Trzeciego Maja&#039;, nameEn: &#039;Constitution Day (3 May)&#039; },
+		{ date: corpus, key: &#039;corpus&#039;, namePl: &#039;Boże Ciało&#039;, nameEn: &#039;Corpus Christi&#039; },
+		{ date: new Date(year, 7, 15), key: &#039;assumption&#039;, namePl: &#039;Wniebowzięcie Najświętszej Marii Panny&#039;, nameEn: &#039;Assumption of Mary&#039; },
+		{ date: new Date(year, 10, 1), key: &#039;all_saints&#039;, namePl: &#039;Wszystkich Świętych&#039;, nameEn: &#039;All Saints’ Day&#039; },
+		{ date: new Date(year, 10, 11), key: &#039;independence&#039;, namePl: &#039;Narodowe Święto Niepodległości&#039;, nameEn: &#039;Independence Day&#039; },
+		// Zgodnie z kalendarzem Planopii (getPolishHolidaysForYear) — przy włączonych polskich świętach Wigilia jest dniem wolnym w UI.
+		{ date: new Date(year, 11, 24), key: &#039;xmas_eve&#039;, namePl: &#039;Wigilia Bożego Narodzenia&#039;, nameEn: &#039;Christmas Eve&#039; },
+		{ date: new Date(year, 11, 25), key: &#039;xmas1&#039;, namePl: &#039;Boże Narodzenie (pierwszy dzień)&#039;, nameEn: &#039;Christmas Day&#039; },
+		{ date: new Date(year, 11, 26), key: &#039;xmas2&#039;, namePl: &#039;Boże Narodzenie (drugi dzień)&#039;, nameEn: &#039;Second Day of Christmas&#039; },
+	]
+
+	items.sort((a, b) =&gt; a.date.getTime() - b.date.getTime())
+	return items
+}
+
+/**
+ * @param {number[]} years
+ * @param {&#039;pl&#039;|&#039;en&#039;} locale
+ */
+function formatPolishHolidaysForAssistant(years, locale) {
+	const uniq = [...new Set(years)]
+		.filter(y =&gt; Number.isFinite(y) &amp;&amp; y &gt;= 1990 &amp;&amp; y &lt;= 2100)
+		.sort((a, b) =&gt; a - b)
+	if (uniq.length === 0) return &#039;&#039;
+
+	const lines = []
+	const isPl = locale !== &#039;en&#039;
+	lines.push(isPl ? &#039;### POLSKIE ŚWIĘTA (referencja obliczeniowa — użyj TYLKO tych dat i dni tygodnia)&#039; : &#039;### POLISH PUBLIC HOLIDAYS (computed reference — use ONLY these dates/weekdays)&#039;)
+	lines.push(
+		isPl
+			? &#039;Święto Pracy w Polsce to zawsze **1 maja**, nigdy 1 kwietnia. Wielkanoc i Boże Ciało są ruchome — nie zgaduj ich „z pamięci”. **W Planopii** (przy włączonych polskich świętach w zespole) **24 grudnia (Wigilia)** jest w kalendarzu traktowana jak dzień wolny — tak samo jak poniżej; nie sugeruj brania urlopu na Wigilię „żeby mieć wolne”, jeśli użytkownik ma włączone święta w aplikacji (sprawdź też DATA CONTEXT → ustawienia).&#039;
+			: &#039;Labour Day in Poland is always **1 May**, never 1 April. Easter and Corpus Christi move — do not guess from memory. In **Planopia** (when Polish holidays are enabled for the team), **24 December (Christmas Eve)** is treated as a non-working holiday in the calendar like below — do not tell users they must take leave on Christmas Eve to be off if Polish holidays are on (also check DATA CONTEXT → settings).&#039;,
+	)
+	for (const y of uniq) {
+		lines.push(&#039;&#039;)
+		lines.push(`**${y}**`)
+		for (const h of getPolishPublicHolidays(y)) {
+			const wd = isPl ? WD_PL[h.date.getDay()] : WD_EN[h.date.getDay()]
+			const name = isPl ? h.namePl : h.nameEn
+			const ds = `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, &#039;0&#039;)}-${String(h.date.getDate()).padStart(2, &#039;0&#039;)}`
+			lines.push(`- ${ds} (${wd}) — ${name}`)
+		}
+	}
+	return lines.join(&#039;\n&#039;)
+}
+
+/**
+ * User asks about holidays / time off / calendar — attach computed list.
+ * @param {string} text
+ */
+function shouldAttachPolishCalendarHint(text) {
+	if (!text || typeof text !== &#039;string&#039;) return false
+	const t = text.toLowerCase()
+	const pl =
+		/święt|wielkanoc|wolny|wolne|urlop|kalendarz|majów|nie\s*pracuj|dni\s*wolne|ustawow|niepodległo|boże\s*ciało|trzech\s*króli|święto\s*pracy|konstytucj|wszystkich\s*święty|narodowe|wielkanocn|świąteczn|wigili|boże\s*narodzeni|długi\s*weekend|kwietni|styczni|lut(y|ego)|marc|maja|czerwc|lipc|sierpni|wrześni|październik|listopad|grudni/i
+	const en = /public holiday|easter|calendar|time off|vacation|day off|poland|polish|long weekend|national holiday/i
+	return pl.test(t) || en.test(t)
+}
+
+/**
+ * @param {string} text
+ * @returns {number[]}
+ */
+function extractYearsFromText(text) {
+	if (!text || typeof text !== &#039;string&#039;) return []
+	const m = text.match(/\b(19\d{2}|20\d{2})\b/g)
+	if (!m) return []
+	return [...new Set(m.map(Number))].filter(y =&gt; y &gt;= 1990 &amp;&amp; y &lt;= 2100)
+}
+
+module.exports = {
+	easterSunday,
+	getPolishPublicHolidays,
+	formatPolishHolidaysForAssistant,
+	shouldAttachPolishCalendarHint,
+	extractYearsFromText,
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

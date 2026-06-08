@@ -9,11 +9,21 @@ import { useUpdateVacationDays } from '../../hooks/useVacation'
 import { useUserLeaveRequests, useUpdateLeaveRequestStatus } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filterLeaveRequestsByPeriod, filterLeaveRequestsByStatuses } from '../../utils/leaveRequestPeriod'
+import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
+import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
+import LeaveRequestStatusFilterModal from './LeaveRequestStatusFilterModal'
 
 function AdminLeaveRequests() {
 	const { userId } = useParams()
 	const [leaveTypeDays, setLeaveTypeDays] = useState({})
 	const [updatingRequestId, setUpdatingRequestId] = useState(null)
+	const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+	const [selectedMonth, setSelectedMonth] = useState('all')
+	const [leaveDaysInfoOpen, setLeaveDaysInfoOpen] = useState(false)
+	const [insightsOpen, setInsightsOpen] = useState(false)
+	const [statusFiltersOpen, setStatusFiltersOpen] = useState(false)
+	const [statusFilters, setStatusFilters] = useState(createDefaultLeaveRequestStatusFilters)
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
@@ -26,6 +36,18 @@ function AdminLeaveRequests() {
 	const updateLeaveRequestStatusMutation = useUpdateLeaveRequestStatus()
 
 	const loading = loadingUser || loadingRequests || loadingSettings
+	const periodLeaveRequests = React.useMemo(
+		() => filterLeaveRequestsByPeriod(leaveRequests, selectedYear, selectedMonth),
+		[leaveRequests, selectedYear, selectedMonth]
+	)
+	const filteredLeaveRequests = React.useMemo(
+		() => filterLeaveRequestsByStatuses(periodLeaveRequests, statusFilters),
+		[periodLeaveRequests, statusFilters]
+	)
+	const activeStatusFilterCount = React.useMemo(
+		() => LEAVE_REQUEST_STATUS_KEYS.filter(status => statusFilters[status] !== false).length,
+		[statusFilters]
+	)
 
 	// Pobierz typy urlopów, które mają allowDaysLimit: true
 	const leaveTypesWithLimit = React.useMemo(() => {
@@ -143,9 +165,24 @@ function AdminLeaveRequests() {
 
 				{leaveTypesWithLimit.length > 0 && (
 					<div style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '450px' }}>
-						<label style={{ fontWeight: '700', fontSize: '16px', display: 'block', marginBottom: '12px' }}>
-							{t('adminleavereq.label1') || 'Dni urlopu'}
-						</label>
+						<div className="leave-days-limit-header">
+							<span>{t('adminleavereq.label1') || 'Dni urlopu'}</span>
+							<button
+								type="button"
+								className="leave-days-info-toggle"
+								aria-label={t('adminleavereq.infoLabel')}
+								aria-expanded={leaveDaysInfoOpen}
+								aria-controls="leave-days-info"
+								onClick={() => setLeaveDaysInfoOpen(open => !open)}
+							>
+								i
+							</button>
+						</div>
+						{leaveDaysInfoOpen && (
+							<div id="leave-days-info" className="leave-days-info">
+								{t('adminleavereq.reminder')}
+							</div>
+						)}
 						<div style={{ display: 'grid', gap: '10px' }}>
 							{leaveTypesWithLimit.map(leaveType => {
 								const typeName = i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name
@@ -171,28 +208,31 @@ function AdminLeaveRequests() {
 					</div>
 				)}
 
-				<div style={{ 
-					marginBottom: '20px',
-					padding: '12px 14px',
-					backgroundColor: '#fff8e1',
-					border: '1px solid #f59e0b',
-					borderRadius: '8px',
-					fontSize: '14px',
-					color: '#92400e',
-					lineHeight: 1.45
-				}}>
-					<strong>💡 {t('adminleavereq.reminder')}</strong>
-				</div>
-
-				<div style={{ marginTop: '8px' }}>
+				<div style={{ marginTop: '50px' }}>
 					<h4 style={{ marginBottom: '16px' }}>{t('adminleavereq.h4')}</h4>
+					<LeaveRequestPeriodFilter
+						requests={leaveRequests}
+						selectedYear={selectedYear}
+						selectedMonth={selectedMonth}
+						onYearChange={setSelectedYear}
+						onMonthChange={setSelectedMonth}
+						resultCount={filteredLeaveRequests.length}
+						onOpenInsights={() => setInsightsOpen(true)}
+						onOpenStatusFilters={() => setStatusFiltersOpen(true)}
+						activeStatusCount={activeStatusFilterCount}
+					/>
 					{leaveRequests.length === 0 && (
 						<div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', color: '#6b7280', backgroundColor: '#fff' }}>
 							{t('adminleavereq.none') || 'Brak danych'}
 						</div>
 					)}
-					{leaveRequests.map(request => (
-						<div key={request._id} style={{ marginBottom: '14px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '650px' }}>
+					{leaveRequests.length > 0 && filteredLeaveRequests.length === 0 && (
+						<div className="leave-request-period-empty">
+							{t('leaveRequestFilter.noResults')}
+						</div>
+					)}
+					{filteredLeaveRequests.map(request => (
+						<div key={request._id} className={`leave-request-card ${statusLabels[request.status] || 'status-unknown'}`}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
 								<strong style={{ fontSize: '16px' }}>
 									{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
@@ -316,6 +356,27 @@ function AdminLeaveRequests() {
 					))}
 				</div>
 				</div>
+				<LeaveRequestInsightsModal
+					isOpen={insightsOpen}
+					onRequestClose={() => setInsightsOpen(false)}
+					requests={leaveRequests}
+					periodRequests={periodLeaveRequests}
+					selectedYear={selectedYear}
+					selectedMonth={selectedMonth}
+					onYearChange={setSelectedYear}
+					onMonthChange={setSelectedMonth}
+					settings={settings}
+					leaveTypeDays={leaveTypeDays}
+					reportSubject={`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || undefined}
+					statusFilters={statusFilters}
+				/>
+				<LeaveRequestStatusFilterModal
+					isOpen={statusFiltersOpen}
+					onRequestClose={() => setStatusFiltersOpen(false)}
+					periodRequests={periodLeaveRequests}
+					statusFilters={statusFilters}
+					onStatusFiltersChange={setStatusFilters}
+				/>
 			</div>
 			)}
 		</>

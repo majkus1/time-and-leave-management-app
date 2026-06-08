@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\billingPurchaseIntentValidator.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\billingPurchaseIntentValidator.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">48.14</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">167</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">38.66</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.34</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">const { firmDb } = require(&#039;../db/db&#039;)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const {
+	isPaidPlanKey,
+	isAddonId,
+	isModuleKey,
+	normalizePaidPlanKey,
+	isBundlePlanKey,
+	isCorePlanKey,
+} = require(&#039;../constants/planCatalog&#039;)
+const entitlementsService = require(&#039;./entitlementsService&#039;)
+const { assertPaidPlanSeatLimit } = require(&#039;./billingPlanSeatLimitService&#039;)
+const { assertTeamInvoiceComplete } = require(&#039;./billingInvoiceValidation&#039;)
+
+/**
+ * Shared rules for email purchase requests and Przelewy24 checkout.
+ * @returns {Promise&lt;{ team: import(&#039;mongoose&#039;).Document, requester: import(&#039;mongoose&#039;).Document }&gt;}
+ */
+async function validateBillingPurchaseIntent(params) {
+	const { teamId, requestingUserId, kind, planKey, addonId, billingCycle, moduleKeys } = params
+
+	const team = await Team.findById(teamId).select(
+		&#039;name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip&#039;
+	)
+	if (!team) {
+		const err = new Error(&#039;Team not found&#039;)
+		err.code = &#039;NOT_FOUND&#039;
+		throw err
+	}
+
+	assertTeamInvoiceComplete(team)
+
+	const requester = await User.findById(requestingUserId).select(&#039;username firstName lastName&#039;)
+	if (!requester) {
+		const err = new Error(&#039;User not found&#039;)
+		err.code = &#039;NOT_FOUND&#039;
+		throw err
+	}
+
+	if (kind === &#039;plan&#039;) {
+		if (!isPaidPlanKey(planKey)) {
+			const err = new Error(&#039;Invalid plan&#039;)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+		if (billingCycle !== &#039;monthly&#039; &amp;&amp; billingCycle !== &#039;annual&#039;) {
+			const err = new Error(&#039;Invalid billing cycle&#039;)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+		await assertPaidPlanSeatLimit(teamId, planKey)
+		if (
+			entitlementsService.isPaidSubscriptionActive(team) &amp;&amp;
+			normalizePaidPlanKey(team.billingPlanKey) === normalizePaidPlanKey(planKey)
+		) {
+			const err = new Error(
+				&#039;Ten pakiet jest już aktywny dla zespołu. Napisz do nas, jeśli chcesz zmienić rozliczenie (np. na roczne) lub przejść na wyższy plan.&#039;
+			)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+		const nk = normalizePaidPlanKey(planKey)
+		const rawMods = Array.isArray(moduleKeys) ? moduleKeys : []
+		if (rawMods.length &gt; 0) {
+			if (isBundlePlanKey(nk)) {
+				const err = new Error(
+					&#039;Pakiety PRO / BUSINESS / ENTERPRISE zawierają wszystkie moduły — nie dodawaj listy modułów.&#039;
+				)
+				err.code = &#039;VALIDATION&#039;
+				throw err
+			}
+			if (!isCorePlanKey(nk)) {
+				const err = new Error(&#039;Lista modułów dotyczy tylko planów CORE.&#039;)
+				err.code = &#039;VALIDATION&#039;
+				throw err
+			}
+			const seen = new Set()
+			for (const mk of rawMods) {
+				if (!isModuleKey(mk)) {
+					const err = new Error(&#039;Nieprawidłowy klucz modułu.&#039;)
+					err.code = &#039;VALIDATION&#039;
+					throw err
+				}
+				if (seen.has(mk)) {
+					const err = new Error(&#039;Zduplikowany moduł na liście.&#039;)
+					err.code = &#039;VALIDATION&#039;
+					throw err
+				}
+				seen.add(mk)
+			}
+		}
+	} else if (kind === &#039;addon&#039;) {
+		if (!isAddonId(addonId)) {
+			const err = new Error(&#039;Invalid addon&#039;)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+		if (!entitlementsService.isPaidSubscriptionActive(team)) {
+			const err = new Error(
+				&#039;Pakietów wiadomości AI można dokupić tylko przy aktywnej płatnej subskrypcji zespołu (plan nie może być wygasły).&#039;
+			)
+			err.code = &#039;ADDON_REQUIRES_PAID_PLAN&#039;
+			throw err
+		}
+	} else {
+		const err = new Error(&#039;Invalid kind&#039;)
+		err.code = &#039;VALIDATION&#039;
+		throw err
+	}
+
+	return { team, requester }
+}
+
+/**
+ * Walidacja koszyka Stripe: 1× plan + opcjonalnie moduły CORE (ten sam billingCycle).
+ * @param {{ teamId: string, requestingUserId: string, priceDefinitions: object[] }} params
+ */
+async function validateStripeSubscriptionCheckout(params) {
+	const { teamId, requestingUserId, priceDefinitions } = params
+	const defs = Array.isArray(priceDefinitions) ? priceDefinitions : []
+	const planDefs = defs.filter(d =&gt; d.kind === &#039;plan&#039;)
+	const moduleDefs = defs.filter(d =&gt; d.kind === &#039;module&#039;)
+
+	if (planDefs.length !== 1) {
+		const err = new Error(&#039;Subskrypcja wymaga dokładnie jednej pozycji planu.&#039;)
+		err.code = &#039;VALIDATION&#039;
+		throw err
+	}
+	const planDef = planDefs[0]
+	for (const m of moduleDefs) {
+		if (m.billingCycle !== planDef.billingCycle) {
+			const err = new Error(&#039;Moduły muszą mieć ten sam cykl co plan (miesięczny / roczny).&#039;)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+	}
+
+	const { team, requester } = await validateBillingPurchaseIntent({
+		teamId,
+		requestingUserId,
+		kind: &#039;plan&#039;,
+		planKey: planDef.planKey,
+		billingCycle: planDef.billingCycle,
+	})
+
+	const nk = normalizePaidPlanKey(planDef.planKey)
+	if (isBundlePlanKey(nk) &amp;&amp; moduleDefs.length &gt; 0) {
+		const err = new Error(
+			&#039;Pakiety PRO / BUSINESS / ENTERPRISE zawierają wszystkie moduły — usuń dodatkowe pozycje modułów z koszyka.&#039;
+		)
+		err.code = &#039;VALIDATION&#039;
+		throw err
+	}
+
+	for (const m of moduleDefs) {
+		if (!isModuleKey(m.moduleKey)) {
+			const err = new Error(&#039;Nieznany klucz modułu w mapie Stripe.&#039;)
+			err.code = &#039;VALIDATION&#039;
+			throw err
+		}
+	}
+
+	return { team, requester, planDef, moduleDefs }
+}
+
+module.exports = { validateBillingPurchaseIntent, validateStripeSubscriptionCheckout }</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

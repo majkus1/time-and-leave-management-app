@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
+import { buildReportFilename } from '../utils/export/reportFilename'
 
 export function useAIAssistantStatus() {
 	return useQuery({
@@ -191,7 +192,13 @@ export async function downloadAiIntentExport(format, payload) {
 			{ responseType: 'blob', withCredentials: true, timeout: 120000 }
 		)
 		const cd = res.headers['content-disposition'] || res.headers['Content-Disposition']
-		let filename = sub === 'pdf' ? 'planopia-export.pdf' : 'planopia-export.xlsx'
+		let filename = buildReportFilename({
+			locale: payload.locale || 'pl',
+			pl: 'raport-planopia',
+			en: 'planopia-report',
+			parts: [payload.reportType, payload.dateFrom, payload.dateTo].filter(Boolean),
+			extension: sub,
+		})
 		if (cd) {
 			const star = /filename\*=UTF-8''([^;]+)/i.exec(cd)
 			const quoted = /filename="([^"]+)"/i.exec(cd)

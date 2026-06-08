@@ -1,0 +1,1204 @@
+{
+  "config.js": [],
+  "constants/planCatalog.js": [],
+  "constants/specialTeams.js": [
+    "constants/planCatalog.js"
+  ],
+  "controllers/aiAssistantController.js": [
+    "db/db.js",
+    "models/Team.js",
+    "services/aiAssistantService.js",
+    "services/aiExportFileService.js",
+    "services/aiLeaveDraftService.js",
+    "services/aiWorkdayDraftService.js",
+    "services/entitlementsService.js",
+    "services/logService.js",
+    "utils/clientSafeErrors.js"
+  ],
+  "controllers/announcementController.js": [
+    "config.js",
+    "db/db.js",
+    "models/Announcement.js",
+    "models/EmailNotificationPreference.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/pushNotificationService.js",
+    "utils/announcementAccess.js"
+  ],
+  "controllers/billingController.js": [
+    "db/db.js",
+    "models/BillingLedgerEntry.js",
+    "models/BillingPaymentSession.js",
+    "models/Team.js",
+    "services/billingActivationService.js",
+    "services/billingCatalogService.js",
+    "services/billingRequestService.js",
+    "services/emailService.js",
+    "services/entitlementsService.js",
+    "services/przelewy24/p24CheckoutService.js",
+    "services/przelewy24/p24Config.js",
+    "services/przelewy24/p24ReturnConfirmService.js",
+    "services/stripe/billingStripeService.js",
+    "services/stripe/stripeConfig.js",
+    "services/stripe/stripePriceMapService.js",
+    "services/teamSeatCountService.js",
+    "utils/clientSafeErrors.js"
+  ],
+  "controllers/boardController.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/Department.js",
+    "models/Task.js",
+    "models/Team.js",
+    "models/user.js",
+    "utils/boardAccess.js"
+  ],
+  "controllers/calendarController.js": [
+    "db/db.js",
+    "models/CalendarConfirmation.js",
+    "models/Workday.js",
+    "models/user.js",
+    "utils/timesheetAccess.js",
+    "utils/timesheetWriteAccess.js"
+  ],
+  "controllers/chatController.js": [
+    "db/db.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/Message.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/pushNotificationService.js",
+    "utils/chatChannelAccess.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "controllers/departmentController.js": [
+    "controllers/boardController.js",
+    "controllers/chatController.js",
+    "controllers/scheduleController.js",
+    "db/db.js",
+    "models/Board.js",
+    "models/Department.js",
+    "models/Schedule.js",
+    "models/user.js",
+    "utils/teamScopeAccess.js"
+  ],
+  "controllers/leaveController.js": [
+    "config.js",
+    "db/db.js",
+    "models/LeavePlan.js",
+    "models/LeaveRequest.js",
+    "models/Settings.js",
+    "models/SupervisorConfig.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/entitlementsService.js",
+    "services/pushNotificationService.js",
+    "services/roleService.js",
+    "utils/holidays.js",
+    "utils/leaveRealtime.js",
+    "utils/leaveRequestConflicts.js",
+    "utils/leaveRequestTypes.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "controllers/leavePlanController.js": [
+    "db/db.js",
+    "models/LeavePlan.js",
+    "models/user.js",
+    "utils/vacationAccess.js"
+  ],
+  "controllers/leaveRequestController.js": [
+    "config.js",
+    "db/db.js",
+    "models/EmailNotificationPreference.js",
+    "models/LeavePlan.js",
+    "models/LeaveRequest.js",
+    "models/Settings.js",
+    "models/SupervisorConfig.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/pushNotificationService.js",
+    "services/roleService.js",
+    "utils/holidays.js",
+    "utils/leaveRealtime.js",
+    "utils/leaveRequestConflicts.js",
+    "utils/leaveRequestTypes.js",
+    "utils/leaveStatusText.js",
+    "utils/vacationAccess.js"
+  ],
+  "controllers/leaveRequestTypeController.js": [
+    "db/db.js",
+    "models/Settings.js",
+    "models/user.js"
+  ],
+  "controllers/legalController.js": [
+    "db/db.js",
+    "models/LegalAcceptance.js",
+    "models/LegalDocument.js"
+  ],
+  "controllers/logController.js": [
+    "db/db.js",
+    "models/log.js",
+    "models/user.js",
+    "utils/logAccessPolicy.js"
+  ],
+  "controllers/p24WebhookController.js": [
+    "services/przelewy24/p24WebhookService.js"
+  ],
+  "controllers/qrController.js": [
+    "services/qrService.js",
+    "utils/safeHttpErrors.js"
+  ],
+  "controllers/scheduleController.js": [
+    "db/db.js",
+    "models/Schedule.js",
+    "models/Settings.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/aiScheduleAutoDraftService.js",
+    "services/emailService.js",
+    "services/entitlementsService.js",
+    "services/logService.js",
+    "services/pushNotificationService.js",
+    "services/roleService.js",
+    "services/scheduleAutoPlannerService.js",
+    "utils/clientSafeErrors.js",
+    "utils/holidays.js",
+    "utils/scheduleRealtime.js"
+  ],
+  "controllers/settingsController.js": [
+    "db/db.js",
+    "models/Settings.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/entitlementsService.js"
+  ],
+  "controllers/stripeWebhookController.js": [
+    "services/stripe/billingStripeService.js"
+  ],
+  "controllers/superAdminActivityController.js": [
+    "services/appSessionService.js"
+  ],
+  "controllers/supervisorController.js": [
+    "db/db.js",
+    "models/SupervisorConfig.js",
+    "models/user.js",
+    "utils/supervisorAccess.js"
+  ],
+  "controllers/taskCommentController.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/Task.js",
+    "models/TaskComment.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/pushNotificationService.js",
+    "utils/boardAccess.js",
+    "utils/taskAccess.js"
+  ],
+  "controllers/taskController.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/Task.js",
+    "models/user.js",
+    "services/emailService.js",
+    "services/pushNotificationService.js",
+    "utils/boardAccess.js",
+    "utils/taskAccess.js"
+  ],
+  "controllers/taskNotificationController.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/BoardViewState.js",
+    "models/Task.js",
+    "models/TaskComment.js",
+    "models/TaskViewState.js",
+    "models/user.js",
+    "utils/boardAccess.js",
+    "utils/taskAccess.js"
+  ],
+  "controllers/teamController.js": [
+    "constants/specialTeams.js",
+    "controllers/boardController.js",
+    "controllers/chatController.js",
+    "controllers/scheduleController.js",
+    "db/db.js",
+    "models/LegalAcceptance.js",
+    "models/LegalDocument.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/appSessionService.js",
+    "services/entitlementsService.js",
+    "services/logService.js",
+    "services/passwordValidator.js",
+    "services/teamDeletionAuditService.js",
+    "services/teamService.js"
+  ],
+  "controllers/ticketController.js": [
+    "db/db.js",
+    "models/Team.js",
+    "models/Ticket.js",
+    "services/emailService.js"
+  ],
+  "controllers/timeEntryController.js": [
+    "controllers/workdayController.js",
+    "db/db.js",
+    "models/LeaveRequest.js",
+    "models/QRCode.js",
+    "models/Settings.js",
+    "models/TimeEntry.js",
+    "models/Workday.js",
+    "models/user.js",
+    "utils/holidays.js"
+  ],
+  "controllers/userController.js": [
+    "config.js",
+    "controllers/boardController.js",
+    "controllers/chatController.js",
+    "controllers/scheduleController.js",
+    "controllers/teamController.js",
+    "db/db.js",
+    "models/Board.js",
+    "models/CalendarConfirmation.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/LeavePlan.js",
+    "models/LeaveRequest.js",
+    "models/LegalAcceptance.js",
+    "models/LegalDocument.js",
+    "models/Message.js",
+    "models/Schedule.js",
+    "models/Settings.js",
+    "models/SupervisorConfig.js",
+    "models/Task.js",
+    "models/Team.js",
+    "models/Workday.js",
+    "models/log.js",
+    "models/user.js",
+    "services/appSessionService.js",
+    "services/emailService.js",
+    "services/entitlementsService.js",
+    "services/logService.js",
+    "services/passwordValidator.js",
+    "services/roleService.js",
+    "utils/authTokens.js",
+    "utils/timesheetTaskAccess.js",
+    "utils/timesheetWriteAccess.js",
+    "utils/userProfileAccessPolicy.js"
+  ],
+  "controllers/vacationController.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/roleService.js",
+    "utils/vacationAccess.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "controllers/workActivityController.js": [
+    "db/db.js",
+    "models/Settings.js",
+    "models/user.js",
+    "utils/workActivities.js"
+  ],
+  "controllers/workdayController.js": [
+    "db/db.js",
+    "models/CalendarConfirmation.js",
+    "models/LeaveRequest.js",
+    "models/QRCode.js",
+    "models/Settings.js",
+    "models/SupervisorConfig.js",
+    "models/Task.js",
+    "models/Workday.js",
+    "models/user.js",
+    "services/roleService.js",
+    "services/workdayBulkFillService.js",
+    "services/workdayPayloadService.js",
+    "utils/holidays.js",
+    "utils/timerWorkActivity.js",
+    "utils/timesheetAccess.js",
+    "utils/timesheetTaskAccess.js",
+    "utils/timesheetWriteAccess.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "db/db.js": [],
+  "index.js": [
+    "constants/specialTeams.js",
+    "controllers/boardController.js",
+    "controllers/chatController.js",
+    "controllers/scheduleController.js",
+    "db/db.js",
+    "middleware/authMiddleware.js",
+    "middleware/freemiumApiGuard.js",
+    "middleware/planModuleApiGuard.js",
+    "middleware/requireSuperAdmin.js",
+    "middleware/serveUploadMiddleware.js",
+    "models/Board.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/Schedule.js",
+    "models/Team.js",
+    "models/user.js",
+    "routes/aiAssistantRoutes.js",
+    "routes/announcementRoutes.js",
+    "routes/billingInternalRoutes.js",
+    "routes/billingRoutes.js",
+    "routes/billingStripeRoutes.js",
+    "routes/billingWebhookRoutes.js",
+    "routes/boardRoutes.js",
+    "routes/calendarRoutes.js",
+    "routes/chatRoutes.js",
+    "routes/department.js",
+    "routes/emailNotificationRoutes.js",
+    "routes/leavePlanRoutes.js",
+    "routes/leaveRequestRoutes.js",
+    "routes/leaveRequestTypeRoutes.js",
+    "routes/leaveRoutes.js",
+    "routes/legalRoutes.js",
+    "routes/logRoutes.js",
+    "routes/notificationRoutes.js",
+    "routes/publicRoutes.js",
+    "routes/pushRoutes.js",
+    "routes/qrRoutes.js",
+    "routes/scheduleRoutes.js",
+    "routes/settingsRoutes.js",
+    "routes/superAdminActivityRoutes.js",
+    "routes/supervisorRoutes.js",
+    "routes/teamRoutes.js",
+    "routes/ticketsRoutes.js",
+    "routes/timeEntryRoutes.js",
+    "routes/userRoutes.js",
+    "routes/vacationRoutes.js",
+    "routes/workActivityRoutes.js",
+    "routes/workdayRoutes.js",
+    "services/appSessionService.js",
+    "services/entitlementsService.js",
+    "utils/socketChatHandlers.js"
+  ],
+  "middleware/authMiddleware.js": [
+    "db/db.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "middleware/billingAdminSecretMiddleware.js": [],
+  "middleware/freemiumApiGuard.js": [
+    "db/db.js",
+    "models/Team.js",
+    "services/entitlementsService.js",
+    "services/freemiumApiPolicyService.js",
+    "services/teamSeatCountService.js"
+  ],
+  "middleware/freemiumWorkdayTimerGuard.js": [
+    "db/db.js",
+    "models/Team.js",
+    "services/entitlementsService.js"
+  ],
+  "middleware/legalGuard.js": [
+    "db/db.js",
+    "models/LegalAcceptance.js",
+    "models/LegalDocument.js"
+  ],
+  "middleware/planModuleApiGuard.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js",
+    "services/entitlementsService.js",
+    "services/freemiumApiPolicyService.js",
+    "services/planModuleAccessPolicy.js"
+  ],
+  "middleware/requireAnnouncementManagerRole.js": [
+    "utils/announcementAccess.js"
+  ],
+  "middleware/requireAppAdminRole.js": [],
+  "middleware/requireBillingStaffRole.js": [],
+  "middleware/requireSuperAdmin.js": [
+    "utils/logAccessPolicy.js"
+  ],
+  "middleware/serveUploadMiddleware.js": [
+    "db/db.js",
+    "models/user.js",
+    "utils/uploadAccess.js",
+    "utils/uploadAccessPolicy.js"
+  ],
+  "middleware/teamMiddleware.js": [
+    "controllers/teamController.js",
+    "db/db.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/entitlementsService.js"
+  ],
+  "migrations/createBoards.js": [
+    "controllers/boardController.js",
+    "db/db.js",
+    "models/Board.js",
+    "models/Department.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "migrations/createDepartmentChannels.js": [
+    "controllers/chatController.js",
+    "db/db.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "migrations/createSchedules.js": [
+    "controllers/scheduleController.js",
+    "db/db.js",
+    "models/Department.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "migrations/migrateLeaveTypes.js": [
+    "db/db.js",
+    "models/Settings.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "migrations/migrateRolesToNewSystem.js": [
+    "db/db.js",
+    "models/SupervisorConfig.js",
+    "models/user.js"
+  ],
+  "migrations/updateGeneralChannels.js": [
+    "db/db.js",
+    "models/Channel.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "migrations/updateRoleName.js": [
+    "db/db.js",
+    "models/user.js"
+  ],
+  "models/Announcement.js": [],
+  "models/AppSession.js": [],
+  "models/BillingLedgerEntry.js": [],
+  "models/BillingPaymentSession.js": [],
+  "models/Board.js": [],
+  "models/BoardViewState.js": [],
+  "models/CalendarConfirmation.js": [],
+  "models/Channel.js": [],
+  "models/Department.js": [],
+  "models/EmailNotificationPreference.js": [],
+  "models/LeavePlan.js": [],
+  "models/LeaveRequest.js": [],
+  "models/LegalAcceptance.js": [],
+  "models/LegalDocument.js": [],
+  "models/Message.js": [],
+  "models/PushSubscription.js": [],
+  "models/QRCode.js": [],
+  "models/Schedule.js": [],
+  "models/Settings.js": [],
+  "models/SupervisorConfig.js": [],
+  "models/Task.js": [],
+  "models/TaskComment.js": [],
+  "models/TaskViewState.js": [],
+  "models/Team.js": [],
+  "models/Ticket.js": [],
+  "models/TimeEntry.js": [],
+  "models/UserNotification.js": [],
+  "models/Workday.js": [],
+  "models/log.js": [],
+  "models/user.js": [],
+  "routes/aiAssistantRoutes.js": [
+    "controllers/aiAssistantController.js",
+    "middleware/authMiddleware.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/announcementRoutes.js": [
+    "controllers/announcementController.js",
+    "middleware/authMiddleware.js",
+    "middleware/requireAnnouncementManagerRole.js"
+  ],
+  "routes/billingInternalRoutes.js": [
+    "controllers/billingController.js",
+    "middleware/billingAdminSecretMiddleware.js"
+  ],
+  "routes/billingRoutes.js": [
+    "controllers/billingController.js",
+    "middleware/authMiddleware.js",
+    "middleware/requireBillingStaffRole.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/billingStripeRoutes.js": [
+    "controllers/billingController.js",
+    "middleware/authMiddleware.js",
+    "middleware/requireBillingStaffRole.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/billingWebhookRoutes.js": [
+    "controllers/p24WebhookController.js",
+    "controllers/stripeWebhookController.js"
+  ],
+  "routes/boardRoutes.js": [
+    "controllers/boardController.js",
+    "controllers/taskCommentController.js",
+    "controllers/taskController.js",
+    "controllers/taskNotificationController.js",
+    "middleware/authMiddleware.js",
+    "utils/attachmentUpload.js"
+  ],
+  "routes/calendarRoutes.js": [
+    "controllers/calendarController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/chatRoutes.js": [
+    "controllers/chatController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/department.js": [
+    "controllers/departmentController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/emailNotificationRoutes.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "middleware/authMiddleware.js",
+    "models/EmailNotificationPreference.js",
+    "models/Team.js",
+    "services/entitlementsService.js"
+  ],
+  "routes/leavePlanRoutes.js": [
+    "controllers/leavePlanController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/leaveRequestRoutes.js": [
+    "controllers/leaveRequestController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/leaveRequestTypeRoutes.js": [
+    "controllers/leaveRequestTypeController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/leaveRoutes.js": [
+    "controllers/leaveController.js",
+    "controllers/leaveRequestController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/legalRoutes.js": [
+    "controllers/legalController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/logRoutes.js": [
+    "controllers/logController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/notificationRoutes.js": [
+    "middleware/authMiddleware.js",
+    "services/userNotificationService.js"
+  ],
+  "routes/publicRoutes.js": [
+    "controllers/userController.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/pushRoutes.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "middleware/authMiddleware.js",
+    "models/PushSubscription.js",
+    "models/Team.js",
+    "services/entitlementsService.js"
+  ],
+  "routes/qrRoutes.js": [
+    "controllers/qrController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/scheduleRoutes.js": [
+    "controllers/scheduleController.js",
+    "middleware/authMiddleware.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/settingsRoutes.js": [
+    "controllers/settingsController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/superAdminActivityRoutes.js": [
+    "controllers/superAdminActivityController.js"
+  ],
+  "routes/supervisorRoutes.js": [
+    "controllers/supervisorController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/teamRoutes.js": [
+    "controllers/teamController.js",
+    "middleware/authMiddleware.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/ticketsRoutes.js": [
+    "controllers/ticketController.js",
+    "middleware/authMiddleware.js",
+    "middleware/requireAppAdminRole.js",
+    "utils/attachmentUpload.js"
+  ],
+  "routes/timeEntryRoutes.js": [
+    "controllers/timeEntryController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/userRoutes.js": [
+    "controllers/userController.js",
+    "middleware/authMiddleware.js",
+    "utils/rateLimiters.js"
+  ],
+  "routes/vacationRoutes.js": [
+    "controllers/vacationController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/workActivityRoutes.js": [
+    "controllers/workActivityController.js",
+    "middleware/authMiddleware.js"
+  ],
+  "routes/workdayRoutes.js": [
+    "controllers/workdayController.js",
+    "middleware/authMiddleware.js",
+    "middleware/freemiumWorkdayTimerGuard.js"
+  ],
+  "scripts/_readonly-bz-extra.js": [],
+  "scripts/cleanupSoftDeletedRecords.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/CalendarConfirmation.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/LeavePlan.js",
+    "models/LeaveRequest.js",
+    "models/Message.js",
+    "models/Schedule.js",
+    "models/SupervisorConfig.js",
+    "models/Team.js",
+    "models/Workday.js",
+    "models/log.js",
+    "models/user.js",
+    "services/teamDeletionAuditService.js",
+    "services/teamService.js"
+  ],
+  "scripts/cleanupTestPaidPlanSessions.js": [
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "models/Team.js"
+  ],
+  "scripts/clearAppSessions.js": [
+    "db/db.js",
+    "models/AppSession.js"
+  ],
+  "scripts/copyDatabaseToTest.js": [],
+  "scripts/deleteLogsByDateRange.js": [
+    "db/db.js",
+    "models/log.js"
+  ],
+  "scripts/diagnoseBillingWebhooks.js": [
+    "db/db.js",
+    "models/BillingLedgerEntry.js",
+    "models/BillingPaymentSession.js",
+    "models/Team.js",
+    "services/przelewy24/p24Config.js",
+    "services/stripe/stripeConfig.js"
+  ],
+  "scripts/listLogPostmanIds.js": [
+    "db/db.js",
+    "models/Team.js",
+    "models/log.js",
+    "models/user.js"
+  ],
+  "scripts/listPendingP24Teams.js": [
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "models/Team.js"
+  ],
+  "scripts/listVacationPostmanIds.js": [
+    "db/db.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "scripts/p24TestAccess.js": [
+    "services/przelewy24/p24Config.js"
+  ],
+  "scripts/seedLegalDocuments.js": [
+    "db/db.js",
+    "models/LegalDocument.js"
+  ],
+  "scripts/simulateTeamBusinessPlan.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js"
+  ],
+  "scripts/simulateTeamFreemium.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js"
+  ],
+  "scripts/simulateTeamHaloLike.js": [
+    "db/db.js",
+    "models/Team.js"
+  ],
+  "scripts/simulateTeamLegacyGrace.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js"
+  ],
+  "scripts/simulateTeamStarterPlan.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js",
+    "services/billingActivationService.js"
+  ],
+  "scripts/simulateTeamTrialExpired.js": [
+    "db/db.js",
+    "models/Team.js"
+  ],
+  "services/aiAssistantScopeService.js": [
+    "db/db.js",
+    "models/SupervisorConfig.js",
+    "models/user.js",
+    "services/roleService.js"
+  ],
+  "services/aiAssistantService.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/aiContextBuilderService.js",
+    "services/aiExportIntentService.js",
+    "services/openaiService.js",
+    "utils/polishPublicHolidays.js"
+  ],
+  "services/aiContextBuilderService.js": [
+    "db/db.js",
+    "models/Announcement.js",
+    "models/Board.js",
+    "models/Department.js",
+    "models/LeaveRequest.js",
+    "models/Schedule.js",
+    "models/Settings.js",
+    "models/Task.js",
+    "models/Team.js",
+    "models/Workday.js",
+    "models/user.js",
+    "services/aiAssistantScopeService.js",
+    "services/aiVerifiedStatsService.js",
+    "utils/workHoursDisplay.js"
+  ],
+  "services/aiExportFileService.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/LeaveRequest.js",
+    "models/Settings.js",
+    "models/Task.js",
+    "models/Workday.js",
+    "models/user.js",
+    "services/aiExportIntentService.js",
+    "utils/leaveRequestTypes.js",
+    "utils/workHoursDisplay.js"
+  ],
+  "services/aiExportIntentService.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/aiAssistantScopeService.js",
+    "services/aiAssistantService.js",
+    "services/openaiService.js"
+  ],
+  "services/aiLeaveDraftService.js": [
+    "db/db.js",
+    "models/LeaveRequest.js",
+    "models/Settings.js",
+    "models/user.js",
+    "services/openaiService.js",
+    "utils/leaveRequestConflicts.js",
+    "utils/leaveRequestDateUtils.js",
+    "utils/leaveRequestTypes.js"
+  ],
+  "services/aiScheduleAutoDraftService.js": [
+    "db/db.js",
+    "models/Schedule.js",
+    "models/Settings.js",
+    "models/user.js",
+    "services/openaiService.js",
+    "services/roleService.js",
+    "services/scheduleAutoPlannerService.js",
+    "utils/holidays.js"
+  ],
+  "services/aiVerifiedStatsService.js": [
+    "db/db.js",
+    "models/Workday.js",
+    "models/user.js",
+    "utils/workHoursDisplay.js"
+  ],
+  "services/aiWorkdayDraftService.js": [
+    "db/db.js",
+    "models/LeaveRequest.js",
+    "models/Settings.js",
+    "models/Workday.js",
+    "models/user.js",
+    "services/openaiService.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "services/appSessionService.js": [
+    "db/db.js",
+    "models/AppSession.js",
+    "models/Team.js"
+  ],
+  "services/billingActivationService.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/BillingLedgerEntry.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/billingPlanSeatLimitService.js",
+    "services/entitlementsService.js",
+    "services/logService.js"
+  ],
+  "services/billingCatalogService.js": [
+    "constants/planCatalog.js"
+  ],
+  "services/billingInvoiceValidation.js": [],
+  "services/billingPlanSeatLimitService.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js",
+    "services/emailService.js",
+    "services/teamSeatCountService.js"
+  ],
+  "services/billingPurchaseIntentValidator.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/billingInvoiceValidation.js",
+    "services/billingPlanSeatLimitService.js",
+    "services/entitlementsService.js"
+  ],
+  "services/billingRequestService.js": [
+    "constants/planCatalog.js",
+    "services/billingPurchaseIntentValidator.js",
+    "services/emailService.js"
+  ],
+  "services/emailService.js": [
+    "config.js",
+    "db/db.js",
+    "models/EmailNotificationPreference.js",
+    "models/Settings.js",
+    "models/user.js",
+    "services/userNotificationService.js",
+    "utils/leaveRequestTypes.js",
+    "utils/leaveStatusText.js"
+  ],
+  "services/entitlementsService.js": [
+    "constants/planCatalog.js",
+    "constants/specialTeams.js",
+    "db/db.js",
+    "models/Settings.js",
+    "models/Team.js",
+    "models/user.js"
+  ],
+  "services/freemiumApiPolicyService.js": [
+    "constants/planCatalog.js",
+    "utils/logAccessPolicy.js"
+  ],
+  "services/logService.js": [
+    "db/db.js",
+    "models/log.js"
+  ],
+  "services/openaiService.js": [],
+  "services/passwordValidator.js": [],
+  "services/planModuleAccessPolicy.js": [
+    "constants/planCatalog.js"
+  ],
+  "services/przelewy24/p24CheckoutService.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "services/billingPurchaseIntentValidator.js",
+    "services/przelewy24/p24Config.js",
+    "services/przelewy24/p24HttpClient.js",
+    "services/przelewy24/p24Sign.js"
+  ],
+  "services/przelewy24/p24Config.js": [
+    "config.js"
+  ],
+  "services/przelewy24/p24FinalizePaidSession.js": [
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "services/billingActivationService.js",
+    "services/przelewy24/p24Config.js",
+    "services/przelewy24/p24HttpClient.js",
+    "services/przelewy24/p24Period.js",
+    "services/przelewy24/p24Sign.js"
+  ],
+  "services/przelewy24/p24HttpClient.js": [
+    "services/przelewy24/p24Config.js"
+  ],
+  "services/przelewy24/p24Period.js": [],
+  "services/przelewy24/p24ReturnConfirmService.js": [
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "services/przelewy24/p24FinalizePaidSession.js",
+    "services/przelewy24/p24HttpClient.js"
+  ],
+  "services/przelewy24/p24Sign.js": [],
+  "services/przelewy24/p24WebhookService.js": [
+    "db/db.js",
+    "models/BillingPaymentSession.js",
+    "services/przelewy24/p24Config.js",
+    "services/przelewy24/p24FinalizePaidSession.js",
+    "services/przelewy24/p24Sign.js"
+  ],
+  "services/pushNotificationService.js": [
+    "db/db.js",
+    "models/PushSubscription.js",
+    "models/Settings.js",
+    "models/user.js",
+    "services/userNotificationService.js",
+    "utils/leaveRequestTypes.js",
+    "utils/leaveStatusText.js"
+  ],
+  "services/qrService.js": [
+    "db/db.js",
+    "models/QRCode.js",
+    "models/user.js"
+  ],
+  "services/roleService.js": [
+    "db/db.js",
+    "models/SupervisorConfig.js",
+    "models/user.js"
+  ],
+  "services/scheduleAutoPlannerService.js": [
+    "db/db.js",
+    "models/LeaveRequest.js",
+    "models/user.js",
+    "utils/holidays.js"
+  ],
+  "services/stripe/billingStripeService.js": [
+    "constants/planCatalog.js",
+    "db/db.js",
+    "models/BillingLedgerEntry.js",
+    "models/Team.js",
+    "services/billingActivationService.js",
+    "services/billingPlanSeatLimitService.js",
+    "services/billingPurchaseIntentValidator.js",
+    "services/entitlementsService.js",
+    "services/stripe/stripeConfig.js",
+    "services/stripe/stripePriceMapService.js"
+  ],
+  "services/stripe/stripeConfig.js": [
+    "config.js"
+  ],
+  "services/stripe/stripePriceMapService.js": [],
+  "services/teamDeletionAuditService.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/logService.js",
+    "utils/logAccessPolicy.js"
+  ],
+  "services/teamSeatCountService.js": [
+    "db/db.js",
+    "models/user.js"
+  ],
+  "services/teamService.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/CalendarConfirmation.js",
+    "models/Channel.js",
+    "models/Department.js",
+    "models/LeavePlan.js",
+    "models/LeaveRequest.js",
+    "models/Message.js",
+    "models/Schedule.js",
+    "models/SupervisorConfig.js",
+    "models/Team.js",
+    "models/Workday.js",
+    "models/log.js",
+    "models/user.js",
+    "services/teamDeletionAuditService.js"
+  ],
+  "services/userNotificationService.js": [
+    "db/db.js",
+    "models/UserNotification.js",
+    "models/user.js"
+  ],
+  "services/workdayBulkFillService.js": [
+    "services/workdayPayloadService.js",
+    "utils/holidays.js",
+    "utils/timesheetTaskAccess.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "services/workdayPayloadService.js": [
+    "utils/manualActivityBlocks.js",
+    "utils/manualTaskBlocks.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "tests/attachmentUploadPolicy.test.js": [
+    "utils/attachmentUpload.js"
+  ],
+  "tests/authTokens.test.js": [
+    "utils/authTokens.js"
+  ],
+  "tests/boardAccess.test.js": [
+    "utils/boardAccessPolicy.js"
+  ],
+  "tests/chatChannelAccess.test.js": [
+    "utils/chatChannelAccess.js"
+  ],
+  "tests/clientSafeErrors.test.js": [
+    "utils/clientSafeErrors.js"
+  ],
+  "tests/entitlementsAndFreemiumPolicy.test.js": [
+    "constants/planCatalog.js",
+    "services/entitlementsService.js",
+    "services/freemiumApiPolicyService.js"
+  ],
+  "tests/logAccessPolicy.test.js": [
+    "utils/logAccessPolicy.js"
+  ],
+  "tests/safeHttpErrors.test.js": [
+    "utils/safeHttpErrors.js"
+  ],
+  "tests/supervisorAccessPolicy.test.js": [
+    "utils/supervisorAccessPolicy.js"
+  ],
+  "tests/teamScopeAccess.test.js": [
+    "utils/teamScopeAccess.js"
+  ],
+  "tests/timesheetAccess.test.js": [
+    "utils/timesheetAccessPolicy.js",
+    "utils/timesheetWriteAccessPolicy.js"
+  ],
+  "tests/uploadAccessPolicy.test.js": [
+    "utils/uploadAccessPolicy.js"
+  ],
+  "tests/userProfileAccessPolicy.test.js": [
+    "utils/userProfileAccessPolicy.js"
+  ],
+  "tests/vacationAccessPolicy.test.js": [
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/announcementAccess.js": [],
+  "utils/attachmentUpload.js": [],
+  "utils/authTokens.js": [
+    "db/db.js",
+    "models/Team.js",
+    "models/user.js",
+    "services/appSessionService.js"
+  ],
+  "utils/boardAccess.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/user.js",
+    "utils/boardAccessPolicy.js",
+    "utils/taskAccess.js"
+  ],
+  "utils/boardAccessPolicy.js": [
+    "utils/taskAccess.js"
+  ],
+  "utils/chatChannelAccess.js": [
+    "db/db.js",
+    "models/Channel.js",
+    "models/user.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/clientSafeErrors.js": [],
+  "utils/fileUpload.js": [
+    "utils/attachmentUpload.js"
+  ],
+  "utils/holidays.js": [],
+  "utils/leaveCalculation.js": [
+    "controllers/leaveController.js",
+    "models/Settings.js"
+  ],
+  "utils/leaveRealtime.js": [],
+  "utils/leaveRequestConflicts.js": [],
+  "utils/leaveRequestDateUtils.js": [
+    "utils/holidays.js"
+  ],
+  "utils/leaveRequestTypes.js": [],
+  "utils/leaveStatusText.js": [],
+  "utils/logAccessPolicy.js": [],
+  "utils/manualActivityBlocks.js": [
+    "utils/workActivities.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "utils/manualTaskBlocks.js": [
+    "utils/manualActivityBlocks.js",
+    "utils/workdayEntryValidation.js"
+  ],
+  "utils/polishPublicHolidays.js": [],
+  "utils/rateLimiters.js": [],
+  "utils/safeHttpErrors.js": [],
+  "utils/scheduleRealtime.js": [],
+  "utils/socketChatHandlers.js": [
+    "utils/chatChannelAccess.js"
+  ],
+  "utils/supervisorAccess.js": [
+    "db/db.js",
+    "models/user.js",
+    "utils/supervisorAccessPolicy.js",
+    "utils/userProfileAccessPolicy.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/supervisorAccessPolicy.js": [
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/taskAccess.js": [
+    "db/db.js",
+    "models/user.js"
+  ],
+  "utils/teamScopeAccess.js": [
+    "utils/userProfileAccessPolicy.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/timerWorkActivity.js": [
+    "utils/workActivities.js"
+  ],
+  "utils/timesheetAccess.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/roleService.js",
+    "utils/timesheetAccessPolicy.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/timesheetAccessPolicy.js": [],
+  "utils/timesheetTaskAccess.js": [
+    "db/db.js",
+    "models/Board.js",
+    "models/Task.js"
+  ],
+  "utils/timesheetWriteAccess.js": [
+    "db/db.js",
+    "models/Settings.js",
+    "models/user.js",
+    "services/roleService.js",
+    "utils/timesheetWriteAccessPolicy.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/timesheetWriteAccessPolicy.js": [],
+  "utils/uploadAccess.js": [
+    "db/db.js",
+    "models/Announcement.js",
+    "models/Channel.js",
+    "models/Message.js",
+    "models/Task.js",
+    "models/TaskComment.js",
+    "models/Team.js",
+    "models/Ticket.js",
+    "models/user.js",
+    "utils/boardAccess.js",
+    "utils/chatChannelAccess.js",
+    "utils/taskAccess.js",
+    "utils/uploadAccessPolicy.js",
+    "utils/userProfileAccessPolicy.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/uploadAccessPolicy.js": [],
+  "utils/userProfileAccessPolicy.js": [
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/vacationAccess.js": [
+    "db/db.js",
+    "models/user.js",
+    "services/roleService.js",
+    "utils/vacationAccessPolicy.js"
+  ],
+  "utils/vacationAccessPolicy.js": [],
+  "utils/workActivities.js": [],
+  "utils/workHoursDisplay.js": [],
+  "utils/workdayEntryValidation.js": [
+    "utils/holidays.js"
+  ]
+}

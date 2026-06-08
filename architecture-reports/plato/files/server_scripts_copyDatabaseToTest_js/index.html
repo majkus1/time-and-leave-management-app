@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\scripts\copyDatabaseToTest.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\scripts\copyDatabaseToTest.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">47.32</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">219</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">33.48</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.67</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+ * Skrypt do kopiowania danych z bazy produkcyjnej do bazy testowej lokalnej
+ * 
+ * UWAGA: Ten skrypt NIE usuwa danych z bazy produkcyjnej - tylko kopiuje je do testowej.
+ * Przed kopiowaniem czyści wszystkie kolekcje w bazie testowej.
+ * 
+ * Użycie:
+ *   node server/scripts/copyDatabaseToTest.js
+ * 
+ * Wymagane zmienne środowiskowe w server/.env:
+ *   DB_URI - URI bazy produkcyjnej (źródło)
+ *   DB_URI_TEST - URI bazy testowej (docelowa)
+ */
+
+const path = require(&#039;path&#039;);
+const fs = require(&#039;fs&#039;);
+
+// Sprawdź czy dotenv jest dostępny
+let dotenv;
+try {
+	dotenv = require(&#039;dotenv&#039;);
+} catch (error) {
+	console.error(&#039;❌ Błąd: Nie można załadować modułu &quot;dotenv&quot;&#039;);
+	console.error(&#039;&#039;);
+	console.error(&#039;   Rozwiązanie: Zainstaluj zależności projektu:&#039;);
+	console.error(&#039;   npm install&#039;);
+	console.error(&#039;&#039;);
+	console.error(&#039;   Lub jeśli używasz yarn:&#039;);
+	console.error(&#039;   yarn install&#039;);
+	console.error(&#039;&#039;);
+	process.exit(1);
+}
+
+// Załaduj .env z folderu server/
+const envPath = path.join(__dirname, &#039;..&#039;, &#039;.env&#039;);
+if (fs.existsSync(envPath)) {
+	dotenv.config({ path: envPath });
+} else {
+	console.error(`❌ Nie znaleziono pliku .env w: ${envPath}`);
+	console.error(&#039;   Upewnij się, że plik server/.env istnieje&#039;);
+	process.exit(1);
+}
+
+const mongoose = require(&#039;mongoose&#039;);
+
+// Sprawdź wymagane zmienne środowiskowe
+if (!process.env.DB_URI) {
+	console.error(&#039;❌ Błąd: DB_URI nie jest ustawione w .env&#039;);
+	console.error(&#039;   Upewnij się, że plik server/.env zawiera DB_URI (baza produkcyjna)&#039;);
+	process.exit(1);
+}
+
+if (!process.env.DB_URI_TEST) {
+	console.error(&#039;❌ Błąd: DB_URI_TEST nie jest ustawione w .env&#039;);
+	console.error(&#039;   Upewnij się, że plik server/.env zawiera DB_URI_TEST (baza testowa)&#039;);
+	process.exit(1);
+}
+
+// Lista wszystkich kolekcji w aplikacji (na podstawie modeli)
+const COLLECTIONS = [
+	&#039;teams&#039;,
+	&#039;users&#039;,
+	&#039;workdays&#039;,
+	&#039;leaverequests&#039;,
+	&#039;leaveplans&#039;,
+	&#039;calendarconfirmations&#039;,
+	&#039;logs&#039;,
+	&#039;settings&#039;,
+	&#039;departments&#039;,
+	&#039;channels&#039;,
+	&#039;messages&#039;,
+	&#039;boards&#039;,
+	&#039;schedules&#039;,
+	&#039;tasks&#039;,
+	&#039;taskcomments&#039;,
+	&#039;supervisorconfigs&#039;,
+	&#039;legaldocuments&#039;,
+	&#039;legal_acceptances&#039;  // Uwaga: z podkreślnikiem (zgodnie z modelem)
+];
+
+/**
+ * Kopiuje wszystkie dokumenty z jednej kolekcji do drugiej
+ */
+async function copyCollection(sourceDb, targetDb, collectionName) {
+	try {
+		const sourceCollection = sourceDb.collection(collectionName);
+		const targetCollection = targetDb.collection(collectionName);
+
+		// Sprawdź czy kolekcja istnieje w źródle
+		const collections = await sourceDb.listCollections({ name: collectionName }).toArray();
+		if (collections.length === 0) {
+			console.log(`   ⏭️  Pominięto ${collectionName} (nie istnieje w źródle)`);
+			return { copied: 0, skipped: true };
+		}
+
+		// Pobierz wszystkie dokumenty ze źródła
+		const documents = await sourceCollection.find({}).toArray();
+		
+		if (documents.length === 0) {
+			console.log(`   ⏭️  Pominięto ${collectionName} (pusta w źródle)`);
+			return { copied: 0, skipped: true };
+		}
+
+		// Wyczyść kolekcję docelową
+		await targetCollection.deleteMany({});
+
+		// Wstaw dokumenty do docelowej bazy (batch insert dla wydajności)
+		if (documents.length &gt; 0) {
+			await targetCollection.insertMany(documents, { ordered: false });
+		}
+
+		return { copied: documents.length, skipped: false };
+	} catch (error) {
+		console.error(`   ❌ Błąd podczas kopiowania ${collectionName}:`, error.message);
+		return { copied: 0, error: error.message };
+	}
+}
+
+/**
+ * Główna funkcja kopiowania
+ */
+async function copyDatabase() {
+	let sourceConnection = null;
+	let targetConnection = null;
+
+	try {
+		console.log(&#039;🔄 Rozpoczynam kopiowanie bazy danych...\n&#039;);
+
+		// Połącz z bazą źródłową (produkcyjna)
+		console.log(&#039;📡 Łączenie z bazą produkcyjną (źródło)...&#039;);
+		sourceConnection = await mongoose.createConnection(process.env.DB_URI).asPromise();
+		console.log(&#039;✅ Połączono z bazą produkcyjną\n&#039;);
+
+		// Połącz z bazą docelową (testowa)
+		console.log(&#039;📡 Łączenie z bazą testową (docelowa)...&#039;);
+		targetConnection = await mongoose.createConnection(process.env.DB_URI_TEST).asPromise();
+		console.log(&#039;✅ Połączono z bazą testową\n&#039;);
+
+		console.log(&#039;🗑️  Czyszczenie bazy testowej przed kopiowaniem...\n&#039;);
+
+		// Wyczyść wszystkie kolekcje w bazie testowej
+		for (const collectionName of COLLECTIONS) {
+			try {
+				const targetCollection = targetConnection.db.collection(collectionName);
+				const count = await targetCollection.countDocuments();
+				if (count &gt; 0) {
+					await targetCollection.deleteMany({});
+					console.log(`   🗑️  Wyczyszczono ${collectionName} (${count} dokumentów)`);
+				}
+			} catch (error) {
+				// Ignoruj błędy jeśli kolekcja nie istnieje
+				if (error.codeName !== &#039;NamespaceNotFound&#039;) {
+					console.warn(`   ⚠️  Ostrzeżenie przy czyszczeniu ${collectionName}:`, error.message);
+				}
+			}
+		}
+
+		console.log(&#039;\n📦 Kopiowanie kolekcji...\n&#039;);
+
+		const results = {
+			success: 0,
+			skipped: 0,
+			errors: 0,
+			totalCopied: 0
+		};
+
+		// Kopiuj każdą kolekcję
+		for (const collectionName of COLLECTIONS) {
+			process.stdout.write(`   📋 Kopiowanie ${collectionName}... `);
+			const result = await copyCollection(sourceConnection.db, targetConnection.db, collectionName);
+			
+			if (result.error) {
+				console.log(`❌ BŁĄD`);
+				results.errors++;
+			} else if (result.skipped) {
+				console.log(`⏭️  POMINIĘTO`);
+				results.skipped++;
+			} else {
+				console.log(`✅ ${result.copied} dokumentów`);
+				results.success++;
+				results.totalCopied += result.copied;
+			}
+		}
+
+		// Podsumowanie
+		console.log(&#039;\n&#039; + &#039;=&#039;.repeat(60));
+		console.log(&#039;📊 PODSUMOWANIE KOPIOWANIA&#039;);
+		console.log(&#039;=&#039;.repeat(60));
+		console.log(`✅ Skopiowano: ${results.success} kolekcji (${results.totalCopied} dokumentów)`);
+		console.log(`⏭️  Pominięto: ${results.skipped} kolekcji`);
+		if (results.errors &gt; 0) {
+			console.log(`❌ Błędy: ${results.errors} kolekcji`);
+		}
+		console.log(&#039;=&#039;.repeat(60));
+		console.log(&#039;\n✅ Kopiowanie zakończone pomyślnie!&#039;);
+		console.log(&#039;⚠️  UWAGA: Dane w bazie produkcyjnej pozostały niezmienione.&#039;);
+
+	} catch (error) {
+		console.error(&#039;\n❌ Krytyczny błąd podczas kopiowania:&#039;, error);
+		process.exit(1);
+	} finally {
+		// Zamknij połączenia
+		if (sourceConnection) {
+			await sourceConnection.close();
+			console.log(&#039;\n🔌 Zamknięto połączenie z bazą produkcyjną&#039;);
+		}
+		if (targetConnection) {
+			await targetConnection.close();
+			console.log(&#039;🔌 Zamknięto połączenie z bazą testową&#039;);
+		}
+		process.exit(0);
+	}
+}
+
+// Uruchom kopiowanie
+copyDatabase().catch(error =&gt; {
+	console.error(&#039;❌ Nieoczekiwany błąd:&#039;, error);
+	process.exit(1);
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

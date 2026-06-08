@@ -214,12 +214,16 @@ async function validateNewWorkdayEntry(deps) {
 
 	const existingWorkdays = existingCandidates.filter(w => toWarsawYmd(w.date) === dateYmd)
 
+	const hasActivityBlocks = w =>
+		Array.isArray(w.manualActivityBlocks) && w.manualActivityBlocks.some(b => b && b.hours > 0)
+
 	const hasHeavyExisting = existingWorkdays.some(
 		w =>
 			(w.hoursWorked != null && w.hoursWorked > 0) ||
 			(w.additionalWorked != null && w.additionalWorked > 0) ||
 			(w.realTimeDayWorked && String(w.realTimeDayWorked).trim() !== '') ||
-			(w.absenceType && isNonEmptyString(w.absenceType)),
+			(w.absenceType && isNonEmptyString(w.absenceType)) ||
+			hasActivityBlocks(w),
 	)
 
 	const onlyNotesExisting =
@@ -230,6 +234,7 @@ async function validateNewWorkdayEntry(deps) {
 				!(w.additionalWorked != null && w.additionalWorked > 0) &&
 				!(w.realTimeDayWorked && String(w.realTimeDayWorked).trim() !== '') &&
 				!isNonEmptyString(w.absenceType) &&
+				!hasActivityBlocks(w) &&
 				w.notes != null &&
 				String(w.notes).trim() !== '',
 		)
@@ -345,4 +350,6 @@ module.exports = {
 	isWeekendWarsawYmd,
 	normalizeWorkdayPayload,
 	validateNewWorkdayEntry,
+	validateHours,
+	parseHoursValue,
 }

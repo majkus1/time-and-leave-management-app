@@ -449,8 +449,8 @@ async function prepareAssistantTurn(input) {
 
 	const exportInstructions =
 		locale === 'en'
-			? 'Export / Excel / PDF: Do NOT say you cannot generate files or only offer to help wording a formal "request". When the user wants Excel/PDF, say briefly that **below this assistant reply** (under the chat bubble) there are the real buttons **"Download Excel (from database)"** and **"Download PDF (from database)"** — only those start the download. Do **NOT** put markdown links `[label](url)`, bare URLs, or standalone phrases like "Download from database" as if they were clickable — they do nothing in this chat. Point users to the buttons instead. Explain what the export contains using DATA CONTEXT; the file matches the same team scope and selected period as your tables, not the chat text alone.'
-			: 'Eksport / Excel / PDF: Nie twierdz, że nie możesz pliku wygenerować i nie ograniczaj się do „pomocy w sformułowaniu prośby”. Gdy użytkownik chce Excel/PDF, napisz krótko, że **poniżej tej odpowiedzi asystenta** (pod dymkiem w czacie) są prawdziwe przyciski **„Pobierz Excel (z bazy)”** i **„Pobierz PDF (z bazy)”** — tylko one uruchamiają pobranie. **Nie wstawiaj** linków markdown `[etykieta](adres)`, gołych URL ani osobnej linii typu „Download from database” jakby była klikalna — w treści wiadomości to nic nie robi. Skieruj użytkownika na przyciski poniżej. Opisz zawartość z DATA CONTEXT; plik = ten sam zakres zespołu i okres co tabele, nie sam tekst czatu.'
+			? 'Export / Excel / PDF: Do NOT say you cannot generate files or only offer to help wording a formal "request". When the user wants Excel/PDF, say briefly that **below this assistant reply** (under the chat bubble) there are the real buttons **"Download Excel (from database)"** and **"Download PDF (from database)"** — only those start the download. Do **NOT** put markdown links `[label](url)`, bare URLs, or standalone phrases like "Download from database" as if they were clickable — they do nothing in this chat. Point users to the buttons instead. Explain what the export contains using DATA CONTEXT; the file matches the same team scope and selected period as your tables, not the chat text alone. When summarizing or preparing report commentary, write in a business style: key KPIs, trends, risks, workload, leave impact, task/activity split, and productivity/output metrics if present.'
+			: 'Eksport / Excel / PDF: Nie twierdz, że nie możesz pliku wygenerować i nie ograniczaj się do „pomocy w sformułowaniu prośby”. Gdy użytkownik chce Excel/PDF, napisz krótko, że **poniżej tej odpowiedzi asystenta** (pod dymkiem w czacie) są prawdziwe przyciski **„Pobierz Excel (z bazy)”** i **„Pobierz PDF (z bazy)”** — tylko one uruchamiają pobranie. **Nie wstawiaj** linków markdown `[etykieta](adres)`, gołych URL ani osobnej linii typu „Download from database” jakby była klikalna — w treści wiadomości to nic nie robi. Skieruj użytkownika na przyciski poniżej. Opisz zawartość z DATA CONTEXT; plik = ten sam zakres zespołu i okres co tabele, nie sam tekst czatu. Przy podsumowaniu lub komentarzu do raportu pisz biznesowo: KPI, trendy, ryzyka, obciążenie, wpływ urlopów, rozbicie zadań/czynności oraz wykonanie/wydajność, jeśli dane są dostępne.'
 
 	const productVsDataRule =
 		locale === 'en'
@@ -466,6 +466,16 @@ async function prepareAssistantTurn(input) {
 		locale === 'en'
 			? '**When the question is about Planopia work/leave/team numbers — VERIFIED STATS (JSON in DATA CONTEXT):** Ground truth. For anything about **this user** (I/me/my/how much did I work): use **only** `workStatsForRequestingUser`. For **team size / active accounts**: use **only** `teamRoster`. For **total hours of everyone in scope** (whole team): use `teamWorkAggregateForUsersInAiScope`. Do **not** manually sum `perUserTotals` / all users in the raw workday JSON when the question is about one person. If any other line in DATA CONTEXT disagrees with VERIFIED STATS, **VERIFIED STATS wins**. (Skip this block for purely general questions.)'
 			: '**Gdy pytanie dotyczy liczb z Planopii — VERIFIED STATS (JSON w DATA CONTEXT):** To obowiązujące liczby. Pytania o **Ciebie** (ja/mnie/ile przepracowałem): wyłącznie `workStatsForRequestingUser`. Pytania o **liczbę osób w zespole / konta aktywne**: wyłącznie `teamRoster`. Pytania o **sumę całej grupy w zakresie**: `teamWorkAggregateForUsersInAiScope`. Nie sumuj ręcznie `perUserTotals` po wszystkich użytkownikach, gdy pytanie dotyczy jednej osoby. Gdy coś innego w kontekście się nie zgadza z VERIFIED STATS — **obowiązuje VERIFIED STATS**. (Przy samych pytaniach ogólnych — ten blok pomijaj.)'
+
+	const workActivitiesRule =
+		locale === 'en'
+			? '**Timesheet tasks, activities, and productivity:** Planopia can split workday hours into board tasks (`taskBlocks`) and configured work activities (`activityBlocks`). Timer sessions may also carry task/activity and quantity. Use activity name snapshots from DATA CONTEXT; if an admin renamed/deleted an activity later, historical rows still keep their stored context. Quantity / unit / efficiency appear only when the activity is configured to measure output and the user provided a quantity. Treat productivity as an operational planning metric, not a worker rating; never shame or score employees.'
+			: '**Zadania, czynności i wydajność w ewidencji:** Planopia pozwala rozbić godziny dnia na zadania z tablic (`taskBlocks`) oraz skonfigurowane czynności (`activityBlocks`). Sesje timera też mogą mieć zadanie/czynność i ilość wykonania. Korzystaj ze snapshotów nazw z DATA CONTEXT; gdy admin później zmieni/usunie czynność, historyczne wpisy nadal mają zapisany kontekst. Ilość / jednostka / wydajność pojawia się tylko przy czynnościach z włączonym mierzeniem wykonania i gdy użytkownik podał ilość. Traktuj wydajność jako metrykę operacyjną do planowania, nie jako ocenę pracownika; nie zawstydzaj i nie punktuj osób.'
+
+	const businessReportRule =
+		locale === 'en'
+			? '**Business report mindset:** For report-style answers, lead with useful decisions: workload, anomalies, bottlenecks, leave coverage, pending approvals, task delivery risk, activity mix, measured output, and month-to-month changes when the period is a year. Use only visible DATA CONTEXT and role scope; if a department/user is outside scope, say that the context does not include those records.'
+			: '**Podejście biznesowe do raportów:** Przy odpowiedziach raportowych zaczynaj od informacji przydatnych decyzyjnie: obciążenie, anomalie, wąskie gardła, pokrycie urlopów, oczekujące akceptacje, ryzyka zadań, miks czynności, zmierzone wykonanie i zmiany miesiąc do miesiąca, gdy okres jest roczny. Korzystaj wyłącznie z widocznego DATA CONTEXT i zakresu roli; jeśli dział/użytkownik jest poza zakresem, napisz, że kontekst nie zawiera tych rekordów.'
 
 	const periodFromMessageRule =
 		locale === 'en'
@@ -487,6 +497,8 @@ async function prepareAssistantTurn(input) {
 		productVsDataRule,
 		generalKnowledgeRule,
 		verifiedStatsRule,
+		workActivitiesRule,
+		businessReportRule,
 		periodFromMessageRule,
 		...(customDateRangeUiRule ? [customDateRangeUiRule] : []),
 		'Do not invent employees, hours, or leave requests when answering from DATA CONTEXT.',

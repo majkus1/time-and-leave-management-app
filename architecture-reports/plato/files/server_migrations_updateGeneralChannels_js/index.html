@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\migrations\updateGeneralChannels.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\migrations\updateGeneralChannels.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">60.94</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">97</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">25.50</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.82</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">// Migration script to update existing #ogólny channels to use team names
+require(&#039;dotenv&#039;).config()
+const { firmDb } = require(&#039;../db/db&#039;)
+const Channel = require(&#039;../models/Channel&#039;)(firmDb)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const User = require(&#039;../models/user&#039;)(firmDb)
+
+async function updateGeneralChannels() {
+	try {
+		console.log(&#039;Starting migration: Update general channels...&#039;)
+		
+		// Find all general channels with old name #ogólny
+		const oldGeneralChannels = await Channel.find({ 
+			type: &#039;general&#039;,
+			name: &#039;#ogólny&#039;,
+			isActive: true
+		})
+		
+		console.log(`Found ${oldGeneralChannels.length} channels to update`)
+		
+		for (const channel of oldGeneralChannels) {
+			try {
+				// Get team name
+				const team = await Team.findById(channel.teamId)
+				if (!team) {
+					console.log(`Team not found for channel ${channel._id}, skipping...`)
+					continue
+				}
+				
+				// Get all users in the team
+				const allUsers = await User.find({ teamId: channel.teamId }).select(&#039;_id&#039;)
+				const memberIds = allUsers.map(user =&gt; user._id)
+				
+				// Update channel
+				channel.name = `#${team.name}`
+				channel.description = `Kanał ogólny dla całego zespołu ${team.name}`
+				channel.members = memberIds
+				channel.isTeamChannel = true
+				
+				await channel.save()
+				console.log(`Updated channel for team &quot;${team.name}&quot; (${channel._id})`)
+			} catch (error) {
+				console.error(`Error updating channel ${channel._id}:`, error)
+			}
+		}
+		
+		// Also update any general channels that might have incorrect names
+		const allGeneralChannels = await Channel.find({ 
+			type: &#039;general&#039;,
+			isActive: true
+		})
+		
+		for (const channel of allGeneralChannels) {
+			try {
+				const team = await Team.findById(channel.teamId)
+				if (!team) {
+					continue
+				}
+				
+				const expectedName = `#${team.name}`
+				if (channel.name === expectedName) {
+					// This is the automatic team channel - mark it as such
+					const allUsers = await User.find({ teamId: channel.teamId }).select(&#039;_id&#039;)
+					const memberIds = allUsers.map(user =&gt; user._id)
+					
+					channel.isTeamChannel = true
+					channel.description = `Kanał ogólny dla całego zespołu ${team.name}`
+					
+					// Update members if needed
+					const existingMemberIds = channel.members.map(m =&gt; m.toString())
+					const currentMemberIds = memberIds.map(id =&gt; id.toString())
+					
+					const needsUpdate = existingMemberIds.length !== currentMemberIds.length ||
+						!existingMemberIds.every(id =&gt; currentMemberIds.includes(id))
+					
+					if (needsUpdate) {
+						channel.members = memberIds
+					}
+					
+					await channel.save()
+					console.log(`Marked and synced team channel &quot;${team.name}&quot; (${channel._id})`)
+				}
+			} catch (error) {
+				console.error(`Error processing channel ${channel._id}:`, error)
+			}
+		}
+		
+		console.log(&#039;Migration completed successfully!&#039;)
+		process.exit(0)
+	} catch (error) {
+		console.error(&#039;Migration failed:&#039;, error)
+		process.exit(1)
+	}
+}
+
+// Run migration
+updateGeneralChannels()</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

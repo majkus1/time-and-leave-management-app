@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\controllers\ticketController.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\controllers\ticketController.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">55.80</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">260</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">65.12</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.29</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">// controllers/ticketController.js
+const { centralTicketConnection, firmDb } = require(&#039;../db/db&#039;)
+const Team = require(&#039;../models/Team&#039;)(firmDb)
+const Ticket = centralTicketConnection ? require(&#039;../models/Ticket&#039;)(centralTicketConnection) : null
+const { notifyTicketReporter, notifyHelpCenterStaff } = require(&#039;../services/emailService&#039;)
+
+function ticketsDisabled(res) {
+	res.status(503).json({ error: &#039;Baza zgłoszeń jest niedostępna&#039; })
+}
+
+function getCompanyFromHost(req) {
+	const host = req.headers.host
+	const subdomain = host.split(&#039;.&#039;)[0]
+	return subdomain === &#039;planopia&#039; ? null : subdomain
+}
+
+/** Centrum pomocy Planopia: ten zespół + wskazany e-mail widzą wszystkie zgłoszenia z całej bazy. */
+const PLATFORM_SUPPORT_TEAM_NAME = &#039;OficjalnyAdminowy&#039;
+const PLATFORM_SUPPORT_EMAIL = &#039;michalipka1@gmail.com&#039;
+
+function normalizedEmail(email) {
+	return (email || &#039;&#039;).trim().toLowerCase()
+}
+
+function emailsEqual(a, b) {
+	return normalizedEmail(a) === normalizedEmail(b)
+}
+
+/** Lista zgłoszeń członka zespołu: company jak w Team, userEmail bez rozróżniania wielkości liter (JWT vs Mongo). */
+function ticketsForTeamMemberFilter(teamName, userEmail) {
+	const lower = normalizedEmail(userEmail)
+	return {
+		company: teamName,
+		$expr: {
+			$eq: [{ $toLower: { $trim: { input: { $ifNull: [&#039;$userEmail&#039;, &#039;&#039;] } } } }, lower],
+		},
+	}
+}
+
+function isPlatformSupportUser(team, userEmail) {
+	if (!team || (team.name || &#039;&#039;).trim() !== PLATFORM_SUPPORT_TEAM_NAME) return false
+	if (!userEmail || typeof userEmail !== &#039;string&#039;) return false
+	return normalizedEmail(userEmail) === normalizedEmail(PLATFORM_SUPPORT_EMAIL)
+}
+
+/** Dostęp do pojedynczego zgłoszenia (poza kontem wsparcia): tylko autor i ten sam „company” co zespół / host. */
+function assertNonSupportTicketAccess({ ticket, userEmail, teamId, team, req }) {
+	if (!emailsEqual(ticket.userEmail, userEmail)) {
+		return { ok: false, status: 403, body: { error: &#039;Brak uprawnień&#039; } }
+	}
+	if (teamId &amp;&amp; team) {
+		if ((ticket.company || &#039;&#039;).trim() !== (team.name || &#039;&#039;).trim()) {
+			return { ok: false, status: 403, body: { error: &#039;Brak dostępu do tego zgłoszenia&#039; } }
+		}
+	} else {
+		const company = req.body.frontendUrl || getCompanyFromHost(req)
+		if (ticket.company !== company) {
+			return { ok: false, status: 403, body: { error: &#039;Brak dostępu do tego zgłoszenia&#039; } }
+		}
+	}
+	return { ok: true }
+}
+
+exports.createTicket = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	const { topic, message } = req.body
+	const attachments = req.files ? req.files.map(f =&gt; f.filename) : []
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+	
+	try {
+		let company
+		
+		if (teamId) {
+			const team = await Team.findById(teamId)
+			if (!team) {
+				return res.status(404).json({ error: &#039;Zespół nie został znaleziony&#039; })
+			}
+			company = team.name
+		} else {
+			company = req.body.frontendUrl || getCompanyFromHost(req)
+		}
+
+		const ticket = await Ticket.create({
+			company,
+			userEmail,
+			topic,
+			status: &#039;Otwarte&#039;,
+			messages: [{ sender: &#039;user&#039;, author: userEmail, content: message, files: attachments }],
+		})
+
+		void notifyHelpCenterStaff({
+			kind: &#039;new_ticket&#039;,
+			ticket,
+			messagePreview: message,
+			authorEmail: userEmail,
+		})
+
+		res.status(201).json({ message: &#039;Ticket created&#039;, ticket })
+	} catch (err) {
+		res.status(500).json({ error: &#039;Nie udało się utworzyć zgłoszenia&#039; })
+	}
+}
+
+exports.getMyTickets = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+
+	if (teamId) {
+		const team = await Team.findById(teamId)
+		if (team) {
+			if (isPlatformSupportUser(team, userEmail)) {
+				const tickets = await Ticket.find().sort({ createdAt: -1 })
+				return res.json(tickets)
+			}
+			const tickets = await Ticket.find(ticketsForTeamMemberFilter(team.name, userEmail)).sort({
+				createdAt: -1,
+			})
+			return res.json(tickets)
+		}
+	}
+
+	const company = req.body.frontendUrl || getCompanyFromHost(req)
+	const tickets = await Ticket.find({
+		company,
+		$expr: {
+			$eq: [{ $toLower: { $trim: { input: { $ifNull: [&#039;$userEmail&#039;, &#039;&#039;] } } } }, normalizedEmail(userEmail)],
+		},
+	}).sort({ createdAt: -1 })
+	res.json(tickets)
+}
+
+exports.getAllTickets = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	if (!req.user.roles.includes(&#039;Admin&#039;)) return res.status(403).send(&#039;Brak uprawnień&#039;)
+
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+
+	if (teamId) {
+		const team = await Team.findById(teamId)
+		if (team) {
+			if (isPlatformSupportUser(team, userEmail)) {
+				const tickets = await Ticket.find().sort({ createdAt: -1 })
+				return res.json(tickets)
+			}
+			const tickets = await Ticket.find({ company: team.name }).sort({ createdAt: -1 })
+			return res.json(tickets)
+		}
+	}
+
+	const company = req.body.frontendUrl || getCompanyFromHost(req)
+	const tickets = await Ticket.find({ company }).sort({ createdAt: -1 })
+	res.json(tickets)
+}
+
+exports.replyToTicket = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	const { id } = req.params
+	const { message } = req.body
+	const attachments = req.files ? req.files.map(f =&gt; f.filename) : []
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+
+	const ticket = await Ticket.findById(id)
+	if (!ticket) return res.status(404).json({ error: &#039;Ticket nie znaleziony&#039; })
+
+	const team = teamId ? await Team.findById(teamId) : null
+	if (!isPlatformSupportUser(team, userEmail)) {
+		const check = assertNonSupportTicketAccess({ ticket, userEmail, teamId, team, req })
+		if (!check.ok) return res.status(check.status).json(check.body)
+	}
+
+	const isStaffSender =
+		req.user.roles.includes(&#039;Admin&#039;) || isPlatformSupportUser(team, userEmail)
+	const sender = isStaffSender ? &#039;admin&#039; : &#039;user&#039;
+
+	ticket.messages.push({
+		sender,
+		author: userEmail,
+		content: message,
+		files: attachments,
+	})
+	await ticket.save()
+
+	void notifyHelpCenterStaff({
+		kind: &#039;reply&#039;,
+		ticket,
+		messagePreview: message,
+		authorEmail: userEmail,
+		isStaffMessage: isStaffSender,
+	})
+
+	if (isStaffSender &amp;&amp; !emailsEqual(ticket.userEmail, userEmail)) {
+		void notifyTicketReporter({
+			recipientEmail: ticket.userEmail,
+			kind: &#039;reply&#039;,
+			topic: ticket.topic,
+			extra: { messagePreview: message },
+		})
+	}
+
+	res.json({ message: &#039;Odpowiedź dodana&#039;, ticket })
+}
+
+exports.updateTicketStatus = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	const { id } = req.params
+	const { status } = req.body
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+	const team = teamId ? await Team.findById(teamId) : null
+	const isSupport = isPlatformSupportUser(team, userEmail)
+
+	if (!isSupport &amp;&amp; !req.user.roles.includes(&#039;Admin&#039;)) {
+		return res.status(403).send(&#039;Brak uprawnień&#039;)
+	}
+
+	const ticket = await Ticket.findById(id)
+	if (!ticket) return res.status(404).json({ error: &#039;Ticket nie znaleziony&#039; })
+
+	if (!isSupport) {
+		const check = assertNonSupportTicketAccess({ ticket, userEmail, teamId, team, req })
+		if (!check.ok) return res.status(check.status).json(check.body)
+	}
+
+	const prevStatus = ticket.status
+	ticket.status = status
+	await ticket.save()
+
+	if (prevStatus !== status &amp;&amp; !emailsEqual(ticket.userEmail, userEmail)) {
+		void notifyTicketReporter({
+			recipientEmail: ticket.userEmail,
+			kind: &#039;status&#039;,
+			topic: ticket.topic,
+			extra: { newStatus: status },
+		})
+	}
+
+	res.json({ message: &#039;Status updated&#039;, ticket })
+}
+
+exports.getTicketById = async (req, res) =&gt; {
+	if (!Ticket) return ticketsDisabled(res)
+	const { id } = req.params
+	const userEmail = req.user.username
+	const teamId = req.user.teamId
+
+	const ticket = await Ticket.findById(id)
+	if (!ticket) return res.status(404).json({ error: &#039;Ticket nie znaleziony&#039; })
+
+	const team = teamId ? await Team.findById(teamId) : null
+	if (!isPlatformSupportUser(team, userEmail)) {
+		const check = assertNonSupportTicketAccess({ ticket, userEmail, teamId, team, req })
+		if (!check.ok) return res.status(check.status).json(check.body)
+	}
+
+	res.json(ticket)
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

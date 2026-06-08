@@ -162,6 +162,7 @@ exports.registerTimeEntry = async (req, res) => {
 					overtimeTime: finalOvertimeTime, // Time in seconds spent in overtime mode
 					workDescription: workday.activeTimer.workDescription,
 					taskId: workday.activeTimer.taskId,
+					activityId: workday.activeTimer.activityId || null,
 					qrCodeId: workday.activeTimer.qrCodeId
 				}
 
@@ -270,6 +271,7 @@ exports.registerTimeEntry = async (req, res) => {
 				totalOvertimeTime: 0,
 				workDescription: '',
 				taskId: null,
+				activityId: null,
 				qrCodeId: qrCode._id
 			}
 			await workday.save()

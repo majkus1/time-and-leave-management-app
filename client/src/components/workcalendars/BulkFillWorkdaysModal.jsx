@@ -1,6 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { teamHasWorkActivities } from '../../utils/workActivities'
 import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
+import WorkdayHoursWithActivities from './WorkdayHoursWithActivities'
+import {
+	createDefaultActivityBlock,
+	serializeActivityBlocks,
+	sumBlockHours,
+	validateActivityBlocksClient,
+	buildRealTimeFromBlocks,
+} from '../../utils/manualActivityBlocks'
+import {
+	createDefaultTaskBlock,
+	serializeTaskBlocks,
+	sumTaskBlockHours,
+	validateTaskBlocksClient,
+	buildRealTimeFromTaskBlocks,
+} from '../../utils/manualTaskBlocks'
 
 const formatDateLocal = (date) => {
 	const d = date instanceof Date ? date : new Date(date)
@@ -39,13 +55,6 @@ const calculateHoursFromRange = (timeFrom, timeTo) => {
 	return Number.isInteger(hours) ? String(hours) : String(Math.round(hours * 2) / 2)
 }
 
-const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
-	const totalMinutes = index * 30
-	const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
-	const minutes = String(totalMinutes % 60).padStart(2, '0')
-	return `${hours}:${minutes}`
-})
-
 const isHalfHourStep = (value) => {
 	const doubled = Number(value) * 2
 	return Number.isFinite(doubled) && Math.abs(doubled - Math.round(doubled)) < 0.01
@@ -56,6 +65,9 @@ function BulkFillWorkdaysModal({
 	onClose,
 	onSubmit,
 	settings,
+	workActivities = [],
+	timesheetTasks = [],
+	tasksModuleEnabled = false,
 	currentMonth,
 	currentYear,
 	isPending = false,
@@ -90,8 +102,13 @@ function BulkFillWorkdaysModal({
 	const [additionalWorked, setAdditionalWorked] = useState('')
 	const [absenceType, setAbsenceType] = useState('')
 	const [notes, setNotes] = useState('')
+	const [splitByActivity, setSplitByActivity] = useState(false)
+	const [activityBlocks, setActivityBlocks] = useState([createDefaultActivityBlock()])
+	const [splitByTask, setSplitByTask] = useState(false)
+	const [taskBlocks, setTaskBlocks] = useState([createDefaultTaskBlock()])
 	const [error, setError] = useState('')
 	const [selectedWorkHoursIndex, setSelectedWorkHoursIndex] = useState(0)
+	const activitiesList = workActivities.length ? workActivities : (settings?.workActivities || [])
 
 	useEffect(() => {
 		if (!isOpen) return
@@ -108,6 +125,10 @@ function BulkFillWorkdaysModal({
 		setAdditionalWorked('')
 		setAbsenceType('')
 		setNotes('')
+		setSplitByActivity(false)
+		setActivityBlocks([createDefaultActivityBlock()])
+		setSplitByTask(false)
+		setTaskBlocks([createDefaultTaskBlock()])
 		setError('')
 		setSelectedWorkHoursIndex(0)
 	}, [isOpen, firstWorkHours, calendarMonthStart, calendarMonthEnd, currentMonth, currentYear, defaultWeekDate, today])
@@ -156,17 +177,6 @@ function BulkFillWorkdaysModal({
 		setHoursWorked(calculated || '')
 	}
 
-	const applyWorkHoursOption = (index) => {
-		const option = workHoursOptions[index]
-		if (!option) return
-		setSelectedWorkHoursIndex(index)
-		setTimeFrom(option.timeFrom || '')
-		setTimeTo(option.timeTo || '')
-		setHoursWorked(option.hours != null ? String(option.hours) : '')
-		setAdditionalWorked('')
-		setAbsenceType('')
-	}
-
 	const handleAbsenceChange = (value) => {
 		setAbsenceType(value)
 		if (value.trim()) {
@@ -190,10 +200,38 @@ function BulkFillWorkdaysModal({
 		}
 		const cleanAbsenceType = absenceType.trim()
 		const isAbsenceEntry = cleanAbsenceType.length > 0
-		const cleanHoursWorked = isAbsenceEntry ? '' : String(hoursWorked || '').trim()
+		const useActivitySplit = teamHasWorkActivities({ workActivities: activitiesList }) && splitByActivity && !isAbsenceEntry
+		const useTaskSplit = tasksModuleEnabled && splitByTask && !isAbsenceEntry
+
+		let cleanHoursWorked = isAbsenceEntry ? '' : String(hoursWorked || '').trim()
 		const cleanAdditionalWorked = isAbsenceEntry ? '' : String(additionalWorked || '').trim()
 		const cleanTimeFrom = isAbsenceEntry ? '' : timeFrom
 		const cleanTimeTo = isAbsenceEntry ? '' : timeTo
+		let manualActivityBlocks
+		let manualTaskBlocks
+
+		if (useActivitySplit) {
+			const blockError = validateActivityBlocksClient(activityBlocks, t)
+			if (blockError) {
+				setError(blockError)
+				return
+			}
+			manualActivityBlocks = serializeActivityBlocks(activityBlocks)
+		}
+		if (useTaskSplit) {
+			const taskError = validateTaskBlocksClient(taskBlocks, t)
+			if (taskError) {
+				setError(taskError)
+				return
+			}
+			manualTaskBlocks = serializeTaskBlocks(taskBlocks)
+		}
+		if (useActivitySplit || useTaskSplit) {
+			const activityTotal = useActivitySplit ? sumBlockHours(activityBlocks) : 0
+			const taskTotal = useTaskSplit ? sumTaskBlockHours(taskBlocks) : 0
+			cleanHoursWorked = String(Math.round((activityTotal + taskTotal) * 2) / 2)
+		}
+
 		const hours = parseFloat(cleanHoursWorked)
 		const overtime = cleanAdditionalWorked === '' ? 0 : parseFloat(cleanAdditionalWorked)
 		if (!cleanAbsenceType && (Number.isNaN(hours) || hours <= 0 || hours > 24 || !isHalfHourStep(hours))) {
@@ -205,7 +243,9 @@ function BulkFillWorkdaysModal({
 			return
 		}
 
-		const realTimeDayWorked = !cleanAbsenceType && cleanTimeFrom && cleanTimeTo ? `${cleanTimeFrom}-${cleanTimeTo}` : ''
+		const realTimeDayWorked = (useActivitySplit || useTaskSplit)
+			? [useActivitySplit ? buildRealTimeFromBlocks(activityBlocks) : '', useTaskSplit ? buildRealTimeFromTaskBlocks(taskBlocks) : ''].filter(Boolean).join(', ')
+			: (!cleanAbsenceType && cleanTimeFrom && cleanTimeTo ? `${cleanTimeFrom}-${cleanTimeTo}` : '')
 		await onSubmit({
 			startDate: selectedRange.startDate,
 			endDate: selectedRange.endDate,
@@ -214,6 +254,8 @@ function BulkFillWorkdaysModal({
 			realTimeDayWorked,
 			absenceType: cleanAbsenceType,
 			notes: notes.trim(),
+			manualActivityBlocks,
+			manualTaskBlocks,
 		})
 	}
 
@@ -393,88 +435,40 @@ function BulkFillWorkdaysModal({
 				)}
 
 				<div className="bulk-fill-entry-card">
-					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
-						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.hoursWorkedPerDay')}</span>
-							<input
-								type="number"
-								step="0.5"
-								min="0"
-								max="24"
-								placeholder={t('workcalendar.bulkFill.hoursPlaceholderShort') || 'np. 10'}
-								value={hoursWorked}
-								onChange={(e) => {
-									setHoursWorked(e.target.value)
-									setAbsenceType('')
-								}}
-								className="w-full border border-gray-300 rounded-md px-4 py-2"
-							/>
-						</label>
-						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.overtimePerDay')}</span>
-							<input
-								type="number"
-								step="0.5"
-								min="0"
-								placeholder={t('workcalendar.bulkFill.overtimePlaceholderShort') || 'np. 2'}
-								value={additionalWorked}
-								onChange={(e) => {
-									setAdditionalWorked(e.target.value)
-									setAbsenceType('')
-								}}
-								className="w-full border border-gray-300 rounded-md px-4 py-2"
-							/>
-						</label>
-					</div>
-
-					{workHoursOptions.length > 0 && (
-						<div className="bulk-fill-work-hours-options">
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '8px' }}>{t('workcalendar.selectWorkHours')}</span>
-							{workHoursOptions.map((workHours, index) => (
-								<label
-									key={`${workHours.timeFrom}-${workHours.timeTo}-${index}`}
-									className={`bulk-fill-work-hours-option ${selectedWorkHoursIndex === index ? 'is-selected' : ''}`}
-								>
-									<input
-										type="radio"
-										name="bulkFillWorkHours"
-										checked={selectedWorkHoursIndex === index}
-										onChange={() => applyWorkHoursOption(index)}
-									/>
-									<span>{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('workcalendar.allfrommonthhours')})</span>
-								</label>
-							))}
-						</div>
-					)}
-
-					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
-						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.timeFrom')}</span>
-							<select
-								value={timeFrom}
-								onChange={(e) => handleTimeChange(e.target.value, timeTo)}
-								className="w-full border border-gray-300 rounded-md px-4 py-2"
-							>
-								<option value="">{t('workcalendar.bulkFill.select')}</option>
-								{halfHourOptions.map(option => (
-									<option key={`from-${option}`} value={option}>{option}</option>
-								))}
-							</select>
-						</label>
-						<label>
-							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.timeTo')}</span>
-							<select
-								value={timeTo}
-								onChange={(e) => handleTimeChange(timeFrom, e.target.value)}
-								className="w-full border border-gray-300 rounded-md px-4 py-2"
-							>
-								<option value="">{t('workcalendar.bulkFill.select')}</option>
-								{halfHourOptions.map(option => (
-									<option key={`to-${option}`} value={option}>{option}</option>
-								))}
-							</select>
-						</label>
-					</div>
+					<WorkdayHoursWithActivities
+						settings={settings}
+						workActivities={activitiesList}
+						splitByActivity={splitByActivity}
+						onSplitByActivityChange={setSplitByActivity}
+						activityBlocks={activityBlocks}
+						onActivityBlocksChange={setActivityBlocks}
+						tasksModuleEnabled={tasksModuleEnabled}
+						timesheetTasks={timesheetTasks}
+						splitByTask={splitByTask}
+						onSplitByTaskChange={setSplitByTask}
+						taskBlocks={taskBlocks}
+						onTaskBlocksChange={setTaskBlocks}
+						hoursWorked={hoursWorked}
+						onHoursWorkedChange={(value) => {
+							setHoursWorked(value)
+							setAbsenceType('')
+						}}
+						additionalWorked={additionalWorked}
+						onAdditionalWorkedChange={(value) => {
+							setAdditionalWorked(value)
+							setAbsenceType('')
+						}}
+						realTimeDayWorked={timeFrom && timeTo ? `${timeFrom}-${timeTo}` : ''}
+						workTimeFrom={timeFrom}
+						workTimeTo={timeTo}
+						onWorkTimeFromChange={(value) => handleTimeChange(value, timeTo)}
+						onWorkTimeToChange={(value) => handleTimeChange(timeFrom, value)}
+						onRealTimeDayWorkedChange={() => {}}
+						selectedWorkHoursIndex={selectedWorkHoursIndex}
+						onSelectedWorkHoursIndexChange={setSelectedWorkHoursIndex}
+						hasAbsenceEntryInput={!!absenceType.trim()}
+						showWorkHoursPresets={workHoursOptions.length > 0}
+					/>
 				</div>
 
 				<div className="bulk-fill-absence-card">

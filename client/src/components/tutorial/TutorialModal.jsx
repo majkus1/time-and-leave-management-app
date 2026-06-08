@@ -56,6 +56,10 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	)
 	const supervisorCanViewTimesheets =
 		isSupervisor && supervisorConfig?.permissions?.canViewTimesheets !== false
+	const supervisorCanApproveLeaves =
+		isSupervisor && supervisorConfig?.permissions?.canApproveLeaves !== false
+	const canSeeManagerReports =
+		isAdmin || isHR || (isSupervisor && (supervisorCanViewTimesheets || supervisorCanApproveLeaves))
 
 	const formatTutorialContent = (content) => {
 		if (!content || typeof content !== 'string') return []
@@ -170,8 +174,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Requesting leave and absences',
 			path: '/leave-request',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Zgłoś urlop" wypełnij formularz: wybierz rodzaj urlopu (wypoczynkowy, okolicznościowy, na żądanie, bezpłatny, zwolnienie lekarskie L4, inna nieobecność lub inny), podaj daty rozpoczęcia i zakończenia oraz liczbę dni lub godzin. Po wysłaniu zgłoszenia, przełożony, HR lub Admin otrzyma powiadomienie email i będzie mógł zatwierdzić lub odrzucić wniosek. Status wniosku możesz śledzić w sekcji "Zgłoś urlop".'
-				: 'In the "Request Leave" section, fill out the form: select the type of leave (vacation, occasional, on demand, unpaid, sick leave L4, other absence, or other), provide start and end dates, and the number of days or hours. After submitting, your supervisor, HR, or Admin will receive an email notification and can approve or reject the request. You can track the request status in the "Request Leave" section.'
+				? 'W „Zgłoś urlop” wypełniasz formularz: rodzaj urlopu, daty i liczbę dni lub godzin. Po wysłaniu przełożony, HR lub Admin dostaje maila i może zatwierdzić lub odrzucić wniosek.\n\n– Status wniosku śledzisz na tej samej stronie.\n– Obok filtra roku i miesiąca jest przycisk „Statystyki” — zobaczysz podsumowanie swoich wniosków i limity urlopów; stamtąd możesz też pobrać Excel lub PDF.'
+				: 'In “Request Leave”, fill in the type, dates, and number of days or hours. After submitting, your supervisor, HR, or Admin gets an email and can approve or reject.\n\n– Track status on the same page.\n– Next to the year/month filter, click “Statistics” for a summary of your requests and leave limits; you can also download Excel or PDF from there.'
 		},
 		{
 			id: 'timesheet',
@@ -182,8 +186,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Filling in daily work time records',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Na głównym ekranie znajdziesz kalendarz miesięczny. Kliknij na wybrany dzień, aby dodać wpis czasu pracy. W formularzu wprowadź godzinę rozpoczęcia i zakończenia pracy lub liczbę godzin pracy oraz ewentualne nadgodziny. Wszystkie wpisy są automatycznie zapisywane. Ewidencję możesz przeglądać w widoku miesięcznym. Zaakceptowane wnioski urlopowe oraz nieobecności zgłoszone, które nie wymagają zatwierdzenia, są automatycznie dodawane do kalendarza ewidencji czasu pracy i odnotowane w podsumowaniu. Jeśli w polu nieobecność wpiszesz słowo "urlop", jest to zliczane do podsumowania miesiąca i liczone jako urlop w dniach lub godzinach w zależności od ustawień skonfigurowanych dla zespołu.'
-				: 'On the main screen, you will find a monthly calendar. Click on a selected day to add a work time entry. In the form, enter start and end times or the number of work hours, and any overtime. All entries are automatically saved. You can view your timesheet in monthly view. Approved leave requests and reported absences that do not require approval are automatically added to the timesheet calendar and noted in the summary. If you enter the word "urlop" (leave) in the absence field, it is counted in the monthly summary and calculated as leave in days or hours depending on the settings configured for the team.'
+				? 'Na stronie „Czas pracy” masz kalendarz miesięczny. Kliknij dzień, aby dodać lub zmienić wpis.\n\n– Prosty wpis: godziny od–do albo sama liczba godzin, plus ewentualne nadgodziny.\n– Rozbij dzień na czynności: gdy Admin lub HR dodały czynności w Ustawieniach — w formularzu zaznacz opcję i przypisz godziny do każdej czynności. Przy włączonym „Mierz wykonanie” możesz wpisać też wykonaną ilość (np. sztuki, m²).\n– Godziny do zadań z tablic: jeśli zespół ma moduł zadań — możesz przypisać godziny do wybranych zadań.\n– Filtry czynności i zadań (przy podsumowaniu miesiąca) zawężają widok kalendarza i liczone godziny.\n– Zaakceptowane urlopy i część nieobecności wpisują się do kalendarza same.'
+				: 'On “Timesheet” you have a monthly calendar. Click a day to add or edit an entry.\n\n– Simple entry: start/end times or hours only, plus overtime if needed.\n– Split by activities: when Admin or HR added activities in Settings — tick the option in the form and assign hours to each activity. With “Track quantity” enabled you can also enter amount done (e.g. pieces, m²).\n– Hours to board tasks: if your team has the tasks module — assign hours to selected tasks.\n– Activity and task filters (in the monthly summary) narrow the calendar view and counted hours.\n– Approved leave and some absences appear in the calendar automatically.'
 		},
 		{
 			id: 'timer',
@@ -194,8 +198,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Using work time counter to track work time',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Na głównym ekranie znajdziesz panel licznika czasu pracy (jeśli jest włączony w ustawieniach). Możesz uruchomić licznik na dwa sposoby: 1) Kliknij "Start" w panelu licznika, aby rozpocząć sesję pracy ręcznie. 2) Zeskanuj kod QR w miejscu pracy - jeśli nie masz aktywnego licznika, skanowanie automatycznie zarejestruje wejście i uruchomi licznik. Jeśli masz aktywny licznik, skanowanie QR zarejestruje wyjście i zatrzyma licznik. Licznik automatycznie śledzi czas pracy w czasie rzeczywistym.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy licznik dalej liczy czas. Przerwy są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu. Możesz również oznaczyć czas jako nadgodziny - są one liczone osobno i widoczne w szczegółach. Po zakończeniu pracy kliknij "Stop" lub zeskanuj QR ponownie - czas zostanie automatycznie dodany do ewidencji czasu pracy dla aktualnego dnia. Wszystkie sesje są zapisywane i możesz je przeglądać w historii sesji, gdzie widoczne są: całkowity czas pracy, czas przerwy i czas nadgodzin.'
-				: 'On the main screen, you will find the work time counter panel (if enabled in settings). You can start the counter in two ways: 1) Click "Start" in the counter panel to manually begin a work session. 2) Scan the QR code at your workplace - if you don\'t have an active counter, scanning will automatically register entry and start the counter. If you have an active counter, scanning the QR will register exit and stop the counter. The counter automatically tracks work time in real-time.\n\nImportant: work time is counted from start to stop - the counter continues counting even during breaks. Breaks are tracked separately and visible in session details after stopping. You can also mark time as overtime - it is counted separately and visible in details. After finishing work, click "Stop" or scan the QR again - the time will be automatically added to your timesheet for the current day. All sessions are saved and you can view them in the session history, where you can see: total work time, break time, and overtime.'
+				? 'Panel licznika jest na stronie „Czas pracy” (gdy Admin włączył go w Ustawieniach).\n\n– Start ręcznie albo skan QR — wejście startuje licznik, kolejny skan kończy pracę.\n– Przy starcie możesz wybrać czynność, zadanie z tablicy albo opis pracy z bieżącego miesiąca.\n– Po zatrzymaniu sesji — przy czynności z „Mierz wykonanie” możesz uzupełnić wykonaną ilość.\n– Czas trafia do ewidencji danego dnia. Sesje widać na liście pod kalendarzem.\n– Nadgodziny i przerwy są liczone osobno w szczegółach sesji.'
+				: 'The counter panel is on “Timesheet” (when Admin enabled it in Settings).\n\n– Start manually or scan QR — entry starts the counter, another scan ends work.\n– When starting you can pick an activity, a board task, or a work description from the current month.\n– After stopping — for activities with “Track quantity” you can fill in amount done.\n– Time goes to that day’s timesheet. Sessions appear in the list under the calendar.\n– Overtime and breaks are counted separately in session details.'
 		},
 		{
 			id: 'boards',
@@ -206,8 +210,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Managing tasks',
 			path: '/boards',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'Tablice zadań umożliwiają zarządzanie projektami i zadaniami. Tablica dla całego zespołu jest automatycznie utworzona na starcie z wszystkimi użytkownikami. Gdy dodasz nowy dział w zespole, automatycznie tworzy się tablica dla tego działu. Możesz również tworzyć niestandardowe tablice. W każdej tablicy możesz dodawać zadania, przypisywać je do konkretnych użytkowników i ustawiać priorytet. Zadania można przenosić między kolumnami (np. "Do zrobienia", "W trakcie", "Zrobione") poprzez przeciąganie. Do każdego zadania możesz dodać opis, komentarze i załączniki. Tablica zespołowa jest widoczna dla wszystkich członków zespołu, tablice działowe dla wszystkich członków przypisanych do danego działu, a niestandardowe tablice dla wybranych członków zespołu.'
-				: 'Task boards allow you to manage projects and tasks. A board for the entire team is automatically created at the start with all users. When you add a new department to the team, a board for that department is automatically created. You can also create custom boards. In each board, you can add tasks, assign them to specific users, and set priority. Tasks can be moved between columns (e.g., "To Do", "In Progress", "Done") by dragging. You can add descriptions, comments, and attachments to each task. The team board is visible to all team members, department boards to all members assigned to the department, and custom boards to selected team members.'
+				? 'Tablice służą do prowadzenia zadań w kolumnach (do zrobienia, w trakcie, zrobione). Możesz dodawać zadania, przypisywać osoby i komentarze.\n\n– Jeśli zespół ma moduł zadań, w ewidencji czasu możesz też przypisywać godziny pracy do wybranych zadań z tablicy (obok czynności).'
+				: 'Boards help you manage tasks in columns (to do, in progress, done). You can add tasks, assign people, and comment.\n\n– If your team has the tasks module, in the timesheet you can also assign work hours to selected board tasks (alongside activities).'
 		},
 		{
 			id: 'schedule',
@@ -268,8 +272,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Planning leave in calendar',
 			path: '/leave-planner',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Zaplanuj swój urlop" znajdziesz kalendarz, w którym możesz zaznaczać dni, w których planujesz wziąć urlop. W kalendarzu widoczne są również wszystkie Twoje zatwierdzone i zgłoszone wnioski urlopowe oraz nieobecności. Możesz przeglądać zaakceptowane wnioski urlopowe i planować kolejne urlopy, unikając konfliktów terminów. Dodatkowo masz dostęp do Asystenta terminu urlopu, który sprawdza wybraną datę lub zakres i pokazuje potencjalne konflikty oraz święta. Zaznaczone dni są widoczne w sekcji "Plany urlopowe" dla całego zespołu, co pomaga w koordynacji urlopów.'
-				: 'In the "Plan your leave" section, you will find a calendar where you can mark days when you plan to take leave. The calendar also shows all your approved and submitted leave requests and absences. You can review accepted leave requests and plan future leaves, avoiding date conflicts. Additionally, you can use the Leave date assistant, which checks the selected date or range and shows potential conflicts and holidays. Marked days are visible in the "Vacation plans" section for the entire team, which helps coordinate leaves.'
+				? 'Kalendarz do planowania urlopów. Widać Twoje wnioski i nieobecności.\n\n– Przycisk „Statystyki” obok filtra okresu pokazuje podsumowanie wniosków i wykorzystane limity urlopów.'
+				: 'Calendar for planning leave. You see your requests and absences.\n\n– The “Statistics” button next to the period filter shows a summary of requests and used leave limits.'
 		},
 		{
 			id: 'leave-plans',
@@ -296,8 +300,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Team settings configuration',
 			path: '/settings',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji Ustawienia możesz skonfigurować wszystkie parametry zespołu: godziny pracy (standardowe godziny, dni tygodnia), święta i dni wolne, typy urlopów (z możliwością dodania własnych typów), limity urlopów dla poszczególnych typów, włączenie/wyłączenie licznika czasu pracy. Powiadomienia push każdy użytkownik konfiguruje indywidualnie w swoich ustawieniach profilu.\n\nPracownicy bez dostępu do aplikacji: włącz dodawanie takich kont (wliczają się do limitu miejsc — bez logowania i bez maila z hasłem). Opcjonalnie zezwól na wpisy czasu pracy i wnioski urlopowe składane za nich przez Admina, HR lub uprawnionego przełożonego — w kalendarzu ewidencji i w formularzu urlopu.'
-				: 'In the Settings section, you can configure all team parameters: working hours (standard hours, weekdays), holidays and days off, leave types (with the ability to add custom types), leave limits for specific types, enable/disable work time counter. Push notifications are configured individually by each user in their profile settings.\n\nEmployees without app access: enable adding such accounts (they count toward the seat limit — no login and no password email). Optionally allow timesheet entries and leave requests submitted on their behalf by Admin, HR, or an authorized supervisor — in the timesheet calendar and leave form.'
+				? 'W Ustawieniach konfigurujesz zespół. Najważniejsze obszary:\n\n– Godziny pracy, weekendy i święta — wpływają na ewidencję i urlopy.\n– Ewidencja czasu → Czynności: dodajesz listę czynności (np. montaż, biuro). Możesz włączyć „Mierz wykonanie” i podać jednostkę (szt., m²) — wtedy w raportach widać też wydajność.\n– Typy urlopów i limity — gdy masz moduł urlopów w planie.\n– Licznik i QR — gdy plan obejmuje timer.\n– Pracownicy bez dostępu: konto bez logowania (wlicza się w limit miejsc). Możesz włączyć wpisy ewidencji za taką osobę; wnioski urlopowe za nią — w planie płatnym.'
+				: 'In Settings you configure the team. Main areas:\n\n– Work hours, weekends, holidays — affect timesheets and leave.\n– Work time records → Activities: add activities (e.g. assembly, office). Enable “Track quantity” and a unit (pcs, m²) to see efficiency in reports.\n– Leave types and limits — when your plan includes leave.\n– Timer and QR — when your plan includes the counter.\n– No-access employees: account without login (counts toward seat limit). You can enable timesheet entries on their behalf; leave requests for them — on paid plans.'
 		},
 		{
 			id: 'create-user',
@@ -332,8 +336,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Reviewing employee timesheets',
 			path: '/calendars-list',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Ewidencja czasu pracy" Admin i HR widzą ewidencje wszystkich pracowników w zespole. Przełożony (Supervisor) z odpowiednimi uprawnieniami może przeglądać ewidencje pracowników ze swojego działu lub wybranych pracowników. Uprawnienia przełożonego konfiguruje się w sekcji zarządzania zespołem - przy edycji użytkownika i jego ról, jeśli użytkownik ma rolę Przełożony, można tam ustawić jego uprawnienia. W sekcji dostępny jest zbiorowy kalendarz z wpisami ewidencji wszystkich pracowników z możliwością filtrowania po działach i pracownikach. Możesz również wybrać pracownika i miesiąc, aby zobaczyć jego szczegółową ewidencję. Widoczne są wszystkie wpisy. Możesz eksportować ewidencje do PDF lub do Excela.'
-				: 'In the "Work Time Records" section, Admin and HR can view timesheets of all employees in the team. Supervisors with appropriate permissions can view timesheets of employees from their department or selected employees. Supervisor permissions are configured in the team management section - when editing a user and their roles, if the user has the Supervisor role, you can set their permissions there. The section includes a collective calendar with timesheet entries of all employees with the ability to filter by departments and employees. You can also select an employee and month to see their detailed timesheet. All entries are visible. You can export timesheets to PDF or Excel.'
+				? 'W „Ewidencji czasu pracy” widzisz kalendarze pracowników (Admin i HR — cały zespół; przełożony — według uprawnień).\n\n– Wybierz miesiąc, dział lub osobę. Kliknij pracownika, aby zobaczyć szczegóły miesiąca.\n– Filtry czynności i zadań zawężają dane i podsumowania (godziny wg czynności lub zadań).\n– Możesz edytować wpisy pracownika w jego kalendarzu.\n– Eksporty Excel i PDF — opis w sekcji „Raporty i eksporty”.'
+				: 'In “Work time records” you see employee calendars (Admin and HR — whole team; supervisor — per permissions).\n\n– Pick month, department, or person. Click an employee for month details.\n– Activity and task filters narrow data and summaries (hours by activity or task).\n– You can edit entries in the employee calendar.\n– Excel and PDF exports — see the “Reports and exports” section.'
 		},
 		{
 			id: 'leave-approval',
@@ -344,8 +348,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				: 'Managing leave requests',
 			path: '/leave-list',
 			content: i18n.resolvedLanguage === 'pl' 
-				? 'W sekcji "Urlopy" Admin i HR widzą wszystkie wnioski urlopowe w zespole. Przełożony widzi wnioski pracowników ze swojego działu lub wybranych pracowników (zgodnie z konfiguracją). W sekcji dostępny jest zbiorowy kalendarz z zaakceptowanymi wnioskami urlopowymi, zgłoszonymi nieobecnościami i innymi wpisami z możliwością filtrowania po działach i pracownikach. Możesz zatwierdzić, odrzucić lub anulować wniosek. Po zatwierdzeniu, urlop automatycznie pojawia się w kalendarzu urlopowym. Każda zmiana statusu wniosku wysyła powiadomienie email do pracownika. Możesz również wygenerować wniosek do PDF. Admin i HR mają zawsze pełny dostęp do wszystkich wniosków. Przełożony może mieć ograniczone uprawnienia w zależności od konfiguracji (może zatwierdzać tylko urlopy pracowników z działu lub wybranych pracowników).'
-				: 'In the "Leaves" section, Admin and HR see all leave requests in the team. Supervisors see requests from employees in their department or selected employees (according to configuration). The section includes a collective calendar with approved leave requests, reported absences, and other entries with the ability to filter by departments and employees. You can approve, reject, or cancel a request. After approval, the leave automatically appears in the leave calendar. Any change in request status sends an email notification to the employee. You can also generate the request to PDF. Admin and HR always have full access to all requests. Supervisors may have limited permissions depending on configuration (can only approve leaves from department employees or selected employees).'
+				? 'W „Wnioskach urlopowych” (menu boczne) przeglądasz wnioski zespołu, zatwierdzasz lub odrzucasz.\n\n– Filtruj okres, dział, pracownika i status.\n– Przycisk „Statystyki” obok filtra — podsumowanie wniosków, limity, typy urlopów; stamtąd Excel/PDF dla wybranych danych.\n– Na dole strony: przyciski Excel i PDF — raport urlopów całego zespołu za wybrany okres.\n– Przy jednym pracowniku (lista wniosków) też jest „Statystyki”.'
+				: 'In “Leave requests” (sidebar) you review team requests and approve or reject.\n\n– Filter period, department, employee, and status.\n– “Statistics” next to the filter — summary, limits, leave types; Excel/PDF from there.\n– At the bottom: Excel and PDF — team leave report for the selected period.\n– For one employee’s list there is also “Statistics”.'
 		},
 		...(canSeePackagesTutorial
 			? [
@@ -365,6 +369,23 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 							i18n.resolvedLanguage === 'pl'
 								? '– Menu boczne → „Pakiety i rozliczenia” (ikona portfela).\n– U góry: aktualny plan zespołu i wykorzystanie limitu Asystenta AI (czat, grafik, drafty).\n– Plany: Core (konfiguracja — wielkość zespołu i moduły), gotowe pakiety Pro i Business.\n– Przełącz rozliczenie miesięczne/roczne, potem wybierz plan lub dokup wiadomości AI.\n– Płatność online: cykliczna subskrypcja kartą (Stripe) lub BLIK/przelew (Przelewy24) — w zależności od planu i dostępności; przy Stripe możesz też zarządzać kartą na tej stronie.\n– Gdy płatność online nie jest dostępna — formularz zgłoszenia mailem.\n– Dokupy wiadomości AI — przy aktywnej płatnej subskrypcji.\n– Na dole: dokumenty prawne (regulamin, polityka prywatności, DPA); przy nowej wersji — ostrzeżenie i akceptacja jednym przyciskiem.'
 								: '– Sidebar → “Packages & billing” (wallet icon).\n– At the top: current team plan and shared AI Assistant usage (chat, schedule, drafts).\n– Plans: Core (configure team size and modules), ready-made Pro and Business bundles.\n– Switch monthly/yearly billing, then pick a plan or buy extra AI messages.\n– Online payment: recurring card subscription (Stripe) or BLIK/bank transfer (Przelewy24) — depending on the plan and what is enabled; with Stripe you can manage your card on this page.\n– If online payment is unavailable — email request form.\n– Extra AI message packs — with an active paid subscription.\n– At the bottom: legal documents (terms, privacy, DPA); when a new version is required — warning and accept all in one step.',
+					},
+				]
+			: []),
+		...(canSeeManagerReports
+			? [
+					{
+						id: 'reports-exports',
+						title: i18n.resolvedLanguage === 'pl' ? 'Raporty i eksporty' : 'Reports and exports',
+						icon: '/img/schedule time works.png',
+						description: i18n.resolvedLanguage === 'pl'
+							? 'Excel i PDF — gdzie je znaleźć'
+							: 'Excel and PDF — where to find them',
+						path: '/calendars-list',
+						hideNavigateButton: true,
+						content: i18n.resolvedLanguage === 'pl'
+							? 'Raporty nie mają osobnej strony — pobierasz je przyciskami w aplikacji.\n\nEwidencja czasu pracy (menu boczne):\n– Przewiń na dół listy kalendarzy.\n– Excel / PDF — raport zespołu (godziny, nadgodziny, urlopy w okresie).\n– Excel / PDF wg osób — zestawienie per pracownik.\n– Raport zadań i czynności — gdy są dane i filtry czynności lub zadań (godziny, ilości, wydajność).\n– Kalendarz jednej osoby → u góry PDF z podsumowaniem miesiąca.\n\nWnioski urlopowe (Admin, HR, przełożony z uprawnieniem):\n– Przewiń na dół strony.\n– Excel / PDF — raport urlopów zespołu (statusy, typy, podsumowania).\n– Przycisk „Statystyki” obok filtra roku — szybki podgląd; stamtąd też Excel/PDF.\n\nW planie darmowym: eksporty ewidencji działają; pełne wnioski urlopowe i ich raporty — po rozszerzeniu planu.'
+							: 'Reports have no separate page — download them with buttons in the app.\n\nWork time records (sidebar):\n– Scroll to the bottom of the calendar list.\n– Excel / PDF — team report (hours, overtime, leave in the period).\n– Excel / PDF by person — per employee.\n– Tasks and activities report — when data and activity/task filters exist (hours, quantities, efficiency).\n– One person’s calendar → PDF at the top with monthly summary.\n\nLeave requests (Admin, HR, approving supervisor):\n– Scroll to the bottom.\n– Excel / PDF — team leave report (statuses, types, summaries).\n– “Statistics” next to the year filter — quick view; Excel/PDF from there too.\n\nOn the free plan: timesheet exports work; full leave requests and their reports — after upgrading.',
 					},
 				]
 			: []),
@@ -410,6 +431,14 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		'leave-planner',
 		'leave-plans',
 	])
+
+	const supervisorManagerSectionIds = []
+	if (supervisorCanViewTimesheets) supervisorManagerSectionIds.push('timesheets-admin')
+	if (supervisorCanApproveLeaves) supervisorManagerSectionIds.push('leave-approval')
+	if (canSeeManagerReports) supervisorManagerSectionIds.push('reports-exports')
+	const supervisorManagerSections = adminHRSections.filter((s) =>
+		supervisorManagerSectionIds.includes(s.id)
+	)
 
 	let sections
 	if (freemiumTier) {
@@ -457,8 +486,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						? 'Kalendarz miesięczny — wpisy ręczne (w tym planie bez licznika i QR)'
 						: 'Monthly calendar — manual entries (no counter/QR on this plan)',
 					content: pl
-						? 'W planie darmowym uzupełniasz ewidencję w kalendarzu miesięcznym na stronie „Czas pracy”: godziny od–do lub liczba godzin oraz ewentualne nadgodziny. Licznika czasu pracy i skanowania kodów QR w tym planie nie ma — te funkcje wracają po rozszerzeniu planu (Administrator lub HR).'
-						: 'On the free plan you use the monthly calendar under “Timesheet”: start/end times or hours, plus overtime when needed. There is no work-time counter or QR scanning on this plan — Admin or HR can unlock those after upgrading.',
+						? 'W planie darmowym uzupełniasz ewidencję w kalendarzu miesięcznym na stronie „Czas pracy”: godziny od–do lub liczba godzin oraz ewentualne nadgodziny. Gdy Administrator dodał czynności w Ustawieniach — możesz rozbijać dzień na czynności. Licznika czasu i skanowania QR w tym planie nie ma — wracają po rozszerzeniu planu.'
+						: 'On the free plan you use the monthly calendar under “Timesheet”: start/end times or hours, plus overtime when needed. If Admin added activities in Settings — you can split a day by activity. No work-time counter or QR on this plan — those unlock after upgrading.',
 				}
 			})
 
@@ -473,8 +502,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								? 'W freemium: weekendy, święta, godziny pracy i pracownicy bez dostępu'
 								: 'On freemium: weekends, holidays, work hours, no-access workers',
 							content: pl
-								? 'W planie darmowym Administrator i HR mogą zmieniać: pracę w weekendy, dni świąteczne, standardowe godziny pracy (szybki wybór w ewidencji) oraz pracowników bez dostępu do aplikacji. Typy urlopów, QR, licznik i pełny grafik — po rozszerzeniu planu.\n\nPracownicy bez dostępu: włącz dodawanie kont i wpisy czasu pracy za nich w kalendarzu ewidencji. Wnioski urlopowe za takiego pracownika — w planie płatnym.'
-								: 'On the free plan, Admin and HR can configure: weekend work, holidays, standard work hours (quick picks in the timesheet), and employees without app access. Leave types, QR, timer, and full schedules unlock after upgrading.\n\nNo-access workers: enable adding accounts and timesheet entries on their behalf. Leave requests for them — on paid plans.',
+								? 'W planie darmowym Administrator i HR mogą zmieniać: pracę w weekendy, dni świąteczne, standardowe godziny pracy (szybki wybór w ewidencji), czynności w ewidencji (Ustawienia → Ewidencja czasu → Czynności) oraz pracowników bez dostępu do aplikacji. Typy urlopów, QR, licznik i pełny grafik — po rozszerzeniu planu.\n\nPracownicy bez dostępu: włącz dodawanie kont i wpisy czasu pracy za nich w kalendarzu ewidencji. Wnioski urlopowe za takiego pracownika — w planie płatnym.'
+								: 'On the free plan, Admin and HR can configure: weekend work, holidays, standard work hours (quick picks in the timesheet), timesheet activities (Settings → Work time records → Activities), and employees without app access. Leave types, QR, timer, and full schedules unlock after upgrading.\n\nNo-access workers: enable adding accounts and timesheet entries on their behalf. Leave requests for them — on paid plans.',
 						}
 					}
 					if (s.id === 'create-user' && isAdmin) {
@@ -486,9 +515,8 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 					return s
 				})
 			sections = [overview, ...baseFiltered, ...adminFreemium]
-		} else if (isSupervisor && supervisorCanViewTimesheets) {
-			const ts = adminHRSections.find((x) => x.id === 'timesheets-admin')
-			sections = ts ? [overview, ...baseFiltered, ts] : [overview, ...baseFiltered]
+		} else if (isSupervisor && supervisorManagerSections.length > 0) {
+			sections = [overview, ...baseFiltered, ...supervisorManagerSections]
 		} else {
 			sections = [overview, ...baseFiltered]
 		}
@@ -497,7 +525,9 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			...baseSections,
 			...(isAdmin || isHR
 				? adminHRSections.filter((s) => isAdmin || s.id !== 'help-center')
-				: nonAdminHRSections),
+				: isSupervisor && supervisorManagerSections.length > 0
+					? [...nonAdminHRSections, ...supervisorManagerSections]
+					: nonAdminHRSections),
 		]
 	}
 

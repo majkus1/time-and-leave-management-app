@@ -1,0 +1,122 @@
+name: Security Report
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: "20 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  npm-audit:
+    name: npm audit (${{ matrix.project.name }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: server-root
+            path: .
+            lockfile: package-lock.json
+          - name: client
+            path: client
+            lockfile: client/package-lock.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.project.lockfile }}
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.project.path }}
+        run: npm ci
+
+      - name: Generate npm audit report
+        id: audit
+        working-directory: ${{ matrix.project.path }}
+        shell: bash
+        run: |
+          set +e
+          npm audit --audit-level=moderate --json > npm-audit-${{ matrix.project.name }}.json
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          {
+            echo "## npm audit: ${{ matrix.project.name }}"
+            echo ""
+            echo "- Exit code: \`$status\`"
+            echo "- Mode: reporting only, this job does not block deployments."
+            echo "- Full JSON report is available as a workflow artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Upload npm audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.project.name }}
+          path: ${{ matrix.project.path }}/npm-audit-${{ matrix.project.name }}.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: critical
+          comment-summary-in-pr: always
+
+  trivy-filesystem:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability, secret and misconfiguration scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 0
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload Trivy SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Upload Trivy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-filesystem-sarif
+          path: trivy-results.sarif
+          if-no-files-found: warn
+          retention-days: 14

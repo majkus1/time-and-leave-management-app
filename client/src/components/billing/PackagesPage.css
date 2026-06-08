@@ -786,6 +786,14 @@
 	border-color: #93c5fd;
 }
 
+.packages-pay-note {
+	margin: -0.24rem 0 0.12rem;
+	color: #64748b;
+	font-size: 0.72rem;
+	line-height: 1.3;
+	text-align: center;
+}
+
 .packages-modal__actions.packages-modal__actions--pay button.packages-pay-btn--ghost {
 	background: #fff;
 	color: #64748b;

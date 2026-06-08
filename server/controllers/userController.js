@@ -1957,3 +1957,40 @@ exports.getMyTasks = async (req, res) => {
 		res.status(500).json({ message: 'Error getting tasks' })
 	}
 }
+
+/** Tasks for timesheet — self or managed user (HR/supervisor). */
+exports.getTimesheetTasks = async (req, res) => {
+	try {
+		const { fetchTimesheetTasksForUser } = require('../utils/timesheetTaskAccess')
+		const {
+			resolveTeamScopedTimesheetWriteAccess,
+			sendTeamScopedTimesheetWriteAccessError,
+		} = require('../utils/timesheetWriteAccess')
+
+		const forUserId = req.query.forUserId || req.user.userId
+		let targetUser
+
+		if (String(forUserId) === String(req.user.userId)) {
+			targetUser = await User.findById(req.user.userId)
+		} else {
+			const access = await resolveTeamScopedTimesheetWriteAccess(req.user.userId, forUserId)
+			if (access.error) {
+				return sendTeamScopedTimesheetWriteAccessError(res, access.error, { asJson: true })
+			}
+			targetUser = access.targetUser
+		}
+
+		if (!targetUser) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		if (!targetUser.teamId) {
+			return res.json([])
+		}
+
+		const tasks = await fetchTimesheetTasksForUser(targetUser._id, targetUser.teamId, targetUser)
+		res.json(tasks)
+	} catch (error) {
+		console.error('Error getting timesheet tasks:', error)
+		res.status(500).json({ message: 'Error getting tasks' })
+	}
+}

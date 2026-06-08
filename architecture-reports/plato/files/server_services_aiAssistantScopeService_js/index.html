@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - server\services\aiAssistantScopeService.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>server\services\aiAssistantScopeService.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">61.38</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">69</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">18.11</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.53</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+ * Determines which user IDs the requester may see in AI context for workdays, timer aggregates, and tasks.
+ * Mirrors workday team visibility: Admin/HR → full team; Supervisor → supervised scope; Worker → self only.
+ * (Leave requests in the assistant are loaded separately for **all active team members** — see aiContextBuilderService.)
+ */
+const { firmDb } = require(&#039;../db/db&#039;)
+const User = require(&#039;../models/user&#039;)(firmDb)
+const SupervisorConfig = require(&#039;../models/SupervisorConfig&#039;)(firmDb)
+const { canSupervisorViewTimesheets, canSupervisorApproveLeaves } = require(&#039;./roleService&#039;)
+
+/**
+ * @param {import(&#039;mongoose&#039;).Types.ObjectId} teamId
+ * @returns {Promise&lt;import(&#039;mongoose&#039;).Types.ObjectId[]&gt;}
+ */
+async function getActiveTeamUserIds(teamId) {
+	const users = await User.find({
+		teamId,
+		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+	}).select(&#039;_id&#039;)
+	return users.map(u =&gt; u._id)
+}
+
+/**
+ * @param {import(&#039;mongoose&#039;).Document} requestingUser - full User document
+ * @returns {Promise&lt;{ scope: &#039;team&#039;|&#039;supervised&#039;|&#039;self&#039;, detailedUserIds: import(&#039;mongoose&#039;).Types.ObjectId[] }&gt;}
+ */
+exports.resolveDetailedDataScope = async function resolveDetailedDataScope(requestingUser) {
+	const teamId = requestingUser.teamId
+	const selfId = requestingUser._id
+
+	const isAdmin = requestingUser.roles.includes(&#039;Admin&#039;)
+	const isHR = requestingUser.roles.includes(&#039;HR&#039;)
+	const isSupervisor = requestingUser.roles.includes(&#039;Przełożony (Supervisor)&#039;)
+
+	if (isAdmin || isHR) {
+		const ids = await getActiveTeamUserIds(teamId)
+		return { scope: &#039;team&#039;, detailedUserIds: ids }
+	}
+
+	if (isSupervisor) {
+		const teamUsers = await User.find({
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		}).select(&#039;_id firstName lastName department&#039;)
+
+		const allowed = []
+		for (const u of teamUsers) {
+			// eslint-disable-next-line no-await-in-loop
+			const okTs = await canSupervisorViewTimesheets(requestingUser, u)
+			// eslint-disable-next-line no-await-in-loop
+			const okLeave = await canSupervisorApproveLeaves(requestingUser, u)
+			if (okTs || okLeave) allowed.push(u._id)
+		}
+		// Zawsze uwzględnij własne konto przełożonego w AI (raport „ja + podlegli”).
+		const selfStr = selfId.toString()
+		if (!allowed.some(id =&gt; id.toString() === selfStr)) {
+			allowed.push(selfId)
+		}
+		return { scope: &#039;supervised&#039;, detailedUserIds: allowed }
+	}
+
+	// Worker (or any other role): only own detailed records
+	return { scope: &#039;self&#039;, detailedUserIds: [selfId] }
+}
+
+/**
+ * All active team user IDs (for anonymized aggregates e.g. leave occupancy for workers).
+ */
+exports.getTeamUserIdsForAggregates = getActiveTeamUserIds</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
