@@ -1,3 +1,5 @@
+import { roundHours } from './formatWorkDuration'
+
 function formatEntryTimeLocal(dateValue) {
 	if (!dateValue) return ''
 	const date = new Date(dateValue)
@@ -15,16 +17,11 @@ function isTimerWorkEntry(entry) {
 	return new Date(entry.endTime) > new Date(entry.startTime)
 }
 
-function roundHours(value) {
-	if (!Number.isFinite(value)) return 0
-	return Math.round(value * 100) / 100
-}
-
 function getTimerEntryTaskHours(entry) {
 	if (!isTimerWorkEntry(entry) || !entry.taskId) return 0
-	const minutes = Math.round((new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60))
-	if (minutes <= 0) return 0
-	return minutes / 60
+	const hours = (new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60 * 60)
+	if (hours <= 0) return 0
+	return roundHours(hours)
 }
 
 function collectManualTaskHoursMap(workday, selectedTaskIds = []) {
@@ -322,7 +319,7 @@ export function aggregateTaskHours(rows, { groupByUser = false } = {}) {
 			})
 		}
 		const entry = map.get(key)
-		entry.hours = Math.round((entry.hours + row.hours) * 2) / 2
+		entry.hours = roundHours(entry.hours + row.hours)
 		if (!entry.taskName && row.taskName) entry.taskName = row.taskName
 	}
 	return [...map.values()].sort((a, b) => {

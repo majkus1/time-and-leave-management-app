@@ -48,10 +48,14 @@ import {
 	isCalendarFilterActive,
 	workdayMatchesCalendarFilters,
 	getFilteredCalendarHours,
-	getFilteredManualCalendarHours,
 	buildFilteredRealTimeForCalendar,
 	formatCalendarBreakdown,
 } from '../../utils/workCalendarFilters'
+import {
+	formatHoursDecimal,
+	formatWorkDuration,
+	roundToHalfHour,
+} from '../../utils/formatWorkDuration'
 import {
 	collectTasksFromWorkdays,
 	getTaskFilterLabel,
@@ -193,25 +197,8 @@ function UserCalendar() {
 		return t('workcalendar.overtime5plus')
 	}
 
-	// Funkcja do zaokrąglania godzin do pół godziny (0.5)
-	const roundToHalfHour = (hours) => {
-		if (hours === null || hours === undefined) return null
-		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
-		if (isNaN(numHours)) return null
-		// Zaokrąglij do najbliższej pół godziny
-		return Math.round(numHours * 2) / 2
-	}
-
-	// Funkcja do formatowania godzin - usuwa niepotrzebne zera dziesiętne (np. 8.5 zamiast 8.50, 8 zamiast 8.0)
-	const formatHours = (hours) => {
-		if (hours === null || hours === undefined) return ''
-		const numHours = typeof hours === 'number' ? hours : parseFloat(hours)
-		if (isNaN(numHours)) return ''
-		// Jeśli liczba jest całkowita, wyświetl bez miejsc dziesiętnych
-		if (numHours % 1 === 0) return numHours.toString()
-		// W przeciwnym razie wyświetl z jedną cyfrą po przecinku, ale usuń końcowe zera
-		return numHours.toFixed(1).replace(/\.0$/, '')
-	}
+	// Eksport PDF/Excel — dziesiętny format jak dotychczas
+	const formatHours = formatHoursDecimal
 
 	/** Godziny w eksporcie Excel — jak w kalendarzu: do 0,5 h, bez szumu z timera. */
 	const excelHoursValue = (value) => {
@@ -748,10 +735,7 @@ function UserCalendar() {
 				let title = ''
 				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
 				const filteredHours = getFilteredCalendarHours(day, selectedActivityIds, selectedTaskIds)
-				const manualFilteredHours = filterActive
-					? getFilteredManualCalendarHours(day, selectedActivityIds, selectedTaskIds)
-					: filteredHours
-				const hasHoursWorked = filterActive ? manualFilteredHours > 0 : filteredHours > 0
+				const hasHoursWorked = filteredHours > 0
 				const hasOnlyNotes = !hasHoursWorked && !hasAbsenceType && day.notes && day.notes.trim() !== ''
 
 				if (filterActive) {
@@ -760,8 +744,10 @@ function UserCalendar() {
 				}
 
 				if (hasHoursWorked) {
-					const roundedHours = roundToHalfHour(filteredHours)
-					title = `${formatHours(roundedHours)} ${t('workcalendar.allfrommonthhours')}`
+					const displayHours = filterActive
+						? formatWorkDuration(filteredHours, { preferClockUnderHour: true })
+						: formatHoursDecimal(roundToHalfHour(filteredHours) ?? filteredHours)
+					title = `${displayHours} ${t('workcalendar.allfrommonthhours')}`
 					const breakdown = formatCalendarBreakdown(day, {
 						workActivities,
 						taskTitlesById,
@@ -930,6 +916,18 @@ function UserCalendar() {
 
 	const showActivitySummary = selectedTaskIds.length === 0 && activitySummaryRows.length > 0
 	const showTaskSummary = selectedActivityIds.length === 0 && tasksModuleEnabled && taskSummaryRows.length > 0
+	const calendarFilterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
+	const breakdownUsesClockFormat =
+		selectedActivityIds.length > 0 || selectedTaskIds.length > 0
+	const formatSidebarTotal = (hours) => {
+		if (calendarFilterActive) {
+			return formatWorkDuration(hours, { preferClockUnderHour: true })
+		}
+		const rounded = roundToHalfHour(hours)
+		return formatHoursDecimal(rounded !== null ? rounded : hours)
+	}
+	const formatBreakdownRow = (hours) =>
+		formatWorkDuration(hours, { preferClockUnderHour: breakdownUsesClockFormat })
 
 	const currentMonthWorkdaysForReview = React.useMemo(() => {
 		if (!canEditManagedWorkdays) return []
@@ -2177,7 +2175,7 @@ function UserCalendar() {
 					{t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p>
-					{t('workcalendar.allfrommonth2')} {formatHours(roundToHalfHour(totalHours))} {t('workcalendar.allfrommonthhours')}
+					{t('workcalendar.allfrommonth2')} {formatSidebarTotal(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p>
 					{t('workcalendar.allfrommonth3')} {formatHours(roundToHalfHour(additionalHours))} {getOvertimeWord(additionalHours)}
@@ -2207,7 +2205,7 @@ function UserCalendar() {
 						</h4>
 						{activitySummaryRows.map(row => (
 							<p key={row.activityId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
-								{row.activityName}: <strong>{formatHours(row.hours)} h</strong>
+								{row.activityName}: <strong>{formatBreakdownRow(row.hours)} h</strong>
 								{row.quantity > 0 && row.unit ? (
 									<span> · {row.quantity} {row.unit}{row.efficiency ? ` · ${row.efficiency} ${row.unit}/h` : ''}</span>
 								) : null}
@@ -2225,7 +2223,7 @@ function UserCalendar() {
 						</h4>
 						{taskSummaryRows.map(row => (
 							<p key={row.taskId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
-								{row.taskName}: <strong>{formatHours(row.hours)} h</strong>
+								{row.taskName}: <strong>{formatBreakdownRow(row.hours)} h</strong>
 							</p>
 						))}
 					</div>

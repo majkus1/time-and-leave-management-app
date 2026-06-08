@@ -14,11 +14,7 @@ import {
 	buildFilteredRealTimeFromTaskEntries,
 	formatTaskBreakdown,
 } from './workTaskAggregation'
-
-function roundHours(value) {
-	if (!Number.isFinite(value)) return 0
-	return Math.round(value * 100) / 100
-}
+import { roundHours } from './formatWorkDuration'
 
 export function isCalendarFilterActive(selectedActivityIds = [], selectedTaskIds = []) {
 	return selectedActivityIds.length > 0 || selectedTaskIds.length > 0

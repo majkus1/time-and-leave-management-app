@@ -1,4 +1,5 @@
 import { findWorkActivityById, getWorkActivityName } from './workActivities'
+import { roundHours } from './formatWorkDuration'
 
 function formatEntryTimeLocal(dateValue) {
 	if (!dateValue) return ''
@@ -79,16 +80,11 @@ function isTimerWorkEntry(entry) {
 	return new Date(entry.endTime) > new Date(entry.startTime)
 }
 
-function roundHours(value) {
-	if (!Number.isFinite(value)) return 0
-	return Math.round(value * 100) / 100
-}
-
 function getTimerEntryHours(entry) {
 	if (!isTimerWorkEntry(entry) || !entry.activityId) return 0
-	const minutes = Math.round((new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60))
-	if (minutes <= 0) return 0
-	return minutes / 60
+	const hours = (new Date(entry.endTime) - new Date(entry.startTime)) / (1000 * 60 * 60)
+	if (hours <= 0) return 0
+	return roundHours(hours)
 }
 
 function getSessionHours(entry) {
@@ -310,7 +306,7 @@ export function aggregateActivityHours(rows, { groupByUser = false } = {}) {
 			})
 		}
 		const entry = map.get(key)
-		entry.hours = Math.round((entry.hours + row.hours) * 2) / 2
+		entry.hours = roundHours(entry.hours + row.hours)
 		if (Number.isFinite(Number(row.quantity))) {
 			entry.quantity = Math.round((entry.quantity + Number(row.quantity)) * 100) / 100
 			if (!entry.unit && row.unit) entry.unit = row.unit

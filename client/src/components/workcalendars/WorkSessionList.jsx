@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getTimerSessionDisplayName } from '../../utils/timerSessionSelect'
 import { filterGroupedSessionsByActivities } from '../../utils/workActivityAggregation'
 import { filterGroupedSessionsByTasks } from '../../utils/workTaskAggregation'
+import { formatHoursClock } from '../../utils/formatWorkDuration'
 
 // Session item component with mobile expand/collapse
 function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, formatOvertimeTime, onDelete, deleteSession, t, i18n }) {
@@ -447,13 +448,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 		}
 	}, [selectedDate, filteredGroups, filteredTotalMinutes])
 
-	const formatHours = (hours) => {
-		const num = parseFloat(hours)
-		if (isNaN(num)) return '0:00'
-		const h = Math.floor(num)
-		const m = Math.round((num - h) * 60)
-		return `${h}:${m.toString().padStart(2, '0')}`
-	}
+	const formatHours = formatHoursClock
 
 	const formatDate = (dateString) => {
 		if (!dateString) return ''
