@@ -1,6 +1,9 @@
+import { isAdmin, isHR } from './roleHelpers'
+import { freemiumSeatRecoveryPath, isFreemiumSeatEscapePath } from './freemiumSeatEscape'
+
 export const CSRF_ERROR_CODES = ['CSRF_SECRET_MISSING', 'CSRF_TOKEN_MISSING', 'CSRF_TOKEN_INVALID']
 
-export const handleAuthError = async ({ err, axiosInstance, apiUrl, loggedIn, logout }) => {
+export const handleAuthError = async ({ err, axiosInstance, apiUrl, loggedIn, logout, role = [] }) => {
 	const originalRequest = err?.config || {}
 
 	const code = err?.response?.data?.code
@@ -14,8 +17,8 @@ export const handleAuthError = async ({ err, axiosInstance, apiUrl, loggedIn, lo
 		}
 		if (code === 'FREEMIUM_SEAT_OVER_CAPACITY') {
 			const path = window.location.pathname || ''
-			if (!path.startsWith('/team-access-notice')) {
-				window.location.assign('/team-access-notice?reason=seats')
+			if (!isFreemiumSeatEscapePath(path, role)) {
+				window.location.assign(freemiumSeatRecoveryPath(role))
 			}
 			throw err
 		}

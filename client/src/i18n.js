@@ -59,6 +59,8 @@ i18n
 						genericBody:
 							'You do not have access to this part of the application. If you believe this is a mistake, contact your team administrator.',
 						backDashboard: 'Back to dashboard',
+						goTeamManagement: 'Go to team management',
+						goPackages: 'Packages & billing',
 						logout: 'Log out',
 					},
 					aiAssistant: {
@@ -2062,6 +2064,8 @@ i18n
 						genericBody:
 							'Nie masz dostępu do tej części aplikacji. Jeśli uważasz, że to pomyłka, napisz do administratora zespołu.',
 						backDashboard: 'Wróć do ewidencji',
+						goTeamManagement: 'Przejdź do zarządzania zespołem',
+						goPackages: 'Pakiety i rozliczenia',
 						logout: 'Wyloguj się',
 					},
 					aiAssistant: {

@@ -79,7 +79,13 @@ export default function FreemiumRouteSync() {
 		}
 
 		if (freemiumSeatBlocked) {
-			if (p === TEAM_ACCESS_NOTICE_PATH) return
+			if (p === TEAM_ACCESS_NOTICE_PATH) {
+				if (staffBilling) {
+					navigate('/packages', { replace: true })
+					return
+				}
+				return
+			}
 			if (p === '/edit-profile') return
 			if (staffBilling && p === '/packages') return
 			if (p === '/settings') return
@@ -88,10 +94,6 @@ export default function FreemiumRouteSync() {
 				canFreemiumCalendars &&
 				(p === '/calendars-list' || p.startsWith('/work-calendars/'))
 			) {
-				return
-			}
-			if (userIsAdmin) {
-				navigate('/team-management', { replace: true })
 				return
 			}
 			if (staffBilling) {

@@ -1,8 +1,11 @@
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { isAdmin, isHR } from '../../utils/roleHelpers'
+import { freemiumSeatRecoveryPath } from '../../utils/freemiumSeatEscape'
 import './TeamAccessNoticePage.css'
 
 /**
@@ -13,14 +16,24 @@ export default function TeamAccessNoticePage() {
 	const { t } = useTranslation()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
-	const { logout } = useAuth()
+	const { logout, role } = useAuth()
 	const reason = searchParams.get('reason') || 'generic'
 	const { freemiumMaxSeats, freemiumSeatBlocked } = useFreemiumAccess({ enabled: true })
+	const userIsAdmin = isAdmin(role)
+	const userIsHR = isHR(role)
+	const seatsIssue = reason === 'seats' || (reason === 'generic' && freemiumSeatBlocked)
+
+	useEffect(() => {
+		if (!seatsIssue) return
+		if (userIsAdmin || userIsHR) {
+			navigate(freemiumSeatRecoveryPath(role), { replace: true })
+		}
+	}, [seatsIssue, userIsAdmin, userIsHR, role, navigate])
 
 	const title = t('teamAccessNotice.title')
 	let body = t('teamAccessNotice.genericBody')
 
-	if (reason === 'seats' || (reason === 'generic' && freemiumSeatBlocked)) {
+	if (seatsIssue) {
 		body = t('teamAccessNotice.seatsBody', { max: freemiumMaxSeats })
 	} else if (reason === 'billing') {
 		body = t('teamAccessNotice.billingBody')
@@ -47,9 +60,28 @@ export default function TeamAccessNoticePage() {
 				<h1 className="team-access-notice__title">{title}</h1>
 				<p className="team-access-notice__body">{body}</p>
 				<div className="team-access-notice__actions">
-					<button type="button" className="team-access-notice__btn primary" onClick={() => navigate('/dashboard')}>
-						{t('teamAccessNotice.backDashboard')}
-					</button>
+					{(userIsAdmin || userIsHR) && seatsIssue ? (
+						<button
+							type="button"
+							className="team-access-notice__btn primary"
+							onClick={() => navigate('/packages')}
+						>
+							{t('teamAccessNotice.goPackages')}
+						</button>
+					) : (
+						<button type="button" className="team-access-notice__btn primary" onClick={() => navigate('/dashboard')}>
+							{t('teamAccessNotice.backDashboard')}
+						</button>
+					)}
+					{userIsAdmin && seatsIssue ? (
+						<button
+							type="button"
+							className="team-access-notice__btn secondary"
+							onClick={() => navigate('/team-management')}
+						>
+							{t('teamAccessNotice.goTeamManagement')}
+						</button>
+					) : null}
 					<button type="button" className="team-access-notice__btn secondary" onClick={handleLogout}>
 						{t('teamAccessNotice.logout')}
 					</button>

@@ -72,6 +72,9 @@ function isFreemiumSeatOverageAllowed(path, method, teamId) {
 
 	if (pathStartsWithAny(path, ['/api/settings', '/api/email-notifications', '/api/tickets'])) return true
 
+	/** Powiadomienia, push i logi — nie blokują panelu admina przy przycinaniu zespołu. */
+	if (pathStartsWithAny(path, ['/api/notifications', '/api/push', '/api/userlogs'])) return true
+
 	return false
 }
 

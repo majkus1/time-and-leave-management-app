@@ -73,6 +73,13 @@ describe('freemiumApiPolicyService', () => {
 		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'POST', teamId), true)
 	})
 
+	it('seat overcapacity: notifications, push i userlogs dozwolone (panel admina)', () => {
+		const teamId = '507f1f77bcf86cd799439011'
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/notifications', 'GET', teamId), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/push/preferences', 'GET', teamId), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/userlogs/abc', 'GET', teamId), true)
+	})
+
 	it('normalizeApiPath obcina query string', () => {
 		const req = { originalUrl: '/api/workdays?x=1', url: '/other' }
 		assert.equal(policy.normalizeApiPath(req), '/api/workdays')

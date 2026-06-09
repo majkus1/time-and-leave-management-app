@@ -100,10 +100,10 @@ function AppContent() {
 	useEffect(() => {
 		const interceptor = axios.interceptors.response.use(
 			res => res,
-			err => handleAuthError({ err, axiosInstance: axios, apiUrl: API_URL, loggedIn, logout })
+			err => handleAuthError({ err, axiosInstance: axios, apiUrl: API_URL, loggedIn, logout, role })
 		)
 		return () => axios.interceptors.response.eject(interceptor)
-	}, [loggedIn, logout])
+	}, [loggedIn, logout, role])
 
 	function ScrollToHashElement() {
 		const { hash } = useLocation()

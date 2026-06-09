@@ -93,6 +93,72 @@ describe('authErrorHandler', () => {
 		expect(logout).toHaveBeenCalledTimes(1)
 	})
 
+	it('redirects worker to notice on seat overcapacity', async () => {
+		const assign = vi.fn()
+		vi.stubGlobal('location', { pathname: '/dashboard', assign })
+
+		const err = {
+			config: { url: '/api/schedules' },
+			response: { status: 403, data: { code: 'FREEMIUM_SEAT_OVER_CAPACITY' } },
+		}
+
+		await expect(handleAuthError({
+			err,
+			axiosInstance: createAxiosMock(),
+			apiUrl: API_URL,
+			loggedIn: true,
+			logout: vi.fn(),
+			role: ['Pracownik (Worker)'],
+		})).rejects.toEqual(err)
+
+		expect(assign).toHaveBeenCalledWith('/team-access-notice?reason=seats')
+		vi.unstubAllGlobals()
+	})
+
+	it('sends admin to packages on seat overcapacity outside escape paths', async () => {
+		const assign = vi.fn()
+		vi.stubGlobal('location', { pathname: '/dashboard', assign })
+
+		const err = {
+			config: { url: '/api/schedules' },
+			response: { status: 403, data: { code: 'FREEMIUM_SEAT_OVER_CAPACITY' } },
+		}
+
+		await expect(handleAuthError({
+			err,
+			axiosInstance: createAxiosMock(),
+			apiUrl: API_URL,
+			loggedIn: true,
+			logout: vi.fn(),
+			role: ['Admin'],
+		})).rejects.toEqual(err)
+
+		expect(assign).toHaveBeenCalledWith('/packages')
+		vi.unstubAllGlobals()
+	})
+
+	it('does not redirect admin already on team management', async () => {
+		const assign = vi.fn()
+		vi.stubGlobal('location', { pathname: '/team-management', assign })
+
+		const err = {
+			config: { url: '/api/schedules' },
+			response: { status: 403, data: { code: 'FREEMIUM_SEAT_OVER_CAPACITY' } },
+		}
+
+		await expect(handleAuthError({
+			err,
+			axiosInstance: createAxiosMock(),
+			apiUrl: API_URL,
+			loggedIn: true,
+			logout: vi.fn(),
+			role: ['Admin'],
+		})).rejects.toEqual(err)
+
+		expect(assign).not.toHaveBeenCalled()
+		vi.unstubAllGlobals()
+	})
+
 	it('does not log out on regular 403 without CSRF error code', async () => {
 		const axiosInstance = createAxiosMock()
 		const logout = vi.fn()
