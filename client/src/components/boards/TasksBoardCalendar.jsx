@@ -220,7 +220,7 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 						value={currentMonth}
 						onChange={handleMonthSelect}
 						style={selectStyle}
-						className="focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="calendar-month-select focus:outline-none focus:ring-2 focus:ring-blue-500"
 						aria-label={t('workcalendar.monthlabel')}
 					>
 						{Array.from({ length: 12 }, (_, i) => {

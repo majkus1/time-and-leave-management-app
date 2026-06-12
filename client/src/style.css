@@ -1243,6 +1243,49 @@ hr {
 	top: 80px;
 }
 
+.btn-excel.btn-success,
+.btn-pdf.btn-primary,
+.btn-print-leavereq.btn-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 150px;
+	height: 41px;
+	padding: 0 18px;
+	border: 0 !important;
+	border-radius: 8px;
+	color: #fff !important;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1;
+	box-shadow: none;
+}
+
+.btn-excel.btn-success {
+	background: #16a34a !important;
+}
+
+.btn-pdf.btn-primary,
+.btn-print-leavereq.btn-primary {
+	background: #2f91d0 !important;
+}
+
+.btn-excel.btn-success:hover:not(:disabled) {
+	background: #15803d !important;
+}
+
+.btn-pdf.btn-primary:hover:not(:disabled),
+.btn-print-leavereq.btn-primary:hover:not(:disabled) {
+	background: #287fb6 !important;
+}
+
+.btn-excel.btn-success:disabled,
+.btn-pdf.btn-primary:disabled,
+.btn-print-leavereq.btn-primary:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
 #calendars-works-review {
 	margin-top: 50px;
 }
@@ -3715,13 +3758,6 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 
 .pdfexcelbtns .btn-pdf.btn-primary {
 	display: none;
-	background-color: #3498db !important;
-	border-color: #2980b9 !important;
-}
-
-.pdfexcelbtns .btn-pdf.btn-primary:hover {
-	background-color: #2980b9 !important;
-	border-color: #2471a3 !important;
 }
 
 @media (min-width: 1200px) {
@@ -4048,6 +4084,18 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	font-weight: bold;
 }
 
+@media (max-width: 768px) {
+	.calendar-controls .calendar-month-select,
+	.leave-request-period-filter .calendar-month-select,
+	.leave-insights-modal__period .calendar-month-select {
+		field-sizing: content;
+		width: auto !important;
+		min-width: 108px;
+		max-width: min(42vw, 168px);
+		white-space: nowrap;
+	}
+}
+
 #calendars-works-review {
 	margin-bottom: 10px;
 }
@@ -4199,23 +4247,23 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 #calendars-works-review .newbutton-confirmmonth {
 	width: 100%;
 	min-width: 0 !important;
-	margin: 12px 0 14px !important;
-	padding: 10px 20px !important;
+	margin: 10px 0 12px !important;
+	padding: 8px 16px !important;
 	border: none !important;
-	border-radius: 12px !important;
+	border-radius: 11px !important;
 	color: #ffffff !important;
 	background: #22c55e !important;
-	box-shadow: 0 12px 22px rgba(34, 197, 94, 0.18);
-	font-size: 16px;
+	box-shadow: 0 10px 18px rgba(34, 197, 94, 0.16);
+	font-size: 14px;
 	font-weight: 700;
-	line-height: 1.4;
+	line-height: 1.3;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	min-height: 55px;
+	min-height: 44px;
 	text-align: center;
 	white-space: normal;
 	word-break: normal;
@@ -4359,6 +4407,15 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	#calendars-works-review .resume-month-work > p {
 		padding: 11px 12px;
 		font-size: 13px !important;
+	}
+
+	.calendar-my-work .newbutton-confirmmonth,
+	#calendars-works-review .newbutton-confirmmonth {
+		margin: 8px 0 10px !important;
+		padding: 7px 12px !important;
+		border-radius: 10px !important;
+		font-size: 13px;
+		min-height: 40px;
 	}
 
 	#calendars-works-review .row {
@@ -5016,7 +5073,8 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 16px;
-	margin-bottom: 18px;
+	margin-bottom: 14px;
+	padding-right: 42px;
 }
 
 .leave-insights-modal__header h2,
@@ -5051,6 +5109,12 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	cursor: pointer;
 }
 
+.leave-insights-modal__header .leave-insights-modal__close {
+	position: absolute;
+	top: 18px;
+	right: 18px;
+}
+
 .leave-insights-modal__header-actions {
 	display: flex;
 	align-items: center;
@@ -5059,33 +5123,45 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	flex-wrap: wrap;
 }
 
-.leave-insights-modal__header .leave-insights-export-button {
+.leave-insights-modal__export-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+	margin-bottom: 16px;
+	max-width: 300px;
+}
+
+.leave-insights-modal__header .leave-insights-export-button,
+.leave-insights-modal__export-actions .leave-insights-export-button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	flex: 0 0 auto;
 	width: auto;
-	min-width: 76px;
-	height: 34px;
-	padding: 0 12px;
-	border: 1px solid transparent;
+	min-width: 150px;
+	height: 41px;
+	padding: 0 18px;
+	border: 0;
 	border-radius: 8px;
 	color: #fff;
-	font-size: 13px;
+	font-size: 14px;
 	font-weight: 700;
 	line-height: 1;
-	box-shadow: 0 8px 18px rgba(15, 42, 74, 0.1);
+	box-shadow: none;
 }
 
-.leave-insights-modal__header .leave-insights-export-button.is-excel {
+.leave-insights-modal__header .leave-insights-export-button.is-excel,
+.leave-insights-modal__export-actions .leave-insights-export-button.is-excel {
 	background: #16a34a;
 }
 
-.leave-insights-modal__header .leave-insights-export-button.is-pdf {
+.leave-insights-modal__header .leave-insights-export-button.is-pdf,
+.leave-insights-modal__export-actions .leave-insights-export-button.is-pdf {
 	background: #2f91d0;
 }
 
-.leave-insights-modal__header .leave-insights-export-button:disabled {
+.leave-insights-modal__header .leave-insights-export-button:disabled,
+.leave-insights-modal__export-actions .leave-insights-export-button:disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
 }
@@ -5664,6 +5740,8 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	.leave-insights-modal__header {
 		align-items: flex-start;
 		flex-wrap: wrap;
+		margin-bottom: 12px;
+		padding-right: 38px;
 	}
 
 	.leave-insights-modal__header-actions {
@@ -5671,7 +5749,18 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		justify-content: flex-start;
 	}
 
-	.leave-insights-modal__header .leave-insights-export-button {
+	.leave-insights-modal__header .leave-insights-modal__close {
+		top: 14px;
+		right: 14px;
+	}
+
+	.leave-insights-modal__export-actions {
+		max-width: none;
+		margin-bottom: 14px;
+	}
+
+	.leave-insights-modal__header .leave-insights-export-button,
+	.leave-insights-modal__export-actions .leave-insights-export-button {
 		flex: 1 1 96px;
 	}
 
@@ -6448,9 +6537,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 .workday-bulk-fill-button {
 	background: #ffffff;
-	border: 1px solid #0d6efd;
+	border: 1px solid #22c55e;
 	border-radius: 6px;
-	color: #0d6efd;
+	color: #15803d;
 	cursor: pointer;
 	font-weight: 700;
 	padding: 9px 14px;
@@ -6458,9 +6547,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 }
 
 .workday-bulk-fill-button:hover {
-	background: #eef6ff;
-	border-color: #0b5ed7;
-	color: #0b5ed7;
+	background: #f0fdf4;
+	border-color: #16a34a;
+	color: #166534;
 }
 
 .workday-toolbar-actions {

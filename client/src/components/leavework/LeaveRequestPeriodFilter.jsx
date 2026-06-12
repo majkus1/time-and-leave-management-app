@@ -38,6 +38,7 @@ function LeaveRequestPeriodFilter({
 				<label>
 					<span>{t('leaveRequestFilter.month')}</span>
 					<select
+						className="calendar-month-select"
 						value={selectedMonth}
 						onChange={(event) => onMonthChange(event.target.value === 'all' ? 'all' : Number(event.target.value))}
 						disabled={selectedYear === 'all'}

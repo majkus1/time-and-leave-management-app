@@ -554,7 +554,7 @@ function AdminAllLeaveCalendar() {
 				</div>
 				<div className="calendar-controls flex flex-wrap items-center" style={{ marginTop: '20px', gap: '5px', alignItems: 'center' }}>
 						<>
-							<select value={calendarView === 'all-months' ? 'all-months' : currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+							<select value={calendarView === 'all-months' ? 'all-months' : currentMonth} onChange={handleMonthSelect} style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }} className="calendar-month-select focus:outline-none focus:ring-2 focus:ring-blue-500">
 								<option value="all-months">{t('planslist.allMonths') || 'Wszystkie miesiące'}</option>
 								{Array.from({ length: 12 }, (_, i) => (
 									<option key={i} value={i}>

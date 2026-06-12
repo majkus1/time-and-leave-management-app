@@ -517,25 +517,26 @@ function LeaveRequestInsightsModal({
 					<h2>{t('leaveRequestInsights.title')}</h2>
 					<p>{t('leaveRequestInsights.subtitle')}</p>
 				</div>
-				<div className="leave-insights-modal__header-actions">
-					<button
-						type="button"
-						className="leave-insights-export-button is-excel"
-						onClick={handleExportExcel}
-						disabled={exporting !== null}
-					>
-						{exporting === 'excel' ? 'Generowanie...' : 'Excel'}
-					</button>
-					<button
-						type="button"
-						className="leave-insights-export-button is-pdf"
-						onClick={handleExportPdf}
-						disabled={exporting !== null}
-					>
-						{exporting === 'pdf' ? 'Generowanie...' : 'PDF'}
-					</button>
-					<button type="button" onClick={onRequestClose} aria-label={t('leaveRequestInsights.close')}>×</button>
-				</div>
+				<button type="button" className="leave-insights-modal__close" onClick={onRequestClose} aria-label={t('leaveRequestInsights.close')}>×</button>
+			</div>
+
+			<div className="leave-insights-modal__export-actions">
+				<button
+					type="button"
+					className="leave-insights-export-button is-excel"
+					onClick={handleExportExcel}
+					disabled={exporting !== null}
+				>
+					{exporting === 'excel' ? 'Generowanie...' : 'Excel'}
+				</button>
+				<button
+					type="button"
+					className="leave-insights-export-button is-pdf"
+					onClick={handleExportPdf}
+					disabled={exporting !== null}
+				>
+					{exporting === 'pdf' ? 'Generowanie...' : 'PDF'}
+				</button>
 			</div>
 
 			<div className="leave-insights-modal__period">
@@ -556,6 +557,7 @@ function LeaveRequestInsightsModal({
 				<label>
 					<span>{t('leaveRequestFilter.month')}</span>
 					<select
+						className="calendar-month-select"
 						value={selectedMonth}
 						disabled={selectedYear === 'all'}
 						onChange={(event) => onMonthChange(event.target.value === 'all' ? 'all' : Number(event.target.value))}

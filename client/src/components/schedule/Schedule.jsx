@@ -1523,6 +1523,7 @@ function Schedule() {
 					<select
 						value={currentMonth}
 						onChange={handleMonthSelect}
+						className="calendar-month-select"
 						style={{
 							padding: '8px 12px',
 							border: '1px solid #bdc3c7',

@@ -517,6 +517,8 @@ function MonthlyCalendar() {
 		formatWorkDuration(hours, { preferClockUnderHour: calendarFilterActive })
 	const formatBreakdownRow = (hours) =>
 		formatWorkDuration(hours, { preferClockUnderHour: breakdownUsesClockFormat })
+	const formatTaskBreakdownRow = (hours) =>
+		formatWorkDuration(hours, { preferClockUnderHour: true })
 
 	const calendarEvents = React.useMemo(() => {
 		const filterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
@@ -1434,7 +1436,7 @@ function MonthlyCalendar() {
 						value={currentMonth}
 						onChange={handleMonthSelect}
 						style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', fontSize: '16px' }}
-						className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+						className="calendar-month-select focus:outline-none focus:ring-2 focus:ring-blue-500">
 						{Array.from({ length: 12 }, (_, i) => (
 							<option key={i} value={i}>
 								{new Date(0, i)
@@ -1688,7 +1690,7 @@ function MonthlyCalendar() {
 						</h4>
 						{taskSummaryRows.map(row => (
 							<p key={row.taskId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
-								{row.taskName}: <strong>{formatBreakdownRow(row.hours)} h</strong>
+								{row.taskName}: <strong>{formatTaskBreakdownRow(row.hours)} h</strong>
 							</p>
 						))}
 					</div>
