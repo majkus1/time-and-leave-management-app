@@ -73,8 +73,31 @@ function TimerPanel() {
 	const activeTimerMonth = Number.isNaN(activeTimerDate.getTime()) ? currentMonth : activeTimerDate.getMonth()
 	const activeTimerYear = Number.isNaN(activeTimerDate.getTime()) ? currentYear : activeTimerDate.getFullYear()
 	const { data: isTimerMonthConfirmed = false } = useCalendarConfirmation(activeTimerMonth, activeTimerYear)
-	const timerMonthConfirmedReason = t('workcalendar.bulkFill.errors.monthConfirmed') || 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
 	const timerMonthLocked = !!isTimerMonthConfirmed
+	const timerMonthConfirmedBase = i18n.resolvedLanguage === 'pl'
+		? 'Miesiąc jest potwierdzony.'
+		: 'This month is confirmed.'
+	const getTimerMonthLockedMessage = (action) => {
+		if (i18n.resolvedLanguage !== 'pl') {
+			const actions = {
+				start: 'start the time counter',
+				stop: 'stop and save the time counter',
+				pause: 'pause or resume the time counter',
+				edit: 'edit the active time counter entry',
+				split: 'save this session and continue',
+			}
+			return `${timerMonthConfirmedBase} Revert confirmation to ${actions[action] || 'change time counter entries'}.`
+		}
+
+		const actions = {
+			start: 'uruchomić licznik czasu',
+			stop: 'zatrzymać i zapisać licznik czasu',
+			pause: 'wstrzymać lub wznowić licznik czasu',
+			edit: 'edytować aktywny wpis licznika czasu',
+			split: 'zapisać sesję i kontynuować pracę',
+		}
+		return `${timerMonthConfirmedBase} Cofnij potwierdzenie, aby ${actions[action] || 'zmieniać wpisy z licznika czasu'}.`
+	}
 
 	// Fetch sessions from current month to get unique work descriptions
 	const { data: sessionsData } = useTodaySessions(currentMonth, currentYear)
@@ -282,7 +305,7 @@ function TimerPanel() {
 	// Check if timer can be started today
 	const canStartToday = useMemo(() => {
 		if (timerMonthLocked) {
-			return { canStart: false, reason: timerMonthConfirmedReason }
+			return { canStart: false, reason: getTimerMonthLockedMessage('start') }
 		}
 
 		if (!settings) return { canStart: true } // If settings not loaded, allow (backend will check)
@@ -325,7 +348,7 @@ function TimerPanel() {
 		}
 
 		return { canStart: true }
-	}, [timerMonthLocked, timerMonthConfirmedReason, settings, acceptedLeaveRequests, workdays, t])
+	}, [timerMonthLocked, timerMonthConfirmedBase, i18n.resolvedLanguage, settings, acceptedLeaveRequests, workdays, t])
 
 	const handleStart = async () => {
 		// Check frontend validation first
@@ -354,7 +377,7 @@ function TimerPanel() {
 
 	const handlePause = async () => {
 		if (timerMonthLocked) {
-			await showAlert(timerMonthConfirmedReason)
+			await showAlert(getTimerMonthLockedMessage('pause'))
 			return
 		}
 
@@ -368,7 +391,7 @@ function TimerPanel() {
 
 	const handleStop = async () => {
 		if (timerMonthLocked) {
-			await showAlert(timerMonthConfirmedReason)
+			await showAlert(getTimerMonthLockedMessage('stop'))
 			return
 		}
 
@@ -399,7 +422,7 @@ function TimerPanel() {
 
 	const handleUpdateDescription = async () => {
 		if (timerMonthLocked) {
-			await showAlert(timerMonthConfirmedReason)
+			await showAlert(getTimerMonthLockedMessage('edit'))
 			return
 		}
 
@@ -513,7 +536,7 @@ function TimerPanel() {
 						lineHeight: 1.45,
 					}}
 				>
-					{timerMonthConfirmedReason}
+					{isActive ? getTimerMonthLockedMessage('stop') : getTimerMonthLockedMessage('start')}
 				</div>
 			)}
 
@@ -770,8 +793,8 @@ function TimerPanel() {
 									<div style={{ display: 'flex', gap: '10px' }}>
 										<button
 											onClick={async () => {
-												if (isTimerMonthConfirmed) {
-													await showAlert(timerMonthConfirmedReason)
+												if (timerMonthLocked) {
+													await showAlert(getTimerMonthLockedMessage('split'))
 													return
 												}
 
@@ -912,6 +935,7 @@ function TimerPanel() {
 						<button
 							onClick={handlePause}
 							disabled={pauseTimer.isPending || timerMonthLocked}
+							title={timerMonthLocked ? getTimerMonthLockedMessage('pause') : ''}
 							style={{
 								flex: 1,
 								minWidth: '120px',
@@ -944,7 +968,7 @@ function TimerPanel() {
 								cursor: (stopTimer.isPending || isFromQR || timerMonthLocked) ? 'not-allowed' : 'pointer',
 								opacity: (stopTimer.isPending || isFromQR || timerMonthLocked) ? 0.6 : 1
 							}}
-							title={timerMonthLocked ? timerMonthConfirmedReason : (isFromQR ? (t('timer.stopQROnly') || 'Licznik czasu pracy uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : '')}
+							title={timerMonthLocked ? getTimerMonthLockedMessage('stop') : (isFromQR ? (t('timer.stopQROnly') || 'Licznik czasu pracy uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : '')}
 						>
 							{t('timer.stop') || 'Stop'}
 						</button>
@@ -1027,6 +1051,7 @@ function TimerPanel() {
 					<button
 						onClick={handleStart}
 						disabled={startTimer.isPending || timerMonthLocked}
+						title={timerMonthLocked ? getTimerMonthLockedMessage('start') : ''}
 						style={{
 							width: '100%',
 							backgroundColor: '#27ae60',
