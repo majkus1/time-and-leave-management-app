@@ -11,6 +11,7 @@ import { useWorkActivities } from '../../hooks/useWorkActivities'
 import { teamHasWorkActivities, getEnabledWorkActivities, getWorkActivityName, findWorkActivityById } from '../../utils/workActivities'
 import { buildTimerSelectValue, parseTimerSelectValue } from '../../utils/timerSessionSelect'
 import { useWorkdays } from '../../hooks/useWorkdays'
+import { useCalendarConfirmation } from '../../hooks/useCalendar'
 import { isHolidayDate } from '../../utils/holidays'
 import axios from 'axios'
 import { API_URL } from '../../config'
@@ -68,6 +69,12 @@ function TimerPanel() {
 	const currentDate = new Date()
 	const currentMonth = currentDate.getMonth()
 	const currentYear = currentDate.getFullYear()
+	const activeTimerDate = activeTimer?.startTime ? new Date(activeTimer.startTime) : currentDate
+	const activeTimerMonth = Number.isNaN(activeTimerDate.getTime()) ? currentMonth : activeTimerDate.getMonth()
+	const activeTimerYear = Number.isNaN(activeTimerDate.getTime()) ? currentYear : activeTimerDate.getFullYear()
+	const { data: isTimerMonthConfirmed = false } = useCalendarConfirmation(activeTimerMonth, activeTimerYear)
+	const timerMonthConfirmedReason = t('workcalendar.bulkFill.errors.monthConfirmed') || 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
+	const timerMonthLocked = !!isTimerMonthConfirmed
 
 	// Fetch sessions from current month to get unique work descriptions
 	const { data: sessionsData } = useTodaySessions(currentMonth, currentYear)
@@ -274,6 +281,10 @@ function TimerPanel() {
 
 	// Check if timer can be started today
 	const canStartToday = useMemo(() => {
+		if (timerMonthLocked) {
+			return { canStart: false, reason: timerMonthConfirmedReason }
+		}
+
 		if (!settings) return { canStart: true } // If settings not loaded, allow (backend will check)
 
 		const today = new Date()
@@ -314,7 +325,7 @@ function TimerPanel() {
 		}
 
 		return { canStart: true }
-	}, [settings, acceptedLeaveRequests, workdays, t])
+	}, [timerMonthLocked, timerMonthConfirmedReason, settings, acceptedLeaveRequests, workdays, t])
 
 	const handleStart = async () => {
 		// Check frontend validation first
@@ -342,6 +353,11 @@ function TimerPanel() {
 	}
 
 	const handlePause = async () => {
+		if (timerMonthLocked) {
+			await showAlert(timerMonthConfirmedReason)
+			return
+		}
+
 		try {
 			await pauseTimer.mutateAsync()
 		} catch (error) {
@@ -351,6 +367,11 @@ function TimerPanel() {
 	}
 
 	const handleStop = async () => {
+		if (timerMonthLocked) {
+			await showAlert(timerMonthConfirmedReason)
+			return
+		}
+
 		try {
 			if (!(await validateClosingQuantity())) return
 			await stopTimer.mutateAsync({ quantity: closingQuantityPayload() })
@@ -377,6 +398,11 @@ function TimerPanel() {
 	}
 
 	const handleUpdateDescription = async () => {
+		if (timerMonthLocked) {
+			await showAlert(timerMonthConfirmedReason)
+			return
+		}
+
 		try {
 			await updateTimer.mutateAsync({
 				workDescription: editingDescription.trim() || '',
@@ -473,6 +499,23 @@ function TimerPanel() {
 					})}
 				</span>
 			</h3>
+
+			{timerMonthLocked && (
+				<div
+					style={{
+						marginBottom: '16px',
+						padding: '10px 12px',
+						borderRadius: '8px',
+						border: '1px solid #fde68a',
+						backgroundColor: '#fffbeb',
+						color: '#92400e',
+						fontSize: '14px',
+						lineHeight: 1.45,
+					}}
+				>
+					{timerMonthConfirmedReason}
+				</div>
+			)}
 
 			{isActive ? (
 				<>
@@ -624,7 +667,7 @@ function TimerPanel() {
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
 									onClick={handleUpdateDescription}
-									disabled={updateTimer.isPending}
+									disabled={updateTimer.isPending || timerMonthLocked}
 									style={{
 										flex: 1,
 										backgroundColor: '#27ae60',
@@ -634,8 +677,8 @@ function TimerPanel() {
 										borderRadius: '6px',
 										fontSize: '14px',
 										fontWeight: '500',
-										cursor: updateTimer.isPending ? 'not-allowed' : 'pointer',
-										opacity: updateTimer.isPending ? 0.6 : 1
+										cursor: (updateTimer.isPending || timerMonthLocked) ? 'not-allowed' : 'pointer',
+										opacity: (updateTimer.isPending || timerMonthLocked) ? 0.6 : 1
 									}}
 								>
 									{t('timer.save') || 'Zapisz'}
@@ -727,6 +770,11 @@ function TimerPanel() {
 									<div style={{ display: 'flex', gap: '10px' }}>
 										<button
 											onClick={async () => {
+												if (isTimerMonthConfirmed) {
+													await showAlert(timerMonthConfirmedReason)
+													return
+												}
+
 												try {
 													if (!(await validateClosingQuantity())) return
 													await splitSession.mutateAsync({
@@ -749,7 +797,7 @@ function TimerPanel() {
 													await showAlert(error.response?.data?.message || t('timer.splitError') || 'Błąd podczas zapisywania sesji')
 												}
 											}}
-											disabled={splitSession.isPending}
+											disabled={splitSession.isPending || timerMonthLocked}
 											style={{
 												flex: 1,
 												backgroundColor: '#9b59b6',
@@ -759,8 +807,8 @@ function TimerPanel() {
 												borderRadius: '6px',
 												fontSize: '14px',
 												fontWeight: '500',
-												cursor: splitSession.isPending ? 'not-allowed' : 'pointer',
-												opacity: splitSession.isPending ? 0.6 : 1
+												cursor: (splitSession.isPending || timerMonthLocked) ? 'not-allowed' : 'pointer',
+												opacity: (splitSession.isPending || timerMonthLocked) ? 0.6 : 1
 											}}
 										>
 											{splitSession.isPending ? (t('timer.saving') || 'Zapisywanie...') : (t('timer.saveAndContinue') || 'Zapisz sesję i kontynuuj')}
@@ -839,11 +887,12 @@ function TimerPanel() {
 										await showAlert(error.response?.data?.message || t('timer.updateError') || 'Błąd podczas aktualizacji')
 									}
 								}}
-								disabled={updateTimer.isPending}
+								disabled={updateTimer.isPending || timerMonthLocked}
 								style={{
 									width: '18px',
 									height: '18px',
-									cursor: updateTimer.isPending ? 'not-allowed' : 'pointer'
+									cursor: (updateTimer.isPending || timerMonthLocked) ? 'not-allowed' : 'pointer',
+									opacity: (updateTimer.isPending || timerMonthLocked) ? 0.6 : 1
 								}}
 							/>
 							<span style={{ fontWeight: '500' }}>
@@ -862,7 +911,7 @@ function TimerPanel() {
 					}}>
 						<button
 							onClick={handlePause}
-							disabled={pauseTimer.isPending}
+							disabled={pauseTimer.isPending || timerMonthLocked}
 							style={{
 								flex: 1,
 								minWidth: '120px',
@@ -873,15 +922,15 @@ function TimerPanel() {
 								borderRadius: '6px',
 								fontSize: '14px',
 								fontWeight: '500',
-								cursor: pauseTimer.isPending ? 'not-allowed' : 'pointer',
-								opacity: pauseTimer.isPending ? 0.6 : 1
+								cursor: (pauseTimer.isPending || timerMonthLocked) ? 'not-allowed' : 'pointer',
+								opacity: (pauseTimer.isPending || timerMonthLocked) ? 0.6 : 1
 							}}
 						>
 							{isBreak ? (t('timer.resume') || 'Wznów') : (t('timer.pause') || 'Przerwa')}
 						</button>
 						<button
 							onClick={handleStop}
-							disabled={stopTimer.isPending || isFromQR}
+							disabled={stopTimer.isPending || isFromQR || timerMonthLocked}
 							style={{
 								flex: 1,
 								minWidth: '120px',
@@ -892,10 +941,10 @@ function TimerPanel() {
 								borderRadius: '6px',
 								fontSize: '14px',
 								fontWeight: '500',
-								cursor: (stopTimer.isPending || isFromQR) ? 'not-allowed' : 'pointer',
-								opacity: (stopTimer.isPending || isFromQR) ? 0.6 : 1
+								cursor: (stopTimer.isPending || isFromQR || timerMonthLocked) ? 'not-allowed' : 'pointer',
+								opacity: (stopTimer.isPending || isFromQR || timerMonthLocked) ? 0.6 : 1
 							}}
-							title={isFromQR ? (t('timer.stopQROnly') || 'Licznik czasu pracy uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : ''}
+							title={timerMonthLocked ? timerMonthConfirmedReason : (isFromQR ? (t('timer.stopQROnly') || 'Licznik czasu pracy uruchomiony przez kod QR może być zatrzymany tylko przez ponowne zeskanowanie kodu QR') : '')}
 						>
 							{t('timer.stop') || 'Stop'}
 						</button>
@@ -977,7 +1026,7 @@ function TimerPanel() {
 
 					<button
 						onClick={handleStart}
-						disabled={startTimer.isPending}
+						disabled={startTimer.isPending || timerMonthLocked}
 						style={{
 							width: '100%',
 							backgroundColor: '#27ae60',
@@ -987,8 +1036,8 @@ function TimerPanel() {
 							borderRadius: '6px',
 							fontSize: '16px',
 							fontWeight: '500',
-							cursor: startTimer.isPending ? 'not-allowed' : 'pointer',
-							opacity: startTimer.isPending ? 0.6 : 1,
+							cursor: (startTimer.isPending || timerMonthLocked) ? 'not-allowed' : 'pointer',
+							opacity: (startTimer.isPending || timerMonthLocked) ? 0.6 : 1,
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',

@@ -32,6 +32,8 @@ const { validateAndSanitizeWorkdayCreate, applyWorkdayUpdateFields } = require('
 const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
 const { resolveTimerActivityId, getTimerActivitySnapshot, groupTimerSessions } = require('../utils/timerWorkActivity')
 
+const CONFIRMED_MONTH_TIMER_MESSAGE = 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
+
 async function loadAllowedTasksMapForUser(targetUser) {
 	if (!targetUser?._id || !targetUser?.teamId) return new Map()
 	const tasks = await fetchTimesheetTasksForUser(targetUser._id, targetUser.teamId, targetUser)
@@ -42,6 +44,33 @@ async function loadAllowedTasksMapForUser(targetUser) {
 function isWeekend(date) {
 	const day = new Date(date).getDay()
 	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
+}
+
+async function isCalendarMonthConfirmed(userId, date) {
+	const checkDate = new Date(date)
+	if (!userId || Number.isNaN(checkDate.getTime())) return false
+
+	const confirmation = await CalendarConfirmation.findOne({
+		userId,
+		month: checkDate.getMonth(),
+		year: checkDate.getFullYear(),
+		isConfirmed: true,
+	}).lean()
+
+	return !!confirmation
+}
+
+async function ensureTimerMonthCanBeChanged(userId, date) {
+	if (await isCalendarMonthConfirmed(userId, date)) {
+		return {
+			ok: false,
+			status: 400,
+			message: CONFIRMED_MONTH_TIMER_MESSAGE,
+			code: 'MONTH_CONFIRMED',
+		}
+	}
+
+	return { ok: true }
 }
 
 /**
@@ -99,6 +128,10 @@ exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 		const dateStr = date.toISOString().split('T')[0]
 		const checkDate = new Date(date)
 		checkDate.setHours(0, 0, 0, 0)
+
+		if (await isCalendarMonthConfirmed(userId, checkDate)) {
+			return { canStart: false, reason: CONFIRMED_MONTH_TIMER_MESSAGE }
+		}
 
 		// No limit on timer sessions - timer hours will be added to existing hoursWorked
 
@@ -716,6 +749,11 @@ exports.pauseTimer = async (req, res) => {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
 		}
 
+		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
+		if (!monthLock.ok) {
+			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
+		}
+
 		const now = new Date()
 		
 		// Initialize break tracking if not exists
@@ -764,6 +802,11 @@ exports.stopTimer = async (req, res) => {
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
+		}
+
+		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
+		if (!monthLock.ok) {
+			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
 		}
 
 		const endTime = new Date()
@@ -924,6 +967,11 @@ exports.updateActiveTimer = async (req, res) => {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
 		}
 
+		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
+		if (!monthLock.ok) {
+			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
+		}
+
 		// Update work description and/or taskId
 		if (workDescription !== undefined) {
 			workday.activeTimer.workDescription = workDescription || ''
@@ -993,6 +1041,11 @@ exports.splitSession = async (req, res) => {
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
 			return res.status(400).json({ message: 'Brak aktywnego timera' })
+		}
+
+		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
+		if (!monthLock.ok) {
+			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
 		}
 
 		const endTime = new Date()
