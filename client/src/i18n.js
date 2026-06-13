@@ -387,6 +387,7 @@ i18n
 							'If you finished paying, your subscription will update in a moment. Refresh the page if limits have not changed yet.',
 						p24WebhookHint:
 							'Online payments need a public HTTPS webhook URL on the API server (P24_WEBHOOK_URL or API_PUBLIC_URL). Until then, use “Send request”.',
+						teamSeatsInTeam: '{{count}} user accounts in this team (counts toward plan limits).',
 						teamSeatsInTeam_one: '{{count}} user account in this team (counts toward plan limits).',
 						teamSeatsInTeam_other: '{{count}} user accounts in this team (counts toward plan limits).',
 						planSeatLimitExceeded:
@@ -436,6 +437,8 @@ i18n
 					},
 					schedule: {
 						title: 'Schedules',
+						creating: 'Creating...',
+						closeModal: 'Close',
 						noSchedules: 'No schedules available',
 						notFound: 'Schedule not found',
 						backToList: 'Back to schedules list',
@@ -830,6 +833,8 @@ i18n
 						forward: 'Forward',
 					},
 					workcalendar: {
+						saveError: 'Error saving entry',
+						exportError: 'Failed to generate PDF.',
 						confirmmonthbutton: 'Confirm month',
 						cancelconfirmation: 'Cancel confirmation',
 						processing: 'Processing...',
@@ -1102,6 +1107,7 @@ i18n
 						messageDeleted: 'Message deleted',
 						deleteMessageConfirm: 'Are you sure you want to delete this message?',
 						editMessageError: 'Failed to edit message',
+						deleteMessageError: 'Failed to delete message',
 						deletingMessage: 'Deleting...',
 						addAttachment: 'Add attachment',
 						removeAttachment: 'Remove attachment',
@@ -1177,6 +1183,7 @@ i18n
 					},
 					editprofile: {
 						headertxt: 'Edit profile',
+						loading: 'Loading...',
 						firstnamelabel: 'First name',
 						lastnamelabel: 'Last name',
 						firstnameplaceholder: 'Enter your first name',
@@ -1216,6 +1223,7 @@ i18n
 					},
 					leaveform: {
 						header: 'Leave or absence request',
+						loadingTypes: 'Loading types...',
 						dateAssistantButton: 'Date assistant',
 						closeDateAssistant: 'Close date assistant',
 						availableday: 'Available vacation days',
@@ -1684,6 +1692,7 @@ i18n
 					},
 					settings: {
 						title: 'Settings',
+						loading: 'Loading...',
 						workWeekendsTitle: 'Weekend work configuration',
 						howItWorks: 'How does it work?',
 						info1: 'If the team does NOT work on weekends:',
@@ -1735,6 +1744,10 @@ i18n
 						removeHoliday: 'Remove',
 						holidayDateNameRequired: 'Date and holiday name are required',
 						holidayDateExists: 'A holiday for this date already exists',
+						holidayAddSuccess: 'Holiday has been added successfully',
+						holidayAddError: 'Error adding holiday',
+						holidayDeleteSuccess: 'Holiday has been deleted successfully',
+						holidayDeleteError: 'Error deleting holiday',
 						workHoursTitle: 'Work hours configuration',
 						workHoursDescription: 'Configure standard work hours for your team. These hours will be immediately available as quick selection options in work time records forms and schedule entry forms, making data entry faster and more convenient.',
 						workHoursDescriptionFreemium:
@@ -2393,6 +2406,9 @@ i18n
 							'Jeśli dokończyłeś płatność, subskrypcja zaktualizuje się za chwilę. Odśwież stronę, jeśli limity się nie zmieniły.',
 						p24WebhookHint:
 							'Do automatycznej aktywacji po płatności potrzebny jest publiczny adres webhooka na API (HTTPS): P24_WEBHOOK_URL lub API_PUBLIC_URL. Do tego czasu użyj „Wyślij zgłoszenie”.',
+						usdIndicativeNote:
+							'Ceny w USD są orientacyjne (1 USD ≈ 3,69 PLN). Rozliczenie i faktury są w PLN.',
+						teamSeatsInTeam: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
 						teamSeatsInTeam_one: '{{count}} konto użytkownika w zespole (liczy się do limitu planu).',
 						teamSeatsInTeam_few: '{{count}} konta użytkowników w zespole (liczy się do limitu planu).',
 						teamSeatsInTeam_many: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
@@ -2444,6 +2460,8 @@ i18n
 					},
 					schedule: {
 						title: 'Grafiki',
+						creating: 'Tworzenie...',
+						closeModal: 'Zamknij',
 						noSchedules: 'Brak dostępnych grafików',
 						notFound: 'Grafik nie został znaleziony',
 						backToList: 'Wróć do listy grafików',
@@ -2838,6 +2856,8 @@ i18n
 						forward: 'Do przodu',
 					},
 					workcalendar: {
+						saveError: 'Błąd podczas zapisywania wpisu',
+						exportError: 'Nie udało się wygenerować PDF.',
 						confirmmonthbutton: 'Potwierdź miesiąc',
 						cancelconfirmation: 'Anuluj potwierdzenie',
 						processing: 'Przetwarzanie...',
@@ -3108,6 +3128,7 @@ i18n
 						messageDeleted: 'Wiadomość usunięta',
 						deleteMessageConfirm: 'Czy na pewno chcesz usunąć tę wiadomość?',
 						editMessageError: 'Nie udało się edytować wiadomości',
+						deleteMessageError: 'Nie udało się usunąć wiadomości',
 						deletingMessage: 'Usuwanie...',
 						addAttachment: 'Dodaj załącznik',
 						removeAttachment: 'Usuń załącznik',
@@ -3184,6 +3205,7 @@ i18n
 					},
 					editprofile: {
 						headertxt: 'Edytuj profil',
+						loading: 'Ładowanie...',
 						firstnamelabel: 'Imię',
 						lastnamelabel: 'Nazwisko',
 						firstnameplaceholder: 'Wpisz swoje imię',
@@ -3223,6 +3245,7 @@ i18n
 					},
 					leaveform: {
 						header: 'Wniosek o urlop lub nieobecność',
+						loadingTypes: 'Ładowanie typów...',
 						dateAssistantButton: 'Asystent terminu',
 						closeDateAssistant: 'Zamknij asystenta terminu',
 						availableday: 'Dostępne dni urlopu',
@@ -3655,6 +3678,7 @@ i18n
 					},
 					settings: {
 						title: 'Ustawienia',
+						loading: 'Ładowanie...',
 						workWeekendsTitle: 'Konfiguracja pracy w weekendy',
 						howItWorks: 'Jak to działa?',
 						info1: 'Jeśli zespół NIE pracuje w weekendy:',
@@ -3709,6 +3733,10 @@ i18n
 						removeHoliday: 'Usuń',
 						holidayDateNameRequired: 'Data i nazwa święta są wymagane',
 						holidayDateExists: 'Święto dla tej daty już istnieje',
+						holidayAddSuccess: 'Święto zostało dodane pomyślnie',
+						holidayAddError: 'Błąd podczas dodawania święta',
+						holidayDeleteSuccess: 'Święto zostało usunięte pomyślnie',
+						holidayDeleteError: 'Błąd podczas usuwania święta',
 						workHoursTitle: 'Konfiguracja godzin pracy',
 						workHoursDescription: 'Skonfiguruj standardowe godziny pracy dla Twojego zespołu. Te godziny będą od razu dostępne jako szybki wybór w formularzach ewidencji czasu pracy oraz w formularzach dodawania wpisów do grafiku, co znacznie przyspieszy wprowadzanie danych.',
 						workHoursDescriptionFreemium:
