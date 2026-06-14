@@ -1940,12 +1940,12 @@ i18n
 						infoModal: {
 							title: 'Work Time Counter Information',
 							howItWorks: 'How does the work time counter work?',
-							howItWorksDesc: 'The work time counter allows you to record work time. Click "Start" to begin tracking. You can add a work description or select a task from the list.\n\nImportant: work time is counted from start to stop - the work time counter continues counting even during breaks. Breaks and overtime are tracked separately and visible in session details after stopping.',
+							howItWorksDesc: 'Click "Start" to track work time and "Stop" when finished. You can add a description or choose a task before starting. Breaks and overtime are saved separately in session details.',
 							qrCode: 'QR Codes - Entry/Exit',
-							qrCodeDesc: 'Scan a QR code to start the work time counter (entry), then scan the same code again to stop it (exit).',
+							qrCodeDesc: 'Scan the QR code once to start work and again to stop it.',
 							configuration: 'Configuration',
-							configurationDesc: 'Administrators and HR can configure QR codes in team settings (Settings).',
-							canDisable: 'Administrators and HR can disable the work time counter function in team settings if it is not needed.',
+							configurationDesc: 'Administrators and HR manage QR codes in team settings.',
+							canDisable: 'The timer can also be disabled in team settings.',
 							close: 'Close'
 						}
 					},
@@ -3929,12 +3929,12 @@ i18n
 						infoModal: {
 							title: 'Informacje o liczniku czasu pracy',
 							howItWorks: 'Jak działa licznik czasu pracy?',
-							howItWorksDesc: 'Licznik czasu pracy pozwala na rejestrację czasu pracy. Kliknij "Start", aby rozpocząć pomiar. Możesz dodać opis pracy lub wybrać zadanie z listy.\n\nWażne: czas pracy liczy się od startu do stopu - nawet podczas przerwy licznik czasu pracy dalej liczy czas. Przerwy i nadgodziny są śledzone osobno i widoczne w szczegółach sesji po zatrzymaniu.',
+							howItWorksDesc: 'Kliknij "Start", aby rozpocząć pomiar, a "Stop", gdy kończysz pracę. Przed startem możesz dodać opis lub wybrać zadanie. Przerwy i nadgodziny zapisują się osobno w szczegółach sesji.',
 							qrCode: 'Kody QR - Wejście/Wyjście',
-							qrCodeDesc: 'Zeskanuj kod QR, aby rozpocząć licznik czasu pracy (wejście), a następnie zeskanuj ten sam kod ponownie, aby go zatrzymać (wyjście).',
+							qrCodeDesc: 'Zeskanuj kod QR raz, aby rozpocząć pracę, i ponownie, aby ją zakończyć.',
 							configuration: 'Konfiguracja',
-							configurationDesc: 'Administratorzy i HR mogą skonfigurować kody QR w ustawieniach zespołu (Settings).',
-							canDisable: 'Administratorzy i HR mogą wyłączyć funkcję licznika czasu pracy w ustawieniach zespołu, jeśli nie jest potrzebna.',
+							configurationDesc: 'Administratorzy i HR zarządzają kodami QR w ustawieniach zespołu.',
+							canDisable: 'Licznik można też wyłączyć w ustawieniach zespołu.',
 							close: 'Zamknij'
 						}
 					},

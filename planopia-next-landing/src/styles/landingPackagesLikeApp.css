@@ -7,7 +7,7 @@
 .landing-pricing-app-clone .packages-grid {
 	display: grid;
 	grid-template-columns: 1fr;
-	gap: 1rem;
+	gap: 1.25rem;
 }
 
 @media (min-width: 900px) {
@@ -19,19 +19,26 @@
 
 .landing-pricing-app-clone .packages-tier {
 	position: relative;
-	border: 1px solid #e2e8f0;
-	border-radius: 14px;
-	padding: 1.1rem;
-	background: #fff;
-	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+	border: 1px solid #dbe6f2;
+	border-radius: 18px;
+	padding: 1.35rem;
+	background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+	box-shadow: 0 16px 34px rgba(16, 47, 94, 0.08);
 	display: flex;
 	flex-direction: column;
 	min-height: 100%;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .landing-pricing-app-clone .packages-tier--highlight {
-	border-color: #a5b4fc;
-	box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+	border-color: #00a63e;
+	box-shadow: 0 18px 42px rgba(0, 166, 62, 0.13);
+	background: linear-gradient(180deg, #ffffff 0%, #f5fff8 100%);
+}
+
+.landing-pricing-app-clone .packages-tier:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 20px 44px rgba(16, 47, 94, 0.12);
 }
 
 .landing-pricing-app-clone .packages-tier__badge {
@@ -39,7 +46,7 @@
 	top: -0.5rem;
 	left: 50%;
 	transform: translateX(-50%);
-	background: linear-gradient(90deg, #6366f1, #8b5cf6);
+	background: #00a63e;
 	/* Globalne `a { color }` / Tailwind nie mogą nadpisać — tekst na fioletowym tle */
 	color: #ffffff !important;
 	font-size: 0.65rem;
@@ -54,13 +61,14 @@
 .landing-pricing-app-clone .packages-tier h3 {
 	margin: 0.25rem 0 0.5rem;
 	font-size: 1.15rem;
-	color: #0f172a;
+	font-weight: 700;
+	color: #102f5e;
 }
 
 .landing-pricing-app-clone .packages-tier__price {
 	font-size: 1.9rem;
-	font-weight: 900;
-	color: #020617;
+	font-weight: 800;
+	color: #102f5e;
 	letter-spacing: -0.02em;
 	line-height: 1.05;
 	margin-bottom: 0.25rem;
@@ -92,7 +100,7 @@
 }
 
 .landing-pricing-app-clone .packages-tier__feature-check {
-	color: #059669;
+	color: #00a63e;
 	font-size: 1rem;
 	line-height: 1.25;
 	flex-shrink: 0;
@@ -132,8 +140,8 @@
 	border-radius: 10px;
 	font-weight: 600;
 	cursor: pointer;
-	border: 1px solid #0f172a;
-	background: #0f172a;
+	border: 1px solid #00a63e;
+	background: #00a63e;
 	color: #fff;
 	width: 100%;
 	font-size: inherit;
@@ -141,7 +149,9 @@
 }
 
 .landing-pricing-app-clone .packages-tier__cta:hover {
-	opacity: 0.92;
+	background: #008f45;
+	border-color: #008f45;
+	opacity: 1;
 }
 
 .landing-pricing-app-clone .packages-tier--core-summary {
@@ -157,35 +167,40 @@
 	width: 100%;
 	padding: 0.65rem 1rem;
 	border-radius: 10px;
-	border: none;
+	border: 1px solid #00a63e;
 	font-weight: 600;
 	cursor: pointer;
-	background: #0f172a;
-	color: #ffffff !important;
+	background: #ffffff;
+	color: #008f45 !important;
 	box-sizing: border-box;
 	font-size: inherit;
 	font-family: inherit;
 }
 
 .landing-pricing-app-clone .packages-tier--highlight a.packages-tier__bundle-cta {
-	background: linear-gradient(90deg, #4f46e5, #7c3aed);
+	background: #00a63e;
+	color: #ffffff !important;
 }
 
 .landing-pricing-app-clone .packages-tier a.packages-tier__bundle-cta:hover {
-	opacity: 0.92;
+	background: #008f45;
+	border-color: #008f45;
+	color: #ffffff !important;
+	opacity: 1;
 }
 
 .landing-pricing-app-clone .packages-enterprise-strip {
 	margin: 1.5rem 0 2rem;
 	padding: 1.25rem 1.5rem;
-	border-radius: 14px;
-	background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-	border: 1px solid #e2e8f0;
+	border-radius: 18px;
+	background: linear-gradient(135deg, #ffffff 0%, #f5fff8 100%);
+	border: 1px solid #dbe6f2;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem 2rem;
 	align-items: center;
 	justify-content: space-between;
+	box-shadow: 0 16px 34px rgba(16, 47, 94, 0.08);
 }
 
 .landing-pricing-app-clone .packages-enterprise-strip__main {
@@ -196,8 +211,8 @@
 .landing-pricing-app-clone .packages-enterprise-strip__main h3 {
 	margin: 0 0 0.35rem;
 	font-size: 1.1rem;
-	font-weight: 600;
-	color: #0f172a;
+	font-weight: 700;
+	color: #102f5e;
 }
 
 .landing-pricing-app-clone .packages-enterprise-strip__body {
@@ -217,9 +232,9 @@
 	border-radius: 10px;
 	font-weight: 600;
 	cursor: pointer;
-	border: 1px solid #334155;
+	border: 1px solid #b8c8dc;
 	background: #fff;
-	color: #0f172a;
+	color: #102f5e;
 	font-size: inherit;
 	font-family: inherit;
 	text-decoration: none;
@@ -227,7 +242,9 @@
 }
 
 .landing-pricing-app-clone .packages-enterprise-strip__btn:hover {
-	background: #f8fafc;
+	background: #f5fff8;
+	border-color: #00a63e;
+	color: #008f45;
 }
 
 /* Modal */

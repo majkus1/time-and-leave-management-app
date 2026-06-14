@@ -4,7 +4,7 @@ import { BLOG_TOPICS_PL } from '@/data/blogInternalLinks'
 export default function BlogTopicsNav() {
 	return (
 		<section
-			className="mb-10 md:mb-14 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-5 md:p-8"
+			className="blog-topics-nav mb-10 md:mb-14 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-5 md:p-8"
 			aria-labelledby="blog-topics-heading"
 		>
 			<h2 id="blog-topics-heading" className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 text-center">
@@ -17,7 +17,7 @@ export default function BlogTopicsNav() {
 				{BLOG_TOPICS_PL.map((topic) => (
 					<div
 						key={topic.id}
-						className="rounded-xl bg-white border border-slate-100 p-5 shadow-sm"
+						className="blog-topics-card rounded-xl bg-white border border-slate-100 p-5 shadow-sm"
 					>
 						<h3 className="text-lg font-semibold text-gray-900 mb-1">{topic.title}</h3>
 						<p className="text-sm text-gray-600 mb-4">{topic.description}</p>
@@ -26,7 +26,7 @@ export default function BlogTopicsNav() {
 								<li key={link.href}>
 									<Link
 										href={link.href}
-										className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline underline-offset-2"
+										className="blog-topics-link text-sm font-medium !text-[#102f5e] visited:!text-[#102f5e] hover:!text-[#008f45] focus-visible:!text-[#008f45] no-underline hover:underline focus-visible:underline underline-offset-[5px]"
 									>
 										{link.label}
 									</Link>

@@ -139,15 +139,15 @@ function ProductPromotion() {
 
 
 			{/* HEADER + MENU */}
-			<header className="bg-white top-0 z-50 w-full flex justify-between headerpromotionmenu" id="planopiaheader">
-				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
+			<header className="landing-polished-header bg-white top-0 z-50 w-full flex justify-between headerpromotionmenu" id="planopiaheader">
+				<div className="landing-polished-header-inner max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
 					<Link
 						href="/"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
-					<nav className="hidden desktop:flex space-x-8 navdesktop">
+					<nav className="landing-polished-nav hidden desktop:flex navdesktop">
 						<a
 							href="#oaplikacji"
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
@@ -177,7 +177,7 @@ function ProductPromotion() {
 						<Link
 							href="https://app.planopia.pl/"
 							onClick={toggleMenu}
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
+							className="landing-polished-login bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 						>
 							Logowanie
 						</Link>
@@ -185,12 +185,12 @@ function ProductPromotion() {
 						<Link
 							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
+							className="landing-polished-register bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
 							Załóż darmowy zespół
 						</Link>
 
-						<Link href="/en" className="flex items-center languagechoose">
+						<Link href="/en" className="landing-polished-language flex items-center languagechoose">
 							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
 						</Link>
 					</nav>
@@ -219,26 +219,31 @@ function ProductPromotion() {
 
 			<main>
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid md:grid-cols-2 gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
+			<section className="landing-polished-hero px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
+				<div className="landing-polished-hero-inner max-w-7xl mx-auto text-left">
+					<div className="landing-polished-hero-grid grid md:grid-cols-2 gap-10 items-center">
+						<div className="landing-polished-hero-copy ordering">
+							<p className="landing-polished-eyebrow">Wszystko w jednym miejscu</p>
+							<h1 className="landing-polished-title text-2xl sm:text-3xl font-bold text-blue-700">
 								{planOfferingCopy.pl.heroH1}
 							</h1>
-							<h2 className="font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
+							<h2 className="landing-polished-subtitle font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
 								{planOfferingCopy.pl.heroSub}
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
-								className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4">
+								className="landing-polished-hero-cta inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4">
 								Załóż darmowy zespół
 							</Link>
+							<div className="landing-polished-proof">
+								<span>Bez karty płatniczej</span>
+								<span>Gotowe w 2 minuty</span>
+							</div>
 						</div>
 						<img
-							src="/img/headerimage.webp"
+							src="/img/headerimage4.webp"
 							alt="biznesmen zaznaczający aplikację"
-							className="rounded-xl w-full h-auto aspect-[3/2]"
+							className="landing-polished-hero-image rounded-xl w-full h-auto aspect-[3/2]"
 							loading="eager"
 							fetchPriority="high"
 							width={800}
@@ -248,8 +253,19 @@ function ProductPromotion() {
 				</div>
 			</section>
 
-			<section id="oaplikacji" className="py-12 bg-white px-4">
+<section id="oaplikacji" className="py-12 bg-white px-4">
   <div className="max-w-7xl mx-auto">
+    <div className="landing-about-heading-block mb-8">
+        <p className="landing-about-heading-eyebrow">
+          Aplikacja do zarządzania firmą
+        </p>
+        <h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">
+          Wszystko, czego potrzebujesz w jednym systemie
+        </h2>
+        <p className="landing-about-intro mt-4 text-lg text-gray-600">
+          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań oraz Asystent AI — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
+        </p>
+    </div>
     <div
       className="
         grid gap-10
@@ -261,15 +277,8 @@ function ProductPromotion() {
     >
       {/* Tekst + kafelki */}
       <div className="[grid-area:features] min-w-0">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-          Kompleksowa aplikacja do zarządzania firmą
-        </h2>
-        <p className="mt-4 text-lg text-gray-600">
-          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań oraz Asystent AI — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
-        </p>
-
         {/* Feature grid */}
-        <div className="mt-8 grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           {/* 1 */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
             <img src="/img/schedule time works.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
@@ -298,8 +307,8 @@ function ProductPromotion() {
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 		  <img src="/img/pdf.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
-			<p className="font-semibold text-gray-900">Dokumenty</p>
-<p className="text-sm text-gray-600">Generowanie PDF i Excel: kalendarze pracy i wnioski urlopowe zawsze pod ręką.</p>
+			<p className="font-semibold text-gray-900">Raporty</p>
+<p className="text-sm text-gray-600">Biznesowe raporty PDF i Excel z danymi, statystykami i podsumowaniami dla zespołu.</p>
             </div>
 
           </div>
@@ -358,26 +367,26 @@ function ProductPromotion() {
       </div>
 
       <aside
-        className="[grid-area:callout] w-full rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/95 via-white to-slate-50 p-5 md:p-6 shadow-sm ring-1 ring-indigo-100/70"
+        className="landing-enterprise-callout [grid-area:callout] w-full rounded-xl p-5 md:p-6"
         aria-labelledby="planopia-enterprise-offer-heading-pl"
       >
         <h3
           id="planopia-enterprise-offer-heading-pl"
-          className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 mb-2"
+          className="landing-enterprise-callout__eyebrow text-xs font-semibold uppercase tracking-[0.12em] mb-2"
         >
           Rozwój Planopii pod Twoją organizację
         </h3>
-        <p className="text-gray-900 text-base md:text-lg leading-relaxed font-semibold">
+        <p className="landing-enterprise-callout__lead text-base md:text-lg leading-relaxed font-semibold">
           Potrzebujesz więcej niż standardowa oferta?{' '}
-          <span className="text-gray-800">
+          <span>
             Rozwijamy aplikację także pod konkretne potrzeby firm: dodatkowe funkcje, integracje dopasowane do procesów, osobne środowisko lub obsługa dużej liczby pracowników.
           </span>
         </p>
-        <p className="mt-3 text-gray-700 text-sm md:text-base leading-relaxed">
+        <p className="landing-enterprise-callout__text mt-3 text-sm md:text-base leading-relaxed">
           Zestawienie pakietów i limitów znajdziesz w sekcji{' '}
           <Link
             href="#cennik-pakiety-platne"
-            className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 underline-offset-[3px] hover:decoration-indigo-500 transition-colors"
+            className="landing-enterprise-callout__link font-semibold underline underline-offset-[3px] transition-colors"
           >
             Cennik
           </Link>{' '}
@@ -398,44 +407,42 @@ function ProductPromotion() {
 
 <section id="dlakogo" className="py-12 bg-gray-50 px-4 for">
   <div className="max-w-7xl mx-auto">
-    <div className="mb-10">
-      <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900">Dla kogo jest Planopia?</h3>
-      <p className="mt-3 text-lg text-gray-600">
-        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję, urlopy, grafiki i raporty, z Asystentem AI w ramach limitów wybranego pakietu.
-      </p>
+    <div className="landing-audience-heading mb-10">
+      <p className="landing-about-heading-eyebrow">Dla kogo jest Planopia?</p>
+      <h3 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">Jedna aplikacja, wiele możliwości</h3>
     </div>
 
-    <div className="grid md:grid-cols-3 gap-6 mb-4">
+    <div className="landing-audience-cards grid md:grid-cols-3 gap-6 mb-4">
       {/* 1: Małe zespoły */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/img/groupses.png" alt="Małe zespoły" className="w-10 h-10 rounded-lg object-contain" />
-          <p className="font-semibold text-gray-900">Małe zespoły</p>
+          <img src="/img/groupses.png" alt="Małe zespoły 1-15 osób" className="w-10 h-10 rounded-lg object-contain" />
+          <p className="font-semibold text-gray-900">Małe zespoły (1-15 osób)</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Szybka ewidencja, proste wnioski, przejrzysty kalendarz. Jasne role i uprawnienia — bez zbędnej złożoności.
+          Zastąp Excela jedną prostą aplikacją do czasu pracy, urlopów i grafików.
         </p>
       </div>
 
-      {/* 2: Firmy i organizacje */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      {/* 2: Rozwijające się firmy */}
+      <div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/img/enterprise.png" alt="Firmy i organizacje" className="w-10 h-10 rounded-lg object-contain" />
-          <p className="font-semibold text-gray-900">Firmy i organizacje</p>
+          <img src="/img/enterprise.png" alt="Rozwijające się firmy 15-100+ osób" className="w-10 h-10 rounded-lg object-contain" />
+          <p className="font-semibold text-gray-900">Rozwijające się firmy (15-100+ osób)</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Centralna kontrola nad czasem pracy, akceptacjami i raportami. Integracje oraz uprawnienia dla ról.
+          Uporządkuj procesy HR, raportowanie i zarządzanie zespołem w jednym systemie.
         </p>
       </div>
 
-      {/* 3: HR i menedżerowie */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      {/* 3: HR i kierownicy */}
+      <div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/img/hr-manager.png" alt="HR i menedżerowie" className="w-10 h-10 rounded-lg object-contain" />
-          <p className="font-semibold text-gray-900">HR i menedżerowie</p>
+          <img src="/img/hr-manager.png" alt="HR i kierownicy" className="w-10 h-10 rounded-lg object-contain" />
+          <p className="font-semibold text-gray-900">HR i kierownicy</p>
         </div>
         <p className="mt-3 text-gray-600 text-sm">
-          Sprawna obsługa wniosków, powiadomienia e-mail i push oraz komplet dokumentów do kontroli i rozliczeń.
+          Mniej ręcznej pracy, więcej automatyzacji, raportów i kontroli nad zespołem.
         </p>
       </div>
     </div>
@@ -447,16 +454,19 @@ function ProductPromotion() {
 
 <LandingVideoGuideTeaser locale="pl" />
 
-<section id="kontakt" className="py-12 px-4 bg-gray-50">
+<section id="kontakt" className="landing-contact-section py-12 px-4 bg-gray-50">
   <div className="max-w-7xl mx-auto">
-    <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Kontakt i dane firmy</h2>
-    <p className="mt-3 text-left text-gray-600">
+    <div className="landing-contact-heading">
+      <p className="landing-contact-eyebrow">Porozmawiajmy</p>
+      <h2 className="landing-contact-title text-3xl md:text-4xl font-bold">Skontaktuj się z nami</h2>
+    </div>
+    <p className="landing-contact-lead mt-3 text-left">
       Masz pytania lub chcesz prezentację? Napisz, zadzwoń albo umów rozmowę online.
     </p>
 
     <div className="mt-10 grid gap-8 md:grid-cols-2 max-w-7xl mx-auto">
       {/* Lewa kolumna – dane kontaktowe */}
-      <div className="relative bg-gradient-to-br from-blue-50 via-white to-green-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-blue-100">
+      <div className="landing-contact-card landing-contact-card--person relative bg-gradient-to-br from-blue-50 via-white to-green-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-blue-100">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-green-200/20 rounded-full -ml-12 -mb-12 blur-2xl"></div>
         <div className="relative">
@@ -484,7 +494,7 @@ function ProductPromotion() {
           <div className="mt-6 space-y-4 mb-6">
             <a
               href="mailto:office@ml-devworks.com"
-              className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+              className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
             >
               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,7 +506,7 @@ function ProductPromotion() {
 
             <a 
               href="tel:+48516598792" 
-              className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+              className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
             >
               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,7 +520,7 @@ function ProductPromotion() {
               href="https://www.linkedin.com/in/michal-lipka-wd/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+              className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
             >
               <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <img src="/img/linkedin.webp" alt="Logo LinkedIn" className="w-5 h-5" />
@@ -522,14 +532,14 @@ function ProductPromotion() {
       </div>
 
       {/* Prawa kolumna – formularz */}
-      <div className="relative bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-green-100">
+      <div className="landing-contact-card landing-contact-card--form relative bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-green-100">
         <div className="absolute top-0 left-0 w-32 h-32 bg-green-200/20 rounded-full -ml-16 -mt-16 blur-2xl"></div>
         <div className="absolute bottom-0 right-0 w-24 h-24 bg-blue-200/20 rounded-full -mr-12 -mb-12 blur-2xl"></div>
         <div className="relative">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-3">
               
-              <p className="text-2xl font-bold text-gray-900">Formularz kontaktowy</p>
+              <p className="landing-contact-form-title text-2xl font-bold text-gray-900">Formularz kontaktowy</p>
             </div>
             <p className="text-gray-600">
               Umów rozmowę online lub zostaw wiadomość — wrócę z odpowiedzią.
@@ -587,7 +597,7 @@ function ProductPromotion() {
             {/* Przycisk */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+              className="landing-contact-submit w-full text-white rounded-lg px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
             >
               Wyślij
             </button>

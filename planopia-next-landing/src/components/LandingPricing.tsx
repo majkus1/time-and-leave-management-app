@@ -19,6 +19,7 @@ import '@/styles/landingPackagesLikeApp.css'
 
 type Locale = 'pl' | 'en'
 type Billing = 'monthly' | 'yearly'
+type PricingIconName = 'trial' | 'free' | 'core' | 'pro' | 'business' | 'ai' | 'custom'
 
 const PLN_PER_USD = 3.69
 
@@ -39,6 +40,53 @@ const MODULE_LABELS: Record<ModuleId, { pl: string; en: string }> = {
 	tasks: { pl: 'Zadania (Kanban)', en: 'Tasks (Kanban)' },
 	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
 	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
+}
+
+function PricingIcon({ name }: { name: PricingIconName }) {
+	const common = {
+		fill: 'none',
+		stroke: 'currentColor',
+		strokeWidth: 1.8,
+		strokeLinecap: 'round' as const,
+		strokeLinejoin: 'round' as const,
+	}
+	const icons = {
+		trial: (
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<rect x="5" y="4.5" width="14" height="15" rx="2.5" {...common} />
+				<path d="M8 3v4M16 3v4M8 10h8M10 15l1.5 1.5L15 13" {...common} />
+			</svg>
+		),
+		free: (
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="12" cy="12" r="8.5" {...common} />
+				<path d="M12 7v5l3 2" {...common} />
+			</svg>
+		),
+		core: (
+			<img src="/img/group-chat.png" alt="" aria-hidden="true" />
+		),
+		pro: (
+			<img src="/img/startup.png" alt="" aria-hidden="true" />
+		),
+		business: (
+			<img src="/img/business-and-trade.png" alt="" aria-hidden="true" />
+		),
+		ai: (
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" {...common} />
+				<path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z" {...common} />
+			</svg>
+		),
+		custom: (
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M6 4h8l4 4v12H6V4Z" {...common} />
+				<path d="M14 4v4h4M9 13h6M9 16h4" {...common} />
+			</svg>
+		),
+	}
+
+	return <span className={`pricing-icon pricing-icon--${name}`}>{icons[name]}</span>
 }
 
 function tierPriceDisplay(
@@ -86,9 +134,12 @@ function FreeTierCard({ locale }: { locale: Locale }) {
 	const t = copy[locale]
 	return (
 		<div className="pricing-free-card h-full flex flex-col text-left rounded-2xl p-5 md:p-6 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40 border border-slate-200 shadow-sm w-full">
-			<div className="flex flex-wrap items-center gap-2 mb-2">
-				<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
-				<span className="pricing-badge-pill pricing-badge-pill--hero font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
+			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-3">
+				<div className="pricing-card-title-row">
+					<PricingIcon name="free" />
+					<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
+				</div>
+				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--free font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
 					{t.freeBadge}
 				</span>
 			</div>
@@ -117,9 +168,12 @@ function TrialCard({ locale, lines }: { locale: Locale; lines: string[] }) {
 	const t = copy[locale]
 	return (
 		<div className="pricing-trial-card h-full flex flex-col text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm w-full">
-			<div className="flex flex-wrap items-center gap-3 mb-4 shrink-0">
-				<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
-				<span className="pricing-badge-pill pricing-badge-pill--hero font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
+			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-4 shrink-0">
+				<div className="pricing-card-title-row">
+					<PricingIcon name="trial" />
+					<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
+				</div>
+				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--trial font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
 					{t.trialBadge}
 				</span>
 			</div>
@@ -145,13 +199,15 @@ function TrialCard({ locale, lines }: { locale: Locale; lines: string[] }) {
 
 const copy = {
 	pl: {
-		title: 'Cennik Planopia',
+		eyebrow: 'Cennik Planopia',
+		title: 'Prosty cennik. Pełna funkcjonalność.',
 		subtitle:
 			'Najpierw 30 dni pełnej aplikacji za darmo. Potem: bezpłatny plan z ewidencją czasu pracy (do 5 aktywnych kont) albo pakiety płatne — ceny netto jak w aplikacji w sekcji „Pakiety i rozliczenia”.',
 		paidPlansIntro: 'Pakiety płatne (subskrypcja)',
 		billingLabel: 'Rozliczenie',
 		billingMonthly: 'Miesięcznie',
 		billingYearly: 'Rocznie',
+		billingYearlySaving: 'oszczędzasz ok. 17%',
 		billingYearlyBadge: '2 miesiące w cenie',
 		billingYearlyHint: 'Płacisz z góry za 10 miesięcy — korzystasz przez pełne 12 miesięcy.',
 		trialTitle: '30 dni — pełna aplikacja',
@@ -209,13 +265,15 @@ const copy = {
 		netPerMonthShort: 'netto / miesięcznie',
 	},
 	en: {
-		title: 'Planopia pricing',
+		eyebrow: 'Planopia pricing',
+		title: 'Simple pricing. Full functionality.',
 		subtitle:
 			'Start with a 30-day full-product trial. Then use free time tracking for up to 5 active accounts, or upgrade to paid plans — net prices match the in-app Packages & billing page. USD amounts are indicative (1 USD ≈ 3.69 PLN).',
 		paidPlansIntro: 'Paid plans (subscription)',
 		billingLabel: 'Billing',
 		billingMonthly: 'Monthly',
 		billingYearly: 'Yearly',
+		billingYearlySaving: 'save about 17%',
 		billingYearlyBadge: '2 months on us',
 		billingYearlyHint: 'Pay upfront for 10 months of list price — full 12 months of access.',
 		trialTitle: '30 days — full product',
@@ -464,16 +522,17 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 		<section id={locale === 'pl' ? 'cennik' : 'prices'} className="landing-pricing py-12 px-4 bg-slate-50/80">
 			{modalNode}
 			<div className="max-w-7xl mx-auto">
-				<div className="mb-10 text-left w-full">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">{t.title}</h2>
-					<p className="mt-3 text-gray-600 text-base md:text-lg">{t.subtitle}</p>
+				<div className="landing-pricing-heading mb-10 text-left w-full">
+					<p className="landing-pricing-eyebrow">{t.eyebrow}</p>
+					<h2 className="landing-pricing-title">{t.title}</h2>
+					<p className="landing-pricing-subtitle">{t.subtitle}</p>
 				</div>
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-10 items-stretch">
+				<div className="landing-pricing-free-options grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-10 items-stretch">
 					<TrialCard locale={locale} lines={trialLines} />
 					<FreeTierCard locale={locale} />
 				</div>
 
-				<div className="mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
+				<div className="landing-pricing-billing mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
 					<p
 						id={locale === 'pl' ? 'cennik-pakiety-platne' : 'prices-paid-plans'}
 						className="pricing-paid-plans-intro font-semibold text-gray-700 m-0 leading-snug scroll-mt-24"
@@ -485,7 +544,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm shrink-0">
 							<button
 								type="button"
-								className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+								className={`pricing-billing-option rounded-lg px-4 py-2 text-sm font-semibold transition ${
 									billing === 'monthly' ? 'bg-slate-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'
 								}`}
 								onClick={() => setBilling('monthly')}
@@ -495,13 +554,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							</button>
 							<button
 								type="button"
-								className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+								className={`pricing-billing-option pricing-billing-option--yearly rounded-lg px-4 py-2 text-sm font-semibold transition ${
 									billing === 'yearly' ? 'bg-slate-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'
 								}`}
 								onClick={() => setBilling('yearly')}
 								aria-pressed={billing === 'yearly'}
 							>
-								{t.billingYearly}
+								<span>{t.billingYearly}</span>
+								<span className="pricing-billing-saving">{t.billingYearlySaving}</span>
 							</button>
 						</div>
 					</div>
@@ -518,6 +578,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 				<div className="landing-pricing-app-clone">
 					<div className="packages-grid packages-grid--hero">
 						<div className="packages-tier packages-tier--core-summary">
+							<PricingIcon name="core" />
 							<h3>{t.heroCoreTitle}</h3>
 							{coreHeroDisplay.strike && (
 								<p className="mb-1 text-sm text-gray-400 m-0">
@@ -578,6 +639,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							return (
 								<div key={bundle.id} className={`packages-tier${isPro ? ' packages-tier--highlight' : ''}`}>
 									{isPro && <span className="packages-tier__badge">{t.recommended}</span>}
+									<PricingIcon name={bundle.id === 'pro' ? 'pro' : 'business'} />
 									<h3>{bundle.id === 'pro' ? 'PRO' : 'Business'}</h3>
 									{d.strike && (
 										<p className="mb-1 text-sm text-gray-400 m-0">
@@ -671,6 +733,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 					</div>
 
 					<section className="packages-enterprise-strip" aria-labelledby="landing-enterprise-heading">
+						<PricingIcon name="custom" />
 						<div className="packages-enterprise-strip__main">
 							<h3 id="landing-enterprise-heading">{t.enterpriseStripTitle}</h3>
 							<p className="packages-enterprise-strip__body">{t.enterpriseStripBody}</p>
@@ -682,8 +745,11 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						</div>
 					</section>
 
-					<div className="mt-12 rounded-2xl border border-dashed border-indigo-200 bg-gradient-to-br from-indigo-50/80 to-fuchsia-50/50 p-6 md:p-8">
-						<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
+					<div className="pricing-ai-addons mt-12 rounded-2xl border border-dashed p-6 md:p-8">
+						<div className="pricing-ai-addons__heading">
+							<PricingIcon name="ai" />
+							<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
+						</div>
 						<p className="text-sm text-gray-600 mt-1 mb-6">{t.addonSubtitle}</p>
 						<div className="grid sm:grid-cols-3 gap-4">
 							{landingAddons.map(a => (
@@ -695,13 +761,13 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 										<p className="font-semibold text-gray-900">
 											{locale === 'pl' ? `+${a.messages} wiadomości` : `+${a.messages} messages`}
 										</p>
-										<p className="pricing-addon-price text-indigo-700 font-bold">
+										<p className="pricing-addon-price font-bold">
 											{locale === 'pl' ? `${a.pricePlnNet} zł` : `$${formatMoney('en', plnToUsd(a.pricePlnNet), 2)}`}
 										</p>
 									</div>
 									<Link
 										href={paymentHref('addon', { addon: a.id, billing: billingCycleParam })}
-										className="text-center text-sm font-semibold py-2.5 px-4 rounded-lg bg-white border border-indigo-200 text-indigo-800 hover:bg-indigo-50 transition shrink-0"
+										className="text-center text-sm font-semibold py-2.5 px-4 rounded-lg bg-white border transition shrink-0"
 									>
 										{t.addonOpenPackages}
 									</Link>
@@ -713,7 +779,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 
 				<p className="mt-4 text-sm text-gray-500 leading-relaxed" role="note">
 					{t.tiersFootnote}{' '}
-					<Link href={PAYMENT_BASE_URL} className="text-indigo-700 underline font-medium">
+					<Link href={PAYMENT_BASE_URL} className="landing-pricing-footnote-link underline font-medium">
 						{PAYMENT_BASE_URL.replace('https://', '')}
 					</Link>
 				</p>

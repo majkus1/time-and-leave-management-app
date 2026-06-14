@@ -106,7 +106,7 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 	if (!canEditSettings) return null
 
 	return (
-		<div className="settings-section" style={{ marginTop: embedded ? 0 : '30px' }}>
+		<div className="settings-section work-activities-settings-section" style={{ marginTop: embedded ? 0 : '30px' }}>
 			{embedded ? (
 				<h4 style={{
 					marginBottom: '15px',
@@ -130,14 +130,16 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 					{workActivities.length === 0 ? (
 						<p style={{ color: '#888', marginBottom: '12px' }}>{t('settings.workActivitiesEmpty')}</p>
 					) : (
-						<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+						<div className="work-activities-settings-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
 							{workActivities.map(activity => (
 								<div
 									key={activity.id}
+									className="work-activities-settings-item"
 									style={{
 										display: 'flex',
 										alignItems: 'center',
 										justifyContent: 'space-between',
+										flexWrap: 'wrap',
 										gap: '12px',
 										padding: '10px 12px',
 										border: '1px solid #dee2e6',
@@ -145,7 +147,7 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 										backgroundColor: '#fff',
 									}}
 								>
-									<div>
+									<div className="work-activities-settings-item__main" style={{ flex: '1 1 240px', minWidth: 0 }}>
 										<strong>{activity.name}</strong>
 										{activity.nameEn ? <span style={{ color: '#666' }}> / {activity.nameEn}</span> : null}
 										<span style={{ marginLeft: '8px', fontSize: '12px', color: '#888' }}>
@@ -157,8 +159,8 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 											</span>
 										) : null}
 									</div>
-									<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-										<label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+									<div className="work-activities-settings-item__actions" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+										<label className="work-activities-settings-option" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
 											<input
 												type="checkbox"
 												checked={activity.trackQuantity === true}
@@ -175,10 +177,10 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 												if (value !== (activity.unit || '')) handlePatchActivity(activity.id, { unit: value })
 											}}
 											placeholder={t('settings.workActivityUnitPlaceholder')}
-											className="form-control"
+											className="form-control work-activities-settings-unit-input"
 											style={{ width: '82px', height: '34px', padding: '6px 8px' }}
 										/>
-										<label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+										<label className="work-activities-settings-option" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
 											<input
 												type="checkbox"
 												checked={activity.isEnabled !== false}
@@ -201,14 +203,14 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 						</div>
 					)}
 
-					<div style={{
+					<div className="work-activities-settings-add-card" style={{
 						padding: '16px',
 						border: '1px solid #dee2e6',
 						borderRadius: '8px',
 						backgroundColor: embedded ? '#fff' : '#f8f9fa',
 					}}>
 						<h4 style={{ marginBottom: '12px' }}>{t('settings.workActivitiesAdd')}</h4>
-						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 150px 136px 90px auto', gap: '8px', alignItems: 'end' }}>
+						<div className="work-activities-settings-add-grid" style={{ display: 'grid', gap: '8px', alignItems: 'end' }}>
 							<div>
 								<label className="block text-sm mb-1">{t('settings.typeName')}</label>
 								<input
@@ -262,7 +264,7 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 								type="button"
 								onClick={handleAdd}
 								disabled={addMutation.isPending}
-								className="btn btn-primary"
+								className="btn btn-primary work-activities-settings-add-button"
 							>
 								{t('settings.add')}
 							</button>

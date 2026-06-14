@@ -138,15 +138,15 @@ function ENProductPromotion() {
 			/>
 
 			{/* HEADER + MENU */}
-			<header className="bg-white top-0 z-50 w-full flex justify-between headerpromotionmenu" id="planopiaheader">
-				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
+			<header className="landing-polished-header bg-white top-0 z-50 w-full flex justify-between headerpromotionmenu" id="planopiaheader">
+				<div className="landing-polished-header-inner max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
 					<Link
 						href="/en"
 						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
 						style={{ marginBottom: '0px' }}>
 						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
 					</Link>
-					<nav className="hidden desktop:flex space-x-8 navdesktop">
+					<nav className="landing-polished-nav hidden desktop:flex navdesktop">
 						<a
 							href="#aboutapp"
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
@@ -175,18 +175,18 @@ function ENProductPromotion() {
 						</a>
 						<Link
 							href="https://app.planopia.pl/"
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
+							className="landing-polished-login bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
 							onClick={toggleMenu}>
 							Login
 						</Link>
 						<Link
 							href="https://app.planopia.pl/team-registration"
 							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
+							className="landing-polished-register bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
 						>
 							Create your free team
 						</Link>
-						<Link href="/" className="flex items-center languagechoose">
+						<Link href="/" className="landing-polished-language flex items-center languagechoose">
 							<img src="/img/poland.webp" alt="Wersja Polska" className="w-6 h-6" />
 						</Link>
 					</nav>
@@ -215,27 +215,32 @@ function ENProductPromotion() {
 
 			<main>
 			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid md:grid-cols-2 gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-2xl sm:text-3xl font-bold text-blue-700">
+			<section className="landing-polished-hero px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
+				<div className="landing-polished-hero-inner max-w-7xl mx-auto text-left">
+					<div className="landing-polished-hero-grid grid md:grid-cols-2 gap-10 items-center">
+						<div className="landing-polished-hero-copy ordering">
+							<p className="landing-polished-eyebrow">Everything in one place</p>
+							<h1 className="landing-polished-title text-2xl sm:text-3xl font-bold text-blue-700">
 								{planOfferingCopy.en.heroH1}
 							</h1>
-							<h2 className="font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
+							<h2 className="landing-polished-subtitle font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
 								{planOfferingCopy.en.heroSub}
 							</h2>
 							<Link
 								href="https://app.planopia.pl/team-registration"
-								className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4"
+								className="landing-polished-hero-cta inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4"
 							>
 								Create your free team
 							</Link>
+							<div className="landing-polished-proof">
+								<span>No credit card</span>
+								<span>Ready in 2 minutes</span>
+							</div>
 						</div>
 						<img
-							src="/img/headerimage.webp"
+							src="/img/headerimage4.webp"
 							alt="businessman managing calendar in the app"
-							className="rounded-xl w-full h-auto aspect-[3/2]"
+							className="landing-polished-hero-image rounded-xl w-full h-auto aspect-[3/2]"
 							loading="eager"
 							fetchPriority="high"
 							width={800}
@@ -247,6 +252,17 @@ function ENProductPromotion() {
 
 			<section id="aboutapp" className="py-12 bg-white px-4">
 				<div className="max-w-7xl mx-auto">
+					<div className="landing-about-heading-block mb-8">
+							<p className="landing-about-heading-eyebrow">
+								Company management app
+							</p>
+							<h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">
+								Everything you need in one system
+							</h2>
+							<p className="landing-about-intro mt-4 text-lg text-gray-600">
+								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards, and an AI Assistant - everything in one place. Forget Excel sheets and endless emails. Planopia automates processes - faster, clearer, and error-free.
+							</p>
+					</div>
 					<div
 						className="
 							grid gap-10
@@ -258,15 +274,8 @@ function ENProductPromotion() {
 					>
 						{/* Text + feature cards */}
 						<div className="[grid-area:features] min-w-0">
-							<h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-								Comprehensive company management app
-							</h2>
-							<p className="mt-4 text-lg text-gray-600">
-								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards, and an AI Assistant - everything in one place. Forget Excel sheets and endless emails. Planopia automates processes - faster, clearer, and error-free.
-							</p>
-
 							{/* Feature grid */}
-							<div className="mt-8 grid sm:grid-cols-2 gap-4">
+							<div className="grid sm:grid-cols-2 gap-4">
 								{/* 1 */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="/img/schedule time works.png" className="icon-landing-about" alt='icon in section' loading="eager" />
@@ -295,8 +304,8 @@ function ENProductPromotion() {
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="/img/pdf.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
-										<p className="font-semibold text-gray-900">Documents</p>
-										<p className="text-sm text-gray-600">Generate PDF and Excel: work calendars and leave requests always at hand.</p>
+										<p className="font-semibold text-gray-900">Reports</p>
+										<p className="text-sm text-gray-600">Business PDF and Excel reports with data, statistics, and team summaries.</p>
 									</div>
 								</div>
 								{/* 4 */}
@@ -351,26 +360,26 @@ function ENProductPromotion() {
 						</div>
 
 						<aside
-							className="[grid-area:callout] w-full rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/95 via-white to-slate-50 p-5 md:p-6 shadow-sm ring-1 ring-indigo-100/70"
+							className="landing-enterprise-callout [grid-area:callout] w-full rounded-xl p-5 md:p-6"
 							aria-labelledby="planopia-enterprise-offer-heading-en"
 						>
 							<h3
 								id="planopia-enterprise-offer-heading-en"
-								className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 mb-2"
+								className="landing-enterprise-callout__eyebrow text-xs font-semibold uppercase tracking-[0.12em] mb-2"
 							>
 								Building Planopia for your organization
 							</h3>
-							<p className="text-gray-900 text-base md:text-lg leading-relaxed font-semibold">
+							<p className="landing-enterprise-callout__lead text-base md:text-lg leading-relaxed font-semibold">
 								Need more than the standard offering?{' '}
-								<span className="text-gray-800">
+								<span>
 									We also extend the product for company-specific needs: extra features, integrations aligned with your processes, a dedicated environment, or scaling to a large workforce.
 								</span>
 							</p>
-							<p className="mt-3 text-gray-700 text-sm md:text-base leading-relaxed">
+							<p className="landing-enterprise-callout__text mt-3 text-sm md:text-base leading-relaxed">
 								Compare plans and limits in the{' '}
 								<Link
 									href="#prices-paid-plans"
-									className="font-semibold text-indigo-700 hover:text-indigo-900 underline decoration-indigo-300 underline-offset-[3px] hover:decoration-indigo-500 transition-colors"
+									className="landing-enterprise-callout__link font-semibold underline underline-offset-[3px] transition-colors"
 								>
 									Pricing
 								</Link>{' '}
@@ -390,44 +399,42 @@ function ENProductPromotion() {
 
 			<section id="for" className="py-12 bg-gray-50 px-4 for">
 				<div className="max-w-7xl mx-auto">
-					<div className="mb-10">
-						<h3 className="text-3xl md:text-4xl font-extrabold text-gray-900">Who is Planopia for?</h3>
-						<p className="mt-3 text-lg text-gray-600">
-							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant within your plan limits.
-						</p>
+					<div className="landing-audience-heading mb-10">
+						<p className="landing-about-heading-eyebrow">Who is Planopia for?</p>
+						<h3 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">One app, many possibilities</h3>
 					</div>
 
-					<div className="grid md:grid-cols-3 gap-6 mb-4">
+					<div className="landing-audience-cards grid md:grid-cols-3 gap-6 mb-4">
 						{/* 1: Small teams */}
-						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+						<div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<img src="/img/groupses.png" alt="Small teams" className="w-10 h-10 rounded-lg object-contain" />
-								<p className="font-semibold text-gray-900">Small teams</p>
+								<img src="/img/groupses.png" alt="Small teams 1-15 people" className="w-10 h-10 rounded-lg object-contain" />
+								<p className="font-semibold text-gray-900">Small teams (1-15 people)</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Quick tracking, simple requests, a clear calendar. Straightforward roles and permissions — without unnecessary complexity.
+								Replace spreadsheets with one simple app for time tracking, leave, and schedules.
 							</p>
 						</div>
 
-						{/* 2: Companies and organizations */}
-						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+						{/* 2: Growing companies */}
+						<div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<img src="/img/enterprise.png" alt="Companies and organizations" className="w-10 h-10 rounded-lg object-contain" />
-								<p className="font-semibold text-gray-900">Companies & organizations</p>
+								<img src="/img/enterprise.png" alt="Growing companies 15-100+ people" className="w-10 h-10 rounded-lg object-contain" />
+								<p className="font-semibold text-gray-900">Growing companies (15-100+ people)</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Central control over work time, approvals, and reports. Integrations and role-based permissions included.
+								Organize HR processes, reporting, and team management in one system.
 							</p>
 						</div>
 
-						{/* 3: HR and managers */}
-						<div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+						{/* 3: HR and team leads */}
+						<div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
-								<img src="/img/hr-manager.png" alt="HR and managers" className="w-10 h-10 rounded-lg object-contain" />
-								<p className="font-semibold text-gray-900">HR & managers</p>
+								<img src="/img/hr-manager.png" alt="HR and team leads" className="w-10 h-10 rounded-lg object-contain" />
+								<p className="font-semibold text-gray-900">HR & team leads</p>
 							</div>
 							<p className="mt-3 text-gray-600 text-sm">
-								Efficient request handling, email and push notifications, and complete documentation for audits and settlements.
+								Less manual work, more automation, reports, and control over the team.
 							</p>
 						</div>
 					</div>
@@ -438,16 +445,19 @@ function ENProductPromotion() {
 
 			<LandingVideoGuideTeaser locale="en" />
 
-			<section id="contact" className="py-12 px-4 bg-gray-50">
+			<section id="contact" className="landing-contact-section py-12 px-4 bg-gray-50">
 				<div className="max-w-7xl mx-auto">
-					<h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-900">Contact & company details</h2>
-					<p className="mt-3 text-left text-gray-600">
+					<div className="landing-contact-heading">
+						<p className="landing-contact-eyebrow">Let's talk</p>
+						<h2 className="landing-contact-title text-3xl md:text-4xl font-bold">Get in touch with us</h2>
+					</div>
+					<p className="landing-contact-lead mt-3 text-left">
 						Have questions or want a demo? Send a message, call, or schedule an online meeting.
 					</p>
 
 					<div className="mt-10 grid gap-8 md:grid-cols-2 max-w-7xl mx-auto">
 					{/* Left column – contact details */}
-					<div className="relative bg-gradient-to-br from-blue-50 via-white to-green-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-blue-100">
+					<div className="landing-contact-card landing-contact-card--person relative bg-gradient-to-br from-blue-50 via-white to-green-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-blue-100">
 						<div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
 						<div className="absolute bottom-0 left-0 w-24 h-24 bg-green-200/20 rounded-full -ml-12 -mb-12 blur-2xl"></div>
 						<div className="relative">
@@ -475,7 +485,7 @@ function ENProductPromotion() {
 							<div className="mt-6 space-y-4 mb-6">
 								<a
 									href="mailto:office@ml-devworks.com"
-									className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+									className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
 								>
 									 <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,7 +497,7 @@ function ENProductPromotion() {
 
 								<a 
 									href="tel:+48516598792" 
-									className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+									className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
 								>
 									<div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
 										<svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -501,7 +511,7 @@ function ENProductPromotion() {
 									href="https://www.linkedin.com/in/michal-lipka-wd/"
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
+									className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
 								>
 									<div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
 										<img src="/img/linkedin.webp" alt="LinkedIn logo" className="w-5 h-5" />
@@ -513,14 +523,14 @@ function ENProductPromotion() {
 					</div>
 
 					{/* Right column – form */}
-					<div className="relative bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-green-100">
+					<div className="landing-contact-card landing-contact-card--form relative bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-green-100">
 						<div className="absolute top-0 left-0 w-32 h-32 bg-green-200/20 rounded-full -ml-16 -mt-16 blur-2xl"></div>
 						<div className="absolute bottom-0 right-0 w-24 h-24 bg-blue-200/20 rounded-full -mr-12 -mb-12 blur-2xl"></div>
 						<div className="relative">
 							<div className="mb-6">
 								<div className="flex items-center gap-3 mb-3">
 									
-									<p className="text-2xl font-bold text-gray-900">Contact form</p>
+									<p className="landing-contact-form-title text-2xl font-bold text-gray-900">Contact form</p>
 								</div>
 								<p className="text-gray-600">
 									Schedule an online meeting or leave a message — I'll get back to you shortly.
@@ -578,7 +588,7 @@ function ENProductPromotion() {
 								{/* Button */}
 								<button
 									type="submit"
-									className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+									className="landing-contact-submit w-full text-white rounded-lg px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
 								>
 									Send
 								</button>
@@ -606,8 +616,3 @@ function ENProductPromotion() {
 }
 
 export default ENProductPromotion
-
-
-
-
-

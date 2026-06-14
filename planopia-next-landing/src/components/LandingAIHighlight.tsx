@@ -3,42 +3,36 @@
 type Locale = 'pl' | 'en'
 
 const PL_LEAD =
-	'Zadaj pytanie — dostaniesz odpowiedź z kontekstu Twojej firmy: ewidencja, urlopy, zadania i grafik w jednym czacie, zamiast pięciu zakładek i Excela. Opisz miesiąc prostymi słowami — AI grafiku ułoży zmiany według Twoich zasad i wykluczeń, z podglądem zanim zatwierdzisz. HR i managerzy dostają gotowe podsumowania i raporty w minutach; pracownicy szybciej ogarniają urlopy i godziny. W kilka chwil przygotujesz też treść wniosku urlopowego albo wpisu do ewidencji.'
+	'Zadaj pytanie i dostań odpowiedź z kontekstu Twojej firmy: ewidencja, urlopy, zadania i grafik w jednym czacie. Asystent pomaga szybciej tworzyć raporty, podsumowania, wnioski i wpisy czasu pracy — bez przekopywania tabel.'
 
 const EN_LEAD =
-	'Ask once — get answers grounded in how your team already works in Planopia: time, leave, tasks, and schedules in one chat, not five tabs and a spreadsheet. Describe the month in plain language — AI scheduling builds shift drafts to your rules and exclusions, ready to review before you publish. HR and managers get report-ready summaries in minutes; employees move faster on leave and hours. Draft a leave request or timesheet line in seconds when you need it.'
+	'Ask once and get answers grounded in your company context: time, leave, tasks, and schedules in one chat. The assistant helps create reports, summaries, leave drafts, and time entries faster — without digging through spreadsheets.'
 
 const strings = {
 	pl: {
-		eyebrow: 'Nowość w Planopii',
+		eyebrow: 'Asystent AI Planopii',
 		title: 'Asystent AI — mniej ręcznej pracy, więcej gotowych wniosków',
 		leadParagraphs: [PL_LEAD],
-		featuresHeading: '🔥 Co potrafi Asystent AI',
+		featuresHeading: 'Co potrafi Asystent AI?',
 		bullets: [
-			'Gotowe podsumowania i statystyki — szybkie wnioski zamiast analiz w tabelach',
-			'Planowanie urlopów i nieobecności — dopasowane do zespołu i ról',
-			'Grafik zespołu — osobny asystent AI do auto-uzupełnienia miesiąca (zmiany, wykluczenia) w formie rozmowy; ustawienia zespołu i potwierdzenie przed generowaniem',
-			'Generowanie raportów i eksport — Excel, PDF, bez ręcznej pracy',
-			'Wsparcie decyzji HR i managera — mniej zgadywania, więcej konkretów',
-			'Automatyczne wnioski urlopowe i uzupełnianie ewidencji czasu pracy',
-			'Szybki wgląd dla pracowników — wszystko w jednym miejscu',
+			'Raporty i statystyki — szybkie wnioski dla HR, managera i właściciela',
+			'Grafik zespołu — propozycje zmian według zasad, ról i wykluczeń',
+			'Urlopy i ewidencja — pomoc przy wnioskach oraz wpisach czasu pracy',
+			'Decyzje biznesowe — mniej zgadywania, więcej danych w jednym miejscu',
 		],
 		cta: 'Pakiety i limity Asystenta AI',
 		ctaHref: '#cennik-pakiety-platne',
 	},
 	en: {
-		eyebrow: 'New in Planopia',
+		eyebrow: 'Planopia AI Assistant',
 		title: 'AI Assistant — less manual work, more ready-made insights',
 		leadParagraphs: [EN_LEAD],
-		featuresHeading: '🔥 What the AI Assistant can do',
+		featuresHeading: 'What can the AI Assistant do?',
 		bullets: [
-			'Ready-made summaries and stats — insights instead of spreadsheet crunching',
-			'Leave and absence planning — tailored to your team and roles',
-			'Team schedule — dedicated AI for monthly auto-fill (shifts, exclusions) via chat; team presets and confirmation before generation',
-			'Reports and export — Excel, PDF, less manual work',
-			'Support for HR and manager decisions — less guesswork, more clarity',
-			'Automatic leave drafts and time-log entries',
-			'Quick employee view — everything in one place',
+			'Reports and statistics — fast insights for HR, managers, and owners',
+			'Team schedules — shift suggestions based on rules, roles, and exclusions',
+			'Leave and timesheets — support for requests and time-log entries',
+			'Business decisions — less guessing, more data in one place',
 		],
 		cta: 'Plans and AI Assistant limits',
 		ctaHref: '#prices-paid-plans',
@@ -53,17 +47,17 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 			className="landing-ai-highlight py-12 px-4 relative overflow-hidden"
 			aria-labelledby="ai-heading"
 		>
-			{/* Ambient glow — wyższa widoczność niż same przezroczyste gradienty */}
+			{/* Ambient glow */}
 			<div
 				className="pointer-events-none absolute inset-0 opacity-90"
 				style={{
 					background:
-						'radial-gradient(ellipse 90% 70% at 15% 0%, rgba(56,189,248,0.22), transparent 55%), radial-gradient(ellipse 80% 60% at 85% 100%, rgba(167,139,250,0.2), transparent 50%), radial-gradient(ellipse 50% 40% at 50% 40%, rgba(244,114,182,0.08), transparent 65%)',
+						'radial-gradient(ellipse 90% 70% at 15% 0%, rgba(0,166,62,0.14), transparent 55%), radial-gradient(ellipse 80% 60% at 85% 100%, rgba(16,47,94,0.08), transparent 50%)',
 				}}
 			/>
 			<div className="max-w-7xl mx-auto relative z-[1]">
-				<div className="rounded-3xl p-[1.5px] bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-500 shadow-[0_0_60px_-12px_rgba(34,211,238,0.45),0_25px_50px_-12px_rgba(0,0,0,0.5)]">
-					<div className="rounded-3xl bg-white px-6 py-10 md:px-12 md:py-12 relative overflow-hidden shadow-inner shadow-slate-200/60">
+				<div className="landing-ai-shell rounded-3xl p-[1.5px]">
+					<div className="landing-ai-panel rounded-3xl bg-white px-6 py-10 md:px-12 md:py-12 relative overflow-hidden">
 						<div className="relative">
 							<span
 								className="pointer-events-none absolute right-0 top-0 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-cyan-100 bg-white shadow-md ring-2 ring-cyan-200/70 md:h-20 md:w-20"
@@ -75,7 +69,7 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 							<h2 id="ai-heading" className="pr-20 md:pr-28">
 								{t.title}
 							</h2>
-							<div className="ai-highlight-lead mt-5 space-y-4">
+							<div className="ai-highlight-lead mt-4 space-y-4">
 								{t.leadParagraphs.map((p, i) => (
 									<p key={i} className="m-0">
 										{p}
@@ -86,7 +80,7 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 								{t.featuresHeading}
 							</h3>
 							<ul
-								className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+								className="mt-2 grid gap-4 sm:grid-cols-2"
 								aria-labelledby="ai-features-heading"
 							>
 								{t.bullets.map(b => (
@@ -103,7 +97,7 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 							</ul>
 							<a
 								href={t.ctaHref}
-								className="landing-ai-cta mt-9 inline-flex items-center gap-2 font-bold text-white bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-700 hover:from-indigo-500 hover:via-violet-500 hover:to-indigo-600 px-7 py-3.5 rounded-xl transition shadow-lg shadow-indigo-500/35 ring-2 ring-indigo-950/10 hover:shadow-xl hover:shadow-indigo-500/40"
+								className="landing-ai-cta mt-9 inline-flex items-center gap-2 font-bold text-white px-7 py-3.5 rounded-xl transition"
 							>
 								{t.cta}
 								<svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.25} viewBox="0 0 24 24" aria-hidden>

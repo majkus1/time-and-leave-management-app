@@ -23,15 +23,10 @@ function PWANavigationBar() {
 			
 			// Check for Android/Chrome standalone mode
 			const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-			
-			// Check if running in fullscreen mode (another PWA indicator)
-			const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches
-			
-			// Check if running in minimal-ui mode
-			const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches
-			
-			// PWA is detected if any of these conditions are true
-			const detectedPWA = isIOSStandalone || isStandalone || isFullscreen || isMinimalUI
+
+			// Show only in installed app mode. Do not treat fullscreen/minimal-ui as PWA,
+			// because some mobile browsers can report those modes without a real install.
+			const detectedPWA = isIOSStandalone || isStandalone
 			
 			setIsPWA(detectedPWA)
 		}

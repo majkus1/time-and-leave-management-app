@@ -33,19 +33,19 @@ export default function LandingVideoGuideTeaser({ locale }: { locale: Locale }) 
 	return (
 		<section
 			id={t.sectionId}
-			className="py-12 px-4 bg-white border-t border-gray-100"
+			className="landing-video-guide-teaser py-12 px-4 bg-white border-t border-gray-100"
 			aria-label={t.aria}>
 			<div className="max-w-7xl mx-auto">
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50/90 via-white to-blue-50/50 px-6 py-8 sm:px-8 sm:py-9 shadow-sm">
+				<div className="landing-video-guide-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 rounded-2xl border px-6 py-8 sm:px-8 sm:py-9">
 					<div className="min-w-0 flex-1">
-						<p className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-2">{t.kicker}</p>
-						<h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.title}</h2>
-						<p className="mt-2 text-gray-600 text-base leading-relaxed max-w-2xl">{t.description}</p>
+						<p className="landing-video-guide-eyebrow text-xs font-semibold uppercase tracking-wider mb-2">{t.kicker}</p>
+						<h2 className="landing-video-guide-title text-2xl sm:text-3xl font-bold">{t.title}</h2>
+						<p className="landing-video-guide-description mt-2 text-base leading-relaxed max-w-2xl">{t.description}</p>
 					</div>
 					<div className="shrink-0 sm:pl-4">
 						<Link
 							href={t.href}
-							className="landing-video-guide-teaser-cta inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 font-semibold px-6 py-3.5 hover:bg-blue-700 transition shadow-sm w-full sm:w-auto min-h-[48px]">
+							className="landing-video-guide-teaser-cta inline-flex items-center justify-center gap-2 rounded-xl font-semibold px-6 py-3.5 transition shadow-sm w-full sm:w-auto min-h-[48px]">
 							<svg
 								className="w-5 h-5 shrink-0 opacity-95"
 								fill="none"

@@ -598,16 +598,16 @@ select {
 	border-radius: 14px;
 	text-decoration: none !important;
 	color: #0f172a !important;
-	background: linear-gradient(145deg, #f8fafc 0%, #eef2ff 55%, #f0f9ff 100%);
-	border: 1px solid rgba(99, 102, 241, 0.38);
-	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07);
+	background: linear-gradient(145deg, #f8fffb 0%, #eefbf3 58%, #f8fafc 100%);
+	border: 1px solid rgba(34, 197, 94, 0.34);
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .login-create-team-cta:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 10px 28px rgba(99, 102, 241, 0.18);
-	border-color: rgba(79, 70, 229, 0.55);
+	box-shadow: 0 10px 28px rgba(5, 150, 105, 0.18);
+	border-color: rgba(5, 150, 105, 0.52);
 	color: #0f172a !important;
 }
 
@@ -619,9 +619,9 @@ select {
 	align-items: center;
 	justify-content: center;
 	border-radius: 12px;
-	background: linear-gradient(135deg, #6366f1, #4f46e5);
+	background: linear-gradient(135deg, #22c55e, #059669);
 	color: #fff;
-	box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+	box-shadow: 0 2px 8px rgba(5, 150, 105, 0.34);
 }
 
 .login-create-team-cta__text {
@@ -651,7 +651,7 @@ select {
 	flex-shrink: 0;
 	font-size: 1.15rem;
 	font-weight: 600;
-	color: #6366f1;
+	color: #059669;
 	opacity: 0.9;
 }
 
@@ -1658,10 +1658,6 @@ button, .btn {
 	color: white;
 	border-radius: 5px;
 	background: linear-gradient(165deg, #10b981 0%, #059669 42%, #047857 100%) !important;
-}
-
-.bg-green-600 {
-	background: linear-gradient(165deg, #10b981 0%, #059669 42%, #047857 100%) !important
 }
 
 .packages-tier__badge {
@@ -4527,7 +4523,7 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	body:has(.pwa-navigation-bar) #leave-request-form,
 	body:has(.pwa-navigation-bar) #leave-planner,
 	body:has(.pwa-navigation-bar) #all-leaveplans,
-	body:has(.pwa-navigation-bar) .leave-calendar-plans-one-employee
+	body:has(.pwa-navigation-bar) .leave-calendar-plans-one-employee,
 	body:has(.pwa-navigation-bar) .container {
 		padding-bottom: 90px !important;
 	}
@@ -5908,8 +5904,131 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		flex-direction: column;
 	}
 
-	.schedule-availability-actions button {
+.schedule-availability-actions button {
+	width: 100%;
+}
+}
+
+/* Settings: work activities section */
+.work-activities-settings-section,
+.work-activities-settings-list,
+.work-activities-settings-add-card {
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.work-activities-settings-item {
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.work-activities-settings-item__main {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.work-activities-settings-item__actions {
+	flex: 0 1 auto;
+	justify-content: flex-end;
+	min-width: 0;
+}
+
+.work-activities-settings-option {
+	min-width: 0;
+	white-space: normal;
+}
+
+.work-activities-settings-unit-input {
+	flex: 0 0 82px;
+	max-width: 82px;
+}
+
+.work-activities-settings-add-grid {
+	grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(130px, 150px) minmax(118px, 136px) minmax(80px, 90px) auto;
+}
+
+.work-activities-settings-add-grid > div {
+	min-width: 0;
+}
+
+.work-activities-settings-add-grid .form-control {
+	min-width: 0;
+	width: 100%;
+}
+
+.work-activities-settings-add-button {
+	white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+	.work-activities-settings-add-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.work-activities-settings-add-button {
 		width: 100%;
+	}
+}
+
+@media (max-width: 640px) {
+	.work-activities-settings-section {
+		overflow-x: hidden;
+	}
+
+	.work-activities-settings-item {
+		align-items: stretch !important;
+		padding: 12px !important;
+	}
+
+	.work-activities-settings-item__main {
+		flex-basis: 100% !important;
+	}
+
+	.work-activities-settings-item__main span {
+		display: inline-block;
+		margin-left: 0 !important;
+		margin-right: 8px;
+		margin-top: 4px;
+	}
+
+	.work-activities-settings-item__actions {
+		width: 100%;
+		justify-content: flex-start;
+		gap: 10px !important;
+	}
+
+	.work-activities-settings-option {
+		flex: 1 1 135px;
+	}
+
+	.work-activities-settings-unit-input {
+		flex: 1 1 96px;
+		width: auto !important;
+		max-width: none;
+	}
+
+	.work-activities-settings-item__actions .btn {
+		flex: 1 1 100%;
+		width: 100%;
+	}
+
+	.work-activities-settings-add-card {
+		padding: 14px !important;
+	}
+
+	.work-activities-settings-add-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.work-activities-settings-add-grid > div[style*="height"] {
+		height: auto !important;
+		align-items: flex-start !important;
+	}
+
+	.work-activities-settings-add-grid label {
+		white-space: normal !important;
 	}
 }
 
