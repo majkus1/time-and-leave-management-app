@@ -22,6 +22,58 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='
 	font-size: max(16px, 1em) !important;
 }
 
+/* Checkboxy — zielony marki z białym ptaszkiem */
+input[type='checkbox'] {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	width: 1.25rem;
+	height: 1.25rem;
+	min-width: 1.25rem;
+	min-height: 1.25rem;
+	margin: 0;
+	border: 2px solid #cbd5e1;
+	border-radius: 4px;
+	background-color: #ffffff;
+	cursor: pointer;
+	vertical-align: middle;
+	flex-shrink: 0;
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type='checkbox']:checked {
+	background-color: #00a846;
+	border-color: #00a846;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 0.85rem 0.85rem;
+}
+
+input[type='checkbox']:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(0, 168, 70, 0.28);
+}
+
+input[type='checkbox']:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+	background-color: #f1f5f9;
+	border-color: #e2e8f0;
+}
+
+input[type='checkbox']:disabled:checked {
+	background-color: #94a3b8;
+	border-color: #94a3b8;
+}
+
+input[type='radio'] {
+	accent-color: #00a846;
+	cursor: pointer;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
 @keyframes fadeInUp {
 	0% {
 		opacity: 0;
@@ -518,20 +570,20 @@ span {
 
 /* Grafik — dni świąteczne (polskie / własne z ustawień zespołu) */
 .schedule-container .schedule-calendar-holiday-cell {
-	box-shadow: inset 0 0 0 2px rgba(217, 119, 6, 0.4) !important;
-	background-color: rgba(254, 243, 199, 0.42) !important;
+	box-shadow: inset 0 0 0 2px rgba(0, 128, 0, 0.35) !important;
+	background-color: rgba(236, 253, 245, 0.45) !important;
 }
 /* Święto — wydarzenie całodniowe (jak MonthlyCalendar), nazwa widoczna w komórce */
 .schedule-container .fc .fc-daygrid-event.schedule-calendar-holiday-event,
 .schedule-container .fc-h-event.schedule-calendar-holiday-event {
-	border-left: 3px solid #d97706 !important;
+	border-left: 3px solid darkgreen !important;
 	font-size: clamp(10px, 2.4vw, 12px);
-	color: #78350f !important;
+	color: #ffffff !important;
 }
 .schedule-container .schedule-calendar-holiday-event-content {
 	width: 100%;
 	min-width: 0;
-	color: #78350f;
+	color: #ffffff;
 }
 
 #root > div > div > div.sidebar.bg-dark.text-white > div.p-2 > button {
@@ -737,6 +789,12 @@ select {
 	margin-top: 80px;
 }
 
+.board-column-task-count {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff;
+	font-size: 12px !important;
+}
+
 .schedule-container {
 	margin-top: 80px;
 }
@@ -785,7 +843,7 @@ select {
 
 	.clickable-user-item .user-icon {
 		font-size: 14px;
-		color: #3498db;
+		color: #00a846;
 		opacity: 0.7;
 		transition: all 0.2s ease;
 	}
@@ -802,7 +860,7 @@ select {
 
 	.leave-pending-badge {
 		margin-left: 8px;
-		background-color: #2563eb;
+		background-color: #3b82f6;
 		border-radius: 10px;
 		padding: 2px 7px;
 		min-width: 20px;
@@ -1267,7 +1325,7 @@ hr {
 
 .btn-pdf.btn-primary,
 .btn-print-leavereq.btn-primary {
-	background: #2f91d0 !important;
+	background: #D62828 !important;
 }
 
 .btn-excel.btn-success:hover:not(:disabled) {
@@ -1276,7 +1334,7 @@ hr {
 
 .btn-pdf.btn-primary:hover:not(:disabled),
 .btn-print-leavereq.btn-primary:hover:not(:disabled) {
-	background: #287fb6 !important;
+	background: #B5221A !important;
 }
 
 .btn-excel.btn-success:disabled,
@@ -1353,6 +1411,352 @@ hr {
 body.sidebar-collapsed .tutorial-modal-content.ReactModal__Content,
 body.sidebar-collapsed .ReactModal__Content.tutorial-modal-content {
 	margin-left: 0 !important;
+}
+
+.tutorial-modal-section__text {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.tutorial-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+	padding-bottom: 20px;
+	padding-right: 44px;
+	border-bottom: 2px solid #e5e7eb;
+	box-sizing: border-box;
+}
+
+.tutorial-modal-title {
+	margin: 0;
+	color: #1f2937 !important;
+	font-size: 28px !important;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px;
+	line-height: 1.25 !important;
+}
+
+.tutorial-modal-subtitle {
+	margin: 8px 0 0 0;
+	color: #6b7280;
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.tutorial-modal-video-link {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 14px;
+	padding: 10px 14px;
+	max-width: 100%;
+	box-sizing: border-box;
+	border-radius: 10px;
+	border: 1px solid #bae6fd;
+	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+	color: #0369a1 !important;
+	font-size: 15px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+	box-shadow: 0 1px 2px rgba(14, 165, 233, 0.08);
+}
+
+.tutorial-modal-video-link:hover {
+	background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+	border-color: #38bdf8;
+	box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+.tutorial-modal-video-link span:first-of-type {
+	flex: 1;
+	min-width: 0;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.tutorial-modal-video-link__arrow {
+	flex-shrink: 0;
+	opacity: 0.75;
+	font-size: 18px;
+	line-height: 1;
+}
+
+.tutorial-modal-sections {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-bottom: 30px;
+	align-items: flex-start;
+	max-width: 100%;
+}
+
+.tutorial-modal-sections__column {
+	flex: none;
+	width: 100%;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+@media (min-width: 768px) {
+	.tutorial-modal-sections {
+		flex-direction: row;
+	}
+
+	.tutorial-modal-sections__column {
+		flex: 1;
+		min-width: 0;
+	}
+}
+
+.tutorial-modal-section {
+	padding: 20px;
+	box-sizing: border-box;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.tutorial-modal-section__head {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	min-width: 0;
+}
+
+.tutorial-modal-section__icon {
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: all 0.3s ease;
+}
+
+.tutorial-modal-section__icon img {
+	width: 28px;
+	height: 28px;
+}
+
+.tutorial-modal-section__title {
+	display: block !important;
+	align-items: unset !important;
+	margin: 0 0 8px 0;
+	color: #1f2937 !important;
+	font-size: 18px !important;
+	font-weight: 600;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+	hyphens: auto;
+	line-height: 1.35 !important;
+}
+
+.tutorial-modal-section__desc {
+	margin: 0;
+	color: #6b7280;
+	font-size: 14px;
+	line-height: 1.5;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+
+.tutorial-modal-section__chevron {
+	flex-shrink: 0;
+	margin-top: 4px;
+	transition: transform 0.3s ease;
+}
+
+.tutorial-modal-section__details {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #e5e7eb;
+	animation: fadeIn 0.3s ease;
+}
+
+.tutorial-modal-nav-btn,
+.tutorial-modal-footer-btn {
+	max-width: 100%;
+	box-sizing: border-box;
+	transition: all 0.2s;
+}
+
+.tutorial-modal-nav-btn {
+	width: 100%;
+	padding: 10px 16px;
+	background-color: #00a846;
+	color: #fff !important;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	line-height: 1.35;
+}
+
+.tutorial-modal-nav-btn:hover {
+	background-color: #009639;
+	transform: translateY(-1px);
+}
+
+.tutorial-modal-footer {
+	padding-top: 20px;
+	border-top: 2px solid #e5e7eb;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+.tutorial-modal-footer-btn {
+	padding: 12px 24px;
+	background-color: #00a846;
+	color: #fff !important;
+	border: none;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	touch-action: manipulation;
+	line-height: 1.35;
+}
+
+.tutorial-modal-footer-btn:hover {
+	background-color: #009639;
+	transform: translateY(-1px);
+}
+
+@media (max-width: 400px) {
+	.tutorial-modal-overlay.ReactModal__Overlay {
+		padding: 8px !important;
+		align-items: flex-start !important;
+	}
+
+	.tutorial-modal-content.ReactModal__Content,
+	.ReactModal__Content.tutorial-modal-content {
+		width: 100% !important;
+		max-width: 100% !important;
+		padding: 14px 12px 18px !important;
+		max-height: calc(100dvh - 16px) !important;
+		border-radius: 10px !important;
+	}
+
+	.tutorial-modal-header {
+		margin-bottom: 16px !important;
+		padding-bottom: 14px !important;
+		padding-right: 36px !important;
+	}
+
+	.tutorial-modal-title {
+		font-size: 20px !important;
+		gap: 8px !important;
+	}
+
+	.tutorial-modal-title svg {
+		width: 26px !important;
+		height: 26px !important;
+		flex-shrink: 0;
+	}
+
+	.tutorial-modal-subtitle {
+		font-size: 14px !important;
+		line-height: 1.45 !important;
+	}
+
+	.tutorial-modal-video-link {
+		font-size: 13px !important;
+		padding: 8px 10px !important;
+		gap: 8px !important;
+	}
+
+	.tutorial-modal-sections {
+		gap: 12px !important;
+		margin-bottom: 20px !important;
+	}
+
+	.tutorial-modal-section {
+		padding: 12px 10px !important;
+	}
+
+	.tutorial-modal-section__head {
+		gap: 8px !important;
+	}
+
+	.tutorial-modal-section__icon {
+		width: 38px !important;
+		height: 38px !important;
+		border-radius: 10px !important;
+	}
+
+	.tutorial-modal-section__icon img {
+		width: 22px !important;
+		height: 22px !important;
+	}
+
+	.tutorial-modal-section__title {
+		font-size: 15px !important;
+		margin-bottom: 6px !important;
+	}
+
+	.tutorial-modal-section__desc {
+		font-size: 13px !important;
+		line-height: 1.45 !important;
+	}
+
+	.tutorial-modal-section__chevron {
+		width: 18px !important;
+		height: 18px !important;
+		margin-top: 2px !important;
+	}
+
+	.tutorial-modal-section__details {
+		margin-top: 12px !important;
+		padding-top: 12px !important;
+	}
+
+	.tutorial-modal-nav-btn {
+		font-size: 13px !important;
+		padding: 10px 12px !important;
+		white-space: normal !important;
+		text-align: center;
+		line-height: 1.35 !important;
+	}
+
+	.tutorial-modal-footer {
+		justify-content: stretch !important;
+	}
+
+	.tutorial-modal-footer-btn {
+		width: 100%;
+		justify-content: center;
+		font-size: 14px !important;
+		padding: 12px 14px !important;
+		white-space: normal !important;
+		line-height: 1.35 !important;
+	}
+
+	.tutorial-modal-section__details p,
+	.tutorial-modal-section__details li {
+		font-size: 14px !important;
+		line-height: 1.55 !important;
+	}
+
+	.tutorial-modal-video-link__arrow {
+		font-size: 16px;
+	}
 }
 
 button, .btn {
@@ -1609,8 +2013,8 @@ button, .btn {
 }
 
 .timer-quantity-card input:focus {
-	border-color: #2563eb;
-	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+	border-color: #00a846;
+	box-shadow: 0 0 0 2px rgba(0, 168, 70, 0.13);
 	outline: none;
 }
 
@@ -1654,10 +2058,10 @@ button, .btn {
 }
 
 .btn-success {
-	/* background: transparent; */
 	color: white;
 	border-radius: 5px;
-	background: linear-gradient(165deg, #10b981 0%, #059669 42%, #047857 100%) !important;
+	background-color: #00a846 !important;
+	border-color: #00a846 !important;
 }
 
 .packages-tier__badge {
@@ -1682,9 +2086,29 @@ button, .btn {
 }
 
 .btn-primary {
-	/* background: transparent; */
-	color: white;
-	border-radius: 5px;
+	background-color: #00a846 !important;
+	border-color: #00a846 !important;
+	color: #fff !important;
+	border-radius: 8px;
+	font-weight: 600;
+	box-shadow: 0 10px 24px rgba(0, 168, 70, 0.16);
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-primary:focus:not(:disabled) {
+	background-color: #008f3d !important;
+	border-color: #008f3d !important;
+	color: #fff !important;
+	box-shadow: 0 14px 30px rgba(0, 168, 70, 0.22);
+	transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+	background-color: #94a3b8 !important;
+	border-color: #94a3b8 !important;
+	box-shadow: none;
+	opacity: 0.75;
 }
 
 .btn-danger {
@@ -1694,15 +2118,48 @@ button, .btn {
 }
 
 .btn-info {
-	/* background: transparent; */
-	color: white;
-	border-radius: 5px;
+	background-color: #213555 !important;
+	border-color: #213555 !important;
+	color: #fff !important;
+	border-radius: 8px;
+	font-weight: 600;
+}
+
+.btn-info:hover:not(:disabled),
+.btn-info:focus:not(:disabled) {
+	background-color: #16263f !important;
+	border-color: #16263f !important;
+	color: #fff !important;
+}
+
+.btn-outline-primary {
+	background-color: #fff !important;
+	border-color: #00a846 !important;
+	color: #008f3d !important;
+	border-radius: 8px;
+	font-weight: 600;
+}
+
+.btn-outline-primary:hover:not(:disabled),
+.btn-outline-primary:focus:not(:disabled) {
+	background-color: #ecfdf5 !important;
+	border-color: #00a846 !important;
+	color: #006b32 !important;
 }
 
 .btn-secondary {
-	/* background: transparent; */
-	color: white;
-	border-radius: 5px;
+	background-color: #f8fafc !important;
+	border-color: #cbd5e1 !important;
+	color: #213555 !important;
+	border-radius: 8px;
+	font-weight: 600;
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-secondary:focus:not(:disabled) {
+	background-color: #eef2f7 !important;
+	border-color: #94a3b8 !important;
+	color: #213555 !important;
 }
 
 .logout {
@@ -3508,7 +3965,7 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 	right: 10px;
 	top: 50%;
 	transform: translateY(-50%);
-	background: #2563eb;
+	background: #00a846;
 	border-radius: 12px;
 	padding: 2px 8px;
 	min-width: 20px;
@@ -3516,6 +3973,10 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.sidebar-notification-badge--leave-pending {
+	background: #3b82f6;
 }
 
 .sidebar-notification-badge-count {
@@ -4045,12 +4506,12 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	padding: 3px;
 }
 
-/* Święta w grafiku — jasne tło, ciemny tekst (nadpisanie białego z reguły wyżej) */
+/* Święta w grafiku — zielone tło jak w ewidencji, biały tekst */
 .schedule-container .fc .schedule-calendar-holiday-event .fc-event-main span,
 .schedule-container .fc .schedule-calendar-holiday-event .fc-event-title,
 .schedule-container .schedule-calendar-holiday-event-content,
 .schedule-container .schedule-calendar-holiday-event-content span {
-	color: #78350f !important;
+	color: #ffffff !important;
 	font-weight: 600 !important;
 }
 
@@ -4900,13 +5361,13 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 .leave-days-info-toggle:hover,
 .leave-days-info-toggle[aria-expanded='true'] {
-	border-color: #2563eb;
-	background: #eff6ff;
-	color: #2563eb;
+	border-color: #00a846;
+	background: #ecfdf5;
+	color: #008f3d;
 }
 
 .leave-days-info-toggle:focus-visible {
-	outline: 2px solid rgba(37, 99, 235, 0.25);
+	outline: 2px solid rgba(0, 168, 70, 0.25);
 	outline-offset: 2px;
 }
 
@@ -5153,7 +5614,7 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 .leave-insights-modal__header .leave-insights-export-button.is-pdf,
 .leave-insights-modal__export-actions .leave-insights-export-button.is-pdf {
-	background: #2f91d0;
+	background: #D62828;
 }
 
 .leave-insights-modal__header .leave-insights-export-button:disabled,
@@ -5372,7 +5833,7 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	display: block;
 	height: 100%;
 	border-radius: inherit;
-	background: linear-gradient(90deg, #2563eb, #60a5fa);
+	background: linear-gradient(90deg, #00a846, #86efac);
 }
 
 .leave-insights-limit-list {
@@ -6470,6 +6931,31 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	.managed-workday-modal form {
 		padding: 16px;
 	}
+
+	.bulk-fill-workdays-modal__form {
+		padding: 16px 14px;
+		gap: 14px;
+	}
+
+	.bulk-fill-workdays-modal__header h2 {
+		font-size: 20px !important;
+	}
+
+	.bulk-fill-workdays-modal__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.bulk-fill-workdays-modal__actions .btn {
+		width: 100%;
+		justify-content: center;
+		white-space: normal;
+		text-align: center;
+	}
+
+	.workday-hours-time-selects {
+		grid-template-columns: 1fr;
+	}
 }
 
 /* Monthly Calendar modal: subtle UI refresh without layout changes */
@@ -6564,8 +7050,13 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	align-items: center !important;
 	justify-content: center !important;
 	padding: 24px !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
 	background-color: rgba(15, 23, 42, 0.38) !important;
+	overflow-x: hidden !important;
 	overflow-y: auto !important;
+	-webkit-overflow-scrolling: touch;
 }
 
 .managed-workday-modal.ReactModal__Content,
@@ -6573,9 +7064,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 .managed-workday-modal {
 	position: relative !important;
 	inset: auto !important;
-	width: min(820px, calc(100vw - 32px)) !important;
+	width: min(820px, 100%) !important;
 	max-width: 820px !important;
-	max-height: calc(100vh - 48px) !important;
+	max-height: calc(100dvh - 48px) !important;
 	margin: 0 !important;
 	margin-left: 0 !important;
 	padding: 0 !important;
@@ -6583,7 +7074,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	border-radius: 12px !important;
 	background: #fff !important;
 	box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
-	overflow: auto !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	box-sizing: border-box !important;
 }
 
 .managed-workday-modal form {
@@ -6596,14 +7089,96 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 .bulk-fill-workdays-modal.ReactModal__Content,
 .ReactModal__Content.bulk-fill-workdays-modal,
 .bulk-fill-workdays-modal {
-	width: min(820px, calc(100vw - 32px)) !important;
+	position: relative !important;
+	inset: auto !important;
+	width: min(820px, 100%) !important;
 	max-width: 820px !important;
+	max-height: calc(100dvh - 48px) !important;
+	margin: 0 !important;
+	margin-left: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	box-sizing: border-box !important;
+	-webkit-overflow-scrolling: touch;
 }
 
-.bulk-fill-range-options {
+.bulk-fill-workdays-modal__form {
 	display: grid;
-	gap: 8px;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	padding: 22px;
+	min-width: 0;
+	max-width: 100%;
+	box-sizing: border-box;
+	overflow-x: hidden;
+}
+
+.bulk-fill-workdays-modal__header {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	align-items: flex-start;
+	min-width: 0;
+}
+
+.bulk-fill-workdays-modal__header > div:first-child {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.bulk-fill-workdays-modal__header h2 {
+	display: block !important;
+	margin: 0 !important;
+	font-size: 22px !important;
+	color: #0f2747 !important;
+	font-weight: 700;
+	line-height: 1.25;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+
+.bulk-fill-workdays-modal__header p {
+	margin: 6px 0 0 !important;
+	color: #5f6f84 !important;
+	font-size: 14px !important;
+	line-height: 1.45;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+
+.bulk-fill-workdays-modal__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	flex-wrap: wrap;
+	min-width: 0;
+}
+
+.bulk-fill-custom-dates {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: 1fr;
+	min-width: 0;
+}
+
+.bulk-fill-workdays-modal input,
+.bulk-fill-workdays-modal select,
+.bulk-fill-workdays-modal textarea,
+.bulk-fill-workdays-modal button {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.bulk-fill-range-options button {
+	min-width: 0;
+	white-space: normal;
+	text-align: center;
+	line-height: 1.3;
+	word-break: break-word;
 }
 
 .bulk-fill-entry-card {
@@ -6613,6 +7188,29 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	border: 1px solid #e2e8f0;
 	border-radius: 10px;
 	background: #f8fafc;
+	min-width: 0;
+	max-width: 100%;
+	overflow-x: hidden;
+}
+
+.bulk-fill-workdays-modal .manual-split-blocks-editor__total {
+	white-space: normal;
+	word-break: break-word;
+	max-width: 100%;
+}
+
+.workday-hours-time-selects {
+	margin-top: 12px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+	min-width: 0;
+}
+
+.bulk-fill-workdays-modal .bulk-fill-range-options {
+	display: grid;
+	gap: 8px;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .bulk-fill-absence-card {
@@ -6627,9 +7225,9 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 .bulk-fill-work-hours-options {
 	padding: 12px;
-	border: 1px solid #93c5fd;
+	border: 1px solid rgba(0, 168, 70, 0.35);
 	border-radius: 8px;
-	background: #eaf6ff;
+	background: #ecfdf5;
 }
 
 .bulk-fill-work-hours-option {
@@ -6646,8 +7244,8 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 }
 
 .bulk-fill-work-hours-option.is-selected {
-	border-color: #0d6efd;
-	background: #bfdbfe;
+	border-color: #00a846;
+	background: #ecfdf5;
 }
 
 .bulk-fill-work-hours-option input {
@@ -6845,8 +7443,18 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		margin-right: 0 !important;
 	}
 
-	.bulk-fill-range-options {
+	.bulk-fill-workdays-modal .bulk-fill-range-options {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.bulk-fill-range-options button {
+		padding: 9px 8px !important;
+		font-size: 13px;
+	}
+
+	.bulk-fill-entry-card,
+	.bulk-fill-absence-card {
+		padding: 12px;
 	}
 
 	.workday-bulk-fill-button {
@@ -7083,17 +7691,31 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	.managed-workday-modal-overlay {
 		align-items: flex-start !important;
 		padding: 14px !important;
+		overflow-x: hidden !important;
 	}
 
 	.managed-workday-modal.ReactModal__Content,
 	.ReactModal__Content.managed-workday-modal,
 	.managed-workday-modal {
 		width: 100% !important;
-		max-height: calc(100vh - 28px) !important;
+		max-width: 100% !important;
+		max-height: calc(100dvh - 28px) !important;
+	}
+
+	.bulk-fill-workdays-modal.ReactModal__Content,
+	.ReactModal__Content.bulk-fill-workdays-modal,
+	.bulk-fill-workdays-modal {
+		width: 100% !important;
+		max-width: 100% !important;
+		max-height: calc(100dvh - 28px) !important;
 	}
 
 	.managed-workday-modal form {
 		padding: 18px;
+	}
+
+	.bulk-fill-workdays-modal__form {
+		padding: 18px 14px;
 	}
 
 	.managed-month-confirmation,

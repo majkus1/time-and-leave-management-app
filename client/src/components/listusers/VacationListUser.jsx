@@ -20,6 +20,7 @@ import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
+import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
 import {
 	LEAVE_REQUEST_STATUS_KEYS,
@@ -949,28 +950,17 @@ function VacationListUser() {
 		}
 		try {
 			const report = getLeaveReportData()
-			const theme = {
-				navy: '#0f2a4a',
-				blue: '#2563eb',
-				green: '#16a34a',
-				red: '#dc2626',
-				purple: '#7c3aed',
-				amber: '#d97706',
-				muted: '#64748b',
-				line: '#dbe7f2',
-				soft: '#f5f9fd',
-				white: '#ffffff',
-			}
+			const theme = PDF_REPORT_THEME
 			const statusColors = {
 				accepted: theme.green,
-				pending: theme.blue,
+				pending: theme.amber,
 				rejected: theme.red,
 				sent: theme.purple,
 			}
 			const tableLayout = {
 				hLineColor: () => theme.line,
 				vLineColor: () => theme.line,
-				fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+				fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? theme.softRow : null),
 			}
 			const kpiCards = [
 				{ label: 'Wnioski łącznie', value: report.statusStats.total, sub: `${formatReportNumber(report.durationStats.total)} ${exportDurationUnit}`, color: theme.navy },
@@ -1009,18 +999,18 @@ function VacationListUser() {
 						body: [[
 							{
 								stack: [
-									{ text: 'PLANOPIA · RAPORT URLOPÓW I NIEOBECNOŚCI', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1 },
+									{ text: 'PLANOPIA · RAPORT URLOPÓW I NIEOBECNOŚCI', fontSize: 8, bold: true, color: theme.headerEyebrow, characterSpacing: 1 },
 									{ text: 'Urlopy zespołu', fontSize: 22, bold: true, color: theme.white, margin: [0, 6, 0, 0] },
-									{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: '#e0f2fe', margin: [0, 5, 0, 0] },
+									{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 								],
 								border: [false, false, false, false],
 								margin: [16, 14, 12, 14],
 							},
 							{
 								stack: [
-									{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: '#dbeafe' },
-									{ text: `Jednostka: ${exportDurationUnit}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
-									{ text: `Statusy: ${report.statusLabel}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
+									{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: theme.headerSubtitle },
+									{ text: `Jednostka: ${exportDurationUnit}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
+									{ text: `Statusy: ${report.statusLabel}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 								],
 								border: [false, false, false, false],
 								alignment: 'right',
@@ -1075,7 +1065,7 @@ function VacationListUser() {
 										row.requests,
 										formatReportNumber(row.total),
 										{ canvas: [
-											{ type: 'rect', x: 0, y: 3, w: 130, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: 130, h: 6, r: 3, color: theme.barTrack },
 											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.blue },
 										] },
 									]
@@ -1106,7 +1096,7 @@ function VacationListUser() {
 										formatReportNumber(row.accepted),
 										formatReportNumber(row.pending),
 										{ canvas: [
-											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: theme.barTrack },
 											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.purple },
 										] },
 									]
@@ -1137,7 +1127,7 @@ function VacationListUser() {
 										formatReportNumber(row.accepted),
 										formatReportNumber(row.pending),
 										{ canvas: [
-											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: '#e8f0f8' },
+											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: theme.barTrack },
 											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.green },
 										] },
 									]
@@ -1317,9 +1307,9 @@ function VacationListUser() {
 								className='filter-button'
 								style={{ 
 									padding: '8px 12px', 
-									border: '1px solid #3498db', 
+									border: '1px solid #00a846', 
 									borderRadius: '6px', 
-									backgroundColor: '#3498db', 
+									backgroundColor: '#00a846', 
 									cursor: 'pointer', 
 									display: 'flex',
 									alignItems: 'center',
@@ -1333,8 +1323,8 @@ function VacationListUser() {
 								}}
 								onMouseOut={(e) => {
 									const button = e.currentTarget
-									button.style.backgroundColor = '#3498db'
-									button.style.borderColor = '#3498db'
+									button.style.backgroundColor = '#00a846'
+									button.style.borderColor = '#00a846'
 								}}
 								title={t('planslist.filter') || 'Filtrowanie'}
 							>
@@ -1530,7 +1520,7 @@ function VacationListUser() {
 									{t('planslist.calendarView') || 'Widok kalendarza'}
 								</h3>
 								<div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef' }}>
+									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'single' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'single' ? '#00a846' : '#e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -1541,7 +1531,7 @@ function VacationListUser() {
 										/>
 										<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
 									</label>
-									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef' }}>
+									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'all-months' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'all-months' ? '#00a846' : '#e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -1643,7 +1633,7 @@ function VacationListUser() {
 								</h3>
 								
 								{/* Opcja: Wszyscy z zespołu */}
-								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#e8f4f8' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#3498db' : '#e9ecef' }}>
+								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
 									<input
 										type="radio"
 										name="userFilter"
@@ -1706,7 +1696,7 @@ function VacationListUser() {
 															)}
 														</label>
 														{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
-															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #3498db' }}>
+															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
 																{usersFromSelectedDepartments
 																	.filter(user => user.department && user.department.includes(deptName))
 																	.map(user => (
@@ -1787,7 +1777,7 @@ function VacationListUser() {
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										padding: '10px 20px',
-										backgroundColor: '#3498db',
+										backgroundColor: '#00a846',
 										color: 'white',
 										border: 'none',
 										borderRadius: '6px',
@@ -1797,7 +1787,7 @@ function VacationListUser() {
 										transition: 'background-color 0.2s'
 									}}
 									onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-									onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
+									onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}>
 									{t('planslist.apply') || t('boards.cancel') || 'Zastosuj'}
 								</button>
 							</div>

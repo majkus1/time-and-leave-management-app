@@ -15,6 +15,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { resolveExportExecutionContext } = require('./aiExportIntentService')
 const { roundWorkHoursForDisplay } = require('../utils/workHoursDisplay')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { PDF_REPORT_THEME } = require('../constants/pdfReportTheme')
 
 /** Gdy brak wpisu w Settings — te same nazwy co domyślne w models/Settings.js */
 const SYSTEM_LEAVE_TYPE_FALLBACK = {
@@ -438,9 +439,11 @@ function pdfTable(headers, rows, widths) {
 			body: [headers, ...bodyRows],
 		},
 		layout: {
-			fillColor: (i) => (i === 0 ? '#e2e8f0' : i % 2 === 0 ? '#f8fafc' : null),
+			fillColor: (i) => (i === 0 ? PDF_REPORT_THEME.headerFill : i % 2 === 0 ? PDF_REPORT_THEME.softRow : null),
 			hLineWidth: () => 0.5,
 			vLineWidth: () => 0.5,
+			hLineColor: () => PDF_REPORT_THEME.line,
+			vLineColor: () => PDF_REPORT_THEME.line,
 		},
 		margin: [0, 0, 0, 10],
 	}
@@ -690,7 +693,9 @@ async function pdfBuffer(content) {
 		pageSize: 'A4',
 		pageMargins: [36, 44, 36, 44],
 		defaultStyle: { font: 'OpenSans', fontSize: 8 },
-		styles: { h: { fontSize: 12, bold: true } },
+		styles: {
+			h: { fontSize: 12, bold: true, color: PDF_REPORT_THEME.navy },
+		},
 		content,
 	}
 	const pdfDoc = pdfMake.createPdf(docDefinition)

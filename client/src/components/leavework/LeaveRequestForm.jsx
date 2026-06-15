@@ -659,7 +659,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 												padding: '8px 12px',
 												backgroundColor: '#e8f4f8',
 												borderRadius: '6px',
-												border: '1px solid #3498db'
+												border: '1px solid #00a846'
 											}}>
 												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
 												<span style={{ 

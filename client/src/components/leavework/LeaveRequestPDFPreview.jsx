@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useSettings } from '../../hooks/useSettings'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import { buildReportFilename } from '../../utils/export/reportFilename'
+import { PDF_BRAND } from '../../utils/export/pdfReportTheme'
 
 function LeaveRequestPDFPreview() {
 	const location = useLocation()
@@ -96,11 +97,11 @@ function LeaveRequestPDFPreview() {
 				}}>
 					<h2 style={{ 
 						marginBottom: '25px',
-						color: '#1e40af',
+						color: PDF_BRAND.primary,
 						fontSize: '24px',
 						fontWeight: '600',
 						textAlign: 'center',
-						borderBottom: '2px solid #3b82f6',
+						borderBottom: `2px solid ${PDF_BRAND.primary}`,
 						paddingBottom: '10px'
 					}}>{t('leavepdf.title')}</h2>
 					<div className='allrequests'>

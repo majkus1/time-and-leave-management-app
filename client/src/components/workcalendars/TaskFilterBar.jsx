@@ -16,9 +16,9 @@ function TaskFilterBar({ tasks = [], selectedIds = [], onChange, compact = false
 	const chipStyle = (active) => ({
 		padding: compact ? '4px 10px' : '6px 12px',
 		borderRadius: '999px',
-		border: `1px solid ${active ? '#4f46e5' : '#d1d5db'}`,
-		background: active ? '#eef2ff' : '#fff',
-		color: active ? '#4338ca' : '#374151',
+		border: `1px solid ${active ? '#00a846' : '#d1d5db'}`,
+		background: active ? '#ecfdf5' : '#fff',
+		color: active ? '#213555' : '#374151',
 		fontSize: compact ? '12px' : '13px',
 		fontWeight: active ? 600 : 500,
 		cursor: 'pointer',

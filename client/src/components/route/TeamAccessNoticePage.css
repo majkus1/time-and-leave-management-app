@@ -58,12 +58,14 @@
 }
 
 .team-access-notice__btn.primary {
-	background: linear-gradient(135deg, #6366f1, #4f46e5);
+	background: #00a846;
 	color: #fff;
+	box-shadow: 0 12px 26px rgba(0, 168, 70, 0.18);
 }
 
 .team-access-notice__btn.primary:hover {
-	filter: brightness(1.05);
+	background: #008f3d;
+	filter: none;
 }
 
 .team-access-notice__btn.secondary {

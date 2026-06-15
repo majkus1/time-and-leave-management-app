@@ -1216,6 +1216,7 @@ export default function PackagesPage() {
 						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t, i18n.resolvedLanguage)
 						const planBody = { kind: 'plan', planKey: tier.id, billingCycle: cycle }
 						const stripePlanReady = hasStripeMappingForBody(stripeStatus, planBody)
+						const iconSrc = tier.id === 'business' ? '/img/business.png' : '/img/startup.png'
 						return (
 							<div
 								key={tier.id}
@@ -1229,6 +1230,9 @@ export default function PackagesPage() {
 								{isPro && !isCurrentPlan && (
 									<span className="packages-tier__badge">{t('billingPackages.recommended')}</span>
 								)}
+								<span className="packages-tier__icon" aria-hidden>
+									<img src={iconSrc} alt="" />
+								</span>
 								<h3>{TIER_LABELS[tier.id] || tier.id}</h3>
 								<div className="packages-tier__price">{main}</div>
 								<div className="packages-tier__price-sub">{sub}</div>
@@ -1395,6 +1399,9 @@ export default function PackagesPage() {
 											{t('billingPackages.planCurrentBadge')}
 										</span>
 									)}
+									<span className="packages-tier__icon" aria-hidden>
+										<img src="/img/core.png" alt="" />
+									</span>
 									<h3>{t('billingPackages.heroCoreTitle')}</h3>
 									<div className="packages-tier__price">
 										{t('billingPackages.fromWord')} {corePb.main}
@@ -1466,7 +1473,10 @@ export default function PackagesPage() {
 				})()}
 
 				<div className="packages-addons">
-					<h3>{t('billingPackages.addonsTitle')}</h3>
+					<h3>
+						<span className="packages-addons__icon" aria-hidden="true" />
+						{t('billingPackages.addonsTitle')}
+					</h3>
 					<p className="packages-addons__sub">{t('billingPackages.addonsSubtitle')}</p>
 					{ent && !ent.ai?.unrestricted && ent.ai?.canPurchaseAddon === false && (
 						<p className="packages-addons__locked">{t('billingPackages.addonsLocked')}</p>
@@ -1877,9 +1887,6 @@ export default function PackagesPage() {
 								{modalLabels.cancel}
 							</button>
 						</div>
-						<p className="packages-core-payment-footnote" role="note">
-							{t('billingPackages.coreConfiguratorPayFootnote')}
-						</p>
 					</div>
 				</div>
 			)}

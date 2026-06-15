@@ -62,14 +62,14 @@ function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} })
 				}}>
 					{statusLabel}
 				</h3>
-				<span style={{
-					backgroundColor: status.color,
-					color: 'white',
-					borderRadius: '12px',
-					padding: '4px 10px',
-					fontSize: '12px',
-					fontWeight: '600'
-				}}>
+				<span
+					className="board-column-task-count"
+					style={{
+						backgroundColor: status.color,
+						borderRadius: '12px',
+						padding: '4px 10px',
+						fontWeight: '600',
+					}}>
 					{tasks.length}
 				</span>
 			</div>
@@ -349,7 +349,7 @@ function Board() {
 						}}
 						style={{
 							padding: '12px 24px',
-							backgroundColor: '#3498db',
+							backgroundColor: '#00a846',
 							color: 'white',
 							border: 'none',
 							borderRadius: '8px',
@@ -499,4 +499,3 @@ function Board() {
 }
 
 export default Board
-

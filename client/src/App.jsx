@@ -46,7 +46,6 @@ import ScrollToTop from './components/ScrollToTop.jsx'
 import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
 import PWANavigationBar from './components/PWANavigationBar'
-import AiAssistantPromoFab from './components/AiAssistantPromoFab'
 import QRScan from './components/qr/QRScan'
 import AIAssistant from './components/aiAssistant/AIAssistant'
 import PackagesPage from './components/billing/PackagesPage'
@@ -131,7 +130,6 @@ function AppContent() {
 			<ScrollToTop />
 			<FreemiumRouteSync />
 			<PWANavigationBar />
-			<AiAssistantPromoFab />
 			{isCheckingAuth ? (
 				<div className="content-with-loader">
 					<Loader />

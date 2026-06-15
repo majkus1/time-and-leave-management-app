@@ -614,36 +614,16 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 				×
 			</button>
 			{/* Header */}
-			<div style={{ 
-				display: 'flex', 
-				justifyContent: 'space-between', 
-				alignItems: 'center',
-				marginBottom: '30px',
-				paddingBottom: '20px',
-				paddingRight: '44px',
-				borderBottom: '2px solid #e5e7eb'
-			}}>
+			<div className="tutorial-modal-header">
 				<div>
-					<h2 style={{ 
-						margin: 0,
-						color: '#1f2937',
-						fontSize: '28px',
-						fontWeight: '700',
-						display: 'flex',
-						alignItems: 'center',
-						gap: '12px'
-					}}>
+					<h2 className="tutorial-modal-title">
 						<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 							<circle cx="12" cy="12" r="10"></circle>
 							<path d="M12 16v-4M12 8h.01"></path>
 						</svg>
 						{i18n.resolvedLanguage === 'pl' ? 'Jak korzystać z aplikacji?' : 'How to use the app?'}
 					</h2>
-					<p style={{ 
-						margin: '8px 0 0 0',
-						color: '#6b7280',
-						fontSize: '16px'
-					}}>
+					<p className="tutorial-modal-subtitle">
 						{freemiumTier
 							? (i18n.resolvedLanguage === 'pl'
 								? 'Instrukcja dostosowana do planu darmowego — tylko to, co masz w menu'
@@ -654,6 +634,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						}
 					</p>
 					<a
+						className="tutorial-modal-video-link"
 						href={
 							i18n.resolvedLanguage === 'pl'
 								? 'https://planopia.pl/blog/instrukcja-wideo-planopia'
@@ -666,34 +647,6 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								? 'Materiały wideo — otwiera się w nowej karcie'
 								: 'Video tutorials — opens in a new tab'
 						}
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: '10px',
-							marginTop: '14px',
-							padding: '10px 14px',
-							maxWidth: '100%',
-							boxSizing: 'border-box',
-							borderRadius: '10px',
-							border: '1px solid #bae6fd',
-							background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-							color: '#0369a1',
-							fontSize: '15px',
-							fontWeight: 600,
-							textDecoration: 'none',
-							transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
-							boxShadow: '0 1px 2px rgba(14, 165, 233, 0.08)',
-						}}
-						onMouseEnter={(e) => {
-							e.currentTarget.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%)'
-							e.currentTarget.style.borderColor = '#38bdf8'
-							e.currentTarget.style.boxShadow = '0 2px 8px rgba(14, 165, 233, 0.15)'
-						}}
-						onMouseLeave={(e) => {
-							e.currentTarget.style.background = 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'
-							e.currentTarget.style.borderColor = '#bae6fd'
-							e.currentTarget.style.boxShadow = '0 1px 2px rgba(14, 165, 233, 0.08)'
-						}}
 					>
 						<svg
 							width="22"
@@ -710,12 +663,12 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 							<circle cx="12" cy="12" r="10" />
 							<polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
 						</svg>
-						<span style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
+						<span>
 							{i18n.resolvedLanguage === 'pl'
 								? 'Materiały wideo — krótkie nagrania z aplikacji'
 								: 'Video tutorials — short clips from the app'}
 						</span>
-						<span style={{ flexShrink: 0, opacity: 0.75, fontSize: '18px', lineHeight: 1 }} aria-hidden>
+						<span className="tutorial-modal-video-link__arrow" aria-hidden>
 							↗
 						</span>
 					</a>
@@ -723,39 +676,26 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 			</div>
 
 			{/* Sections Grid */}
-			<div style={{
-				display: 'flex',
-				flexDirection: isMobile ? 'column' : 'row',
-				gap: '16px',
-				marginBottom: '30px',
-				alignItems: 'flex-start'
-			}}>
+			<div className="tutorial-modal-sections">
 				{columns.map((columnSections, columnIndex) => (
 					<div
 						key={columnIndex}
-						style={{
-							flex: isMobile ? 'none' : '1',
-							width: isMobile ? '100%' : 'auto',
-							minWidth: isMobile ? 'auto' : '300px',
-							display: 'flex',
-							flexDirection: 'column',
-							gap: '16px'
-						}}
+						className="tutorial-modal-sections__column"
 					>
 						{columnSections.map((section) => (
 							<div
 								key={section.id}
+								className="tutorial-modal-section"
 								onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
 								style={{
-									padding: '20px',
 									border: '2px solid',
-									borderColor: activeSection === section.id ? '#667eea' : '#e5e7eb',
+									borderColor: activeSection === section.id ? '#00a846' : '#e5e7eb',
 									borderRadius: '12px',
 									cursor: 'pointer',
 									transition: 'all 0.3s ease',
-									backgroundColor: activeSection === section.id ? '#f0f4ff' : 'white',
+									backgroundColor: activeSection === section.id ? '#f0fdf4' : 'white',
 									boxShadow: activeSection === section.id 
-										? '0 4px 12px rgba(102, 126, 234, 0.2)' 
+										? '0 4px 12px rgba(0, 168, 70, 0.18)' 
 										: '0 2px 4px rgba(0, 0, 0, 0.05)'
 								}}
 						onMouseEnter={(e) => {
@@ -771,47 +711,28 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 							}
 						}}
 					>
-						<div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-							<div style={{
-								width: '48px',
-								height: '48px',
-								borderRadius: '12px',
-								backgroundColor: activeSection === section.id ? '#667eea' : '#f3f4f6',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								flexShrink: 0,
-								transition: 'all 0.3s ease'
+						<div className="tutorial-modal-section__head">
+							<div className="tutorial-modal-section__icon" style={{
+								backgroundColor: activeSection === section.id ? '#00a846' : '#f3f4f6',
 							}}>
 								<img 
 									src={section.icon} 
 									alt={section.title}
 									style={{
-										width: '28px',
-										height: '28px',
 										filter: activeSection === section.id ? 'brightness(0) invert(1)' : 'none'
 									}}
 								/>
 							</div>
-							<div style={{ flex: 1 }}>
-								<h3 style={{
-									margin: '0 0 8px 0',
-									color: '#1f2937',
-									fontSize: '18px',
-									fontWeight: '600'
-								}}>
+							<div className="tutorial-modal-section__text">
+								<h3 className="tutorial-modal-section__title">
 									{section.title}
 								</h3>
-								<p style={{
-									margin: 0,
-									color: '#6b7280',
-									fontSize: '14px',
-									lineHeight: '1.5'
-								}}>
+								<p className="tutorial-modal-section__desc">
 									{section.description}
 								</p>
 							</div>
 							<svg 
+								className="tutorial-modal-section__chevron"
 								width="20" 
 								height="20" 
 								viewBox="0 0 24 24" 
@@ -819,7 +740,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								stroke="currentColor" 
 								strokeWidth="2"
 								style={{
-									color: activeSection === section.id ? '#667eea' : '#9ca3af',
+									color: activeSection === section.id ? '#00a846' : '#9ca3af',
 									transform: activeSection === section.id ? 'rotate(180deg)' : 'rotate(0deg)',
 									transition: 'transform 0.3s ease',
 									flexShrink: 0,
@@ -831,12 +752,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						</div>
 						
 						{activeSection === section.id && (
-							<div style={{
-								marginTop: '16px',
-								paddingTop: '16px',
-								borderTop: '1px solid #e5e7eb',
-								animation: 'fadeIn 0.3s ease'
-							}}>
+							<div className="tutorial-modal-section__details">
 								<div style={{ marginBottom: '16px' }}>
 									{formatTutorialContent(section.content).map((block, blockIndex) => (
 										block.type === 'list' ? (
@@ -919,33 +835,11 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 								)}
 								{!section.hideNavigateButton && (
 									<button
+										type="button"
+										className="tutorial-modal-nav-btn"
 										onClick={(e) => {
 											e.stopPropagation()
 											handleNavigateToSection(section.path)
-										}}
-										style={{
-											width: '100%',
-											padding: '10px 16px',
-											backgroundColor: '#667eea',
-											color: 'white',
-											border: 'none',
-											borderRadius: '8px',
-											fontSize: '14px',
-											fontWeight: '600',
-											cursor: 'pointer',
-											transition: 'all 0.2s',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											gap: '8px'
-										}}
-										onMouseEnter={(e) => {
-											e.target.style.backgroundColor = '#5568d3'
-											e.target.style.transform = 'translateY(-1px)'
-										}}
-										onMouseLeave={(e) => {
-											e.target.style.backgroundColor = '#667eea'
-											e.target.style.transform = 'translateY(0)'
 										}}
 									>
 										{i18n.resolvedLanguage === 'pl' ? 'Przejdź do sekcji' : 'Go to section'}
@@ -964,39 +858,11 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 
 			{/* Footer */}
 			{showOnFirstView && (
-				<div style={{
-					paddingTop: '20px',
-					borderTop: '2px solid #e5e7eb',
-					display: 'flex',
-					justifyContent: 'flex-end',
-					gap: '12px'
-				}}>
+				<div className="tutorial-modal-footer">
 					<button
 						type="button"
+						className="tutorial-modal-footer-btn"
 						onClick={dismissFirstViewTutorial}
-						style={{
-							padding: '12px 24px',
-							backgroundColor: '#667eea',
-							color: 'white',
-							border: 'none',
-							borderRadius: '8px',
-							fontSize: '16px',
-							fontWeight: '600',
-							cursor: 'pointer',
-							transition: 'all 0.2s',
-							display: 'flex',
-							alignItems: 'center',
-							gap: '8px',
-							touchAction: 'manipulation',
-						}}
-						onMouseEnter={(e) => {
-							e.target.style.backgroundColor = '#5568d3'
-							e.target.style.transform = 'translateY(-1px)'
-						}}
-						onMouseLeave={(e) => {
-							e.target.style.backgroundColor = '#667eea'
-							e.target.style.transform = 'translateY(0)'
-						}}
 					>
 						{i18n.resolvedLanguage === 'pl' ? 'Rozumiem, przejdź dalej' : 'Got it, continue'}
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

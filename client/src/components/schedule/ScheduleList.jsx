@@ -77,7 +77,7 @@ function ScheduleList() {
 							onClick={() => setIsCreateModalOpen(true)}
 							style={{
 								padding: '12px 24px',
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								color: 'white',
 								border: 'none',
 								borderRadius: '8px',
@@ -167,7 +167,7 @@ function ScheduleList() {
 									style={{
 										background: 'transparent',
 										border: 'none',
-										color: '#3498db',
+										color: '#00a846',
 										cursor: 'pointer',
 										fontSize: '16px',
 										padding: '4px 8px',
@@ -180,7 +180,7 @@ function ScheduleList() {
 									}}
 									onMouseLeave={(e) => {
 										e.target.style.backgroundColor = 'transparent'
-										e.target.style.color = '#3498db'
+										e.target.style.color = '#00a846'
 									}}
 									title={t('schedule.usersInfo') || 'Zobacz użytkowników'}>
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

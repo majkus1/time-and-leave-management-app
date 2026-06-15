@@ -508,8 +508,10 @@ function MonthlyCalendar() {
 		return aggregateTaskHours(rows, { groupByUser: false })
 	}, [workdays, currentMonth, currentYear, selectedTaskIds, taskTitleLookup, tasksModuleEnabled, t])
 
-	const showActivitySummary = selectedTaskIds.length === 0 && activitySummaryRows.length > 0
-	const showTaskSummary = selectedActivityIds.length === 0 && tasksModuleEnabled && taskSummaryRows.length > 0
+	const showActivitySummary = activitySummaryRows.length > 0
+		&& (selectedTaskIds.length === 0 || selectedActivityIds.length > 0)
+	const showTaskSummary = tasksModuleEnabled && taskSummaryRows.length > 0
+		&& (selectedActivityIds.length === 0 || selectedTaskIds.length > 0)
 	const calendarFilterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
 	const breakdownUsesClockFormat =
 		selectedActivityIds.length > 0 || selectedTaskIds.length > 0

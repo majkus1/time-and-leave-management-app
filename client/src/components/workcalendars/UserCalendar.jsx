@@ -7,6 +7,7 @@ import Modal from 'react-modal'
 import Sidebar from '../dashboard/Sidebar'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
+import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { buildReportFilename } from '../../utils/export/reportFilename'
 import { API_URL } from '../../config.js'
 import { useTranslation } from 'react-i18next'
@@ -914,8 +915,10 @@ function UserCalendar() {
 		[monthTaskRows]
 	)
 
-	const showActivitySummary = selectedTaskIds.length === 0 && activitySummaryRows.length > 0
-	const showTaskSummary = selectedActivityIds.length === 0 && tasksModuleEnabled && taskSummaryRows.length > 0
+	const showActivitySummary = activitySummaryRows.length > 0
+		&& (selectedTaskIds.length === 0 || selectedActivityIds.length > 0)
+	const showTaskSummary = tasksModuleEnabled && taskSummaryRows.length > 0
+		&& (selectedActivityIds.length === 0 || selectedTaskIds.length > 0)
 	const calendarFilterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
 	const breakdownUsesClockFormat =
 		selectedActivityIds.length > 0 || selectedTaskIds.length > 0
@@ -1251,18 +1254,7 @@ function UserCalendar() {
 		)
 	}
 
-	const pdfTheme = {
-		navy: '#0b2442',
-		blue: '#2563eb',
-		green: '#16a34a',
-		amber: '#d97706',
-		purple: '#7c3aed',
-		red: '#dc2626',
-		ink: '#0f2746',
-		muted: '#64748b',
-		line: '#dbe7f2',
-		soft: '#f5f9fd',
-	}
+	const pdfTheme = PDF_REPORT_THEME
 
 	const pdfSafeNumber = value => {
 		const number = Number(value || 0)
@@ -1442,7 +1434,7 @@ function UserCalendar() {
 						],
 					},
 					layout: {
-						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? pdfTheme.softRow : null),
 						hLineColor: () => pdfTheme.line,
 						vLineColor: () => pdfTheme.line,
 					},
@@ -1469,7 +1461,7 @@ function UserCalendar() {
 						],
 					},
 					layout: {
-						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? pdfTheme.softRow : null),
 						hLineColor: () => pdfTheme.line,
 						vLineColor: () => pdfTheme.line,
 					},
@@ -1493,16 +1485,16 @@ function UserCalendar() {
 						body: [[
 							{
 								stack: [
-									{ text: 'EWIDENCJA CZASU PRACY', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1 },
+									{ text: 'EWIDENCJA CZASU PRACY', fontSize: 8, bold: true, color: pdfTheme.headerEyebrow, characterSpacing: 1 },
 									{ text: userName || 'Pracownik', fontSize: 17, bold: true, color: '#ffffff', margin: [0, 4, 0, 0] },
-									user?.position ? { text: user.position, fontSize: 8, color: '#bfdbfe', margin: [0, 2, 0, 0] } : null,
+									user?.position ? { text: user.position, fontSize: 8, color: pdfTheme.headerEyebrow, margin: [0, 2, 0, 0] } : null,
 								].filter(Boolean),
 								border: [false, false, false, false],
 								margin: [14, 9, 10, 9],
 							},
 							{
 								stack: [
-									{ text: `Okres: ${getReportMonthLabel()}`, fontSize: 9, color: '#dbeafe', alignment: 'right' },
+									{ text: `Okres: ${getReportMonthLabel()}`, fontSize: 9, color: pdfTheme.headerSubtitle, alignment: 'right' },
 									{
 										text: isConfirmed ? 'Miesiąc potwierdzony' : 'Miesiąc niepotwierdzony',
 										fontSize: 10,
@@ -1988,13 +1980,13 @@ function UserCalendar() {
 							padding: '15px',
 							backgroundColor: '#f8fafc',
 							borderRadius: '6px',
-							borderLeft: '4px solid #3b82f6',
+							borderLeft: '4px solid #213555',
 							marginLeft: '10px',
 							maxWidth: '700px'
 						}}>
 							<h3 style={{ 
 								margin: '0',
-								color: '#1e40af',
+								color: '#213555',
 								fontSize: '18px',
 								fontWeight: '600'
 							}}>

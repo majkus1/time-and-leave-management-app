@@ -265,40 +265,13 @@ function BulkFillWorkdaysModal({
 			onRequestClose={onClose}
 			className="bulk-fill-workdays-modal"
 			overlayClassName="managed-workday-modal-overlay"
-			style={{
-				overlay: {
-					position: 'fixed',
-					inset: 0,
-					zIndex: 100000,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					padding: '24px',
-					backgroundColor: 'rgba(15, 23, 42, 0.38)',
-					overflowY: 'auto',
-				},
-				content: {
-					position: 'relative',
-					inset: 'auto',
-					width: 'min(820px, calc(100vw - 32px))',
-					maxWidth: '820px',
-					maxHeight: 'calc(100vh - 48px)',
-					margin: 0,
-					padding: 0,
-					border: 0,
-					borderRadius: '12px',
-					background: '#fff',
-					boxShadow: '0 24px 70px rgba(15, 23, 42, 0.24)',
-					overflow: 'auto',
-				},
-			}}
 			contentLabel={t('workcalendar.bulkFill.title')}
 		>
-			<form onSubmit={handleSubmit} style={{ display: 'grid', gap: '16px', padding: '22px' }}>
-				<div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
+			<form onSubmit={handleSubmit} className="bulk-fill-workdays-modal__form">
+				<div className="bulk-fill-workdays-modal__header">
 					<div>
-						<h2 style={{ margin: 0, fontSize: '22px', color: '#0f2747' }}>{t('workcalendar.bulkFill.title')}</h2>
-						<p style={{ margin: '6px 0 0', color: '#5f6f84', fontSize: '14px' }}>
+						<h2>{t('workcalendar.bulkFill.title')}</h2>
+						<p>
 							{t('workcalendar.bulkFill.description')}
 						</p>
 					</div>
@@ -339,9 +312,9 @@ function BulkFillWorkdaysModal({
 									}
 								}}
 								style={{
-									border: rangeType === value ? '2px solid #0d6efd' : '1px solid #d7dde5',
-									background: rangeType === value ? '#eef6ff' : '#fff',
-									color: '#13294b',
+									border: rangeType === value ? '2px solid #00a846' : '1px solid #d7dde5',
+									background: rangeType === value ? '#ecfdf5' : '#fff',
+									color: rangeType === value ? '#213555' : '#13294b',
 									borderRadius: '8px',
 									padding: '10px 12px',
 									fontWeight: 700,
@@ -368,7 +341,7 @@ function BulkFillWorkdaysModal({
 				)}
 
 				{rangeType === 'custom' && (
-					<div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+					<div className="bulk-fill-custom-dates">
 						<label>
 							<span style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>{t('workcalendar.bulkFill.dateFrom')}</span>
 							<input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2" />
@@ -498,7 +471,7 @@ function BulkFillWorkdaysModal({
 					/>
 				</label>
 
-				<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+				<div className="bulk-fill-workdays-modal__actions">
 					<button type="button" className="btn btn-secondary" onClick={onClose}>{t('workcalendar.cancel')}</button>
 					<button type="submit" className="btn btn-primary" disabled={isPending || !!disabledReason}>
 						{isPending ? t('workcalendar.bulkFill.filling') : t('workcalendar.bulkFill.fill')}

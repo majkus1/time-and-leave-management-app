@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	aggregateActivityHours,
+	buildFilteredRealTimeFromEntries,
 	flattenWorkdayActivityRows,
 } from './workActivityAggregation'
 
@@ -98,5 +99,33 @@ describe('workActivityAggregation', () => {
 			unit: 'szt',
 			efficiency: 7.78,
 		}))
+	})
+
+	it('keeps manual day time range when filtering by matching activity', () => {
+		const workday = {
+			realTimeDayWorked: '03:00-07:30',
+			manualActivityBlocks: [{
+				activityId: 'activity-ttt',
+				activityName: 'ttt',
+				hours: 4.5,
+			}],
+		}
+
+		expect(buildFilteredRealTimeFromEntries(workday, ['activity-ttt'])).toBe('03:00-07:30')
+	})
+
+	it('uses per-activity block time range when filtering by activity', () => {
+		const workday = {
+			realTimeDayWorked: '03:00-07:30',
+			manualActivityBlocks: [{
+				activityId: 'activity-ttt',
+				activityName: 'ttt',
+				hours: 4.5,
+				timeFrom: '08:00',
+				timeTo: '12:30',
+			}],
+		}
+
+		expect(buildFilteredRealTimeFromEntries(workday, ['activity-ttt'])).toBe('08:00-12:30')
 	})
 })

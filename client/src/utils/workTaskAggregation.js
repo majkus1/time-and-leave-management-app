@@ -91,17 +91,36 @@ export function getFilteredTaskHours(workday, selectedTaskIds) {
 }
 
 export function buildFilteredRealTimeFromTaskEntries(workday, selectedTaskIds = []) {
+	const ranges = []
 	const entries = Array.isArray(workday?.timeEntries) ? workday.timeEntries : []
-	const ranges = entries
-		.filter(entry => !entry?.isBreak && entry?.startTime && entry?.endTime)
-		.filter(entry => {
-			if (!selectedTaskIds?.length) return true
-			const id = taskIdStr(entry.taskId)
-			return id && selectedTaskIds.includes(id)
-		})
-		.map(entry => `${formatEntryTimeLocal(entry.startTime)}-${formatEntryTimeLocal(entry.endTime)}`)
-		.filter(Boolean)
-	return [...new Set(ranges)].join(', ')
+	for (const entry of entries) {
+		if (entry?.isBreak || !entry?.startTime || !entry?.endTime) continue
+		const id = taskIdStr(entry.taskId)
+		if (selectedTaskIds?.length && (!id || !selectedTaskIds.includes(id))) continue
+		const range = `${formatEntryTimeLocal(entry.startTime)}-${formatEntryTimeLocal(entry.endTime)}`
+		if (range) ranges.push(range)
+	}
+
+	const blocks = Array.isArray(workday?.manualTaskBlocks) ? workday.manualTaskBlocks : []
+	for (const block of blocks) {
+		const id = taskIdStr(block.taskId)
+		if (!id) continue
+		if (selectedTaskIds.length && !selectedTaskIds.includes(id)) continue
+		if (block.timeFrom?.trim() && block.timeTo?.trim()) {
+			ranges.push(`${block.timeFrom.trim()}-${block.timeTo.trim()}`)
+		}
+	}
+
+	const unique = [...new Set(ranges.filter(Boolean))]
+	if (unique.length) return unique.join(', ')
+
+	if (selectedTaskIds?.length && workday?.realTimeDayWorked?.trim()) {
+		if (workdayMatchesTaskFilter(workday, selectedTaskIds)) {
+			return workday.realTimeDayWorked.trim()
+		}
+	}
+
+	return ''
 }
 
 export function formatTaskBreakdown(workday, taskTitlesById = {}, selectedTaskIds = []) {

@@ -11,10 +11,25 @@
 	width: 100%;
 }
 
+@media (min-width: 1500px) {
+	.content.p-3.ai-assistant-page {
+		width: min(calc(100% - 280px), 1320px);
+		max-width: 1320px;
+		margin-left: calc(280px + ((100vw - 280px - min(calc(100vw - 280px), 1320px)) / 2)) !important;
+		margin-right: auto;
+	}
+}
+
 /* Gdy użytkownik schowa główny sidebar — więcej miejsca na czat / panel asystenta */
 @media (min-width: 1500px) {
 	body.sidebar-collapsed .ai-assistant-page {
-		max-width: min(100%, 1460px);
+		max-width: min(100%, 1320px);
+	}
+
+	body.sidebar-collapsed .content.p-3.ai-assistant-page {
+		width: min(calc(100% - 20px), 1320px);
+		max-width: 1320px;
+		margin-left: calc(20px + ((100vw - 20px - min(calc(100vw - 20px), 1320px)) / 2)) !important;
 	}
 }
 
@@ -707,12 +722,12 @@
 }
 
 .ai-assistant-msg__export-btn--pdf {
-	background: #2f91d0;
+	background: #D62828;
 	color: #fff;
 }
 
 .ai-assistant-msg__export-btn--pdf:hover:not(:disabled) {
-	background: #287fb6;
+	background: #B5221A;
 }
 
 .ai-assistant-composer {

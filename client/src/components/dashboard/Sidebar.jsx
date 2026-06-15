@@ -507,7 +507,7 @@ function Sidebar() {
 									<span className="nav-text">{t('sidebar.btn7')}</span>
 									{pendingLeaveCount > 0 && (
 										<span
-											className="sidebar-notification-badge"
+											className="sidebar-notification-badge sidebar-notification-badge--leave-pending"
 											title={t('sidebar.pendingLeaveRequests') || 'Pending leave requests'}
 										>
 											<span className="sidebar-notification-badge-count">

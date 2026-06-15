@@ -259,8 +259,6 @@ const copy = {
 			'Przy tej konfiguracji pakiet PRO (239 zł / miesięcznie) może być korzystniejszy — rozważ przejście na PRO.',
 		coreUpsellProCta: 'Zobacz PRO w aplikacji',
 		coreContinueCta: 'Kontynuuj zakup w aplikacji',
-		corePayFootnote:
-			'Core miesięczny: subskrypcja kartą albo BLIK/przelew (także z modułami). Core roczny: tylko BLIK/przelew. Płatność uruchomi się po zalogowaniu.',
 		cancel: 'Anuluj',
 		netPerMonthShort: 'netto / miesięcznie',
 	},
@@ -326,8 +324,6 @@ const copy = {
 			'At this configuration, the PRO bundle (239 PLN / month) may be better value — consider upgrading to PRO.',
 		coreUpsellProCta: 'Open PRO in the app',
 		coreContinueCta: 'Continue purchase in the app',
-		corePayFootnote:
-			'Core monthly: card subscription or BLIK/transfer (with modules too). Core yearly: BLIK/transfer only. Checkout starts after you sign in.',
 		cancel: 'Cancel',
 		netPerMonthShort: 'net per month',
 	},
@@ -509,9 +505,6 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							{t.cancel}
 						</button>
 					</div>
-					<p className="packages-core-payment-footnote" role="note">
-						{t.corePayFootnote}
-					</p>
 					</div>
 				</div>
 			</div>,

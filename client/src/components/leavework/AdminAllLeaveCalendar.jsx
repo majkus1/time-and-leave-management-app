@@ -615,9 +615,9 @@ function AdminAllLeaveCalendar() {
 						className='filter-button'
 						style={{ 
 							padding: '8px 12px', 
-							border: '1px solid #3498db', 
+							border: '1px solid #00a846', 
 							borderRadius: '6px', 
-							backgroundColor: '#3498db', 
+							backgroundColor: '#00a846', 
 							cursor: 'pointer', 
 							display: 'flex',
 							alignItems: 'center',
@@ -631,8 +631,8 @@ function AdminAllLeaveCalendar() {
 						}}
 						onMouseOut={(e) => {
 							const button = e.currentTarget
-							button.style.backgroundColor = '#3498db'
-							button.style.borderColor = '#3498db'
+							button.style.backgroundColor = '#00a846'
+							button.style.borderColor = '#00a846'
 						}}
 						title={t('planslist.filter') || 'Filtrowanie'}
 					>
@@ -865,7 +865,7 @@ function AdminAllLeaveCalendar() {
 						</h3>
 						
 						{/* Opcja: Wszyscy z zespołu */}
-						<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#e8f4f8' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#3498db' : '#e9ecef' }}>
+						<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
 							<input
 								type="radio"
 								name="userFilter"
@@ -927,7 +927,7 @@ function AdminAllLeaveCalendar() {
 													)}
 												</label>
 												{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
-													<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #3498db' }}>
+													<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
 														{usersFromSelectedDepartments
 															.filter(user => user.department && user.department.includes(deptName))
 															.map(user => (
@@ -1008,7 +1008,7 @@ function AdminAllLeaveCalendar() {
 							onClick={() => setFilterModalOpen(false)}
 							style={{
 								padding: '10px 20px',
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								color: 'white',
 								border: 'none',
 								borderRadius: '6px',
@@ -1018,7 +1018,7 @@ function AdminAllLeaveCalendar() {
 								transition: 'background-color 0.2s'
 							}}
 							onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-							onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
+							onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}>
 							{t('planslist.apply') || t('boards.cancel') || 'Zastosuj'}
 						</button>
 					</div>

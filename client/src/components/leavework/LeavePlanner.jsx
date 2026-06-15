@@ -476,7 +476,7 @@ function LeavePlanner() {
 												padding: '8px 12px',
 												backgroundColor: '#e8f4f8',
 												borderRadius: '6px',
-												border: '1px solid #3498db'
+												border: '1px solid #00a846'
 											}}>
 												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
 												<span style={{ 
@@ -754,9 +754,9 @@ function LeavePlanner() {
 							className='view-toggle-button'
 							style={{ 
 								padding: '8px 12px', 
-								border: '1px solid #3498db', 
+								border: '1px solid #00a846', 
 								borderRadius: '6px', 
-								backgroundColor: '#3498db', 
+								backgroundColor: '#00a846', 
 								cursor: 'pointer', 
 								display: 'flex',
 								alignItems: 'center',
@@ -770,8 +770,8 @@ function LeavePlanner() {
 							}}
 							onMouseOut={(e) => {
 								const button = e.currentTarget
-								button.style.backgroundColor = '#3498db'
-								button.style.borderColor = '#3498db'
+								button.style.backgroundColor = '#00a846'
+								button.style.borderColor = '#00a846'
 							}}
 							title={calendarView === 'single' ? (t('planslist.allMonths') || 'Wszystkie miesiące') : (t('planslist.singleMonth') || 'Jeden miesiąc')}
 						>

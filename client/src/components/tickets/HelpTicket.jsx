@@ -9,6 +9,19 @@ import './HelpTicket.css'
 
 const uploadsBase = API_URL.replace(/\/api\/?$/, '')
 
+const normalizeTicketEmail = value => String(value || '').trim().toLowerCase()
+
+const isReporterReply = (message, ticket) => {
+	const reporterEmail = normalizeTicketEmail(ticket?.userEmail)
+	const authorEmail = normalizeTicketEmail(message?.author)
+
+	if (reporterEmail && authorEmail) {
+		return reporterEmail === authorEmail
+	}
+
+	return message?.sender !== 'admin'
+}
+
 const HelpTicket = () => {
 	const { username, role } = useAuth()
 	const [selectedTicketId, setSelectedTicketId] = useState(null)
@@ -335,32 +348,36 @@ const HelpTicket = () => {
 								</h3>
 								<div className="help-center__thread">
 									{selectedTicket.messages && selectedTicket.messages.length > 1 ? (
-										selectedTicket.messages.slice(1).map((msg, idx) => (
-											<div
-												key={idx}
-												className={`help-center__bubble ${
-													msg.sender === 'admin' ? 'help-center__bubble--staff' : 'help-center__bubble--user'
-												}`}>
-												<div className="help-center__bubble-text">{msg.content}</div>
-												{msg.files && msg.files.length > 0 && (
-													<div className="help-center__bubble-files">
-														{msg.files.map((file, fileIdx) => (
-															<a
-																key={fileIdx}
-																href={`${uploadsBase}/uploads/${file}`}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="help-center__bubble-file-link">
-																{t('tickets.downloadAttachment')} {fileIdx + 1}
-															</a>
-														))}
+										selectedTicket.messages.slice(1).map((msg, idx) => {
+											const reporterReply = isReporterReply(msg, selectedTicket)
+
+											return (
+												<div
+													key={idx}
+													className={`help-center__bubble ${
+														reporterReply ? 'help-center__bubble--user' : 'help-center__bubble--staff'
+													}`}>
+													<div className="help-center__bubble-text">{msg.content}</div>
+													{msg.files && msg.files.length > 0 && (
+														<div className="help-center__bubble-files">
+															{msg.files.map((file, fileIdx) => (
+																<a
+																	key={fileIdx}
+																	href={`${uploadsBase}/uploads/${file}`}
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="help-center__bubble-file-link">
+																	{t('tickets.downloadAttachment')} {fileIdx + 1}
+																</a>
+															))}
+														</div>
+													)}
+													<div className="help-center__bubble-meta">
+														{msg.author} — {new Date(msg.timestamp).toLocaleString()}
 													</div>
-												)}
-												<div className="help-center__bubble-meta">
-													{msg.author} — {new Date(msg.timestamp).toLocaleString()}
 												</div>
-											</div>
-										))
+											)
+										})
 									) : (
 										<div className="help-center__thread-empty">{t('tickets.noanswer')}</div>
 									)}

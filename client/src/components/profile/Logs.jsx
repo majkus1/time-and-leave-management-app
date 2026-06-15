@@ -629,7 +629,7 @@ function Logs() {
 						fontSize: '20px',
 						fontWeight: '600',
 						paddingBottom: '10px',
-						borderBottom: '2px solid #3498db'
+						borderBottom: '2px solid #00a846'
 					}}>
 						{t('logs.rolesTitle') || 'Role w systemie'}
 					</h3>
@@ -688,7 +688,7 @@ function Logs() {
 														style={{
 															background: 'transparent',
 															border: 'none',
-															color: '#3498db',
+															color: '#00a846',
 															cursor: 'pointer',
 															padding: '0',
 															fontSize: '13px',
@@ -709,7 +709,7 @@ function Logs() {
 									style={{
 										background: 'transparent',
 										border: 'none',
-										color: '#3498db',
+										color: '#00a846',
 										cursor: 'pointer',
 										padding: '4px 8px',
 										borderRadius: '4px',
@@ -724,7 +724,7 @@ function Logs() {
 									}}
 									onMouseLeave={(e) => {
 										e.target.style.backgroundColor = 'transparent'
-										e.target.style.color = '#3498db'
+										e.target.style.color = '#00a846'
 									}}
 									title={t('logs.roleInfo') || 'Informacje o roli'}
 								>
@@ -752,7 +752,7 @@ function Logs() {
 						fontSize: '20px',
 						fontWeight: '600',
 						paddingBottom: '10px',
-						borderBottom: '2px solid #3498db'
+						borderBottom: '2px solid #00a846'
 					}}>
 						{t('logs.departmentsTitle')}
 					</h3>
@@ -799,7 +799,7 @@ function Logs() {
 														style={{
 															background: 'transparent',
 															border: 'none',
-															color: '#3498db',
+															color: '#00a846',
 															cursor: 'pointer',
 															padding: '4px 8px',
 															borderRadius: '4px',
@@ -816,7 +816,7 @@ function Logs() {
 														}}
 														onMouseLeave={(e) => {
 															e.target.style.backgroundColor = 'transparent'
-															e.target.style.color = '#3498db'
+															e.target.style.color = '#00a846'
 														}}
 														title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}
 													>
@@ -870,9 +870,9 @@ function Logs() {
 								style={{ 
 									padding: '10px 20px',
 									borderRadius: '6px',
-									border: '1px solid #3498db',
+									border: '1px solid #00a846',
 									backgroundColor: 'transparent',
-									color: '#3498db',
+									color: '#00a846',
 									transition: 'all 0.2s',
 									fontSize: '14px',
 									fontWeight: '500',
@@ -889,7 +889,7 @@ function Logs() {
 							backgroundColor: '#f8f9fa',
 							padding: '20px',
 							borderRadius: '8px',
-							border: '2px solid #3498db'
+							border: '2px solid #00a846'
 						}}>
 							<div style={{ marginBottom: '15px' }}>
 								<label style={{ 
@@ -929,8 +929,8 @@ function Logs() {
 									style={{ 
 										padding: '10px 20px',
 										borderRadius: '6px',
-										border: '1px solid #3498db',
-										backgroundColor: '#3498db',
+										border: '1px solid #00a846',
+										backgroundColor: '#00a846',
 										color: 'white',
 										cursor: globalNewDepartmentName.trim() ? 'pointer' : 'not-allowed',
 										opacity: globalNewDepartmentName.trim() ? 1 : 0.5,
@@ -949,9 +949,9 @@ function Logs() {
 									style={{ 
 										padding: '10px 20px',
 										borderRadius: '6px',
-										border: '1px solid #3498db',
+										border: '1px solid #00a846',
 										backgroundColor: 'transparent',
-										color: '#3498db',
+										color: '#00a846',
 										fontSize: '14px',
 										fontWeight: '500',
 										cursor: 'pointer'
@@ -998,7 +998,7 @@ function Logs() {
 									padding: '10px 20px',
 									borderRadius: '6px 6px 0 0',
 									border: 'none',
-									backgroundColor: activeTab === 'active' ? '#3498db' : 'transparent',
+									backgroundColor: activeTab === 'active' ? '#00a846' : 'transparent',
 									color: activeTab === 'active' ? 'white' : '#495057',
 									fontSize: '16px',
 									fontWeight: '600',
@@ -1175,7 +1175,7 @@ function Logs() {
 												width: '40px', 
 												height: '40px', 
 												borderRadius: '50%', 
-												backgroundColor: '#3498db',
+												backgroundColor: '#00a846',
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'center',
@@ -1368,7 +1368,7 @@ function Logs() {
 														color: '#2c3e50', 
 														marginBottom: '20px',
 														paddingBottom: '10px',
-														borderBottom: '2px solid #3498db'
+														borderBottom: '2px solid #00a846'
 													}}>
 														{t('logs.editrole')}
 													</h4>
@@ -1430,33 +1430,33 @@ function Logs() {
 																			backgroundColor: '#f8f9fa',
 																			borderRadius: '8px',
 																			border: '1px solid #e9ecef',
-																			borderLeft: '4px solid #3498db'
+																			borderLeft: '4px solid #00a846'
 																		}}>
 																			<button
 																				type="button"
 																				onClick={() => setSupervisorConfigModal({ isOpen: true, userId: editingUser._id })}
 																				style={{
 																					padding: '8px 16px',
-																					border: '1px solid #3498db',
+																					border: '1px solid #00a846',
 																					borderRadius: '6px',
-																					backgroundColor: '#3498db',
+																					backgroundColor: '#00a846',
 																					color: 'white',
 																					cursor: 'pointer',
 																					fontSize: '13px',
 																					fontWeight: '600',
 																					transition: 'all 0.2s',
-																					boxShadow: '0 2px 4px rgba(52, 152, 219, 0.2)'
+																					boxShadow: '0 2px 4px rgba(0, 168, 70, 0.18)'
 																				}}
 																				onMouseEnter={(e) => {
 																					e.target.style.backgroundColor = '#2980b9'
 																					e.target.style.borderColor = '#2980b9'
-																					e.target.style.boxShadow = '0 3px 6px rgba(52, 152, 219, 0.3)'
+																					e.target.style.boxShadow = '0 3px 6px rgba(0, 168, 70, 0.26)'
 																					e.target.style.transform = 'translateY(-1px)'
 																				}}
 																				onMouseLeave={(e) => {
-																					e.target.style.backgroundColor = '#3498db'
-																					e.target.style.borderColor = '#3498db'
-																					e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
+																					e.target.style.backgroundColor = '#00a846'
+																					e.target.style.borderColor = '#00a846'
+																					e.target.style.boxShadow = '0 2px 4px rgba(0, 168, 70, 0.18)'
 																					e.target.style.transform = 'translateY(0)'
 																				}}>
 																				{t('logs.configure') || 'Konfiguruj'}
@@ -1629,9 +1629,9 @@ function Logs() {
 																	style={{ 
 																		padding: '8px 16px',
 																		borderRadius: '6px',
-																		border: '1px solid #3498db',
+																		border: '1px solid #00a846',
 																		backgroundColor: 'transparent',
-																		color: '#3498db',
+																		color: '#00a846',
 																		transition: 'all 0.2s'
 																	}}>
 																	{t('newuser.department2')}
@@ -1645,7 +1645,7 @@ function Logs() {
 																backgroundColor: 'white',
 																padding: '20px',
 																borderRadius: '8px',
-																border: '2px solid #3498db'
+																border: '2px solid #00a846'
 															}}>
 																<div style={{ marginBottom: '15px' }}>
 																	<label style={{ 
@@ -1684,8 +1684,8 @@ function Logs() {
 																		style={{ 
 																			padding: '8px 16px',
 																			borderRadius: '6px',
-																			border: '1px solid #3498db',
-																			backgroundColor: '#3498db',
+																			border: '1px solid #00a846',
+																			backgroundColor: '#00a846',
 																			color: 'white',
 																			cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
 																			opacity: newDepartmentName.trim() ? 1 : 0.5
@@ -1702,9 +1702,9 @@ function Logs() {
 																		style={{ 
 																			padding: '8px 16px',
 																			borderRadius: '6px',
-																			border: '1px solid #3498db',
+																			border: '1px solid #00a846',
 																			backgroundColor: 'transparent',
-																			color: '#3498db'
+																			color: '#00a846'
 																		}}>
 																		{t('newuser.department3')}
 																	</button>
@@ -1781,7 +1781,7 @@ function Logs() {
 													color: '#2c3e50', 
 													marginBottom: '20px',
 													paddingBottom: '10px',
-													borderBottom: '2px solid #3498db'
+													borderBottom: '2px solid #00a846'
 												}}>
 													{t('logs.userl')} - {getUserDisplayName(user)}
 												</h4>
@@ -1860,7 +1860,7 @@ function Logs() {
 											width: '50px', 
 											height: '50px', 
 											borderRadius: '50%', 
-											backgroundColor: '#3498db',
+											backgroundColor: '#00a846',
 											display: 'flex',
 											alignItems: 'center',
 											justifyContent: 'center',
@@ -2077,7 +2077,7 @@ function Logs() {
 											color: '#2c3e50', 
 											marginBottom: '20px',
 											paddingBottom: '10px',
-											borderBottom: '2px solid #3498db',
+											borderBottom: '2px solid #00a846',
 											fontSize: '18px'
 										}}>
 											{t('logs.editrole')}
@@ -2146,7 +2146,7 @@ function Logs() {
 																backgroundColor: '#f8f9fa',
 																borderRadius: '8px',
 																border: '1px solid #e9ecef',
-																borderLeft: '4px solid #3498db',
+																borderLeft: '4px solid #00a846',
 																flexDirection: 'column'
 															}}>
 																<button
@@ -2154,26 +2154,26 @@ function Logs() {
 																	onClick={() => setSupervisorConfigModal({ isOpen: true, userId: editingUser._id })}
 																	style={{
 																		padding: '10px 16px',
-																		border: '1px solid #3498db',
+																		border: '1px solid #00a846',
 																		borderRadius: '6px',
-																		backgroundColor: '#3498db',
+																		backgroundColor: '#00a846',
 																		color: 'white',
 																		cursor: 'pointer',
 																		fontSize: '14px',
 																		fontWeight: '600',
 																		transition: 'all 0.2s',
-																		boxShadow: '0 2px 4px rgba(52, 152, 219, 0.2)',
+																		boxShadow: '0 2px 4px rgba(0, 168, 70, 0.18)',
 																		width: '100%'
 																	}}
 																	onMouseEnter={(e) => {
 																		e.target.style.backgroundColor = '#2980b9'
 																		e.target.style.borderColor = '#2980b9'
-																		e.target.style.boxShadow = '0 3px 6px rgba(52, 152, 219, 0.3)'
+																		e.target.style.boxShadow = '0 3px 6px rgba(0, 168, 70, 0.26)'
 																	}}
 																	onMouseLeave={(e) => {
-																		e.target.style.backgroundColor = '#3498db'
-																		e.target.style.borderColor = '#3498db'
-																		e.target.style.boxShadow = '0 2px 4px rgba(52, 152, 219, 0.2)'
+																		e.target.style.backgroundColor = '#00a846'
+																		e.target.style.borderColor = '#00a846'
+																		e.target.style.boxShadow = '0 2px 4px rgba(0, 168, 70, 0.18)'
 																	}}>
 																	{t('logs.configure') || 'Konfiguruj'}
 																</button>
@@ -2346,9 +2346,9 @@ function Logs() {
 															width: '100%',
 															padding: '12px 16px',
 															borderRadius: '8px',
-															border: '1px solid #3498db',
+															border: '1px solid #00a846',
 															backgroundColor: 'transparent',
-															color: '#3498db',
+															color: '#00a846',
 															transition: 'all 0.2s',
 															fontSize: '14px'
 														}}>
@@ -2363,7 +2363,7 @@ function Logs() {
 													backgroundColor: 'white',
 													padding: '20px',
 													borderRadius: '8px',
-													border: '2px solid #3498db'
+													border: '2px solid #00a846'
 												}}>
 													<div style={{ marginBottom: '15px' }}>
 														<label style={{ 
@@ -2403,8 +2403,8 @@ function Logs() {
 																width: '100%',
 																padding: '12px 16px',
 																borderRadius: '8px',
-																border: '1px solid #3498db',
-																backgroundColor: '#3498db',
+																border: '1px solid #00a846',
+																backgroundColor: '#00a846',
 																color: 'white',
 																fontSize: '14px',
 																cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
@@ -2423,9 +2423,9 @@ function Logs() {
 																width: '100%',
 																padding: '12px 16px',
 																borderRadius: '8px',
-																border: '1px solid #3498db',
+																border: '1px solid #00a846',
 																backgroundColor: 'transparent',
-																color: '#3498db',
+																color: '#00a846',
 																fontSize: '14px'
 															}}>
 															{t('newuser.department3')}
@@ -2503,7 +2503,7 @@ function Logs() {
 											color: '#2c3e50', 
 											marginBottom: '20px',
 											paddingBottom: '10px',
-											borderBottom: '2px solid #3498db',
+											borderBottom: '2px solid #00a846',
 											fontSize: '18px'
 										}}>
 											{t('logs.userl')} - {getUserDisplayName(user)}
@@ -2846,7 +2846,7 @@ function Logs() {
 														}}>
 															{user.roles.map((role, idx) => (
 																<span key={idx} style={{
-																	backgroundColor: '#3498db',
+																	backgroundColor: '#00a846',
 																	color: 'white',
 																	padding: '4px 8px',
 																	borderRadius: '4px',

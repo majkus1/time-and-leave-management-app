@@ -124,7 +124,7 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 					onClick={onClose}
 					style={{
 						padding: '10px 20px',
-						backgroundColor: '#3498db',
+						backgroundColor: '#00a846',
 						color: 'white',
 						border: 'none',
 						borderRadius: '6px',
@@ -134,7 +134,7 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 						transition: 'background-color 0.2s'
 					}}
 					onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-					onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
+					onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}>
 					{t('usersInfo.close') || t('boards.cancel') || 'Zamknij'}
 				</button>
 			</div>

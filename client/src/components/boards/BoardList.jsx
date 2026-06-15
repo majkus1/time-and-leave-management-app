@@ -67,7 +67,7 @@ function BoardList() {
 	return (
 		<>
 			<Sidebar />
-			<div style={{ maxWidth: '1200px', padding: '15px' }} className='board-list'>
+			<div style={{ padding: '15px' }} className='board-list'>
 				<div style={{ marginBottom: '30px' }}>
 					<h2 style={{ 
 						color: '#2c3e50', 
@@ -82,7 +82,7 @@ function BoardList() {
 						onClick={() => setIsCreateModalOpen(true)}
 						style={{
 							padding: '12px 24px',
-							backgroundColor: '#3498db',
+							backgroundColor: '#00a846',
 							color: 'white',
 							border: 'none',
 							borderRadius: '8px',
@@ -171,7 +171,7 @@ function BoardList() {
 									style={{
 										background: 'transparent',
 										border: 'none',
-										color: '#3498db',
+										color: '#00a846',
 										cursor: 'pointer',
 										fontSize: '16px',
 										padding: '4px 8px',
@@ -184,7 +184,7 @@ function BoardList() {
 									}}
 									onMouseLeave={(e) => {
 										e.target.style.backgroundColor = 'transparent'
-										e.target.style.color = '#3498db'
+										e.target.style.color = '#00a846'
 									}}
 									title={t('usersInfo.viewUsers') || 'Zobacz użytkowników'}>
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -285,4 +285,3 @@ function BoardList() {
 }
 
 export default BoardList
-

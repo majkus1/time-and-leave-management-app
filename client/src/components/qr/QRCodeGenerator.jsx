@@ -132,7 +132,7 @@ function QRCodeGenerator() {
 					onClick={handleGenerate}
 					disabled={generating || !newQRName.trim()}
 					style={{
-						backgroundColor: '#3498db',
+						backgroundColor: '#00a846',
 						color: 'white',
 						border: 'none',
 						padding: '10px 20px',
@@ -150,7 +150,7 @@ function QRCodeGenerator() {
 					}}
 					onMouseLeave={(e) => {
 						if (!generating && newQRName.trim()) {
-							e.target.style.backgroundColor = '#3498db'
+							e.target.style.backgroundColor = '#00a846'
 						}
 					}}
 				>

@@ -336,15 +336,20 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 	const totalMinutes = sessionsData?.totalMinutes || 0
 	const dateRange = sessionsData?.dateRange
 
-	const activityFilteredGroups = useMemo(
-		() => filterGroupedSessionsByActivities(groupedSessions, selectedActivityIds),
-		[groupedSessions, selectedActivityIds]
-	)
-
-	const filteredGroups = useMemo(
-		() => filterGroupedSessionsByTasks(activityFilteredGroups, selectedTaskIds),
-		[activityFilteredGroups, selectedTaskIds]
-	)
+	const filteredGroups = useMemo(() => {
+		const hasActivity = selectedActivityIds.length > 0
+		const hasTask = selectedTaskIds.length > 0
+		if (!hasActivity && !hasTask) return groupedSessions
+		if (hasActivity && hasTask) {
+			const byActivity = filterGroupedSessionsByActivities(groupedSessions, selectedActivityIds)
+			const byTask = filterGroupedSessionsByTasks(groupedSessions, selectedTaskIds)
+			return [...byActivity, ...byTask]
+		}
+		if (hasActivity) {
+			return filterGroupedSessionsByActivities(groupedSessions, selectedActivityIds)
+		}
+		return filterGroupedSessionsByTasks(groupedSessions, selectedTaskIds)
+	}, [groupedSessions, selectedActivityIds, selectedTaskIds])
 
 	const filteredTotalMinutes = useMemo(() => {
 		return filteredGroups.reduce((sum, group) => sum + (group.totalMinutes || 0), 0)
@@ -715,7 +720,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 								borderRadius: '8px',
 								padding: '15px',
 								backgroundColor: '#f8f9fa',
-								borderLeft: `4px solid #3498db`,
+								borderLeft: `4px solid #00a846`,
 								position: 'relative'
 							}}
 						>
@@ -726,7 +731,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 								left: 0,
 								height: '4px',
 								width: `${Math.min(parseFloat(group.percentage) || 0, 100)}%`,
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								borderRadius: '8px 0 0 0'
 							}} />
 
@@ -770,7 +775,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 									<div style={{
 										fontSize: '14px',
 										fontWeight: '600',
-										color: '#3498db',
+										color: '#00a846',
 										marginTop: '5px'
 									}}>
 										{group.percentage}%

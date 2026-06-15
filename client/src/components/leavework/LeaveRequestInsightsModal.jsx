@@ -13,6 +13,7 @@ import {
 } from '../../utils/leaveRequestPeriod'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
+import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { buildReportFilename, safeFilenamePart } from '../../utils/export/reportFilename'
 
@@ -84,8 +85,8 @@ function LeaveRequestInsightsModal({
 		: activeStatusKeys.map(status => statusLabels[status]).join(', ')
 	const statusColors = {
 		accepted: '#22c55e',
-		pending: '#3b82f6',
-		rejected: '#ef4444',
+		pending: '#f59e0b',
+		rejected: '#991b1b',
 		sent: '#8b5cf6',
 	}
 	const requestRows = React.useMemo(() => (
@@ -192,30 +193,20 @@ function LeaveRequestInsightsModal({
 		return lines
 	}
 	const buildPdf = () => {
-		const theme = {
-			navy: '#0f2a4a',
-			blue: '#2563eb',
-			green: '#16a34a',
-			red: '#dc2626',
-			purple: '#7c3aed',
-			amber: '#d97706',
-			muted: '#64748b',
-			line: '#dbe7f2',
-			soft: '#f5f9fd',
-		}
+		const theme = PDF_REPORT_THEME
 		const kpiCards = [
 			{ label: 'Wszystkie wnioski', value: stats.total, sub: `${formatDuration(durationStats.total)} ${durationUnit}`, color: theme.navy },
 			...activeStatusKeys.map(status => ({
 				label: statusLabels[status],
 				value: stats[status],
 				sub: `${formatDuration(durationStats[status])} ${durationUnit}`,
-				color: status === 'accepted' ? theme.green : status === 'pending' ? theme.blue : status === 'rejected' ? theme.red : theme.purple,
+				color: status === 'accepted' ? theme.green : status === 'pending' ? theme.amber : status === 'rejected' ? theme.red : theme.purple,
 			})),
 		]
 		const tableLayout = {
 			hLineColor: () => theme.line,
 			vLineColor: () => theme.line,
-			fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+			fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? theme.softRow : null),
 		}
 		const content = [
 			{
@@ -224,18 +215,18 @@ function LeaveRequestInsightsModal({
 					body: [[
 						{
 							stack: [
-								{ text: 'RAPORT URLOPÓW I NIEOBECNOŚCI', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1 },
+								{ text: 'RAPORT URLOPÓW I NIEOBECNOŚCI', fontSize: 8, bold: true, color: theme.headerEyebrow, characterSpacing: 1 },
 								{ text: getReportSubject(), fontSize: 20, bold: true, color: '#ffffff', margin: [0, 5, 0, 0] },
-								{ text: `Okres: ${getPeriodLabel()}`, fontSize: 10, color: '#e0f2fe', margin: [0, 4, 0, 0] },
+								{ text: `Okres: ${getPeriodLabel()}`, fontSize: 10, color: theme.headerSubtitle, margin: [0, 4, 0, 0] },
 							],
 							border: [false, false, false, false],
 							margin: [16, 14, 12, 14],
 						},
 						{
 							stack: [
-								{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: '#dbeafe' },
-								{ text: `Jednostka: ${durationUnit}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
-								{ text: `Statusy: ${activeStatusLabel}`, fontSize: 8, color: '#dbeafe', margin: [0, 5, 0, 0] },
+								{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: theme.headerSubtitle },
+								{ text: `Jednostka: ${durationUnit}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
+								{ text: `Statusy: ${activeStatusLabel}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 							],
 							border: [false, false, false, false],
 							alignment: 'right',

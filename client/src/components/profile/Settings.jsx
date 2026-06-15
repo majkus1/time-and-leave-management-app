@@ -880,7 +880,7 @@ function Settings() {
 					<div
 						style={{
 							backgroundColor: '#e8f4fd',
-							borderLeft: '4px solid #3498db',
+							borderLeft: '4px solid #00a846',
 							borderRadius: '8px',
 							padding: '16px 20px',
 							marginBottom: '20px',
@@ -918,7 +918,7 @@ function Settings() {
 							fontSize: '20px',
 							fontWeight: '600',
 							paddingBottom: '10px',
-							borderBottom: '2px solid #3498db'
+							borderBottom: '2px solid #00a846'
 						}}>
 							{t('settings.qrCodeTitle') || 'Kody QR - Wejście/Wyjście'}
 						</h3>
@@ -952,7 +952,7 @@ function Settings() {
 											height: '24px',
 											marginRight: '12px',
 											cursor: 'pointer',
-											accentColor: '#3498db'
+											accentColor: '#00a846'
 										}}
 									/>
 									<span>{t('settings.timerEnabledLabel') || 'Włącz funkcję QR i licznika czasu pracy'}</span>
@@ -991,7 +991,7 @@ function Settings() {
 							fontSize: '20px',
 							fontWeight: '600',
 							paddingBottom: '10px',
-							borderBottom: '2px solid #3498db'
+							borderBottom: '2px solid #00a846'
 						}}>
 							{t('settings.workWeekendsTitle')}
 						</h3>
@@ -1101,7 +1101,7 @@ function Settings() {
 											height: '24px',
 											marginRight: '12px',
 											cursor: 'pointer',
-											accentColor: '#3498db'
+											accentColor: '#00a846'
 										}}
 									/>
 									<span>{t('settings.workOnWeekendsLabel')}</span>
@@ -1128,7 +1128,7 @@ function Settings() {
 							fontSize: '20px',
 							fontWeight: '600',
 							paddingBottom: '10px',
-							borderBottom: '2px solid #3498db'
+							borderBottom: '2px solid #00a846'
 						}}>
 							{t('settings.holidaysTitle') || 'Konfiguracja dni świątecznych'}
 						</h3>
@@ -1234,7 +1234,7 @@ function Settings() {
 											height: '24px',
 											marginRight: '12px',
 											cursor: 'pointer',
-											accentColor: '#3498db'
+											accentColor: '#00a846'
 										}}
 									/>
 									<span>{t('settings.includePolishHolidaysLabel') || 'Uwzględnij polskie dni świąteczne (ustawowo wolne w Polsce)'}</span>
@@ -1254,11 +1254,11 @@ function Settings() {
 											display: 'inline-flex',
 											alignItems: 'center',
 											justifyContent: 'center',
-											color: '#3498db',
+											color: '#00a846',
 											transition: 'color 0.2s'
 										}}
 										onMouseEnter={(e) => e.target.style.color = '#2980b9'}
-										onMouseLeave={(e) => e.target.style.color = '#3498db'}
+										onMouseLeave={(e) => e.target.style.color = '#00a846'}
 										title={t('settings.viewPolishHolidays') || 'Zobacz listę polskich dni świątecznych'}
 									>
 										<svg
@@ -1317,7 +1317,7 @@ function Settings() {
 											height: '24px',
 											marginRight: '12px',
 											cursor: 'pointer',
-											accentColor: '#3498db'
+											accentColor: '#00a846'
 										}}
 									/>
 									<span>{t('settings.includeCustomHolidaysLabel') || 'Uwzględnij niestandardowe dni świąteczne'}</span>
@@ -1502,7 +1502,7 @@ function Settings() {
 									fontSize: '20px',
 									fontWeight: '600',
 									paddingBottom: '10px',
-									borderBottom: '2px solid #3498db'
+									borderBottom: '2px solid #00a846'
 								}}>
 									{t('settings.workHoursTitle') || 'Konfiguracja godzin pracy'}
 								</h3>
@@ -1572,7 +1572,7 @@ function Settings() {
 															type="button"
 															onClick={() => handleEditWorkHours(index)}
 															style={{
-																backgroundColor: '#3498db',
+																backgroundColor: '#00a846',
 																color: 'white',
 																border: 'none',
 																padding: '6px 12px',
@@ -1581,8 +1581,8 @@ function Settings() {
 																cursor: 'pointer',
 																transition: 'all 0.2s'
 															}}
-															onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-															onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
+															onMouseEnter={(e) => e.target.style.backgroundColor = '#009639'}
+															onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}
 														>
 															{t('settings.edit') || 'Edytuj'}
 														</button>
@@ -1822,7 +1822,7 @@ function Settings() {
 									fontSize: '20px',
 									fontWeight: '600',
 									paddingBottom: '10px',
-									borderBottom: '2px solid #3498db',
+									borderBottom: '2px solid #00a846',
 								}}>
 									{t('settings.workdayEntriesTitle')}
 								</h3>
@@ -1865,7 +1865,7 @@ function Settings() {
 													height: '24px',
 													marginRight: '12px',
 													cursor: 'pointer',
-													accentColor: '#3498db',
+													accentColor: '#00a846',
 												}}
 											/>
 											<span>{t('settings.workdayEntriesOnlyTodayTitle')}</span>
@@ -1908,7 +1908,7 @@ function Settings() {
 									fontSize: '20px',
 									fontWeight: '600',
 									paddingBottom: '10px',
-									borderBottom: '2px solid #3498db'
+									borderBottom: '2px solid #00a846'
 								}}>
 									{t('settings.leaveCalculationTitle') || 'Konfiguracja obliczania urlopów'}
 								</h3>
@@ -2051,7 +2051,7 @@ function Settings() {
 							fontSize: '20px',
 							fontWeight: '600',
 							paddingBottom: '10px',
-							borderBottom: '2px solid #3498db'
+							borderBottom: '2px solid #00a846'
 						}}>
 							{t('settings.leaveRequestTypesTitle') || 'Typy wniosków urlopowych'}
 						</h3>
@@ -2751,7 +2751,7 @@ function Settings() {
 									fontSize: '20px',
 									fontWeight: '600',
 									paddingBottom: '10px',
-									borderBottom: '2px solid #3498db',
+									borderBottom: '2px solid #00a846',
 								}}>
 									{t('settings.noAccessUsersTitle')}
 								</h3>
@@ -2805,7 +2805,7 @@ function Settings() {
 													height: '24px',
 													marginRight: '12px',
 													cursor: 'pointer',
-													accentColor: '#3498db',
+													accentColor: '#00a846',
 												}}
 											/>
 											<span>{t('settings.allowManagedNoAccessUsersTitle')}</span>
@@ -2839,7 +2839,7 @@ function Settings() {
 													height: '24px',
 													marginRight: '12px',
 													cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
-													accentColor: '#3498db',
+													accentColor: '#00a846',
 												}}
 											/>
 											<span>{t('settings.allowManagedWorkdayEntriesTitle')}</span>
@@ -2874,7 +2874,7 @@ function Settings() {
 														height: '24px',
 														marginRight: '12px',
 														cursor: allowManagedNoAccessUsers ? 'pointer' : 'not-allowed',
-														accentColor: '#3498db',
+														accentColor: '#00a846',
 													}}
 												/>
 												<span>{t('settings.allowManagedLeaveRequestsTitle')}</span>
@@ -2908,7 +2908,7 @@ function Settings() {
 								disabled={updateSettingsMutation.isPending}
 								style={{
 									width: '100%',
-									backgroundColor: updateSettingsMutation.isPending ? '#95a5a6' : '#3498db',
+									backgroundColor: updateSettingsMutation.isPending ? '#95a5a6' : '#00a846',
 									color: 'white',
 									border: 'none',
 									padding: '14px 24px',
@@ -2925,13 +2925,13 @@ function Settings() {
 								}}
 								onMouseEnter={(e) => {
 									if (!updateSettingsMutation.isPending) {
-										e.target.style.backgroundColor = '#2980b9'
-										e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)'
+										e.target.style.backgroundColor = '#009639'
+										e.target.style.boxShadow = '0 4px 8px rgba(0, 150, 57, 0.22)'
 									}
 								}}
 								onMouseLeave={(e) => {
 									if (!updateSettingsMutation.isPending) {
-										e.target.style.backgroundColor = '#3498db'
+										e.target.style.backgroundColor = '#00a846'
 										e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
 									}
 								}}
@@ -3104,7 +3104,7 @@ function Settings() {
 						<button
 							onClick={() => setIsPolishHolidaysModalOpen(false)}
 							style={{
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								color: 'white',
 								border: 'none',
 								padding: '10px 20px',
@@ -3115,10 +3115,10 @@ function Settings() {
 								transition: 'all 0.2s'
 							}}
 							onMouseEnter={(e) => {
-								e.target.style.backgroundColor = '#2980b9'
+								e.target.style.backgroundColor = '#009639'
 							}}
 							onMouseLeave={(e) => {
-								e.target.style.backgroundColor = '#3498db'
+								e.target.style.backgroundColor = '#00a846'
 							}}
 						>
 							{t('settings.close') || 'Zamknij'}

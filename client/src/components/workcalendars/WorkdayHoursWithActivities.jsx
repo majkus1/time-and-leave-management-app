@@ -171,7 +171,7 @@ function WorkdayHoursWithActivities({
 			)}
 
 			{!useBlockSplit && (
-				<div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+				<div className="workday-hours-time-selects">
 					<select
 						value={workTimeFrom}
 						onChange={e => onWorkTimeFromChange(e.target.value)}

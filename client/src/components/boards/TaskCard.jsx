@@ -673,7 +673,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 										onClick={() => setIsEditing(true)}
 										style={{
 											padding: '8px 14px',
-											backgroundColor: '#3498db',
+											backgroundColor: '#00a846',
 											color: 'white',
 											border: 'none',
 											borderRadius: '6px',
@@ -756,7 +756,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						{canEdit && (
 							<label style={{
 								padding: '6px 12px',
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								color: 'white',
 								border: 'none',
 								borderRadius: '6px',
@@ -814,7 +814,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									rel="noopener noreferrer"
 									style={{
 										textDecoration: 'none',
-										color: '#3498db',
+										color: '#00a846',
 										flex: 1,
 										display: 'inline-flex',
 										alignItems: 'center',
@@ -906,7 +906,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 															target="_blank"
 															rel="noopener noreferrer"
 															style={{
-																color: '#3498db',
+																color: '#00a846',
 																textDecoration: 'none',
 																fontSize: '13px',
 																display: 'inline-flex',
@@ -1009,7 +1009,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								disabled={!commentText.trim() || uploadingCommentFile}
 								style={{
 									padding: '10px 20px',
-									backgroundColor: '#3498db',
+									backgroundColor: '#00a846',
 									color: 'white',
 									border: 'none',
 									borderRadius: '6px',
@@ -1171,4 +1171,3 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 }
 
 export default TaskCard
-

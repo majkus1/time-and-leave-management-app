@@ -741,7 +741,7 @@ function TimerPanel() {
 								}}
 								style={{
 									width: '100%',
-									backgroundColor: '#3498db',
+									backgroundColor: '#00a846',
 									color: 'white',
 									border: 'none',
 									padding: '10px 20px',
@@ -1209,20 +1209,9 @@ function TimerPanel() {
 					marginTop: '30px'
 				}}>
 					<button
-						onClick={() => setInfoModalIsOpen(false)}
-						style={{
-							padding: '10px 20px',
-							fontSize: '16px',
-							fontWeight: '500',
-							color: 'white',
-							backgroundColor: '#3b82f6',
-							border: 'none',
-							borderRadius: '6px',
-							cursor: 'pointer',
-							transition: 'background-color 0.2s'
-						}}
-						onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-						onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}>
+						type="button"
+						className="btn btn-primary"
+						onClick={() => setInfoModalIsOpen(false)}>
 						{t('timer.infoModal.close') || 'Zamknij'}
 					</button>
 				</div>

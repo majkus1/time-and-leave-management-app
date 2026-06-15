@@ -392,9 +392,9 @@ function Schedule() {
 						title: h.name,
 						start: h.date,
 						allDay: true,
-						backgroundColor: 'rgba(254, 243, 199, 0.98)',
-						borderColor: 'rgba(217, 119, 6, 0.55)',
-						textColor: '#92400e',
+						backgroundColor: 'green',
+						borderColor: 'darkgreen',
+						textColor: 'white',
 						classNames: ['schedule-calendar-holiday-event'],
 						extendedProps: { type: 'holiday', holidayName: h.name },
 					}))
@@ -1476,7 +1476,7 @@ function Schedule() {
 				whiteSpace: 'normal',
 				wordBreak: 'break-word',
 				fontWeight: 600,
-				color: '#78350f'
+				color: '#ffffff'
 			}
 			return (
 				<div className="event-content schedule-calendar-holiday-event-content" title={holidayLabel}>
@@ -2444,9 +2444,9 @@ function Schedule() {
 									gap: '8px',
 									padding: '8px 12px',
 									borderRadius: '10px',
-									backgroundColor: '#fffbeb',
-									border: '1px solid #fcd34d',
-									color: '#92400e',
+									backgroundColor: '#ecfdf5',
+									border: '1px solid rgba(0, 128, 0, 0.35)',
+									color: '#006b32',
 									fontSize: '13px',
 									fontWeight: '600',
 									width: '100%',
@@ -2846,9 +2846,9 @@ function Schedule() {
 							marginBottom: '16px',
 							padding: '10px 12px',
 							borderRadius: '8px',
-							backgroundColor: '#fff7ed',
-							border: '1px solid #fdba74',
-							color: '#9a3412',
+							backgroundColor: isSelectedDateHolidayBlocked ? '#ecfdf5' : '#fff7ed',
+							border: isSelectedDateHolidayBlocked ? '1px solid rgba(0, 128, 0, 0.35)' : '1px solid #fdba74',
+							color: isSelectedDateHolidayBlocked ? '#006b32' : '#9a3412',
 							fontSize: '14px'
 						}}>
 							{isSelectedDateWeekendBlocked

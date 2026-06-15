@@ -16,7 +16,7 @@ const sectionHeadingStyle = {
 	fontSize: '20px',
 	fontWeight: '600',
 	paddingBottom: '10px',
-	borderBottom: '2px solid #3498db',
+	borderBottom: '2px solid #00a846',
 }
 
 function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {

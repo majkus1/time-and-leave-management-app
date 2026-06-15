@@ -193,7 +193,7 @@ function SupervisorConfigModal({ isOpen, onClose, supervisorId }) {
 								padding: '10px 20px',
 								border: 'none',
 								borderRadius: '6px',
-								backgroundColor: '#3498db',
+								backgroundColor: '#00a846',
 								color: 'white',
 								cursor: updateConfigMutation.isPending ? 'not-allowed' : 'pointer',
 								fontSize: '16px',

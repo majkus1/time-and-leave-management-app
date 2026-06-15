@@ -8,18 +8,36 @@ function formatEntryTimeLocal(dateValue) {
 	return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-/** Time ranges from timer sessions, optionally only matching activity filter. */
+/** Time ranges from timer sessions and manual activity blocks, optionally filtered by activity. */
 export function buildFilteredRealTimeFromEntries(workday, selectedActivityIds = []) {
+	const ranges = []
 	const entries = Array.isArray(workday?.timeEntries) ? workday.timeEntries : []
-	const ranges = entries
-		.filter(entry => !entry?.isBreak && entry?.startTime && entry?.endTime)
-		.filter(entry => {
-			if (!selectedActivityIds?.length) return true
-			return entry?.activityId && selectedActivityIds.includes(entry.activityId)
-		})
-		.map(entry => `${formatEntryTimeLocal(entry.startTime)}-${formatEntryTimeLocal(entry.endTime)}`)
-		.filter(Boolean)
-	return [...new Set(ranges)].join(', ')
+	for (const entry of entries) {
+		if (entry?.isBreak || !entry?.startTime || !entry?.endTime) continue
+		if (selectedActivityIds?.length && (!entry?.activityId || !selectedActivityIds.includes(entry.activityId))) continue
+		const range = `${formatEntryTimeLocal(entry.startTime)}-${formatEntryTimeLocal(entry.endTime)}`
+		if (range) ranges.push(range)
+	}
+
+	const blocks = Array.isArray(workday?.manualActivityBlocks) ? workday.manualActivityBlocks : []
+	for (const block of blocks) {
+		if (!block?.activityId) continue
+		if (selectedActivityIds?.length && !selectedActivityIds.includes(block.activityId)) continue
+		if (block.timeFrom?.trim() && block.timeTo?.trim()) {
+			ranges.push(`${block.timeFrom.trim()}-${block.timeTo.trim()}`)
+		}
+	}
+
+	const unique = [...new Set(ranges.filter(Boolean))]
+	if (unique.length) return unique.join(', ')
+
+	if (selectedActivityIds?.length && workday?.realTimeDayWorked?.trim()) {
+		if (workdayMatchesActivityFilter(workday, selectedActivityIds)) {
+			return workday.realTimeDayWorked.trim()
+		}
+	}
+
+	return ''
 }
 
 export function filterGroupedSessionsByActivities(groupedSessions = [], selectedActivityIds = []) {

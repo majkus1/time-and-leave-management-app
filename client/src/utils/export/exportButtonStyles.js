@@ -1,4 +1,5 @@
 /** Wspólne style przycisków eksportu (listy / kalendarze). */
+import { PDF_BRAND } from './pdfReportTheme'
 
 export const exportExcelButtonStyle = {
 	display: 'inline-flex',
@@ -28,7 +29,7 @@ export const exportPdfButtonStyle = {
 	fontWeight: 700,
 	borderRadius: '8px',
 	border: '0',
-	backgroundColor: '#2f91d0',
+	backgroundColor: PDF_BRAND.primary,
 	color: '#fff',
 	cursor: 'pointer',
 	lineHeight: 1,

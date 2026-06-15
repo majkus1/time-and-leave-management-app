@@ -23,6 +23,7 @@ import {
 	pdfDataTable,
 } from '../../utils/export/pdfDownload'
 import { computeTeamTotalsForMonth, aggregateYearTeamTotals } from '../../utils/teamWorkCalendarSummary'
+import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
 import { buildReportFilename } from '../../utils/export/reportFilename'
 import { useWorkActivities } from '../../hooks/useWorkActivities'
@@ -672,19 +673,7 @@ function AdminUserList() {
 			: `${summary.leaveDays} (${Number(summary.leaveHours || 0).toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
 	}
 
-	const reportTheme = {
-		navy: '#0b2442',
-		blue: '#2563eb',
-		cyan: '#38bdf8',
-		green: '#16a34a',
-		amber: '#f59e0b',
-		purple: '#7c3aed',
-		red: '#dc2626',
-		ink: '#0f2746',
-		muted: '#64748b',
-		line: '#dbe7f2',
-		soft: '#f5f9fd',
-	}
+	const reportTheme = PDF_REPORT_THEME
 
 	const safeNumber = (value) => {
 		const number = Number(value || 0)
@@ -735,18 +724,18 @@ function AdminUserList() {
 			body: [[
 				{
 					stack: [
-						{ text: 'PLANOPIA · RAPORT EWIDENCJI', fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1.2 },
+						{ text: 'PLANOPIA · RAPORT EWIDENCJI', fontSize: 8, bold: true, color: reportTheme.headerEyebrow, characterSpacing: 1.2 },
 						{ text: 'Podsumowanie ewidencji', fontSize: 22, bold: true, color: '#ffffff', margin: [0, 7, 0, 0] },
-						{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: '#dbeafe', margin: [0, 5, 0, 0] },
+						{ text: `Okres: ${exportPeriodLabel}`, fontSize: 11, color: reportTheme.headerSubtitle, margin: [0, 5, 0, 0] },
 					],
 					border: [false, false, false, false],
 					margin: [18, 16, 12, 16],
 				},
 				{
 					stack: [
-						{ text: 'Szybki obraz', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: 'Szybki obraz', fontSize: 8, color: reportTheme.headerEyebrow, bold: true },
 						{ text: `${formatHours(summary.totalHours)} h`, fontSize: 24, bold: true, color: '#ffffff', margin: [0, 5, 0, 0] },
-						{ text: `${summary.totalWorkDays} dni pracy · ${formatHours(summary.overtime)} h nadgodzin`, fontSize: 8, color: '#dbeafe', margin: [0, 4, 0, 0] },
+						{ text: `${summary.totalWorkDays} dni pracy · ${formatHours(summary.overtime)} h nadgodzin`, fontSize: 8, color: reportTheme.headerSubtitle, margin: [0, 4, 0, 0] },
 						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
 					],
 					border: [false, false, false, false],
@@ -768,9 +757,9 @@ function AdminUserList() {
 			body: [[
 				{
 					stack: [
-						{ text: eyebrow, fontSize: 8, bold: true, color: '#bfdbfe', characterSpacing: 1.2 },
+						{ text: eyebrow, fontSize: 8, bold: true, color: reportTheme.headerEyebrow, characterSpacing: 1.2 },
 						{ text: title, fontSize: 22, bold: true, color: '#ffffff', margin: [0, 7, 0, 0] },
-						{ text: subtitle, fontSize: 11, color: '#dbeafe', margin: [0, 5, 0, 0] },
+						{ text: subtitle, fontSize: 11, color: reportTheme.headerSubtitle, margin: [0, 5, 0, 0] },
 					],
 					border: [false, false, false, false],
 					margin: [18, 16, 12, 16],
@@ -1035,7 +1024,7 @@ function AdminUserList() {
 			layout: {
 				hLineWidth: () => 0,
 				vLineWidth: () => 0,
-				fillColor: () => '#f8fbff',
+				fillColor: () => reportTheme.softRow,
 			},
 			margin: [0, 0, 0, 8],
 		}]
@@ -1044,7 +1033,7 @@ function AdminUserList() {
 	const pdfTableLayout = {
 		hLineColor: () => '#e5edf5',
 		vLineColor: () => '#e5edf5',
-		fillColor: (rowIndex) => rowIndex === 0 ? reportTheme.navy : (rowIndex % 2 === 0 ? '#f8fbff' : null),
+		fillColor: (rowIndex) => rowIndex === 0 ? reportTheme.navy : (rowIndex % 2 === 0 ? reportTheme.softRow : null),
 	}
 
 	const pdfDataTableStyled = (headers, rows, widths, footerRow) => {
@@ -1560,9 +1549,9 @@ function AdminUserList() {
 					title: 'Według osób',
 					subtitle: `Okres: ${exportPeriodLabel}`,
 					side: [
-						{ text: 'Największy udział czasu', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: 'Największy udział czasu', fontSize: 8, color: reportTheme.headerEyebrow, bold: true },
 						{ text: byHours?.name || '-', fontSize: 15, color: '#ffffff', bold: true, margin: [0, 5, 0, 0] },
-						{ text: byHours ? `${formatHours(byHours.totals.totalHours)} h pracy` : 'Brak godzin w okresie', fontSize: 8, color: '#dbeafe', margin: [0, 4, 0, 0] },
+						{ text: byHours ? `${formatHours(byHours.totals.totalHours)} h pracy` : 'Brak godzin w okresie', fontSize: 8, color: reportTheme.headerSubtitle, margin: [0, 4, 0, 0] },
 						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
 					],
 				}),
@@ -1710,7 +1699,7 @@ function AdminUserList() {
 					title: 'Raport operacyjny',
 					subtitle: `Okres: ${exportPeriodLabel}`,
 					side: [
-						{ text: 'Zakres danych', fontSize: 8, color: '#bfdbfe', bold: true },
+						{ text: 'Zakres danych', fontSize: 8, color: reportTheme.headerEyebrow, bold: true },
 						{ text: `${formatHours(operationalTotals.taskHours)} h zadań`, fontSize: 12, color: '#ffffff', bold: true, margin: [0, 6, 0, 0] },
 						{ text: `${formatHours(operationalTotals.activityHours)} h czynności`, fontSize: 12, color: '#ffffff', bold: true, margin: [0, 3, 0, 0] },
 						{ text: `Wygenerowano: ${generatedAt}`, fontSize: 7, color: '#93c5fd', margin: [0, 9, 0, 0] },
@@ -2132,9 +2121,9 @@ function AdminUserList() {
 								className="filter-button"
 								style={{ 
 									padding: '8px 12px', 
-									border: '1px solid #3498db', 
+									border: '1px solid #00a846', 
 									borderRadius: '6px', 
-									backgroundColor: '#3498db', 
+									backgroundColor: '#00a846', 
 									cursor: 'pointer', 
 									display: 'flex',
 									alignItems: 'center',
@@ -2148,8 +2137,8 @@ function AdminUserList() {
 								}}
 								onMouseOut={(e) => {
 									const button = e.currentTarget
-									button.style.backgroundColor = '#3498db'
-									button.style.borderColor = '#3498db'
+									button.style.backgroundColor = '#00a846'
+									button.style.borderColor = '#00a846'
 								}}
 								title={t('planslist.filter') || 'Filtrowanie'}
 							>
@@ -2677,9 +2666,9 @@ function AdminUserList() {
 											cursor: 'pointer',
 											padding: '8px 12px',
 											borderRadius: '6px',
-											backgroundColor: calendarView === 'single' ? '#e8f4f8' : '#f8f9fa',
+											backgroundColor: calendarView === 'single' ? '#ecfdf5' : '#f8f9fa',
 											border: '1px solid',
-											borderColor: calendarView === 'single' ? '#3498db' : '#e9ecef',
+											borderColor: calendarView === 'single' ? '#00a846' : '#e9ecef',
 										}}
 									>
 										<input
@@ -2699,9 +2688,9 @@ function AdminUserList() {
 											cursor: 'pointer',
 											padding: '8px 12px',
 											borderRadius: '6px',
-											backgroundColor: calendarView === 'all-months' ? '#e8f4f8' : '#f8f9fa',
+											backgroundColor: calendarView === 'all-months' ? '#ecfdf5' : '#f8f9fa',
 											border: '1px solid',
-											borderColor: calendarView === 'all-months' ? '#3498db' : '#e9ecef',
+											borderColor: calendarView === 'all-months' ? '#00a846' : '#e9ecef',
 										}}
 									>
 										<input
@@ -2739,7 +2728,7 @@ function AdminUserList() {
 								</h3>
 								
 								{/* Opcja: Wszyscy z zespołu */}
-								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#e8f4f8' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#3498db' : '#e9ecef' }}>
+								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
 									<input
 										type="radio"
 										name="userFilter"
@@ -2802,7 +2791,7 @@ function AdminUserList() {
 															)}
 														</label>
 														{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
-															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #3498db' }}>
+															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
 																{usersFromSelectedDepartments
 																	.filter(user => user.department && user.department.includes(deptName))
 																	.map(user => (
@@ -2883,7 +2872,7 @@ function AdminUserList() {
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										padding: '10px 20px',
-										backgroundColor: '#3498db',
+										backgroundColor: '#00a846',
 										color: 'white',
 										border: 'none',
 										borderRadius: '6px',
@@ -2893,7 +2882,7 @@ function AdminUserList() {
 										transition: 'background-color 0.2s'
 									}}
 									onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-									onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}>
+									onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}>
 									{t('planslist.apply') || t('boards.cancel') || 'Zastosuj'}
 								</button>
 							</div>
