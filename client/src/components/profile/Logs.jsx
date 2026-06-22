@@ -1448,8 +1448,8 @@ function Logs() {
 																					boxShadow: '0 2px 4px rgba(0, 168, 70, 0.18)'
 																				}}
 																				onMouseEnter={(e) => {
-																					e.target.style.backgroundColor = '#2980b9'
-																					e.target.style.borderColor = '#2980b9'
+																					e.target.style.backgroundColor = '#00963e'
+																					e.target.style.borderColor = '#00963e'
 																					e.target.style.boxShadow = '0 3px 6px rgba(0, 168, 70, 0.26)'
 																					e.target.style.transform = 'translateY(-1px)'
 																				}}
@@ -1488,7 +1488,7 @@ function Logs() {
 																					e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
 																					e.target.style.transform = 'translateY(0)'
 																				}}>
-																				{t('logs.manageSubordinates') || 'Pracownicy'}
+																				{t('logs.manageSubordinatesButton') || 'Podwładni'}
 																			</button>
 																		</div>
 																	)}
@@ -2166,8 +2166,8 @@ function Logs() {
 																		width: '100%'
 																	}}
 																	onMouseEnter={(e) => {
-																		e.target.style.backgroundColor = '#2980b9'
-																		e.target.style.borderColor = '#2980b9'
+																		e.target.style.backgroundColor = '#00963e'
+																		e.target.style.borderColor = '#00963e'
 																		e.target.style.boxShadow = '0 3px 6px rgba(0, 168, 70, 0.26)'
 																	}}
 																	onMouseLeave={(e) => {
@@ -2203,7 +2203,7 @@ function Logs() {
 																		e.target.style.borderColor = '#27ae60'
 																		e.target.style.boxShadow = '0 2px 4px rgba(39, 174, 96, 0.2)'
 																	}}>
-																	{t('logs.manageSubordinates') || 'Pracownicy'}
+																	{t('logs.manageSubordinatesButton') || 'Podwładni'}
 																</button>
 															</div>
 														)}
