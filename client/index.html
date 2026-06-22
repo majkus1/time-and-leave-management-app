@@ -9,7 +9,19 @@
   <meta name="author" content="Planopia" />
   
   <!-- PWA Meta Tags -->
-  <meta name="theme-color" content="#0d6efd" />
+  <meta name="theme-color" content="#0d6efd" id="meta-theme-color" />
+  <script>
+    (function () {
+      try {
+        // THEME_SWITCHER_ENABLED=false — zawsze jasny do czasu wdrożenia dark mode
+        var theme = 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        var meta = document.getElementById('meta-theme-color');
+        if (meta) meta.setAttribute('content', '#0d6efd');
+      } catch (e) {}
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />

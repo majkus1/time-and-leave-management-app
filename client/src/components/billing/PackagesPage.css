@@ -1320,3 +1320,57 @@
 .packages-core-total__amount {
 	font-weight: 600;
 }
+
+/* Theme tokens — light/dark via theme.css variables */
+.packages-page {
+	color: var(--po-text);
+}
+
+.packages-invoice-section,
+.packages-current-plan,
+.packages-tier-card,
+.packages-usage,
+.packages-modal__content {
+	background: var(--po-surface);
+	border-color: var(--po-border);
+	color: var(--po-text);
+}
+
+.packages-invoice-section {
+	background: linear-gradient(145deg, var(--po-surface-muted), var(--po-bg-elevated));
+}
+
+.packages-invoice-section__title,
+.packages-current-plan h3,
+.packages-tier-card__name {
+	color: var(--po-text);
+}
+
+.packages-invoice-section__hint,
+.packages-invoice-section__nip-hint,
+.packages-current-plan__body,
+.packages-entitlements-hint {
+	color: var(--po-text-muted);
+}
+
+.packages-invoice-section input,
+.packages-invoice-section textarea,
+.packages-invoice-section select {
+	background: var(--po-input-bg);
+	color: var(--po-input-text);
+	border-color: var(--po-input-border);
+}
+
+.packages-sent-banner,
+.packages-freemium-seat-banner,
+.packages-paid-plan-seat-banner,
+.packages-admin-only-banner {
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .packages-freemium-seat-banner,
+[data-theme='dark'] .packages-paid-plan-seat-banner {
+	background: var(--po-warning-soft);
+	color: var(--po-text);
+}
+

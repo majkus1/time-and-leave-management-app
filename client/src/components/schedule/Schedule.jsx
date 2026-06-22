@@ -25,7 +25,8 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
-import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAllLeaveRequests, useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
+import { mergeCalendarLeaveRequests } from '../../utils/leaveRequestCalendarVisibility'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate, getHolidaysInRange, toYmdLocal } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -191,7 +192,8 @@ function Schedule() {
 		currentMonth,
 		currentYear
 	)
-	const { data: allTeamLeaveRequests = [], isLoading: loadingLeaveRequests } = useAllLeaveRequests()
+	const { data: allTeamLeaveRequests = [], isLoading: loadingAllLeaveRequests } = useAllLeaveRequests()
+	const { data: acceptedSentTeamRequests = [], isLoading: loadingAcceptedLeaveRequests } = useAllAcceptedLeaveRequests()
 	const { data: settings } = useSettings()
 	const isAvailabilityEnabled = schedule?.availabilityEnabled === true
 	const draftEntriesCountCurrentMonth = React.useMemo(
@@ -354,23 +356,15 @@ function Schedule() {
 		
 		// Get user IDs from the schedule users
 		const scheduleUserIds = users.map(u => u._id?.toString() || u.toString()).filter(Boolean)
-		
-		const visibleLeaveStatuses = new Set([
-			'status.accepted',
-			'accepted',
-			'status.sent',
-			'sent',
-			'status.pending',
-			'pending',
-		])
+		const scheduleUserIdSet = new Set(scheduleUserIds)
 
-		// Filter leave requests for users in this schedule
-		const scheduleLeaveRequests = allTeamLeaveRequests.filter(request => {
-			if (!request.userId || !request.startDate || !request.endDate) return false
-			if (!visibleLeaveStatuses.has(request.status)) return false
-			const requestUserId = request.userId._id?.toString() || request.userId?.toString()
-			return scheduleUserIds.includes(requestUserId)
-		})
+		const scheduleLeaveRequests = mergeCalendarLeaveRequests({
+			acceptedSentRequests: acceptedSentTeamRequests,
+			allStatusRequests: allTeamLeaveRequests,
+			role,
+			currentUserId: userId,
+			scopeUserIds: scheduleUserIdSet,
+		}).filter((request) => request.userId && request.startDate && request.endDate)
 		
 		// Filter leave requests by userId if showOnlyMyEvents is enabled
 		const filteredLeaveRequests = showOnlyMyEvents
@@ -487,7 +481,7 @@ function Schedule() {
 			if (dateCompare !== 0) return dateCompare
 			return sortEventsSameDay(a, b)
 		})
-	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allTeamLeaveRequests, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage, currentMonth, currentYear])
+	}, [scheduleEntries, getColorForEmployee, showOnlyMyEvents, userId, users, allTeamLeaveRequests, acceptedSentTeamRequests, role, generateDateRangeForCalendar, settings, t, i18n.resolvedLanguage, currentMonth, currentYear])
 
 	// Sort selected entries by timeFrom for display in modal
 	const sortedSelectedEntries = React.useMemo(() => {
@@ -1721,7 +1715,7 @@ function Schedule() {
 					</div>
 				)}
 
-				{loadingEntries || loadingLeaveRequests ? (
+				{loadingEntries || loadingAllLeaveRequests || loadingAcceptedLeaveRequests ? (
 					<Loader />
 				) : (
 					<div style={{
@@ -1766,6 +1760,8 @@ function Schedule() {
 				<Modal
 					isOpen={isAutoGenerateModalOpen}
 					onRequestClose={() => setIsAutoGenerateModalOpen(false)}
+					className="schedule-auto-modal"
+					overlayClassName="schedule-auto-modal-overlay"
 					style={{
 						overlay: {
 							display: 'flex',

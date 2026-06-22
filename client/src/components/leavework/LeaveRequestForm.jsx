@@ -4,7 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useUserLeaveRequests, useAllLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers, useAvailabilityCheckerLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays, useVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
@@ -35,7 +35,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 
 	// TanStack Query hooks
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
-	const { data: allTeamLeaveRequests = [] } = useAllLeaveRequests()
+	const availabilityCheckerRequests = useAvailabilityCheckerLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const { data: settings } = useSettings()
 	const managedLeaveEnabled = settings?.allowManagedLeaveRequests === true
@@ -70,18 +70,6 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 		() => LEAVE_REQUEST_STATUS_KEYS.filter(status => statusFilters[status] !== false).length,
 		[statusFilters]
 	)
-	const availabilityCheckerRequests = React.useMemo(() => {
-		if (!Array.isArray(allTeamLeaveRequests)) return []
-		const visibleStatuses = new Set([
-			'status.accepted',
-			'accepted',
-			'status.sent',
-			'sent',
-			'status.pending',
-			'pending',
-		])
-		return allTeamLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
-	}, [allTeamLeaveRequests])
 	const availableLeaveDays = activeVacationData?.vacationDays || 0
 	const leaveTypeDays = activeVacationData?.leaveTypeDays || {}
 	

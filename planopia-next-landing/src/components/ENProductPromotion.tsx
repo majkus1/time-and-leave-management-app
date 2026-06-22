@@ -128,8 +128,8 @@ function ENProductPromotion() {
 						"offers": {
 							"@type": "AggregateOffer",
 							"offerCount": "5",
-							"lowPrice": "99",
-							"highPrice": "799",
+							"lowPrice": "0",
+							"highPrice": "479",
 							"priceCurrency": "PLN",
 							"description": planOfferingCopy.en.jsonLdOfferDescription
 						}
@@ -217,7 +217,7 @@ function ENProductPromotion() {
 			{/* HERO */}
 			<section className="landing-polished-hero px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="landing-polished-hero-inner max-w-7xl mx-auto text-left">
-					<div className="landing-polished-hero-grid grid md:grid-cols-2 gap-10 items-center">
+					<div className="landing-polished-hero-grid grid lg:grid-cols-2 gap-10 items-center">
 						<div className="landing-polished-hero-copy ordering">
 							<p className="landing-polished-eyebrow">Everything in one place</p>
 							<h1 className="landing-polished-title text-2xl sm:text-3xl font-bold text-blue-700">
@@ -235,6 +235,7 @@ function ENProductPromotion() {
 							<div className="landing-polished-proof">
 								<span>No credit card</span>
 								<span>Ready in 2 minutes</span>
+								<span>Free tier after trial</span>
 							</div>
 						</div>
 						<img
@@ -250,6 +251,26 @@ function ENProductPromotion() {
 				</div>
 			</section>
 
+			<section className="landing-value-proof-section px-4" aria-labelledby="planopia-value-proof-heading-en">
+				<div className="landing-value-proof max-w-7xl mx-auto">
+					<div className="landing-value-proof__header">
+						<p className="landing-value-proof__eyebrow">{planOfferingCopy.en.valueEyebrow}</p>
+						<h2 id="planopia-value-proof-heading-en" className="landing-value-proof__title">
+							{planOfferingCopy.en.valueTitle}
+						</h2>
+						<p className="landing-value-proof__lead">{planOfferingCopy.en.valueLead}</p>
+					</div>
+					<div className="landing-value-proof__grid">
+						{planOfferingCopy.en.valueCards.map(card => (
+							<article className="landing-value-proof__card" key={card.title}>
+								<h3>{card.title}</h3>
+								<p>{card.text}</p>
+							</article>
+						))}
+					</div>
+				</div>
+			</section>
+
 			<section id="aboutapp" className="py-12 bg-white px-4">
 				<div className="max-w-7xl mx-auto">
 					<div className="landing-about-heading-block mb-8">
@@ -260,7 +281,7 @@ function ENProductPromotion() {
 								Everything you need in one system
 							</h2>
 							<p className="landing-about-intro mt-4 text-lg text-gray-600">
-								Planopia is a complete company management tool. Time tracking, leave management, work schedules, chats, task boards, and an AI Assistant - everything in one place. Forget Excel sheets and endless emails. Planopia automates processes - faster, clearer, and error-free.
+								Planopia organizes everyday administration: time tracking, leave management, work schedules, chats, task boards, and an AI Assistant. Instead of chasing spreadsheets, emails, and paper requests, you keep team data in one place and generate reports faster for the team, accounting, and owners.
 							</p>
 					</div>
 					<div
@@ -281,15 +302,15 @@ function ENProductPromotion() {
 									<img src="/img/schedule time works.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Work time tracking</p>
-										<p className="text-sm text-gray-600">Calendar, overtime, and work summaries.</p>
+										<p className="text-sm text-gray-600">Calendar, overtime, and work summaries without rebuilding spreadsheets by hand.</p>
 									</div>
 								</div>
 								{/* Timer */}
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 									<img src="/img/timer.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
-										<p className="font-semibold text-gray-900">Automatic time registration</p>
-										<p className="text-sm text-gray-600">QR code check-in/out, task tracking, and monthly work time statistics.</p>
+										<p className="font-semibold text-gray-900">Timer + QR</p>
+										<p className="text-sm text-gray-600">Work timer, QR check-in/out, tasks, and monthly time statistics.</p>
 									</div>
 								</div>
 								{/* 2 */}
@@ -297,7 +318,7 @@ function ENProductPromotion() {
 									<img src="/img/sunbed.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Leaves and absences</p>
-										<p className="text-sm text-gray-600">Requests, approvals, notifications.</p>
+										<p className="text-sm text-gray-600">Requests, approvals, and notifications without a paper workflow.</p>
 									</div>
 								</div>
 								{/* 3 */}
@@ -305,7 +326,7 @@ function ENProductPromotion() {
 									<img src="/img/pdf.png" className="icon-landing-about" alt='icon in section' loading="eager" />
 									<div>
 										<p className="font-semibold text-gray-900">Reports</p>
-										<p className="text-sm text-gray-600">Business PDF and Excel reports with data, statistics, and team summaries.</p>
+										<p className="text-sm text-gray-600">PDF and Excel reports with data, statistics, and summaries for the team, accounting, and owners.</p>
 									</div>
 								</div>
 								{/* 4 */}
@@ -448,7 +469,7 @@ function ENProductPromotion() {
 			<section id="contact" className="landing-contact-section py-12 px-4 bg-gray-50">
 				<div className="max-w-7xl mx-auto">
 					<div className="landing-contact-heading">
-						<p className="landing-contact-eyebrow">Let's talk</p>
+						<p className="landing-contact-eyebrow">Let&apos;s talk</p>
 						<h2 className="landing-contact-title text-3xl md:text-4xl font-bold">Get in touch with us</h2>
 					</div>
 					<p className="landing-contact-lead mt-3 text-left">
@@ -533,7 +554,7 @@ function ENProductPromotion() {
 									<p className="landing-contact-form-title text-2xl font-bold text-gray-900">Contact form</p>
 								</div>
 								<p className="text-gray-600">
-									Schedule an online meeting or leave a message — I'll get back to you shortly.
+									Schedule an online meeting or leave a message — I&apos;ll get back to you shortly.
 								</p>
 							</div>
 

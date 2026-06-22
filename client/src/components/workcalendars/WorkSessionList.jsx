@@ -38,6 +38,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 
 	return (
 		<div
+			className="work-session-item"
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
@@ -49,6 +50,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 			}}
 		>
 			<div
+				className="work-session-item__row"
 				style={{
 					display: 'flex',
 					justifyContent: 'space-between',
@@ -212,7 +214,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 			</div>
 			{/* Expanded details on mobile */}
 			{isMobile && isExpanded && (
-				<div style={{
+				<div className="work-session-item__expand" style={{
 					padding: '8px 12px',
 					paddingTop: '8px',
 					borderTop: '1px solid #e8e8e8',
@@ -604,7 +606,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 	const displayTotalMinutes = filteredData.totalMinutes || 0
 
 	return (
-		<div className="work-session-list" style={{
+		<div className="work-session-list po-surface-panel" style={{
 			backgroundColor: 'white',
 			borderRadius: '12px',
 			boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -869,7 +871,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			</div>
 
 			{displayData.length > 0 && (
-				<div style={{
+				<div className="work-session-total" style={{
 					marginTop: '20px',
 					padding: '15px',
 					backgroundColor: '#f0f0f0',

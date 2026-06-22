@@ -128,8 +128,8 @@ function ProductPromotion() {
 						"offers": {
 							"@type": "AggregateOffer",
 							"offerCount": "5",
-							"lowPrice": "99",
-							"highPrice": "799",
+							"lowPrice": "0",
+							"highPrice": "479",
 							"priceCurrency": "PLN",
 							"description": planOfferingCopy.pl.jsonLdOfferDescription
 						}
@@ -221,7 +221,7 @@ function ProductPromotion() {
 			{/* HERO */}
 			<section className="landing-polished-hero px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
 				<div className="landing-polished-hero-inner max-w-7xl mx-auto text-left">
-					<div className="landing-polished-hero-grid grid md:grid-cols-2 gap-10 items-center">
+					<div className="landing-polished-hero-grid grid lg:grid-cols-2 gap-10 items-center">
 						<div className="landing-polished-hero-copy ordering">
 							<p className="landing-polished-eyebrow">Wszystko w jednym miejscu</p>
 							<h1 className="landing-polished-title text-2xl sm:text-3xl font-bold text-blue-700">
@@ -253,6 +253,26 @@ function ProductPromotion() {
 				</div>
 			</section>
 
+			<section className="landing-value-proof-section px-4" aria-labelledby="planopia-value-proof-heading">
+				<div className="landing-value-proof max-w-7xl mx-auto">
+					<div className="landing-value-proof__header">
+						<p className="landing-value-proof__eyebrow">{planOfferingCopy.pl.valueEyebrow}</p>
+						<h2 id="planopia-value-proof-heading" className="landing-value-proof__title">
+							{planOfferingCopy.pl.valueTitle}
+						</h2>
+						<p className="landing-value-proof__lead">{planOfferingCopy.pl.valueLead}</p>
+					</div>
+					<div className="landing-value-proof__grid">
+						{planOfferingCopy.pl.valueCards.map(card => (
+							<article className="landing-value-proof__card" key={card.title}>
+								<h3>{card.title}</h3>
+								<p>{card.text}</p>
+							</article>
+						))}
+					</div>
+				</div>
+			</section>
+
 <section id="oaplikacji" className="py-12 bg-white px-4">
   <div className="max-w-7xl mx-auto">
     <div className="landing-about-heading-block mb-8">
@@ -263,7 +283,7 @@ function ProductPromotion() {
           Wszystko, czego potrzebujesz w jednym systemie
         </h2>
         <p className="landing-about-intro mt-4 text-lg text-gray-600">
-          Planopia to kompletne narzędzie do zarządzania firmą. Ewidencja czasu pracy, urlopy, grafik pracy, czaty, tablice zadań oraz Asystent AI — wszystko w jednym miejscu. Zapomnij o Excelach i mailach. Planopia automatyzuje procesy — szybciej, czytelniej, bez błędów.
+          Planopia porządkuje codzienną administrację: ewidencję czasu pracy, urlopy, grafik pracy, czaty, tablice zadań oraz Asystenta AI. Zamiast śledzić arkusze, maile i papierowe wnioski, zbierasz dane w jednym miejscu i szybciej generujesz raporty dla zespołu, księgowości i właściciela.
         </p>
     </div>
     <div
@@ -284,15 +304,15 @@ function ProductPromotion() {
             <img src="/img/schedule time works.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
               <p className="font-semibold text-gray-900">Ewidencja czasu pracy</p>
-              <p className="text-sm text-gray-600">Kalendarz, nadgodziny i podsumowania pracy.</p>
+              <p className="text-sm text-gray-600">Kalendarz, nadgodziny i podsumowania bez ręcznego składania arkuszy.</p>
             </div>
           </div>
           {/* Timer */}
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
             <img src="/img/timer.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
-              <p className="font-semibold text-gray-900">Automatyczna rejestracja czasu</p>
-              <p className="text-sm text-gray-600">QR kod wejścia/wyjścia, zaznaczanie zadań i miesięczne statystyki czasu pracy.</p>
+              <p className="font-semibold text-gray-900">Timer + QR</p>
+              <p className="text-sm text-gray-600">Timer pracy, QR wejścia/wyjścia, zadania i miesięczne statystyki czasu.</p>
             </div>
           </div>
           {/* 2 */}
@@ -300,7 +320,7 @@ function ProductPromotion() {
 		  <img src="/img/sunbed.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
               <p className="font-semibold text-gray-900">Urlopy i nieobecności</p>
-              <p className="text-sm text-gray-600">Wnioski, akceptacje, powiadomienia.</p>
+              <p className="text-sm text-gray-600">Wnioski, akceptacje i powiadomienia bez papierowego obiegu.</p>
             </div>
           </div>
           {/* 3 */}
@@ -308,7 +328,7 @@ function ProductPromotion() {
 		  <img src="/img/pdf.png" className='icon-landing-about' alt='ikonki w sekcji o nas' loading="eager" />
             <div>
 			<p className="font-semibold text-gray-900">Raporty</p>
-<p className="text-sm text-gray-600">Biznesowe raporty PDF i Excel z danymi, statystykami i podsumowaniami dla zespołu.</p>
+<p className="text-sm text-gray-600">Raporty PDF i Excel z danymi, statystykami i podsumowaniami dla zespołu, księgowości i właściciela.</p>
             </div>
 
           </div>
@@ -625,10 +645,6 @@ function ProductPromotion() {
 }
 
 export default ProductPromotion
-
-
-
-
 
 
 

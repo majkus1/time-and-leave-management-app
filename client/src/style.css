@@ -32,9 +32,9 @@ input[type='checkbox'] {
 	min-width: 1.25rem;
 	min-height: 1.25rem;
 	margin: 0;
-	border: 2px solid #cbd5e1;
+	border: 2px solid var(--po-input-border);
 	border-radius: 4px;
-	background-color: #ffffff;
+	background-color: var(--po-input-bg);
 	cursor: pointer;
 	vertical-align: middle;
 	flex-shrink: 0;
@@ -42,8 +42,8 @@ input[type='checkbox'] {
 }
 
 input[type='checkbox']:checked {
-	background-color: #00a846;
-	border-color: #00a846;
+	background-color: var(--po-brand);
+	border-color: var(--po-brand);
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: center;
@@ -58,17 +58,17 @@ input[type='checkbox']:focus-visible {
 input[type='checkbox']:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
-	background-color: #f1f5f9;
-	border-color: #e2e8f0;
+	background-color: var(--po-surface-muted);
+	border-color: var(--po-border);
 }
 
 input[type='checkbox']:disabled:checked {
-	background-color: #94a3b8;
-	border-color: #94a3b8;
+	background-color: var(--po-text-muted);
+	border-color: var(--po-text-muted);
 }
 
 input[type='radio'] {
-	accent-color: #00a846;
+	accent-color: var(--po-brand);
 	cursor: pointer;
 	vertical-align: middle;
 	flex-shrink: 0;
@@ -4783,13 +4783,32 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	box-shadow: 0 2px 10px rgba(15, 42, 74, 0.04);
 }
 
+.allfrommonth-p__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+	border-radius: 9px;
+	background: #eef7ff;
+	box-sizing: content-box;
+}
+
+.allfrommonth-p__icon img {
+	width: 24px;
+	height: 24px;
+	object-fit: contain;
+}
+
 .calendar-my-work .allfrommonth-p img {
 	width: 24px;
 	height: 24px;
 	margin-right: 0;
-	padding: 4px;
-	border-radius: 9px;
-	background: #eef7ff;
+	padding: 0;
+	border-radius: 0;
+	background: none;
 	object-fit: contain;
 }
 
@@ -7179,6 +7198,32 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	text-align: center;
 	line-height: 1.3;
 	word-break: break-word;
+	border-radius: 8px;
+	padding: 10px 12px;
+	font-weight: 700;
+	cursor: pointer;
+	background: #ffffff;
+	border: 1px solid #d7dde5;
+	color: #13294b;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.bulk-fill-range-options button:hover:not(.is-active) {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+}
+
+/* Aktywny zakres — jak hover przycisku „Uzupełnij” */
+.bulk-fill-range-options button.is-active {
+	background: #f0fdf4;
+	border: 1px solid #22c55e;
+	color: #15803d;
+}
+
+.bulk-fill-range-options button.is-active:hover {
+	background: #f0fdf4;
+	border-color: #16a34a;
+	color: #166534;
 }
 
 .bulk-fill-entry-card {

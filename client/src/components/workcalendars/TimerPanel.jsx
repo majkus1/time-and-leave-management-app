@@ -442,7 +442,7 @@ function TimerPanel() {
 
 	if (loadingTimer) {
 		return (
-			<div style={{
+			<div className="timer-panel-card po-surface-panel" style={{
 				backgroundColor: 'white',
 				borderRadius: '12px',
 				boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -462,7 +462,7 @@ function TimerPanel() {
 		continuousRunStartMs != null ? Math.max(0, (Date.now() - continuousRunStartMs) / 1000) : 0
 
 	return (
-		<div style={{
+		<div className="timer-panel-card po-surface-panel" style={{
 			backgroundColor: 'white',
 			borderRadius: '12px',
 			boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -542,7 +542,9 @@ function TimerPanel() {
 			{isActive ? (
 				<>
 					{/* Active timer display */}
-					<div style={{
+					<div
+						className={`timer-panel-active-display${isBreak ? ' is-break' : ''}`}
+						style={{
 						textAlign: 'center',
 						marginBottom: '20px',
 						padding: '20px',
@@ -1078,6 +1080,7 @@ function TimerPanel() {
 			<Modal
 				isOpen={infoModalIsOpen}
 				onRequestClose={() => setInfoModalIsOpen(false)}
+				className="timer-info-modal"
 				style={{
 					overlay: {
 						display: 'flex',

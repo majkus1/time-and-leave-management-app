@@ -99,6 +99,7 @@ function ScheduleList() {
 						schedules.map((schedule) => (
 							<div
 								key={schedule._id}
+								className="schedule-card po-surface-panel"
 								style={{
 									backgroundColor: 'white',
 									borderRadius: '12px',

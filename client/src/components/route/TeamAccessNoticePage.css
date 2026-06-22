@@ -4,17 +4,17 @@
 	align-items: center;
 	justify-content: center;
 	padding: 1.5rem;
-	background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 45%, #f8fafc 100%);
+	background: linear-gradient(160deg, var(--po-bg) 0%, var(--po-bg-elevated) 45%, var(--po-surface-muted) 100%);
 }
 
 .team-access-notice__card {
 	max-width: 28rem;
 	width: 100%;
-	background: #fff;
+	background: var(--po-surface);
 	border-radius: 16px;
 	padding: 2rem 1.75rem;
-	box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
-	border: 1px solid rgba(148, 163, 184, 0.25);
+	box-shadow: 0 18px 50px var(--po-shadow-strong);
+	border: 1px solid var(--po-border);
 	text-align: center;
 }
 
@@ -28,7 +28,7 @@
 .team-access-notice__title {
 	font-size: 1.35rem;
 	font-weight: 600;
-	color: #0f172a;
+	color: var(--po-text);
 	margin: 0 0 1rem;
 	line-height: 1.35;
 }
@@ -36,7 +36,7 @@
 .team-access-notice__body {
 	font-size: 0.95rem;
 	line-height: 1.55;
-	color: #475569;
+	color: var(--po-text-secondary);
 	margin: 0 0 1.5rem;
 	text-align: left;
 }
@@ -58,28 +58,28 @@
 }
 
 .team-access-notice__btn.primary {
-	background: #00a846;
+	background: var(--po-brand);
 	color: #fff;
 	box-shadow: 0 12px 26px rgba(0, 168, 70, 0.18);
 }
 
 .team-access-notice__btn.primary:hover {
-	background: #008f3d;
+	background: var(--po-brand-hover);
 	filter: none;
 }
 
 .team-access-notice__btn.secondary {
-	background: #f1f5f9;
-	color: #334155;
-	border: 1px solid #e2e8f0;
+	background: var(--po-surface-hover);
+	color: var(--po-text-secondary);
+	border: 1px solid var(--po-border);
 }
 
 .team-access-notice__btn.secondary:hover {
-	background: #e2e8f0;
+	background: var(--po-surface-muted);
 }
 
 .team-access-notice__lang {
 	margin: 1.25rem 0 0;
 	font-size: 0.75rem;
-	color: #94a3b8;
+	color: var(--po-text-muted);
 }

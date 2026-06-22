@@ -302,6 +302,8 @@ function BulkFillWorkdaysModal({
 							<button
 								key={value}
 								type="button"
+								className={rangeType === value ? 'is-active' : ''}
+								aria-pressed={rangeType === value}
 								onClick={() => {
 									setRangeType(value)
 									if (value === 'day') setDayDate(today)
@@ -310,14 +312,6 @@ function BulkFillWorkdaysModal({
 										setPickMonth(currentMonth)
 										setPickYear(currentYear)
 									}
-								}}
-								style={{
-									border: rangeType === value ? '2px solid #00a846' : '1px solid #d7dde5',
-									background: rangeType === value ? '#ecfdf5' : '#fff',
-									color: rangeType === value ? '#213555' : '#13294b',
-									borderRadius: '8px',
-									padding: '10px 12px',
-									fontWeight: 700,
 								}}
 							>
 								{label}

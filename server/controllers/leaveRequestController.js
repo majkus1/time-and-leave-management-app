@@ -642,7 +642,7 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 		let acceptedLeaveRequests
 		let allowedUserIds = []
 		
-		// W /all-leave-plans wszyscy (Admin, HR, Przełożony, Worker) widzą wszystkich z zespołu
+		// accepted + sent, cały zespół — używane przez kalendarze zespołowe (nie /leave-list).
 		if (isAdmin || isHR || isSupervisor) {
 			// Admin, HR i Przełożony widzą wszystkich z zespołu
 			const teamUsers = await User.find({ 
@@ -712,7 +712,8 @@ exports.getAllAcceptedLeaveRequests = async (req, res) => {
 	}
 }
 
-// Pobierz wszystkie wnioski urlopowe (wszystkie statusy) dla zespołu
+// Pobierz wszystkie wnioski urlopowe (wszystkie statusy) — workflow /leave-list, badge pending;
+// na kalendarzach pending jest dokładany po stronie klienta z tego endpointu (przełożony: podwładni).
 exports.getAllLeaveRequests = async (req, res) => {
 	try {
 		const requestingUser = await User.findById(req.user.userId)

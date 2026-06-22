@@ -15,9 +15,6 @@ const CHAT_ICON = '/img/planio-czat.png'
 const UI: Record<
 	Locale,
 	{
-		/** Krótka chmurka przy FAB: efekt pisania + auto-zanik */
-		teaserBubble: string
-		teaserDismissAria: string
 		title: string
 		placeholder: string
 		send: string
@@ -40,8 +37,6 @@ const UI: Record<
 	}
 > = {
 	pl: {
-		teaserBubble: 'Cześć, jestem Planio. Jak mogę pomóc?',
-		teaserDismissAria: 'Zamknij podpowiedź',
 		title: 'Planio - Asystent',
 		placeholder: 'Napisz pytanie…',
 		send: 'Wyślij',
@@ -63,8 +58,6 @@ const UI: Record<
 		emailDisabled: 'Wysyłka e-maili z czatu jest chwilowo wyłączona.',
 	},
 	en: {
-		teaserBubble: 'Hi! App questions? Happy to help.',
-		teaserDismissAria: 'Close tip',
 		title: 'Planio - Assistant',
 		placeholder: 'Type your question…',
 		send: 'Send',
@@ -87,14 +80,6 @@ const UI: Record<
 		emailDisabled: 'Email sending from chat is temporarily unavailable.',
 	},
 }
-
-/** Opóźnienie przed pokazaniem chmurki po wejściu na stronę */
-const TEASER_DELAY_MS = 900
-/** Tempo „pisania” (ms na znak) */
-const TEASER_TYPE_MS = 38
-/** Jak długo pełny tekst jest widoczny zanim zniknie */
-const TEASER_HOLD_MS = 5200
-const TEASER_FADE_MS = 520
 
 function localeFromPath(pathname: string | null): Locale {
 	if (!pathname) return 'pl'
@@ -230,13 +215,6 @@ export default function LandingChatWidget() {
 	const t = UI[locale]
 	const panelId = useId()
 	const [open, setOpen] = useState(false)
-	const [teaserOn, setTeaserOn] = useState(false)
-	const [teaserChars, setTeaserChars] = useState(0)
-	const [teaserFade, setTeaserFade] = useState(false)
-	const teaserDelayRef = useRef<number | null>(null)
-	const teaserTypeRef = useRef<number | null>(null)
-	const teaserHoldRef = useRef<number | null>(null)
-	const teaserFadeDoneRef = useRef<number | null>(null)
 	const [lines, setLines] = useState<ChatLine[]>([])
 	const [input, setInput] = useState('')
 	const [busy, setBusy] = useState(false)
@@ -252,90 +230,6 @@ export default function LandingChatWidget() {
 	const inputRef = useRef<HTMLTextAreaElement>(null)
 
 	const enabledPublic = process.env.NEXT_PUBLIC_LANDING_CHAT_ENABLED !== 'false'
-
-	const bubbleText = t.teaserBubble
-
-	const clearTeaserTimers = useCallback(() => {
-		if (teaserDelayRef.current) {
-			window.clearTimeout(teaserDelayRef.current)
-			teaserDelayRef.current = null
-		}
-		if (teaserTypeRef.current) {
-			window.clearTimeout(teaserTypeRef.current)
-			teaserTypeRef.current = null
-		}
-		if (teaserHoldRef.current) {
-			window.clearTimeout(teaserHoldRef.current)
-			teaserHoldRef.current = null
-		}
-		if (teaserFadeDoneRef.current) {
-			window.clearTimeout(teaserFadeDoneRef.current)
-			teaserFadeDoneRef.current = null
-		}
-	}, [])
-
-	useEffect(() => {
-		if (!enabledPublic) return
-		if (typeof window === 'undefined') return
-		teaserDelayRef.current = window.setTimeout(() => {
-			teaserDelayRef.current = null
-			setTeaserOn(true)
-			setTeaserChars(0)
-			setTeaserFade(false)
-		}, TEASER_DELAY_MS)
-		return () => {
-			if (teaserDelayRef.current) {
-				window.clearTimeout(teaserDelayRef.current)
-				teaserDelayRef.current = null
-			}
-		}
-	}, [enabledPublic])
-
-	useEffect(() => {
-		if (!teaserOn || teaserFade) return
-		if (teaserChars >= bubbleText.length) return
-		teaserTypeRef.current = window.setTimeout(() => {
-			teaserTypeRef.current = null
-			setTeaserChars(c => c + 1)
-		}, TEASER_TYPE_MS)
-		return () => {
-			if (teaserTypeRef.current) {
-				window.clearTimeout(teaserTypeRef.current)
-				teaserTypeRef.current = null
-			}
-		}
-	}, [teaserOn, teaserChars, teaserFade, bubbleText.length])
-
-	useEffect(() => {
-		if (!teaserOn || teaserFade) return
-		if (teaserChars < bubbleText.length) return
-		teaserHoldRef.current = window.setTimeout(() => {
-			teaserHoldRef.current = null
-			setTeaserFade(true)
-		}, TEASER_HOLD_MS)
-		return () => {
-			if (teaserHoldRef.current) {
-				window.clearTimeout(teaserHoldRef.current)
-				teaserHoldRef.current = null
-			}
-		}
-	}, [teaserOn, teaserChars, teaserFade, bubbleText.length])
-
-	useEffect(() => {
-		if (!teaserFade) return
-		teaserFadeDoneRef.current = window.setTimeout(() => {
-			teaserFadeDoneRef.current = null
-			setTeaserOn(false)
-			setTeaserChars(0)
-			setTeaserFade(false)
-		}, TEASER_FADE_MS)
-		return () => {
-			if (teaserFadeDoneRef.current) {
-				window.clearTimeout(teaserFadeDoneRef.current)
-				teaserFadeDoneRef.current = null
-			}
-		}
-	}, [teaserFade])
 
 	useLayoutEffect(() => {
 		if (typeof document === 'undefined') return
@@ -360,24 +254,11 @@ export default function LandingChatWidget() {
 		if (open && lines.length === 0) seedWelcome()
 	}, [open, lines.length, seedWelcome])
 
-	const dismissTeaserInstant = useCallback(() => {
-		clearTeaserTimers()
-		setTeaserOn(false)
-		setTeaserChars(0)
-		setTeaserFade(false)
-	}, [clearTeaserTimers])
-
-	const dismissTeaserFade = useCallback(() => {
-		clearTeaserTimers()
-		setTeaserFade(true)
-	}, [clearTeaserTimers])
-
 	const openPanel = useCallback(() => {
-		dismissTeaserInstant()
 		setOpen(true)
 		setError(null)
 		requestAnimationFrame(() => inputRef.current?.focus())
-	}, [dismissTeaserInstant])
+	}, [])
 
 	const send = useCallback(async () => {
 		const text = input.trim()
@@ -459,48 +340,6 @@ export default function LandingChatWidget() {
 		<div
 			className={`landing-chat-widget pointer-events-none fixed bottom-0 right-0 z-[9997] flex flex-col items-end gap-2 p-4 md:p-5 [&_*]:pointer-events-auto ${mobileMenuOpen ? 'hidden' : ''}`}
 		>
-			{teaserOn && !open && (
-				<div
-					role="status"
-					aria-live="off"
-					className={`landing-chat-teaser relative max-w-[min(100vw-2rem,18.5rem)] rounded-2xl border border-emerald-200/90 bg-white px-3 py-2.5 pr-9 text-sm text-gray-800 shadow-lg shadow-emerald-900/10 ring-1 ring-emerald-100/80 transition-opacity duration-500 ease-out ${
-						teaserFade ? 'pointer-events-none opacity-0' : 'opacity-100'
-					}`}
-				>
-					<button
-						type="button"
-						onClick={dismissTeaserFade}
-						className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-lg text-base leading-none text-gray-500 hover:bg-emerald-50 hover:text-gray-800"
-						aria-label={t.teaserDismissAria}
-					>
-						×
-					</button>
-					<div className="flex items-start gap-2">
-						<ChatIcon className="h-8 w-8 shrink-0" />
-						<div className="min-w-0 pt-0.5">
-							<p className="m-0 min-h-[2.75rem] text-[13px] font-bold leading-snug sm:min-h-0 sm:text-sm">
-								{bubbleText.slice(0, teaserChars)}
-								{teaserChars < bubbleText.length && !teaserFade ? (
-									<span
-										className="ml-0.5 inline-block h-[0.95em] w-[2px] translate-y-[0.06em] animate-pulse bg-emerald-600"
-										aria-hidden
-									/>
-								) : null}
-							</p>
-							<div className="mt-2">
-								<button
-									type="button"
-									onClick={openPanel}
-									className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-								>
-									{locale === 'pl' ? 'Napisz' : 'Chat'}
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-
 			{open && (
 				<div
 					role="dialog"

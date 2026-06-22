@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
 import { useAllLeavePlans } from '../../hooks/useLeavePlans'
-import { useAllLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useAllLeaveRequests, useAllAcceptedLeaveRequests, useOwnLeaveRequests } from '../../hooks/useLeaveRequests'
+import { mergeCalendarLeaveRequests, isPendingLeaveStatus } from '../../utils/leaveRequestCalendarVisibility'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -82,7 +83,7 @@ function AdminAllLeaveCalendar() {
 	}, [calendarView])
 	const navigate = useNavigate()
 	const { t, i18n } = useTranslation()
-	const { role, logout, username, teamId } = useAuth()
+	const { role, logout, username, teamId, userId } = useAuth()
 
 	// TanStack Query hooks
 	// Dla /all-leave-plans zawsze pobieramy wszystkich użytkowników z zespołu, niezależnie od roli
@@ -99,12 +100,14 @@ function AdminAllLeaveCalendar() {
 	})
 	
 	const { data: allLeavePlans = [], isLoading: loadingPlans, error: plansError } = useAllLeavePlans()
-	const { data: allTeamLeaveRequests = [], isLoading: loadingRequests, error: requestsError } = useAllLeaveRequests()
+	const { data: allTeamLeaveRequests = [], isLoading: loadingAllRequests, error: allRequestsError } = useAllLeaveRequests()
+	const { data: acceptedSentTeamRequests = [], isLoading: loadingAcceptedRequests, error: acceptedRequestsError } = useAllAcceptedLeaveRequests()
+	const { data: ownLeaveRequests = [], isLoading: loadingOwnRequests } = useOwnLeaveRequests()
 	const { data: settings } = useSettings()
 	const { data: departments = [] } = useDepartments(teamId)
 	
-	const loading = loadingUsers || loadingPlans || loadingRequests
-	const error = usersError || plansError || requestsError
+	const loading = loadingUsers || loadingPlans || loadingAllRequests || loadingAcceptedRequests || loadingOwnRequests
+	const error = usersError || plansError || allRequestsError || acceptedRequestsError
 
 	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
 	const isWeekend = (date) => {
@@ -209,54 +212,31 @@ function AdminAllLeaveCalendar() {
 		})
 	}, [allLeavePlans, filteredUsers])
 
+	const ownPendingLeaveRequests = useMemo(
+		() => (Array.isArray(ownLeaveRequests) ? ownLeaveRequests : []).filter((r) => isPendingLeaveStatus(r?.status)),
+		[ownLeaveRequests]
+	)
+
 	const acceptedLeaveRequests = useMemo(() => {
-		if (!allTeamLeaveRequests || allTeamLeaveRequests.length === 0) {
-			return []
-		}
-		const visibleStatuses = new Set([
-			'status.accepted',
-			'accepted',
-			'status.sent',
-			'sent',
-			'status.pending',
-			'pending',
-		])
-		
-		const filteredUserIds = new Set(filteredUsers.map(u => {
-			if (!u || !u._id) return null
-			return u._id.toString()
-		}).filter(Boolean))
-		
-		return allTeamLeaveRequests.filter(request => {
-			if (!visibleStatuses.has(request?.status)) {
-				return false
-			}
-			// Sprawdź czy request ma userId (może być obiektem lub stringiem)
-			if (!request || !request.userId) {
-				return false
-			}
-			
-			// Jeśli userId jest obiektem, sprawdź _id
-			if (typeof request.userId === 'object' && request.userId !== null) {
-				// Jeśli obiekt ma _id, użyj go
-				if (request.userId._id) {
-					return filteredUserIds.has(request.userId._id.toString())
-				}
-				// Jeśli obiekt nie ma _id, ale ma toString (ObjectId), użyj go
-				if (request.userId.toString) {
-					return filteredUserIds.has(request.userId.toString())
-				}
-				return false
-			}
-			
-			// Jeśli userId jest stringiem, sprawdź bezpośrednio
-			if (typeof request.userId === 'string') {
-				return filteredUserIds.has(request.userId)
-			}
-			
-			return false
+		const filteredUserIds = new Set(
+			filteredUsers
+				.map((u) => {
+					if (!u || !u._id) return null
+					return u._id.toString()
+				})
+				.filter(Boolean)
+		)
+
+		return mergeCalendarLeaveRequests({
+			acceptedSentRequests: acceptedSentTeamRequests,
+			allStatusRequests: allTeamLeaveRequests,
+			role,
+			currentUserId: userId,
+			scopeUserIds: filteredUserIds,
+			includeSupervisorOwnPending: true,
+			ownPendingRequests: ownPendingLeaveRequests,
 		})
-	}, [allTeamLeaveRequests, filteredUsers])
+	}, [acceptedSentTeamRequests, allTeamLeaveRequests, filteredUsers, role, userId, ownPendingLeaveRequests])
 
 	const singleFilteredUser = useMemo(() => {
 		if (!Array.isArray(filteredUsers) || filteredUsers.length !== 1) return null

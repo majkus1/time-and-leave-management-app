@@ -456,7 +456,6 @@ span {
 	letter-spacing: -0.03em !important;
 }
 .landing-pricing .landing-pricing-subtitle {
-	max-width: 880px;
 	margin: 1rem 0 0 !important;
 	color: #3c506d !important;
 	-webkit-text-fill-color: #3c506d !important;
@@ -487,24 +486,59 @@ span {
 .landing-pricing .landing-pricing-billing {
 	margin-top: 2.35rem !important;
 }
+.landing-pricing .pricing-billing-toggle {
+	display: inline-flex;
+	align-items: stretch;
+	gap: 0.25rem;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0.25rem;
+	border-radius: 0.75rem;
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
+	box-shadow: none;
+}
 .landing-pricing .pricing-billing-option {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 0.35rem;
 	min-height: 2.55rem;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: #213555;
+	transition: background-color 0.15s ease, color 0.15s ease;
 }
-.landing-pricing .pricing-billing-option[aria-pressed="true"],
+.landing-pricing .pricing-billing-option[aria-pressed="true"] {
+	background: #00a846 !important;
+	background-color: #00a846 !important;
+	color: #ffffff !important;
+	box-shadow: none !important;
+}
 .landing-pricing .pricing-billing-option[aria-pressed="true"] span {
-	background: #102f5e !important;
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff !important;
-	box-shadow: 0 10px 22px rgba(16, 47, 94, 0.2) !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	opacity: 1;
 }
-.landing-pricing .pricing-billing-option[aria-pressed="false"],
+.landing-pricing .pricing-billing-option[aria-pressed="false"] {
+	color: #213555 !important;
+	-webkit-text-fill-color: #213555 !important;
+}
 .landing-pricing .pricing-billing-option[aria-pressed="false"] span {
-	color: #102f5e !important;
-	-webkit-text-fill-color: #102f5e !important;
+	color: #64748b !important;
+	-webkit-text-fill-color: #64748b !important;
+	background: transparent !important;
+	box-shadow: none !important;
+}
+.landing-pricing .pricing-billing-option[aria-pressed="false"]:hover {
+	background: rgba(33, 53, 85, 0.06) !important;
+}
+.landing-pricing .pricing-billing-option:focus-visible {
+	outline: 2px solid #00a846;
+	outline-offset: 2px;
 }
 .landing-pricing .pricing-billing-option--yearly {
 	flex-direction: column;
@@ -880,21 +914,45 @@ a.landing-video-guide-teaser-cta:focus-visible {
 	font-size: 16px !important;
 }
 
-/* Nagłówek sekcji pakietów płatnych — 18px (mobile i desktop), nadpisuje inne reguły */
+/* Nagłówek sekcji pakietów płatnych — czytelny próg między darmowym startem a pakietami */
 .landing-pricing p.pricing-paid-plans-intro {
-	font-size: 18px !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.7rem !important;
+	max-width: 980px !important;
+	font-size: clamp(19px, 1.5vw, 22px) !important;
 	color: #102f5e !important;
 	-webkit-text-fill-color: #102f5e !important;
 	font-weight: 700 !important;
+	line-height: 1.28 !important;
+	letter-spacing: 0 !important;
+}
+
+.landing-pricing p.pricing-paid-plans-intro::before {
+	content: "" !important;
+	width: 0.72rem !important;
+	height: 0.72rem !important;
+	flex: 0 0 0.72rem !important;
+	border-radius: 999px !important;
+	background: #00a63e !important;
+	box-shadow: 0 0 0 6px rgba(0, 166, 62, 0.1) !important;
 }
 
 .landing-pricing .landing-pricing-billing {
-	margin-top: 42px !important;
+	margin-top: 68px !important;
+	padding-top: 30px !important;
+	border-top: 1px solid rgba(16, 47, 94, 0.12) !important;
 }
 
 @media (max-width: 768px) {
 	.landing-pricing .landing-pricing-billing {
-		margin-top: 32px !important;
+		margin-top: 52px !important;
+		padding-top: 24px !important;
+	}
+
+	.landing-pricing p.pricing-paid-plans-intro {
+		font-size: 18px !important;
+		line-height: 1.32 !important;
 	}
 }
 
@@ -961,7 +1019,8 @@ a.landing-video-guide-teaser-cta:focus-visible {
 		margin-bottom: 46px !important;
 	}
 	.landing-pricing .landing-pricing-billing {
-		margin-top: 1.7rem !important;
+		margin-top: 48px !important;
+		padding-top: 22px !important;
 	}
 	.landing-pricing .pricing-billing-option {
 		padding-left: 0.8rem !important;
@@ -2331,12 +2390,15 @@ textarea {
 	order: 0;
 }
 
+@media (max-width: 1023px) {
+	.ordering {
+		order: 2;
+	}
+}
+
 @media (max-width: 768px) {
 	.planopiaimgparallax {
 		display: none;
-	}
-	.ordering {
-		order: 2;
 	}
 
 	.my-person {
@@ -2677,21 +2739,29 @@ textarea {
 	height: 34px !important;
 }
 
-#planopia-welcome.landing-polished-hero {
+#planopia-welcome.landing-polished-hero,
+#construction-welcome.landing-polished-hero {
 	background: #f4f8ff !important;
 	padding: 72px 30px 50px !important;
 }
 
 #planopia-welcome .landing-polished-hero-grid {
-	grid-template-columns: minmax(0, 0.94fr) minmax(480px, 1fr);
 	gap: 54px;
 }
 
-#planopia-welcome .landing-polished-hero-copy {
+@media (min-width: 1024px) {
+	#planopia-welcome .landing-polished-hero-grid {
+		grid-template-columns: minmax(0, 0.94fr) minmax(480px, 1fr);
+	}
+}
+
+#planopia-welcome .landing-polished-hero-copy,
+#construction-welcome .landing-polished-hero-copy {
 	max-width: 640px;
 }
 
-#planopia-welcome .landing-polished-eyebrow {
+#planopia-welcome .landing-polished-eyebrow,
+#construction-welcome .landing-polished-eyebrow {
 	margin: 0 0 20px;
 	color: #008f45 !important;
 	-webkit-text-fill-color: #008f45 !important;
@@ -2701,7 +2771,8 @@ textarea {
 	text-transform: uppercase;
 }
 
-#planopia-welcome .landing-polished-title {
+#planopia-welcome .landing-polished-title,
+#construction-welcome .landing-polished-title {
 	margin: 0;
 	color: #102f5e !important;
 	-webkit-text-fill-color: #102f5e !important;
@@ -2711,6 +2782,7 @@ textarea {
 	line-height: 1.2;
 }
 
+.landing-polished-hero .landing-polished-subtitle,
 #underheader.landing-polished-subtitle {
 	max-width: 660px;
 	margin-top: 14px !important;
@@ -2767,6 +2839,101 @@ textarea {
 	font-size: 12px;
 	font-weight: 700;
 	line-height: 1;
+}
+
+.landing-value-proof-section {
+	background: #f8fbff;
+	border-bottom: 1px solid rgba(16, 47, 94, 0.08);
+	padding-top: 38px;
+	padding-bottom: 42px;
+}
+
+.landing-value-proof {
+	display: grid;
+	grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+	gap: 28px;
+	align-items: start;
+}
+
+.landing-value-proof__header {
+	max-width: 560px;
+}
+
+.landing-value-proof__eyebrow {
+	margin: 0 0 12px;
+	color: #008f45 !important;
+	-webkit-text-fill-color: #008f45 !important;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0;
+	line-height: 1.25;
+	text-transform: uppercase;
+}
+
+.landing-value-proof__title {
+	margin: 0;
+	color: #102f5e !important;
+	-webkit-text-fill-color: #102f5e !important;
+	font-family: 'Titillium Web', serif !important;
+	font-size: clamp(29px, 2.65vw, 38px) !important;
+	font-weight: 700 !important;
+	letter-spacing: 0;
+	line-height: 1.2;
+}
+
+.landing-value-proof__lead {
+	margin: 16px 0 0;
+	color: rgba(16, 47, 94, 0.78) !important;
+	-webkit-text-fill-color: rgba(16, 47, 94, 0.78) !important;
+	font-size: 16px;
+	line-height: 1.68;
+}
+
+.landing-value-proof__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+}
+
+.landing-value-proof__card {
+	min-height: 100%;
+	border: 1px solid rgba(16, 47, 94, 0.1);
+	border-radius: 8px;
+	background: #ffffff;
+	box-shadow: 0 12px 28px rgba(16, 47, 94, 0.06);
+	padding: 18px;
+}
+
+.landing-value-proof__card h3 {
+	margin: 0 0 8px;
+	color: #102f5e !important;
+	-webkit-text-fill-color: #102f5e !important;
+	font-family: 'Titillium Web', serif !important;
+	font-size: 17px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0;
+	line-height: 1.35;
+}
+
+.landing-value-proof h2.landing-value-proof__title {
+	font-family: 'Titillium Web', serif !important;
+	font-size: clamp(29px, 2.65vw, 38px) !important;
+	font-weight: 700 !important;
+	line-height: 1.2 !important;
+}
+
+.landing-value-proof .landing-value-proof__card h3 {
+	font-family: 'Titillium Web', serif !important;
+	font-size: 17px !important;
+	font-weight: 700 !important;
+	line-height: 1.35 !important;
+}
+
+.landing-value-proof__card p {
+	margin: 0;
+	color: rgba(16, 47, 94, 0.72);
+	font-size: 14px;
+	line-height: 1.62;
 }
 
 .landing-about-heading-eyebrow {
@@ -2890,38 +3057,25 @@ textarea {
 	line-height: 1.65;
 }
 
-#planopia-welcome .landing-polished-hero-image {
-	width: 100%;
-	min-height: 440px;
-	max-height: 480px;
-	object-fit: contain;
-	border-radius: 28px !important;
-	background: #ffffff;
-}
-
-@media (max-width: 1399px) {
-	#planopiaheader .landing-polished-header-inner {
-		height: 76px;
-	}
-
-	#planopia-welcome.landing-polished-hero {
-		padding-top: 34px !important;
+@media (min-width: 1024px) {
+	#planopia-welcome .landing-polished-hero-image {
+		width: 100%;
+		min-height: 440px;
+		max-height: 480px;
+		object-fit: contain;
+		border-radius: 28px !important;
+		background: #ffffff;
 	}
 }
 
-@media (max-width: 768px) {
-	#planopiaheader .menucontent {
-		padding-left: 14px !important;
-		padding-right: 14px !important;
-	}
-
-	#planopiaheader .landing-polished-header-inner {
-		padding-left: 14px !important;
-		padding-right: 14px !important;
-	}
-
+@media (max-width: 1023px) {
 	#planopia-welcome.landing-polished-hero {
 		padding: 18px 16px 40px !important;
+	}
+
+	.landing-value-proof {
+		grid-template-columns: 1fr;
+		gap: 22px;
 	}
 
 	#planopia-welcome .landing-polished-hero-grid {
@@ -2930,9 +3084,12 @@ textarea {
 	}
 
 	#planopia-welcome .landing-polished-hero-image {
+		width: 100%;
 		min-height: 0;
 		max-height: 330px;
 		object-fit: contain;
+		border-radius: 28px !important;
+		background: #ffffff;
 	}
 
 	#planopia-welcome .landing-polished-title {
@@ -2940,6 +3097,7 @@ textarea {
 		line-height: 1.16;
 	}
 
+	.landing-polished-hero .landing-polished-subtitle,
 	#underheader.landing-polished-subtitle {
 		margin-top: 10px !important;
 		padding-top: 0;
@@ -2964,6 +3122,51 @@ textarea {
 		margin-top: 20px;
 		font-size: 12px;
 	}
+}
+
+@media (max-width: 1399px) {
+	#planopiaheader .landing-polished-header-inner {
+		height: 76px;
+	}
+
+	#planopia-welcome.landing-polished-hero,
+	#construction-welcome.landing-polished-hero {
+		padding-top: 34px !important;
+	}
+}
+
+@media (max-width: 768px) {
+	#planopiaheader .menucontent {
+		padding-left: 14px !important;
+		padding-right: 14px !important;
+	}
+
+	#planopiaheader .landing-polished-header-inner {
+		padding-left: 14px !important;
+		padding-right: 14px !important;
+	}
+
+	#construction-welcome.landing-polished-hero {
+		padding: 18px 16px 40px !important;
+	}
+
+	#construction-welcome .landing-polished-title {
+		font-size: clamp(31px, 9vw, 42px) !important;
+		line-height: 1.16;
+	}
+
+	.landing-polished-hero .landing-polished-subtitle,
+	#underheader.landing-polished-subtitle {
+		margin-top: 10px !important;
+		padding-top: 0;
+		font-size: 18px !important;
+		line-height: 1.45;
+	}
+
+	#construction-welcome .landing-polished-eyebrow {
+		font-size: 11px;
+		margin-bottom: 12px;
+	}
 
 	.landing-about-heading-eyebrow {
 		margin-bottom: 12px !important;
@@ -2979,6 +3182,34 @@ textarea {
 	.landing-about-heading-block,
 	.landing-about-intro {
 		max-width: 100%;
+	}
+
+	.landing-value-proof-section {
+		padding-top: 30px;
+		padding-bottom: 34px;
+	}
+
+	.landing-value-proof__title {
+		font-size: clamp(25px, 7.2vw, 31px) !important;
+		line-height: 1.18;
+	}
+
+	.landing-value-proof h2.landing-value-proof__title {
+		font-size: clamp(25px, 7.2vw, 31px) !important;
+		line-height: 1.18 !important;
+	}
+
+	.landing-value-proof__lead {
+		font-size: 15px;
+		line-height: 1.58;
+	}
+
+	.landing-value-proof__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.landing-value-proof__card {
+		padding: 16px;
 	}
 }
 
@@ -4794,7 +5025,8 @@ a.blog-pillar-banner-link:focus-visible {
 }
 
 /* Final homepage rhythm: more breathing room between landing sections, scoped to PL/EN homepage only */
-#planopia-welcome.landing-polished-hero {
+#planopia-welcome.landing-polished-hero,
+#construction-welcome.landing-polished-hero {
 	padding-top: 84px !important;
 	padding-bottom: 84px !important;
 }
@@ -4817,7 +5049,8 @@ a.blog-pillar-banner-link:focus-visible {
 }
 
 @media (min-width: 1200px) {
-	#planopia-welcome.landing-polished-hero {
+	#planopia-welcome.landing-polished-hero,
+	#construction-welcome.landing-polished-hero {
 		padding-top: 92px !important;
 		padding-bottom: 92px !important;
 	}
@@ -4836,7 +5069,8 @@ a.blog-pillar-banner-link:focus-visible {
 }
 
 @media (max-width: 768px) {
-	#planopia-welcome.landing-polished-hero {
+	#planopia-welcome.landing-polished-hero,
+	#construction-welcome.landing-polished-hero {
 		padding-top: 34px !important;
 		padding-bottom: 64px !important;
 	}
@@ -5006,4 +5240,32 @@ a.landing-polished-hero-cta:focus-visible,
 	text-decoration-color: rgba(0, 166, 62, 0.42) !important;
 	text-underline-offset: 5px !important;
 	transform: translateX(2px) !important;
+}
+
+/* Final homepage value section typography: keep it aligned with other landing section headings. */
+.landing-value-proof h2.landing-value-proof__title,
+.landing-value-proof h2#planopia-value-proof-heading,
+.landing-value-proof h2#planopia-value-proof-heading-en {
+	font-family: 'Titillium Web', serif !important;
+	font-size: clamp(29px, 2.65vw, 38px) !important;
+	font-weight: 700 !important;
+	line-height: 1.2 !important;
+	letter-spacing: 0 !important;
+}
+
+.landing-value-proof .landing-value-proof__card h3 {
+	font-family: 'Titillium Web', serif !important;
+	font-size: 17px !important;
+	font-weight: 700 !important;
+	line-height: 1.35 !important;
+	letter-spacing: 0 !important;
+}
+
+@media (max-width: 768px) {
+	.landing-value-proof h2.landing-value-proof__title,
+	.landing-value-proof h2#planopia-value-proof-heading,
+	.landing-value-proof h2#planopia-value-proof-heading-en {
+		font-size: clamp(25px, 7.2vw, 31px) !important;
+		line-height: 1.18 !important;
+	}
 }

@@ -54,8 +54,10 @@ import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { handleAuthError } from './utils/authErrorHandler'
 import { API_URL } from './config.js'
 import '../src/style.css'
+import './theme.css'
 import { useAuth } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { AlertProvider } from './context/AlertContext'
 import { TutorialProvider } from './context/TutorialContext'
 import { SocketProvider } from './context/SocketContext'
@@ -251,6 +253,7 @@ function App() {
 					v7_relativeSplatPath: true,
 				}}
 			>
+				<ThemeProvider>
 				<AlertProvider>
 					<AuthProvider>
 						<TutorialProvider>
@@ -260,6 +263,7 @@ function App() {
 						</TutorialProvider>
 					</AuthProvider>
 				</AlertProvider>
+				</ThemeProvider>
 			</Router>
 		</QueryClientProvider>
 	)

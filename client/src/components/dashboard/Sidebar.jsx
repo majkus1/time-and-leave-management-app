@@ -13,6 +13,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
+import SidebarThemeButton from '../shared/SidebarThemeButton'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -614,6 +615,7 @@ function Sidebar() {
 
 				{/* Logout Button */}
 				<div className="sidebar-footer">
+					<SidebarThemeButton />
 					<button
 						onClick={handleLogoutClick}
 						className="logout-btn"

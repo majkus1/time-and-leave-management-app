@@ -262,11 +262,12 @@
 }
 
 .landing-pricing-app-clone .packages-modal {
+	position: relative;
 	background: #fff;
 	border-radius: 14px;
 	max-width: 520px;
 	width: 100%;
-	padding: 1.25rem;
+	padding: 1.45rem 1.25rem 1.25rem;
 	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
 	max-height: min(92dvh, 900px);
 	overflow-x: hidden;
@@ -276,8 +277,42 @@
 	overscroll-behavior: contain;
 }
 
+.landing-pricing-app-clone .packages-modal__close {
+	position: absolute;
+	top: 0.8rem;
+	right: 0.8rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.15rem;
+	height: 2.15rem;
+	border: 1px solid #dbe6f2;
+	border-radius: 999px;
+	background: #ffffff;
+	color: #102f5e;
+	font-size: 1.45rem;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: 0 8px 18px rgba(16, 47, 94, 0.08);
+	transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.landing-pricing-app-clone .packages-modal__close:hover,
+.landing-pricing-app-clone .packages-modal__close:focus-visible {
+	background: #eafff1;
+	border-color: #00a63e;
+	color: #008f45;
+	transform: translateY(-1px);
+}
+
+.landing-pricing-app-clone .packages-modal__close:focus-visible {
+	outline: 2px solid rgba(0, 166, 62, 0.45);
+	outline-offset: 2px;
+}
+
 .landing-pricing-app-clone .packages-modal h4 {
-	margin: 0 0 0.75rem;
+	margin: 0 2.65rem 0.75rem 0;
 	color: #0f172a;
 }
 

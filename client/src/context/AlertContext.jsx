@@ -70,25 +70,25 @@ const AlertComponent = ({ type, message, onClose, onConfirm, onCancel, confirmTe
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[1px]"
+			className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[1px] po-alert-backdrop"
 			style={{ zIndex: 100000000 }}
 			onClick={handleBackdropClick}>
-			<div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+			<div className="po-alert-panel rounded-lg max-w-md w-full mx-4 transform transition-all">
 				<div className="p-6">
 					<div className="mb-4">
-						<p className="text-gray-800 text-base leading-relaxed">{message}</p>
+						<p className="po-alert-message text-base leading-relaxed">{message}</p>
 					</div>
 					<div className="flex justify-end gap-3">
 						{type === 'confirm' && (
 							<button
 								onClick={onCancel}
-								className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 font-medium">
+								className="po-alert-btn-secondary px-4 py-2 rounded-md transition-colors duration-200 font-medium">
 								{cancelText}
 							</button>
 						)}
 						<button
 							onClick={type === 'alert' ? onClose : onConfirm}
-							className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors duration-200 font-medium">
+							className="po-alert-btn-primary px-4 py-2 rounded-md transition-colors duration-200 font-medium">
 							{type === 'alert' ? 'OK' : confirmText}
 						</button>
 					</div>

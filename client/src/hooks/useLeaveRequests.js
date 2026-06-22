@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 import { useSocket } from '../context/SocketContext'
+import { useAuth } from '../context/AuthContext'
+import { mergeCalendarLeaveRequests } from '../utils/leaveRequestCalendarVisibility'
 
 const ALL_LEAVE_REQUESTS_QUERY_KEY = ['leaveRequests', 'all']
 const PENDING_STATUSES = new Set(['status.pending', 'pending'])
@@ -152,7 +154,7 @@ export const useAcceptedLeaveRequests = ({ enabled = true } = {}) => {
 	})
 }
 
-// Query hook - pobieranie wszystkich zaakceptowanych wniosków (dla wszystkich użytkowników z zespołu)
+// Query hook - pobieranie zaakceptowanych/wysłanych wniosków całego zespołu (kalendarze: /all-leave-plans, grafik)
 export const useAllAcceptedLeaveRequests = () => {
 	const queryClient = useQueryClient()
 	const { socket } = useSocket()
@@ -183,7 +185,7 @@ export const useAllAcceptedLeaveRequests = () => {
 	})
 }
 
-// Query hook - pobieranie wszystkich wniosków urlopowych (wszystkie statusy) dla zespołu
+// Query hook - wszystkie statusy; workflow /leave-list, badge pending, warstwa pending na kalendarzach
 export const useAllLeaveRequests = () => {
 	const queryClient = useQueryClient()
 	const { socket } = useSocket()
@@ -207,6 +209,25 @@ export const useAllLeaveRequests = () => {
 		staleTime: 1 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
+}
+
+/** Asystent dostępności i kalendarze — accepted/sent całego zespołu + pending wg roli. */
+export const useAvailabilityCheckerLeaveRequests = (scopeUserIds = null) => {
+	const { role, userId } = useAuth()
+	const { data: acceptedSentRequests = [] } = useAllAcceptedLeaveRequests()
+	const { data: allStatusRequests = [] } = useAllLeaveRequests()
+
+	return useMemo(
+		() =>
+			mergeCalendarLeaveRequests({
+				acceptedSentRequests,
+				allStatusRequests,
+				role,
+				currentUserId: userId,
+				scopeUserIds,
+			}),
+		[acceptedSentRequests, allStatusRequests, role, userId, scopeUserIds]
+	)
 }
 
 // Query hook - podsumowanie oczekujących wniosków (łącznie + per użytkownik)

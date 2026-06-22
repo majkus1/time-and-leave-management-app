@@ -41,7 +41,7 @@ const COPY: Record<
 	pl: {
 		heroH1: 'Ewidencja czasu pracy na budowie i grafiki dla firm budowlanych',
 		heroSub:
-			'Jedna aplikacja na co dzień: czas pracy, urlopy, grafiki brygad, zadania na tablicach i czat zespołu — bez Excela i chaosu w wiadomościach. Najpierw 30 dni pełnej aplikacji; potem darmowy plan ewidencji do 5 osób lub pakiety płatne z pełnymi modułami.',
+			'Czas pracy, urlopy, grafiki brygad, zadania i czat w jednym miejscu — bez Excela. 30 dni za darmo, potem darmowa ewidencja do 5 osób lub pakiety płatne.',
 		galleryTitle: 'Jak wygląda Planopia w praktyce — zrzuty z aplikacji',
 		videoEyebrow: 'Instrukcja wideo',
 		videoTitle: 'Zobacz Planopię w działaniu',
@@ -115,7 +115,7 @@ const COPY: Record<
 		ctaNote:
 			'30 dni pełnej aplikacji; potem darmowa ewidencja (5 kont) lub plan płatny — urlopy, grafik, czat, AI.',
 		blogLinkLabel: 'Przeczytaj artykuł: ewidencja czasu na budowie',
-		heroImageSrc: '/img/budowa1.webp',
+		heroImageSrc: '/img/budowa2.webp',
 		heroImageAlt: 'Planopia na budowie — ewidencja czasu pracy i zespół w terenie',
 	},
 	en: {
@@ -195,7 +195,7 @@ const COPY: Record<
 		ctaNote:
 			'30 days full access; then free time tracking (5 accounts) or a paid plan — leave, schedules, chat, AI.',
 		blogLinkLabel: 'Read the article: time tracking on construction sites',
-		heroImageSrc: '/img/budowa1.webp',
+		heroImageSrc: '/img/budowa2.webp',
 		heroImageAlt: 'Construction site team — time tracking with Planopia',
 	},
 }
@@ -291,20 +291,21 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 				<article className="break-words">
 					{/* Hero: jak strona główna — desktop: tekst | obraz; mobile: obraz nad tekstem */}
 					<section
-						className="px-4 pt-5 pb-10 md:py-12 bg-gradient-to-r from-blue-50 to-white"
+						id="construction-welcome"
+						className="landing-polished-hero landing-hero-below-fixed-header px-4 py-10 md:py-12"
 						aria-labelledby="construction-hero-heading"
 					>
 						<div className="max-w-7xl mx-auto">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+							<div className="landing-polished-hero-grid grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
 								<header
 									id="construction-hero-heading"
-									className="order-2 md:order-1 min-w-0 text-left"
+									className="landing-polished-hero-copy order-2 md:order-1 min-w-0 text-left"
 								>
-									<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
+									<p className="landing-polished-eyebrow">
 										{locale === 'pl' ? 'Branża: budownictwo' : 'Industry: construction'}
 									</p>
-									<h1 className="construction-industry-h1 text-gray-900 mb-4 leading-tight">{c.heroH1}</h1>
-									<p className="text-lg text-gray-600 max-w-3xl">{c.heroSub}</p>
+									<h1 className="landing-polished-title">{c.heroH1}</h1>
+									<p className="landing-polished-subtitle mt-2 max-w-xl">{c.heroSub}</p>
 									<div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center">
 										<a
 											href={registerHref}

@@ -107,7 +107,7 @@ function ChangePassword() {
 							<div>
 								<h4><img src="img/user-avatar.png" alt="ikonka w sidebar" />{t('editprofile.headertxt')}</h4>
 								<hr />
-								<div className="card-body editformbox" style={{ 
+								<div className="card-body editformbox po-surface-panel" style={{ 
 									backgroundColor: 'white',
 									borderRadius: '12px',
 									boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',

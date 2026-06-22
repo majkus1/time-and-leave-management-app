@@ -2,14 +2,14 @@
 	display: flex;
 	height: 100vh;
 	margin-top: 75px;
-	background-color: #f8f9fa;
+	background-color: var(--po-bg);
 	flex-direction: row-reverse; /* Sidebar on the right on desktop */
 }
 
 .chat-sidebar {
 	width: 280px;
-	background-color: #213555;
-	color: white;
+	background-color: var(--po-sidebar-bg);
+	color: var(--po-sidebar-text);
 	display: flex;
 	flex-direction: column;
 	border-left: 1px solid rgba(255, 255, 255, 0.08);

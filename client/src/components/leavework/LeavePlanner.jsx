@@ -7,7 +7,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useLeavePlans, useToggleLeavePlan, useDeleteLeavePlan } from '../../hooks/useLeavePlans'
-import { useOwnLeaveRequests, useAllLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useAvailabilityCheckerLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
@@ -88,7 +88,7 @@ function LeavePlanner() {
 	// TanStack Query hooks
 	const { data: selectedDates = [], isLoading: loadingPlans } = useLeavePlans()
 	const { data: ownLeaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
-	const { data: allTeamLeaveRequests = [], isLoading: loadingAllTeamRequests } = useAllLeaveRequests()
+	const checkerRequests = useAvailabilityCheckerLeaveRequests()
 	const { data: vacationData, isLoading: loadingVacation } = useOwnVacationDays()
 	const availableLeaveDays = vacationData?.vacationDays || 0
 	const leaveTypeDays = vacationData?.leaveTypeDays || {}
@@ -115,7 +115,7 @@ function LeavePlanner() {
 	const toggleLeavePlanMutation = useToggleLeavePlan()
 	const deleteLeavePlanMutation = useDeleteLeavePlan()
 
-	const loading = loadingPlans || loadingRequests || loadingAllTeamRequests || loadingVacation
+	const loading = loadingPlans || loadingRequests || loadingVacation
 
 	const visibleOwnLeaveRequests = React.useMemo(() => {
 		if (!Array.isArray(ownLeaveRequests)) return []
@@ -129,19 +129,6 @@ function LeavePlanner() {
 		])
 		return ownLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
 	}, [ownLeaveRequests])
-
-	const checkerRequests = React.useMemo(() => {
-		if (!Array.isArray(allTeamLeaveRequests)) return []
-		const visibleStatuses = new Set([
-			'status.accepted',
-			'accepted',
-			'status.sent',
-			'sent',
-			'status.pending',
-			'pending',
-		])
-		return allTeamLeaveRequests.filter((request) => visibleStatuses.has(request?.status))
-	}, [allTeamLeaveRequests])
 
 	const periodOwnLeaveRequests = React.useMemo(
 		() => filterLeaveRequestsByPeriod(ownLeaveRequests, requestFilterYear, requestFilterMonth),

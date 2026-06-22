@@ -200,10 +200,10 @@ function TrialCard({ locale, lines }: { locale: Locale; lines: string[] }) {
 const copy = {
 	pl: {
 		eyebrow: 'Cennik Planopia',
-		title: 'Prosty cennik. Pełna funkcjonalność.',
+		title: 'Prosty cennik. Darmowy start.',
 		subtitle:
-			'Najpierw 30 dni pełnej aplikacji za darmo. Potem: bezpłatny plan z ewidencją czasu pracy (do 5 aktywnych kont) albo pakiety płatne — ceny netto jak w aplikacji w sekcji „Pakiety i rozliczenia”.',
-		paidPlansIntro: 'Pakiety płatne (subskrypcja)',
+			'Najpierw 30 dni pełnej aplikacji za darmo. Potem darmowa ewidencja czasu pracy do 5 aktywnych kont albo pakiety z urlopami, grafikami, raportami, zadaniami i AI.',
+		paidPlansIntro: 'Pakiety płatne (subskrypcja) — gdy chcesz odejść od Excela i ręcznych akceptacji',
 		billingLabel: 'Rozliczenie',
 		billingMonthly: 'Miesięcznie',
 		billingYearly: 'Rocznie',
@@ -213,28 +213,28 @@ const copy = {
 		trialTitle: '30 dni — pełna aplikacja',
 		trialBadge: 'bez karty',
 		trialCta: 'Załóż darmowy zespół',
-		freeTitle: 'Darmowa ewidencja czasu pracy — po okresie próbnym',
+		freeTitle: 'Darmowa ewidencja czasu pracy',
 		freeBadge: '0 zł',
 		freeIntro:
-			'Bez abonamentu: ewidencja czasu pracy online dla małych zespołów (po okresie próbnym, jeśli nie wykupisz pakietu).',
+			'Po okresie próbnym mały zespół może dalej prowadzić ewidencję czasu online bez abonamentu.',
 		freeFeatures: ['Do 5 aktywnych kont w zespole', 'Kalendarze i rejestracja czasu pracy'],
 		freeCta: 'Zacznij od rejestracji zespołu',
 		fromWord: 'od',
 		recommended: 'Polecany',
 		heroCoreTitle: 'Core',
-		heroCoreLead: 'Dla firm, które potrzebują ewidencji czasu pracy i urlopów.',
+		heroCoreLead: 'Dla firm, które chcą odejść od Excela i papierowych wniosków urlopowych.',
 		heroCoreTeamHint: 'Dla zespołów do 100 użytkowników.',
-		heroCoreFeat1: 'Ewidencja czasu pracy',
-		heroCoreFeat2: 'Urlopy i nieobecności',
-		heroCoreFeat3: 'Możliwość rozszerzenia o moduły',
+		heroCoreFeat1: 'Ewidencja czasu pracy zamiast arkuszy',
+		heroCoreFeat2: 'Urlopy i akceptacje w jednym miejscu',
+		heroCoreFeat3: 'Możliwość rozszerzenia o moduły, gdy zespół rośnie',
 		heroCoreCta: 'Wybierz Core',
-		heroProLead: 'Najlepszy wybór dla większości firm. Wszystko w jednym pakiecie.',
-		heroBusinessLead: 'Więcej miejsca na zespół, wyższe limity i wsparcie.',
-		proBulletModules: 'Wszystkie moduły',
-		proBulletAi: 'AI (50 wiadomości / miesięcznie na zespół)',
+		heroProLead: 'Dla firm, które chcą zarządzać czasem pracy, urlopami, zadaniami i komunikacją w jednym miejscu.',
+		heroBusinessLead: 'Dla większych zespołów, które potrzebują wyższych limitów, wsparcia i dopasowania procesu.',
+		proBulletModules: 'Wszystkie moduły do pracy operacyjnej',
+		proBulletAi: 'AI do raportów i podsumowań (50 wiadomości / miesięcznie na zespół)',
 		proBulletUsers: 'Do 30 użytkowników',
-		businessBulletModules: 'Wszystkie moduły',
-		businessBulletAi: 'AI (300 wiadomości / miesięcznie, zespół)',
+		businessBulletModules: 'Wszystkie moduły dla większego zespołu',
+		businessBulletAi: 'AI do analiz i decyzji (300 wiadomości / miesięcznie, zespół)',
 		businessBulletUsers: 'Do 100 użytkowników',
 		businessBulletPriority: 'Priorytetowe wsparcie',
 		businessBulletIntegrations: 'Dodatkowe funkcje i integracje na życzenie pod Twój biznes',
@@ -264,10 +264,10 @@ const copy = {
 	},
 	en: {
 		eyebrow: 'Planopia pricing',
-		title: 'Simple pricing. Full functionality.',
+		title: 'Simple pricing. Start free.',
 		subtitle:
-			'Start with a 30-day full-product trial. Then use free time tracking for up to 5 active accounts, or upgrade to paid plans — net prices match the in-app Packages & billing page. USD amounts are indicative (1 USD ≈ 3.69 PLN).',
-		paidPlansIntro: 'Paid plans (subscription)',
+			'Start with a 30-day full-product trial. Then keep free time tracking for up to 5 active accounts, or choose paid plans with leave, schedules, reports, tasks, and AI. USD amounts are indicative (1 USD ≈ 3.69 PLN).',
+		paidPlansIntro: 'Paid plans (subscription) — when you want to move away from spreadsheets and manual approvals',
 		billingLabel: 'Billing',
 		billingMonthly: 'Monthly',
 		billingYearly: 'Yearly',
@@ -277,28 +277,28 @@ const copy = {
 		trialTitle: '30 days — full product',
 		trialBadge: 'no card',
 		trialCta: 'Create your free team',
-		freeTitle: 'Free time tracking — after the trial',
+		freeTitle: 'Free time tracking — stays after the trial',
 		freeBadge: 'Free',
 		freeIntro:
-			'No subscription: online time tracking for small teams (after the trial, if you do not buy a paid plan).',
+			'No subscription and no pressure: if you do not buy a paid plan after the trial, a small team can keep online time tracking.',
 		freeFeatures: ['Up to 5 active accounts', 'Calendars and time records'],
 		freeCta: 'Register your team to begin',
 		fromWord: 'from',
 		recommended: 'Recommended',
 		heroCoreTitle: 'Core',
-		heroCoreLead: 'For companies that need time tracking and leave.',
+		heroCoreLead: 'For companies that want to leave spreadsheets and paper leave requests behind.',
 		heroCoreTeamHint: 'For teams up to 100 users.',
-		heroCoreFeat1: 'Time & attendance',
-		heroCoreFeat2: 'Leave / absences',
-		heroCoreFeat3: 'Option to expand with add-on modules',
+		heroCoreFeat1: 'Time tracking instead of spreadsheets',
+		heroCoreFeat2: 'Leave and approvals in one place',
+		heroCoreFeat3: 'Option to expand with modules as the team grows',
 		heroCoreCta: 'Choose Core',
-		heroProLead: 'Best choice for most companies. Everything in one package.',
-		heroBusinessLead: 'More room for your team, higher limits, and support.',
-		proBulletModules: 'All modules',
-		proBulletAi: 'AI (50 messages / month, team)',
+		heroProLead: 'For companies that want time tracking, leave, tasks, and team communication in one place.',
+		heroBusinessLead: 'For larger teams that need higher limits, support, and process fit.',
+		proBulletModules: 'All modules for daily operations',
+		proBulletAi: 'AI for reports and summaries (50 messages / month, team)',
 		proBulletUsers: 'Up to 30 users',
-		businessBulletModules: 'All modules',
-		businessBulletAi: 'AI (300 messages / month, team)',
+		businessBulletModules: 'All modules for a larger team',
+		businessBulletAi: 'AI for analysis and decisions (300 messages / month, team)',
 		businessBulletUsers: 'Up to 100 users',
 		businessBulletPriority: 'Priority support',
 		businessBulletIntegrations: 'Extra features and integrations tailored to your business',
@@ -400,6 +400,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 					onClick={() => setCoreModalOpen(false)}
 				>
 					<div className="packages-modal packages-modal--wide" onClick={e => e.stopPropagation()}>
+					<button
+						type="button"
+						className="packages-modal__close"
+						aria-label={locale === 'pl' ? 'Zamknij modal konfiguracji Core' : 'Close Core configuration modal'}
+						onClick={() => setCoreModalOpen(false)}
+					>
+						×
+					</button>
 					<h4 id="landing-core-modal-title">{t.coreModalTitle}</h4>
 					<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">{t.coreModalHint}</p>
 
@@ -534,12 +542,10 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 					</p>
 					<div className="flex flex-row flex-wrap items-center gap-3">
 						<span className="text-sm font-semibold text-gray-800 shrink-0">{t.billingLabel}</span>
-						<div className="inline-flex w-fit max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm shrink-0">
+						<div className="pricing-billing-toggle shrink-0">
 							<button
 								type="button"
-								className={`pricing-billing-option rounded-lg px-4 py-2 text-sm font-semibold transition ${
-									billing === 'monthly' ? 'bg-slate-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'
-								}`}
+								className="pricing-billing-option rounded-lg px-4 py-2 text-sm font-semibold transition"
 								onClick={() => setBilling('monthly')}
 								aria-pressed={billing === 'monthly'}
 							>
@@ -547,9 +553,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							</button>
 							<button
 								type="button"
-								className={`pricing-billing-option pricing-billing-option--yearly rounded-lg px-4 py-2 text-sm font-semibold transition ${
-									billing === 'yearly' ? 'bg-slate-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'
-								}`}
+								className="pricing-billing-option pricing-billing-option--yearly rounded-lg px-4 py-2 text-sm font-semibold transition"
 								onClick={() => setBilling('yearly')}
 								aria-pressed={billing === 'yearly'}
 							>

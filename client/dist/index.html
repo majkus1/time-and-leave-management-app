@@ -9,7 +9,21 @@
   <meta name="author" content="Planopia" />
   
   <!-- PWA Meta Tags -->
-  <meta name="theme-color" content="#0d6efd" />
+  <meta name="theme-color" content="#0d6efd" id="meta-theme-color" />
+  <script>
+    (function () {
+      try {
+        var key = 'planopia-theme';
+        var pref = localStorage.getItem(key);
+        var dark = pref === 'dark' || (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var theme = dark ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        var meta = document.getElementById('meta-theme-color');
+        if (meta) meta.setAttribute('content', dark ? '#0f1419' : '#0d6efd');
+      } catch (e) {}
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -23,8 +37,8 @@
   
   <!-- DNS Prefetch for better performance -->
   <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-  <script type="module" crossorigin src="/assets/index-CUb2I0jh.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-JDBly5V5.css">
+  <script type="module" crossorigin src="/assets/index-jYprozE5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DG6vgOTh.css">
 <link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body>

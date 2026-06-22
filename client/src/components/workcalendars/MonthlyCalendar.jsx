@@ -1641,28 +1641,28 @@ function MonthlyCalendar() {
 )}
 
 				<p className='allfrommonth-p'>
-					<img src="/img/calendar mono.png" /> {t('workcalendar.allfrommonth1')} {totalWorkDays}
+					<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/calendar mono.png" alt="" /></span> {t('workcalendar.allfrommonth1')} {totalWorkDays}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/time.png" /> {t('workcalendar.allfrommonth2')} {formatSidebarTotal(totalHours)} {t('workcalendar.allfrommonthhours')}
+				<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/time.png" alt="" /></span> {t('workcalendar.allfrommonth2')} {formatSidebarTotal(totalHours)} {t('workcalendar.allfrommonthhours')}
 				</p>
 				<p className='allfrommonth-p'>
-				<img src="/img/clock mono.png" /> {t('workcalendar.allfrommonth3')} {formatHoursDecimal(additionalHours)} {getOvertimeWord(additionalHours)}
+				<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/clock mono.png" alt="" /></span> {t('workcalendar.allfrommonth3')} {formatHoursDecimal(additionalHours)} {getOvertimeWord(additionalHours)}
 				</p>
 
 				<p className='allfrommonth-p'>
-				<img src="/img/weekend mono.png" /> {settings?.leaveCalculationMode === 'hours' 
+				<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/weekend mono.png" alt="" /></span> {settings?.leaveCalculationMode === 'hours' 
 					? `${t('workcalendar.allfrommonth4hours') || 'Łączna liczba godzin urlopu'}: ${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')}`
 					: `${t('workcalendar.allfrommonth4')} ${totalLeaveDays} (${totalLeaveHours.toFixed(1)} ${t('workcalendar.allfrommonthhours')})`
 				}
 				</p>
 				{totalHolidays > 0 && (
 					<p className='allfrommonth-p'>
-						<img src="/img/party.png" /> {t('workcalendar.allfrommonth6') || 'Dni świąteczne:'} {totalHolidays}
+						<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/party.png" alt="" /></span> {t('workcalendar.allfrommonth6') || 'Dni świąteczne:'} {totalHolidays}
 					</p>
 				)}
 				<p className='allfrommonth-p'>
-				<img src="/img/dismiss.png" /> {t('workcalendar.allfrommonth5')} {totalOtherAbsences}
+				<span className="allfrommonth-p__icon" aria-hidden="true"><img src="/img/dismiss.png" alt="" /></span> {t('workcalendar.allfrommonth5')} {totalOtherAbsences}
 				</p>
 				{showActivitySummary && (
 					<div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>

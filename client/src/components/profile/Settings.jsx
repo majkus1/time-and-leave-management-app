@@ -15,6 +15,8 @@ import { calculateHours } from '../../utils/timeHelpers'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import QRCodeGenerator from '../qr/QRCodeGenerator'
 import WorkActivitiesSettingsSection from './WorkActivitiesSettingsSection'
+import ThemeToggle from '../shared/ThemeToggle'
+import { THEME_SWITCHER_ENABLED } from '../../utils/themeStorage'
 
 const NOTIFICATION_MODULE_REQUIREMENTS = {
 	chat: 'chat',
@@ -537,6 +539,14 @@ function Settings() {
 					</h2>
 					<hr></hr>
 				</div>
+
+				{THEME_SWITCHER_ENABLED && (
+				<div className="po-settings-card po-theme-section">
+					<h3 className="po-settings-card__title">{t('settings.themeTitle')}</h3>
+					<p className="po-settings-card__hint">{t('settings.themeDescription')}</p>
+					<ThemeToggle />
+				</div>
+				)}
 
 				{freemiumTier && pushOnlySettings && (
 					<div
