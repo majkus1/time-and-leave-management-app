@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
 import './AuthForms.css'
+import AuthPageTopBar from '../shared/AuthPageTopBar'
+import AuthLogo from '../shared/AuthLogo'
 
 function SetPassword() {
 	const [password, setPassword] = useState('')
@@ -16,14 +18,9 @@ function SetPassword() {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 	const { token } = useParams()
 	const navigate = useNavigate()
-	const { t, i18n } = useTranslation()
+	const { t } = useTranslation()
 	const { showAlert } = useAlert()
 	const { forceClearAuth } = useAuth()
-
-	const lngs = {
-		en: { nativeName: '', flag: '/img/united-kingdom.png' },
-		pl: { nativeName: '', flag: '/img/poland.png' },
-	}
 
 	const isPasswordValid = password => {
 		const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/
@@ -63,31 +60,12 @@ function SetPassword() {
 	}
 
 	return (
-		<div className="alllogin">
-			<div className="language-box">
-				{Object.keys(lngs).map(lng => (
-					<button
-						key={lng}
-						type="button"
-						style={{
-							fontWeight: i18n.resolvedLanguage === lng ? 'bold' : 'normal',
-							marginRight: '5px',
-						}}
-						className="flag-language"
-						onClick={() => i18n.changeLanguage(lng)}>
-						<img
-							src={lngs[lng].flag}
-							alt={`${lngs[lng].nativeName} flag`}
-							style={{ width: '23px', marginRight: '5px' }}
-						/>
-						{lngs[lng].nativeName}
-					</button>
-				))}
-			</div>
+		<div className="alllogin auth-page">
+			<AuthPageTopBar />
 			<div className="login-box">
 				<div className="login-logo">
 					<div>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '150px' }}/>
+						<AuthLogo maxWidth="150px" />
 					</div>
 				</div>
 				<div className="card auth-form-shell">

@@ -119,6 +119,8 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 		<Modal
 			isOpen
 			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal board-quick-task-modal"
 			style={{
 				overlay: {
 					display: 'flex',
@@ -340,6 +342,7 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 					</label>
 					{!assignToAllMembers && (
 						<div
+							className="board-modal__members-list"
 							style={{
 								border: '1px solid #e1e8ed',
 								borderRadius: '6px',
@@ -378,6 +381,7 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 				<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
 					<button
 						type="button"
+						className="board-modal__btn board-modal__btn--secondary"
 						onClick={onClose}
 						style={{
 							padding: '10px 18px',
@@ -391,6 +395,7 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 					</button>
 					<button
 						type="submit"
+						className="board-modal__btn board-modal__btn--primary"
 						disabled={createTaskMutation.isPending}
 						style={{
 							padding: '10px 18px',

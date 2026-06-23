@@ -66,6 +66,8 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 		<Modal
 			isOpen={true}
 			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal board-create-board-modal"
 			style={{
 				overlay: {
 					display: 'flex',
@@ -177,7 +179,9 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 					}}>
 						{t('boards.selectMembers') || 'Wybierz członków'}
 					</label>
-					<div style={{
+					<div
+						className="board-modal__members-list"
+						style={{
 						maxHeight: '200px',
 						overflowY: 'auto',
 						border: '1px solid #bdc3c7',
@@ -214,6 +218,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 				<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
 					<button
 						type="button"
+						className="board-modal__btn board-modal__btn--secondary"
 						onClick={onClose}
 						style={{
 							padding: '10px 20px',
@@ -229,6 +234,7 @@ function EditBoardModal({ board, onClose, onSuccess }) {
 					</button>
 					<button
 						type="submit"
+						className="board-modal__btn board-modal__btn--primary"
 						disabled={updateBoardMutation.isPending}
 						style={{
 							padding: '10px 20px',

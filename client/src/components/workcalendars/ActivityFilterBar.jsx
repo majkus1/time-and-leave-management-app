@@ -34,12 +34,13 @@ function ActivityFilterBar({ activities = [], selectedIds = [], onChange, compac
 
 	return (
 		<div className="workcalendar-filter-bar" style={{ marginBottom: compact ? '10px' : '14px' }}>
-			<div style={{ fontSize: compact ? '12px' : '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
+			<div className="workcalendar-filter-bar__label" style={{ fontSize: compact ? '12px' : '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
 				{t('workcalendar.activities.filterLabel')}
 			</div>
 			<div className="workcalendar-filter-bar__chips">
 				<button
 					type="button"
+					className={`workcalendar-filter-bar__chip${!selectedIds.length ? ' is-active' : ''}`}
 					onClick={() => onChange([])}
 					style={chipStyle(!selectedIds.length)}
 				>
@@ -47,12 +48,14 @@ function ActivityFilterBar({ activities = [], selectedIds = [], onChange, compac
 				</button>
 				{activities.map(activity => {
 					const name = getWorkActivityName(activity, i18n.language)
+					const active = selectedIds.includes(activity.id)
 					return (
 					<button
 						key={activity.id}
 						type="button"
+						className={`workcalendar-filter-bar__chip${active ? ' is-active' : ''}`}
 						onClick={() => toggle(activity.id)}
-						style={chipStyle(selectedIds.includes(activity.id))}
+						style={chipStyle(active)}
 						title={name}
 					>
 						{name}

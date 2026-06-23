@@ -1394,7 +1394,7 @@ function VacationListUser() {
 								</button>
 							</div>
 						</div>
-						<div style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }}>
+						<div style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }} className="leave-list-requests-table">
 							<table
 								style={{
 									width: '100%',
@@ -1461,6 +1461,8 @@ function VacationListUser() {
 						<Modal
 							isOpen={filterModalOpen}
 							onRequestClose={() => setFilterModalOpen(false)}
+							overlayClassName="all-leaveplans-filter-modal-overlay"
+							className="all-leaveplans-filter-modal"
 							style={{
 								overlay: {
 									display: 'flex',
@@ -1483,8 +1485,8 @@ function VacationListUser() {
 								},
 							}}
 							contentLabel={t('planslist.filter') || 'Filtrowanie'}>
-							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-								<h2 style={{ 
+							<div className="all-leaveplans-filter-modal__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+								<h2 className="all-leaveplans-filter-modal__title" style={{ 
 									margin: 0,
 									color: '#2c3e50',
 									fontSize: '24px',
@@ -1493,6 +1495,8 @@ function VacationListUser() {
 									{t('planslist.filter') || 'Filtrowanie'}
 								</h2>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__close"
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										background: 'transparent',
@@ -1514,13 +1518,12 @@ function VacationListUser() {
 								</button>
 							</div>
 
-							{/* Filtrowanie użytkowników */}
-							<div style={{ marginBottom: '20px' }}>
-								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+							<div className="all-leaveplans-filter-modal__section" style={{ marginBottom: '20px' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.calendarView') || 'Widok kalendarza'}
 								</h3>
 								<div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'single' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'single' ? '#00a846' : '#e9ecef' }}>
+									<label className="all-leaveplans-filter-modal__radio-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'single' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'single' ? '#00a846' : '#e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -1531,7 +1534,7 @@ function VacationListUser() {
 										/>
 										<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
 									</label>
-									<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'all-months' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'all-months' ? '#00a846' : '#e9ecef' }}>
+									<label className="all-leaveplans-filter-modal__radio-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', backgroundColor: calendarView === 'all-months' ? '#ecfdf5' : '#f8f9fa', border: '1px solid', borderColor: calendarView === 'all-months' ? '#00a846' : '#e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -1544,10 +1547,11 @@ function VacationListUser() {
 									</label>
 								</div>
 
-								<h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterByStatus') || 'Filtrowanie po statusie wniosku'}
 								</h3>
 								<div
+									className="all-leaveplans-filter-modal__scroll-list"
 									style={{
 										marginBottom: '20px',
 										display: 'flex',
@@ -1562,6 +1566,7 @@ function VacationListUser() {
 									{STATUS_FILTER_KEYS.map((key) => (
 										<label
 											key={key}
+											className="all-leaveplans-filter-modal__check-label"
 											style={{
 												display: 'flex',
 												alignItems: 'center',
@@ -1582,10 +1587,11 @@ function VacationListUser() {
 									))}
 								</div>
 
-								<h3 style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '12px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterByLeaveType') || 'Filtrowanie po typie urlopu / nieobecności'}
 								</h3>
 								<div
+									className="all-leaveplans-filter-modal__scroll-list"
 									style={{
 										marginBottom: '20px',
 										maxHeight: '240px',
@@ -1600,13 +1606,14 @@ function VacationListUser() {
 									}}
 								>
 									{allLeaveTypeIds.length === 0 ? (
-										<p style={{ margin: 0, color: '#7f8c8d', fontSize: '14px' }}>
+										<p className="all-leaveplans-filter-modal__empty" style={{ margin: 0, color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noLeaveTypes') || 'Brak zdefiniowanych typów — typy pojawią się po wczytaniu danych.'}
 										</p>
 									) : (
 										allLeaveTypeIds.map((typeId) => (
 											<label
 												key={typeId}
+												className="all-leaveplans-filter-modal__check-label"
 												style={{
 													display: 'flex',
 													alignItems: 'flex-start',
@@ -1628,12 +1635,11 @@ function VacationListUser() {
 									)}
 								</div>
 
-								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
 								</h3>
 								
-								{/* Opcja: Wszyscy z zespołu */}
-								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
+								<label className={`all-leaveplans-filter-modal__team-option ${showAllTeam ? 'is-active' : ''}`} style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
 									<input
 										type="radio"
 										name="userFilter"
@@ -1648,20 +1654,19 @@ function VacationListUser() {
 									</span>
 								</label>
 
-								{/* Filtrowanie po działach */}
 								<div style={{ marginTop: '20px' }}>
-									<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+									<h4 className="all-leaveplans-filter-modal__subsection-title" style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 										{t('planslist.filterByDepartments') || 'Filtrowanie po działach'}
 									</h4>
 									{filterableDepartments.length > 0 ? (
-										<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+										<div className="all-leaveplans-filter-modal__scroll-list" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
 											{filterableDepartments.map(dept => {
 												const deptName = typeof dept === 'object' ? dept.name : dept
 												const deptKey = typeof dept === 'object' ? (dept._id || dept.name) : dept
 												
 												return (
 													<div key={deptKey} style={{ marginBottom: '10px' }}>
-														<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+														<label className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
 															<input
 																type="checkbox"
 																checked={selectedDepartments.includes(deptName)}
@@ -1674,6 +1679,7 @@ function VacationListUser() {
 															{selectedDepartments.includes(deptName) && (
 																<button
 																	type="button"
+																	className="all-leaveplans-filter-modal__expand-btn"
 																	onClick={(e) => {
 																		e.stopPropagation()
 																		setExpandedDepartments(prev => ({
@@ -1696,11 +1702,11 @@ function VacationListUser() {
 															)}
 														</label>
 														{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
-															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
+															<div className="all-leaveplans-filter-modal__nested-users" style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
 																{usersFromSelectedDepartments
 																	.filter(user => user.department && user.department.includes(deptName))
 																	.map(user => (
-																		<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', cursor: 'pointer' }}>
+																		<label key={user._id} className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', cursor: 'pointer' }}>
 																			<input
 																				type="checkbox"
 																				checked={selectedUserIds.includes(user._id)}
@@ -1719,22 +1725,21 @@ function VacationListUser() {
 											})}
 										</div>
 									) : (
-										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+										<p className="all-leaveplans-filter-modal__empty" style={{ color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noDepartments') || 'Brak działów'}
 										</p>
 									)}
 								</div>
 							</div>
 
-							{/* Filtrowanie po użytkownikach */}
-							<div style={{ marginBottom: '30px' }}>
-								<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+							<div className="all-leaveplans-filter-modal__section" style={{ marginBottom: '30px' }}>
+								<h4 className="all-leaveplans-filter-modal__subsection-title" style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 									{t('planslist.filterByUsers') || 'Filtrowanie po użytkownikach'}
 								</h4>
-								<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+								<div className="all-leaveplans-filter-modal__scroll-list" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
 									{users.length > 0 ? (
 										users.map(user => (
-											<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
+											<label key={user._id} className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
 												<input
 													type="checkbox"
 													checked={selectedUserIds.includes(user._id)}
@@ -1747,16 +1752,17 @@ function VacationListUser() {
 											</label>
 										))
 									) : (
-										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+										<p className="all-leaveplans-filter-modal__empty" style={{ color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noUsers') || 'Brak użytkowników'}
 										</p>
 									)}
 								</div>
 							</div>
 
-							{/* Przyciski akcji */}
-							<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', gap: '10px' }}>
+							<div className="all-leaveplans-filter-modal__footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', gap: '10px' }}>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__btn-reset"
 									onClick={handleResetFilters}
 									style={{
 										padding: '10px 20px',
@@ -1774,6 +1780,8 @@ function VacationListUser() {
 									{t('planslist.resetFilters') || 'Resetuj filtry'}
 								</button>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__btn-apply"
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										padding: '10px 20px',

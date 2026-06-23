@@ -350,7 +350,7 @@ function LeavePlanner() {
 	// Renderowanie widoku wszystkich miesięcy
 	const renderAllMonths = () => {
 		return Array.from({ length: 12 }, (_, month) => (
-			<div key={`${currentYear}-${month}`} className="month-calendar allleaveplans all-leaveplans-all-months" style={{ margin: '10px', border: '1px solid #ddd' }}>
+			<div key={`${currentYear}-${month}`} className="month-calendar allleaveplans all-leaveplans-all-months leave-planner__month-wrap" style={{ margin: '10px', border: '1px solid #ddd' }}>
 				<FullCalendar
 					plugins={[dayGridPlugin, interactionPlugin]}
 					initialView="dayGridMonth"
@@ -446,17 +446,17 @@ function LeavePlanner() {
 						</button>
 					</div>
 					<hr />
-					<div style={{ marginBottom: '20px' }}>
+					<div className="leave-planner__available-section" style={{ marginBottom: '20px' }}>
 						{leaveTypesWithDays.length > 0 ? (
 							<div style={{ marginBottom: '20px' }}>
-								<p style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
+								<p className="leave-request-form__available-label" style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
 									{t('leaveform.availableday') || 'Dostępne dni urlopu'}:
 								</p>
 								<div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '400px' }}>
 									{leaveTypesWithDays.map(type => {
 										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
 										return (
-											<div key={type.id} style={{ 
+											<div key={type.id} className="leave-request-form__type-row" style={{ 
 												display: 'flex', 
 												justifyContent: 'space-between',
 												alignItems: 'center',
@@ -465,8 +465,8 @@ function LeavePlanner() {
 												borderRadius: '6px',
 												border: '1px solid #00a846'
 											}}>
-												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
-												<span style={{ 
+												<span className="leave-request-form__type-name" style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
+												<span className={`leave-request-form__type-value ${type.days > 0 ? 'is-positive' : 'is-negative'}`} style={{ 
 													fontSize: '14px', 
 													fontWeight: '600',
 													color: type.days > 0 ? '#28a745' : '#dc3545'
@@ -479,7 +479,7 @@ function LeavePlanner() {
 								</div>
 							</div>
 						) : (
-							<p style={{ marginBottom: '20px' }}>
+							<p className="leave-planner__available-fallback" style={{ marginBottom: '20px' }}>
 								{t('leaveform.availableday')}{' '}
 								{availableLeaveDays === 0 ? (
 									<span style={{ color: 'red' }}>{t('leaveform.nodata')}</span>
@@ -533,12 +533,12 @@ function LeavePlanner() {
 										<li
 											key={request._id}
 											className={`leave-planner-request-card is-${status || 'unknown'}`}>
-											<div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+											<div className="leave-planner-request-card__title" style={{ fontWeight: 'bold', marginBottom: '5px' }}>
 												{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 											</div>
-											<div style={{ fontSize: '14px', color: '#666' }}>
+											<div className="leave-planner-request-card__dates" style={{ fontSize: '14px', color: '#666' }}>
 												{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-												<span style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
+												<span className={`leave-planner-request-card__duration ${isPendingRequest ? 'is-pending' : 'is-accepted'}`} style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
 													({settings?.leaveCalculationMode === 'hours'
 														? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
 														: `${request.daysRequested} ${t('leaveplanner.days')}`
@@ -555,6 +555,7 @@ function LeavePlanner() {
 							{filteredOwnLeaveRequests.length > visibleRequestCount && (
 								<button
 									type="button"
+									className="leave-planner__show-more"
 									onClick={() => setVisibleRequestCount((prev) => prev + 3)}
 									style={{
 										background: 'transparent',
@@ -622,15 +623,16 @@ function LeavePlanner() {
 					</Modal>
 
 					{/* Sekcja zaznaczonych dat */}
-					<div style={{ marginBottom: '20px' }}>
-						<p style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '10px' }}>
+					<div className="leave-planner__selected-section" style={{ marginBottom: '20px' }}>
+						<p className="leave-planner__selected-title" style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '10px' }}>
 							{t('leaveplanner.header')}
 						</p>
 						{selectedDates.length > 0 ? (
-							<ul style={{ listStyle: 'none', padding: 0 }}>
+							<ul className="leave-planner__selected-list" style={{ listStyle: 'none', padding: 0 }}>
 								{selectedDates.map(date => (
 									<li
 										key={date}
+										className="leave-planner__selected-date"
 										style={{
 											display: 'flex',
 											justifyContent: 'space-between',
@@ -649,6 +651,7 @@ function LeavePlanner() {
 										})()}
 
 										<button
+											className="leave-planner__selected-date-remove"
 											style={{
 												background: 'red',
 												color: 'white',
@@ -664,7 +667,7 @@ function LeavePlanner() {
 								))}
 							</ul>
 						) : (
-							<p style={{ color: '#666', fontStyle: 'italic', fontSize: '14px' }}>
+							<p className="leave-planner__no-dates" style={{ color: '#666', fontStyle: 'italic', fontSize: '14px' }}>
 								{t('leaveplanner.noSelectedDates')}
 							</p>
 						)}
@@ -704,6 +707,7 @@ function LeavePlanner() {
 									<>
 								<button
 									type="button"
+									className="leave-planner__nav-btn"
 									onClick={handlePrevMonth}
 									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
 									onMouseOver={(e) => {
@@ -719,6 +723,7 @@ function LeavePlanner() {
 								</button>
 								<button
 									type="button"
+									className="leave-planner__nav-btn"
 									onClick={handleNextMonth}
 									style={{ padding: '8px 12px', border: '1px solid #bdc3c7', borderRadius: '6px', backgroundColor: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: '600', color: '#495057', transition: 'all 0.2s ease' }}
 									onMouseOver={(e) => {

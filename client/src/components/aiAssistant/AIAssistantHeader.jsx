@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useTheme } from '../../context/ThemeContext'
 
 /**
  * Short intro above the chat (presentational).
@@ -10,6 +11,8 @@ import { useTranslation } from 'react-i18next'
  */
 function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError }) {
 	const { t } = useTranslation()
+	const { isDark } = useTheme()
+	const planioLogoSrc = isDark ? '/img/star.png' : '/img/planio.png'
 	const introBullets = t('aiAssistant.introBullets', { returnObjects: true })
 	const introList = Array.isArray(introBullets) ? introBullets : []
 
@@ -26,7 +29,7 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 			<div className="ai-assistant-header__title-row">
 				<img
 					className="ai-assistant-header__logo"
-					src="/img/planio.png"
+					src={planioLogoSrc}
 					alt=""
 					width={40}
 					height={40}

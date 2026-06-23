@@ -20,21 +20,9 @@ export function ThemeProvider({ children }) {
 		applyThemeToDocument(effective)
 	}, [])
 
-	useEffect(() => {
-		const mq = window.matchMedia('(prefers-color-scheme: dark)')
-		const onChange = () => {
-			if (preference !== 'system') return
-			const effective = resolveTheme('system')
-			setEffectiveTheme(effective)
-			applyThemeToDocument(effective)
-		}
-		mq.addEventListener('change', onChange)
-		return () => mq.removeEventListener('change', onChange)
-	}, [preference])
-
 	const setTheme = useCallback(next => {
 		const effective = setThemePreference(next)
-		setPreferenceState(next)
+		setPreferenceState(next === 'dark' ? 'dark' : 'light')
 		setEffectiveTheme(effective)
 	}, [])
 

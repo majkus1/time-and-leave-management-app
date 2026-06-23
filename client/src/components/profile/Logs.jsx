@@ -207,7 +207,7 @@ function Logs() {
 		return (
 			<>
 				{logs.map((log, logIndex) => (
-					<div key={log._id} style={{ 
+					<div key={log._id} className="team-mgmt-user-log-row" style={{ 
 						padding: '15px',
 						borderBottom: logIndex < logs.length - 1 ? '1px solid #e9ecef' : 'none',
 						backgroundColor: logIndex % 2 === 0 ? '#ffffff' : '#f8f9fa'
@@ -586,7 +586,7 @@ function Logs() {
 		<>
 			<Sidebar />
 
-			<div className="logs-container" style={{ 
+			<div className="logs-container team-management-page" style={{ 
 				maxWidth: '1200px', 
 				margin: '0 auto'
 			}}>
@@ -616,7 +616,7 @@ function Logs() {
 				</div>
 
 				{/* Sekcja ról z opisami */}
-				<div style={{ 
+				<div className="team-mgmt-card" style={{ 
 					backgroundColor: 'white',
 					borderRadius: '12px',
 					boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -739,7 +739,7 @@ function Logs() {
 				</div>
 
 				{/* Sekcja działów */}
-				<div style={{ 
+				<div className="team-mgmt-card" style={{ 
 					backgroundColor: 'white',
 					borderRadius: '12px',
 					boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -761,7 +761,7 @@ function Logs() {
 					{globalDepartmentMode === 'choose' && (
 						<div>
 							{!globalDepartments || globalDepartments.length === 0 ? (
-								<div style={{ 
+								<div className="team-mgmt-alert" style={{ 
 									backgroundColor: '#fff3cd', 
 									padding: '15px', 
 									borderRadius: '6px', 
@@ -1048,7 +1048,7 @@ function Logs() {
 					)}
 
 					{isSuperAdmin && (
-						<div style={{
+						<div className="team-mgmt-card" style={{
 							backgroundColor: 'white',
 							borderRadius: '12px',
 							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -1127,7 +1127,7 @@ function Logs() {
 					{/* Desktop view - tabela */}
 					{activeTab === 'active' && (
 						<React.Fragment>
-						<div className="users-table-container logs-desktop-view" style={{ 
+						<div className="users-table-container logs-desktop-view team-mgmt-card" style={{ 
 						backgroundColor: 'white', 
 						borderRadius: '12px', 
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -1358,7 +1358,7 @@ function Logs() {
 								{editingUser?._id === user._id && (
 									<tr>
 										<td colSpan="2" style={{ padding: '0' }}>
-											<div style={{ 
+											<div className="team-mgmt-edit-panel" style={{ 
 												backgroundColor: '#f8f9fa', 
 												padding: '30px',
 												borderTop: '1px solid #dee2e6'
@@ -1396,7 +1396,7 @@ function Logs() {
 																	flexDirection: 'column',
 																	gap: '8px'
 																}}>
-																	<label style={{ 
+																	<label className="team-mgmt-role-option" style={{ 
 																		display: 'flex', 
 																		alignItems: 'center',
 																		padding: '12px',
@@ -1538,7 +1538,7 @@ function Logs() {
 																
 																{/* Sprawdź czy są departmenty */}
 																													{!departments || departments.length === 0 ? (
-														<div style={{ 
+														<div className="team-mgmt-alert" style={{ 
 															backgroundColor: '#fff3cd', 
 															padding: '15px', 
 															borderRadius: '6px', 
@@ -1559,7 +1559,7 @@ function Logs() {
 																			// Upewnij się, że dep to string
 																			const depName = typeof dep === 'object' ? dep.name : dep;
 																			return (
-																				<label key={depName} style={{ 
+																				<label key={depName} className="team-mgmt-dept-option" style={{ 
 																					display: 'flex', 
 																					alignItems: 'center',
 																					justifyContent: 'space-between',
@@ -1714,7 +1714,7 @@ function Logs() {
 													</div>
 
 													{/* Przypomnienie o zapisaniu zmian */}
-													<div style={{ 
+													<div className="team-mgmt-alert" style={{ 
 														marginTop: '20px', 
 														marginBottom: '15px',
 														padding: '12px 16px',
@@ -1772,7 +1772,7 @@ function Logs() {
 								{expandedLogs.includes(user._id) && (
 									<tr>
 										<td colSpan="2" style={{ padding: '0' }}>
-											<div style={{ 
+											<div className="team-mgmt-edit-panel" style={{ 
 												backgroundColor: '#f8f9fa', 
 												padding: '30px',
 												borderTop: '1px solid #dee2e6'
@@ -1837,7 +1837,7 @@ function Logs() {
 						display: 'block' // Pokazujemy na mobile
 					}}>
 						{users.map((user, index) => (
-							<div key={user._id} style={{ 
+							<div key={user._id} className="team-mgmt-card" style={{ 
 								backgroundColor: 'white',
 								borderRadius: '12px',
 								boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -2068,7 +2068,7 @@ function Logs() {
 
 								{/* Panel edycji */}
 								{editingUser?._id === user._id && (
-									<div style={{ 
+									<div className="team-mgmt-edit-panel" style={{ 
 										backgroundColor: '#f8f9fa', 
 										padding: '20px',
 										borderTop: '1px solid #e9ecef'
@@ -2110,7 +2110,7 @@ function Logs() {
 														flexDirection: 'column',
 														gap: '8px'
 													}}>
-														<label style={{ 
+														<label className="team-mgmt-role-option" style={{ 
 															display: 'flex', 
 															alignItems: 'flex-start',
 															padding: '15px',
@@ -2254,7 +2254,7 @@ function Logs() {
 											{departmentMode === 'choose' && (
 												<div style={{ marginBottom: '20px' }}>
 													{!departments || departments.length === 0 ? (
-														<div style={{ 
+														<div className="team-mgmt-alert" style={{ 
 															backgroundColor: '#fff3cd', 
 															padding: '15px', 
 															borderRadius: '6px', 
@@ -2274,7 +2274,7 @@ function Logs() {
 															{departments.map((dep) => {
 																const depName = typeof dep === 'object' ? dep.name : dep;
 																return (
-																	<label key={depName} style={{ 
+																	<label key={depName} className="team-mgmt-dept-option" style={{ 
 																		display: 'flex', 
 																		alignItems: 'center',
 																		justifyContent: 'space-between',
@@ -2436,7 +2436,7 @@ function Logs() {
 										</div>
 
 										{/* Przypomnienie o zapisaniu zmian */}
-										<div style={{ 
+										<div className="team-mgmt-alert" style={{ 
 											marginTop: '20px', 
 											marginBottom: '15px',
 											padding: '12px 16px',
@@ -2554,6 +2554,7 @@ function Logs() {
 					<div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
 						<button
 							type="button"
+							className="team-mgmt-delete-outline"
 							onClick={() => setDeleteTeamModal(true)}
 							disabled={deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending}
 							style={{
@@ -2594,6 +2595,7 @@ function Logs() {
 						</button>
 						<button
 							type="button"
+							className="team-mgmt-delete-outline team-mgmt-delete-outline--permanent"
 							onClick={() => setPermanentlyDeleteTeamModal(true)}
 							disabled={deleteTeamMutation.isPending || permanentlyDeleteTeamMutation.isPending}
 							style={{
@@ -2645,7 +2647,7 @@ function Logs() {
 						padding: '20px'
 					}} 
 					onClick={handleDeleteCancel}>
-					<div style={{
+					<div className="team-mgmt-modal-content" style={{
 						backgroundColor: 'white',
 						borderRadius: '8px',
 						padding: '30px',
@@ -2740,7 +2742,7 @@ function Logs() {
 						padding: '20px'
 					}} 
 					onClick={() => setDeletedUsersModal(false)}>
-					<div style={{
+					<div className="team-mgmt-modal-content" style={{
 						backgroundColor: 'white',
 						borderRadius: '8px',
 						padding: '30px',
@@ -2760,7 +2762,7 @@ function Logs() {
 							{t('logs.deletedUsers') || 'Ostatnio usunięci użytkownicy'}
 						</h3>
 						
-						<div style={{
+						<div className="team-mgmt-alert" style={{
 							backgroundColor: '#fff3cd',
 							padding: '15px',
 							borderRadius: '6px',
@@ -3031,7 +3033,7 @@ function Logs() {
 						padding: '20px'
 					}} 
 					onClick={() => setDeleteTeamModal(false)}>
-					<div style={{
+					<div className="team-mgmt-modal-content" style={{
 						backgroundColor: 'white',
 						borderRadius: '8px',
 						padding: '30px',
@@ -3056,7 +3058,7 @@ function Logs() {
 					}}>
 						{t('logs.deleteTeamConfirmMessage')}
 					</p>
-					<div style={{
+					<div className="team-mgmt-alert" style={{
 						backgroundColor: '#fff3cd',
 						padding: '15px',
 						borderRadius: '6px',
@@ -3158,7 +3160,7 @@ function Logs() {
 						padding: '20px'
 					}} 
 					onClick={() => setPermanentlyDeleteTeamModal(false)}>
-					<div style={{
+					<div className="team-mgmt-modal-content" style={{
 						backgroundColor: 'white',
 						borderRadius: '8px',
 						padding: '30px',
@@ -3271,6 +3273,7 @@ function Logs() {
 
 			{isSuperAdmin && (
 				<section
+					className="team-mgmt-super-section"
 					style={{
 						marginTop: '3rem',
 						paddingTop: '2rem',
@@ -3416,6 +3419,7 @@ function Logs() {
 
 			{isSuperAdmin && (
 				<section
+					className="team-mgmt-super-section"
 					style={{
 						marginTop: '2.5rem',
 						paddingTop: '2rem',

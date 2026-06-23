@@ -113,6 +113,8 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 		<Modal
 			isOpen={true}
 			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal"
 			style={{
 				overlay: {
 					display: 'flex',
@@ -393,7 +395,9 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 						<span>{t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy'}</span>
 					</label>
 					{!assignToAllMembers && (
-						<div style={{
+						<div
+							className="board-modal__members-list"
+							style={{
 							border: '1px solid #e1e8ed',
 							borderRadius: '6px',
 							maxHeight: '180px',
@@ -480,6 +484,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 				<div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
 					<button
 						type="button"
+						className="board-modal__btn board-modal__btn--secondary"
 						onClick={onClose}
 						style={{
 							padding: '10px 20px',
@@ -495,6 +500,7 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 					</button>
 					<button
 						type="submit"
+						className="board-modal__btn board-modal__btn--primary"
 						disabled={createTaskMutation.isPending}
 						style={{
 							padding: '10px 20px',

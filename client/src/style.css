@@ -3153,7 +3153,7 @@ section {
 .mobile-logo {
 	max-width: 150px;
 	height: auto;
-	transition: transform 0.3s ease;
+	transition: transform 0.3s ease, filter 0.25s ease;
 }
 
 .mobile-logo:hover {
@@ -3632,9 +3632,9 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 }
 
 .flag-language-btn.active {
-	background: rgba(203, 219, 47, 0.3);
-	border-color: #cbdb2f;
-	box-shadow: 0 0 20px rgba(203, 219, 47, 0.3);
+	background: rgba(33, 53, 85, 0.1);
+	border-color: transparent;
+	box-shadow: 0 0 0 2px rgba(0, 168, 70, 0.45);
 }
 
 .flag-icon {
@@ -3660,11 +3660,130 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 .sidebar-logo img {
 	max-width: 180px;
 	height: auto;
-	transition: transform 0.3s ease;
+	transition: transform 0.3s ease, filter 0.25s ease;
+}
+
+.app-brand-logo {
+	transition: filter 0.25s ease;
 }
 
 .sidebar-logo:hover img {
 	transform: scale(1.05);
+}
+
+/* Mobile: przełącznik motywu w lewym górnym rogu menu */
+.sidebar-mobile-theme-slot {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	z-index: 11;
+}
+
+@media (min-width: 1501px) {
+	.sidebar-mobile-theme-slot {
+		display: none;
+	}
+}
+
+/* Theme toggle — spójny z dzwonkiem powiadomień */
+.po-sidebar-theme {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+}
+
+.po-sidebar-theme-btn {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	padding: 0;
+	border: none;
+	border-radius: 12px;
+	background: rgba(33, 53, 85, 0.08);
+	color: #213555;
+	cursor: pointer;
+	transition:
+		background 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease;
+	flex-shrink: 0;
+}
+
+.po-sidebar-theme-btn:hover {
+	background: rgba(33, 53, 85, 0.14);
+	transform: scale(1.04);
+}
+
+.po-sidebar-theme-btn:focus-visible {
+	outline: 2px solid rgba(0, 168, 70, 0.55);
+	outline-offset: 2px;
+}
+
+.po-sidebar-theme-btn__icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+}
+
+/* Light — animated green border highlights new theme switcher */
+[data-theme='light'] .po-sidebar-theme-btn {
+	position: relative;
+	isolation: isolate;
+	overflow: visible;
+	z-index: 0;
+}
+
+[data-theme='light'] .po-sidebar-theme-btn::after {
+	content: '';
+	position: absolute;
+	inset: -2px;
+	border-radius: 14px;
+	padding: 2px;
+	background: linear-gradient(
+		120deg,
+		rgba(0, 168, 70, 0.4),
+		#00a846,
+		#6ee07a,
+		#00a846,
+		rgba(0, 168, 70, 0.4)
+	);
+	background-size: 240% 240%;
+	animation: po-theme-switcher-border-flow 2.5s linear infinite;
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+	z-index: -1;
+}
+
+[data-theme='light'] .sidebar-mobile-theme-slot .po-sidebar-theme-btn::after,
+[data-theme='light'] .auth-top-bar .po-sidebar-theme-btn::after {
+	border-radius: 12px;
+}
+
+@keyframes po-theme-switcher-border-flow {
+	0% {
+		background-position: 0% 50%;
+	}
+	100% {
+		background-position: 200% 50%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-theme='light'] .po-sidebar-theme-btn::after {
+		animation: none;
+		background: #00a846;
+		background-size: 100% 100%;
+	}
 }
 
 /* Close Button */
@@ -3736,6 +3855,7 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		gap: 10px;
 		width: 100%;
 		margin: 12px 0;
 	}
@@ -3745,6 +3865,17 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 		width: 36px;
 		height: 36px;
 		border-radius: 10px;
+	}
+
+	.sidebar-bell-between-logo-and-user .po-sidebar-theme-btn {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+	}
+
+	.sidebar-bell-between-logo-and-user .po-sidebar-theme-btn__icon {
+		width: 19px;
+		height: 19px;
 	}
 
 	.notification-bell--sidebar .notification-bell__icon {
@@ -5350,6 +5481,67 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	cursor: default !important;
 }
 
+/* Board modals — centered overlay (overrides global ReactModal__Content margin-left) */
+.board-modal-overlay.ReactModal__Overlay,
+.board-modal-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 100000020 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 20px !important;
+	background: rgba(0, 0, 0, 0.5) !important;
+	backdrop-filter: blur(2px);
+}
+
+.board-modal.ReactModal__Content,
+.ReactModal__Content.board-modal,
+.board-modal {
+	position: relative !important;
+	inset: auto !important;
+	top: auto !important;
+	left: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: none !important;
+	width: min(600px, calc(100vw - 32px)) !important;
+	max-width: 600px !important;
+	max-height: calc(100vh - 40px) !important;
+	margin: 0 !important;
+	margin-left: 0 !important;
+	padding: 20px !important;
+	border: 0 !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+	overflow: auto !important;
+	outline: none;
+}
+
+.board-modal.board-task-detail-modal.ReactModal__Content,
+.ReactModal__Content.board-modal.board-task-detail-modal,
+.board-modal.board-task-detail-modal {
+	width: min(800px, calc(100vw - 32px)) !important;
+	max-width: 800px !important;
+	max-height: calc(100vh - 32px) !important;
+	background: #f8fafc !important;
+}
+
+.board-modal.board-quick-task-modal.ReactModal__Content,
+.ReactModal__Content.board-modal.board-quick-task-modal,
+.board-modal.board-quick-task-modal {
+	width: min(520px, calc(100vw - 32px)) !important;
+	max-width: 520px !important;
+}
+
+.board-modal.board-create-board-modal.ReactModal__Content,
+.ReactModal__Content.board-modal.board-create-board-modal,
+.board-modal.board-create-board-modal {
+	width: min(500px, calc(100vw - 32px)) !important;
+	max-width: 500px !important;
+}
+
 .leave-days-limit-header {
 	display: flex;
 	align-items: center;
@@ -5542,6 +5734,43 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 .leave-insights-modal--status-filter {
 	width: min(560px, calc(100vw - 32px)) !important;
 	max-width: 560px !important;
+}
+
+.all-leaveplans-filter-modal-overlay.ReactModal__Overlay,
+.all-leaveplans-filter-modal-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 100000020 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 20px !important;
+	background: rgba(0, 0, 0, 0.5) !important;
+	backdrop-filter: blur(2px);
+}
+
+.all-leaveplans-filter-modal.ReactModal__Content,
+.ReactModal__Content.all-leaveplans-filter-modal,
+.all-leaveplans-filter-modal {
+	position: relative !important;
+	inset: auto !important;
+	top: auto !important;
+	left: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: none !important;
+	width: min(600px, calc(100vw - 32px)) !important;
+	max-width: 600px !important;
+	max-height: calc(100vh - 40px) !important;
+	margin: 0 !important;
+	margin-left: 0 !important;
+	padding: 30px !important;
+	border: 0 !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+	overflow: auto !important;
+	outline: none;
 }
 
 .leave-insights-modal__header {
@@ -6049,11 +6278,15 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	padding: 8px 16px;
 	border: 0;
 	border-radius: 7px;
-	background: #2563eb;
+	background: #00a846;
 	color: #fff;
 	font-size: 13px;
 	font-weight: 700;
 	cursor: pointer;
+}
+
+.leave-insights-modal__footer button:hover {
+	background: #009639;
 }
 
 .leave-request-period-filter__controls {
@@ -6202,6 +6435,12 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		padding: 12px !important;
 	}
 
+	.all-leaveplans-filter-modal-overlay.ReactModal__Overlay,
+	.all-leaveplans-filter-modal-overlay {
+		align-items: flex-start !important;
+		padding: 12px !important;
+	}
+
 	.leave-insights-modal.ReactModal__Content,
 	.ReactModal__Content.leave-insights-modal,
 	.leave-insights-modal,
@@ -6211,6 +6450,15 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		width: calc(100vw - 24px) !important;
 		max-height: calc(100vh - 24px) !important;
 		padding: 17px !important;
+	}
+
+	.all-leaveplans-filter-modal.ReactModal__Content,
+	.ReactModal__Content.all-leaveplans-filter-modal,
+	.all-leaveplans-filter-modal {
+		width: calc(100vw - 24px) !important;
+		max-width: calc(100vw - 24px) !important;
+		max-height: calc(100vh - 24px) !important;
+		padding: 20px !important;
 	}
 
 	.leave-insights-modal__header {
@@ -6589,6 +6837,17 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	width: 40px;
 	height: 40px;
 	border-radius: 10px;
+}
+
+.sidebar-mobile-theme-slot .po-sidebar-theme-btn {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+}
+
+.sidebar-mobile-theme-slot .po-sidebar-theme-btn__icon {
+	width: 19px;
+	height: 19px;
 }
 
 .notification-bell__panel {
@@ -7717,6 +7976,110 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	color: #fff;
 }
 
+/* Schedule auto-fill month — centered (overrides global .ReactModal__Content margin-left) */
+.schedule-auto-modal-overlay.ReactModal__Overlay,
+.schedule-auto-modal-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 100000 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 24px !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	-webkit-overflow-scrolling: touch;
+}
+
+.schedule-auto-modal.ReactModal__Content,
+.ReactModal__Content.schedule-auto-modal,
+.schedule-auto-modal {
+	position: relative !important;
+	inset: auto !important;
+	top: auto !important;
+	left: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: none !important;
+	width: min(1200px, 92%) !important;
+	max-width: 1200px !important;
+	max-height: calc(100dvh - 48px) !important;
+	margin: 0 !important;
+	margin-left: 0 !important;
+	padding: 24px !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24) !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	box-sizing: border-box !important;
+}
+
+/* Schedule entry modal (add shift for date) */
+.schedule-entry-modal-overlay.ReactModal__Overlay,
+.schedule-entry-modal-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 100000 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 24px !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	-webkit-overflow-scrolling: touch;
+}
+
+.schedule-entry-modal.ReactModal__Content,
+.ReactModal__Content.schedule-entry-modal,
+.schedule-entry-modal {
+	position: relative !important;
+	inset: auto !important;
+	top: auto !important;
+	left: auto !important;
+	right: auto !important;
+	bottom: auto !important;
+	transform: none !important;
+	width: min(600px, 90%) !important;
+	max-width: 600px !important;
+	max-height: calc(100dvh - 48px) !important;
+	margin: 0 !important;
+	margin-left: 0 !important;
+	padding: 30px !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+	box-sizing: border-box !important;
+}
+
+@media (min-width: 1500px) {
+	.schedule-auto-modal.ReactModal__Content,
+	.ReactModal__Content.schedule-auto-modal,
+	body.sidebar-collapsed .schedule-auto-modal.ReactModal__Content {
+		margin-left: 0 !important;
+	}
+
+	.schedule-entry-modal.ReactModal__Content,
+	.ReactModal__Content.schedule-entry-modal,
+	body.sidebar-collapsed .schedule-entry-modal.ReactModal__Content {
+		margin-left: 0 !important;
+	}
+
+	.all-leaveplans-filter-modal.ReactModal__Content,
+	.ReactModal__Content.all-leaveplans-filter-modal,
+	body.sidebar-collapsed .all-leaveplans-filter-modal.ReactModal__Content {
+		margin-left: 0 !important;
+	}
+}
+
 @media (max-width: 640px) {
 	.monthly-calendar-modal-overlay.ReactModal__Overlay,
 	.monthly-calendar-modal-overlay {
@@ -7761,6 +8124,34 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 
 	.bulk-fill-workdays-modal__form {
 		padding: 18px 14px;
+	}
+
+	.schedule-auto-modal-overlay.ReactModal__Overlay,
+	.schedule-auto-modal-overlay {
+		align-items: flex-start !important;
+		padding: 14px !important;
+	}
+
+	.schedule-auto-modal.ReactModal__Content,
+	.ReactModal__Content.schedule-auto-modal,
+	.schedule-auto-modal {
+		width: calc(100vw - 28px) !important;
+		max-width: calc(100vw - 28px) !important;
+		max-height: calc(100dvh - 28px) !important;
+	}
+
+	.schedule-entry-modal-overlay.ReactModal__Overlay,
+	.schedule-entry-modal-overlay {
+		align-items: flex-start !important;
+		padding: 14px !important;
+	}
+
+	.schedule-entry-modal.ReactModal__Content,
+	.ReactModal__Content.schedule-entry-modal,
+	.schedule-entry-modal {
+		width: calc(100vw - 28px) !important;
+		max-width: calc(100vw - 28px) !important;
+		max-height: calc(100dvh - 28px) !important;
 	}
 
 	.managed-month-confirmation,

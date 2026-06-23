@@ -15,8 +15,6 @@ import { calculateHours } from '../../utils/timeHelpers'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import QRCodeGenerator from '../qr/QRCodeGenerator'
 import WorkActivitiesSettingsSection from './WorkActivitiesSettingsSection'
-import ThemeToggle from '../shared/ThemeToggle'
-import { THEME_SWITCHER_ENABLED } from '../../utils/themeStorage'
 
 const NOTIFICATION_MODULE_REQUIREMENTS = {
 	chat: 'chat',
@@ -522,7 +520,7 @@ function Settings() {
 	return (
 		<>
 			<Sidebar />
-			<div className="logs-container" style={{ 
+			<div className="logs-container settings-page" style={{ 
 				maxWidth: '1200px', 
 				margin: '0 auto'
 			}}>
@@ -540,16 +538,9 @@ function Settings() {
 					<hr></hr>
 				</div>
 
-				{THEME_SWITCHER_ENABLED && (
-				<div className="po-settings-card po-theme-section">
-					<h3 className="po-settings-card__title">{t('settings.themeTitle')}</h3>
-					<p className="po-settings-card__hint">{t('settings.themeDescription')}</p>
-					<ThemeToggle />
-				</div>
-				)}
-
 				{freemiumTier && pushOnlySettings && (
 					<div
+						className="po-settings-muted-banner"
 						style={{
 							backgroundColor: '#f8f9fa',
 							border: '1px solid #dee2e6',
@@ -566,7 +557,7 @@ function Settings() {
 
 				{/* Push tylko poza freemium — powiadomienia w systemie dotyczą modułów (czat, zadania, urlopy…), których w planie darmowym nie ma */}
 				{pushSupported && !freemiumTier && (!freemiumSlimSettings || pushOnlySettings) && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -605,7 +596,7 @@ function Settings() {
 								</button>
 								<div
 									id="settings-push-pwa-tip-panel"
-									className={`${pushPwaTipMobileOpen ? 'block' : 'hidden'} md:block`}
+									className={`settings-push-pwa-tip ${pushPwaTipMobileOpen ? 'block' : 'hidden'} md:block`}
 									style={{
 										backgroundColor: '#e8f5e9',
 										borderLeft: '4px solid #4caf50',
@@ -753,7 +744,7 @@ function Settings() {
 				)}
 
 				{!freemiumTier && (!freemiumSlimSettings || pushOnlySettings) && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -828,6 +819,7 @@ function Settings() {
 
 				{canEditSettings && (
 					<div
+						className="po-settings-team-header"
 						style={{
 							backgroundColor: '#f8f9fa',
 							border: '1px solid #dee2e6',
@@ -862,7 +854,7 @@ function Settings() {
 
 				{/* Komunikat przypominający o zapisywaniu zmian - Admin i HR */}
 				{canEditSettings && (
-					<div style={{ 
+					<div className="po-settings-alert-warn" style={{ 
 						backgroundColor: '#fff3e0',
 						borderLeft: '4px solid #ff9800',
 						borderRadius: '8px',
@@ -888,6 +880,7 @@ function Settings() {
 
 				{freemiumSlimSettings && (
 					<div
+						className="po-settings-info-box po-settings-info-box--brand"
 						style={{
 							backgroundColor: '#e8f4fd',
 							borderLeft: '4px solid #00a846',
@@ -915,7 +908,7 @@ function Settings() {
 
 				{/* QR / licznik — tylko przy module timer_qr lub trial/legacy/freemium (jak sidebar) */}
 				{canEditSettings && !freemiumSlimSettings && showTimerQrSettings && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -934,7 +927,7 @@ function Settings() {
 						</h3>
 						
 						{/* Przełącznik włączania/wyłączania funkcji QR i licznika czasu pracy */}
-						<div style={{
+						<div className="po-settings-toggle-row" style={{
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'space-between',
@@ -988,7 +981,7 @@ function Settings() {
 
 				{/* Sekcja konfiguracji pracy w weekendy - tylko dla Admin i HR */}
 				{canEditSettings && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -1007,7 +1000,7 @@ function Settings() {
 						</h3>
 
 						{/* Informacje o ustawieniu */}
-						<div style={{
+						<div className="po-settings-info-box" style={{
 							backgroundColor: '#e3f2fd',
 							border: '1px solid #90caf9',
 							borderRadius: '8px',
@@ -1083,7 +1076,7 @@ function Settings() {
 						</div>
 
 						{/* Przełącznik */}
-						<div style={{
+						<div className="po-settings-toggle-row" style={{
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'space-between',
@@ -1144,7 +1137,7 @@ function Settings() {
 						</h3>
 
 						{/* Informacje o ustawieniu świąt */}
-						<div style={{
+						<div className="po-settings-info-box" style={{
 							backgroundColor: '#e3f2fd',
 							border: '1px solid #90caf9',
 							borderRadius: '8px',
@@ -1216,7 +1209,7 @@ function Settings() {
 						</div>
 
 						{/* Przełącznik polskich dni świątecznych */}
-						<div style={{
+						<div className="po-settings-toggle-row" style={{
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'space-between',
@@ -1299,7 +1292,7 @@ function Settings() {
 						</div>
 
 						{/* Przełącznik niestandardowych dni świątecznych */}
-						<div style={{
+						<div className="po-settings-toggle-row" style={{
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'space-between',
@@ -1348,7 +1341,7 @@ function Settings() {
 
 						{/* Niestandardowe dni świąteczne - tylko gdy includeCustomHolidays jest włączone */}
 						{includeCustomHolidays && (
-							<div style={{
+							<div className="po-settings-alert-yellow" style={{
 								backgroundColor: '#fff9e6',
 								border: '1px solid #ffd700',
 								borderRadius: '8px',
@@ -2050,13 +2043,16 @@ function Settings() {
 
 						{/* Sekcja zarządzania typami wniosków urlopowych */}
 				{!freemiumSlimSettings && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
+						borderRadius: '12px',
+						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+						padding: '20px',
 						marginBottom: '30px'
 					}}>
 						<h3 style={{ 
 							color: '#2c3e50',
-							marginTop: '40px',
+							marginTop: 0,
 							marginBottom: '20px',
 							fontSize: '20px',
 							fontWeight: '600',
@@ -2066,7 +2062,7 @@ function Settings() {
 							{t('settings.leaveRequestTypesTitle') || 'Typy wniosków urlopowych'}
 						</h3>
 
-						<div style={{
+						<div className="po-settings-info-box" style={{
 							backgroundColor: '#e3f2fd',
 							border: '1px solid #90caf9',
 							borderRadius: '8px',
@@ -2966,7 +2962,7 @@ function Settings() {
 
 				{/* Informacja dla użytkowników bez uprawnień - tylko jeśli nie ma żadnych dostępnych sekcji */}
 				{!canEditSettings && !pushSupported && !freemiumTier && (
-					<div style={{ 
+					<div className="po-settings-panel" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -2986,6 +2982,8 @@ function Settings() {
 				<Modal
 					isOpen={isPolishHolidaysModalOpen}
 					onRequestClose={() => setIsPolishHolidaysModalOpen(false)}
+					overlayClassName="settings-holidays-modal-overlay"
+					className="settings-holidays-modal"
 					style={{
 						overlay: {
 							display: 'flex',

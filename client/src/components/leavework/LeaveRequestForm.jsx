@@ -622,7 +622,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 						</button>
 					</div>
 					<hr />
-					<div className="card-body editformbox" style={{ 
+					<div className="card-body editformbox leave-request-form__main-card" style={{ 
 						backgroundColor: 'white',
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
@@ -632,7 +632,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 					}}>
 						{(!submitForEmployee || selectedManagedUser) && leaveTypesWithDays.length > 0 ? (
 							<div style={{ marginBottom: '20px' }}>
-								<p style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
+								<p className="leave-request-form__available-label" style={{ marginBottom: '10px', fontWeight: '500', fontSize: '16px' }}>
 									{t('leaveform.availableday') || 'Dostępne dni urlopu'}
 									{selectedManagedUser ? ` - ${`${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()}` : ''}:
 								</p>
@@ -640,7 +640,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 									{leaveTypesWithDays.map(type => {
 										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
 										return (
-											<div key={type.id} style={{ 
+											<div key={type.id} className="leave-request-form__type-row" style={{ 
 												display: 'flex', 
 												justifyContent: 'space-between',
 												alignItems: 'center',
@@ -649,8 +649,8 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 												borderRadius: '6px',
 												border: '1px solid #00a846'
 											}}>
-												<span style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
-												<span style={{ 
+												<span className="leave-request-form__type-name" style={{ fontSize: '14px', color: '#2c3e50' }}>{displayName}:</span>
+												<span className={`leave-request-form__type-value ${type.days > 0 ? 'is-positive' : 'is-negative'}`} style={{ 
 													fontSize: '14px', 
 													fontWeight: '600',
 													color: type.days > 0 ? '#28a745' : '#dc3545'
@@ -675,7 +675,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 						) : null}
 
 						<form onSubmit={submitLeaveRequest} id="formleave" className="space-y-6" style={{ width: '100%', maxWidth: '780px' }}>
-							<div style={{
+							<div className="leave-request-form__panel leave-request-form__panel--muted" style={{
 								padding: '16px',
 								border: '1px solid #e5e7eb',
 								borderRadius: '10px',
@@ -684,7 +684,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 								gap: '14px'
 							}}>
 								{managedLeaveEnabled && managedLeaveUsers.length > 0 && (
-									<div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px' }}>
+									<div className="leave-request-form__managed-box" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px' }}>
 										<label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', marginBottom: submitForEmployee ? '12px' : 0 }}>
 											<input
 												type="checkbox"
@@ -696,8 +696,8 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 												style={{ marginTop: '4px' }}
 											/>
 											<span>
-												<strong>{t('leaveform.submitForEmployeeTitle')}</strong>
-												<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+												<strong className="leave-request-form__managed-title">{t('leaveform.submitForEmployeeTitle')}</strong>
+												<span className="leave-request-form__managed-desc" style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
 													{t('leaveform.submitForEmployeeDescription')}
 												</span>
 											</span>
@@ -719,7 +719,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 													))}
 												</select>
 												{selectedManagedUser && (
-													<div style={{
+													<div className="leave-request-form__notice leave-request-form__notice--info" style={{
 														padding: '10px 12px',
 														borderRadius: '8px',
 														backgroundColor: '#eef6ff',
@@ -796,7 +796,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 								</div>
 							</div>
 
-							<div style={{
+							<div className="leave-request-form__panel leave-request-form__panel--surface" style={{
 								padding: '16px',
 								border: '1px solid #e5e7eb',
 								borderRadius: '10px',
@@ -847,9 +847,9 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 						</div>
 					</form>
 
-					<h3 style={{ marginTop: '24px', marginBottom: '8px' }}>{t('leaveform.listsofreq')}</h3>
+					<h3 className="leave-request-form__list-title" style={{ marginTop: '24px', marginBottom: '8px' }}>{t('leaveform.listsofreq')}</h3>
 					{selectedManagedUser && (
-						<div style={{
+						<div className="leave-request-form__notice leave-request-form__notice--info" style={{
 							maxWidth: '650px',
 							marginBottom: '14px',
 							padding: '10px 12px',
@@ -874,7 +874,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 					/>
 					<div>
 						{displayedLeaveRequests.length === 0 && (
-							<div style={{
+							<div className="leave-request-form__empty" style={{
 								maxWidth: '650px',
 								padding: '16px',
 								border: '1px solid #e5e7eb',
@@ -907,11 +907,11 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 								<div key={request._id} className={`leave-request-card ${statusClass} ${managedRequest ? 'is-managed-request' : ''}`}>
 									<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
 										<div>
-											<strong style={{ fontSize: '16px' }}>
+											<strong className="leave-request-card__title" style={{ fontSize: '16px' }}>
 												{translatedType}
 											</strong>
 											{managedRequest && (
-												<span style={{
+												<span className="leave-request-card__badge" style={{
 													display: 'inline-flex',
 													marginLeft: '8px',
 													padding: '2px 8px',
@@ -931,7 +931,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 												{t(`leaveform.statuses.${statusMap[request.status]}`) || t(request.status)}
 											</span>
 											{request.updatedBy && (
-												<span style={{ fontSize: '13px', color: '#6b7280' }}>
+												<span className="leave-request-card__meta" style={{ fontSize: '13px', color: '#6b7280' }}>
 													{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 												</span>
 											)}
@@ -1048,13 +1048,14 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 					{/* Modal anulowania */}
 					{showCancelModal && (
 						<div
-							className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+							className="leave-request-dialog leave-request-dialog__overlay fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
 							style={{
 								zIndex: 100000000,
 								padding: '20px'
 							}}
 							onClick={() => setShowCancelModal(null)}>
 							<div
+								className="leave-request-dialog__panel"
 								style={{
 									backgroundColor: 'white',
 									borderRadius: '8px',
@@ -1065,7 +1066,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 									position: 'relative'
 								}}
 								onClick={(e) => e.stopPropagation()}>
-								<h3 style={{
+								<h3 className="leave-request-dialog__title" style={{
 									margin: '0 0 20px 0',
 									color: '#1f2937',
 									fontSize: '24px',
@@ -1073,7 +1074,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 								}}>
 									{t('leaveform.cancelModalTitle')}
 								</h3>
-								<p style={{
+								<p className="leave-request-dialog__message" style={{
 									margin: '0 0 30px 0',
 									color: '#4b5563',
 									fontSize: '16px',
@@ -1089,6 +1090,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 									<button
 										onClick={() => setShowCancelModal(null)}
 										disabled={cancelLeaveRequestMutation.isPending}
+										className="leave-request-dialog__btn-secondary"
 										style={{
 											padding: '10px 20px',
 											borderRadius: '6px',
@@ -1142,7 +1144,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 					{/* Modal edycji */}
 					{editingRequest && (
 						<div
-							className="fixed inset-0 flex items-center justify-center"
+							className="leave-request-dialog leave-request-dialog__overlay leave-request-dialog__overlay--edit fixed inset-0 flex items-center justify-center"
 							style={{
 								zIndex: 100000000,
 								padding: '20px',
@@ -1151,6 +1153,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 							}}
 							onClick={() => setEditingRequest(null)}>
 							<div
+								className="leave-request-dialog__panel leave-request-dialog__panel--edit"
 								style={{
 									backgroundColor: 'white',
 									borderRadius: '8px',
@@ -1164,11 +1167,11 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 								}}
 								onClick={(e) => e.stopPropagation()}>
 								{/* Header z zielonym gradientem */}
-								<div style={{
+								<div className="leave-request-dialog__header" style={{
 									padding: '30px 30px 0px 30px',
 									borderRadius: '8px 8px 0 0'
 								}}>
-									<h3 style={{
+									<h3 className="leave-request-dialog__title leave-request-dialog__title--on-brand" style={{
 										margin: '0',
 										color: '#ffffff',
 										fontSize: '24px',
@@ -1178,7 +1181,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 									</h3>
 								</div>
 								{/* Zawartość formularza */}
-								<div style={{
+								<div className="leave-request-dialog__body" style={{
 									padding: '30px'
 								}}>
 								<form onSubmit={handleUpdateRequest} className="space-y-6">
@@ -1305,6 +1308,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 											type="button"
 											onClick={() => setEditingRequest(null)}
 											disabled={isUpdating}
+											className="leave-request-dialog__btn-secondary"
 											style={{
 												padding: '10px 20px',
 												borderRadius: '6px',

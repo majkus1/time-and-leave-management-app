@@ -1969,13 +1969,13 @@ function UserCalendar() {
 					</button>
 				</div>
 				</div>
-				<div ref={pdfRef} style={{ 
+				<div ref={pdfRef} className="user-calendar-pdf-shell" style={{ 
 					marginTop: '15px',
 					backgroundColor: '#ffffff',
 					borderRadius: '8px'
 				}}>
 					{user && (
-						<div style={{ 
+						<div className="user-calendar-employee-banner" style={{ 
 							marginBottom: '20px',
 							padding: '15px',
 							backgroundColor: '#f8fafc',

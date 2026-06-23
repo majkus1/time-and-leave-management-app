@@ -13,12 +13,14 @@
   <script>
     (function () {
       try {
-        // THEME_SWITCHER_ENABLED=false — zawsze jasny do czasu wdrożenia dark mode
-        var theme = 'light';
+        var key = 'planopia-theme';
+        var pref = localStorage.getItem(key);
+        var theme = pref === 'dark' ? 'dark' : 'light';
+        var dark = theme === 'dark';
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
         var meta = document.getElementById('meta-theme-color');
-        if (meta) meta.setAttribute('content', '#0d6efd');
+        if (meta) meta.setAttribute('content', dark ? '#0f1419' : '#0d6efd');
       } catch (e) {}
     })();
   </script>

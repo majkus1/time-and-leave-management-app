@@ -295,3 +295,121 @@ label.auth-team-accept-row > span {
 	min-width: 0;
 	line-height: 1.45;
 }
+
+/* Auth pages — top bar (języki + motyw) */
+.auth-top-bar {
+	position: fixed;
+	top: 12px;
+	right: 12px;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.auth-top-bar__langs {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.auth-lang-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: none;
+	border-radius: 10px;
+	background: rgba(33, 53, 85, 0.08);
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-lang-btn:hover {
+	background: rgba(33, 53, 85, 0.14);
+	transform: scale(1.04);
+}
+
+.auth-lang-btn--active {
+	box-shadow: 0 0 0 2px rgba(0, 168, 70, 0.45);
+}
+
+.auth-lang-btn__flag {
+	width: 23px;
+	height: auto;
+	border-radius: 3px;
+	display: block;
+}
+
+.auth-form-error {
+	color: #dc3545;
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+.auth-form-error-banner {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #b91c1c;
+	padding: 0.75rem 1rem;
+	border-radius: 10px;
+	font-size: 0.9rem;
+	line-height: 1.45;
+}
+
+.auth-retention-overlay {
+	background: rgba(15, 23, 42, 0.45);
+}
+
+.auth-retention-panel {
+	background: #fff;
+	border-radius: 12px;
+	padding: 30px;
+	max-width: 500px;
+	width: 100%;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	position: relative;
+	border: 1px solid #e5e7eb;
+}
+
+.auth-retention-panel__title {
+	margin: 0 0 20px;
+	color: #1f2937;
+	font-size: 1.35rem;
+	font-weight: 600;
+}
+
+.auth-retention-panel__notice {
+	background: #fff3cd;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+	border: 1px solid #ffc107;
+	color: #856404;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.auth-retention-panel__actions {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+}
+
+.auth-retention-panel__btn {
+	padding: 10px 20px;
+	border-radius: 8px;
+	border: 1px solid #d1d5db;
+	background: #fff;
+	color: #374151;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: background 0.2s ease;
+}
+
+.auth-retention-panel__btn:hover {
+	background: #f9fafb;
+}

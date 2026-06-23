@@ -580,6 +580,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		>
 			<button
 				type="button"
+				className="tutorial-modal-close"
 				onClick={handleClose}
 				aria-label={i18n.resolvedLanguage === 'pl' ? 'Zamknij samouczek' : 'Close tutorial'}
 				style={{
@@ -685,7 +686,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						{columnSections.map((section) => (
 							<div
 								key={section.id}
-								className="tutorial-modal-section"
+								className={`tutorial-modal-section${activeSection === section.id ? ' is-active' : ''}`}
 								onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
 								style={{
 									border: '2px solid',
@@ -712,7 +713,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 						}}
 					>
 						<div className="tutorial-modal-section__head">
-							<div className="tutorial-modal-section__icon" style={{
+							<div className={`tutorial-modal-section__icon${activeSection === section.id ? ' is-active' : ''}`} style={{
 								backgroundColor: activeSection === section.id ? '#00a846' : '#f3f4f6',
 							}}>
 								<img 
@@ -819,7 +820,7 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 									</a>
 								)}
 								{section.securityReminder && (
-									<div style={{
+									<div className="tutorial-modal-security-note" style={{
 										marginBottom: '16px',
 										padding: '10px 12px',
 										borderRadius: '8px',

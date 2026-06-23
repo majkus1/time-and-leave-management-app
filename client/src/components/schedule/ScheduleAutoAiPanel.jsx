@@ -69,36 +69,34 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 	}
 
 	return (
-		<div
-			style={{
-				borderRadius: '16px',
-				padding: '4px',
-				background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 35%, #f0fdf4 100%)',
-				border: '1px solid #a7f3d0',
-				boxShadow: '0 4px 24px rgba(16, 185, 129, 0.12)',
-				marginBottom: '4px',
-			}}
-		>
+		<div className="schedule-auto-ai-draft" style={{
+			borderRadius: '16px',
+			padding: '4px',
+			background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 35%, #f0fdf4 100%)',
+			border: '1px solid #a7f3d0',
+			boxShadow: '0 4px 24px rgba(16, 185, 129, 0.12)',
+			marginBottom: '4px',
+		}}>
 			<div style={{ padding: '16px 18px 14px' }}>
 				<div style={{ marginBottom: '14px' }}>
-					<div style={{ fontSize: '16px', fontWeight: 800, color: '#064e3b', marginBottom: '6px', letterSpacing: '-0.02em' }}>
+					<div className="schedule-auto-ai-draft__title" style={{ fontSize: '16px', fontWeight: 800, color: '#064e3b', marginBottom: '6px', letterSpacing: '-0.02em' }}>
 						{t('schedule.auto.ai.previewTitle')}
 					</div>
-					<div style={{ fontSize: '13px', fontWeight: 600, color: '#0d9488' }}>
+					<div className="schedule-auto-ai-draft__subtitle" style={{ fontSize: '13px', fontWeight: 600, color: '#0d9488' }}>
 						{t('schedule.auto.ai.previewPeriod')}: {formatPeriodLabel(locale, year, month)}
 					</div>
 				</div>
 
 				{/* Zmiany */}
 				<div style={{ marginBottom: '12px' }}>
-					<div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
+					<div className="schedule-auto-ai-draft__section-title" style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
 						{t('schedule.auto.ai.previewShifts')}
 					</div>
 					{shifts.length === 0 ? (
-						<div style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
+						<div className="schedule-auto-ai-draft__empty" style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
 					) : (
 						shifts.map((s, i) => (
-							<div key={`s-${i}`} style={card}>
+							<div key={`s-${i}`} className="schedule-auto-ai-draft__card" style={card}>
 								<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
 									<span
 										style={{
@@ -110,7 +108,7 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 									>
 										{s.timeFrom} → {s.timeTo}
 									</span>
-									<span style={chip}>
+									<span className="schedule-auto-ai-draft__chip" style={chip}>
 										{t('schedule.auto.ai.previewMinPeople')}: {s.minEmployees ?? '—'}
 									</span>
 								</div>
@@ -126,6 +124,7 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 										.map((d) => (
 										<span
 											key={d}
+											className="schedule-auto-ai-draft__chip schedule-auto-ai-draft__chip--green"
 											style={{
 												...chip,
 												background: '#ecfdf5',
@@ -144,14 +143,14 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 
 				{/* Nadpisania */}
 				<div style={{ marginBottom: '12px' }}>
-					<div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
+					<div className="schedule-auto-ai-draft__section-title" style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
 						{t('schedule.auto.ai.previewOverrides')}
 					</div>
 					{overrides.length === 0 ? (
-						<div style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
+						<div className="schedule-auto-ai-draft__empty" style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
 					) : (
 						overrides.map((o, i) => (
-							<div key={`o-${i}`} style={card}>
+							<div key={`o-${i}`} className="schedule-auto-ai-draft__card" style={card}>
 								<div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '6px', fontSize: '14px' }}>
 									{formatDateShort(o.date, locale)}
 								</div>
@@ -165,14 +164,14 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 
 				{/* Wykluczenia */}
 				<div style={{ marginBottom: '12px' }}>
-					<div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
+					<div className="schedule-auto-ai-draft__section-title" style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '8px' }}>
 						{t('schedule.auto.ai.previewExclusions')}
 					</div>
 					{exclusions.length === 0 ? (
-						<div style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
+						<div className="schedule-auto-ai-draft__empty" style={{ fontSize: '13px', color: '#64748b' }}>{t('schedule.auto.ai.previewEmptySection')}</div>
 					) : (
 						exclusions.map((ex, i) => (
-							<div key={`e-${i}`} style={card}>
+							<div key={`e-${i}`} className="schedule-auto-ai-draft__card" style={card}>
 								<div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
 									{resolveUserName(ex.userId, users)}
 								</div>
@@ -188,7 +187,7 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 				</div>
 
 				{/* Opcje */}
-				<div style={{ ...card, marginBottom: '10px' }}>
+				<div style={{ ...card, marginBottom: '10px' }} className="schedule-auto-ai-draft__card">
 					<div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '10px' }}>
 						{t('schedule.auto.ai.previewOptions')}
 					</div>
@@ -209,7 +208,7 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 				</div>
 
 				{notes ? (
-					<div style={{ ...card, marginBottom: 0 }}>
+					<div style={{ ...card, marginBottom: 0 }} className="schedule-auto-ai-draft__card">
 						<div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '6px' }}>
 							{t('schedule.auto.ai.previewNotes')}
 						</div>
@@ -217,7 +216,7 @@ function DraftPreview({ draft, users, year, month, t, i18n }) {
 					</div>
 				) : null}
 
-				<p style={{ margin: '14px 0 0', fontSize: '12px', color: '#047857', lineHeight: 1.45 }}>
+				<p className="schedule-auto-ai-draft__disclaimer" style={{ margin: '14px 0 0', fontSize: '12px', color: '#047857', lineHeight: 1.45 }}>
 					{t('schedule.auto.ai.disclaimer')}
 				</p>
 			</div>
@@ -322,7 +321,7 @@ export default function ScheduleAutoAiPanel({
 	}
 
 	return (
-		<div style={shellStyle}>
+		<div className="schedule-auto-ai-panel" style={shellStyle}>
 			<style>
 				{`
 					@keyframes scheduleAiDot {
@@ -394,6 +393,7 @@ export default function ScheduleAutoAiPanel({
 			</style>
 
 			<p
+				className="schedule-auto-ai-panel__intro"
 				style={{
 					margin: '0 0 14px',
 					fontSize: '14px',
@@ -408,6 +408,7 @@ export default function ScheduleAutoAiPanel({
 
 			{!aiEnabled && (
 				<div
+					className="schedule-auto-ai-panel__banner"
 					style={{
 						marginBottom: '12px',
 						padding: '10px 12px',
@@ -423,6 +424,7 @@ export default function ScheduleAutoAiPanel({
 
 			{showQuotaStrip && (
 				<div
+					className={`schedule-auto-ai-panel__quota${blockScheduleAi ? ' is-blocked' : ''}`}
 					style={{
 						marginBottom: '12px',
 						padding: '10px 12px',
@@ -458,7 +460,7 @@ export default function ScheduleAutoAiPanel({
 							</Link>
 						</>
 					)}
-					<div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+					<div className="schedule-auto-ai-panel__quota-hint" style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
 						{t('aiAssistant.aiQuota.sharedHint')}
 					</div>
 				</div>
@@ -466,6 +468,7 @@ export default function ScheduleAutoAiPanel({
 
 			{error && (
 				<div
+					className="schedule-auto-ai-panel__error"
 					style={{
 						marginBottom: '12px',
 						padding: '12px 14px',
@@ -488,6 +491,7 @@ export default function ScheduleAutoAiPanel({
 			)}
 
 			<div
+				className="schedule-auto-ai-panel__chat"
 				style={{
 					borderRadius: '14px',
 					padding: '14px',
@@ -501,7 +505,7 @@ export default function ScheduleAutoAiPanel({
 				}}
 			>
 				{messages.length === 0 && (
-					<p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>{t('schedule.auto.ai.noConfig')}</p>
+					<p className="schedule-auto-ai-panel__empty" style={{ margin: 0, fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>{t('schedule.auto.ai.noConfig')}</p>
 				)}
 				{messages.map((m, i) => (
 					<div
@@ -514,6 +518,7 @@ export default function ScheduleAutoAiPanel({
 						}}
 					>
 						<div
+							className="schedule-auto-ai-panel__msg-label"
 							style={{
 								fontSize: '10px',
 								fontWeight: 700,
@@ -528,6 +533,7 @@ export default function ScheduleAutoAiPanel({
 							{m.role === 'user' ? t('schedule.auto.ai.youLabel') : t('schedule.auto.ai.assistantLabel')}
 						</div>
 						<div
+							className={`schedule-auto-ai-panel__msg${m.role === 'user' ? ' schedule-auto-ai-panel__msg--user' : ' schedule-auto-ai-panel__msg--assistant'}`}
 							style={{
 								maxWidth: '92%',
 								padding: '12px 14px',
@@ -603,6 +609,7 @@ export default function ScheduleAutoAiPanel({
 					<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
 						<button
 							type="button"
+							className="schedule-auto-modal__btn schedule-auto-modal__btn--primary"
 							onClick={handleApply}
 							disabled={busy}
 							style={{
@@ -622,6 +629,7 @@ export default function ScheduleAutoAiPanel({
 						</button>
 						<button
 							type="button"
+							className="schedule-auto-modal__btn schedule-auto-modal__btn--secondary"
 							onClick={() => setPendingDraft(null)}
 							disabled={busy}
 							style={{
@@ -642,7 +650,7 @@ export default function ScheduleAutoAiPanel({
 			)}
 
 			{!isAvailabilityEnabled && (
-				<p style={{ margin: '12px 0 0', fontSize: '12px', color: '#94a3b8' }}>{t('schedule.auto.preferAvailability')}</p>
+				<p className="schedule-auto-ai-panel__footer-note" style={{ margin: '12px 0 0', fontSize: '12px', color: '#94a3b8' }}>{t('schedule.auto.preferAvailability')}</p>
 			)}
 		</div>
 	)

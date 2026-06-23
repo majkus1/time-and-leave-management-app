@@ -1762,35 +1762,15 @@ function Schedule() {
 					onRequestClose={() => setIsAutoGenerateModalOpen(false)}
 					className="schedule-auto-modal"
 					overlayClassName="schedule-auto-modal-overlay"
-					style={{
-						overlay: {
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							backgroundColor: 'rgba(0, 0, 0, 0.5)',
-							backdropFilter: 'blur(2px)'
-						},
-						content: {
-							position: 'relative',
-							inset: 'unset',
-							margin: '0',
-							maxWidth: '1200px',
-							width: '92%',
-							maxHeight: '90vh',
-							overflowY: 'auto',
-							borderRadius: '12px',
-							padding: '24px',
-							backgroundColor: 'white'
-						}
-					}}
 					contentLabel={t('schedule.auto.modalAriaLabel') || 'Auto-uzupełnij grafik'}
 				>
-					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-						<h3 style={{ margin: 0, color: '#0f172a', fontSize: '22px' }}>
+					<div className="schedule-auto-modal__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+						<h3 className="schedule-auto-modal__title" style={{ margin: 0, color: '#0f172a', fontSize: '22px' }}>
 							{t('schedule.auto.modalTitle') || 'Auto-uzupełnij miesiąc'}
 						</h3>
 						<button
 							type="button"
+							className="schedule-auto-modal__close"
 							onClick={() => setIsAutoGenerateModalOpen(false)}
 							style={{
 								background: 'transparent',
@@ -1804,7 +1784,7 @@ function Schedule() {
 							×
 						</button>
 					</div>
-					<p style={{ marginTop: 0, marginBottom: '16px', color: '#64748b', fontSize: '14px' }}>
+					<p className="schedule-auto-modal__desc" style={{ marginTop: 0, marginBottom: '16px', color: '#64748b', fontSize: '14px' }}>
 						{t('schedule.auto.modalDescription') || 'System uzupełni brakujące wpisy do minimum obsady na dzień, uwzględniając nieobecności i istniejące wpisy.'}
 					</p>
 					<div>
@@ -1818,6 +1798,7 @@ function Schedule() {
 							`}
 						</style>
 						<div
+							className="schedule-auto-modal__mode-tabs"
 							style={{
 								display: 'flex',
 								gap: '8px',
@@ -1831,6 +1812,7 @@ function Schedule() {
 						>
 							<button
 								type="button"
+								className={`schedule-auto-modal__mode-btn${autoFillUiMode === 'form' ? ' is-active' : ''}`}
 								onClick={() => setAutoFillUiMode('form')}
 								style={{
 									flex: 1,
@@ -1866,6 +1848,7 @@ function Schedule() {
 							>
 								<button
 									type="button"
+									className={`schedule-auto-modal__mode-ai-btn${autoFillUiMode === 'ai' ? ' is-active' : ''}`}
 									onClick={() => setAutoFillUiMode('ai')}
 									style={{
 										width: '100%',
@@ -1895,7 +1878,7 @@ function Schedule() {
 
 						<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
 							<div>
-								<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
+								<label className="schedule-auto-modal__field-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
 									{t('schedule.month') || 'Miesiąc'}
 								</label>
 								<select
@@ -1911,7 +1894,7 @@ function Schedule() {
 								</select>
 							</div>
 							<div>
-								<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
+								<label className="schedule-auto-modal__field-label" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#334155' }}>
 									{t('schedule.year') || 'Rok'}
 								</label>
 								<input
@@ -1940,6 +1923,7 @@ function Schedule() {
 								<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
 									<button
 										type="button"
+										className="schedule-auto-modal__btn schedule-auto-modal__btn--secondary"
 										onClick={() => setIsAutoGenerateModalOpen(false)}
 										style={{
 											padding: '10px 16px',
@@ -1958,13 +1942,14 @@ function Schedule() {
 
 						{autoFillUiMode === 'form' && (
 					<form onSubmit={handleAutoGenerateMonth}>
-						<div style={{ marginBottom: '12px', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px', backgroundColor: '#f8fbff' }}>
+						<div className="schedule-auto-modal__section schedule-auto-modal__section--shifts" style={{ marginBottom: '12px', border: '1px solid #dbeafe', borderRadius: '10px', padding: '12px', backgroundColor: '#f8fbff' }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+								<label className="schedule-auto-modal__section-title" style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
 									{t('schedule.auto.shifts.title') || 'Zmiany (przedziały czasowe)'}
 								</label>
 								<button
 									type="button"
+									className="schedule-auto-modal__btn schedule-auto-modal__btn--add-info"
 									onClick={handleAddShiftRow}
 									style={{
 										padding: '6px 10px',
@@ -1982,6 +1967,7 @@ function Schedule() {
 							</div>
 							{normalizedTeamWorkHoursList(settings?.workHours).length > 0 && (
 								<div
+									className="schedule-auto-modal__callout"
 									style={{
 										fontSize: '12px',
 										color: '#0369a1',
@@ -1998,7 +1984,7 @@ function Schedule() {
 							)}
 							<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 								{autoShiftRows.map((shiftRow, index) => (
-									<div key={shiftRow.id} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', backgroundColor: '#fff' }}>
+									<div key={shiftRow.id} className="schedule-auto-modal__card" style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', backgroundColor: '#fff' }}>
 										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', alignItems: 'end' }}>
 											<div>
 												<label style={{ display: 'block', marginBottom: '4px', fontSize: '13px', color: '#334155' }}>Od</label>
@@ -2039,6 +2025,7 @@ function Schedule() {
 											</div>
 											<button
 												type="button"
+												className="schedule-auto-modal__btn schedule-auto-modal__btn--remove"
 												onClick={() => handleRemoveShiftRow(shiftRow.id)}
 												disabled={autoShiftRows.length <= 1}
 												style={{
@@ -2057,7 +2044,7 @@ function Schedule() {
 											</button>
 										</div>
 										<div style={{ marginTop: '8px' }}>
-											<div style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Dni tygodnia</div>
+											<div className="schedule-auto-modal__hint" style={{ fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Dni tygodnia</div>
 											<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
 												{weekdayOptions.map((weekday) => (
 													<label key={`${shiftRow.id}-${weekday.value}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#334155' }}>
@@ -2072,7 +2059,7 @@ function Schedule() {
 											</div>
 										</div>
 										{index === 0 && (
-											<div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+											<div className="schedule-auto-modal__hint" style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
 												{t('schedule.auto.shifts.tip') || 'Wskazówka: możesz dodać np. zmianę poranną i popołudniową.'}
 											</div>
 										)}
@@ -2081,13 +2068,14 @@ function Schedule() {
 							</div>
 						</div>
 
-						<div style={{ marginBottom: '12px', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px', backgroundColor: '#fffbeb' }}>
+						<div className="schedule-auto-modal__section schedule-auto-modal__section--overrides" style={{ marginBottom: '12px', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px', backgroundColor: '#fffbeb' }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+								<label className="schedule-auto-modal__section-title" style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
 									{t('schedule.auto.overrides.title') || 'Nadpisania konkretnych dni (opcjonalnie)'}
 								</label>
 								<button
 									type="button"
+									className="schedule-auto-modal__btn schedule-auto-modal__btn--add-warn"
 									onClick={handleAddOverrideRow}
 									style={{
 										padding: '6px 10px',
@@ -2104,7 +2092,7 @@ function Schedule() {
 								</button>
 							</div>
 							{autoDayOverrideRows.length === 0 ? (
-								<div style={{ fontSize: '13px', color: '#78716c' }}>
+								<div className="schedule-auto-modal__empty" style={{ fontSize: '13px', color: '#78716c' }}>
 									{t('schedule.auto.overrides.empty') || 'Brak nadpisań. Domyślnie zadziałają zmiany i dni tygodnia z sekcji wyżej.'}
 								</div>
 							) : (
@@ -2158,6 +2146,7 @@ function Schedule() {
 											</div>
 											<button
 												type="button"
+												className="schedule-auto-modal__btn schedule-auto-modal__btn--remove"
 												onClick={() => handleRemoveOverrideRow(overrideRow.id)}
 												style={{
 													padding: '8px 10px',
@@ -2178,13 +2167,14 @@ function Schedule() {
 							)}
 						</div>
 
-						<div style={{ marginBottom: '12px', border: '1px solid #fecdd3', borderRadius: '10px', padding: '12px', backgroundColor: '#fff7f8' }}>
+						<div className="schedule-auto-modal__section schedule-auto-modal__section--exclusions" style={{ marginBottom: '12px', border: '1px solid #fecdd3', borderRadius: '10px', padding: '12px', backgroundColor: '#fff7f8' }}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-								<label style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
+								<label className="schedule-auto-modal__section-title" style={{ marginBottom: 0, fontWeight: 600, color: '#334155' }}>
 									{t('schedule.auto.manualExclusions.title') || 'Ręczne wykluczenia użytkowników (opcjonalnie)'}
 								</label>
 								<button
 									type="button"
+									className="schedule-auto-modal__btn schedule-auto-modal__btn--add-danger"
 									onClick={handleAddManualExclusionRow}
 									style={{
 										padding: '6px 10px',
@@ -2201,7 +2191,7 @@ function Schedule() {
 								</button>
 							</div>
 							{autoManualExclusionRows.length === 0 ? (
-								<div style={{ fontSize: '13px', color: '#7f1d1d' }}>
+								<div className="schedule-auto-modal__danger-text" style={{ fontSize: '13px', color: '#7f1d1d' }}>
 									{t('schedule.auto.manualExclusions.empty') || 'Brak wykluczeń. Planner uwzględni tylko standardowe reguły (urlopy, dyspozycyjność, zmiany).'}
 								</div>
 							) : (
@@ -2264,6 +2254,7 @@ function Schedule() {
 											</div>
 											<button
 												type="button"
+												className="schedule-auto-modal__btn schedule-auto-modal__btn--remove"
 												onClick={() => handleRemoveManualExclusionRow(row.id)}
 												style={{
 													padding: '8px 10px',
@@ -2338,6 +2329,7 @@ function Schedule() {
 						<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
 							<button
 								type="button"
+								className="schedule-auto-modal__btn schedule-auto-modal__btn--secondary"
 								onClick={() => setIsAutoGenerateModalOpen(false)}
 								style={{
 									padding: '10px 16px',
@@ -2352,6 +2344,7 @@ function Schedule() {
 							</button>
 							<button
 								type="submit"
+								className="schedule-auto-modal__btn schedule-auto-modal__btn--primary"
 								disabled={autoGenerateMutation.isPending}
 								style={{
 									padding: '10px 16px',
@@ -2385,28 +2378,8 @@ function Schedule() {
 						setAvailabilityNotes('')
 						setAvailabilityTimeWindows([])
 					}}
-					style={{
-						overlay: {
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							backgroundColor: 'rgba(0, 0, 0, 0.5)',
-							backdropFilter: 'blur(2px)'
-						},
-						content: {
-							position: 'relative',
-							inset: 'unset',
-							margin: '0',
-							maxWidth: '600px',
-							width: '90%',
-							maxHeight: '80vh',
-							overflowY: 'auto',
-							borderRadius: '12px',
-							padding: '30px',
-							backgroundColor: 'white',
-							boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-						}
-					}}
+					className="schedule-entry-modal"
+					overlayClassName="schedule-entry-modal-overlay"
 					contentLabel={t('schedule.addEntry') || 'Dodaj wpis do grafiku'}>
 				<>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -3095,6 +3068,7 @@ function Schedule() {
 					}}>
 						<button
 							type="button"
+							className="schedule-entry-modal__btn-cancel"
 						onClick={() => {
 							setIsModalOpen(false)
 							setSelectedDate(null)
@@ -3119,6 +3093,7 @@ function Schedule() {
 						</button>
 						<button
 							type="submit"
+							className="schedule-entry-modal__btn-submit"
 							disabled={isNonWorkingScheduleDayBlocked}
 							style={{
 								padding: '12px 24px',

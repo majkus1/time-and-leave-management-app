@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
+import AuthPageTopBar from '../shared/AuthPageTopBar'
+import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
 
 function Login() {
@@ -30,7 +32,7 @@ function Login() {
 		if (!loc?.pathname) return '/dashboard'
 		return `${loc.pathname}${loc.search || ''}${loc.hash || ''}`
 	})()
-	const { t, i18n } = useTranslation()
+	const { t } = useTranslation()
 	const { refreshUserData, loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
 
@@ -39,11 +41,6 @@ function Login() {
 			navigate(redirectAfterLogin, { replace: true })
 		}
 	}, [loggedIn, navigate, redirectAfterLogin])
-
-	const lngs = {
-		en: { nativeName: '', flag: '/img/united-kingdom.png' },
-		pl: { nativeName: '', flag: '/img/poland.png' },
-	}
 
 	const handleLogin = async e => {
 		e.preventDefault()
@@ -78,38 +75,19 @@ function Login() {
 	// Jeśli sprawdzamy autoryzację, pokaż loader
 	if (isCheckingAuth) {
 		return (
-			<div className="alllogin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+			<div className="alllogin auth-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
 				<Loader />
 			</div>
 		)
 	}
 
 	return (
-		<div className="alllogin">
-			<div className="language-box">
-				{Object.keys(lngs).map(lng => (
-					<button
-						key={lng}
-						type="button"
-						style={{
-							fontWeight: i18n.resolvedLanguage === lng ? 'bold' : 'normal',
-							marginRight: '5px',
-						}}
-						className="flag-language"
-						onClick={() => i18n.changeLanguage(lng)}>
-						<img
-							src={lngs[lng].flag}
-							alt={`${lngs[lng].nativeName} flag`}
-							style={{ width: '23px', marginRight: '5px' }}
-						/>
-						{lngs[lng].nativeName}
-					</button>
-				))}
-			</div>
+		<div className="alllogin auth-page">
+			<AuthPageTopBar />
 			<div className="login-box">
 				<div className="login-logo">
 					<div>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<AuthLogo maxWidth="180px" />
 					</div>
 				</div>
 				<div className="card boxlog auth-form-shell">
@@ -221,7 +199,7 @@ function Login() {
 						</form>
 
 						{errorMessage && (
-							<p className="mt-3 text-danger" style={{ textAlign: 'center' }}>
+							<p className="auth-form-error mt-3" style={{ textAlign: 'center' }}>
 								{errorMessage}
 							</p>
 						)}

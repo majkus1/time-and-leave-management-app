@@ -7,6 +7,8 @@ import { API_URL } from '../../config'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
 import { devLog } from '../../utils/devLog.js'
+import AuthPageTopBar from '../shared/AuthPageTopBar'
+import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
 
 const TeamRegistration = () => {
@@ -28,11 +30,6 @@ const TeamRegistration = () => {
 	const { setLoggedIn, setRole, setUsername, setTeamId, refreshUserData, loggedIn, isCheckingAuth } = useAuth()
 	const { t, i18n } = useTranslation()
 	const { showAlert } = useAlert()
-
-	const lngs = {
-		en: { nativeName: '', flag: '/img/united-kingdom.png' },
-		pl: { nativeName: '', flag: '/img/poland.png' },
-	}
 
 	// Password validation function (same as in SetPassword.jsx)
 	const isPasswordValid = (password) => {
@@ -136,36 +133,17 @@ const TeamRegistration = () => {
 	// Jeśli sprawdzamy autoryzację, pokaż loader
 	if (isCheckingAuth) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+			<div className="auth-page team-registration-page min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
 				<Loader />
 			</div>
 		)
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+		<div className="auth-page team-registration-page min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+			<AuthPageTopBar />
 			<div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <img src="img/new-logoplanopia.png" style={{ width: '250px', margin: '0 auto', marginBottom: '40px' }} />
-			<div className="language-box">
-				{Object.keys(lngs).map(lng => (
-					<button
-						key={lng}
-						type="button"
-						style={{
-							fontWeight: i18n.resolvedLanguage === lng ? 'bold' : 'normal',
-							marginRight: '5px',
-						}}
-						className="flag-language"
-						onClick={() => i18n.changeLanguage(lng)}>
-						<img
-							src={lngs[lng].flag}
-							alt={`${lngs[lng].nativeName} flag`}
-							style={{ width: '23px', marginRight: '5px' }}
-						/>
-						{lngs[lng].nativeName}
-					</button>
-				))}
-			</div>
+				<AuthLogo maxWidth="250px" style={{ margin: '0 auto', marginBottom: '40px', display: 'block' }} />
 			<p className="mt-6 text-center text-3xl font-extrabold text-gray-900 mt-4">
   {t('newteam.h2')}
 </p>
@@ -178,7 +156,7 @@ const TeamRegistration = () => {
   <div className="bg-white py-8 px-4 sm:px-10 auth-form-team-shell">
     <form className="space-y-6" onSubmit={handleSubmit}>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="auth-form-error-banner">
           {error}
         </div>
       )}
@@ -382,76 +360,39 @@ const TeamRegistration = () => {
   </div>
 </div>
 
-			{/* Modal z informacją o karencji */}
 			{showRetentionModal && retentionInfo && (
-				<div 
-					className="fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
+				<div
+					className="auth-retention-overlay fixed inset-0 flex items-center justify-center backdrop-blur-[1px]"
 					style={{
 						zIndex: 100000000,
-						padding: '20px'
-					}} 
+						padding: '20px',
+					}}
 					onClick={() => setShowRetentionModal(false)}>
-					<div style={{
-						backgroundColor: 'white',
-						borderRadius: '8px',
-						padding: '30px',
-						maxWidth: '500px',
-						width: '100%',
-						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-						position: 'relative'
-					}} onClick={(e) => e.stopPropagation()}>
-						<h3 style={{
-							margin: '0 0 20px 0',
-							color: '#1f2937',
-							fontSize: '24px',
-							fontWeight: '600'
-						}}>
+					<div
+						className="auth-retention-panel"
+						onClick={e => e.stopPropagation()}>
+						<h3 className="auth-retention-panel__title">
 							{t('newteam.retentionModalTitle') || 'Zespół został wcześniej usunięty'}
 						</h3>
-						
-						<div style={{
-							backgroundColor: '#fff3cd',
-							padding: '15px',
-							borderRadius: '6px',
-							marginBottom: '20px',
-							border: '1px solid #ffc107',
-							color: '#856404',
-							fontSize: '14px',
-							lineHeight: '1.6'
-						}}>
+
+						<div className="auth-retention-panel__notice">
 							<p style={{ margin: '0 0 10px 0' }}>
 								<strong>{t('newteam.retentionModalInfo') || 'Okres karencji:'}</strong>
 							</p>
 							<p style={{ margin: 0 }}>
-								{retentionInfo.remainingDays > 0 
-									? t('newteam.retentionModalRemaining', { days: retentionInfo.remainingDays, total: retentionInfo.totalDays }) 
-										|| `Zespół z tym adresem email został usunięty. Dane są przechowywane przez okres karencji (${retentionInfo.remainingDays} z ${retentionInfo.totalDays} dni pozostało). Po upływie karencji dane zostaną trwale usunięte i będzie możliwa rejestracja nowego zespołu.`
-									: t('newteam.retentionModalExpired') 
-										|| 'Okres karencji minął. Dane powinny zostać wkrótce trwale usunięte. Spróbuj ponownie za kilka dni.'
-								}
+								{retentionInfo.remainingDays > 0
+									? t('newteam.retentionModalRemaining', {
+											days: retentionInfo.remainingDays,
+											total: retentionInfo.totalDays,
+										}) ||
+										`Zespół z tym adresem email został usunięty. Dane są przechowywane przez okres karencji (${retentionInfo.remainingDays} z ${retentionInfo.totalDays} dni pozostało). Po upływie karencji dane zostaną trwale usunięte i będzie możliwa rejestracja nowego zespołu.`
+									: t('newteam.retentionModalExpired') ||
+										'Okres karencji minął. Dane powinny zostać wkrótce trwale usunięte. Spróbuj ponownie za kilka dni.'}
 							</p>
 						</div>
 
-						<div style={{
-							display: 'flex',
-							gap: '12px',
-							justifyContent: 'flex-end'
-						}}>
-							<button
-								onClick={() => setShowRetentionModal(false)}
-								style={{
-									padding: '10px 20px',
-									borderRadius: '6px',
-									border: '1px solid #d1d5db',
-									backgroundColor: 'white',
-									color: '#374151',
-									cursor: 'pointer',
-									fontSize: '14px',
-									fontWeight: '500',
-									transition: 'all 0.2s'
-								}}
-								onMouseEnter={(e) => e.target.style.backgroundColor = '#f9fafb'}
-								onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}>
+						<div className="auth-retention-panel__actions">
+							<button type="button" className="auth-retention-panel__btn" onClick={() => setShowRetentionModal(false)}>
 								{t('newteam.retentionModalClose') || 'Rozumiem'}
 							</button>
 						</div>

@@ -45,7 +45,7 @@ function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} })
 				borderRadius: '8px',
 				padding: '16px',
 				margin: '0 0px'
-			}} className='card-list-box-task'>
+			}} className='card-list-box-task board-column'>
 			<div style={{
 				display: 'flex',
 				alignItems: 'center',
@@ -54,7 +54,9 @@ function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} })
 				paddingBottom: '12px',
 				borderBottom: `3px solid ${status.color}`
 			}}>
-				<h3 style={{
+				<h3
+					className="board-column__title"
+					style={{
 					color: '#2c3e50',
 					fontSize: '18px',
 					fontWeight: '600',
@@ -76,7 +78,9 @@ function Column({ status, tasks, onTaskClick, onDeleteTask, unreadByTask = {} })
 			<SortableContext items={tasks.map(t => t._id)} strategy={verticalListSortingStrategy}>
 				<div style={{ minHeight: '100px', width: '100%' }}>
 					{tasks.length === 0 ? (
-						<div style={{
+						<div
+							className="board-column__empty"
+							style={{
 							padding: '20px',
 							textAlign: 'center',
 							color: '#95a5a6',
@@ -401,7 +405,9 @@ function Board() {
 							if (!draggedTask) return null
 							
 							return (
-								<div style={{
+								<div
+									className="task-card board-drag-preview"
+									style={{
 									backgroundColor: 'white',
 									borderRadius: '8px',
 									padding: '16px',

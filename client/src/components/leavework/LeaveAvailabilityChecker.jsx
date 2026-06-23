@@ -119,7 +119,7 @@ function LeaveAvailabilityChecker({
 		}}>
 			{!isModalVariant && (
 				<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-					<h4 style={{ margin: 0, color: '#0f172a', fontSize: '18px' }}>
+					<h4 className="leave-availability-checker__title" style={{ margin: 0, color: '#0f172a', fontSize: '18px' }}>
 						{t(titleKey) || 'Asystent terminu urlopu'}
 					</h4>
 					<div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
@@ -176,7 +176,7 @@ function LeaveAvailabilityChecker({
 			)}
 			{scopeHint && (isModalVariant || !isCollapsed) ? (
 				<div style={{ marginTop: '6px', marginBottom: '2px' }}>
-					<span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>{scopeHint}</span>
+					<span className="leave-availability-checker__scope" style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>{scopeHint}</span>
 				</div>
 			) : null}
 			<div
@@ -190,14 +190,14 @@ function LeaveAvailabilityChecker({
 			>
 				<div ref={contentRef}>
 					{!isModalVariant && (
-						<p style={{ margin: '0 0 14px 0', color: '#64748b', fontSize: '14px' }}>
+						<p className="leave-availability-checker__desc" style={{ margin: '0 0 14px 0', color: '#64748b', fontSize: '14px' }}>
 							{t('leaveplanner.availabilityChecker.description') || 'Wybierz datę lub zakres, a system automatycznie sprawdzi konflikty nieobecności.'}
 						</p>
 					)}
 
 					<div>
 						<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', alignItems: 'end' }}>
-							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
+							<label className="leave-availability-checker__radio-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
 								<input
 									type="radio"
 									name="leave-checker-mode"
@@ -206,7 +206,7 @@ function LeaveAvailabilityChecker({
 								/>
 								{t('leaveplanner.availabilityChecker.singleDate') || 'Jedna data'}
 							</label>
-							<label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
+							<label className="leave-availability-checker__radio-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
 								<input
 									type="radio"
 									name="leave-checker-mode"
@@ -216,7 +216,7 @@ function LeaveAvailabilityChecker({
 								{t('leaveplanner.availabilityChecker.dateRange') || 'Zakres dat'}
 							</label>
 							<div>
-								<label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#475569' }}>
+								<label className="leave-availability-checker__field-label" style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#475569' }}>
 									{t('leaveplanner.availabilityChecker.from') || 'Od'}
 								</label>
 								<input
@@ -228,7 +228,7 @@ function LeaveAvailabilityChecker({
 							</div>
 							{mode === 'range' && (
 								<div>
-									<label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#475569' }}>
+									<label className="leave-availability-checker__field-label" style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#475569' }}>
 										{t('leaveplanner.availabilityChecker.to') || 'Do'}
 									</label>
 									<input
@@ -242,7 +242,7 @@ function LeaveAvailabilityChecker({
 						</div>
 					</div>
 
-					<div style={{
+					<div className={`leave-availability-checker__result leave-availability-checker__result--${analysis.state}`} style={{
 						marginTop: '12px',
 						padding: '12px',
 						borderRadius: '10px',
@@ -272,6 +272,7 @@ function LeaveAvailabilityChecker({
 									{analysis.conflicts.map((item) => (
 										<div
 											key={item.id}
+											className="leave-availability-checker__conflict-card"
 											style={{
 												padding: '8px 10px',
 												borderRadius: '8px',

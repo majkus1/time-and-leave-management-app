@@ -14,6 +14,7 @@ import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
 import SidebarThemeButton from '../shared/SidebarThemeButton'
+import { useTheme } from '../../context/ThemeContext'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -22,6 +23,8 @@ function Sidebar() {
 	const [isNavbarVisible, setIsNavbarVisible] = useState(true)
 	const [lastScrollY, setLastScrollY] = useState(0)
 	const { openTutorial } = useTutorial()
+	const { isDark } = useTheme()
+	const planioLogoSrc = isDark ? '/img/star.png' : '/img/planio.png'
 	/** Dzwonek tylko w sidebarze na desktop (>1500px); na mobile wyłącznie obok hamburgera w pasku. */
 	const [isDesktopLayout, setIsDesktopLayout] = useState(
 		typeof window !== 'undefined' && window.innerWidth > 1500
@@ -232,7 +235,7 @@ function Sidebar() {
 		{!shouldHideMobileNav && (
 			<nav className={`navbar d-md-none mobile-navbar ${isNavbarVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
 					<Link to="/" className="navbar-brand">
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="mobile-logo" />
+						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="mobile-logo app-brand-logo" />
 					</Link>
 					<div className="mobile-navbar-actions">
 						{loggedIn && <NotificationBell variant="mobile" enabled />}
@@ -298,6 +301,13 @@ function Sidebar() {
 					</button>
 				)}
 				
+				{/* Mobile: przełącznik motywu — lewy górny róg menu */}
+				{loggedIn && !isDesktopLayout && (
+					<div className="sidebar-mobile-theme-slot">
+						<SidebarThemeButton />
+					</div>
+				)}
+
 				{/* Language Selector */}
 				<div className="language-selector">
 					{Object.keys(lngs).map(lng => (
@@ -320,13 +330,14 @@ function Sidebar() {
 
 				{/* Logo */}
 				<Link to="/" className="sidebar-logo">
-					<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" />
+					<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" className="app-brand-logo" />
 				</Link>
 
-				{/* Desktop: dzwonek między logo a mailem — równe odstępy (CSS) */}
+				{/* Desktop: dzwonek + motyw między logo a mailem */}
 				{loggedIn && isDesktopLayout && (
 					<div className="sidebar-bell-between-logo-and-user">
 						<NotificationBell variant="sidebar" enabled />
+						<SidebarThemeButton />
 					</div>
 				)}
 
@@ -477,7 +488,7 @@ function Sidebar() {
 						to="/ai-assistant"
 						className={({ isActive }) => `nav-link nav-link--ai ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon nav-icon--planio">
-							<img src="/img/planio.png" alt="" aria-hidden />
+							<img src={planioLogoSrc} alt="" aria-hidden />
 						</div>
 						<span className="nav-text">{t('sidebar.btnAssistant')}</span>
 					</NavLink>
@@ -615,7 +626,6 @@ function Sidebar() {
 
 				{/* Logout Button */}
 				<div className="sidebar-footer">
-					<SidebarThemeButton />
 					<button
 						onClick={handleLogoutClick}
 						className="logout-btn"

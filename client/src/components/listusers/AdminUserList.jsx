@@ -1942,6 +1942,7 @@ function AdminUserList() {
 		if (!totals) return null
 		return (
 			<div
+				className="evidence-team-summary"
 				style={{
 					marginTop: '4px',
 					padding: '14px 16px',
@@ -2227,7 +2228,7 @@ function AdminUserList() {
 								<h5 style={{ margin: '20px 0 10px 0', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
 									{t('planslist.teamMonthlyTableTitle')}
 								</h5>
-								<div style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }}>
+								<div className="evidence-team-table-wrap" style={{ overflowX: 'auto', border: '1px solid #e1e8ed', borderRadius: '8px', backgroundColor: '#fff' }}>
 									<table
 										style={{
 											width: '100%',
@@ -2345,6 +2346,7 @@ function AdminUserList() {
 									</div>
 								</div>
 								<div
+									className="evidence-team-table-wrap"
 									style={{
 										overflowX: 'auto',
 										border: '1px solid #e1e8ed',
@@ -2468,6 +2470,7 @@ function AdminUserList() {
 						)}
 						{(teamHasWorkActivities({ workActivities }) || (tasksModuleEnabled && filterableTasks.length > 0)) && (
 							<div
+								className="evidence-operational-panel"
 								style={{
 									marginTop: '14px',
 									padding: '14px',
@@ -2515,6 +2518,7 @@ function AdminUserList() {
 									{cards.map(card => (
 										<div
 											key={card.label}
+											className="evidence-operational-card"
 											style={{
 												padding: '12px',
 												border: '1px solid #dbe7f2',
@@ -2531,7 +2535,7 @@ function AdminUserList() {
 							)
 						})()}
 						{visibleTaskSummary.length > 0 && (
-							<div style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+							<div className="evidence-operational-panel" style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
 								<h5 style={{ margin: '0 0 10px', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
 									{t('workcalendar.tasks.summaryTitle')}
 									{selectedTaskIds.length > 0
@@ -2561,7 +2565,7 @@ function AdminUserList() {
 							</div>
 						)}
 						{visibleActivitySummary.length > 0 && (
-							<div style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+							<div className="evidence-operational-panel" style={{ marginTop: '24px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
 								<h5 style={{ margin: '0 0 10px', color: '#2c3e50', fontSize: '15px', fontWeight: 600 }}>
 									{t('workcalendar.activities.summaryTitle')}
 									{selectedActivityIds.length > 0
@@ -2601,6 +2605,8 @@ function AdminUserList() {
 						<Modal
 							isOpen={filterModalOpen}
 							onRequestClose={() => setFilterModalOpen(false)}
+							overlayClassName="all-leaveplans-filter-modal-overlay"
+							className="all-leaveplans-filter-modal"
 							style={{
 								overlay: {
 									display: 'flex',
@@ -2623,16 +2629,18 @@ function AdminUserList() {
 								},
 							}}
 							contentLabel={t('planslist.filter') || 'Filtrowanie'}>
-							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-								<h2 style={{ 
+							<div className="all-leaveplans-filter-modal__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+								<h2 className="all-leaveplans-filter-modal__title" style={{
 									margin: 0,
 									color: '#2c3e50',
 									fontSize: '24px',
-									fontWeight: '600'
+									fontWeight: '600',
 								}}>
 									{t('planslist.filter') || 'Filtrowanie'}
 								</h2>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__close"
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										background: 'transparent',
@@ -2646,31 +2654,20 @@ function AdminUserList() {
 										height: '30px',
 										display: 'flex',
 										alignItems: 'center',
-										justifyContent: 'center'
+										justifyContent: 'center',
 									}}
-									onMouseEnter={(e) => e.target.style.color = '#2c3e50'}
-									onMouseLeave={(e) => e.target.style.color = '#7f8c8d'}>
+									onMouseEnter={(e) => { e.target.style.color = '#2c3e50' }}
+									onMouseLeave={(e) => { e.target.style.color = '#7f8c8d' }}>
 									×
 								</button>
 							</div>
 
-							<div style={{ marginBottom: '20px' }}>
-								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+							<div className="all-leaveplans-filter-modal__section" style={{ marginBottom: '20px' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.calendarView') || 'Widok kalendarza'}
 								</h3>
-								<div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-									<label
-										style={{
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											padding: '8px 12px',
-											borderRadius: '6px',
-											backgroundColor: calendarView === 'single' ? '#ecfdf5' : '#f8f9fa',
-											border: '1px solid',
-											borderColor: calendarView === 'single' ? '#00a846' : '#e9ecef',
-										}}
-									>
+								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+									<label className="all-leaveplans-filter-modal__radio-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -2681,18 +2678,7 @@ function AdminUserList() {
 										/>
 										<span>{t('planslist.singleMonth') || 'Jeden miesiąc'}</span>
 									</label>
-									<label
-										style={{
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											padding: '8px 12px',
-											borderRadius: '6px',
-											backgroundColor: calendarView === 'all-months' ? '#ecfdf5' : '#f8f9fa',
-											border: '1px solid',
-											borderColor: calendarView === 'all-months' ? '#00a846' : '#e9ecef',
-										}}
-									>
+									<label className="all-leaveplans-filter-modal__radio-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e9ecef' }}>
 										<input
 											type="radio"
 											name="calendarView"
@@ -2722,13 +2708,25 @@ function AdminUserList() {
 							)}
 
 							{/* Filtrowanie użytkowników */}
-							<div style={{ marginBottom: '20px' }}>
-								<h3 style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
+							<div className="all-leaveplans-filter-modal__section" style={{ marginBottom: '20px' }}>
+								<h3 className="all-leaveplans-filter-modal__section-title" style={{ marginBottom: '15px', color: '#2c3e50', fontSize: '18px', fontWeight: '600' }}>
 									{t('planslist.filterUsers') || 'Filtrowanie użytkowników'}
 								</h3>
-								
-								{/* Opcja: Wszyscy z zespołu */}
-								<label style={{ display: 'flex', alignItems: 'center', marginBottom: '15px', cursor: 'pointer', padding: '10px', borderRadius: '6px', backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent', border: '1px solid', borderColor: showAllTeam ? '#00a846' : '#e9ecef' }}>
+
+								<label
+									className={`all-leaveplans-filter-modal__team-option ${showAllTeam ? 'is-active' : ''}`}
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										marginBottom: '15px',
+										cursor: 'pointer',
+										padding: '10px',
+										borderRadius: '6px',
+										backgroundColor: showAllTeam ? '#ecfdf5' : 'transparent',
+										border: '1px solid',
+										borderColor: showAllTeam ? '#00a846' : '#e9ecef',
+									}}
+								>
 									<input
 										type="radio"
 										name="userFilter"
@@ -2743,20 +2741,19 @@ function AdminUserList() {
 									</span>
 								</label>
 
-								{/* Filtrowanie po działach */}
 								<div style={{ marginTop: '20px' }}>
-									<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+									<h4 className="all-leaveplans-filter-modal__subsection-title" style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 										{t('planslist.filterByDepartments') || 'Filtrowanie po działach'}
 									</h4>
 									{filterableDepartments.length > 0 ? (
-										<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+										<div className="all-leaveplans-filter-modal__scroll-list" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
 											{filterableDepartments.map(dept => {
 												const deptName = typeof dept === 'object' ? dept.name : dept
 												const deptKey = typeof dept === 'object' ? (dept._id || dept.name) : dept
-												
+
 												return (
 													<div key={deptKey} style={{ marginBottom: '10px' }}>
-														<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+														<label className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
 															<input
 																type="checkbox"
 																checked={selectedDepartments.includes(deptName)}
@@ -2769,11 +2766,12 @@ function AdminUserList() {
 															{selectedDepartments.includes(deptName) && (
 																<button
 																	type="button"
+																	className="all-leaveplans-filter-modal__expand-btn"
 																	onClick={(e) => {
 																		e.stopPropagation()
 																		setExpandedDepartments(prev => ({
 																			...prev,
-																			[deptName]: !prev[deptName]
+																			[deptName]: !prev[deptName],
 																		}))
 																	}}
 																	style={{
@@ -2783,7 +2781,7 @@ function AdminUserList() {
 																		border: '1px solid #bdc3c7',
 																		borderRadius: '4px',
 																		backgroundColor: 'white',
-																		cursor: 'pointer'
+																		cursor: 'pointer',
 																	}}
 																>
 																	{expandedDepartments[deptName] ? '▼' : '▶'} {t('planslist.selectUsers') || 'Wybierz użytkowników'}
@@ -2791,11 +2789,11 @@ function AdminUserList() {
 															)}
 														</label>
 														{expandedDepartments[deptName] && selectedDepartments.includes(deptName) && (
-															<div style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
+															<div className="all-leaveplans-filter-modal__nested-users" style={{ marginLeft: '25px', marginTop: '8px', paddingLeft: '15px', borderLeft: '2px solid #00a846' }}>
 																{usersFromSelectedDepartments
 																	.filter(user => user.department && user.department.includes(deptName))
 																	.map(user => (
-																		<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', cursor: 'pointer' }}>
+																		<label key={user._id} className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', cursor: 'pointer' }}>
 																			<input
 																				type="checkbox"
 																				checked={selectedUserIds.includes(user._id)}
@@ -2814,22 +2812,21 @@ function AdminUserList() {
 											})}
 										</div>
 									) : (
-										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+										<p className="all-leaveplans-filter-modal__empty" style={{ color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noDepartments') || 'Brak działów'}
 										</p>
 									)}
 								</div>
 							</div>
 
-							{/* Filtrowanie po użytkownikach */}
-							<div style={{ marginBottom: '30px' }}>
-								<h4 style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
+							<div className="all-leaveplans-filter-modal__section" style={{ marginBottom: '30px' }}>
+								<h4 className="all-leaveplans-filter-modal__subsection-title" style={{ marginBottom: '10px', color: '#34495e', fontSize: '16px', fontWeight: '500' }}>
 									{t('planslist.filterByUsers') || 'Filtrowanie po użytkownikach'}
 								</h4>
-								<div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
+								<div className="all-leaveplans-filter-modal__scroll-list" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #e9ecef', borderRadius: '6px', padding: '10px' }}>
 									{users.length > 0 ? (
 										users.map(user => (
-											<label key={user._id} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
+											<label key={user._id} className="all-leaveplans-filter-modal__check-label" style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' }}>
 												<input
 													type="checkbox"
 													checked={selectedUserIds.includes(user._id)}
@@ -2842,16 +2839,17 @@ function AdminUserList() {
 											</label>
 										))
 									) : (
-										<p style={{ color: '#7f8c8d', fontSize: '14px' }}>
+										<p className="all-leaveplans-filter-modal__empty" style={{ color: '#7f8c8d', fontSize: '14px' }}>
 											{t('planslist.noUsers') || 'Brak użytkowników'}
 										</p>
 									)}
 								</div>
 							</div>
 
-							{/* Przyciski akcji */}
-							<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', gap: '10px' }}>
+							<div className="all-leaveplans-filter-modal__footer" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', gap: '10px' }}>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__btn-reset"
 									onClick={handleResetFilters}
 									style={{
 										padding: '10px 20px',
@@ -2862,13 +2860,15 @@ function AdminUserList() {
 										cursor: 'pointer',
 										fontSize: '14px',
 										fontWeight: '500',
-										transition: 'background-color 0.2s'
+										transition: 'background-color 0.2s',
 									}}
-									onMouseEnter={(e) => e.target.style.backgroundColor = '#7f8c8d'}
-									onMouseLeave={(e) => e.target.style.backgroundColor = '#95a5a6'}>
+									onMouseEnter={(e) => { e.target.style.backgroundColor = '#7f8c8d' }}
+									onMouseLeave={(e) => { e.target.style.backgroundColor = '#95a5a6' }}>
 									{t('planslist.resetFilters') || 'Resetuj filtry'}
 								</button>
 								<button
+									type="button"
+									className="all-leaveplans-filter-modal__btn-apply"
 									onClick={() => setFilterModalOpen(false)}
 									style={{
 										padding: '10px 20px',
@@ -2879,10 +2879,10 @@ function AdminUserList() {
 										cursor: 'pointer',
 										fontSize: '14px',
 										fontWeight: '500',
-										transition: 'background-color 0.2s'
+										transition: 'background-color 0.2s',
 									}}
-									onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-									onMouseLeave={(e) => e.target.style.backgroundColor = '#00a846'}>
+									onMouseEnter={(e) => { e.target.style.backgroundColor = '#2980b9' }}
+									onMouseLeave={(e) => { e.target.style.backgroundColor = '#00a846' }}>
 									{t('planslist.apply') || t('boards.cancel') || 'Zastosuj'}
 								</button>
 							</div>

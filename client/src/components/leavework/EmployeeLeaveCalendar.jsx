@@ -136,7 +136,7 @@ function EmployeeLeaveCalendar() {
 
 	const renderMonths = () => {
 	return Array.from({ length: 12 }, (_, month) => (
-		<div key={month} className="month-calendar allleaveplans" style={{ margin: '10px', border: '1px solid #ddd' }}>
+		<div key={month} className="month-calendar allleaveplans leave-employee-plan__month-wrap" style={{ margin: '10px', border: '1px solid #ddd' }}>
 			<FullCalendar
 				plugins={[dayGridPlugin]}
 				initialView="dayGridMonth"
@@ -215,14 +215,15 @@ function EmployeeLeaveCalendar() {
 
 				{/* Sekcja zaakceptowanych wniosków */}
 				{acceptedLeaveRequests.length > 0 && (
-					<div style={{ padding: '0 20px 20px 20px' }}>
-						<h4 style={{ color: 'green', marginBottom: '15px', fontSize: '18px' }}>
+					<div className="leave-employee-plan__accepted-section" style={{ padding: '0 20px 20px 20px' }}>
+						<h4 className="leave-employee-plan__accepted-heading" style={{ color: 'green', marginBottom: '15px', fontSize: '18px' }}>
 							{t('leaveplanner.acceptedRequests')}
 						</h4>
 						<div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
 							{acceptedLeaveRequests.map(request => (
 								<div
 									key={request._id}
+									className="leave-planner-request-card is-accepted leave-employee-plan__request-card"
 									style={{
 										padding: '10px 15px',
 										border: '2px solid #4ade80',
@@ -231,13 +232,13 @@ function EmployeeLeaveCalendar() {
 										minWidth: '250px',
 										boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
 									}}>
-									<div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#059669' }}>
+									<div className="leave-planner-request-card__title" style={{ fontWeight: 'bold', marginBottom: '8px', color: '#059669' }}>
 										{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 									</div>
-									<div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
+									<div className="leave-planner-request-card__dates" style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>
 										{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
 									</div>
-									<div style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
+									<div className="leave-planner-request-card__duration is-accepted" style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
 										{settings?.leaveCalculationMode === 'hours' 
 											? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
 											: `${request.daysRequested} ${t('leaveplanner.days')}`

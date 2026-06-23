@@ -1,6 +1,6 @@
 /**
- * PDF branding — czerwień kojarząca się z dokumentem PDF (Adobe-style).
- * Celowo inna niż danger/logout (#dc3545, #ef4444, #dc2626).
+ * PDF_BRAND — tylko przyciski eksportu PDF w UI (czerwień kojarząca się z PDF).
+ * Treść raportów: PDF_REPORT_THEME (granat + zielony Planopia).
  */
 export const PDF_BRAND = {
 	primary: '#D62828',
@@ -9,16 +9,16 @@ export const PDF_BRAND = {
 
 /** Kolory treści raportów pdfmake (nagłówki, wykresy, tabele). */
 export const PDF_REPORT_THEME = {
-	navy: '#6E1D19',
-	brand: PDF_BRAND.primary,
-	blue: PDF_BRAND.primary,
-	cyan: PDF_BRAND.primary,
-	headerEyebrow: '#FECACA',
-	headerSubtitle: '#FEE2E2',
-	soft: '#FFF7F7',
-	softRow: '#FFF7F7',
-	barTrack: '#F5E0E0',
-	line: '#F0DEDE',
+	navy: '#213555',
+	brand: '#00a846',
+	blue: '#213555',
+	cyan: '#059669',
+	headerEyebrow: '#A8B8CC',
+	headerSubtitle: '#CBD5E1',
+	soft: '#F4F7FA',
+	softRow: '#F4F7FA',
+	barTrack: '#E2E8F0',
+	line: '#E2E8F0',
 	ink: '#0f2746',
 	muted: '#64748b',
 	white: '#ffffff',
@@ -27,3 +27,4 @@ export const PDF_REPORT_THEME = {
 	purple: '#7c3aed',
 	red: '#991b1b',
 }
+

@@ -10,6 +10,8 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 		<Modal
 			isOpen={isOpen}
 			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal users-info-modal board-create-board-modal"
 			style={{
 				overlay: {
 					display: 'flex',
@@ -72,6 +74,7 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 					{users.map((user, index) => (
 						<div
 							key={user._id || index}
+							className="users-info-modal__user-row"
 							style={{
 								padding: '15px',
 								borderBottom: index < users.length - 1 ? '1px solid #e9ecef' : 'none',
@@ -80,7 +83,9 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 							}}
 							onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e9ecef'}
 							onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa'}>
-							<div style={{ 
+							<div
+								className="users-info-modal__user-name"
+								style={{ 
 								fontWeight: '600', 
 								color: '#2c3e50',
 								marginBottom: '5px',
@@ -89,7 +94,9 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 								{user.firstName} {user.lastName}
 							</div>
 							{user.username && (
-								<div style={{ 
+								<div
+									className="users-info-modal__user-meta"
+									style={{ 
 									fontSize: '14px', 
 									color: '#7f8c8d',
 									marginBottom: user.position ? '3px' : '0'
@@ -98,7 +105,9 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 								</div>
 							)}
 							{user.position && (
-								<div style={{ 
+								<div
+									className="users-info-modal__user-meta"
+									style={{ 
 									fontSize: '14px', 
 									color: '#95a5a6',
 									fontStyle: 'italic'
@@ -121,6 +130,7 @@ function UsersInfoModal({ isOpen, onClose, users, isLoading, title }) {
 
 			<div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
 				<button
+					className="board-modal__btn board-modal__btn--primary"
 					onClick={onClose}
 					style={{
 						padding: '10px 20px',

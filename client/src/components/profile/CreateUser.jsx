@@ -193,7 +193,7 @@ function CreateUser() {
         return (
             <>
                 <Sidebar />
-                <div className="container my-5 d-flex justify-content-center align-items-center newboxuser">
+                <div className="container my-5 d-flex justify-content-center align-items-center newboxuser create-user-page">
                     <div className="card-body editformbox" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', maxWidth: '720px' }}>
                         <h4>Dodawanie pracowników jest wyłączone</h4>
                         <p style={{ color: '#6c757d', margin: 0 }}>Administrator może włączyć dodawanie pracowników bez dostępu w ustawieniach zespołu.</p>
@@ -206,7 +206,7 @@ function CreateUser() {
     return (
         <>
             <Sidebar />
-            <div className="container my-5 d-flex justify-content-center align-items-center newboxuser">
+            <div className="container my-5 d-flex justify-content-center align-items-center newboxuser create-user-page">
                 <div className="row justify-content-start">
                     <div className="col-md-8">
                         <div>
@@ -221,7 +221,7 @@ function CreateUser() {
                                 marginTop: '20px'
                             }}>
                                 {teamInfo && (
-                                    <div className={`mb-4 p-3 rounded-md ${teamInfo.canAddUser ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} padds`} style={{ padding: '10px' }}>
+                                    <div className={`create-user-team-info mb-4 p-3 rounded-md padds ${teamInfo.canAddUser ? 'is-ok bg-green-50 border border-green-200' : 'is-full bg-red-50 border border-red-200'}`} style={{ padding: '10px' }}>
                                         <h6 className="font-semibold mb-2">{t('newuser.teamInfoTitle')}</h6>
                                         <p className="text-sm mb-1">
                                             <strong>{t('newuser.userLimit')}</strong> {teamInfo.currentCount} / {teamInfo.maxUsers}
@@ -239,7 +239,7 @@ function CreateUser() {
                                 <form onSubmit={handleSubmit} className="max-w-2xl space-y-6" id="addusers">
                                     
                                     {(isAdminRole || isHRRole) && managedUsersEnabled && (
-                                        <div style={{ backgroundColor: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                                        <div className="create-user-managed-option" style={{ backgroundColor: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
                                             <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', margin: 0 }}>
                                                 <input
                                                     type="checkbox"
@@ -251,8 +251,8 @@ function CreateUser() {
                                                     style={{ marginTop: '4px' }}
                                                 />
 												<span>
-													<strong>{t('newuser.managedNoAccessTitle')}</strong>
-													<span style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
+													<strong className="create-user-managed-option__title">{t('newuser.managedNoAccessTitle')}</strong>
+													<span className="create-user-managed-option__desc" style={{ display: 'block', color: '#6c757d', fontSize: '13px' }}>
 														{t('newuser.managedNoAccessDescription')}
 													</span>
 												</span>
@@ -344,7 +344,7 @@ function CreateUser() {
                                                             key={dep}
                                                             role="button"
                                                             tabIndex={0}
-                                                            className={`border px-3 py-1 rounded-md cursor-pointer text-sm select-none ${selectedDepartments.includes(dep) ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-800'}`}
+                                                            className={`create-user-chip border px-3 py-1 rounded-md cursor-pointer text-sm select-none ${selectedDepartments.includes(dep) ? 'is-selected bg-blue-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-800'}`}
                                                             onClick={() => handleDepartmentToggle(dep)}
                                                             onKeyDown={(e) => {
                                                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -404,7 +404,7 @@ function CreateUser() {
                                             {availableRoles.map(role => (
                                                 <div
                                                     key={role}
-                                                    className={`border px-3 py-1 rounded-md cursor-pointer text-sm ${selectedRoles.includes(role) ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-800'}`}
+                                                    className={`create-user-chip border px-3 py-1 rounded-md cursor-pointer text-sm ${selectedRoles.includes(role) ? 'is-selected bg-blue-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-800'}`}
                                                     onClick={() => handleRoleClick(role)}
                                                 >{role}</div>
                                             ))}

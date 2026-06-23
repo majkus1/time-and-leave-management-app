@@ -53,7 +53,7 @@ export default function TeamAccessNoticePage() {
 			</Helmet>
 			<div className="team-access-notice__card">
 				<img
-					className="team-access-notice__logo"
+					className="team-access-notice__logo app-brand-logo"
 					src="/img/new-logoplanopia.png"
 					alt="Planopia"
 				/>

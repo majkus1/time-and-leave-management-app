@@ -70,6 +70,8 @@ function SupervisorConfigModal({ isOpen, onClose, supervisorId }) {
 		<Modal
 			isOpen={isOpen}
 			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal"
 			style={{
 				overlay: {
 					display: 'flex',

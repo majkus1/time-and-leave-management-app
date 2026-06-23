@@ -103,6 +103,7 @@ function BoardList() {
 					{boards.map((board) => (
 						<div
 							key={board._id}
+							className="board-list-card"
 							style={{
 								backgroundColor: 'white',
 								borderRadius: '12px',
@@ -117,7 +118,9 @@ function BoardList() {
 							<Link
 								to={`/boards/${board._id}`}
 								style={{ textDecoration: 'none', color: 'inherit' }}>
-								<h3 style={{ 
+								<h3
+									className="board-list-card__title"
+									style={{ 
 									color: '#2c3e50', 
 									marginBottom: '10px',
 									fontSize: '20px',
@@ -136,7 +139,9 @@ function BoardList() {
 									)}
 								</h3>
 								{board.description && (
-									<p style={{ 
+									<p
+										className="board-list-card__desc"
+										style={{ 
 										color: '#7f8c8d', 
 										fontSize: '16px',
 										marginBottom: '10px'
@@ -144,7 +149,9 @@ function BoardList() {
 										{board.description}
 									</p>
 								)}
-								<div style={{ 
+								<div
+									className="board-list-card__type"
+									style={{ 
 									fontSize: '12px', 
 									color: '#95a5a6',
 									marginTop: '10px'
@@ -163,6 +170,7 @@ function BoardList() {
 								alignItems: 'center'
 							}}>
 								<button
+									className="board-list-card__info-btn"
 									onClick={(e) => {
 										e.preventDefault()
 										e.stopPropagation()

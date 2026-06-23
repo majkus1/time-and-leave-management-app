@@ -793,7 +793,7 @@
 	margin-bottom: 20px;
 }
 
-.form-group label {
+.form-group > label {
 	display: block;
 	margin-bottom: 8px;
 	font-weight: 600;
@@ -830,10 +830,13 @@
 .member-checkbox {
 	display: flex;
 	align-items: center;
+	gap: 12px;
 	padding: 8px;
 	cursor: pointer;
 	border-radius: 4px;
 	transition: background-color 0.2s;
+	margin-bottom: 0;
+	font-weight: 400;
 }
 
 .member-checkbox:hover {
@@ -844,7 +847,7 @@
 	width: 1.25rem;
 	height: 1.25rem;
 	min-width: 1.25rem;
-	margin-right: 10px;
+	margin: 0;
 	cursor: pointer;
 	flex-shrink: 0;
 }
@@ -852,6 +855,7 @@
 .member-checkbox span {
 	font-size: 16px;
 	color: #2c3e50;
+	padding-left: 2px;
 }
 
 .modal-footer {

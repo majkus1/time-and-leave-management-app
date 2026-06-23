@@ -183,9 +183,9 @@ function Announcements() {
 		<>
 			<Sidebar />
 			<div className="container-fluid p-0">
-				<div className="board-list" style={{ maxWidth: '900px', padding: '15px' }}>
-					<div style={{ marginBottom: '30px' }}>
-						<h2 style={{ color: '#2c3e50', marginBottom: '20px', fontSize: '28px', fontWeight: '600' }}>
+				<div className="board-list announcements-page" style={{ maxWidth: '900px', padding: '15px' }}>
+					<div className="announcements-page__header" style={{ marginBottom: '30px' }}>
+						<h2 className="announcements-page__title" style={{ color: '#2c3e50', marginBottom: '20px', fontSize: '28px', fontWeight: '600' }}>
 							<img src="/img/announcement.png" alt="Announcements" />{' '}
 							{t('announcements.title') || 'Komunikaty'}
 						</h2>
@@ -194,6 +194,7 @@ function Announcements() {
 
 					{canCreateAnnouncements && (
 					<div
+						className="announcements-card announcements-card--form"
 						style={{
 							backgroundColor: 'white',
 							borderRadius: '12px',
@@ -211,11 +212,12 @@ function Announcements() {
 								flexWrap: 'wrap',
 							}}
 						>
-							<h3 style={{ marginBottom: 0, color: '#2c3e50' }}>
+							<h3 className="announcements-card__heading" style={{ marginBottom: 0, color: '#2c3e50' }}>
 								{t('announcements.newAnnouncement') || 'Nowy komunikat'}
 							</h3>
 							<button
 								type="button"
+								className={`announcements-form__toggle${isCreateFormVisible ? ' announcements-form__toggle--close' : ''}`}
 								onClick={() => {
 									if (isCreateFormVisible) {
 										resetForm()
@@ -240,10 +242,11 @@ function Announcements() {
 						</div>
 
 						{isCreateFormVisible && (
-							<form onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
+							<form className="announcements-form" onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
 							<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
 								<input
 									type="text"
+									className="announcements-form__input"
 									value={title}
 									onChange={(e) => setTitle(e.target.value)}
 									placeholder={t('announcements.titlePlaceholder') || 'Tytuł komunikatu'}
@@ -255,6 +258,7 @@ function Announcements() {
 									}}
 								/>
 								<textarea
+									className="announcements-form__textarea"
 									value={content}
 									onChange={(e) => setContent(e.target.value)}
 									placeholder={t('announcements.contentPlaceholder') || 'Opis komunikatu'}
@@ -269,12 +273,12 @@ function Announcements() {
 								/>
 							</div>
 
-							<div style={{ marginTop: '16px' }}>
-								<label style={{ fontWeight: 600, color: '#2c3e50' }}>
+							<div className="announcements-form__recipients" style={{ marginTop: '16px' }}>
+								<label className="announcements-form__label" style={{ fontWeight: 600, color: '#2c3e50' }}>
 									{t('announcements.recipients') || 'Odbiorcy'}
 								</label>
-								<div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '8px' }}>
-									<label>
+								<div className="announcements-form__radio-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '8px' }}>
+									<label className="announcements-form__radio">
 										<input
 											type="radio"
 											name="targetScope"
@@ -284,7 +288,7 @@ function Announcements() {
 										/>{' '}
 										{t('announcements.targetAll') || 'Wszyscy'}
 									</label>
-									<label>
+									<label className="announcements-form__radio">
 										<input
 											type="radio"
 											name="targetScope"
@@ -294,7 +298,7 @@ function Announcements() {
 										/>{' '}
 										{t('announcements.targetDepartment') || 'Dział'}
 									</label>
-									<label>
+									<label className="announcements-form__radio">
 										<input
 											type="radio"
 											name="targetScope"
@@ -310,6 +314,7 @@ function Announcements() {
 							{targetScope === 'department' && (
 								<div style={{ marginTop: '12px' }}>
 									<select
+										className="announcements-form__select"
 										value={targetDepartment}
 										onChange={(e) => setTargetDepartment(e.target.value)}
 										style={{
@@ -331,6 +336,7 @@ function Announcements() {
 
 							{targetScope === 'users' && (
 								<div
+									className="announcements-form__members-list"
 									style={{
 										marginTop: '12px',
 										padding: '12px',
@@ -345,13 +351,13 @@ function Announcements() {
 										const fullName =
 											`${member.firstName || ''} ${member.lastName || ''}`.trim() || member.username
 										return (
-											<label key={member._id} style={{ display: 'block', marginBottom: '8px' }}>
+											<label key={member._id} className="announcements-form__member">
 												<input
 													type="checkbox"
 													checked={targetUsers.includes(member._id)}
 													onChange={() => toggleUser(member._id)}
-												/>{' '}
-												{fullName}
+												/>
+												<span>{fullName}</span>
 											</label>
 										)
 									})}
@@ -360,6 +366,7 @@ function Announcements() {
 
 							<div style={{ marginTop: '12px' }}>
 								<label
+									className="announcements-form__attach"
 									style={{
 										display: 'inline-flex',
 										alignItems: 'center',
@@ -378,6 +385,7 @@ function Announcements() {
 										{attachments.map((file, index) => (
 											<div
 												key={`${file.name}-${index}`}
+												className="announcements-form__attachment-chip"
 												style={{
 													display: 'inline-flex',
 													alignItems: 'center',
@@ -408,6 +416,7 @@ function Announcements() {
 
 							<button
 								type="submit"
+								className="announcements-form__submit"
 								disabled={createAnnouncementMutation.isPending}
 								style={{
 									marginTop: '16px',
@@ -430,7 +439,7 @@ function Announcements() {
 					</div>
 					)}
 
-					<div style={{ display: 'grid', gap: '16px' }}>
+					<div className="announcements-list" style={{ display: 'grid', gap: '16px' }}>
 						{announcements.map((announcement) => {
 							const creatorName =
 								`${announcement?.createdBy?.firstName || ''} ${announcement?.createdBy?.lastName || ''}`.trim() ||
@@ -442,6 +451,7 @@ function Announcements() {
 							return (
 								<div
 									key={announcement._id}
+									className="announcements-card announcements-item"
 									style={{
 										backgroundColor: 'white',
 										borderRadius: '12px',
@@ -450,22 +460,23 @@ function Announcements() {
 									}}
 								>
 									<div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-										<h4 style={{ margin: 0, color: '#1f2937', overflowWrap: 'anywhere' }}>{announcement.title}</h4>
-										<span style={{ color: '#64748b', fontSize: '13px' }}>
+										<h4 className="announcements-item__title" style={{ margin: 0, color: '#1f2937', overflowWrap: 'anywhere' }}>{announcement.title}</h4>
+										<span className="announcements-item__date" style={{ color: '#64748b', fontSize: '13px' }}>
 											{formatDateTime(announcement.createdAt, i18n.resolvedLanguage)}
 										</span>
 									</div>
-									<div style={{ marginTop: '8px', color: '#475569', whiteSpace: 'pre-wrap' }}>{announcement.content}</div>
-									<div style={{ marginTop: '10px', fontSize: '13px', color: '#475569' }}>
+									<div className="announcements-item__content" style={{ marginTop: '8px', color: '#475569', whiteSpace: 'pre-wrap' }}>{announcement.content}</div>
+									<div className="announcements-item__meta" style={{ marginTop: '10px', fontSize: '13px', color: '#475569' }}>
 										<strong>{t('announcements.createdBy') || 'Autor'}:</strong> {creatorName}
 									</div>
-									<div style={{ marginTop: '4px', fontSize: '13px', color: '#475569' }}>
+									<div className="announcements-item__meta" style={{ marginTop: '4px', fontSize: '13px', color: '#475569' }}>
 										<strong>{t('announcements.recipients') || 'Odbiorcy'}:</strong> {getAudienceLabel(announcement)}
 									</div>
 									{(canDeleteAnyAnnouncement || isAuthor) && (
 										<div style={{ marginTop: '10px' }}>
 											<button
 												type="button"
+												className="announcements-item__delete"
 												onClick={() => handleDeleteAnnouncement(announcement._id)}
 												disabled={isDeletingThisAnnouncement}
 												style={{
@@ -486,14 +497,15 @@ function Announcements() {
 										</div>
 									)}
 									{Array.isArray(announcement.attachments) && announcement.attachments.length > 0 && (
-										<div style={{ marginTop: '10px' }}>
-											<div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '6px' }}>
+										<div className="announcements-item__attachments" style={{ marginTop: '10px' }}>
+											<div className="announcements-item__attachments-title" style={{ fontWeight: 600, fontSize: '13px', marginBottom: '6px' }}>
 												{t('announcements.attachments') || 'Załączniki'}
 											</div>
 											<div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
 												{announcement.attachments.map((file, index) => (
 													<a
 														key={`${file.path}-${index}`}
+														className="announcements-item__attachment-link"
 														href={`${API_URL}/uploads/${file.path}`}
 														target="_blank"
 														rel="noreferrer"
@@ -512,6 +524,7 @@ function Announcements() {
 
 					{announcements.length === 0 && (
 						<div
+							className="announcements-empty"
 							style={{
 								marginTop: '20px',
 								textAlign: 'center',

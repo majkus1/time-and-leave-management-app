@@ -164,7 +164,7 @@ function AdminLeaveRequests() {
 				</div>
 
 				{leaveTypesWithLimit.length > 0 && (
-					<div style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '450px' }}>
+					<div className="admin-leave-days-card" style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '450px' }}>
 						<div className="leave-days-limit-header">
 							<span>{t('adminleavereq.label1') || 'Dni urlopu'}</span>
 							<button
@@ -222,7 +222,7 @@ function AdminLeaveRequests() {
 						activeStatusCount={activeStatusFilterCount}
 					/>
 					{leaveRequests.length === 0 && (
-						<div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', color: '#6b7280', backgroundColor: '#fff' }}>
+						<div className="leave-request-period-empty" style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', color: '#6b7280', backgroundColor: '#fff' }}>
 							{t('adminleavereq.none') || 'Brak danych'}
 						</div>
 					)}
@@ -234,7 +234,7 @@ function AdminLeaveRequests() {
 					{filteredLeaveRequests.map(request => (
 						<div key={request._id} className={`leave-request-card ${statusLabels[request.status] || 'status-unknown'}`}>
 							<div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-								<strong style={{ fontSize: '16px' }}>
+								<strong className="leave-request-card__title" style={{ fontSize: '16px' }}>
 									{getLeaveRequestTypeName(settings, request.type, t, i18n.resolvedLanguage)}
 								</strong>
 								<div className="leave-request-status-desktop" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -242,7 +242,7 @@ function AdminLeaveRequests() {
 										{t(`leaveform.statuses.${request.status.split('.')[1]}`) || request.status}
 									</span>
 									{request.updatedBy && (
-										<span style={{ fontSize: '13px', color: '#6b7280' }}>
+										<span className="leave-request-card__meta" style={{ fontSize: '13px', color: '#6b7280' }}>
 											{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 										</span>
 									)}
@@ -272,12 +272,12 @@ function AdminLeaveRequests() {
 									</span>
 								</p>
 								{request.updatedBy && (
-									<p className="leave-request-updated-by-mobile" style={{ margin: 0, color: '#6b7280' }}>
+									<p className="leave-request-updated-by-mobile leave-request-card__meta" style={{ margin: 0, color: '#6b7280' }}>
 										{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 									</p>
 								)}
 								{request.submittedBy && (
-									<p style={{ margin: 0, color: '#6b7280' }}>
+									<p className="leave-request-card__meta" style={{ margin: 0, color: '#6b7280' }}>
 										Zgłoszono przez: {formatPersonName(request.submittedBy)}
 									</p>
 								)}

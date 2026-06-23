@@ -30,6 +30,7 @@ function minutesAgo(iso) {
 function StatCard({ label, value, sub }) {
 	return (
 		<div
+			className="super-admin-stat-card"
 			style={{
 				background: '#fff',
 				border: '1px solid #e5e7eb',
@@ -48,7 +49,7 @@ function StatCard({ label, value, sub }) {
 
 function DataTable({ columns, rows, empty }) {
 	return (
-		<div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: '10px', background: '#fff' }}>
+		<div className="super-admin-data-table" style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: '10px', background: '#fff' }}>
 			<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
 				<thead>
 					<tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
@@ -169,6 +170,7 @@ export default function SuperAdminActivityPanel() {
 
 	return (
 		<section
+			className="super-admin-activity-panel"
 			style={{
 				marginTop: '3rem',
 				paddingTop: '2rem',

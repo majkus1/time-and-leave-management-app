@@ -341,9 +341,11 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 		
 		return (
 			<Modal
-				isOpen={true}
-				onRequestClose={onClose}
-				style={{
+			isOpen={true}
+			onRequestClose={onClose}
+			overlayClassName="board-modal-overlay"
+			className="board-modal board-task-detail-modal"
+			style={{
 					overlay: {
 						display: 'flex',
 						justifyContent: 'center',
@@ -364,7 +366,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						backgroundColor: '#f8fafc',
 					},
 				}}>
-				<div style={{ ...sectionCardStyle, marginBottom: '16px' }}>
+				<div className="board-modal__section-card" style={{ ...sectionCardStyle, marginBottom: '16px' }}>
 					{isEditing ? (
 						<>
 							<input
@@ -427,7 +429,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								<span>{t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy'}</span>
 							</label>
 							{!editAssignToAll && (
-								<div style={{
+								<div
+									className="board-modal__members-list"
+									style={{
 									border: '1px solid #e1e8ed',
 									borderRadius: '6px',
 									maxHeight: '150px',
@@ -553,6 +557,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 							</div>
 							<div style={{ display: 'flex', gap: '10px' }}>
 								<button
+									className="board-modal__btn board-modal__btn--primary"
 									onClick={handleSaveEdit}
 									style={{
 										padding: '8px 16px',
@@ -565,6 +570,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									{t('boards.save') || 'Zapisz'}
 								</button>
 								<button
+									className="board-modal__btn board-modal__btn--secondary"
 									onClick={() => {
 										setIsEditing(false)
 										setEditTitle(currentTask.title)
@@ -646,7 +652,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								</p>
 							)}
 							{scheduleSummaryText(currentTask, t) && (
-								<div style={{ color: '#34495e', fontSize: '15px', marginBottom: '12px', fontWeight: 500 }}>
+								<div className="task-card__schedule" style={{ color: '#34495e', fontSize: '15px', marginBottom: '12px', fontWeight: 500 }}>
 									📅 {scheduleSummaryText(currentTask, t)}
 								</div>
 							)}
@@ -698,7 +704,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								</div>
 							)}
 							<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
-								<span style={{
+								<span
+									className={`board-priority-badge board-priority-badge--${priorityKey}`}
+									style={{
 									display: 'inline-block',
 									padding: '4px 10px',
 									borderRadius: '999px',
@@ -718,7 +726,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 				</div>
 
 				{/* Status selector */}
-				<div style={sectionCardStyle}>
+				<div className="board-modal__section-card" style={sectionCardStyle}>
 					<label style={{ 
 						display: 'block',
 						marginBottom: '8px',
@@ -748,7 +756,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 				</div>
 
 				{/* Attachments */}
-				<div style={sectionCardStyle}>
+				<div className="board-modal__section-card" style={sectionCardStyle}>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
 						<h4 style={{ margin: 0, color: '#2c3e50' }}>
 							{t('boards.attachments') || 'Załączniki'}
@@ -799,6 +807,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						currentTask.attachments.map((attachment, index) => (
 							<div
 								key={index}
+								className="board-modal__attachment-row"
 								style={{
 									display: 'flex',
 									justifyContent: 'space-between',
@@ -862,7 +871,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 				</div>
 
 				{/* Comments */}
-				<div style={{ ...sectionCardStyle, marginTop: '8px', marginBottom: 0 }}>
+				<div className="board-modal__section-card" style={{ ...sectionCardStyle, marginTop: '8px', marginBottom: 0 }}>
 					<h4 style={{ marginBottom: '15px', color: '#2c3e50', paddingBottom: '10px', borderBottom: '1px solid #e5e7eb' }}>
 						{t('boards.comments') || 'Komentarze'}
 					</h4>
@@ -871,6 +880,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						{comments.map((comment) => (
 							<div
 								key={comment._id}
+								className="board-modal__comment-item"
 								style={{
 									padding: '12px',
 									backgroundColor: '#ffffff',
@@ -1057,6 +1067,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 	return (
 		<div
 			ref={setNodeRef}
+			className="task-card"
 			style={{
 				...style,
 				backgroundColor: 'white',
@@ -1139,7 +1150,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					</p>
 				)}
 				{scheduleLine && (
-					<div style={{ fontSize: '12px', color: '#2980b9', marginBottom: '6px', fontWeight: 600 }}>
+					<div className="task-card__schedule" style={{ fontSize: '12px', color: '#2980b9', marginBottom: '6px', fontWeight: 600 }}>
 						📅 {scheduleLine}
 					</div>
 				)}
@@ -1153,7 +1164,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 					</div>
 				)}
 				<div style={{ marginTop: '8px' }}>
-					<span style={{
+					<span
+						className={`board-priority-badge board-priority-badge--${priorityKey}`}
+						style={{
 						display: 'inline-block',
 						padding: '3px 8px',
 						borderRadius: '999px',

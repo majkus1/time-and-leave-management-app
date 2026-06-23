@@ -1299,3 +1299,94 @@
 		padding: 0.3rem 0.55rem;
 	}
 }
+
+/* =============================================================================
+   Dark mode — structural colors (text overrides live in theme.css)
+   ============================================================================= */
+
+[data-theme='dark'] .ai-assistant-shell {
+	background: var(--po-surface);
+	border-color: var(--po-border);
+	box-shadow: 0 12px 40px var(--po-shadow);
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-header__title {
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-header__intro-details {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-header__intro-summary {
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-header__intro-panel,
+[data-theme='dark'] .ai-assistant-header__intro-list li,
+[data-theme='dark'] .ai-assistant-header__intro-list-text,
+[data-theme='dark'] .ai-assistant-header__intro-legal {
+	color: var(--po-text-secondary);
+}
+
+[data-theme='dark'] .ai-assistant-header__intro-privacy {
+	background: var(--po-surface-hover);
+	border-color: var(--po-border);
+	color: var(--po-text-secondary);
+}
+
+[data-theme='dark'] .ai-assistant-period {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-msg--assistant {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-md {
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-md strong {
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-monthly-killer__hint {
+	color: var(--po-text-muted);
+}
+
+[data-theme='dark'] .ai-assistant-composer__privacy,
+[data-theme='dark'] .ai-assistant-meta {
+	color: var(--po-text-muted);
+}
+
+[data-theme='dark'] .ai-assistant-composer__input {
+	background: var(--po-input-bg);
+	color: var(--po-input-text);
+	border-color: var(--po-input-border);
+}
+
+[data-theme='dark'] .ai-assistant-sessions {
+	background: var(--po-surface);
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-sessions__head {
+	background: var(--po-surface-muted);
+	border-bottom-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-sessions__item-title {
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .ai-assistant-leave-draft,
+[data-theme='dark'] .ai-assistant-workday-draft {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+}

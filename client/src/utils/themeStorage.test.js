@@ -21,12 +21,18 @@ describe('themeStorage', () => {
 		expect(resolveTheme('dark')).toBe('dark')
 	})
 
-	it('readThemePreference defaults to system when switcher enabled', () => {
+	it('readThemePreference defaults to light when switcher enabled', () => {
 		if (!THEME_SWITCHER_ENABLED) {
 			expect(readThemePreference()).toBe('light')
 			return
 		}
-		expect(readThemePreference()).toBe('system')
+		expect(readThemePreference()).toBe('light')
+	})
+
+	it('readThemePreference treats legacy system value as light', () => {
+		if (!THEME_SWITCHER_ENABLED) return
+		localStorage.setItem(THEME_STORAGE_KEY, 'system')
+		expect(readThemePreference()).toBe('light')
 	})
 
 	it('setThemePreference persists and returns effective theme when switcher enabled', () => {

@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
 import Loader from '../Loader'
+import AuthPageTopBar from '../shared/AuthPageTopBar'
+import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
 
 function ResetPassword() {
@@ -14,14 +16,9 @@ function ResetPassword() {
 	const [message, setMessage] = useState('')
 	const [isLoading, setIsLoading] = useState(false)
 	const navigate = useNavigate()
-	const { t, i18n } = useTranslation()
+	const { t } = useTranslation()
 	const { showAlert } = useAlert()
 	const { isCheckingAuth, loggedIn } = useAuth()
-
-	const lngs = {
-		en: { nativeName: '', flag: '/img/united-kingdom.png' },
-		pl: { nativeName: '', flag: '/img/poland.png' },
-	}
 
 	const handleSubmit = async e => {
 		e.preventDefault()
@@ -49,7 +46,7 @@ function ResetPassword() {
 	// Jeśli sprawdzamy autoryzację, pokaż loader
 	if (isCheckingAuth) {
 		return (
-			<div className="alllogin" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+			<div className="alllogin auth-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
 				<Loader />
 			</div>
 		)
@@ -62,31 +59,12 @@ function ResetPassword() {
 	}
 
 	return (
-		<div className="alllogin">
-			<div className="language-box">
-				{Object.keys(lngs).map(lng => (
-					<button
-						key={lng}
-						type="button"
-						style={{
-							fontWeight: i18n.resolvedLanguage === lng ? 'bold' : 'normal',
-							marginRight: '5px',
-						}}
-						className="flag-language"
-						onClick={() => i18n.changeLanguage(lng)}>
-						<img
-							src={lngs[lng].flag}
-							alt={`${lngs[lng].nativeName} flag`}
-							style={{ width: '23px', marginRight: '5px' }}
-						/>
-						{lngs[lng].nativeName}
-					</button>
-				))}
-			</div>
+		<div className="alllogin auth-page">
+			<AuthPageTopBar />
 			<div className="login-box">
 				<div className="login-logo">
 					<div>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+						<AuthLogo maxWidth="180px" />
 					</div>
 				</div>
 				<div className="card auth-form-shell">

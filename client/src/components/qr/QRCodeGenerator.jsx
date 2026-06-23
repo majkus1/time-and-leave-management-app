@@ -78,7 +78,7 @@ function QRCodeGenerator() {
 	if (isLoading) return <Loader />
 
 	return (
-		<div style={{
+		<div className="qr-code-generator" style={{
 			backgroundColor: 'white',
 			borderRadius: '12px',
 			boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
