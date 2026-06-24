@@ -4150,6 +4150,13 @@
 	color: #d8b4fe !important;
 }
 
+[data-theme='dark'] .board-modal span.task-card__calendar-only-badge,
+[data-theme='dark'] .task-card span.task-card__calendar-only-badge {
+	background-color: rgba(139, 92, 246, 0.22) !important;
+	color: #e9d5ff !important;
+	border: 1px solid rgba(167, 139, 250, 0.5) !important;
+}
+
 [data-theme='dark'] .board-drag-preview {
 	opacity: 0.98 !important;
 	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;

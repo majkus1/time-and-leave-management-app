@@ -658,17 +658,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 							)}
 							{currentTask.calendarOnly && (
 								<div style={{ marginBottom: '12px' }}>
-									<span
-										style={{
-											display: 'inline-block',
-											padding: '4px 10px',
-											borderRadius: '6px',
-											backgroundColor: '#f4ecf7',
-											color: '#6c3483',
-											fontSize: '12px',
-											fontWeight: 600,
-										}}
-									>
+									<span className="task-card__calendar-only-badge">
 										{t('boards.calendarOnlyBadge') || 'Szybkie zadanie'}
 									</span>
 								</div>

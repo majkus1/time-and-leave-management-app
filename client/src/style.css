@@ -5528,6 +5528,17 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	background: #f8fafc !important;
 }
 
+.task-card__calendar-only-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 6px;
+	background-color: #f4ecf7;
+	color: #6c3483;
+	font-size: 12px;
+	font-weight: 600;
+	border: 1px solid rgba(108, 52, 131, 0.2);
+}
+
 .board-modal.board-quick-task-modal.ReactModal__Content,
 .ReactModal__Content.board-modal.board-quick-task-modal,
 .board-modal.board-quick-task-modal {
