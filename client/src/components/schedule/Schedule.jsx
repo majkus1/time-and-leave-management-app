@@ -2191,7 +2191,7 @@ function Schedule() {
 								</button>
 							</div>
 							{autoManualExclusionRows.length === 0 ? (
-								<div className="schedule-auto-modal__danger-text" style={{ fontSize: '13px', color: '#7f1d1d' }}>
+								<div className="schedule-auto-modal__danger-text">
 									{t('schedule.auto.manualExclusions.empty') || 'Brak wykluczeń. Planner uwzględni tylko standardowe reguły (urlopy, dyspozycyjność, zmiany).'}
 								</div>
 							) : (
@@ -2273,7 +2273,7 @@ function Schedule() {
 									))}
 								</div>
 							)}
-							<div style={{ marginTop: '8px', fontSize: '12px', color: '#7f1d1d' }}>
+							<div className="schedule-auto-modal__danger-text schedule-auto-modal__danger-text--hint">
 								{t('schedule.auto.manualExclusions.emptyTimeHint') || 'Puste godziny oznaczają wykluczenie użytkownika przez cały dzień.'}
 							</div>
 						</div>

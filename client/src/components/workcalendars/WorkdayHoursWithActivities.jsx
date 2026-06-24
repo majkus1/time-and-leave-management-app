@@ -125,29 +125,16 @@ function WorkdayHoursWithActivities({
 			</div>
 
 			{!useBlockSplit && showWorkHoursPresets && settings?.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
-				<div style={{
-					marginTop: '15px',
-					padding: '12px',
-					backgroundColor: '#e3f2fd',
-					border: '1px solid #90caf9',
-					borderRadius: '6px',
-				}}>
-					<label style={{ display: 'block', marginBottom: '10px', fontWeight: '600', color: '#2c3e50', fontSize: '14px' }}>
+				<div className="workday-hours-presets bulk-fill-work-hours-options">
+					<label className="workday-hours-presets__label bulk-fill-work-hours-options__label">
 						{t('workcalendar.selectWorkHours') || 'Wybierz godziny pracy:'}
 					</label>
-					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+					<div className="workday-hours-presets__list">
 						{settings.workHours.map((workHours, index) => (
 							<label
 								key={index}
-								style={{
-									display: 'flex',
-									alignItems: 'center',
-									cursor: disabled ? 'not-allowed' : 'pointer',
-									padding: '8px',
-									borderRadius: '4px',
-									backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
-									border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
-								}}
+								className={`bulk-fill-work-hours-option${selectedWorkHoursIndex === index ? ' is-selected' : ''}`}
+								style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
 							>
 								<input
 									type="radio"
@@ -159,9 +146,8 @@ function WorkdayHoursWithActivities({
 										if (workHours.hours) onHoursWorkedChange(String(workHours.hours))
 									}}
 									disabled={disabled}
-									style={{ marginRight: '10px' }}
 								/>
-								<span style={{ fontSize: '14px', color: '#2c3e50', flex: 1 }}>
+								<span className="bulk-fill-work-hours-option__text">
 									{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} h)
 								</span>
 							</label>

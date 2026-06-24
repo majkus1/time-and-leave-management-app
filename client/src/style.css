@@ -3981,9 +3981,9 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 }
 
 .nav-link.active {
-	background: linear-gradient(135deg, rgba(203, 219, 47, 0.2) 0%, rgba(203, 219, 47, 0.1) 100%);
-	border-color: rgba(203, 219, 47, 0.5);
-	box-shadow: 0 0 30px rgba(203, 219, 47, 0.2);
+	background: linear-gradient(135deg, rgba(0, 168, 70, 0.15) 0%, rgba(0, 168, 70, 0.07) 100%);
+	border-color: rgba(0, 168, 70, 0.42);
+	box-shadow: 0 0 22px rgba(0, 168, 70, 0.12);
 }
 
 /* AI Asystent — obramowanie w „nowoczesnych” kolorach AI (indygo → fiolet → cyjan → magenta); środek płaski */
@@ -7534,17 +7534,40 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	background: #ecfdf5;
 }
 
+.bulk-fill-work-hours-options__label {
+	display: block;
+	margin-bottom: 10px;
+	font-weight: 600;
+	color: #13294b;
+	font-size: 14px;
+}
+
+.workday-hours-presets {
+	margin-top: 15px;
+}
+
+.workday-hours-presets__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 .bulk-fill-work-hours-option {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	margin: 8px 0 0;
+	margin: 0;
 	padding: 10px 12px;
 	border: 1px solid #d7dde5;
 	border-radius: 6px;
 	background: #fff;
 	color: #13294b;
 	cursor: pointer;
+	font-size: 14px;
+}
+
+.bulk-fill-work-hours-option__text {
+	flex: 1;
 }
 
 .bulk-fill-work-hours-option.is-selected {
@@ -8016,6 +8039,17 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	overflow-x: hidden !important;
 	overflow-y: auto !important;
 	box-sizing: border-box !important;
+}
+
+.schedule-auto-modal__danger-text {
+	font-size: 13px;
+	color: #7f1d1d;
+	line-height: 1.45;
+}
+
+.schedule-auto-modal__danger-text--hint {
+	margin-top: 8px;
+	font-size: 12px;
 }
 
 /* Schedule entry modal (add shift for date) */
