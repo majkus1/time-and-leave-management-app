@@ -42,7 +42,19 @@ const MODULE_LABELS: Record<ModuleId, { pl: string; en: string }> = {
 	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
 }
 
-function PricingIcon({ name }: { name: PricingIconName }) {
+function PricingIcon({ name, locale }: { name: PricingIconName; locale: Locale }) {
+	const imgAlts: Record<'core' | 'pro' | 'business', string> =
+		locale === 'pl'
+			? {
+					core: 'Ikona pakietu Core Planopia',
+					pro: 'Ikona pakietu PRO Planopia',
+					business: 'Ikona pakietu Business Planopia',
+				}
+			: {
+					core: 'Planopia Core plan icon',
+					pro: 'Planopia PRO plan icon',
+					business: 'Planopia Business plan icon',
+				}
 	const common = {
 		fill: 'none',
 		stroke: 'currentColor',
@@ -64,13 +76,13 @@ function PricingIcon({ name }: { name: PricingIconName }) {
 			</svg>
 		),
 		core: (
-			<img src="/img/group-chat.png" alt="" aria-hidden="true" />
+			<img src="/img/group-chat.png" alt={imgAlts.core} aria-hidden="true" />
 		),
 		pro: (
-			<img src="/img/startup.png" alt="" aria-hidden="true" />
+			<img src="/img/startup.png" alt={imgAlts.pro} aria-hidden="true" />
 		),
 		business: (
-			<img src="/img/business-and-trade.png" alt="" aria-hidden="true" />
+			<img src="/img/business-and-trade.png" alt={imgAlts.business} aria-hidden="true" />
 		),
 		ai: (
 			<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -136,7 +148,7 @@ function FreeTierCard({ locale }: { locale: Locale }) {
 		<div className="pricing-free-card h-full flex flex-col text-left rounded-2xl p-5 md:p-6 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40 border border-slate-200 shadow-sm w-full">
 			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-3">
 				<div className="pricing-card-title-row">
-					<PricingIcon name="free" />
+					<PricingIcon name="free" locale={locale} />
 					<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
 				</div>
 				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--free font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
@@ -170,7 +182,7 @@ function TrialCard({ locale, lines }: { locale: Locale; lines: string[] }) {
 		<div className="pricing-trial-card h-full flex flex-col text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm w-full">
 			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-4 shrink-0">
 				<div className="pricing-card-title-row">
-					<PricingIcon name="trial" />
+					<PricingIcon name="trial" locale={locale} />
 					<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
 				</div>
 				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--trial font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
@@ -524,7 +536,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 			{modalNode}
 			<div className="max-w-7xl mx-auto">
 				<div className="landing-pricing-heading mb-10 text-left w-full">
-					<p className="landing-pricing-eyebrow">{t.eyebrow}</p>
+					<p className="landing-pricing-eyebrow landing-section-eyebrow">{t.eyebrow}</p>
 					<h2 className="landing-pricing-title">{t.title}</h2>
 					<p className="landing-pricing-subtitle">{t.subtitle}</p>
 				</div>
@@ -575,7 +587,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 				<div className="landing-pricing-app-clone">
 					<div className="packages-grid packages-grid--hero">
 						<div className="packages-tier packages-tier--core-summary">
-							<PricingIcon name="core" />
+							<PricingIcon name="core" locale={locale} />
 							<h3>{t.heroCoreTitle}</h3>
 							{coreHeroDisplay.strike && (
 								<p className="mb-1 text-sm text-gray-400 m-0">
@@ -636,7 +648,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							return (
 								<div key={bundle.id} className={`packages-tier${isPro ? ' packages-tier--highlight' : ''}`}>
 									{isPro && <span className="packages-tier__badge">{t.recommended}</span>}
-									<PricingIcon name={bundle.id === 'pro' ? 'pro' : 'business'} />
+									<PricingIcon name={bundle.id === 'pro' ? 'pro' : 'business'} locale={locale} />
 									<h3>{bundle.id === 'pro' ? 'PRO' : 'Business'}</h3>
 									{d.strike && (
 										<p className="mb-1 text-sm text-gray-400 m-0">
@@ -730,7 +742,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 					</div>
 
 					<section className="packages-enterprise-strip" aria-labelledby="landing-enterprise-heading">
-						<PricingIcon name="custom" />
+						<PricingIcon name="custom" locale={locale} />
 						<div className="packages-enterprise-strip__main">
 							<h3 id="landing-enterprise-heading">{t.enterpriseStripTitle}</h3>
 							<p className="packages-enterprise-strip__body">{t.enterpriseStripBody}</p>
@@ -744,7 +756,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 
 					<div className="pricing-ai-addons mt-12 rounded-2xl border border-dashed p-6 md:p-8">
 						<div className="pricing-ai-addons__heading">
-							<PricingIcon name="ai" />
+							<PricingIcon name="ai" locale={locale} />
 							<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
 						</div>
 						<p className="text-sm text-gray-600 mt-1 mb-6">{t.addonSubtitle}</p>

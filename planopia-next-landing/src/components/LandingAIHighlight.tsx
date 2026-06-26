@@ -63,9 +63,13 @@ export default function LandingAIHighlight({ locale }: { locale: Locale }) {
 								className="pointer-events-none absolute right-0 top-0 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-cyan-100 bg-white shadow-md ring-2 ring-cyan-200/70 md:h-20 md:w-20"
 								aria-hidden
 							>
-								<img src="/img/planio-ai.png" alt="" className="h-full w-full object-cover" />
+								<img
+									src="/img/planio-ai.png"
+									alt={locale === 'pl' ? 'Logo Asystenta AI Planopia' : 'Planopia AI Assistant logo'}
+									className="h-full w-full object-cover"
+								/>
 							</span>
-							<p className="ai-highlight-eyebrow mb-3 pr-20 md:pr-24">{t.eyebrow}</p>
+							<p className="ai-highlight-eyebrow landing-section-eyebrow mb-3 pr-20 md:pr-24">{t.eyebrow}</p>
 							<h2 id="ai-heading" className="pr-20 md:pr-28">
 								{t.title}
 							</h2>

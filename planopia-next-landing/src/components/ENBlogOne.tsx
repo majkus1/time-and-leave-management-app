@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
@@ -41,7 +42,8 @@ function ENBlogOne() {
 							}
 						},
 						"url": "https://planopia.pl/en/blog/time-tracking-online",
-						"datePublished": "2025-08-25"
+						"datePublished": "2025-08-25",
+						"dateModified": "2025-08-25"
 					})
 				}}
 			/>
@@ -247,6 +249,8 @@ function ENBlogOne() {
 					</div>
 				</div>
 			</aside>
+
+			<BlogRelatedLinks slug="time-tracking-online" locale="en" className="mt-10" />
 		</article>
 
 	</>

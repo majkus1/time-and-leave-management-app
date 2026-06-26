@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
@@ -401,6 +402,8 @@ function ENBlogSix() {
 							Try Planopia for free
 						</Link>
 					</div>
+
+					<BlogRelatedLinks slug="leave-management" locale="en" className="mt-10" />
 				</div>
 			</article>
 

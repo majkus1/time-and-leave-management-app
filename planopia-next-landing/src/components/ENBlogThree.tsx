@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
@@ -41,7 +42,8 @@ function ENBlogThree() {
 							}
 						},
 						"url": "https://planopia.pl/en/blog/leave-planning",
-						"datePublished": "2025-08-25"
+						"datePublished": "2025-08-25",
+						"dateModified": "2025-08-25"
 					})
 				}}
 			/>
@@ -221,6 +223,8 @@ function ENBlogThree() {
 				<p className="mt-8 font-medium text-blue-600">
 					Try Planopia — <Link href="https://app.planopia.pl/team-registration" className="underline">create your team: 30-day trial, then free time tracking or paid leave tools</Link>.
 				</p>
+
+				<BlogRelatedLinks slug="leave-planning" locale="en" className="mt-10" />
 			</article>
 
 			{/* FOOTER */}

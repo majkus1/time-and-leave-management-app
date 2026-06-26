@@ -2,25 +2,26 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-/** Timer na górze, podsumowanie AI pod spodem (zamiana względem wcześniejszej kolejności). */
-const DESKTOP_VIDEOS = ['/img/timer-desktop.mp4', '/img/podsumowanie-ai-desktop.mp4'] as const
+import {
+	LANDING_SHOWCASE_DESKTOP_VIDEOS,
+	LANDING_SHOWCASE_MOBILE_FALLBACK,
+	LANDING_SHOWCASE_MOBILE_VIDEOS,
+} from '@/data/landingShowcaseVideos'
 
-const MOBILE_VIDEOS = [
-	'/img/timer-mobile.mp4',
-	'/img/ewidencja-mobile.mp4',
-	'/img/urlop-zgloszenie-ai-mobile.mp4',
-] as const
+/** Timer na górze, podsumowanie AI pod spodem (zamiana względem wcześniejszej kolejności). */
+const DESKTOP_VIDEOS = LANDING_SHOWCASE_DESKTOP_VIDEOS
+
+const MOBILE_VIDEOS = LANDING_SHOWCASE_MOBILE_VIDEOS
 
 /** Jak wcześniej w sekcji „O aplikacji” — gdy na telefonie wideo nie wystartuje (np. oszczędzanie baterii). */
-const MOBILE_FALLBACK_IMG: Record<'pl' | 'en', string> = {
-	pl: '/img/mobilenews.webp',
-	en: '/img/mobile-ennews.webp',
-}
+const MOBILE_FALLBACK_IMG = LANDING_SHOWCASE_MOBILE_FALLBACK
 
 type Props = { locale: 'pl' | 'en' }
 
 export default function AboutAppShowcaseVideos({ locale }: Props) {
+	const wrapRef = useRef<HTMLDivElement>(null)
 	const [isLg, setIsLg] = useState(false)
+	const [inView, setInView] = useState(false)
 	const [showDesktopPair, setShowDesktopPair] = useState(true)
 	const [mobileIndex, setMobileIndex] = useState(0)
 	const [reduceMotion, setReduceMotion] = useState(false)
@@ -40,6 +41,17 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 		return () => mq.removeEventListener('change', sync)
 	}, [])
 
+	useEffect(() => {
+		const el = wrapRef.current
+		if (!el) return
+		const io = new IntersectionObserver(
+			([entry]) => setInView(entry.isIntersecting),
+			{ rootMargin: '120px 0px', threshold: 0.1 }
+		)
+		io.observe(el)
+		return () => io.disconnect()
+	}, [])
+
 	const desktopLabel =
 		locale === 'pl' ? 'Planopia — podgląd aplikacji na komputerze' : 'Planopia — desktop preview'
 	const mobileLabel =
@@ -47,7 +59,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 
 	const handleDesktopEnded = useCallback(
 		(index: 0 | 1) => {
-			if (reduceMotion || !isLg) return
+			if (reduceMotion || !isLg || !inView) return
 			desktopEndedRef.current[index] = true
 			if (desktopEndedRef.current[0] && desktopEndedRef.current[1]) {
 				desktopEndedRef.current = [false, false]
@@ -55,11 +67,11 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 				setMobileIndex(0)
 			}
 		},
-		[reduceMotion, isLg]
+		[reduceMotion, isLg, inView]
 	)
 
 	const handleMobileEnded = useCallback(() => {
-		if (reduceMotion) return
+		if (reduceMotion || !inView) return
 		if (!isLg) {
 			setMobileIndex(i => (i + 1) % MOBILE_VIDEOS.length)
 			return
@@ -71,11 +83,11 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 			}
 			return i + 1
 		})
-	}, [reduceMotion, isLg])
+	}, [reduceMotion, isLg, inView])
 
-	// Desktop pair: start / replay when phase is active (wide + pair)
+	// Desktop pair: start / replay when phase is active (wide + pair + in viewport)
 	useEffect(() => {
-		if (!isLg || !showDesktopPair) return
+		if (!isLg || !showDesktopPair || !inView) return
 		desktopEndedRef.current = [false, false]
 		desktopRefs.current.forEach(el => {
 			if (!el) return
@@ -88,7 +100,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 			const p = el.play()
 			if (p && typeof p.catch === 'function') p.catch(() => {})
 		})
-	}, [isLg, showDesktopPair, reduceMotion])
+	}, [isLg, showDesktopPair, reduceMotion, inView])
 
 	useEffect(() => {
 		if (!isLg || showDesktopPair) return
@@ -100,16 +112,16 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 		setMobileStaticFallback(false)
 	}, [isLg])
 
-	// Mobile clips: play active, pause rest
+	// Mobile clips: play active, pause rest — tylko gdy sekcja w viewport
 	const showMobileCarousel = !isLg || (isLg && !showDesktopPair)
 	const effectiveMobileIndex = reduceMotion ? 0 : mobileIndex
+	const shouldLoadMobileVideos = inView && showMobileCarousel
 
 	useEffect(() => {
-		if (!showMobileCarousel) {
+		if (!shouldLoadMobileVideos) {
 			mobileRefs.current.forEach(el => el?.pause())
 			return
 		}
-		// Na desktopie (szeroki ekran, fazie „mobilnych” klipów) — bez obrazka zamiast wideo
 		if (!isLg && mobileStaticFallback) {
 			mobileRefs.current.forEach(el => el?.pause())
 			return
@@ -134,7 +146,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 				})
 			}
 		})
-	}, [showMobileCarousel, effectiveMobileIndex, reduceMotion, isLg, mobileStaticFallback])
+	}, [shouldLoadMobileVideos, effectiveMobileIndex, reduceMotion, isLg, mobileStaticFallback])
 
 	/* Desktop: pełna szerokość w opakowaniu */
 	const desktopVideoClass =
@@ -144,42 +156,51 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 	const mobileVideoClass =
 		'mx-auto block h-auto w-auto max-w-full max-h-[600px] rounded-xl bg-white shadow-xl outline-none [border:0]'
 
+	const showDesktopVideos = isLg && showDesktopPair && inView
+
 	return (
-		<div className="about-app-mockup-wrap relative flex w-full min-h-[280px] flex-col justify-center lg:min-h-0">
-			{/* Wide: two desktop clips, then mobile carousel in same column */}
-			<div
-				className={
-					isLg && showDesktopPair
-						? 'flex w-full max-w-[1000px] flex-col gap-5'
-						: 'hidden'
-				}
-			>
-				{DESKTOP_VIDEOS.map((src, i) => (
-					<div
-						key={src}
-						className="overflow-hidden rounded-xl bg-white shadow-xl"
-					>
-						<video
-							ref={el => {
-								desktopRefs.current[i] = el
-							}}
-							className={`w-full ${desktopVideoClass}`}
-							src={src}
-							muted
-							playsInline
-							preload="metadata"
-							autoPlay
-							loop={reduceMotion}
-							onEnded={reduceMotion ? undefined : () => handleDesktopEnded(i as 0 | 1)}
-							aria-label={`${desktopLabel} ${i + 1} / ${DESKTOP_VIDEOS.length}`}
-						/>
-					</div>
-				))}
-			</div>
+		<div
+			ref={wrapRef}
+			className="about-app-mockup-wrap relative flex w-full min-h-[280px] flex-col justify-center lg:min-h-0"
+		>
+			{/* Wide: dwa klipy desktop — renderowane tylko na lg i w viewport (brak src na mobile) */}
+			{showDesktopVideos ? (
+				<div className="flex w-full max-w-[1000px] flex-col gap-5">
+					{DESKTOP_VIDEOS.map((src, i) => (
+						<div
+							key={src}
+							className="overflow-hidden rounded-xl bg-white shadow-xl"
+						>
+							<video
+								ref={el => {
+									desktopRefs.current[i] = el
+								}}
+								className={`w-full ${desktopVideoClass}`}
+								src={src}
+								muted
+								playsInline
+								preload="none"
+								autoPlay
+								loop={reduceMotion}
+								onEnded={reduceMotion ? undefined : () => handleDesktopEnded(i as 0 | 1)}
+								aria-label={`${desktopLabel} ${i + 1} / ${DESKTOP_VIDEOS.length}`}
+							/>
+						</div>
+					))}
+				</div>
+			) : isLg && showDesktopPair ? (
+				<img
+					src={MOBILE_FALLBACK_IMG[locale]}
+					alt={desktopLabel}
+					className={`w-full max-w-[1000px] rounded-xl shadow-xl ${desktopVideoClass}`}
+					loading="lazy"
+					decoding="async"
+				/>
+			) : null}
 
 			{/* Mobile: kontener na pełną szerokość kolumny; samo wideo wyśrodkowane (mx-auto), bez rozciągania */}
 			<div className={showMobileCarousel ? 'flex w-full flex-col items-center' : 'hidden'}>
-				{!isLg && mobileStaticFallback ? (
+				{!inView || (!isLg && mobileStaticFallback) ? (
 					<img
 						src={MOBILE_FALLBACK_IMG[locale]}
 						alt={mobileLabel}
@@ -187,7 +208,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 						loading="lazy"
 						decoding="async"
 					/>
-				) : (
+				) : shouldLoadMobileVideos ? (
 					MOBILE_VIDEOS.map((src, i) => (
 						<video
 							key={src}
@@ -198,7 +219,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 							src={src}
 							muted
 							playsInline
-							preload="metadata"
+							preload="none"
 							poster={MOBILE_FALLBACK_IMG[locale]}
 							loop={reduceMotion}
 							onEnded={reduceMotion ? undefined : handleMobileEnded}
@@ -206,8 +227,16 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 							aria-label={`${mobileLabel} ${i + 1} / ${MOBILE_VIDEOS.length}`}
 						/>
 					))
+				) : (
+					<img
+						src={MOBILE_FALLBACK_IMG[locale]}
+						alt={mobileLabel}
+						className={mobileVideoClass}
+						loading="lazy"
+						decoding="async"
+					/>
 				)}
-				{!reduceMotion && showMobileCarousel && !(!isLg && mobileStaticFallback) && (
+				{!reduceMotion && shouldLoadMobileVideos && !(!isLg && mobileStaticFallback) && (
 					<div className="mt-3 flex justify-center gap-2" aria-hidden>
 						{MOBILE_VIDEOS.map((_, i) => (
 							<span

@@ -2894,42 +2894,18 @@ function Schedule() {
 						)}
 					</div>
 
-					{/* Checkboxy dla wielu konfiguracji godzin pracy */}
+					{/* Presety godzin pracy — te same klasy co w ewidencji (dark mode w theme.css) */}
 					{settings && settings.workHours && Array.isArray(settings.workHours) && settings.workHours.length > 1 && (
-						<div style={{
-							marginBottom: '20px',
-							padding: '12px',
-							backgroundColor: '#e3f2fd',
-							border: '1px solid #90caf9',
-							borderRadius: '6px'
-						}}>
-							<label style={{
-								display: 'block',
-								marginBottom: '10px',
-								fontWeight: '600',
-								color: '#2c3e50',
-								fontSize: '14px'
-							}}>
+						<div className="workday-hours-presets bulk-fill-work-hours-options" style={{ marginBottom: '20px' }}>
+							<label className="workday-hours-presets__label bulk-fill-work-hours-options__label">
 								{t('schedule.selectWorkHours') || 'Wybierz godziny pracy:'}
 							</label>
-							<div style={{
-								display: 'flex',
-								flexDirection: 'column',
-								gap: '8px'
-							}}>
+							<div className="workday-hours-presets__list">
 								{settings.workHours.map((workHours, index) => (
 									<label
 										key={index}
-										style={{
-											display: 'flex',
-											alignItems: 'center',
-											cursor: 'pointer',
-											padding: '8px',
-											borderRadius: '4px',
-											backgroundColor: selectedWorkHoursIndex === index ? '#bbdefb' : 'white',
-											border: `1px solid ${selectedWorkHoursIndex === index ? '#2196f3' : '#dee2e6'}`,
-											transition: 'all 0.2s'
-										}}
+										className={`bulk-fill-work-hours-option${selectedWorkHoursIndex === index ? ' is-selected' : ''}`}
+										style={{ cursor: isNonWorkingScheduleDayBlocked ? 'not-allowed' : 'pointer' }}
 									>
 										<input
 											type="radio"
@@ -2940,16 +2916,9 @@ function Schedule() {
 												setTimeFrom(normalizeHalfHourTime(workHours.timeFrom))
 												setTimeTo(normalizeHalfHourTime(workHours.timeTo))
 											}}
-											style={{
-												marginRight: '10px',
-												cursor: 'pointer'
-											}}
+											disabled={isNonWorkingScheduleDayBlocked}
 										/>
-										<span style={{
-											fontSize: '14px',
-											color: '#2c3e50',
-											flex: 1
-										}}>
+										<span className="bulk-fill-work-hours-option__text">
 											{workHours.timeFrom} - {workHours.timeTo} ({workHours.hours} {t('settings.hours') || 'godzin'})
 										</span>
 									</label>

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 
 export default function ENBlogSevenContent() {
@@ -290,6 +291,8 @@ export default function ENBlogSevenContent() {
 							</div>
 						</div>
 					</section>
+
+					<BlogRelatedLinks slug="comprehensive-company-management-app" locale="en" className="mt-10" />
 				</article>
 			</main>
 

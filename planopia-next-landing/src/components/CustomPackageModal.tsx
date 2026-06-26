@@ -14,6 +14,7 @@ import {
 } from '../lib/pricing/customPackage'
 import { getCustomPackageModalTranslations, getFeatureName } from '../lib/i18n/customPackageModal'
 import { validateCustomPackageRequest } from '../lib/validations/customPackageRequest'
+import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 
 interface CustomPackageModalProps {
 	isOpen: boolean
@@ -61,11 +62,11 @@ export default function CustomPackageModal({ isOpen, onClose, lang = 'pl' }: Cus
 		if (isOpen) {
 			document.body.style.overflow = 'hidden'
 		} else {
-			document.body.style.overflow = 'unset'
+			resetBodyScrollLock()
 			resetForm()
 		}
 		return () => {
-			document.body.style.overflow = 'unset'
+			resetBodyScrollLock()
 		}
 	}, [isOpen])
 

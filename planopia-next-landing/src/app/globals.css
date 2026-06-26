@@ -843,11 +843,6 @@ a.landing-video-guide-teaser-cta:focus-visible {
 }
 
 @media (max-width: 640px) {
-	.landing-video-guide-eyebrow,
-	.landing-contact-eyebrow {
-		font-size: 12px !important;
-	}
-
 	.landing-contact-title {
 		font-size: 2rem !important;
 	}
@@ -2844,8 +2839,8 @@ textarea {
 .landing-value-proof-section {
 	background: #f8fbff;
 	border-bottom: 1px solid rgba(16, 47, 94, 0.08);
-	padding-top: 38px;
-	padding-bottom: 42px;
+	padding-top: 48px;
+	padding-bottom: 48px;
 }
 
 .landing-value-proof {
@@ -2934,6 +2929,18 @@ textarea {
 	color: rgba(16, 47, 94, 0.72);
 	font-size: 14px;
 	line-height: 1.62;
+}
+
+/* Eyebrow <p> above H2 in landing sections — unified 15px, all breakpoints */
+.landing-section-eyebrow {
+	margin: 0 0 0.75rem;
+	color: #008f45 !important;
+	-webkit-text-fill-color: #008f45 !important;
+	font-size: 15px !important;
+	font-weight: 700 !important;
+	line-height: 1.2 !important;
+	letter-spacing: 0.12em !important;
+	text-transform: uppercase !important;
 }
 
 .landing-about-heading-eyebrow {
@@ -3170,7 +3177,6 @@ textarea {
 
 	.landing-about-heading-eyebrow {
 		margin-bottom: 12px !important;
-		font-size: 12px;
 	}
 
 	.landing-about-heading-title {
@@ -3185,8 +3191,8 @@ textarea {
 	}
 
 	.landing-value-proof-section {
-		padding-top: 30px;
-		padding-bottom: 34px;
+		padding-top: 48px;
+		padding-bottom: 48px;
 	}
 
 	.landing-value-proof__title {
@@ -4828,11 +4834,6 @@ a.blog-pillar-banner-link:focus-visible {
 	.landing-video-guide-teaser .landing-video-guide-card,
 	.landing-contact-section .landing-contact-card {
 		border-radius: 20px !important;
-	}
-
-	.landing-video-guide-teaser .landing-video-guide-eyebrow,
-	.landing-contact-section .landing-contact-eyebrow {
-		font-size: 12px !important;
 	}
 
 	.landing-video-guide-teaser .landing-video-guide-title,

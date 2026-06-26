@@ -11,6 +11,7 @@ import {
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
+import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 
 interface BlogHeaderProps {
 	lang?: 'pl' | 'en'
@@ -31,6 +32,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 	
 	// Close menu and sync button state
 	const closeMenu = () => {
+		resetBodyScrollLock()
 		setMenuOpen(false)
 		setButtonState(false) // Always sync button state when closing menu
 	}

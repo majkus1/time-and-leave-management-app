@@ -43,7 +43,8 @@ function BlogThree() {
 							}
 						},
 						"url": "https://planopia.pl/blog/planowanie-urlopow",
-						"datePublished": "2025-08-25"
+						"datePublished": "2025-08-25",
+						"dateModified": "2026-05-17"
 					})
 				}}
 			/>

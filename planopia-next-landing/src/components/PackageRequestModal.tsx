@@ -7,6 +7,7 @@ import { API_URL } from '../config'
 import { calculateTotalPrice, getPricePerUser, formatPrice, type PackageType, type Language } from '../lib/pricing'
 import { getPackageModalTranslations } from '../lib/i18n/packageModal'
 import { validatePackageRequest } from '../lib/validations/packageRequest'
+import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 
 interface PackageRequestModalProps {
 	isOpen: boolean
@@ -51,12 +52,12 @@ export default function PackageRequestModal({ isOpen, onClose, packageType, lang
 		if (isOpen) {
 			document.body.style.overflow = 'hidden'
 		} else {
-			document.body.style.overflow = 'unset'
+			resetBodyScrollLock()
 			// Reset form when modal closes
 			resetForm()
 		}
 		return () => {
-			document.body.style.overflow = 'unset'
+			resetBodyScrollLock()
 		}
 	}, [isOpen])
 

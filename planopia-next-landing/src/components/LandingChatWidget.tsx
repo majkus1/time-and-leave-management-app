@@ -23,6 +23,7 @@ const UI: Record<
 		welcome: string
 		close: string
 		open: string
+		chatIconAlt: string
 		emailCta: string
 		emailBodyLabel: string
 		emailReplyLabel: string
@@ -45,6 +46,7 @@ const UI: Record<
 		welcome: 'Cześć, jestem Planio. Jak mogę pomóc?',
 		close: 'Zamknij czat',
 		open: 'Otwórz czat z asystentem',
+		chatIconAlt: 'Ikona asystenta Planio na stronie',
 		emailCta: 'Wyślij pytanie e-mailem do zespołu',
 		emailBodyLabel: 'Treść wiadomości',
 		emailReplyLabel: 'Twój e-mail (opcjonalnie — żeby móc odpowiedzieć)',
@@ -67,6 +69,7 @@ const UI: Record<
 			'Hi! I’m the Planopia assistant. I can explain features, pricing, the trial, and how to pick a plan — what would you like to know?',
 		close: 'Close chat',
 		open: 'Open assistant chat',
+		chatIconAlt: 'Planio assistant icon on the landing page',
 		emailCta: 'Send your question by email',
 		emailBodyLabel: 'Message',
 		emailReplyLabel: 'Your email (optional — for a reply)',
@@ -198,13 +201,13 @@ function AssistantMessageContent({ text }: { text: string }) {
 	)
 }
 
-function ChatIcon({ className }: { className?: string }) {
+function ChatIcon({ className, alt }: { className?: string; alt: string }) {
 	return (
 		<span
 			className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-white/95 shadow-md shadow-emerald-900/20 ${className ?? ''}`}
 			aria-hidden
 		>
-			<img src={CHAT_ICON} alt="" className="h-[95%] w-[95%] object-contain" />
+			<img src={CHAT_ICON} alt={alt} className="h-[95%] w-[95%] object-contain" />
 		</span>
 	)
 }
@@ -378,7 +381,7 @@ export default function LandingChatWidget() {
 							>
 								{line.role === 'assistant' ? (
 									<div className="flex min-w-0 max-w-[92%] items-end gap-2.5 pr-3">
-										<ChatIcon className="h-10 w-10 mb-0.5 shrink-0" />
+										<ChatIcon className="h-10 w-10 mb-0.5 shrink-0" alt={t.chatIconAlt} />
 										<div className="min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm leading-relaxed text-gray-800">
 											<AssistantMessageContent text={line.content} />
 										</div>
@@ -524,7 +527,7 @@ export default function LandingChatWidget() {
 				aria-label={open ? t.close : t.open}
 				aria-expanded={open}
 			>
-				<ChatIcon className="h-14 w-14" />
+				<ChatIcon className="h-14 w-14" alt={t.chatIconAlt} />
 			</button>
 		</div>
 	)

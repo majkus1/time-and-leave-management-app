@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 import type { LandingGalleryImage } from '../data/landingAppGallery'
 
 type Props = {
@@ -17,9 +19,14 @@ export default function LandingAppScreenshotGallery({
 	images = [],
 	sectionClassName = 'my-10 md:my-12',
 }: Props) {
+	const pathname = usePathname()
 	const [openIndex, setOpenIndex] = useState<number | null>(null)
 
 	const close = useCallback(() => setOpenIndex(null), [])
+
+	useEffect(() => {
+		close()
+	}, [pathname, close])
 
 	useEffect(() => {
 		if (openIndex === null) return
@@ -30,7 +37,7 @@ export default function LandingAppScreenshotGallery({
 		document.body.style.overflow = 'hidden'
 		return () => {
 			document.removeEventListener('keydown', onKey)
-			document.body.style.overflow = ''
+			resetBodyScrollLock()
 		}
 	}, [openIndex, close])
 

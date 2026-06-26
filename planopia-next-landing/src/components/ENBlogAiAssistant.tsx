@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
@@ -290,6 +291,8 @@ function ENBlogAiAssistant() {
 							))}
 						</div>
 					</section>
+
+					<BlogRelatedLinks slug="planopia-ai-assistant-time-tracking-leave-tasks-schedules" locale="en" className="mt-10" />
 				</div>
 			</article>
 

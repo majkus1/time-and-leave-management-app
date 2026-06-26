@@ -13,8 +13,8 @@ const config: Config = {
         foreground: 'var(--foreground)',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'Open Sans', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--font-titillium-web)', 'Titillium Web', 'sans-serif'],
+        mono: ['ui-monospace', 'monospace'],
       },
     },
   },

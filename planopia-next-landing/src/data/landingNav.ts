@@ -1,9 +1,9 @@
 import { industryNavForLocale } from './industryNav'
 
-/** Po ilu linkach w menu mobilnym wstawić rozwijane „Branże”: O Aplikacji, Asystent AI, Cennik */
+/** Po ilu linkach wstawić „Branże”: O Aplikacji → Asystent AI → Cennik → Branże → Blog → Kontakt */
 export const MOBILE_INDUSTRY_INSERT_INDEX = 3
 
-/** Kolejność: O Aplikacji → AI → Cennik → Blog → Kontakt (Branże wstawiane w MobileMenu po indeksie 3) */
+/** Kolejność: O Aplikacji → AI → Cennik → Blog → Kontakt (Branże wstawiane po indeksie 3) */
 export function landingMobileNavItemsPl(opts?: { blogHref?: string }) {
 	const blog = opts?.blogHref ?? '/blog'
 	return [

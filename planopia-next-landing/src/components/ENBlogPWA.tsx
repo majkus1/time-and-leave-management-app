@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
@@ -40,7 +41,8 @@ function ENBlogPWA() {
 							}
 						},
 						"url": "https://planopia.pl/en/blog/how-to-install-planopia-as-pwa",
-						"datePublished": "2025-01-15"
+						"datePublished": "2025-01-15",
+						"dateModified": "2025-01-15"
 					})
 				}}
 			/>
@@ -231,6 +233,8 @@ function ENBlogPWA() {
 						</Link>
 					</div>
 				</div>
+
+				<BlogRelatedLinks slug="how-to-install-planopia-as-pwa" locale="en" className="mt-10 max-w-3xl mx-auto" />
 			</article>
 
 			{/* FOOTER */}

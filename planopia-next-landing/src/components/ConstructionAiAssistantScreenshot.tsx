@@ -1,7 +1,12 @@
-/**
- * Asystent AI — film z interfejsu (pętla, autoplay). Plakat z webp do szybkiego pierwszego kadru.
- * Używane na landingu branżowym i w artykule blogowym.
- */
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import {
+	CONSTRUCTION_AI_POSTER,
+	CONSTRUCTION_AI_VIDEO_DESKTOP,
+	CONSTRUCTION_AI_VIDEO_MOBILE,
+} from '@/data/industryConstructionAiVideo'
+
 type Props = {
 	locale: 'pl' | 'en'
 	imgClassName?: string
@@ -9,44 +14,82 @@ type Props = {
 	desktopVideoSrc?: string
 }
 
-const VIDEO_DESKTOP = '/img/podsumowanie-ai-desktop.mp4'
-const VIDEO_MOBILE = '/img/aias-mob.mp4'
-
 export default function ConstructionAiAssistantScreenshot({
 	locale,
 	imgClassName = 'w-full h-auto object-cover object-top',
-	desktopVideoSrc = VIDEO_DESKTOP,
+	desktopVideoSrc = CONSTRUCTION_AI_VIDEO_DESKTOP,
 }: Props) {
-	const isPl = locale === 'pl'
-	const posterDesktop = isPl ? '/img/aiass.webp' : '/img/aiass-en.webp'
-	const posterMobile = isPl ? '/img/aiass-mobile.webp' : '/img/aiass-mobile-en.webp'
-	const label = isPl ? 'Asystent AI w aplikacji Planopia — podgląd czatu' : 'Planopia AI assistant in the app — chat preview'
+	const wrapRef = useRef<HTMLDivElement>(null)
+	const videoRef = useRef<HTMLVideoElement>(null)
+	const [isMd, setIsMd] = useState(false)
+	const [inView, setInView] = useState(false)
+	const [reduceMotion, setReduceMotion] = useState(false)
 
-	const videoProps = {
-		autoPlay: true as const,
-		muted: true as const,
-		loop: true as const,
-		playsInline: true as const,
-		preload: 'auto' as const,
-		'aria-label': label,
-	}
+	const posters = CONSTRUCTION_AI_POSTER[locale]
+	const label =
+		locale === 'pl'
+			? 'Asystent AI w aplikacji Planopia — podgląd czatu'
+			: 'Planopia AI assistant in the app — chat preview'
+
+	useEffect(() => {
+		setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+		const mq = window.matchMedia('(min-width: 768px)')
+		const sync = () => setIsMd(mq.matches)
+		sync()
+		mq.addEventListener('change', sync)
+		return () => mq.removeEventListener('change', sync)
+	}, [])
+
+	useEffect(() => {
+		const el = wrapRef.current
+		if (!el) return
+		const io = new IntersectionObserver(
+			([entry]) => setInView(entry.isIntersecting),
+			{ rootMargin: '120px 0px', threshold: 0.1 }
+		)
+		io.observe(el)
+		return () => io.disconnect()
+	}, [])
+
+	const poster = isMd ? posters.desktop : posters.mobile
+	const shouldPlayVideo = inView && !reduceMotion
+
+	useEffect(() => {
+		const el = videoRef.current
+		if (!el) return
+		if (!shouldPlayVideo) {
+			el.pause()
+			return
+		}
+		const p = el.play()
+		if (p && typeof p.catch === 'function') p.catch(() => {})
+	}, [shouldPlayVideo, isMd, inView])
 
 	return (
-		<>
-			<video
-				className={`${imgClassName} bg-slate-100 md:hidden`}
-				{...videoProps}
-				poster={posterMobile}
-			>
-				<source src={VIDEO_MOBILE} type="video/mp4" />
-			</video>
-			<video
-				className={`${imgClassName} bg-slate-100 hidden md:block`}
-				{...videoProps}
-				poster={posterDesktop}
-			>
-				<source src={desktopVideoSrc} type="video/mp4" />
-			</video>
-		</>
+		<div ref={wrapRef} className="w-full">
+			{shouldPlayVideo ? (
+				<video
+					ref={videoRef}
+					className={imgClassName}
+					src={isMd ? desktopVideoSrc : CONSTRUCTION_AI_VIDEO_MOBILE}
+					muted
+					loop
+					playsInline
+					preload="none"
+					poster={poster}
+					aria-label={label}
+				/>
+			) : (
+				<img
+					src={poster}
+					alt={label}
+					className={imgClassName}
+					width={800}
+					height={533}
+					loading="lazy"
+					decoding="async"
+				/>
+			)}
+		</div>
 	)
 }

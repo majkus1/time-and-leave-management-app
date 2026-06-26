@@ -38,7 +38,7 @@ export default function LandingVideoGuideTeaser({ locale }: { locale: Locale }) 
 			<div className="max-w-7xl mx-auto">
 				<div className="landing-video-guide-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 rounded-2xl border px-6 py-8 sm:px-8 sm:py-9">
 					<div className="min-w-0 flex-1">
-						<p className="landing-video-guide-eyebrow text-xs font-semibold uppercase tracking-wider mb-2">{t.kicker}</p>
+						<p className="landing-section-eyebrow mb-2">{t.kicker}</p>
 						<h2 className="landing-video-guide-title text-2xl sm:text-3xl font-bold">{t.title}</h2>
 						<p className="landing-video-guide-description mt-2 text-base leading-relaxed max-w-2xl">{t.description}</p>
 					</div>

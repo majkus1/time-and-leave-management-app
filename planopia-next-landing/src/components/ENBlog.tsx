@@ -87,7 +87,7 @@ function ENBlog() {
 							Create your free team
 						</Link>
 						<Link href="/blog" className="flex items-center languagechoose">
-							<img src="/img/poland.webp" alt="English version" className="w-6 h-6" />
+							<img src="/img/poland.webp" alt="Wersja polska" className="w-6 h-6" />
 						</Link>
 					</nav>
 

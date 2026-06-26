@@ -174,6 +174,7 @@ export default function BlogVideoGuide({ locale }: { locale: Locale }) {
 						},
 						url: t.pageUrl,
 						datePublished: '2026-03-24',
+						dateModified: '2026-03-24',
 						video: videoObjects,
 					}),
 				}}

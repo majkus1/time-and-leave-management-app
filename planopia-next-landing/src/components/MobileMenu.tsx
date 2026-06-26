@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 
 interface MobileMenuProps {
 	isOpen: boolean
@@ -57,25 +58,35 @@ export default function MobileMenu({
 		}
 	}, [isOpen, isClosing])
 
-	// Lock body scroll when menu is open (albo w trakcie zamykania) + klasa do styli (np. ukrycie widgetu czatu)
-	const menuBlockingUi = isOpen || isClosing
+	// Klasa wizualna (header, czat) — także w trakcie animacji zamykania
+	const menuVisible = isOpen || isClosing
 	useEffect(() => {
-		if (menuBlockingUi) {
-			document.body.style.overflow = 'hidden'
+		if (menuVisible) {
 			document.body.classList.add('mobile-menu-open')
 		} else {
-			document.body.style.overflow = ''
 			document.body.classList.remove('mobile-menu-open')
 		}
 		return () => {
-			document.body.style.overflow = ''
 			document.body.classList.remove('mobile-menu-open')
 		}
-	}, [menuBlockingUi])
+	}, [menuVisible])
+
+	// Blokada scrolla tylko gdy menu jest otwarte (nie podczas animacji zamykania / nawigacji)
+	useEffect(() => {
+		if (isOpen && !isClosing) {
+			document.body.style.overflow = 'hidden'
+		} else {
+			document.body.style.overflow = ''
+		}
+		return () => {
+			document.body.style.overflow = ''
+		}
+	}, [isOpen, isClosing])
 
 	// Handle close with animation
 	const handleClose = useCallback(() => {
 		if (isClosing) return // Prevent multiple clicks
+		resetBodyScrollLock()
 		setIsClosing(true)
 
 		// Wait for animation to complete before actually closing

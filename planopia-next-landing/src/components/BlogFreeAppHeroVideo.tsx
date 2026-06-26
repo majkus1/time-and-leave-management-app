@@ -1,73 +1,93 @@
 'use client'
 
-import { useMobilePowerSaveStaticImage } from '@/hooks/useMobilePowerSaveStaticImage'
+import { useEffect, useRef, useState } from 'react'
+import {
+	BLOG_FREE_APP_MEDIA_SIZE,
+	BLOG_FREE_APP_POSTER,
+	BLOG_FREE_APP_VIDEO_DESKTOP,
+	BLOG_FREE_APP_VIDEO_MOBILE,
+} from '@/data/blogFreeAppAssets'
 
-/**
- * Film pod kartą hero — ta sama szerokość kolumny co karta (rodzic: max-w-4xl / 5xl / 6xl).
- * Desktop: ewi.mp4, mobile: ewi-mob.mp4.
- * Na mobile przy oszczędzaniu baterii/danych: mobilenews.webp / mobile-ennews.webp zamiast wideo.
- */
-type Props = {
-	locale: 'pl' | 'en'
-}
-
-const VIDEO_DESKTOP = '/img/ewi.mp4'
-const VIDEO_MOBILE = '/img/ewi-mob.mp4'
-const POSTER = '/img/ewidencja.webp'
-
-const FALLBACK: Record<'pl' | 'en', string> = {
-	pl: '/img/mobilenews.webp',
-	en: '/img/mobile-ennews.webp',
-}
+type Props = { locale: 'pl' | 'en' }
 
 export default function BlogFreeAppHeroVideo({ locale }: Props) {
-	const loc = locale === 'en' ? 'en' : 'pl'
+	const wrapRef = useRef<HTMLDivElement>(null)
+	const videoRef = useRef<HTMLVideoElement>(null)
+	const [isMd, setIsMd] = useState(false)
+	const [inView, setInView] = useState(false)
+	const [reduceMotion, setReduceMotion] = useState(false)
+
+	const posters = BLOG_FREE_APP_POSTER[locale]
 	const label =
-		loc === 'pl'
+		locale === 'pl'
 			? 'Planopia — podgląd ewidencji czasu pracy w aplikacji'
 			: 'Planopia — time tracking preview in the app'
 
-	const poster = POSTER
-	const fallbackSrc = FALLBACK[loc]
-	const staticOnMobile = useMobilePowerSaveStaticImage()
+	useEffect(() => {
+		setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+		const mq = window.matchMedia('(min-width: 768px)')
+		const sync = () => setIsMd(mq.matches)
+		sync()
+		mq.addEventListener('change', sync)
+		return () => mq.removeEventListener('change', sync)
+	}, [])
 
-	const videoProps = {
-		autoPlay: true as const,
-		muted: true as const,
-		loop: true as const,
-		playsInline: true as const,
-		preload: 'auto' as const,
-	}
+	useEffect(() => {
+		const el = wrapRef.current
+		if (!el) return
+		const io = new IntersectionObserver(
+			([entry]) => setInView(entry.isIntersecting),
+			{ rootMargin: '120px 0px', threshold: 0.1 }
+		)
+		io.observe(el)
+		return () => io.disconnect()
+	}, [])
+
+	const poster = isMd ? posters.desktop : posters.mobile
+	/** Mobile: zawsze obraz (LCP, mniejszy transfer). Desktop: wideo dopiero w viewport. */
+	const shouldPlayVideo = isMd && inView && !reduceMotion
+
+	useEffect(() => {
+		const el = videoRef.current
+		if (!el) return
+		if (!shouldPlayVideo) {
+			el.pause()
+			return
+		}
+		const p = el.play()
+		if (p && typeof p.catch === 'function') p.catch(() => {})
+	}, [shouldPlayVideo])
+
+	const { width, height } = BLOG_FREE_APP_MEDIA_SIZE
 
 	return (
-		<div className="mt-8 sm:mt-10 w-full">
+		<div ref={wrapRef} className="mt-8 sm:mt-10 w-full">
 			<div className="overflow-hidden rounded-xl bg-slate-100 shadow-md ring-1 ring-slate-200/80">
-				{staticOnMobile ? (
+				{shouldPlayVideo ? (
+					<video
+						ref={videoRef}
+						className="block w-full h-auto object-contain object-center outline-none [border:0]"
+						src={isMd ? BLOG_FREE_APP_VIDEO_DESKTOP : BLOG_FREE_APP_VIDEO_MOBILE}
+						muted
+						loop
+						playsInline
+						preload="none"
+						poster={poster}
+						width={width}
+						height={height}
+						aria-label={label}
+					/>
+				) : (
 					<img
-						src={fallbackSrc}
+						src={poster}
 						alt={label}
-						className="block w-full h-auto object-contain object-center outline-none [border:0] md:hidden"
+						className="block w-full h-auto object-contain object-center outline-none [border:0]"
+						width={width}
+						height={height}
 						loading="lazy"
 						decoding="async"
 					/>
-				) : (
-					<video
-						className="block w-full h-auto object-contain object-center outline-none [border:0] md:hidden"
-						{...videoProps}
-						poster={poster}
-						aria-label={label}
-					>
-						<source src={VIDEO_MOBILE} type="video/mp4" />
-					</video>
 				)}
-				<video
-					className="hidden md:block w-full h-auto object-contain object-center outline-none [border:0]"
-					{...videoProps}
-					poster={poster}
-					aria-label={label}
-				>
-					<source src={VIDEO_DESKTOP} type="video/mp4" />
-				</video>
 			</div>
 		</div>
 	)

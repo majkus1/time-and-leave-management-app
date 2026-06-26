@@ -41,7 +41,8 @@ function BlogPWA() {
 							}
 						},
 						"url": "https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa",
-						"datePublished": "2025-01-15"
+						"datePublished": "2025-01-15",
+						"dateModified": "2025-01-15"
 					})
 				}}
 			/>

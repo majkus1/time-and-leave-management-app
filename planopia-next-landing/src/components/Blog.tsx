@@ -289,7 +289,7 @@ function Blog() {
 
 						{/* Karta wpisu 3 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planowanie urlopows.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/planowanie urlopows.webp" alt="Planowanie urlopów pracowników – narzędzia i praktyki" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Planowanie urlopów pracowników – najlepsze narzędzia i praktyki
 							</h3>
@@ -305,7 +305,7 @@ function Blog() {
 
 						{/* Karta wpisu 4 */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/ewidencjas.webp" alt="Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm
 							</h3>
@@ -338,7 +338,7 @@ function Blog() {
 						</article>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/ewidencjas.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/ewidencjas.webp" alt="Elektroniczna ewidencja czasu pracy – kompletny przewodnik" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Elektroniczna ewidencja czasu pracy - kompletny przewodnik
 							</h3>
@@ -353,7 +353,7 @@ function Blog() {
 						</div>
 
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planowanie urlopows.webp" alt="..." className="rounded-md mb-4 h-48 object-cover" />
+							<img src="/img/planowanie urlopows.webp" alt="Zarządzanie urlopami w firmie – kompletny przewodnik" className="rounded-md mb-4 h-48 object-cover" />
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
 							Zarządzanie urlopami w firmie - kompletny przewodnik
 							</h3>
