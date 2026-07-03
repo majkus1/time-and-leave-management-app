@@ -116,6 +116,7 @@ export const useUpsertScheduleEntry = () => {
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
 			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'user'] })
 		}
 	})
 }
@@ -169,6 +170,7 @@ export const useDeleteScheduleEntry = () => {
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['schedule', variables.scheduleId] })
 			queryClient.invalidateQueries({ queryKey: ['scheduleEntries', variables.scheduleId] })
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'user'] })
 		}
 	})
 }

@@ -46,6 +46,8 @@ export const AlertProvider = ({ children }) => {
 				<AlertComponent
 					type={alert.type}
 					message={alert.message}
+					content={alert.content}
+					panelClassName={alert.panelClassName}
 					onClose={alert.onClose}
 					onConfirm={alert.onConfirm}
 					onCancel={alert.onCancel}
@@ -57,7 +59,7 @@ export const AlertProvider = ({ children }) => {
 	)
 }
 
-const AlertComponent = ({ type, message, onClose, onConfirm, onCancel, confirmText, cancelText }) => {
+const AlertComponent = ({ type, message, content, panelClassName, onClose, onConfirm, onCancel, confirmText, cancelText }) => {
 	const handleBackdropClick = e => {
 		if (e.target === e.currentTarget) {
 			if (type === 'alert') {
@@ -68,17 +70,28 @@ const AlertComponent = ({ type, message, onClose, onConfirm, onCancel, confirmTe
 		}
 	}
 
+	const panelClasses = ['po-alert-panel', 'rounded-lg', 'w-full', 'mx-4', 'transform', 'transition-all']
+	if (panelClassName) {
+		panelClasses.push(panelClassName)
+	} else {
+		panelClasses.push('max-w-md')
+	}
+
 	return (
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[1px] po-alert-backdrop"
 			style={{ zIndex: 100000000 }}
 			onClick={handleBackdropClick}>
-			<div className="po-alert-panel rounded-lg max-w-md w-full mx-4 transform transition-all">
+			<div className={panelClasses.join(' ')}>
 				<div className="p-6">
-					<div className="mb-4">
-						<p className="po-alert-message text-base leading-relaxed">{message}</p>
+					<div className={content ? 'mb-5' : 'mb-4'}>
+						{content ? (
+							content
+						) : (
+							<p className="po-alert-message text-base leading-relaxed">{message}</p>
+						)}
 					</div>
-					<div className="flex justify-end gap-3">
+					<div className="flex justify-end gap-3 flex-wrap">
 						{type === 'confirm' && (
 							<button
 								onClick={onCancel}

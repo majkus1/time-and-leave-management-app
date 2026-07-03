@@ -9,6 +9,7 @@ import { mergeCalendarLeaveRequests } from '../utils/leaveRequestCalendarVisibil
 const ALL_LEAVE_REQUESTS_QUERY_KEY = ['leaveRequests', 'all']
 const PENDING_STATUSES = new Set(['status.pending', 'pending'])
 const LEAVE_REQUESTS_UPDATED_EVENT = 'leave-requests-updated'
+const SCHEDULE_UPDATED_EVENT = 'schedule-updated'
 
 const normalizeUserId = (value) => {
 	if (!value) return null
@@ -84,9 +85,15 @@ export const useUserLeaveRequests = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', userId] })
 		}
 
+		const handleScheduleUpdated = () => {
+			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'user', userId] })
+		}
+
 		socket.on(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+		socket.on(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
 		return () => {
 			socket.off(LEAVE_REQUESTS_UPDATED_EVENT, handleLeaveRequestsUpdated)
+			socket.off(SCHEDULE_UPDATED_EVENT, handleScheduleUpdated)
 		}
 	}, [socket, queryClient, userId])
 
@@ -335,6 +342,19 @@ export const useCreateLeaveRequest = () => {
 	})
 }
 
+export const checkLeaveScheduleConflicts = async ({ startDate, endDate, targetUserId }) => {
+	const response = await axios.post(
+		`${API_URL}/api/leaveworks/leave-requests/schedule-conflicts`,
+		{
+			startDate,
+			endDate,
+			...(targetUserId ? { targetUserId } : {}),
+		},
+		{ withCredentials: true }
+	)
+	return response.data
+}
+
 // Mutation - aktualizacja statusu wniosku
 export const useUpdateLeaveRequestStatus = () => {
 	const queryClient = useQueryClient()
@@ -350,7 +370,6 @@ export const useUpdateLeaveRequestStatus = () => {
 		},
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
-			// Optymistyczna aktualizacja jeśli mamy userId
 			if (variables.userId) {
 				queryClient.setQueryData(['leaveRequests', 'user', variables.userId], (old) => {
 					if (!old) return old

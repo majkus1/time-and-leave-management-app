@@ -19,6 +19,10 @@ const {
 	resolveTeamScopedLeaveManageAccess,
 	sendTeamScopedLeaveViewAccessError,
 } = require('../utils/vacationAccess')
+const {
+	findScheduleConflictsForLeaveRange,
+	attachScheduleConflictsToLeaveRequests,
+} = require('../services/leaveScheduleConflictService')
 
 function respondLeaveUserViewAccessError(res, error) {
 	return sendTeamScopedLeaveViewAccessError(res, error)
@@ -267,10 +271,52 @@ exports.getUserLeaveRequests = async (req, res) => {
 		}
 
 		const filteredRequests = await findLeaveRequestsForUser(userId)
+
+		const manageAccess = await resolveTeamScopedLeaveManageAccess(req.user.userId, userId)
+		if (!manageAccess.error) {
+			const enriched = await attachScheduleConflictsToLeaveRequests({
+				teamId: manageAccess.targetUser.teamId,
+				userId: manageAccess.targetUser._id,
+				leaveRequests: filteredRequests,
+			})
+			return res.status(200).json(enriched)
+		}
+
 		res.status(200).json(filteredRequests)
 	} catch (error) {
 		console.error('Error fetching leave requests:', error)
 		res.status(500).send('Failed to fetch leave requests.')
+	}
+}
+
+exports.checkLeaveScheduleConflicts = async (req, res) => {
+	const { startDate, endDate, targetUserId } = req.body || {}
+
+	if (!startDate || !endDate) {
+		return res.status(400).json({ message: 'startDate and endDate are required.' })
+	}
+
+	try {
+		const effectiveTargetUserId = targetUserId || req.user.userId
+		const access = await resolveTeamScopedLeaveUserViewAccess(req.user.userId, effectiveTargetUserId)
+		if (access.error) {
+			return respondLeaveUserViewAccessError(res, access.error)
+		}
+
+		const conflicts = await findScheduleConflictsForLeaveRange({
+			teamId: access.targetUser.teamId,
+			userId: access.targetUser._id,
+			startDate,
+			endDate,
+		})
+
+		return res.status(200).json({
+			hasConflicts: conflicts.length > 0,
+			conflicts,
+		})
+	} catch (error) {
+		console.error('Error checking leave schedule conflicts:', error)
+		return res.status(500).json({ message: 'Failed to check schedule conflicts.' })
 	}
 }
 

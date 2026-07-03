@@ -4,7 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers, useAvailabilityCheckerLeaveRequests } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers, useAvailabilityCheckerLeaveRequests, checkLeaveScheduleConflicts } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays, useVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
@@ -14,6 +14,7 @@ import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
 import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
 import LeaveRequestStatusFilterModal from './LeaveRequestStatusFilterModal'
 import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
+import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmContent'
 
 	function LeaveRequestForm() {
 	const [type, setType] = useState('')
@@ -31,7 +32,7 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 	const [availabilityAssistantOpen, setAvailabilityAssistantOpen] = useState(false)
 	const [statusFilters, setStatusFilters] = useState(createDefaultLeaveRequestStatusFilters)
 	const { t, i18n } = useTranslation()
-	const { showAlert } = useAlert()
+	const { showAlert, showConfirm } = useAlert()
 
 	// TanStack Query hooks
 	const { data: leaveRequests = [], isLoading: loadingRequests } = useOwnLeaveRequests()
@@ -330,6 +331,41 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 		})
 	}
 
+	const confirmScheduleConflictsIfNeeded = async ({
+		rangeStartDate,
+		rangeEndDate,
+		forTargetUserId = '',
+		forEmployeeName = '',
+		isForOtherEmployee = false,
+	}) => {
+		if (!rangeStartDate || !rangeEndDate) return true
+		try {
+			const result = await checkLeaveScheduleConflicts({
+				startDate: rangeStartDate,
+				endDate: rangeEndDate,
+				targetUserId: forTargetUserId || undefined,
+			})
+			if (!result?.hasConflicts || !Array.isArray(result.conflicts) || result.conflicts.length === 0) {
+				return true
+			}
+			return showConfirm(null, {
+				content: (
+					<LeaveScheduleConflictConfirmContent
+						conflicts={result.conflicts}
+						employeeName={forEmployeeName}
+						isForOtherEmployee={isForOtherEmployee}
+					/>
+				),
+				panelClassName: 'po-alert-panel--schedule-conflict',
+				confirmText: t('leaveScheduleConflict.confirmSubmit'),
+				cancelText: t('leaveScheduleConflict.confirmCancel'),
+			})
+		} catch (error) {
+			console.error('Schedule conflict check failed:', error)
+			return true
+		}
+	}
+
 	const submitLeaveRequest = async e => {
 		e.preventDefault()
 		
@@ -425,6 +461,18 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 			await showAlert(t('leaveform.selectEmployeeRequired'))
 			return
 		}
+
+		const employeeName = selectedManagedUser
+			? `${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()
+			: ''
+		const confirmedDespiteSchedule = await confirmScheduleConflictsIfNeeded({
+			rangeStartDate: startDate,
+			rangeEndDate: endDate,
+			forTargetUserId: effectiveTargetUserId,
+			forEmployeeName: employeeName,
+			isForOtherEmployee: Boolean(effectiveTargetUserId),
+		})
+		if (!confirmedDespiteSchedule) return
 		
 		try {
 			const data = {
@@ -562,6 +610,22 @@ import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 			await showAlert(t('leaveform.dateConflictError'))
 			return
 		}
+
+		const editTargetUserId =
+			effectiveTargetUserId ||
+			editingRequest?.userId?._id ||
+			editingRequest?.userId
+		const editEmployeeName = selectedManagedUser
+			? `${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()
+			: ''
+		const confirmedDespiteSchedule = await confirmScheduleConflictsIfNeeded({
+			rangeStartDate: editStartDate,
+			rangeEndDate: editEndDate,
+			forTargetUserId: editTargetUserId ? String(editTargetUserId) : '',
+			forEmployeeName: editEmployeeName,
+			isForOtherEmployee: Boolean(effectiveTargetUserId),
+		})
+		if (!confirmedDespiteSchedule) return
 		
 		try {
 			const data = {

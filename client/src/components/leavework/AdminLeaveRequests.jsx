@@ -13,6 +13,7 @@ import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filt
 import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
 import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
 import LeaveRequestStatusFilterModal from './LeaveRequestStatusFilterModal'
+import LeaveRequestScheduleConflictNotice from './LeaveRequestScheduleConflictNotice'
 
 function AdminLeaveRequests() {
 	const { userId } = useParams()
@@ -248,6 +249,10 @@ function AdminLeaveRequests() {
 									)}
 								</div>
 							</div>
+
+							{request.scheduleConflict?.hasConflict && (
+								<LeaveRequestScheduleConflictNotice conflict={request.scheduleConflict} variant="card" />
+							)}
 
 							<div style={{ display: 'grid', gap: '6px', marginBottom: '12px' }}>
 								<p style={{ margin: 0 }}>

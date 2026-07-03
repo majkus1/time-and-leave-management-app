@@ -5654,6 +5654,62 @@
 	color: var(--po-text-muted) !important;
 }
 
+[data-theme='dark'] .leave-schedule-conflict-notice {
+	background: rgba(245, 158, 11, 0.12);
+	border-color: rgba(251, 191, 36, 0.45);
+	border-left-color: #f59e0b;
+	color: #fde68a;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-notice__icon {
+	background: #d97706;
+	color: #fff7ed;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-notice__title {
+	color: #fde68a;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-notice__summary,
+[data-theme='dark'] .leave-schedule-conflict-notice__list,
+[data-theme='dark'] .leave-schedule-conflict-notice__hint {
+	color: #fcd34d;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__intro {
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__list-box {
+	background: rgba(245, 158, 11, 0.1);
+	border-color: rgba(251, 191, 36, 0.35);
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__item {
+	border-bottom-color: rgba(251, 191, 36, 0.2);
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__date {
+	color: #fde68a;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__meta {
+	color: #fcd34d;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__time {
+	background: rgba(245, 158, 11, 0.2);
+	color: #fde68a;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__question {
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .leave-schedule-conflict-confirm__note {
+	color: var(--po-text-muted) !important;
+}
+
 [data-theme='dark'] #leave-requests-review .autocol.status-accepted {
 	color: #86efac !important;
 }

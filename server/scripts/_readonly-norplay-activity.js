@@ -34,14 +34,14 @@ async function main() {
 	await mongoose.connect(process.env.DB_URI)
 	const db = mongoose.connection.db
 
-	let team = await db.collection('teams').findOne({ name: { $regex: /^MP TRANSPORT$/i } })
+	let team = await db.collection('teams').findOne({ name: { $regex: /^NorPlay$/i } })
 	if (!team) {
-		team = await db.collection('teams').findOne({ name: { $regex: /MP\s*TRANSPORT/i } })
+		team = await db.collection('teams').findOne({ name: { $regex: /Nor\s*Play/i } })
 	}
 	if (!team) {
 		const fuzzy = await db
 			.collection('teams')
-			.find({ name: { $regex: /MP.*TRANSPORT|TRANSPORT.*MP/i } })
+			.find({ name: { $regex: /Nor.*Play|Play.*Nor/i } })
 			.project({ name: 1, createdAt: 1 })
 			.toArray()
 		console.log(JSON.stringify({ error: 'Team not found', fuzzy }, null, 2))

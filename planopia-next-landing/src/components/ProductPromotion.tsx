@@ -2,10 +2,16 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import LandingVideoGuideTeaser from './LandingVideoGuideTeaser'
-import LandingAIHighlight from './LandingAIHighlight'
 import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+
+const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
+	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
+})
+
+const LandingAIHighlight = dynamic(() => import('./LandingAIHighlight'), {
+	loading: () => <div className="min-h-[200px] w-full" aria-hidden />,
+})
 
 const AboutAppShowcaseVideos = dynamic(() => import('./AboutAppShowcaseVideos'), {
 	loading: () => <div className="about-app-mockup-wrap min-h-[280px] w-full" aria-hidden />,

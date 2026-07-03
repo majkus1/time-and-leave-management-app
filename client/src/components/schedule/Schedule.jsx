@@ -31,6 +31,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate, getHolidaysInRange, toYmdLocal } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import ScheduleAutoAiPanel from './ScheduleAutoAiPanel'
+import { employeeHasApprovedLeaveOnDate } from '../../utils/leaveScheduleConflict'
 
 /** Polish (and some locales) return month names lowercase — capitalize for UI labels */
 function capitalizeMonthName(locale, monthIndexZeroBased) {
@@ -1244,6 +1245,20 @@ function Schedule() {
 			return
 		}
 
+		if (
+			employeeHasApprovedLeaveOnDate({
+				leaveRequests: acceptedSentTeamRequests,
+				employeeId: selectedEmployeeId,
+				dateKey: selectedDayKey,
+			})
+		) {
+			await showAlert(
+				t('schedule.leaveEntryBlocked') ||
+					'Nie można dodać wpisu do grafiku w dniu z zaakceptowanym urlopem tego pracownika.'
+			)
+			return
+		}
+
 		// Validate time format
 		const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
 		if (!timeRegex.test(timeFrom) || !timeRegex.test(timeTo)) {
@@ -1376,7 +1391,12 @@ function Schedule() {
 			
 			await showAlert(t('schedule.entryAdded') || 'Wpis został dodany pomyślnie')
 		} catch (error) {
-			await showAlert(error.response?.data?.message || t('schedule.addError') || 'Błąd podczas dodawania wpisu')
+			const code = error.response?.data?.code
+			await showAlert(
+				code === 'SCHEDULE_LEAVE_BLOCK'
+					? t('schedule.leaveEntryBlocked')
+					: error.response?.data?.message || t('schedule.addError') || 'Błąd podczas dodawania wpisu'
+			)
 		}
 	}
 

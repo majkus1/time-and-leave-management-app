@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { LANDING_HERO_LCP } from '@/data/landingHeroAssets'
 import { landingHeroCopy } from '@/data/landingHeroCopy'
@@ -37,14 +36,14 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 							))}
 						</div>
 					</div>
-					<Image
+					<img
 						src={LANDING_HERO_LCP.src}
 						alt={copy.imageAlt}
 						className="landing-polished-hero-image rounded-xl w-full h-auto aspect-[3/2]"
 						width={LANDING_HERO_LCP.width}
 						height={LANDING_HERO_LCP.height}
-						priority
 						fetchPriority="high"
+						decoding="async"
 						sizes={LANDING_HERO_LCP.sizes}
 					/>
 				</div>

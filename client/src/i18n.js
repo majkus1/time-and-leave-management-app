@@ -502,6 +502,8 @@ i18n
 						holidayBlockedBadge: 'Holiday',
 						holidayBlockedBadgeSub: 'Non-working day (per team settings)',
 						holidayEntryBlocked: 'Cannot add an entry on team holidays (non-working days per settings).',
+						leaveEntryBlocked:
+							'Cannot add a schedule entry on a day with approved leave for this employee.',
 						availability: {
 							title: 'My availability',
 							description: 'Report the days you can work. The person creating the schedule will see this during assignment.',
@@ -1296,6 +1298,24 @@ i18n
 					weekendEndDateError: 'You cannot select a weekend as the end date when the team does not work on weekends. Please select a start date first to create a range (weekends will be excluded from day count).',
 					minDaysBeforeError: 'Leave request type "{{type}}" must be submitted minimum {{days}} {{daysText}} before the planned leave.',
 					selectEmployeeRequired: 'Select an employee.',
+					},
+					leaveScheduleConflict: {
+						confirmIntroSelf:
+							'You already have published shifts in the schedule during the selected leave period:',
+						confirmIntroOther:
+							'{{name}} already has published shifts in the schedule during the selected leave period:',
+						confirmQuestion: 'Do you still want to submit this leave request?',
+						confirmManagerNote:
+							'Your manager will see this schedule information with the request.',
+						confirmSubmit: 'Submit anyway',
+						confirmCancel: 'Go back',
+						badgeTitle: 'Schedule overlap',
+						badgeSummaryOne: 'This request includes a day when the employee is already scheduled to work.',
+						badgeSummaryMany:
+							'This request includes {{count}} days when the employee is already scheduled to work.',
+						badgeAria: 'Schedule overlap warning',
+						managerHint:
+							'Review the schedule and update or remove the conflicting shift if the leave is approved.',
 					},
 					leaveplanner: {
 						vactiontitle: 'Vacation',
@@ -2534,6 +2554,8 @@ i18n
 						holidayBlockedBadge: 'Święto',
 						holidayBlockedBadgeSub: 'Dzień wolny od pracy (ustawienia zespołu)',
 						holidayEntryBlocked: 'Nie można dodać wpisu w dzień świąteczny wolnym od pracy (ustawienia zespołu).',
+						leaveEntryBlocked:
+							'Nie można dodać wpisu do grafiku w dniu z zaakceptowanym urlopem tego pracownika.',
 						availability: {
 							title: 'Moja dyspozycyjność',
 							description: 'Zgłoś dni, w których możesz pracować. Osoba układająca grafik zobaczy to przy przypisaniu.',
@@ -3327,6 +3349,24 @@ i18n
 					weekendEndDateError: 'Nie można wybrać weekendu jako daty końcowej, gdy zespół nie pracuje w weekendy. Wybierz najpierw datę początkową, aby utworzyć zakres (weekendy nie będą wliczane do liczby dni).',
 					minDaysBeforeError: 'Wniosek typu "{{type}}" trzeba złożyć minimum {{days}} {{daysText}} przed planowanym urlopem.',
 					selectEmployeeRequired: 'Wybierz pracownika.',
+					},
+					leaveScheduleConflict: {
+						confirmIntroSelf:
+							'W wybranym okresie urlopu masz już opublikowane wpisy w grafiku:',
+						confirmIntroOther:
+							'Pracownik {{name}} ma już opublikowane wpisy w grafiku w wybranym okresie urlopu:',
+						confirmQuestion: 'Czy na pewno chcesz wysłać ten wniosek?',
+						confirmManagerNote:
+							'Informacja o grafiku będzie widoczna u przełożonego przy wniosku.',
+						confirmSubmit: 'Wyślij mimo to',
+						confirmCancel: 'Wróć',
+						badgeTitle: 'Kolizja z grafikiem',
+						badgeSummaryOne: 'Ten wniosek obejmuje dzień, w którym pracownik jest już wpisany do pracy w grafiku.',
+						badgeSummaryMany:
+							'Ten wniosek obejmuje {{count}} dni, w których pracownik jest już wpisany do pracy w grafiku.',
+						badgeAria: 'Ostrzeżenie o kolizji z grafikiem',
+						managerHint:
+							'Sprawdź grafik i usuń lub zmień wpis na ten dzień, jeśli urlop zostanie zaakceptowany.',
 					},
 					leaveplanner: {
 						vactiontitle: 'Urlop',

@@ -13,6 +13,7 @@ const { isHoliday } = require('../utils/holidays')
 const { sendSchedulePublishedPushNotification } = require('../services/pushNotificationService')
 const { sendSchedulePublishedEmailNotification } = require('../services/emailService')
 const { getClientSafeMessage } = require('../utils/clientSafeErrors')
+const { assertScheduleEntryAllowedForEmployee } = require('../services/leaveScheduleConflictService')
 
 const normalizeDepartments = (departmentValue) =>
 	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
@@ -659,6 +660,15 @@ exports.upsertScheduleEntry = async (req, res) => {
 			}
 		}
 
+		const leaveBlock = await assertScheduleEntryAllowedForEmployee({
+			userId: employeeId,
+			date,
+			locale: req.language || req.headers['accept-language'],
+		})
+		if (!leaveBlock.ok) {
+			return res.status(409).json({ message: leaveBlock.message, code: leaveBlock.code })
+		}
+
 		// Find or create day entry
 		const entryDate = new Date(date)
 		entryDate.setHours(0, 0, 0, 0)
@@ -721,6 +731,12 @@ exports.upsertScheduleEntry = async (req, res) => {
 				console.error('Error sending manual schedule entry email notification:', error)
 			})
 		}
+
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'entry-added',
+		})
 		
 		res.json({ message: 'Schedule entry added successfully', schedule })
 	} catch (error) {
@@ -1115,6 +1131,12 @@ exports.deleteScheduleEntry = async (req, res) => {
 		}
 
 		await schedule.save()
+
+		emitScheduleUpdated(req, {
+			teamId: schedule.teamId,
+			scheduleId: schedule._id,
+			action: 'entry-deleted',
+		})
 		
 		res.json({ message: 'Schedule entry deleted successfully', schedule })
 	} catch (error) {
