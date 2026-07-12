@@ -693,7 +693,7 @@ function Dashboard() {
 							)}
 						</div>
 
-						{!showTeamInsights && personalOverviewPanel}
+						{personalOverviewPanel}
 
 						{showTeamInsights && (
 							<TeamInsightsPanel
@@ -837,8 +837,6 @@ function Dashboard() {
 								</div>
 							</Section>
 						</div>
-
-						{showTeamInsights && personalOverviewPanel}
 					</>
 				)}
 			</main>
