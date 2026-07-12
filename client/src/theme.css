@@ -5977,26 +5977,7 @@
 	color: var(--po-text-muted) !important;
 }
 
-/* QR generator */
-[data-theme='dark'] .settings-page .qr-code-generator {
-	background-color: var(--po-surface) !important;
-	box-shadow: 0 4px 12px var(--po-shadow) !important;
-}
-
-[data-theme='dark'] .settings-page .qr-code-generator h3,
-[data-theme='dark'] .settings-page .qr-code-generator h4 {
-	color: var(--po-text) !important;
-}
-
-[data-theme='dark'] .settings-page .qr-code-generator div[style*='background-color: white'],
-[data-theme='dark'] .settings-page .qr-code-generator div[style*='background-color: rgb(255, 255, 255)'] {
-	background-color: #ffffff !important;
-}
-
-[data-theme='dark'] .settings-page .qr-code-generator div[style*='background-color: white'] h4,
-[data-theme='dark'] .settings-page .qr-code-generator div[style*='background-color: white'] p {
-	color: #0f172a !important;
-}
+/* QR generator — styles in components/qr/QRCode.css */
 
 /* Czynności (WorkActivities) */
 [data-theme='dark'] .settings-page .work-activities-settings-item,

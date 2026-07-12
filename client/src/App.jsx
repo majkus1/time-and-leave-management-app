@@ -6,6 +6,7 @@ import CreateUser from './components/profile/CreateUser'
 import Login from './components/profile/Login'
 import TeamRegistration from './components/profile/TeamRegistration'
 import Dashboard from './components/dashboard/Dashboard'
+import WorkTimePage from './components/dashboard/WorkTimePage'
 import ChangePassword from './components/profile/ChangePassword'
 import SetPassword from './components/profile/SetPassword'
 import ResetPassword from './components/profile/ResetPassword'
@@ -40,6 +41,8 @@ import { useSupervisorConfig } from './hooks/useSupervisor'
 // import ENBlogThree from './components/ENBlogThree.jsx'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
 import FreemiumRouteSync from './components/route/FreemiumRouteSync.jsx'
+import HomeRedirect from './components/route/HomeRedirect.jsx'
+import FreemiumDashboardGuard from './components/route/FreemiumDashboardGuard.jsx'
 import TeamAccessNoticePage from './components/route/TeamAccessNoticePage.jsx'
 import SettingsRouteGate from './components/route/SettingsRouteGate.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
@@ -138,9 +141,9 @@ function AppContent() {
 				</div>
 			) : (
 				<Routes>
-					<Route path="/login" element={loggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
-					<Route path="/team-registration" element={loggedIn ? <Navigate to="/dashboard" /> : <TeamRegistration />} />
-					<Route path="/" element={loggedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
+					<Route path="/login" element={loggedIn ? <HomeRedirect /> : <Login />} />
+					<Route path="/team-registration" element={loggedIn ? <HomeRedirect /> : <TeamRegistration />} />
+					<Route path="/" element={loggedIn ? <HomeRedirect /> : <Login />} />
 					{/* <Route path="/en" element={<ENProductPromotion />} />
 					<Route path="/blog" element={<Blog />} />
 					<Route path="/en/blog" element={<ENBlog />} />
@@ -153,7 +156,8 @@ function AppContent() {
 					<Route path="/new-password/:token" element={<NewPassword />} />
 					<Route path="/qr-scan/:code" element={<QRScan />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
-					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/dashboard" element={<FreemiumDashboardGuard><Dashboard /></FreemiumDashboardGuard>} />
+					<Route path="/work-time" element={<WorkTimePage />} />
 					<Route path="/boards" element={<BoardList />} />
 					<Route path="/boards/:boardId" element={<Board />} />
 					<Route path="/schedule" element={<ScheduleList />} />

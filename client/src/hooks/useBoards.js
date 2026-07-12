@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config'
 import { useSocket } from '../context/SocketContext'
+import { invalidateDashboardSummary } from './useDashboardSummary'
 
 // Get user's boards
 export const useBoards = () => {
@@ -155,6 +156,7 @@ export const useCreateTask = () => {
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', variables.boardId] })
 			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
+			invalidateDashboardSummary(queryClient)
 		}
 	})
 }
@@ -173,6 +175,7 @@ export const useUpdateTask = () => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks', data.boardId] })
 			queryClient.invalidateQueries({ queryKey: ['task', data._id] })
 			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
+			invalidateDashboardSummary(queryClient)
 			// Refetch the specific task to get updated data
 			queryClient.refetchQueries({ queryKey: ['task', data._id] })
 		}
@@ -198,6 +201,7 @@ export const useUpdateTaskStatus = () => {
 			// Invalidate single task cache so modal shows updated status
 			const taskIdToInvalidate = data._id || variables.taskId
 			queryClient.invalidateQueries({ queryKey: ['task', taskIdToInvalidate] })
+			invalidateDashboardSummary(queryClient)
 		}
 	})
 }
@@ -215,6 +219,7 @@ export const useDeleteTask = () => {
 		onSuccess: (_, taskId) => {
 			queryClient.invalidateQueries({ queryKey: ['boardTasks'] })
 			queryClient.invalidateQueries({ queryKey: ['boardCalendarTasks'] })
+			invalidateDashboardSummary(queryClient)
 			// Remove the task from cache
 			queryClient.removeQueries({ queryKey: ['task', taskId] })
 		}

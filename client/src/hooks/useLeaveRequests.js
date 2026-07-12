@@ -5,6 +5,7 @@ import { API_URL } from '../config.js'
 import { useSocket } from '../context/SocketContext'
 import { useAuth } from '../context/AuthContext'
 import { mergeCalendarLeaveRequests } from '../utils/leaveRequestCalendarVisibility'
+import { invalidateDashboardSummary } from './useDashboardSummary'
 
 const ALL_LEAVE_REQUESTS_QUERY_KEY = ['leaveRequests', 'all']
 const PENDING_STATUSES = new Set(['status.pending', 'pending'])
@@ -338,6 +339,7 @@ export const useCreateLeaveRequest = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -370,6 +372,7 @@ export const useUpdateLeaveRequestStatus = () => {
 		},
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+			invalidateDashboardSummary(queryClient)
 			if (variables.userId) {
 				queryClient.setQueryData(['leaveRequests', 'user', variables.userId], (old) => {
 					if (!old) return old
@@ -396,6 +399,7 @@ export const useCancelLeaveRequest = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -415,6 +419,7 @@ export const useUpdateLeaveRequest = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }

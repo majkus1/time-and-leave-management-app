@@ -5,6 +5,8 @@ describe('freemiumSeatEscape', () => {
 	it('admin escape paths include team management', () => {
 		expect(isFreemiumSeatEscapePath('/team-management', ['Admin'])).toBe(true)
 		expect(isFreemiumSeatEscapePath('/dashboard', ['Admin'])).toBe(false)
+		expect(isFreemiumSeatEscapePath('/work-time', ['Admin'])).toBe(true)
+		expect(isFreemiumSeatEscapePath('/work-time', ['Pracownik (Worker)'])).toBe(true)
 	})
 
 	it('recovery path sends admin and HR to packages', () => {

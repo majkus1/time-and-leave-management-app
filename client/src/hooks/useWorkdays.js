@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 import { useSocket } from '../context/SocketContext'
+import { invalidateDashboardSummary } from './useDashboardSummary'
 
 /** Podczas refetch zachowaj poprzednie dane — kalendarz nie traci stanu UI. */
 const keepPreviousQueryData = (previousData) => previousData
@@ -97,6 +98,7 @@ export const useCreateWorkday = () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			// Also invalidate timer sessions queries in case workday contains sessions
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -115,6 +117,7 @@ export const useCreateWorkdayForUser = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -139,6 +142,7 @@ export const useBulkFillWorkdays = (userId = null) => {
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			}
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -182,6 +186,7 @@ export const useUpdateWorkday = () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			// Also invalidate timer sessions queries in case workday contains sessions
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -200,6 +205,7 @@ export const useUpdateWorkdayForUser = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -241,6 +247,7 @@ export const useDeleteWorkday = () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			// Also invalidate timer sessions queries to update the session list immediately
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -266,6 +273,7 @@ export const useClearWorkdaysForMonth = (userId = null) => {
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			}
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -284,6 +292,7 @@ export const useDeleteWorkdayForUser = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -302,6 +311,7 @@ export const useReviewWorkdayForUser = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }

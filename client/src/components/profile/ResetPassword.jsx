@@ -54,7 +54,7 @@ function ResetPassword() {
 
 	// Jeśli użytkownik jest już zalogowany, przekieruj
 	if (loggedIn) {
-		navigate('/dashboard', { replace: true })
+		navigate('/', { replace: true })
 		return null
 	}
 

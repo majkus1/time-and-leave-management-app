@@ -26,7 +26,9 @@ describe('freemiumApiPolicyService', () => {
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/workdays/timer/foo', 'POST'), false)
 	})
 
-	it('freemium active tier: workdays (bez timera), calendar, settings', () => {
+	it('freemium active tier: workdays (bez timera), calendar, settings — bez dashboardu KPI', () => {
+		assert.equal(policy.isFreemiumActiveTierAllowed('/api/dashboard/summary', 'GET'), false)
+		assert.equal(policy.isFreemiumActiveTierAllowed('/api/dashboard/team-insights', 'GET'), false)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/workdays', 'GET'), true)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/workdays/123', 'GET'), true)
 		assert.equal(policy.isFreemiumActiveTierAllowed('/api/work-activities', 'GET'), true)
@@ -67,8 +69,9 @@ describe('freemiumApiPolicyService', () => {
 		)
 	})
 
-	it('seat overcapacity: work-activities dozwolone (ewidencja / konfiguracja czynności)', () => {
+	it('seat overcapacity: work-activities dozwolone (ewidencja / konfiguracja czynności), dashboard zablokowany', () => {
 		const teamId = '507f1f77bcf86cd799439011'
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/dashboard/summary', 'GET', teamId), false)
 		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'GET', teamId), true)
 		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'POST', teamId), true)
 	})

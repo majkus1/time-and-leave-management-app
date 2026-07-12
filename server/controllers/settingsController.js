@@ -16,6 +16,11 @@ function applyFreemiumManagedNoAccessPolicy(team, settings) {
 	settings.allowManagedLeaveRequests = false
 }
 
+function applyFreemiumDashboardPolicy(team, settings) {
+	if (!settings || !entitlementsService.isFreemiumTierTeam(team)) return
+	settings.dashboardEnabled = false
+}
+
 exports.getSettings = async (req, res) => {
 	try {
 		// Pobierz teamId z użytkownika
@@ -25,10 +30,12 @@ exports.getSettings = async (req, res) => {
 		}
 
 		await entitlementsService.syncTimerEnabledSettingForTeam(requestingUser.teamId)
+		await entitlementsService.syncDashboardEnabledSettingForTeam(requestingUser.teamId)
 
 		const settings = await Settings.getSettings(requestingUser.teamId)
 		const team = await loadTeamForEntitlements(requestingUser.teamId)
 		applyFreemiumManagedNoAccessPolicy(team, settings)
+		applyFreemiumDashboardPolicy(team, settings)
 		res.json(settings)
 	} catch (error) {
 		console.error('Error retrieving settings:', error)
@@ -48,6 +55,7 @@ exports.updateSettings = async (req, res) => {
 			leaveCalculationMode,
 			leaveHoursPerDay,
 			timerEnabled,
+			dashboardEnabled,
 			allowManagedNoAccessUsers,
 			allowManagedWorkdayEntries,
 			allowManagedLeaveRequests,
@@ -224,6 +232,19 @@ exports.updateSettings = async (req, res) => {
 			settings.timerEnabled = timerEnabled
 		}
 
+		if (dashboardEnabled !== undefined && typeof dashboardEnabled === 'boolean') {
+			if (dashboardEnabled === true) {
+				const team = await loadTeamForEntitlements(requestingUser.teamId)
+				if (!entitlementsService.mayEnableDashboardByBilling(team, new Date())) {
+					return res.status(400).json({
+						success: false,
+						message: 'Pulpit (Start) nie jest dostępny w planie darmowym.',
+					})
+				}
+			}
+			settings.dashboardEnabled = dashboardEnabled
+		}
+
 		if (allowManagedNoAccessUsers !== undefined && typeof allowManagedNoAccessUsers === 'boolean') {
 			settings.allowManagedNoAccessUsers = allowManagedNoAccessUsers
 			if (!allowManagedNoAccessUsers) {
@@ -248,6 +269,7 @@ exports.updateSettings = async (req, res) => {
 
 		const team = await loadTeamForEntitlements(requestingUser.teamId)
 		applyFreemiumManagedNoAccessPolicy(team, settings)
+		applyFreemiumDashboardPolicy(team, settings)
 
 		await settings.save()
 		

@@ -172,6 +172,26 @@ async function syncTimerEnabledSettingForTeam(teamId) {
 	}
 }
 
+/** Freemium nie ma pulpitu — wymuś wyłączenie w ustawieniach zespołu. */
+async function syncDashboardEnabledSettingForTeam(teamId) {
+	if (!teamId) return
+	const team = await Team.findById(teamId).select(
+		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+	)
+	if (!team) return
+	if (!isFreemiumTierTeam(team, new Date())) return
+	const settings = await Settings.findOne({ teamId })
+	if (settings?.dashboardEnabled) {
+		settings.dashboardEnabled = false
+		await settings.save()
+	}
+}
+
+function mayEnableDashboardByBilling(team, now = new Date()) {
+	if (!team) return false
+	return !isFreemiumTierTeam(team, now)
+}
+
 /**
  * Czy można zapisać timerEnabled=true — spójnie z planModuleApiGuard (trial/legacy/freemium/specjalne vs płatny CORE + moduł / bundle).
  */
@@ -579,5 +599,7 @@ module.exports = {
 	ensureMonthRolloverInMemory,
 	effectiveBillingModuleKeys,
 	syncTimerEnabledSettingForTeam,
+	syncDashboardEnabledSettingForTeam,
 	mayEnableTimerQrByBilling,
+	mayEnableDashboardByBilling,
 }

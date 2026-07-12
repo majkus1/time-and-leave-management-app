@@ -1,5 +1,6 @@
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
 const BillingPaymentSession = require('../models/BillingPaymentSession')(firmDb)
 const BillingLedgerEntry = require('../models/BillingLedgerEntry')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
@@ -42,11 +43,18 @@ exports.getEntitlements = async (req, res) => {
 		if (!team) {
 			return res.status(404).json({ success: false, message: 'Team not found' })
 		}
+		await entitlementsService.syncDashboardEnabledSettingForTeam(req.user.teamId)
+		const settingsLean = await Settings.findOne({ teamId: req.user.teamId })
+			.select('dashboardEnabled')
+			.lean()
 		const teamMemberCount = await countTeamSeats(req.user.teamId)
+		const entitlements = entitlementsService.buildClientEntitlements(team, { activeSeatCount: teamMemberCount })
+		entitlements.dashboardEnabled =
+			!entitlements.freemiumTier && settingsLean?.dashboardEnabled === true
 		res.json({
 			success: true,
 			entitlements: {
-				...entitlementsService.buildClientEntitlements(team, { activeSeatCount: teamMemberCount }),
+				...entitlements,
 				teamMemberCount,
 			},
 		})

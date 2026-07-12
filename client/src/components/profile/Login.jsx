@@ -29,7 +29,7 @@ function Login() {
 	const location = useLocation()
 	const redirectAfterLogin = (() => {
 		const loc = location.state?.from
-		if (!loc?.pathname) return '/dashboard'
+		if (!loc?.pathname) return '/'
 		return `${loc.pathname}${loc.search || ''}${loc.hash || ''}`
 	})()
 	const { t } = useTranslation()

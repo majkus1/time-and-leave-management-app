@@ -65,6 +65,7 @@ function Settings() {
 	const [leaveCalculationMode, setLeaveCalculationMode] = useState('days')
 	const [leaveHoursPerDay, setLeaveHoursPerDay] = useState(8)
 	const [timerEnabled, setTimerEnabled] = useState(true)
+	const [dashboardEnabled, setDashboardEnabled] = useState(false)
 	const [allowManagedNoAccessUsers, setAllowManagedNoAccessUsers] = useState(false)
 	const [allowManagedWorkdayEntries, setAllowManagedWorkdayEntries] = useState(false)
 	const [allowManagedLeaveRequests, setAllowManagedLeaveRequests] = useState(false)
@@ -148,6 +149,7 @@ function Settings() {
 			setLeaveCalculationMode(settings.leaveCalculationMode || 'days')
 			setLeaveHoursPerDay(settings.leaveHoursPerDay || 8)
 			setTimerEnabled(settings.timerEnabled !== undefined ? settings.timerEnabled : true)
+			setDashboardEnabled(settings.dashboardEnabled === true)
 			setAllowManagedNoAccessUsers(settings.allowManagedNoAccessUsers === true)
 			setAllowManagedWorkdayEntries(settings.allowManagedWorkdayEntries === true)
 			setAllowManagedLeaveRequests(settings.allowManagedLeaveRequests === true)
@@ -262,6 +264,7 @@ function Settings() {
 					leaveCalculationMode,
 					leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
 					...(showTimerQrSettings ? { timerEnabled } : {}),
+					dashboardEnabled,
 					allowManagedNoAccessUsers,
 					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
 					allowManagedLeaveRequests:
@@ -537,6 +540,85 @@ function Settings() {
 					</h2>
 					<hr></hr>
 				</div>
+
+				{canEditSettings && !freemiumTier && (
+					<div
+						className="po-settings-panel"
+						style={{
+							backgroundColor: 'white',
+							borderRadius: '12px',
+							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+							padding: '20px',
+							marginBottom: '20px',
+						}}
+					>
+						<h3
+							style={{
+								color: '#2c3e50',
+								marginBottom: '16px',
+								fontSize: '20px',
+								fontWeight: '600',
+								paddingBottom: '10px',
+								borderBottom: '2px solid #00a846',
+							}}
+						>
+							{t('settings.dashboardSectionTitle')}
+						</h3>
+						<div
+							className="po-settings-toggle-row"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								padding: '20px',
+								backgroundColor: '#f8f9fa',
+								borderRadius: '8px',
+								border: '1px solid #dee2e6',
+							}}
+						>
+							<div style={{ flex: 1 }}>
+								<label
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										cursor: 'pointer',
+										fontSize: '16px',
+										fontWeight: '500',
+										color: '#2c3e50',
+									}}
+								>
+									<input
+										type="checkbox"
+										checked={dashboardEnabled}
+										onChange={(e) => setDashboardEnabled(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#00a846',
+										}}
+									/>
+									<span>{t('settings.dashboardEnabledLabel')}</span>
+								</label>
+								<p
+									style={{
+										marginTop: '8px',
+										marginBottom: 0,
+										fontSize: '14px',
+										color: '#7f8c8d',
+										marginLeft: '36px',
+										lineHeight: 1.55,
+									}}
+								>
+									{dashboardEnabled
+										? t('settings.dashboardEnabledDescription')
+										: t('settings.dashboardDisabledDescription')}
+								</p>
+							</div>
+						</div>
+					</div>
+				)}
 
 				{freemiumTier && pushOnlySettings && (
 					<div

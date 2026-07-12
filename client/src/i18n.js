@@ -1918,7 +1918,13 @@ i18n
 						delete: 'Delete',
 						timerEnabledLabel: 'Enable QR and work time counter function',
 						timerEnabledDescription: 'QR and work time counter function is enabled. Users can use QR codes to register work time and work time counter with sessions.',
-						timerDisabledDescription: 'QR and work time counter function is disabled. Users will not be able to use QR codes or work time counter.'
+						timerDisabledDescription: 'QR and work time counter function is disabled. Users will not be able to use QR codes or work time counter.',
+						dashboardSectionTitle: 'Start page (home dashboard)',
+						dashboardEnabledLabel: 'Show Start page for the team',
+						dashboardEnabledDescription:
+							'The “Start” link appears in the sidebar. After login, users land on the home dashboard with team stats, leave overview, and shortcuts — instead of going straight to Work time.',
+						dashboardDisabledDescription:
+							'Start is hidden: no sidebar link. After login, everyone goes directly to Work time — without the summary dashboard.',
 					},
 					timer: {
 						title: 'Work Time Counter',
@@ -3936,7 +3942,13 @@ i18n
 						delete: 'Usuń',
 						timerEnabledLabel: 'Włącz funkcję QR i licznika czasu pracy',
 						timerEnabledDescription: 'Funkcja QR i licznika czasu pracy jest włączona. Użytkownicy mogą używać kodów QR do rejestracji czasu pracy oraz licznika czasu pracy z sesjami.',
-						timerDisabledDescription: 'Funkcja QR i licznika czasu pracy jest wyłączona. Użytkownicy nie będą mogli używać kodów QR ani licznika czasu pracy.'
+						timerDisabledDescription: 'Funkcja QR i licznika czasu pracy jest wyłączona. Użytkownicy nie będą mogli używać kodów QR ani licznika czasu pracy.',
+						dashboardSectionTitle: 'Strona Start (pulpit główny)',
+						dashboardEnabledLabel: 'Włącz stronę Start dla zespołu',
+						dashboardEnabledDescription:
+							'W menu bocznym pojawi się link „Start”. Po zalogowaniu użytkownicy trafiają na pulpit z podsumowaniem: statystyki, urlopy i skróty — zamiast od razu na Ewidencję czasu pracy.',
+						dashboardDisabledDescription:
+							'Strona Start jest ukryta — brak linku w menu. Po zalogowaniu wszyscy trafiają od razu na Ewidencję czasu pracy, bez pulpitu z podsumowaniem.',
 					},
 					timer: {
 						title: 'Licznik czasu pracy',

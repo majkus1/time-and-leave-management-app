@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 
+import { BILLING_ENTITLEMENTS_QUERY_KEY } from './useBilling'
+
 // Query hook - pobieranie ustawień
 export const useSettings = () => {
 	return useQuery({
@@ -28,8 +30,11 @@ export const useUpdateSettings = () => {
 			})
 			return response.data
 		},
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['settings'] })
+			if (variables && Object.prototype.hasOwnProperty.call(variables, 'dashboardEnabled')) {
+				queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+			}
 		},
 	})
 }

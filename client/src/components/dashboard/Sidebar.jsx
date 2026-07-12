@@ -9,6 +9,7 @@ import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useAnnouncementsUnreadCount } from '../../hooks/useAnnouncements'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useDashboardAccess } from '../../hooks/useDashboardAccess'
 import { useSettings } from '../../hooks/useSettings'
 import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
@@ -40,6 +41,7 @@ function Sidebar() {
 		freemiumSeatBlocked,
 		freemiumAppRestricted,
 	} = useFreemiumAccess({ enabled: !!loggedIn })
+	const { canUseDashboard } = useDashboardAccess({ enabled: !!loggedIn })
 	/** Freemium: bez zapytań do czatu/tablic/ogłoszeń/urlopów (403 z freemiumApiGuard). */
 	const premiumSidebarQueriesEnabled = !!loggedIn && !billingEntLoading && !freemiumTier
 
@@ -91,6 +93,7 @@ function Sidebar() {
 	const compactFreemiumNav = freemiumSeatBlocked
 	const narrowFreemiumNav = freemiumAppRestricted
 	const showPremiumModules = !compactFreemiumNav && !narrowFreemiumNav
+	const showDashboardLink = canUseDashboard && !compactFreemiumNav
 	const showScheduleLink =
 		showPremiumModules &&
 		canShowBillingModuleNav(billingEnt, 'schedules_ai', billingEntLoading)
@@ -124,6 +127,8 @@ function Sidebar() {
 
 	const isLeavePlans = location.pathname === '/all-leave-plans' || location.pathname.startsWith('/leave-plans')
 	const isAnnouncementsActive = location.pathname.startsWith('/announcements')
+	const startLabel = i18n.resolvedLanguage === 'pl' ? 'Start' : 'Home'
+	const workTimeLabel = i18n.resolvedLanguage === 'pl' ? 'Czas pracy' : 'Work time'
 
 	useEffect(() => {
 		const mq = window.matchMedia('(min-width: 1501px)')
@@ -370,15 +375,26 @@ function Sidebar() {
 						<span className="nav-text">{t('sidebar.btn1')}</span>
 					</NavLink>
 
-					{!compactFreemiumNav && (
+					{showDashboardLink && (
 					<NavLink
 						to="/dashboard"
 						style={{ marginTop: '20px'}}
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">
-							<img src="/img/clock.png" alt="Dashboard" />
+							<img src="/img/home.png" alt="Dashboard" />
 						</div>
-						<span className="nav-text">{t('sidebar.btn2')}</span>
+						<span className="nav-text">{startLabel}</span>
+					</NavLink>
+					)}
+
+					{!compactFreemiumNav && (
+					<NavLink
+						to="/work-time"
+						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+						<div className="nav-icon">
+							<img src="/img/clock.png" alt="Work time" />
+						</div>
+						<span className="nav-text">{workTimeLabel}</span>
 					</NavLink>
 					)}
 

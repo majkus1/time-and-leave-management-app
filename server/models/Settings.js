@@ -122,6 +122,12 @@ const settingsSchema = new mongoose.Schema({
 		default: false, // Domyślnie wyłączone (dla nowych zespołów)
 		required: true
 	},
+	// Włącz/wyłącz pulpit (Start) z KPI i skrótami
+	dashboardEnabled: {
+		type: Boolean,
+		default: false,
+		required: true
+	},
 	allowManagedNoAccessUsers: {
 		type: Boolean,
 		default: false,
@@ -173,6 +179,7 @@ settingsSchema.statics.getSettings = async function(teamId) {
 			customHolidays: [],
 			leaveRequestTypes: getDefaultSystemLeaveTypes(),
 			timerEnabled: false,
+			dashboardEnabled: true,
 			allowManagedNoAccessUsers: false,
 			allowManagedWorkdayEntries: false,
 			allowManagedLeaveRequests: false,
@@ -238,6 +245,7 @@ settingsSchema.statics.getSettings = async function(teamId) {
 		if (settings.allowManagedLeaveRequests === undefined) settings.allowManagedLeaveRequests = false
 		if (settings.workdayEntriesOnlyToday === undefined) settings.workdayEntriesOnlyToday = false
 		if (!Array.isArray(settings.workActivities)) settings.workActivities = []
+		if (settings.dashboardEnabled === undefined) settings.dashboardEnabled = false
 		
 		await settings.save()
 	}

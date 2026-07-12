@@ -2,12 +2,15 @@ import { useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { useDashboardAccess } from '../../hooks/useDashboardAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
+import { appHomePath } from '../../utils/appHomePath'
+
 const TEAM_ACCESS_NOTICE_PATH = '/team-access-notice'
 
 const FREEMIUM_APP_PATHS = new Set([
-	'/dashboard',
+	'/work-time',
 	'/edit-profile',
 	'/calendars-list',
 	'/documents',
@@ -63,6 +66,7 @@ export default function FreemiumRouteSync() {
 	} = useFreemiumAccess({
 		enabled: !!loggedIn,
 	})
+	const { canUseDashboard } = useDashboardAccess({ enabled: !!loggedIn })
 
 	useEffect(() => {
 		if (!loggedIn) return
@@ -72,6 +76,12 @@ export default function FreemiumRouteSync() {
 
 		const userIsAdmin = isAdmin(role)
 		const staffBilling = userIsAdmin || isHR(role)
+		const freemiumHome = appHomePath({ canUseDashboard: false })
+
+		if (p === '/dashboard' && !canUseDashboard) {
+			navigate('/work-time', { replace: true })
+			return
+		}
 
 		if (freemiumTier && p === '/packages' && !staffBilling) {
 			navigate(`${TEAM_ACCESS_NOTICE_PATH}?reason=billing`, { replace: true })
@@ -86,6 +96,11 @@ export default function FreemiumRouteSync() {
 				}
 				return
 			}
+			if (p === '/dashboard' && !canUseDashboard) {
+				navigate('/work-time', { replace: true })
+				return
+			}
+			if (p === '/work-time') return
 			if (p === '/edit-profile') return
 			if (staffBilling && p === '/packages') return
 			if (p === '/settings') return
@@ -105,7 +120,7 @@ export default function FreemiumRouteSync() {
 		}
 
 		if (freemiumAppRestricted && !isFreemiumAppPathAllowed(p, { staffBilling, userIsAdmin })) {
-			navigate('/dashboard', { replace: true })
+			navigate(freemiumHome, { replace: true })
 		}
 	}, [
 		loggedIn,
@@ -119,6 +134,7 @@ export default function FreemiumRouteSync() {
 		navigate,
 		role,
 		canFreemiumCalendars,
+		canUseDashboard,
 	])
 
 	return null

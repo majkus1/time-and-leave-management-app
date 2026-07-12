@@ -1,0 +1,211 @@
+.po-qr-scan {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 48px 16px;
+	background: var(--po-bg);
+	color: var(--po-text);
+}
+
+.po-qr-scan__panel {
+	width: min(420px, 100%);
+	padding: 32px;
+	border-radius: 16px;
+	border: 1px solid var(--po-border);
+	background: var(--po-surface);
+	box-shadow: 0 12px 32px var(--po-shadow);
+	text-align: center;
+}
+
+.po-qr-scan__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	margin-bottom: 24px;
+}
+
+.po-qr-scan__icon--info {
+	background: var(--po-brand-soft);
+	color: var(--po-brand);
+}
+
+.po-qr-scan__icon--info.is-pulse {
+	animation: po-qr-scan-pulse 1.6s ease-in-out infinite;
+}
+
+.po-qr-scan__icon--error {
+	background: var(--po-danger-soft);
+	color: var(--po-danger);
+}
+
+.po-qr-scan__icon--success-entry {
+	background: var(--po-brand-soft);
+	color: var(--po-brand);
+}
+
+.po-qr-scan__icon--success-exit {
+	background: rgba(59, 130, 246, 0.15);
+	color: #3b82f6;
+}
+
+.po-qr-scan__icon--spin svg {
+	animation: po-qr-scan-spin 0.9s linear infinite;
+}
+
+.po-qr-scan__title {
+	margin: 0 0 8px;
+	color: var(--po-text) !important;
+	font-size: 24px !important;
+	font-weight: 650;
+	line-height: 1.25;
+	text-align: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.po-qr-scan__title--success-entry {
+	color: var(--po-brand-text) !important;
+}
+
+.po-qr-scan__title--success-exit {
+	color: #3b82f6 !important;
+}
+
+.po-qr-scan__text {
+	margin: 0;
+	color: var(--po-text-secondary) !important;
+	font-size: 15px;
+	line-height: 1.45;
+}
+
+.po-qr-scan__text--spaced {
+	margin-bottom: 24px;
+}
+
+.po-qr-scan__location-box {
+	margin-top: 16px;
+	padding: 16px;
+	border-radius: 10px;
+	background: var(--po-surface-muted);
+	text-align: center;
+}
+
+.po-qr-scan__location-label {
+	margin: 0 0 4px;
+	color: var(--po-text-muted) !important;
+	font-size: 13px;
+}
+
+.po-qr-scan__location-name {
+	margin: 0;
+	color: var(--po-text) !important;
+	font-size: 18px;
+	font-weight: 650;
+}
+
+.po-qr-scan__location-highlight {
+	color: var(--po-text) !important;
+	font-weight: 650;
+}
+
+.po-qr-scan__footer {
+	margin-top: 24px;
+	padding-top: 24px;
+	border-top: 1px solid var(--po-border);
+}
+
+.po-qr-scan__redirect {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	color: var(--po-text-muted) !important;
+	font-size: 13px;
+}
+
+.po-qr-scan__redirect svg {
+	flex-shrink: 0;
+}
+
+.po-qr-scan__btn {
+	width: 100%;
+	min-height: 46px;
+	padding: 0 18px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--po-brand);
+	color: #ffffff !important;
+	font-size: 15px;
+	font-weight: 650;
+	cursor: pointer;
+	transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.po-qr-scan__btn--spaced {
+	margin-top: 24px;
+}
+
+.po-qr-scan__btn:hover:not(:disabled) {
+	filter: brightness(1.05);
+	transform: translateY(-1px);
+}
+
+.po-qr-scan__btn:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.po-qr-scan__btn-inner {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
+.po-qr-scan__btn-spinner {
+	animation: po-qr-scan-spin 0.9s linear infinite;
+}
+
+.po-qr-scan__panel.is-success {
+	animation: po-qr-scan-fade-in 0.3s ease-out;
+}
+
+.po-qr-scan__icon.is-success-pop {
+	width: 96px;
+	height: 96px;
+	animation: po-qr-scan-scale-in 0.4s ease-out;
+}
+
+@keyframes po-qr-scan-spin {
+	to { transform: rotate(360deg); }
+}
+
+@keyframes po-qr-scan-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.65; }
+}
+
+@keyframes po-qr-scan-fade-in {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes po-qr-scan-scale-in {
+	from { opacity: 0; transform: scale(0.85); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+[data-theme='dark'] .po-qr-scan__title--success-exit {
+	color: #60a5fa !important;
+}
+
+[data-theme='dark'] .po-qr-scan__icon--success-exit {
+	background: rgba(96, 165, 250, 0.16);
+	color: #60a5fa;
+}

@@ -5,6 +5,7 @@ import {
 	resolveActiveTimerRefetchInterval,
 	resolveActiveTimerStaleTime,
 } from './activeTimerQueryPolicy.js'
+import { invalidateDashboardSummary } from './useDashboardSummary'
 
 // Get active timer status
 export const useActiveTimer = ({ enabled = true } = {}) => {
@@ -40,6 +41,7 @@ export const useStartTimer = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -59,6 +61,7 @@ export const usePauseTimer = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -80,6 +83,7 @@ export const useStopTimer = () => {
 			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -99,6 +103,7 @@ export const useUpdateActiveTimer = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -120,6 +125,7 @@ export const useSplitSession = () => {
 			queryClient.invalidateQueries({ queryKey: ['timer', 'active'] })
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			invalidateDashboardSummary(queryClient)
 		},
 	})
 }
@@ -165,6 +171,7 @@ export const useDeleteSession = () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user'] })
+			invalidateDashboardSummary(queryClient)
 			// Force refetch to ensure immediate update
 			queryClient.refetchQueries({ queryKey: ['workdays'] })
 		},
