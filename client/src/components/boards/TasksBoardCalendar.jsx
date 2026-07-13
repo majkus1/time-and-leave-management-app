@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { addDays } from 'date-fns'
 import { useCalendarTasks } from '../../hooks/useBoards'
 import QuickCalendarTaskModal from './QuickCalendarTaskModal'
+import { calendarTaskSortMinutes, formatCalendarTimeDisplay } from '../../utils/taskScheduleTime'
 
 function toYMD(d) {
 	if (!d) return null
@@ -95,29 +96,37 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 
 	const events = useMemo(() => {
 		const out = []
+		const locale = i18n.resolvedLanguage || i18n.language || 'pl-PL'
 		for (const task of tasks) {
 			const baseTitle = showBoardNameInTitle && task.boardName
 				? `${task.boardName}: ${task.title}`
 				: task.title
 			const color = task.calendarOnly ? '#8e44ad' : '#2980b9'
 			const textColor = '#fff'
+			const displayTime = formatCalendarTimeDisplay(task, locale)
+			const sortMinutes = calendarTaskSortMinutes(task)
+			const commonProps = {
+				id: task._id,
+				title: baseTitle,
+				backgroundColor: color,
+				borderColor: color,
+				textColor,
+				allDay: true,
+				extendedProps: {
+					boardId: String(task.boardId),
+					calendarOnly: task.calendarOnly,
+					taskStatus: task.status || 'todo',
+					taskPriority: task.priority || 'medium',
+					displayTime,
+					sortMinutes,
+				},
+			}
 			if (task.dueDate) {
 				const start = toYMD(task.dueDate)
 				if (!start) continue
 				out.push({
-					id: task._id,
-					title: baseTitle,
+					...commonProps,
 					start,
-					allDay: true,
-					backgroundColor: color,
-					borderColor: color,
-					textColor,
-					extendedProps: {
-						boardId: String(task.boardId),
-						calendarOnly: task.calendarOnly,
-						taskStatus: task.status || 'todo',
-						taskPriority: task.priority || 'medium',
-					},
 				})
 			} else if (task.workPeriodStart && task.workPeriodEnd) {
 				const start = toYMD(task.workPeriodStart)
@@ -125,25 +134,22 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 				if (!start || isNaN(endInclusive.getTime())) continue
 				const endExclusive = addDays(endInclusive, 1)
 				out.push({
-					id: task._id,
-					title: baseTitle,
+					...commonProps,
 					start,
 					end: toYMD(endExclusive),
-					allDay: true,
-					backgroundColor: color,
-					borderColor: color,
-					textColor,
-					extendedProps: {
-						boardId: String(task.boardId),
-						calendarOnly: task.calendarOnly,
-						taskStatus: task.status || 'todo',
-						taskPriority: task.priority || 'medium',
-					},
 				})
 			}
 		}
+		out.sort((a, b) => {
+			const dayCmp = String(a.start).localeCompare(String(b.start))
+			if (dayCmp !== 0) return dayCmp
+			const sortA = a.extendedProps?.sortMinutes ?? 24 * 60
+			const sortB = b.extendedProps?.sortMinutes ?? 24 * 60
+			if (sortA !== sortB) return sortA - sortB
+			return String(a.title).localeCompare(String(b.title))
+		})
 		return out
-	}, [tasks, showBoardNameInTitle])
+	}, [tasks, showBoardNameInTitle, i18n.resolvedLanguage, i18n.language])
 
 	const renderEventContent = useCallback(
 		eventInfo => {
@@ -153,9 +159,13 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 			const statusLabel = t(`boards.status.${statusKey}`)
 			const priorityLabel = t(`boards.priority.${priorityKey}`)
 			const meta = `${t('boards.status')}: ${statusLabel} · ${t('boards.priority')}: ${priorityLabel}`
-			const fullTitle = `${eventInfo.event.title} — ${meta}`
+			const timePrefix = p.displayTime ? `${p.displayTime} · ` : ''
+			const fullTitle = `${timePrefix}${eventInfo.event.title} — ${meta}`
 			return (
 				<div className="tasks-board-calendar-event-inner" title={fullTitle}>
+					{p.displayTime && (
+						<div className="tasks-board-calendar-event-time">{p.displayTime}</div>
+					)}
 					<div className="tasks-board-calendar-event-title">{eventInfo.event.title}</div>
 					<div className="tasks-board-calendar-event-meta">{meta}</div>
 				</div>
@@ -174,7 +184,7 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 
 	return (
 		<div
-			className="tasks-board-calendar-wrap"
+			className="tasks-board-calendar-wrap notranslate"
 			style={{
 				marginTop: '32px',
 				backgroundColor: '#fff',
@@ -313,6 +323,7 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 					}}
 					eventContent={renderEventContent}
 					eventDisplay="block"
+					eventOrder="sortMinutes"
 					dayMaxEvents={4}
 					moreLinkText={(n) => `+${n}`}
 				/>
@@ -351,6 +362,13 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 					min-width: 0;
 					color: #fff;
 				}
+				.tasks-board-calendar-event-time {
+					font-size: 10px;
+					font-weight: 800;
+					line-height: 1.2;
+					color: rgba(255, 255, 255, 0.98) !important;
+					letter-spacing: 0.02em;
+				}
 				.tasks-board-calendar-event-title {
 					font-size: 11px;
 					font-weight: 700;
@@ -372,6 +390,7 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 					letter-spacing: 0.01em;
 				}
 				@media (min-width: 768px) {
+					.tasks-board-calendar-event-time { font-size: 11px; }
 					.tasks-board-calendar-event-title { font-size: 12px; }
 					.tasks-board-calendar-event-meta { font-size: 10px; }
 				}

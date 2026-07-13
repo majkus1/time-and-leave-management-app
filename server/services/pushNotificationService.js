@@ -6,6 +6,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { recordPushNotification, recordPushForUserIds } = require('./userNotificationService')
+const { formatTaskScheduleForNotification } = require('../utils/taskScheduleTime')
 
 const formatPushDate = (dateValue, locale) => {
 	if (!dateValue) return ''
@@ -291,6 +292,11 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 
 	let title, body, statusText = task.status
 
+	const scheduleText = t ? formatTaskScheduleForNotification(task, t) : null
+	const schedulePart = scheduleText && t
+		? t('email.task.schedulePartSuffix', { schedule: scheduleText, ...i18nPlainText })
+		: ''
+
 	// Get status text if translation function is available
 	if (t) {
 		try {
@@ -307,13 +313,13 @@ const sendTaskNotification = async (task, board, createdByUser, recipientUserIds
 	if (isStatusChange) {
 		title = t ? t('email.task.statusChangedTitle') : 'Zmiana statusu zadania'
 		body = t 
-			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText, ...i18nPlainText })
-			: `${creatorName} zmienił status zadania "${taskTitle}" na "${statusText}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
+			? t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText, schedulePart, ...i18nPlainText })
+			: `${creatorName} zmienił status zadania "${taskTitle}" na "${statusText}" (priorytet: ${priorityText}) w tablicy "${boardName}"${schedulePart}`
 	} else {
 		title = t ? t('email.task.newTaskTitle') : 'Nowe zadanie'
 		body = t
-			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText, ...i18nPlainText })
-			: `${creatorName} dodał nowe zadanie "${taskTitle}" (priorytet: ${priorityText}) w tablicy "${boardName}"`
+			? t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText, schedulePart, ...i18nPlainText })
+			: `${creatorName} dodał nowe zadanie "${taskTitle}" (priorytet: ${priorityText}) w tablicy "${boardName}"${schedulePart}`
 	}
 
 	const payload = {

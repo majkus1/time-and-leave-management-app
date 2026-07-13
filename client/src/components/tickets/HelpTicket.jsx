@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { isAdmin } from '../../utils/roleHelpers'
 import { API_URL } from '../../config.js'
 import { useTickets, useTicket, useCreateTicket, useReplyToTicket, useUpdateTicketStatus } from '../../hooks/useTickets'
+import TicketMarkdown from './TicketMarkdown'
+import TicketMarkdownEditor from './TicketMarkdownEditor'
 import './HelpTicket.css'
 
 const uploadsBase = API_URL.replace(/\/api\/?$/, '')
@@ -165,14 +167,13 @@ const HelpTicket = () => {
 									</div>
 									<div className="help-center__field">
 										<label htmlFor="help-message">{t('tickets.messageLabel')}</label>
-										<textarea
+										<TicketMarkdownEditor
 											id="help-message"
-											name="message"
-											placeholder={t('tickets.description')}
 											value={newTicket.message}
-											onChange={handleNewTicketChange}
+											onChange={(message) => setNewTicket(prev => ({ ...prev, message }))}
+											placeholder={t('tickets.description')}
+											minRows={6}
 											required
-											className="help-center__textarea"
 										/>
 									</div>
 									<div className="help-center__attachments-row">
@@ -319,9 +320,11 @@ const HelpTicket = () => {
 									{t('tickets.messageContent')}
 								</h3>
 								<div className="help-center__first-message-body">
-									{selectedTicket.messages && selectedTicket.messages.length > 0
-										? selectedTicket.messages[0].content
-										: t('tickets.nocontent')}
+									{selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+										<TicketMarkdown content={selectedTicket.messages[0].content} />
+									) : (
+										t('tickets.nocontent')
+									)}
 								</div>
 							</section>
 
@@ -357,7 +360,9 @@ const HelpTicket = () => {
 													className={`help-center__bubble ${
 														reporterReply ? 'help-center__bubble--user' : 'help-center__bubble--staff'
 													}`}>
-													<div className="help-center__bubble-text">{msg.content}</div>
+													<div className="help-center__bubble-text">
+														<TicketMarkdown content={msg.content} />
+													</div>
 													{msg.files && msg.files.length > 0 && (
 														<div className="help-center__bubble-files">
 															{msg.files.map((file, fileIdx) => (
@@ -388,12 +393,13 @@ const HelpTicket = () => {
 								<label className="help-center__reply-label" htmlFor="help-reply">
 									{t('tickets.writeReply')}
 								</label>
-								<textarea
+								<TicketMarkdownEditor
 									id="help-reply"
 									value={reply}
-									onChange={e => setReply(e.target.value)}
+									onChange={setReply}
 									placeholder={t('tickets.writeReply')}
-									className="help-center__textarea help-center__reply-textarea"
+									minRows={4}
+									className="help-center__reply-textarea"
 								/>
 								<div className="help-center__attachments-row">
 									<input

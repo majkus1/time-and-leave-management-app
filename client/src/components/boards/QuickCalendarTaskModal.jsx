@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { useBoardUsers, useCreateTask } from '../../hooks/useBoards'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
+import { buildSchedulePayload } from '../../utils/taskScheduleTime'
+import TaskScheduleTimeInput from './TaskScheduleTimeInput'
 
 const SCHEDULE_DEADLINE = 'deadline'
 const SCHEDULE_PERIOD = 'period'
@@ -36,8 +38,11 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 	const [status, setStatus] = useState('todo')
 	const [scheduleMode, setScheduleMode] = useState(SCHEDULE_NONE)
 	const [dueDate, setDueDate] = useState('')
+	const [dueTime, setDueTime] = useState('')
 	const [periodStart, setPeriodStart] = useState('')
 	const [periodEnd, setPeriodEnd] = useState('')
+	const [periodStartTime, setPeriodStartTime] = useState('')
+	const [periodEndTime, setPeriodEndTime] = useState('')
 	const [assignToAllMembers, setAssignToAllMembers] = useState(false)
 	const [selectedAssignees, setSelectedAssignees] = useState([])
 
@@ -86,21 +91,23 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 			assignToAllMembers,
 			assignedTo: assignToAllMembers ? [] : selectedAssignees,
 			calendarOnly: true,
+			...buildSchedulePayload(scheduleMode, {
+				dueDate,
+				dueTime,
+				periodStart,
+				periodEnd,
+				periodStartTime,
+				periodEndTime,
+			}),
 		}
 
-		if (scheduleMode === SCHEDULE_DEADLINE) {
-			if (!dueDate) {
-				await showAlert(t('boards.deadlineRequired') || 'Podaj termin (deadline)')
-				return
-			}
-			payload.dueDate = dueDate
-		} else if (scheduleMode === SCHEDULE_PERIOD) {
-			if (!periodStart || !periodEnd) {
-				await showAlert(t('boards.periodRequired') || 'Podaj daty okresu')
-				return
-			}
-			payload.workPeriodStart = periodStart
-			payload.workPeriodEnd = periodEnd
+		if (scheduleMode === SCHEDULE_DEADLINE && !dueDate) {
+			await showAlert(t('boards.deadlineRequired') || 'Podaj termin (deadline)')
+			return
+		}
+		if (scheduleMode === SCHEDULE_PERIOD && (!periodStart || !periodEnd)) {
+			await showAlert(t('boards.periodRequired') || 'Podaj daty okresu')
+			return
 		}
 
 		try {
@@ -285,6 +292,12 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 								borderRadius: '6px',
 							}}
 						/>
+						<TaskScheduleTimeInput
+							id="quick-task-due-time"
+							value={dueTime}
+							onChange={setDueTime}
+							t={t}
+						/>
 					</div>
 				)}
 
@@ -306,6 +319,13 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 									borderRadius: '6px',
 								}}
 							/>
+							<TaskScheduleTimeInput
+								id="quick-task-period-start-time"
+								value={periodStartTime}
+								onChange={setPeriodStartTime}
+								label={t('boards.scheduleTimeFrom') || 'Godzina rozpoczęcia (opcjonalnie)'}
+								t={t}
+							/>
 						</div>
 						<div>
 							<label style={{ display: 'block', marginBottom: '6px', fontWeight: 600 }}>{t('boards.periodTo') || 'Do'}</label>
@@ -322,6 +342,13 @@ function QuickCalendarTaskModal({ boardId: fixedBoardId, boardsForPicker, onClos
 									border: '1px solid #bdc3c7',
 									borderRadius: '6px',
 								}}
+							/>
+							<TaskScheduleTimeInput
+								id="quick-task-period-end-time"
+								value={periodEndTime}
+								onChange={setPeriodEndTime}
+								label={t('boards.scheduleTimeTo') || 'Godzina zakończenia (opcjonalnie)'}
+								t={t}
 							/>
 						</div>
 					</div>

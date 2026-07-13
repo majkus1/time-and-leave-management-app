@@ -10,6 +10,8 @@ import { useBoardUsers } from '../../hooks/useBoards'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { API_URL } from '../../config.js'
+import { buildSchedulePayload, scheduleSummaryFromTask } from '../../utils/taskScheduleTime'
+import TaskScheduleTimeInput from './TaskScheduleTimeInput'
 
 const STATUSES = [
 	{ id: 'todo', color: '#e74c3c' },
@@ -35,19 +37,6 @@ function formatDateInputFromTask(value) {
 	return `${y}-${m}-${day}`
 }
 
-function scheduleSummaryText(task, t) {
-	if (!task) return null
-	if (task.dueDate) {
-		const d = new Date(task.dueDate)
-		return `${t('boards.deadline')}: ${d.toLocaleDateString()}`
-	}
-	if (task.workPeriodStart && task.workPeriodEnd) {
-		const a = new Date(task.workPeriodStart)
-		const b = new Date(task.workPeriodEnd)
-		return `${t('boards.workPeriod')}: ${a.toLocaleDateString()} – ${b.toLocaleDateString()}`
-	}
-	return null
-}
 const ATTACH_ICON_SRC = '/img/attach-file.png'
 const ATTACH_ICON_STYLE = {
 	width: '16px',
@@ -57,7 +46,7 @@ const ATTACH_ICON_STYLE = {
 }
 
 function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate, unreadCount = 0, onSeen }) {
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const { userId, role } = useAuth()
 	const { showAlert, showConfirm } = useAlert()
 	const { socket } = useSocket()
@@ -95,8 +84,11 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 	const [editAssignees, setEditAssignees] = useState([])
 	const [editScheduleMode, setEditScheduleMode] = useState('none')
 	const [editDueDate, setEditDueDate] = useState('')
+	const [editDueTime, setEditDueTime] = useState('')
 	const [editPeriodStart, setEditPeriodStart] = useState('')
 	const [editPeriodEnd, setEditPeriodEnd] = useState('')
+	const [editPeriodStartTime, setEditPeriodStartTime] = useState('')
+	const [editPeriodEndTime, setEditPeriodEndTime] = useState('')
 	const [uploadingFile, setUploadingFile] = useState(false)
 	
 	// Update edit fields when task data changes
@@ -110,18 +102,27 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 			if (currentTask.dueDate) {
 				setEditScheduleMode('deadline')
 				setEditDueDate(formatDateInputFromTask(currentTask.dueDate))
+				setEditDueTime(currentTask.dueTime || '')
 				setEditPeriodStart('')
 				setEditPeriodEnd('')
+				setEditPeriodStartTime('')
+				setEditPeriodEndTime('')
 			} else if (currentTask.workPeriodStart && currentTask.workPeriodEnd) {
 				setEditScheduleMode('period')
 				setEditDueDate('')
+				setEditDueTime('')
 				setEditPeriodStart(formatDateInputFromTask(currentTask.workPeriodStart))
 				setEditPeriodEnd(formatDateInputFromTask(currentTask.workPeriodEnd))
+				setEditPeriodStartTime(currentTask.workPeriodStartTime || '')
+				setEditPeriodEndTime(currentTask.workPeriodEndTime || '')
 			} else {
 				setEditScheduleMode('none')
 				setEditDueDate('')
+				setEditDueTime('')
 				setEditPeriodStart('')
 				setEditPeriodEnd('')
+				setEditPeriodStartTime('')
+				setEditPeriodEndTime('')
 			}
 		}
 	}, [currentTask])
@@ -178,7 +179,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 	const priorityKey = currentTask?.priority || 'medium'
 	const priorityStyle = PRIORITY_META[priorityKey] || PRIORITY_META.medium
 	const priorityLabel = t(`boards.priority.${priorityKey}`)
-	const scheduleLine = currentTask ? scheduleSummaryText(currentTask, t) : null
+	const scheduleLine = currentTask
+		? scheduleSummaryFromTask(currentTask, t, i18n.resolvedLanguage || i18n.language)
+		: null
 	const assignedText = currentTask?.assignedScope === 'all-members'
 		? (t('boards.assignToAllMembers') || t('boards.assignToAll') || 'Wszyscy członkowie tablicy')
 		: (currentTask?.assignedTo || []).map(u => u.username).join(', ')
@@ -254,16 +257,14 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 			return
 		}
 		try {
-			const schedulePayload =
-				editScheduleMode === 'deadline'
-					? { dueDate: editDueDate, workPeriodStart: null, workPeriodEnd: null }
-					: editScheduleMode === 'period'
-						? {
-								dueDate: null,
-								workPeriodStart: editPeriodStart,
-								workPeriodEnd: editPeriodEnd,
-						  }
-						: { dueDate: null, workPeriodStart: null, workPeriodEnd: null }
+			const schedulePayload = buildSchedulePayload(editScheduleMode, {
+				dueDate: editDueDate,
+				dueTime: editDueTime,
+				periodStart: editPeriodStart,
+				periodEnd: editPeriodEnd,
+				periodStartTime: editPeriodStartTime,
+				periodEndTime: editPeriodEndTime,
+			})
 
 			await updateTaskMutation.mutateAsync({
 				taskId: currentTask._id,
@@ -494,21 +495,29 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									<span>{t('boards.workPeriod') || 'Okres realizacji'}</span>
 								</label>
 								{editScheduleMode === 'deadline' && (
-									<input
-										type="date"
-										value={editDueDate}
-										onChange={(e) => setEditDueDate(e.target.value)}
-										style={{
-											display: 'block',
-											width: '100%',
-											maxWidth: '250px',
-											boxSizing: 'border-box',
-											padding: '10px',
-											border: '1px solid #bdc3c7',
-											borderRadius: '6px',
-											fontSize: '16px',
-										}}
-									/>
+									<div>
+										<input
+											type="date"
+											value={editDueDate}
+											onChange={(e) => setEditDueDate(e.target.value)}
+											style={{
+												display: 'block',
+												width: '100%',
+												maxWidth: '250px',
+												boxSizing: 'border-box',
+												padding: '10px',
+												border: '1px solid #bdc3c7',
+												borderRadius: '6px',
+												fontSize: '16px',
+											}}
+										/>
+										<TaskScheduleTimeInput
+											id="edit-task-due-time"
+											value={editDueTime}
+											onChange={setEditDueTime}
+											t={t}
+										/>
+									</div>
 								)}
 								{editScheduleMode === 'period' && (
 									<div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -531,6 +540,13 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 													fontSize: '16px',
 												}}
 											/>
+											<TaskScheduleTimeInput
+												id="edit-task-period-start-time"
+												value={editPeriodStartTime}
+												onChange={setEditPeriodStartTime}
+												label={t('boards.scheduleTimeFrom') || 'Godzina rozpoczęcia (opcjonalnie)'}
+												t={t}
+											/>
 										</div>
 										<div>
 											<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
@@ -550,6 +566,13 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 													borderRadius: '6px',
 													fontSize: '16px',
 												}}
+											/>
+											<TaskScheduleTimeInput
+												id="edit-task-period-end-time"
+												value={editPeriodEndTime}
+												onChange={setEditPeriodEndTime}
+												label={t('boards.scheduleTimeTo') || 'Godzina zakończenia (opcjonalnie)'}
+												t={t}
 											/>
 										</div>
 									</div>
@@ -651,9 +674,9 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									{currentTask.description}
 								</p>
 							)}
-							{scheduleSummaryText(currentTask, t) && (
+							{scheduleLine && (
 								<div className="task-card__schedule" style={{ color: '#34495e', fontSize: '15px', marginBottom: '12px', fontWeight: 500 }}>
-									📅 {scheduleSummaryText(currentTask, t)}
+									📅 {scheduleLine}
 								</div>
 							)}
 							{currentTask.calendarOnly && (

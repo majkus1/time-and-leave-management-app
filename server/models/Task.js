@@ -63,6 +63,12 @@ const taskSchema = new mongoose.Schema({
 		type: Date,
 		default: null,
 	},
+	/** Godzina deadline (HH:mm), opcjonalnie */
+	dueTime: {
+		type: String,
+		default: null,
+		trim: true,
+	},
 	/** Początek okresu realizacji (wraz z workPeriodEnd) */
 	workPeriodStart: {
 		type: Date,
@@ -72,6 +78,18 @@ const taskSchema = new mongoose.Schema({
 	workPeriodEnd: {
 		type: Date,
 		default: null,
+	},
+	/** Godzina rozpoczęcia okresu (HH:mm), opcjonalnie */
+	workPeriodStartTime: {
+		type: String,
+		default: null,
+		trim: true,
+	},
+	/** Godzina zakończenia okresu (HH:mm), opcjonalnie */
+	workPeriodEndTime: {
+		type: String,
+		default: null,
+		trim: true,
 	},
 	/** Widoczne tylko w kalendarzu zadań, nie na tablicy Kanban */
 	calendarOnly: {

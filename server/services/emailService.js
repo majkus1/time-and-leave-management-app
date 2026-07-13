@@ -6,6 +6,7 @@ const EmailNotificationPreference = require('../models/EmailNotificationPreferen
 const { appUrl } = require('../config')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
+const { formatTaskScheduleForNotification } = require('../utils/taskScheduleTime')
 
 /** Powiadomienia wewnętrzne: nowe zgłoszenia / aktywność w dyskusji Help Center */
 const HELP_CENTER_STAFF_EMAILS = ['planopiaapp@gmail.com', 'michalipka1@gmail.com']
@@ -334,6 +335,18 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 			}
 		}
 		
+		const scheduleText = formatTaskScheduleForNotification(task, t)
+		const schedulePart = scheduleText
+			? t('email.task.schedulePartSuffix', { schedule: scheduleText })
+			: ''
+		const scheduleRow = scheduleText
+			? `
+						<tr>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.task.scheduleLabel')}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${escapeHtml(scheduleText)}</td>
+						</tr>`
+			: ''
+		
 		// Build email content
 		let title, content, subject
 		
@@ -341,7 +354,7 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 			title = t('email.task.statusChangedTitle')
 			subject = t('email.task.statusChangedSubject', { taskTitle, status: statusText, priority: priorityText })
 			content = `
-				<p style="margin: 0 0 16px 0;">${t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText })}</p>
+				<p style="margin: 0 0 16px 0;">${t('email.task.statusChangedMessage', { creatorName, taskTitle, status: statusText, boardName, priority: priorityText, schedulePart })}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
@@ -365,6 +378,7 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.assignedTo')}:</td>
 							<td style="padding: 8px 0; color: #1f2937;">${assigneesText}</td>
 						</tr>
+						${scheduleRow}
 						${task.description ? `
 						<tr>
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.description')}:</td>
@@ -378,7 +392,7 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 			title = t('email.task.newTaskTitle')
 			subject = t('email.task.newTaskSubject', { taskTitle, priority: priorityText })
 			content = `
-				<p style="margin: 0 0 16px 0;">${t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText })}</p>
+				<p style="margin: 0 0 16px 0;">${t('email.task.newTaskMessage', { creatorName, taskTitle, boardName, priority: priorityText, schedulePart })}</p>
 				<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
 					<p style="margin: 0 0 12px 0; font-weight: 600; color: #1f2937;">${t('email.task.taskDetails')}</p>
 					<table style="width: 100%; border-collapse: collapse;">
@@ -402,6 +416,7 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.assignedTo')}:</td>
 							<td style="padding: 8px 0; color: #1f2937;">${assigneesText}</td>
 						</tr>
+						${scheduleRow}
 						${task.description ? `
 						<tr>
 							<td style="padding: 8px 0; color: #6b7280; font-size: 14px; vertical-align: top;">${t('email.task.description')}:</td>
@@ -418,7 +433,7 @@ const sendTaskNotification = async (task, board, recipientUserIds, createdByUser
 		const plainTask = String(task.title || '').trim().slice(0, 160)
 		const plainBoard = String(board.name || '').trim().slice(0, 120)
 		const plainCreator = `${createdByUser.firstName || ''} ${createdByUser.lastName || ''}`.trim()
-		const inboxPreview = [plainCreator, plainTask, plainBoard, statusText, priorityText]
+		const inboxPreview = [plainCreator, plainTask, plainBoard, statusText, priorityText, scheduleText]
 			.filter(Boolean)
 			.join(' · ')
 		

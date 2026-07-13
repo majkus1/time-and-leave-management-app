@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { useBoardUsers, useCreateTask } from '../../hooks/useBoards'
 import { useAlert } from '../../context/AlertContext'
 import { useAuth } from '../../context/AuthContext'
+import { buildSchedulePayload } from '../../utils/taskScheduleTime'
+import TaskScheduleTimeInput from './TaskScheduleTimeInput'
 import axios from 'axios'
 import { API_URL } from '../../config'
 
@@ -38,8 +40,11 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 	const [selectedFile, setSelectedFile] = useState(null)
 	const [scheduleMode, setScheduleMode] = useState('none') // none | deadline | period
 	const [dueDate, setDueDate] = useState('')
+	const [dueTime, setDueTime] = useState('')
 	const [periodStart, setPeriodStart] = useState('')
 	const [periodEnd, setPeriodEnd] = useState('')
+	const [periodStartTime, setPeriodStartTime] = useState('')
+	const [periodEndTime, setPeriodEndTime] = useState('')
 
 	useEffect(() => {
 		if (!userId || assignToAllMembers || selectedAssignees.length > 0) return
@@ -77,7 +82,15 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 				status,
 				priority,
 				assignToAllMembers,
-				assignedTo: assignToAllMembers ? [] : selectedAssignees
+				assignedTo: assignToAllMembers ? [] : selectedAssignees,
+				...buildSchedulePayload(scheduleMode, {
+					dueDate,
+					dueTime,
+					periodStart,
+					periodEnd,
+					periodStartTime,
+					periodEndTime,
+				}),
 			}
 			
 			const createdTask = await createTaskMutation.mutateAsync({
@@ -311,22 +324,29 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 						<span>{t('boards.workPeriod') || 'Okres realizacji'}</span>
 					</label>
 					{scheduleMode === 'deadline' && (
-						<input
-							type="date"
-							value={dueDate}
-							onChange={(e) => setDueDate(e.target.value)}
-							style={{
-								marginTop: '10px',
-								display: 'block',
-								width: '100%',
-								maxWidth: '250px',
-								boxSizing: 'border-box',
-								padding: '10px',
-								border: '1px solid #bdc3c7',
-								borderRadius: '6px',
-								fontSize: '16px'
-							}}
-						/>
+						<div style={{ marginTop: '10px' }}>
+							<input
+								type="date"
+								value={dueDate}
+								onChange={(e) => setDueDate(e.target.value)}
+								style={{
+									display: 'block',
+									width: '100%',
+									maxWidth: '250px',
+									boxSizing: 'border-box',
+									padding: '10px',
+									border: '1px solid #bdc3c7',
+									borderRadius: '6px',
+									fontSize: '16px'
+								}}
+							/>
+							<TaskScheduleTimeInput
+								id="create-task-due-time"
+								value={dueTime}
+								onChange={setDueTime}
+								t={t}
+							/>
+						</div>
 					)}
 					{scheduleMode === 'period' && (
 						<div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
@@ -349,6 +369,13 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 										fontSize: '16px'
 									}}
 								/>
+								<TaskScheduleTimeInput
+									id="create-task-period-start-time"
+									value={periodStartTime}
+									onChange={setPeriodStartTime}
+									label={t('boards.scheduleTimeFrom') || 'Godzina rozpoczęcia (opcjonalnie)'}
+									t={t}
+								/>
 							</div>
 							<div>
 								<label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#2c3e50' }}>
@@ -368,6 +395,13 @@ function CreateTaskModal({ boardId, initialStatus = 'todo', onClose, onSuccess }
 										borderRadius: '6px',
 										fontSize: '16px'
 									}}
+								/>
+								<TaskScheduleTimeInput
+									id="create-task-period-end-time"
+									value={periodEndTime}
+									onChange={setPeriodEndTime}
+									label={t('boards.scheduleTimeTo') || 'Godzina zakończenia (opcjonalnie)'}
+									t={t}
 								/>
 							</div>
 						</div>

@@ -1,9 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl" translate="no" class="notranslate">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="google" content="notranslate" />
   <meta name="description" content="Planopia - aplikacja do zarządzania czasem pracy, urlopami i zespołem" />
   <meta name="keywords" content="zarządzanie zespołem, urlopy, czas pracy, planowanie" />
   <meta name="author" content="Planopia" />
@@ -21,6 +22,17 @@
         document.documentElement.style.colorScheme = theme;
         var meta = document.getElementById('meta-theme-color');
         if (meta) meta.setAttribute('content', dark ? '#0f1419' : '#0d6efd');
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('i18nextLng') || '';
+        var lang = stored.toLowerCase().indexOf('en') === 0 ? 'en' : 'pl';
+        document.documentElement.lang = lang;
+        document.documentElement.setAttribute('translate', 'no');
+        document.documentElement.classList.add('notranslate');
       } catch (e) {}
     })();
   </script>

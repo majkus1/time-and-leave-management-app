@@ -16,6 +16,10 @@ const {
 	normalizeObjectIdString,
 } = require('../utils/taskAccess')
 const { resolveBoardAccessForUser } = require('../utils/boardAccess')
+const {
+	applyScheduleTimesToTask,
+	normalizeTaskScheduleTimes,
+} = require('../utils/taskScheduleTime')
 
 async function loadBoardForRequest(req, res, boardId) {
 	const access = await resolveBoardAccessForUser({ boardId, reqUser: req.user })
@@ -239,7 +243,7 @@ exports.getCalendarTasks = async (req, res) => {
 		}
 
 		const tasks = await Task.find(query)
-			.select('title boardId dueDate workPeriodStart workPeriodEnd calendarOnly status priority')
+			.select('title boardId dueDate dueTime workPeriodStart workPeriodEnd workPeriodStartTime workPeriodEndTime calendarOnly status priority')
 			.sort({ dueDate: 1, workPeriodStart: 1 })
 			.limit(3000)
 			.lean()
@@ -256,8 +260,11 @@ exports.getCalendarTasks = async (req, res) => {
 			boardId: t.boardId,
 			boardName: boardNameById[t.boardId.toString()] || '',
 			dueDate: t.dueDate,
+			dueTime: t.dueTime || null,
 			workPeriodStart: t.workPeriodStart,
 			workPeriodEnd: t.workPeriodEnd,
+			workPeriodStartTime: t.workPeriodStartTime || null,
+			workPeriodEndTime: t.workPeriodEndTime || null,
 			calendarOnly: !!t.calendarOnly,
 			status: t.status,
 			priority: t.priority,
@@ -282,8 +289,11 @@ exports.createTask = async (req, res) => {
 			assignToAllMembers,
 			priority,
 			dueDate,
+			dueTime,
 			workPeriodStart,
 			workPeriodEnd,
+			workPeriodStartTime,
+			workPeriodEndTime,
 			calendarOnly,
 		} = req.body
 		const userId = req.user.userId
@@ -324,7 +334,17 @@ exports.createTask = async (req, res) => {
 			calendarOnly: calendarOnly === true,
 		})
 
+		const timeResult = applyScheduleTimesToTask(newTask, {
+			dueTime,
+			workPeriodStartTime,
+			workPeriodEndTime,
+		})
+		if (timeResult.error) {
+			return res.status(400).json({ message: timeResult.error })
+		}
+
 		normalizeTaskScheduleFields(newTask)
+		normalizeTaskScheduleTimes(newTask)
 		if (!newTask.dueDate && !newTask.workPeriodStart && !newTask.workPeriodEnd) {
 			// If no schedule is provided, anchor task in calendar on creation day.
 			const now = new Date()
@@ -414,8 +434,11 @@ exports.updateTask = async (req, res) => {
 			priority,
 			order,
 			dueDate,
+			dueTime,
 			workPeriodStart,
 			workPeriodEnd,
+			workPeriodStartTime,
+			workPeriodEndTime,
 			calendarOnly,
 		} = req.body
 		const userId = req.user.userId
@@ -469,10 +492,21 @@ exports.updateTask = async (req, res) => {
 		if (workPeriodEnd !== undefined) {
 			task.workPeriodEnd = parseOptionalDateInput(workPeriodEnd)
 		}
+		if (dueTime !== undefined || workPeriodStartTime !== undefined || workPeriodEndTime !== undefined) {
+			const timeResult = applyScheduleTimesToTask(task, {
+				dueTime,
+				workPeriodStartTime,
+				workPeriodEndTime,
+			})
+			if (timeResult.error) {
+				return res.status(400).json({ message: timeResult.error })
+			}
+		}
 		if (calendarOnly !== undefined) {
 			task.calendarOnly = calendarOnly === true
 		}
 		normalizeTaskScheduleFields(task)
+		normalizeTaskScheduleTimes(task)
 		if (task.workPeriodStart && task.workPeriodEnd && task.workPeriodStart > task.workPeriodEnd) {
 			return res.status(400).json({ message: 'Invalid work period (start after end)' })
 		}

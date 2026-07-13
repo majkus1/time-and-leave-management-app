@@ -6789,6 +6789,89 @@
 	color: var(--po-text) !important;
 }
 
+[data-theme='dark'] .help-center .help-center__md-toolbar {
+	background: var(--po-surface-elevated) !important;
+	border-color: var(--po-border) !important;
+}
+
+[data-theme='dark'] .help-center .help-center__md-btn {
+	background: var(--po-surface) !important;
+	border-color: var(--po-border) !important;
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .help-center .help-center__md-btn:hover {
+	background: var(--po-surface-hover) !important;
+}
+
+[data-theme='dark'] .help-center .help-center__md a {
+	color: var(--po-brand-text) !important;
+}
+
+[data-theme='dark'] .help-center .help-center__md code {
+	background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal-overlay {
+	background: var(--po-overlay) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal {
+	background: var(--po-modal-bg) !important;
+	border-color: var(--po-border) !important;
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55) !important;
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal-title {
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal-close {
+	color: var(--po-text-muted) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal-close:hover {
+	color: var(--po-text) !important;
+	background: var(--po-surface-hover) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__field label {
+	color: var(--po-text-muted) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__input {
+	background-color: var(--po-input-bg) !important;
+	color: var(--po-input-text) !important;
+	border-color: var(--po-input-border) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__input::placeholder {
+	color: var(--po-text-muted) !important;
+	opacity: 0.85;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__input:focus {
+	border-color: var(--po-brand) !important;
+	box-shadow: 0 0 0 3px var(--po-brand-soft) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__btn-ghost {
+	background: var(--po-surface-muted) !important;
+	border-color: var(--po-border) !important;
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__btn-ghost:hover {
+	background: var(--po-surface-hover) !important;
+	border-color: var(--po-border-strong) !important;
+}
+
+[data-theme='dark'] .help-center__link-modal .help-center__btn-primary {
+	background-color: var(--po-brand) !important;
+	color: #fff !important;
+}
+
 [data-theme='dark'] .help-center .help-center__bubble-meta,
 [data-theme='dark'] .help-center .help-center__thread-empty {
 	color: var(--po-text-muted) !important;
