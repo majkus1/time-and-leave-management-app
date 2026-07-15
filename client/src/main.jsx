@@ -12,10 +12,12 @@ import "@fontsource/titillium-web/600.css";
 import "@fontsource/teko";               // domyślny styl Teko (400)
 import "@fontsource/teko/700.css";        // np. bold
 import { devLog } from './utils/devLog.js'
+import { initializeMarketingAnalytics } from './utils/marketingAnalytics.js'
 
 // Set app element for react-modal once (prevents multiple registration warnings)
 if (typeof document !== 'undefined') {
 	Modal.setAppElement('#root')
+	initializeMarketingAnalytics()
 }
 
 // Rejestracja Service Worker z automatycznym odświeżaniem

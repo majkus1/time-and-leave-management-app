@@ -20,8 +20,8 @@ export default function ReklamacjePage() {
 					<p className="mt-3 text-gray-700 leading-relaxed">
 						Reklamacje dotyczące świadczenia usługi Planopia (w tym płatności i dostępu do aplikacji) można złożyć
 						<strong> drogą elektroniczną</strong>, wysyłając wiadomość na adres:{' '}
-						<a href="mailto:office@ml-devworks.com" className="text-indigo-700 font-medium hover:underline">
-							office@ml-devworks.com
+						<a href="mailto:biuro@planopia.pl" className="text-indigo-700 font-medium hover:underline">
+							biuro@planopia.pl
 						</a>
 						. W tytule lub treści prosimy o dopisek „Reklamacja Planopia” oraz opis przedmiotu reklamacji i dane
 						pozwalające zidentyfikować konto (np. nazwa firmy / adres e-mail konta).

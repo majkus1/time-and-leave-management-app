@@ -1,34 +1,67 @@
 'use client'
 
-import Script from 'next/script'
+import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
+import {
+	CONSENT_EVENT_NAME,
+	initializeConsentMode,
+	loadGoogleTag,
+	readConsent,
+	trackEvent,
+} from '@/lib/analytics'
 
 export default function GoogleAnalytics() {
-  return (
-    <>
-      {/* Google Analytics */}
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-DVKVCS2CQK"
-        strategy="lazyOnload"
-      />
-      <Script id="google-analytics" strategy="lazyOnload">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-DVKVCS2CQK');
-        `}
-      </Script>
+	const pathname = usePathname()
+	const lastTrackedPage = useRef('')
 
-      {/* Google Tag Manager */}
-      <Script id="google-tag-manager" strategy="lazyOnload">
-        {`
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-PBJSBRBV');
-        `}
-      </Script>
-    </>
-  )
+	useEffect(() => {
+		initializeConsentMode()
+		const consent = readConsent()
+		if (consent) void loadGoogleTag(consent)
+	}, [])
+
+	useEffect(() => {
+		const trackCurrentPage = () => {
+			const consent = readConsent()
+			if (!consent?.analytics) return
+
+			const pagePath = `${pathname}${window.location.search}`
+			if (lastTrackedPage.current === pagePath) return
+			lastTrackedPage.current = pagePath
+
+			trackEvent('page_view', {
+				page_location: window.location.href,
+				page_path: pagePath,
+				page_title: document.title,
+			})
+		}
+
+		trackCurrentPage()
+		window.addEventListener(CONSENT_EVENT_NAME, trackCurrentPage)
+		return () => window.removeEventListener(CONSENT_EVENT_NAME, trackCurrentPage)
+	}, [pathname])
+
+	useEffect(() => {
+		const trackRegistrationClick = (event: MouseEvent) => {
+			const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href]')
+			if (!anchor) return
+
+			try {
+				const url = new URL(anchor.href, window.location.href)
+				if (url.hostname !== 'app.planopia.pl' || url.pathname !== '/team-registration') return
+				trackEvent('begin_sign_up', {
+					link_url: url.href,
+					link_text: anchor.textContent?.trim().slice(0, 100) || 'registration',
+					page_path: window.location.pathname,
+				})
+			} catch {
+				// Ignore malformed third-party links.
+			}
+		}
+
+		document.addEventListener('click', trackRegistrationClick, true)
+		return () => document.removeEventListener('click', trackRegistrationClick, true)
+	}, [])
+
+	return null
 }

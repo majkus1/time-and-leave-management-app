@@ -3,9 +3,9 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
-	title: 'Program do ewidencji czasu pracy — online, darmowy plan | Planopia',
+	title: { absolute: 'Program do ewidencji czasu pracy online | Planopia' },
 	description:
-		'Program do ewidencji czasu pracy online: godziny, nadgodziny, kalendarz miesięczny i raporty PDF/Excel. 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 kont.',
+		'Program do ewidencji czasu pracy online: godziny, nadgodziny i raporty PDF/Excel. 30 dni za darmo, potem darmowa ewidencja do 5 kont.',
 	keywords: [
 		'program do ewidencji czasu pracy',
 		'ewidencja czasu pracy program',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 		alternateLocale: ['en_US'],
 		url: '/program-do-ewidencji-czasu-pracy',
 		siteName: 'Planopia',
-		title: 'Program do ewidencji czasu pracy — online, darmowy plan | Planopia',
+		title: 'Program do ewidencji czasu pracy online | Planopia',
 		description:
 			'Rejestracja godzin, nadgodziny i raporty PDF/Excel w jednej aplikacji. 30 dni pełnej Planopii, potem darmowa ewidencja do 5 aktywnych kont.',
 		images: [

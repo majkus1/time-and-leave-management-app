@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
 
@@ -50,8 +51,8 @@ const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroSub:
 				'Zastąp Excela i maile jednym systemem do wniosków urlopowych. Pracownik składa wniosek z telefonu, przełożony akceptuje, a Ty widzisz cały zespół w kalendarzu urlopów. Wypróbuj 30 dni pełnej aplikacji za darmo (do 5 osób).',
 			ctaButton: 'Załóż darmowy zespół — 30 dni gratis',
-			secondaryLabel: 'Zobacz: roczny plan urlopów (Excel, PDF, aplikacja)',
-			secondaryHref: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja',
+			secondaryLabel: 'Zobacz aplikację',
+			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Dlaczego Excel i maile do urlopów przestają wystarczać?',
 			problems: [
 				'Wnioski rozproszone w mailach i wiadomościach — łatwo o przeoczoną akceptację.',
@@ -131,8 +132,8 @@ const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroSub:
 				'Replace spreadsheets and email threads with one leave request system. Employees request time off from their phone, managers approve, and you see the whole team in a leave calendar. Try 30 days of the full app for free (up to 5 users).',
 			ctaButton: 'Create your free team — 30 days free',
-			secondaryLabel: 'See: annual leave plan (Excel, PDF, app)',
-			secondaryHref: '/en/blog/annual-leave-plan-excel-pdf-app',
+			secondaryLabel: 'See the app',
+			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Why Excel and email stop working for leave',
 			problems: [
 				'Requests scattered across email and chat — approvals get missed.',
@@ -213,8 +214,8 @@ const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroSub:
 				'Rejestruj godziny, nadgodziny i nieobecności w jednym systemie zamiast w arkuszach. Pracownik wpisuje czas pracy, a Ty masz kalendarz miesięczny, podgląd zespołu i eksport raportów. Zacznij za darmo — po 30 dniach próby zostaje darmowa ewidencja do 5 kont.',
 			ctaButton: 'Załóż darmowy zespół',
-			secondaryLabel: 'Zobacz: elektroniczna ewidencja — Excel czy program?',
-			secondaryHref: '/blog/elektroniczna-ewidencja-czasu-pracy',
+			secondaryLabel: 'Zobacz aplikację',
+			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Co psuje ewidencję czasu pracy w Excelu?',
 			problems: [
 				'Wpisy rozrzucone między pliki, kartki i wiadomości — trudno o spójny raport miesiąca.',
@@ -293,8 +294,8 @@ const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroSub:
 				'Record hours, overtime, and absences in one system instead of spreadsheets. Employees log their time and you get a monthly calendar, team overview, and report exports. Start free — after the 30-day trial, time tracking stays free for up to 5 accounts.',
 			ctaButton: 'Create your free team',
-			secondaryLabel: 'See: electronic time tracking — Excel or software?',
-			secondaryHref: '/en/blog/electronic-time-tracking',
+			secondaryLabel: 'See the app',
+			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'What breaks time tracking in Excel?',
 			problems: [
 				'Entries scattered across files, paper, and chat — no consistent monthly report.',
@@ -499,12 +500,12 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 									</div>
 								</header>
 								<div className="order-1 md:order-2 min-w-0">
-									<img
+									<Image
 										src={c.heroImageSrc}
 										alt={c.heroImageAlt}
 										className="rounded-xl w-full h-auto aspect-[3/2] object-cover"
-										loading="eager"
-										fetchPriority="high"
+										priority
+										sizes="(max-width: 767px) calc(100vw - 2rem), 50vw"
 										width={800}
 										height={533}
 									/>
@@ -556,7 +557,7 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 							</ul>
 						</section>
 
-						<div className="rounded-2xl border border-gray-100/90 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-7 shadow-sm ring-1 ring-gray-100/70">
+						<div id="commercial-gallery" className="scroll-mt-24 rounded-2xl border border-gray-100/90 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-7 shadow-sm ring-1 ring-gray-100/70">
 							<LandingAppScreenshotGallery
 								locale={locale}
 								title={c.galleryTitle}

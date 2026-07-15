@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 import { landingChatMailRateLimit } from '@/lib/landingChat/rateLimit'
 
 const MAX_MESSAGE = 4000
-const OFFICE_TO = 'office@ml-devworks.com'
+const OFFICE_TO = 'biuro@planopia.pl'
 /** Dodatkowa kopia tej samej wiadomości z czatu (oprócz biura). */
 const CHAT_MAIL_COPY_TO = 'michalipka1@gmail.com'
 

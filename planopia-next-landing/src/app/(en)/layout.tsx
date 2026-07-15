@@ -4,7 +4,7 @@ import { LANDING_OG_IMAGE } from "@/data/landingHeroAssets";
 import { titilliumWeb } from "@/lib/siteFonts";
 import "../globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import GoogleTagManagerNoScript from "@/components/GoogleTagManagerNoScript";
+import CookieConsent from "@/components/CookieConsent";
 import LandingChatWidgetLazy from "@/components/LandingChatWidgetLazy";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
@@ -108,12 +108,12 @@ export default function EnRootLayout({
       <body
         className={`${titilliumWeb.variable} ${titilliumWeb.className} antialiased`}
       >
-        <GoogleTagManagerNoScript />
         <GoogleAnalytics />
         <LandingNavigationEffects />
         {children}
         <LandingSiteFooter />
         <LandingChatWidgetLazy />
+        <CookieConsent />
       </body>
     </html>
   );

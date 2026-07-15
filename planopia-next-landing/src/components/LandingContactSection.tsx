@@ -84,7 +84,7 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 
 							<div className="mt-6 space-y-4 mb-6">
 								<a
-									href="mailto:office@ml-devworks.com"
+									href="mailto:biuro@planopia.pl"
 									className="landing-contact-link flex items-center gap-3 p-3 bg-white/60 rounded-lg hover:bg-white/80 transition-all group border border-gray-100"
 								>
 									<div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -92,7 +92,7 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 										</svg>
 									</div>
-									<span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">office@ml-devworks.com</span>
+									<span className="text-gray-800 font-medium group-hover:text-blue-600 transition-colors">biuro@planopia.pl</span>
 								</a>
 
 								<a

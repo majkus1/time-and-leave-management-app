@@ -10,7 +10,7 @@ const COMPLAINTS_PL = `
 Usługodawca: ML Devworks Michał Lipka, Rynek Główny 34 lok. 15, 31-010 Kraków, NIP: 6762707876, REGON: 543372505.
 
 ## 1. Złożenie reklamacji
-Reklamacje dotyczące świadczenia usługi Planopia (w tym płatności i dostępu do aplikacji) można złożyć drogą elektroniczną, wysyłając wiadomość na adres: office@ml-devworks.com. W tytule lub treści prosimy o dopisek „Reklamacja Planopia” oraz opis przedmiotu reklamacji i dane pozwalające zidentyfikować konto (np. nazwa firmy / adres e-mail konta).
+Reklamacje dotyczące świadczenia usługi Planopia (w tym płatności i dostępu do aplikacji) można złożyć drogą elektroniczną, wysyłając wiadomość na adres: biuro@planopia.pl. W tytule lub treści prosimy o dopisek „Reklamacja Planopia” oraz opis przedmiotu reklamacji i dane pozwalające zidentyfikować konto (np. nazwa firmy / adres e-mail konta).
 
 ## 2. Termin na złożenie reklamacji
 Reklamację należy złożyć w rozsądnym terminie po stwierdzeniu okoliczności stanowiących jej podstawę, nie później niż w ciągu 14 dni od dnia, w którym konsument lub Klient dowiedział się o przyczynie reklamacji (w sprawach objętych przepisami o konsumentach — zgodnie z obowiązującymi przepisami, w szczególności ustawą o prawach konsumenta).
@@ -30,7 +30,7 @@ const COMPLAINTS_EN = `
 Service provider: ML Devworks Michał Lipka, Rynek Główny 34 lok. 15, 31-010 Kraków, Poland. NIP: 6762707876, REGON: 543372505.
 
 ## 1. How to submit a complaint
-Complaints regarding the Planopia service (including payments and access to the application) may be submitted by email to: office@ml-devworks.com. Please include "Planopia complaint" in the subject or body, describe the issue, and provide details to identify your account (e.g. company name / account email).
+Complaints regarding the Planopia service (including payments and access to the application) may be submitted by email to: biuro@planopia.pl. Please include "Planopia complaint" in the subject or body, describe the issue, and provide details to identify your account (e.g. company name / account email).
 
 ## 2. Time limit for filing
 A complaint should be filed within a reasonable time after the circumstances arise, and in any case not later than 14 days from the day you became aware of the grounds for the complaint, where applicable under consumer protection rules.

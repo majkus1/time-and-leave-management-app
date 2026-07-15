@@ -20,8 +20,8 @@ export default function ComplaintsEnPage() {
 					<p className="mt-3 text-gray-700 leading-relaxed">
 						Complaints regarding the Planopia service (including payments and access to the application) may be
 						submitted <strong>by email</strong> to:{' '}
-						<a href="mailto:office@ml-devworks.com" className="text-indigo-700 font-medium hover:underline">
-							office@ml-devworks.com
+						<a href="mailto:biuro@planopia.pl" className="text-indigo-700 font-medium hover:underline">
+							biuro@planopia.pl
 						</a>
 						. Please include “Planopia complaint” in the subject or body, describe the issue, and provide details to
 						identify your account (e.g. company name / account email).

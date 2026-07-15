@@ -8,7 +8,7 @@ For website user data, the data controller is ML Devworks Michał Lipka with its
 
 For Client employees' data, the data controller is the Client (employer), and ML Devworks Michał Lipka acts as a data processor based on a data processing agreement (DPA).
 
-Contact: office@ml-devworks.com
+Contact: biuro@planopia.pl
 
 ## 2. Purposes and Legal Bases for Processing
 
@@ -73,7 +73,7 @@ Contact: office@ml-devworks.com
 
 5.2. After subscription termination/contract end, team data will be deleted within 30 days, except for data required by law (e.g., tax regulations). User data is retained for 30 days after deletion (retention period), then permanently deleted.
 
-5.3. The Client has the right to request extension or shortening of the data retention period within the scope permitted by law. Requests should be sent to: office@ml-devworks.com
+5.3. The Client has the right to request extension or shortening of the data retention period within the scope permitted by law. Requests should be sent to: biuro@planopia.pl
 
 ## 6. Rights of Data Subjects
 
@@ -86,7 +86,7 @@ Contact: office@ml-devworks.com
    - Right to object to processing
    - Right to withdraw consent
 
-6.2. Rights can be exercised by contacting: office@ml-devworks.com
+6.2. Rights can be exercised by contacting: biuro@planopia.pl
 
 6.3. You also have the right to lodge a complaint with the supervisory authority (President of the Personal Data Protection Office in Poland, or your local data protection authority).
 
@@ -94,11 +94,16 @@ Contact: office@ml-devworks.com
 
 7.1. The website uses cookies for:
    - Enabling basic functionality
-   - Traffic analysis (Google Analytics, Google Tag Manager)
+   - Analysis of traffic and website usage (Google Analytics 4) - only after consent
+   - Measurement of campaign performance and attribution of sign-ups to ads (Google Ads) - only after marketing consent
 
-7.2. Data from analytical tools (Google Analytics, Google Tag Manager) is processed by Google LLC in accordance with their privacy policy. These tools may use cookies to analyze website usage.
+7.2. Data from Google Analytics 4 and Google Ads is processed by Google LLC in accordance with Google’s privacy policy. These tools may use cookies and similar identifiers to analyze website usage and measure conversions.
 
-7.3. You can manage cookie settings in your browser or block analytical cookies.
+7.3. On the first visit, users can accept all optional cookies, reject them, or choose analytics and marketing categories separately. Refusing consent does not restrict access to the website or the ability to sign up.
+
+7.4. Consent can be changed or withdrawn at any time using the “Cookie settings” link in the website footer. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
+
+7.5. The cookie choice is stored for 180 days unless the user deletes cookies or changes the settings earlier.
 
 ## 8. Security Measures
 

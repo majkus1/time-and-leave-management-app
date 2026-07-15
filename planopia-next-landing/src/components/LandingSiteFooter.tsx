@@ -11,6 +11,7 @@ import {
 	LANDING_SELLER,
 	type LandingLocale,
 } from '@/data/landingFooterData'
+import { openCookieSettings } from '@/lib/analytics'
 
 function localeFromPath(pathname: string | null): LandingLocale {
 	if (!pathname) return 'pl'
@@ -154,6 +155,9 @@ export default function LandingSiteFooter() {
 					<p className="text-xs text-slate-500">
 						© {new Date().getFullYear()} Planopia · {LANDING_SELLER.legalName}
 					</p>
+					<button type="button" className="landing-cookie-settings" onClick={openCookieSettings}>
+						{locale === 'pl' ? 'Ustawienia cookies' : 'Cookie settings'}
+					</button>
 				</div>
 			</div>
 		</footer>

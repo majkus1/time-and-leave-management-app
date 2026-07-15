@@ -106,11 +106,11 @@
 
 9.3. All disputes will be resolved by the court competent for the Service Provider's registered office.
 
-9.4. Contact: office@ml-devworks.com
+9.4. Contact: biuro@planopia.pl
 
 ## 10. Complaints
 
-10.1. Complaints regarding the Service (including payments and access to the application) may be submitted by email to: office@ml-devworks.com. Please mark the message as a “Planopia complaint” and include information that allows us to identify the Account.
+10.1. Complaints regarding the Service (including payments and access to the application) may be submitted by email to: biuro@planopia.pl. Please mark the message as a “Planopia complaint” and include information that allows us to identify the Account.
 
 10.2. A complaint should be filed within a reasonable time after the circumstances arise, and in any case not later than 14 days from the day the entitled party became aware of the grounds for the complaint, where applicable under mandatory consumer protection rules.
 

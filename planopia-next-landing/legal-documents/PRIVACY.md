@@ -8,7 +8,7 @@ W zakresie danych użytkowników serwisu administratorem danych osobowych jest M
 
 W zakresie danych pracowników Klientów administratorem danych jest Klient (pracodawca), a ML Devworks Michał Lipka działa jako podmiot przetwarzający dane na podstawie umowy powierzenia przetwarzania danych (DPA).
 
-Kontakt: office@ml-devworks.com
+Kontakt: biuro@planopia.pl
 
 ## 2. Cele i podstawy przetwarzania
 
@@ -73,7 +73,7 @@ Kontakt: office@ml-devworks.com
 
 5.2. Po zakończeniu subskrypcji/rozwiązaniu umowy dane zespołu zostaną usunięte w terminie 30 dni, z wyjątkiem danych wymaganych przepisami prawa (np. przepisy podatkowe). Dane użytkowników są przechowywane przez 30 dni po usunięciu (okres karencji), a następnie trwale usuwane.
 
-5.3. Klient ma prawo zwrócić się do Administratora z prośbą o przedłużenie lub skrócenie okresu przechowywania danych w zakresie dopuszczalnym przepisami prawa. Wniosek należy kierować na adres: office@ml-devworks.com
+5.3. Klient ma prawo zwrócić się do Administratora z prośbą o przedłużenie lub skrócenie okresu przechowywania danych w zakresie dopuszczalnym przepisami prawa. Wniosek należy kierować na adres: biuro@planopia.pl
 
 ## 6. Prawa osób, których dane dotyczą
 
@@ -86,7 +86,7 @@ Kontakt: office@ml-devworks.com
    - Prawo do wniesienia sprzeciwu wobec przetwarzania
    - Prawo do cofnięcia zgody
 
-6.2. Realizację praw można zgłaszać na adres: office@ml-devworks.com
+6.2. Realizację praw można zgłaszać na adres: biuro@planopia.pl
 
 6.3. Przysługuje również prawo do wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych.
 
@@ -94,11 +94,16 @@ Kontakt: office@ml-devworks.com
 
 7.1. Strona korzysta z plików cookie w celu:
    - Umożliwienia działania funkcji podstawowych
-   - Analizy ruchu na stronie (Google Analytics, Google Tag Manager)
+   - Analizy ruchu i sposobu korzystania ze strony (Google Analytics 4) - wyłącznie po wyrażeniu zgody
+   - Pomiaru skuteczności kampanii i przypisywania rejestracji do reklam (Google Ads) - wyłącznie po wyrażeniu zgody marketingowej
 
-7.2. Dane z narzędzi analitycznych (Google Analytics, Google Tag Manager) są przetwarzane przez Google LLC zgodnie z ich polityką prywatności. Te narzędzia mogą wykorzystywać cookies do analizy użycia strony.
+7.2. Dane z narzędzi Google Analytics 4 i Google Ads są przetwarzane przez Google LLC zgodnie z polityką prywatności Google. Narzędzia te mogą wykorzystywać pliki cookie i podobne identyfikatory do analizy użycia strony oraz pomiaru konwersji.
 
-7.3. Można zarządzać ustawieniami cookie w przeglądarce lub zablokować cookies analityczne.
+7.3. Przy pierwszej wizycie można zaakceptować wszystkie opcjonalne pliki cookie, odrzucić je albo osobno wybrać kategorię analityczną i marketingową. Brak zgody nie ogranicza dostępu do strony ani możliwości rejestracji.
+
+7.4. Zgodę można w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce strony. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej wycofaniem.
+
+7.5. Wybór dotyczący cookies jest przechowywany przez 180 dni, chyba że użytkownik wcześniej usunie pliki cookie lub zmieni ustawienia.
 
 ## 8. Środki bezpieczeństwa
 

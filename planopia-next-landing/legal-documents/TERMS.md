@@ -106,11 +106,11 @@
 
 9.3. Wszelkie spory będą rozstrzygane przez sąd właściwy dla siedziby Usługodawcy.
 
-9.4. Kontakt: office@ml-devworks.com
+9.4. Kontakt: biuro@planopia.pl
 
 ## 10. Reklamacje
 
-10.1. Reklamacje dotyczące świadczenia Usługi (w tym płatności i dostępu do aplikacji) można składać drogą elektroniczną na adres: office@ml-devworks.com. W treści wiadomości prosimy o oznaczenie zgłoszenia jako „Reklamacja Planopia” oraz podanie informacji pozwalających zidentyfikować Konto.
+10.1. Reklamacje dotyczące świadczenia Usługi (w tym płatności i dostępu do aplikacji) można składać drogą elektroniczną na adres: biuro@planopia.pl. W treści wiadomości prosimy o oznaczenie zgłoszenia jako „Reklamacja Planopia” oraz podanie informacji pozwalających zidentyfikować Konto.
 
 10.2. Reklamację należy złożyć w rozsądnym terminie po stwierdzeniu okoliczności stanowiących jej podstawę, nie później niż w ciągu 14 dni od dnia, w którym uprawniony podmiot dowiedział się o przyczynie reklamacji — w zakresie objętym przepisami o konsumentach, zgodnie z obowiązującymi przepisami.
 

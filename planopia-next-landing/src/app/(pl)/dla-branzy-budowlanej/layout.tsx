@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
-	title: 'Ewidencja czasu pracy na budowie i grafiki — firmy budowlane',
+	title: { absolute: 'Ewidencja czasu pracy na budowie i grafiki | Planopia' },
 	description:
-		`Planopia dla budowlanki: ewidencja czasu pracy i brygad, pracownicy bez logowania, grafiki, urlopy, Kanban, czat, PDF/Excel z placu budowy. ${blogArticleOfferLine.pl}`,
+		'Planopia dla firm budowlanych: czas pracy brygad bez logowania, grafiki, urlopy i raporty PDF/Excel. 30 dni pełnej aplikacji za darmo.',
 	keywords: [
 		'ewidencja czasu pracy na budowie',
 		'brygadzista ewidencja czasu pracy',
@@ -38,9 +37,9 @@ export const metadata: Metadata = {
 		alternateLocale: ['en_US'],
 		url: '/dla-branzy-budowlanej',
 		siteName: 'Planopia',
-		title: 'Ewidencja czasu pracy na budowie i grafiki — firmy budowlane | Planopia',
+		title: 'Ewidencja czasu pracy na budowie i grafiki | Planopia',
 		description:
-			`Jedna aplikacja na budowę i biuro. ${blogArticleOfferLine.pl}`,
+			'Jedna aplikacja na budowę i biuro: czas pracy brygad, grafiki, urlopy i raporty. 30 dni pełnej aplikacji za darmo.',
 		images: [
 			{
 				url: '/img/worktimeblog.webp',
@@ -53,7 +52,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Ewidencja czasu pracy na budowie — Planopia',
-		description: `Grafiki, urlopy, zadania, czat. ${blogArticleOfferLine.pl}`,
+		description: 'Czas pracy brygad bez logowania, grafiki, urlopy i raporty PDF/Excel.',
 		images: ['/img/worktimeblog.webp'],
 	},
 	alternates: {

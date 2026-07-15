@@ -10,6 +10,7 @@ import { devLog } from '../../utils/devLog.js'
 import AuthPageTopBar from '../shared/AuthPageTopBar'
 import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
+import { trackRegistrationConversion } from '../../utils/marketingAnalytics.js'
 
 const TeamRegistration = () => {
 	const [formData, setFormData] = useState({
@@ -88,6 +89,7 @@ const TeamRegistration = () => {
 
 			if (response.data && response.data.success) {
 				await refreshUserData()
+				await trackRegistrationConversion()
 				sessionStorage.setItem('showTeamSuccessModal', 'true')
 				navigate('/')
 			} else {
