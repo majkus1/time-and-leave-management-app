@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db');
 const Team = require('../models/Team')(firmDb);
 const User = require('../models/user')(firmDb);
+const Settings = require('../models/Settings')(firmDb);
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createLog } = require('../services/logService');
@@ -184,6 +185,10 @@ exports.registerTeam = async (req, res) => {
 		});
 
 		await teamAdmin.save();
+
+		// Nowe zespoły startują z pulpitem. Istniejące zespoły zachowują
+		// dotychczasową wartość dashboardEnabled w swoim dokumencie ustawień.
+		await Settings.getSettings(newTeam._id);
 
 		// Record legal document acceptances (TERMS and PRIVACY) — wymagane wyżej
 		// Note: DPA is automatically accepted when first employee is added

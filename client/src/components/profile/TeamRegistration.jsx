@@ -88,10 +88,10 @@ const TeamRegistration = () => {
 			devLog('[TeamRegistration] Response', response.data)
 
 			if (response.data && response.data.success) {
+				sessionStorage.setItem('showTeamSuccessModal', 'true')
 				await refreshUserData()
 				await trackRegistrationConversion()
-				sessionStorage.setItem('showTeamSuccessModal', 'true')
-				navigate('/')
+				navigate('/dashboard', { replace: true })
 			} else {
 				devLog('[TeamRegistration] Unexpected response', response.data)
 			}
