@@ -5,22 +5,19 @@ const TutorialContext = createContext(null)
 
 export function TutorialProvider({ children }) {
 	const [isOpen, setIsOpen] = useState(false)
-	const [showOnFirstView, setShowOnFirstView] = useState(false)
 
-	const openTutorial = useCallback((options = {}) => {
-		setShowOnFirstView(options.firstView === true)
+	const openTutorial = useCallback(() => {
 		setIsOpen(true)
 	}, [])
 
 	const closeTutorial = useCallback(() => {
 		setIsOpen(false)
-		setShowOnFirstView(false)
 	}, [])
 
 	return (
 		<TutorialContext.Provider value={{ openTutorial, closeTutorial }}>
 			{children}
-			<TutorialModal isOpen={isOpen} onClose={closeTutorial} showOnFirstView={showOnFirstView} />
+			<TutorialModal isOpen={isOpen} onClose={closeTutorial} />
 		</TutorialContext.Provider>
 	)
 }

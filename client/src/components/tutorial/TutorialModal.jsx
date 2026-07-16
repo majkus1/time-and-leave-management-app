@@ -1,20 +1,17 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import Modal from 'react-modal'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { API_URL } from '../../config'
 import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
-function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
+function TutorialModal({ isOpen, onClose }) {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
-	const { refreshUserData, markTutorialSeenLocally, role, username, userId } = useAuth()
+	const { role, username, userId } = useAuth()
 	const { freemiumTier, freemiumSeatBlocked } = useFreemiumAccess({ enabled: true })
 	const [activeSection, setActiveSection] = useState(null)
 	const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
-	const dismissFirstViewRef = useRef(false)
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -24,27 +21,6 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
-	useEffect(() => {
-		if (isOpen) dismissFirstViewRef.current = false
-	}, [isOpen])
-
-	const dismissFirstViewTutorial = useCallback(() => {
-		if (dismissFirstViewRef.current) return
-		dismissFirstViewRef.current = true
-		markTutorialSeenLocally()
-		onClose()
-		void (async () => {
-			try {
-				await axios.post(`${API_URL}/api/users/tutorial/seen`, {}, { withCredentials: true })
-				await refreshUserData()
-			} catch (error) {
-				if (process.env.NODE_ENV === 'development') {
-					console.error('Error marking tutorial as seen:', error)
-				}
-			}
-		})()
-	}, [markTutorialSeenLocally, onClose, refreshUserData])
-	
 	// Sprawdź role użytkownika
 	const isAdmin = role && role.includes('Admin')
 	const isHR = role && role.includes('HR')
@@ -545,19 +521,11 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 	}, [sections, isMobile])
 
 	const handleClose = () => {
-		if (showOnFirstView) {
-			dismissFirstViewTutorial()
-		} else {
-			onClose()
-		}
+		onClose()
 	}
 
 	const handleNavigateToSection = (path) => {
-		if (showOnFirstView) {
-			dismissFirstViewTutorial()
-		} else {
-			onClose()
-		}
+		onClose()
 		setTimeout(() => {
 			navigate(path)
 		}, 100)
@@ -856,22 +824,6 @@ function TutorialModal({ isOpen, onClose, showOnFirstView = false }) {
 					</div>
 				))}
 			</div>
-
-			{/* Footer */}
-			{showOnFirstView && (
-				<div className="tutorial-modal-footer">
-					<button
-						type="button"
-						className="tutorial-modal-footer-btn"
-						onClick={dismissFirstViewTutorial}
-					>
-						{i18n.resolvedLanguage === 'pl' ? 'Rozumiem, przejdź dalej' : 'Got it, continue'}
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-							<polyline points="9 18 15 12 9 6"></polyline>
-						</svg>
-					</button>
-				</div>
-			)}
 
 			<style>{`
 				@keyframes fadeIn {

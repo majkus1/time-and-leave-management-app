@@ -1,17 +1,82 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import confetti from 'canvas-confetti'
 import Sidebar from './Sidebar'
 import Loader from '../Loader'
 import { useAuth } from '../../context/AuthContext'
-import { useTutorial } from '../../context/TutorialContext'
 import { useDashboardSummary } from '../../hooks/useDashboardSummary'
 import { useTimerElapsed } from '../../hooks/useTimerElapsed'
 import { formatTimerClock } from '../../utils/timerDisplay'
 import TeamInsightsPanel from './TeamInsightsPanel'
 import PersonalOverviewPanel from './PersonalOverviewPanel'
 import './Dashboard.css'
+
+function launchWelcomeConfetti() {
+	const canvas = document.createElement('canvas')
+	canvas.setAttribute('aria-hidden', 'true')
+	Object.assign(canvas.style, {
+		position: 'fixed',
+		inset: '0',
+		width: '100vw',
+		height: '100vh',
+		pointerEvents: 'none',
+		zIndex: '100000000',
+	})
+	document.body.appendChild(canvas)
+
+	const celebration = confetti.create(canvas, { resize: true })
+	const colors = ['#16a34a', '#22c55e', '#86efac', '#ffffff', '#facc15', '#38bdf8']
+	const timers = []
+	const fire = (delay, options) => {
+		timers.push(setTimeout(() => celebration({
+			colors,
+			ticks: 260,
+			scalar: 1.08,
+			...options,
+		}), delay))
+	}
+
+	fire(0, {
+		particleCount: 180,
+		spread: 110,
+		startVelocity: 55,
+		origin: { x: 0.5, y: 0.12 },
+	})
+	fire(280, {
+		particleCount: 110,
+		angle: 60,
+		spread: 70,
+		startVelocity: 52,
+		origin: { x: 0, y: 0.55 },
+	})
+	fire(280, {
+		particleCount: 110,
+		angle: 120,
+		spread: 70,
+		startVelocity: 52,
+		origin: { x: 1, y: 0.55 },
+	})
+	fire(720, {
+		particleCount: 140,
+		spread: 160,
+		startVelocity: 38,
+		gravity: 0.9,
+		origin: { x: 0.5, y: 0.32 },
+	})
+
+	const cleanupTimer = setTimeout(() => {
+		celebration.reset()
+		canvas.remove()
+	}, 5000)
+
+	return () => {
+		timers.forEach(clearTimeout)
+		clearTimeout(cleanupTimer)
+		celebration.reset()
+		canvas.remove()
+	}
+}
 
 const copy = {
 	pl: {
@@ -481,9 +546,7 @@ function Dashboard() {
 	const { t, i18n } = useTranslation()
 	const language = i18n.resolvedLanguage === 'pl' ? 'pl' : 'en'
 	const text = getText(language)
-	const { username, hasSeenTutorial, firstLoginAt } = useAuth()
-	const { openTutorial } = useTutorial()
-	const tutorialAutoOpenedRef = useRef(false)
+	const { username } = useAuth()
 	const { data: summary, isLoading, isError } = useDashboardSummary()
 	const activeTimer = useMemo(() => {
 		const timer = summary?.work?.myToday?.activeTimer
@@ -494,42 +557,26 @@ function Dashboard() {
 	useEffect(() => {
 		const showModalFromStorage = sessionStorage.getItem('showTeamSuccessModal') === 'true'
 		const showModalFromState = location.state?.showTeamSuccessModal
+		let cleanupConfetti
+		let confettiTimer
 
 		if (showModalFromStorage || showModalFromState) {
 			setShowSuccessModal(true)
 			if (showModalFromStorage) sessionStorage.removeItem('showTeamSuccessModal')
 			window.history.replaceState({}, document.title)
-			setTimeout(() => {
-				confetti({
-					particleCount: 120,
-					spread: 70,
-					origin: { y: 0.2 },
-					zIndex: 10000,
-				})
-			}, 300)
+			confettiTimer = setTimeout(() => {
+				cleanupConfetti = launchWelcomeConfetti()
+			}, 250)
+		}
+
+		return () => {
+			clearTimeout(confettiTimer)
+			cleanupConfetti?.()
 		}
 	}, [location.state])
 
-	const shouldOfferAutoTutorial = useCallback(() => {
-		if (hasSeenTutorial || !firstLoginAt || showSuccessModal) return false
-		return true
-	}, [hasSeenTutorial, firstLoginAt, showSuccessModal])
-
-	const openAutoTutorialOnce = useCallback(() => {
-		if (tutorialAutoOpenedRef.current || !shouldOfferAutoTutorial()) return
-		tutorialAutoOpenedRef.current = true
-		openTutorial({ firstView: true })
-	}, [shouldOfferAutoTutorial, openTutorial])
-
-	useEffect(() => {
-		if (!shouldOfferAutoTutorial()) return
-		const timer = setTimeout(openAutoTutorialOnce, 500)
-		return () => clearTimeout(timer)
-	}, [shouldOfferAutoTutorial, openAutoTutorialOnce])
-
 	const handleCloseSuccessModal = () => {
 		setShowSuccessModal(false)
-		setTimeout(openAutoTutorialOnce, 300)
 	}
 
 	const todayContext = summary?.period?.todayContext
