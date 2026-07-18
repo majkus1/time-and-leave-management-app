@@ -66,6 +66,8 @@ export const FOOTER_SOLUTIONS: Record<LandingLocale, FooterLegalLink[]> = {
 	pl: [
 		{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 		{ href: '/program-do-urlopow', label: 'Program do urlopów' },
+		{ href: '/dla-firm-sprzatajacych', label: 'Dla firm sprzątających' },
+		{ href: '/dla-gastronomii', label: 'Dla gastronomii' },
 		{ href: '/dla-branzy-budowlanej', label: 'Dla firm budowlanych' },
 	],
 	en: [

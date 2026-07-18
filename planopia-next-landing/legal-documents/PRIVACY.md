@@ -49,7 +49,7 @@ Kontakt: biuro@planopia.pl
    - Dostawcom hostingu i infrastruktury aplikacji (m.in. Render.com — backend i baza danych; Vercel lub Netlify — strona planopia.pl)
    - **OpenAI** (OpenAI, L.L.C.) — wyłącznie przy korzystaniu z funkcji AI opisanych w ust. 3.4
    - Operatorom płatności (m.in. Przelewy24, Stripe) — w zakresie danych niezbędnych do rozliczenia subskrypcji
-   - Google LLC (Google Analytics, Google Tag Manager) — analiza ruchu na stronie planopia.pl
+   - Google LLC (Google Analytics, Google Tag Manager) — analiza ruchu oraz pomiar skuteczności kampanii na stronach planopia.pl i app.planopia.pl
    - Organom państwowym na żądanie wynikające z przepisów prawa
 
 4.2. Wszyscy podwykonawcy są zobowiązani do przestrzegania zasad ochrony danych osobowych.
@@ -92,18 +92,20 @@ Kontakt: biuro@planopia.pl
 
 ## 7. Pliki cookie
 
-7.1. Strona korzysta z plików cookie w celu:
+7.1. Strony planopia.pl i app.planopia.pl korzystają z plików cookie w celu:
    - Umożliwienia działania funkcji podstawowych
    - Analizy ruchu i sposobu korzystania ze strony (Google Analytics 4) - wyłącznie po wyrażeniu zgody
    - Pomiaru skuteczności kampanii i przypisywania rejestracji do reklam (Google Ads) - wyłącznie po wyrażeniu zgody marketingowej
 
-7.2. Dane z narzędzi Google Analytics 4 i Google Ads są przetwarzane przez Google LLC zgodnie z polityką prywatności Google. Narzędzia te mogą wykorzystywać pliki cookie i podobne identyfikatory do analizy użycia strony oraz pomiaru konwersji.
+7.2. Przed wyrażeniem zgody tag Google działa w trybie Consent Mode z wyłączonym zapisem danych analitycznych i reklamowych. Może wtedy wysyłać do Google ograniczone sygnały techniczne bez plików cookie, służące zagregowanemu pomiarowi i modelowaniu skuteczności. Opcjonalne pliki cookie analityczne i marketingowe nie są zapisywane ani odczytywane do czasu udzielenia odpowiedniej zgody.
 
-7.3. Przy pierwszej wizycie można zaakceptować wszystkie opcjonalne pliki cookie, odrzucić je albo osobno wybrać kategorię analityczną i marketingową. Brak zgody nie ogranicza dostępu do strony ani możliwości rejestracji.
+7.3. Dane z narzędzi Google Analytics 4 i Google Ads są przetwarzane przez Google LLC zgodnie z polityką prywatności Google. Po wyrażeniu odpowiedniej zgody narzędzia te mogą wykorzystywać pliki cookie i podobne identyfikatory do analizy użycia strony oraz pomiaru konwersji.
 
-7.4. Zgodę można w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce strony. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej wycofaniem.
+7.4. Przy pierwszej wizycie można zaakceptować wszystkie opcjonalne pliki cookie, odrzucić je albo osobno wybrać kategorię analityczną i marketingową. Brak zgody nie ogranicza dostępu do strony ani możliwości rejestracji.
 
-7.5. Wybór dotyczący cookies jest przechowywany przez 180 dni, chyba że użytkownik wcześniej usunie pliki cookie lub zmieni ustawienia.
+7.5. Zgodę można w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce planopia.pl albo przycisk ustawień cookies na publicznych ekranach app.planopia.pl. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej wycofaniem.
+
+7.6. Wybór dotyczący cookies jest przechowywany przez 180 dni, chyba że użytkownik wcześniej usunie pliki cookie lub zmieni ustawienia.
 
 ## 8. Środki bezpieczeństwa
 

@@ -43,6 +43,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
 
     // Industry landings
+	{
+	  url: 'https://planopia.pl/dla-gastronomii',
+	  lastModified: new Date('2026-07-17'),
+	  changeFrequency: 'monthly',
+	  priority: 0.85,
+	},
+	{
+	  url: 'https://planopia.pl/dla-firm-sprzatajacych',
+	  lastModified: new Date('2026-07-17'),
+	  changeFrequency: 'monthly',
+	  priority: 0.85,
+	},
     {
       url: 'https://planopia.pl/dla-branzy-budowlanej',
       lastModified: new Date(),
@@ -175,6 +187,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
 
     // Blog — construction / budowlanka
+	{
+	  url: 'https://planopia.pl/blog/jak-ulozyc-grafik-pracy-w-restauracji',
+	  lastModified: new Date('2026-07-17'),
+	  changeFrequency: 'monthly',
+	  priority: 0.82,
+	},
+	{
+	  url: 'https://planopia.pl/blog/jak-zarzadzac-firma-sprzatajaca',
+	  lastModified: new Date('2026-07-17'),
+	  changeFrequency: 'monthly',
+	  priority: 0.82,
+	},
     {
       url: 'https://planopia.pl/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie',
       lastModified: new Date(),

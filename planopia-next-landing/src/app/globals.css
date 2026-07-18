@@ -2735,7 +2735,7 @@ textarea {
 }
 
 #planopia-welcome.landing-polished-hero,
-#construction-welcome.landing-polished-hero {
+.industry-landing-hero.landing-polished-hero {
 	background: #f4f8ff !important;
 	padding: 72px 30px 50px !important;
 }
@@ -2751,12 +2751,12 @@ textarea {
 }
 
 #planopia-welcome .landing-polished-hero-copy,
-#construction-welcome .landing-polished-hero-copy {
+.industry-landing-hero .landing-polished-hero-copy {
 	max-width: 640px;
 }
 
 #planopia-welcome .landing-polished-eyebrow,
-#construction-welcome .landing-polished-eyebrow {
+.industry-landing-hero .landing-polished-eyebrow {
 	margin: 0 0 20px;
 	color: #008f45 !important;
 	-webkit-text-fill-color: #008f45 !important;
@@ -2767,7 +2767,7 @@ textarea {
 }
 
 #planopia-welcome .landing-polished-title,
-#construction-welcome .landing-polished-title {
+.industry-landing-hero .landing-polished-title {
 	margin: 0;
 	color: #102f5e !important;
 	-webkit-text-fill-color: #102f5e !important;
@@ -3137,7 +3137,7 @@ textarea {
 	}
 
 	#planopia-welcome.landing-polished-hero,
-	#construction-welcome.landing-polished-hero {
+	.industry-landing-hero.landing-polished-hero {
 		padding-top: 34px !important;
 	}
 }
@@ -3153,11 +3153,11 @@ textarea {
 		padding-right: 14px !important;
 	}
 
-	#construction-welcome.landing-polished-hero {
+	.industry-landing-hero.landing-polished-hero {
 		padding: 18px 16px 40px !important;
 	}
 
-	#construction-welcome .landing-polished-title {
+	.industry-landing-hero .landing-polished-title {
 		font-size: clamp(31px, 9vw, 42px) !important;
 		line-height: 1.16;
 	}
@@ -3170,7 +3170,7 @@ textarea {
 		line-height: 1.45;
 	}
 
-	#construction-welcome .landing-polished-eyebrow {
+	.industry-landing-hero .landing-polished-eyebrow {
 		font-size: 11px;
 		margin-bottom: 12px;
 	}
@@ -4237,6 +4237,9 @@ button.mobile-menu-item.mobile-menu-industry-toggle {
 }
 
 .mobile-menu-item.mobile-menu-industry-child {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
 	font-size: 0.95rem;
 	padding: 0.75rem 1rem;
 }
@@ -5027,7 +5030,7 @@ a.blog-pillar-banner-link:focus-visible {
 
 /* Final homepage rhythm: more breathing room between landing sections, scoped to PL/EN homepage only */
 #planopia-welcome.landing-polished-hero,
-#construction-welcome.landing-polished-hero {
+.industry-landing-hero.landing-polished-hero {
 	padding-top: 84px !important;
 	padding-bottom: 84px !important;
 }
@@ -5051,7 +5054,7 @@ a.blog-pillar-banner-link:focus-visible {
 
 @media (min-width: 1200px) {
 	#planopia-welcome.landing-polished-hero,
-	#construction-welcome.landing-polished-hero {
+	.industry-landing-hero.landing-polished-hero {
 		padding-top: 92px !important;
 		padding-bottom: 92px !important;
 	}
@@ -5071,7 +5074,7 @@ a.blog-pillar-banner-link:focus-visible {
 
 @media (max-width: 768px) {
 	#planopia-welcome.landing-polished-hero,
-	#construction-welcome.landing-polished-hero {
+	.industry-landing-hero.landing-polished-hero {
 		padding-top: 34px !important;
 		padding-bottom: 64px !important;
 	}
@@ -5301,6 +5304,11 @@ a.landing-polished-hero-cta:focus-visible,
 .cookie-consent h2 { margin: 0; font-size: 1.2rem; font-weight: 650; letter-spacing: 0; color: #0f2747; }
 .cookie-consent p { margin: 5px 0 0; font-size: .94rem; line-height: 1.48; color: #536174; }
 .cookie-consent a { color: #08794b; text-decoration: underline; text-underline-offset: 2px; }
+
+.industry-cta-heading {
+	justify-content: center !important;
+	text-align: center !important;
+}
 
 .cookie-consent__options { display: grid; gap: 8px; margin-top: 18px; }
 .cookie-consent__option { display: flex; gap: 18px; align-items: center; justify-content: space-between; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 7px; background: #f8fafc; cursor: pointer; }

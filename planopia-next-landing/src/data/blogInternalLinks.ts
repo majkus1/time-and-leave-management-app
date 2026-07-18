@@ -46,6 +46,10 @@ export const BLOG_TOPICS_PL = [
 		title: 'Branże i zastosowania',
 		description: 'Rozwiązania dopasowane do specyfiki pracy zespołu.',
 		links: [
+			{ href: '/dla-firm-sprzatajacych', label: 'Firmy sprzątające — landing' },
+			{ href: '/blog/jak-zarzadzac-firma-sprzatajaca', label: 'Jak zarządzać firmą sprzątającą' },
+			{ href: '/dla-gastronomii', label: 'Gastronomia — landing' },
+			{ href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji', label: 'Jak ułożyć grafik pracy w restauracji' },
 			{ href: '/dla-branzy-budowlanej', label: 'Firmy budowlane — landing' },
 			{ href: '/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie', label: 'Ewidencja czasu pracy na budowie' },
 		],
@@ -94,6 +98,16 @@ const L = {
 		label: 'Ewidencja czasu pracy na budowie',
 	},
 	budowaLanding: { href: '/dla-branzy-budowlanej', label: 'Planopia dla firm budowlanych' },
+	gastronomia: {
+		href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji',
+		label: 'Jak ułożyć grafik pracy w restauracji',
+	},
+	gastronomiaLanding: { href: '/dla-gastronomii', label: 'Planopia dla gastronomii' },
+	sprzatanie: {
+		href: '/blog/jak-zarzadzac-firma-sprzatajaca',
+		label: 'Jak zarządzać firmą sprzątającą',
+	},
+	sprzatanieLanding: { href: '/dla-firm-sprzatajacych', label: 'Planopia dla firm sprzątających' },
 	ai: {
 		href: '/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik',
 		label: 'Asystent AI — ewidencja, urlopy, grafik',
@@ -144,6 +158,14 @@ export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
 	},
 	'jak-prowadzic-ewidencje-czasu-pracy-na-budowie': {
 		related: [L.budowaLanding, L.pillar, L.online, L.elektroniczna],
+	},
+	'jak-ulozyc-grafik-pracy-w-restauracji': {
+		relatedTitle: 'Więcej o grafiku i organizacji zespołu',
+		related: [L.gastronomiaLanding, L.kompleksowa, L.planowanie, L.online],
+	},
+	'jak-zarzadzac-firma-sprzatajaca': {
+		relatedTitle: 'Więcej o organizacji pracy zespołu',
+		related: [L.sprzatanieLanding, L.kompleksowa, L.online, L.programEwidencja],
 	},
 	'asystent-ai-planopia-ewidencja-urlopy-zadania-grafik': {
 		related: [L.pillar, L.kompleksowa, L.online, L.planowanie],

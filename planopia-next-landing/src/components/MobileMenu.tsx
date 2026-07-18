@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
 
 interface MobileMenuProps {
@@ -23,7 +24,7 @@ interface MobileMenuProps {
 	}
 	/** Sekcja pod główną nawigacją (np. Branże) */
 	industrySectionTitle?: string
-	industryLinks?: Array<{ href: string; label: string }>
+	industryLinks?: Array<{ href: string; label: string; iconSrc?: string }>
 	/** Po ilu elementach z menuItems wstawić „Branże” (np. 3 = po Cenniku). Brak = na końcu listy (stare zachowanie). */
 	industryInsertIndex?: number
 }
@@ -200,7 +201,12 @@ export default function MobileMenu({
 												style={{
 													animationDelay: `${(navBefore.length + 1 + i) * 0.05}s`
 												}}>
-												{item.label}
+												{item.iconSrc && (
+													<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-50" aria-hidden>
+														<Image src={item.iconSrc} alt="" width={24} height={24} className="h-6 w-6 object-contain" />
+													</span>
+												)}
+												<span className="min-w-0 leading-5">{item.label}</span>
 											</Link>
 										))}
 									</div>

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRef, useState, useCallback } from 'react'
 import { industryNavForLocale } from '../data/industryNav'
 
@@ -59,10 +60,15 @@ export default function LandingIndustriesDropdown({ locale }: Props) {
 							<li key={item.href}>
 								<Link
 									href={item.href}
-									className="block px-4 py-3 text-left no-underline transition hover:bg-blue-50"
+									className="grid min-w-[21rem] grid-cols-[44px_1fr] items-center gap-3 px-4 py-3 text-left no-underline transition hover:bg-blue-50 focus-visible:bg-blue-50 focus-visible:outline-none"
 									onClick={() => setOpen(false)}>
-									<span className="block font-semibold text-gray-900">{item.title}</span>
-									<span className="mt-0.5 block text-sm leading-snug text-gray-600">{item.description}</span>
+									<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-emerald-100 bg-emerald-50/70" aria-hidden>
+										<Image src={item.iconSrc} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+									</span>
+									<span className="min-w-0">
+										<span className="block font-semibold leading-5 text-gray-900">{item.title}</span>
+										<span className="mt-1 block text-sm leading-snug text-gray-600">{item.description}</span>
+									</span>
 								</Link>
 							</li>
 						))}

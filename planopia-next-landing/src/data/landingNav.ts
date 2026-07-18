@@ -29,6 +29,10 @@ export function landingMobileNavItemsEn(opts?: { blogHref?: string }) {
 export function industryMobileConfig(locale: 'pl' | 'en') {
 	return {
 		industrySectionTitle: locale === 'pl' ? 'Branże' : 'Industries',
-		industryLinks: industryNavForLocale(locale).map((i) => ({ href: i.href, label: i.title })),
+		industryLinks: industryNavForLocale(locale).map((item) => ({
+			href: item.href,
+			label: item.title,
+			iconSrc: item.iconSrc,
+		})),
 	}
 }

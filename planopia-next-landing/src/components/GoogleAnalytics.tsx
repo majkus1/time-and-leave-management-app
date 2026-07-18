@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import {
 	CONSENT_EVENT_NAME,
+	DEFAULT_CONSENT,
 	initializeConsentMode,
 	loadGoogleTag,
 	readConsent,
@@ -16,15 +17,11 @@ export default function GoogleAnalytics() {
 
 	useEffect(() => {
 		initializeConsentMode()
-		const consent = readConsent()
-		if (consent) void loadGoogleTag(consent)
+		void loadGoogleTag(readConsent() || DEFAULT_CONSENT)
 	}, [])
 
 	useEffect(() => {
 		const trackCurrentPage = () => {
-			const consent = readConsent()
-			if (!consent?.analytics) return
-
 			const pagePath = `${pathname}${window.location.search}`
 			if (lastTrackedPage.current === pagePath) return
 			lastTrackedPage.current = pagePath

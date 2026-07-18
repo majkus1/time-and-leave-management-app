@@ -4,24 +4,24 @@ import { BLOG_TOPICS_PL } from '@/data/blogInternalLinks'
 export default function BlogTopicsNav() {
 	return (
 		<section
-			className="blog-topics-nav mb-10 md:mb-14 rounded-2xl border border-slate-200/90 bg-slate-50/80 p-5 md:p-8"
+			className="blog-topics-nav border-t border-slate-200 pt-10 md:pt-12"
 			aria-labelledby="blog-topics-heading"
 		>
-			<h2 id="blog-topics-heading" className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 text-center">
+			<h2 id="blog-topics-heading" className="m-0 w-full text-left text-2xl font-bold !text-[#102f5e] md:text-3xl">
 				Według tematu
 			</h2>
-			<p className="text-left text-gray-600 text-sm md:text-base mb-8 max-w-2xl">
+			<p className="mt-2 max-w-2xl text-left text-sm text-slate-600 md:text-base">
 				Przewodniki o ewidencji czasu pracy, urlopach i Planopii — od darmowej aplikacji po branże i instrukcje.
 			</p>
-			<div className="grid gap-6 md:grid-cols-2">
+			<div className="mt-7 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
 				{BLOG_TOPICS_PL.map((topic) => (
 					<div
 						key={topic.id}
-						className="blog-topics-card rounded-xl bg-white border border-slate-100 p-5 shadow-sm"
+						className="blog-topics-card border-l-2 border-slate-200 pl-4"
 					>
-						<h3 className="text-lg font-semibold text-gray-900 mb-1">{topic.title}</h3>
-						<p className="text-sm text-gray-600 mb-4">{topic.description}</p>
-						<ul className="space-y-2">
+						<h3 className="m-0 text-lg font-semibold !text-[#102f5e]">{topic.title}</h3>
+						<p className="mt-1 text-sm leading-relaxed text-slate-600">{topic.description}</p>
+						<ul className="mt-4 space-y-2.5">
 							{topic.links.map((link) => (
 								<li key={link.href}>
 									<Link

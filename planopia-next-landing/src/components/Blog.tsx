@@ -1,104 +1,242 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import MobileMenu from './MobileMenu'
+import BlogTopicsNav from './BlogTopicsNav'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import MobileMenu from './MobileMenu'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
-import { planOfferingCopy } from '@/data/planOfferingCopy'
-import BlogTopicsNav from './BlogTopicsNav'
 import { BLOG_PILLAR_PL } from '@/data/blogInternalLinks'
+import { planOfferingCopy } from '@/data/planOfferingCopy'
+
+type BlogCategory = 'all' | 'time' | 'leave' | 'industries' | 'product'
+
+type BlogArticle = {
+	href: string
+	title: string
+	description: string
+	image: string
+	imageAlt: string
+	category: Exclude<BlogCategory, 'all'>
+	featured?: boolean
+	badge?: string
+}
+
+const categories: { value: BlogCategory; label: string }[] = [
+	{ value: 'all', label: 'Wszystkie tematy' },
+	{ value: 'time', label: 'Ewidencja czasu pracy' },
+	{ value: 'leave', label: 'Urlopy i planowanie' },
+	{ value: 'industries', label: 'Branże i zastosowania' },
+	{ value: 'product', label: 'Planopia i instrukcje' },
+]
+
+const categoryLabels: Record<Exclude<BlogCategory, 'all'>, string> = {
+	time: 'Ewidencja czasu',
+	leave: 'Urlopy i planowanie',
+	industries: 'Branże',
+	product: 'Planopia',
+}
+
+const articles: BlogArticle[] = [
+	{
+		href: BLOG_PILLAR_PL.href,
+		title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów',
+		description: 'Kompletny przewodnik po ewidencji czasu, urlopach i modelu Planopii: 30 dni pełnej aplikacji, a później darmowa ewidencja lub pakiety płatne.',
+		image: '/img/ewidencjas.webp',
+		imageAlt: 'Darmowa aplikacja do ewidencji czasu pracy Planopia',
+		category: 'time',
+		featured: true,
+		badge: 'Główny przewodnik',
+	},
+	{
+		href: '/blog/jak-zarzadzac-firma-sprzatajaca',
+		title: 'Jak zarządzać firmą sprzątającą? Praktyczny poradnik',
+		description: 'Obiekty, grafik ekip, nagłe zastępstwa, zadania, kontrola wykonania oraz rozliczenie godzin — proces organizacji pracy krok po kroku.',
+		image: '/img/sprzatajaca.webp',
+		imageAlt: 'Program dla firmy sprzątającej — grafik ekip i ewidencja czasu',
+		category: 'industries',
+		badge: 'Nowy poradnik',
+	},
+	{
+		href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji',
+		title: 'Jak ułożyć grafik pracy w restauracji? Praktyczny poradnik',
+		description: 'Dostępność zespołu, obsada sali i kuchni, zastępstwa, urlopy oraz porównanie grafiku z przepracowanymi godzinami.',
+		image: '/img/gastronomia.webp',
+		imageAlt: 'Grafik pracy dla gastronomii i restauracji w Planopii',
+		category: 'industries',
+	},
+	{
+		href: '/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie',
+		title: 'Jak prowadzić ewidencję czasu pracy na budowie?',
+		description: 'Praktyczny poradnik dla firm budowlanych: godziny brygad, nadgodziny, grafiki, zadania i komunikacja bez kartek oraz rozproszonych arkuszy.',
+		image: '/img/budowa2.webp',
+		imageAlt: 'Ewidencja czasu pracy na budowie w firmie budowlanej',
+		category: 'industries',
+	},
+	{
+		href: '/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik',
+		title: 'Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik',
+		description: 'Jak połączyć codzienne procesy zespołu z inteligentnymi podsumowaniami, raportami i odpowiedziami opartymi na danych firmy.',
+		image: '/img/aibloga.webp',
+		imageAlt: 'Asystent AI w Planopii — ewidencja, urlopy, zadania i grafik',
+		category: 'product',
+	},
+	{
+		href: '/blog/instrukcja-wideo-planopia',
+		title: 'Instrukcja wideo — jak korzystać z Planopii',
+		description: 'Krótkie nagrania pokazujące pracę z aplikacją, w tym dodawanie godzin w ewidencji na telefonie i komputerze.',
+		image: '/img/video.webp',
+		imageAlt: 'Instrukcja wideo Planopia — poradniki z aplikacji',
+		category: 'product',
+		badge: 'Wideo',
+	},
+	{
+		href: '/blog/jak-zainstalowac-planopie-jako-pwa',
+		title: 'Jak zainstalować Planopię jako aplikację PWA?',
+		description: 'Instrukcja instalacji Planopii na iPhonie, Androidzie i komputerze, aby mieć aplikację zawsze pod ręką.',
+		image: '/img/pwas.webp',
+		imageAlt: 'Instalacja Planopii jako aplikacji PWA na telefonie i komputerze',
+		category: 'product',
+	},
+	{
+		href: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja',
+		title: 'Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać?',
+		description: 'Ograniczenia arkuszy, checklista programu do wniosków i praktyczny sposób przejścia z Excela do uporządkowanego systemu.',
+		image: '/img/roczny-plan.webp',
+		imageAlt: 'Roczny plan urlopów — kalendarz i wnioski w Planopii',
+		category: 'leave',
+	},
+	{
+		href: '/blog/program-do-urlopow-dla-malej-firmy',
+		title: 'Program do urlopów dla małej firmy — jak wybrać?',
+		description: 'Najważniejsze funkcje, koszty i kryteria wyboru aplikacji urlopowej dla małego lub rozwijającego się zespołu.',
+		image: '/img/plans-urlopnew.webp',
+		imageAlt: 'Program do urlopów dla małej firmy — Planopia',
+		category: 'leave',
+	},
+	{
+		href: '/blog/dni-wolne-2026',
+		title: 'Dni wolne 2026 — kalendarz świąt w Polsce',
+		description: 'Wszystkie ustawowe dni wolne, długie weekendy i wskazówki pomagające zaplanować urlopy zespołu w 2026 roku.',
+		image: '/img/dni wolnes.webp',
+		imageAlt: 'Kalendarz dni wolnych 2026 w Polsce',
+		category: 'leave',
+	},
+	{
+		href: '/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
+		title: 'Aplikacja do zarządzania firmą — wszystko w jednym miejscu',
+		description: 'Ewidencja czasu, urlopy, grafiki, zadania, czaty i role w jednym środowisku zamiast kilku niespójnych narzędzi.',
+		image: '/img/kompleksowos.webp',
+		imageAlt: 'Kompleksowa aplikacja do zarządzania firmą',
+		category: 'product',
+	},
+	{
+		href: '/blog/planowanie-urlopow',
+		title: 'Planowanie urlopów pracowników — narzędzia i praktyki',
+		description: 'Jak ograniczyć konflikty terminów, chaos papierowych wniosków i błędy w arkuszach dzięki wspólnemu kalendarzowi urlopowemu.',
+		image: '/img/planowanie urlopows.webp',
+		imageAlt: 'Planowanie urlopów pracowników — narzędzia i praktyki',
+		category: 'leave',
+	},
+	{
+		href: '/blog/ewidencja-czasu-pracy-online',
+		title: 'Ewidencja czasu pracy online — rozwiązania dla firm',
+		description: 'Dlaczego firmy zastępują papierowe listy i Excel elektroniczną ewidencją dostępną z telefonu oraz komputera.',
+		image: '/img/ewidencjas.webp',
+		imageAlt: 'Ewidencja czasu pracy online — nowoczesne rozwiązania dla firm',
+		category: 'time',
+	},
+	{
+		href: '/blog/elektroniczna-ewidencja-czasu-pracy',
+		title: 'Elektroniczna ewidencja czasu pracy — przewodnik',
+		description: 'Najważniejsze informacje o wyborze programu, prowadzeniu danych i przechodzeniu z tradycyjnej dokumentacji na system online.',
+		image: '/img/ewidencjas.webp',
+		imageAlt: 'Elektroniczna ewidencja czasu pracy — kompletny przewodnik',
+		category: 'time',
+	},
+	{
+		href: '/blog/zarzadzanie-urlopami',
+		title: 'Zarządzanie urlopami w firmie — kompletny przewodnik',
+		description: 'Jak uporządkować składanie wniosków, decyzje, limity i kalendarz nieobecności bez zbędnej pracy administracyjnej.',
+		image: '/img/planowanie urlopows.webp',
+		imageAlt: 'Zarządzanie urlopami w firmie — kompletny przewodnik',
+		category: 'leave',
+	},
+]
 
 function Blog() {
 	const [menuOpen, setMenuOpen] = useState(false)
-	const toggleMenu = () => setMenuOpen(prev => !prev)
+	const [selectedCategory, setSelectedCategory] = useState<BlogCategory>('all')
+	const [filterOpen, setFilterOpen] = useState(false)
+	const filterRef = useRef<HTMLDivElement>(null)
+	const toggleMenu = () => setMenuOpen(previous => !previous)
+	const visibleArticles = selectedCategory === 'all'
+		? articles
+		: articles.filter(article => article.category === selectedCategory)
+	const selectedCategoryLabel = categories.find(category => category.value === selectedCategory)?.label ?? categories[0].label
+
+	useEffect(() => {
+		if (!filterOpen) return
+
+		const closeOnOutsideClick = (event: PointerEvent) => {
+			if (!filterRef.current?.contains(event.target as Node)) setFilterOpen(false)
+		}
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setFilterOpen(false)
+		}
+
+		document.addEventListener('pointerdown', closeOnOutsideClick)
+		document.addEventListener('keydown', closeOnEscape)
+		return () => {
+			document.removeEventListener('pointerdown', closeOnOutsideClick)
+			document.removeEventListener('keydown', closeOnEscape)
+		}
+	}, [filterOpen])
 
 	return (
 		<>
-			{/* Schema.org JSON-LD */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
 					__html: JSON.stringify({
-						"@context": "https://schema.org",
-						"@type": "Blog",
-						"name": "Blog Planopii",
-						"url": "https://planopia.pl/blog",
-						"description": `Oficjalny blog Planopii — ewidencja czasu pracy online, urlopy, HR, produktywność.${planOfferingCopy.pl.blogJsonLdExtra}`,
-						"author": {
-							"@type": "Person",
-							"name": "Michał Lipka"
-						}
-					})
+						'@context': 'https://schema.org',
+						'@type': 'Blog',
+						name: 'Blog Planopii',
+						url: 'https://planopia.pl/blog',
+						description: `Oficjalny blog Planopii — ewidencja czasu pracy online, urlopy, HR, produktywność.${planOfferingCopy.pl.blogJsonLdExtra}`,
+						author: { '@type': 'Person', name: 'Michał Lipka' },
+					}),
 				}}
 			/>
 
-			{/* HEADER + MENU */}
 			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
 				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
-					<Link
-						href="/"
-						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
-						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
+					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: 0 }}>
+						<Image src="/img/new-logoplanopia.png" alt="Planopia" width={180} height={54} className="h-auto w-[180px]" priority />
 					</Link>
 					<nav className="hidden desktop:flex space-x-8 navdesktop">
-						<Link
-							href="/#oaplikacji"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							O Aplikacji
-						</Link>
-						<Link
-							href="/#asystent-ai"
-							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
-							Asystent AI
-						</Link>
-						<Link
-							href="/#cennik"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Cennik
-						</Link>
+						<Link href="/#oaplikacji" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">O Aplikacji</Link>
+						<Link href="/#asystent-ai" className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">Asystent AI</Link>
+						<Link href="/#cennik" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Cennik</Link>
 						<LandingIndustriesDropdown locale="pl" />
-						<Link
-							href="/blog"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Blog
-						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Kontakt
-						</Link>
-						<Link
-							href="https://app.planopia.pl/"
-							onClick={toggleMenu}
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Logowanie
-						</Link>
-
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
-						>
-							Załóż darmowy zespół
-						</Link>
+						<Link href="/blog" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Blog</Link>
+						<Link href="/#kontakt" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Kontakt</Link>
+						<Link href="https://app.planopia.pl/" className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition">Logowanie</Link>
+						<Link href="https://app.planopia.pl/team-registration" className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu">Załóż darmowy zespół</Link>
 						<Link href="/en/blog" className="flex items-center languagechoose">
-							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
+							<Image src="/img/united-kingdom.webp" alt="English version" width={24} height={24} />
 						</Link>
 					</nav>
-
 					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
 				</div>
 			</header>
 
-			{/* Professional Mobile Menu */}
 			<MobileMenu
 				isOpen={menuOpen}
 				onClose={toggleMenu}
@@ -108,268 +246,98 @@ function Blog() {
 				{...industryMobileConfig('pl')}
 				loginHref="https://app.planopia.pl/"
 				registerHref="https://app.planopia.pl/team-registration"
-				languageSwitcher={{
-					href: '/en/blog',
-					flagSrc: '/img/united-kingdom.webp',
-					alt: 'English version'
-				}}
+				languageSwitcher={{ href: '/en/blog', flagSrc: '/img/united-kingdom.webp', alt: 'English version' }}
 			/>
 
-			{/* HERO */}
-			<section className="px-4 pt-6 pb-3 md:py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid gap-10 items-center">
-						<div className="ordering">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-0 md:mb-6 blogh1 text-center mt-2 md:mt-4">Blog</h1>
-						</div>
-						
+			<main className="bg-white">
+				<section
+					id="blog-index-hero"
+					className="border-b border-blue-100 bg-[#f4f8ff] px-4 py-12 md:py-16"
+					style={{ marginTop: '70px' }}
+					aria-labelledby="blog-heading">
+					<div className="mx-auto max-w-7xl">
+						<p className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-emerald-700">Centrum wiedzy Planopii</p>
+						<h1 id="blog-heading" className="m-0 max-w-3xl text-4xl font-bold leading-tight !text-[#102f5e] md:text-5xl">Blog Planopii</h1>
+						<p className="mt-4 max-w-3xl text-lg leading-relaxed text-slate-700 md:text-xl">
+							Praktyczne poradniki o czasie pracy, urlopach, grafikach i organizacji zespołu. Konkretnie, bez zbędnej teorii.
+						</p>
 					</div>
-				</div>
-			</section>
+				</section>
 
-			<section className="px-4 pt-5 pb-12 md:py-16 bg-white">
-				<div className="max-w-7xl mx-auto">
-					<BlogTopicsNav />
-
-					<div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-						
-
-						{/* Karta — Asystent AI */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-indigo-100/90">
-							<img
-								src="/img/aibloga.webp"
-								alt="Asystent AI w Planopii — ewidencja, urlopy, zadania i grafik"
-								className="rounded-md mb-4 h-48 object-cover"
-							/>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik w jednym systemie
-							</h3>
-							<p className="text-gray-600 flex-1">
-								Jak połączyć ewidencję czasu pracy, urlopy, tablice zadań i grafik z inteligentnym podsumowaniem — automatyzacja pracy zespołu i procesów HR bez pięciu osobnych narzędzi.
-							</p>
-							<Link
-								href="/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta — ewidencja na budowie */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-amber-100/80">
-							<img
-								src="/img/budowa1.webp"
-								alt="Ewidencja czasu pracy na budowie — firma budowlana"
-								className="rounded-md mb-4 h-48 object-cover"
-							/>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Jak prowadzić ewidencję czasu pracy na budowie (prosto i bez Excela)
-							</h3>
-							<p className="text-gray-600 flex-1">
-								Poradnik dla firm budowlanych: jeden system zamiast kartek i arkuszy, nadgodziny, grafiki brygad — oraz tablice zadań i czaty, żeby zespół miał narzędzie na co dzień, nie tylko przy urlopach.
-							</p>
-							<Link
-								href="/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu — instrukcja wideo */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
-							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
-								<img
-									src="/img/video.webp"
-									alt="Instrukcja wideo Planopia — poradniki z aplikacji"
-									className="h-full w-full object-cover opacity-90"
-								/>
-								<span className="boxvideo absolute bottom-3 left-3 inline-flex items-center rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow">
-									Wideo
-								</span>
+				<section className="px-4 py-10 md:py-14" aria-labelledby="articles-heading">
+					<div className="mx-auto max-w-7xl">
+						<div className="mb-8 flex flex-col gap-5 border-b border-slate-200 pb-7 sm:flex-row sm:items-end sm:justify-between">
+							<div>
+								<h2 id="articles-heading" className="m-0 text-2xl font-bold !text-[#102f5e] md:text-3xl">Artykuły i poradniki</h2>
+								<p className="mt-2 text-sm text-slate-600">{visibleArticles.length} {visibleArticles.length === 1 ? 'materiał' : 'materiałów'}</p>
 							</div>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Instrukcja wideo — jak korzystać z Planopii
-							</h3>
-							<p className="text-gray-600 flex-1">
-								Krótkie nagrania z aplikacji: m.in. jak ręcznie dodać godziny czasu pracy w ewidencji. Oglądaj na telefonie lub komputerze — kolejne filmy będziemy dodawać na bieżąco.
-							</p>
-							<Link
-								href="/blog/instrukcja-wideo-planopia"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
+							<div ref={filterRef} className="relative w-full sm:w-72">
+								<span id="blog-category-label" className="mb-1.5 block text-sm font-semibold text-slate-700">Temat</span>
+								<button
+									id="blog-category"
+									type="button"
+									aria-labelledby="blog-category-label blog-category"
+									aria-haspopup="listbox"
+									aria-expanded={filterOpen}
+									onClick={() => setFilterOpen(open => !open)}
+									className="flex min-h-[46px] w-full items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-left text-base text-slate-800 shadow-sm outline-none transition hover:border-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100">
+									<span className="truncate">{selectedCategoryLabel}</span>
+									<span className={`text-xs text-slate-500 transition-transform ${filterOpen ? 'rotate-180' : ''}`} aria-hidden>▾</span>
+								</button>
+								{filterOpen && (
+									<div role="listbox" aria-labelledby="blog-category-label" className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl">
+										{categories.map(category => {
+											const selected = category.value === selectedCategory
+											return (
+												<button
+													key={category.value}
+													type="button"
+													role="option"
+													aria-selected={selected}
+													onClick={() => {
+														setSelectedCategory(category.value)
+														setFilterOpen(false)
+													}}
+													className={`flex min-h-10 w-full items-center justify-between rounded-md px-3 py-2 text-left text-base transition ${selected ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50'}`}>
+													<span>{category.label}</span>
+													{selected && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-600" aria-hidden />}
+												</button>
+											)
+										})}
+									</div>
+								)}
+							</div>
 						</div>
 
-						{/* Karta wpisu - Jak zainstalować Planopię jako PWA */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/pwas.webp" alt="Instalacja Planopii jako aplikacji PWA na telefonie i komputerze" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Jak zainstalować Planopię jako aplikację PWA? Instrukcja krok po kroku
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Dowiedz się, jak dodać Planopię jako aplikację PWA na iPhonie, iPadzie, telefonie z Androidem oraz w przeglądarce na komputerze (np. Chrome). Krótka instrukcja instalacji aplikacji do ewidencji czasu pracy i zarządzania urlopami na ekranie głównym, w menu aplikacji lub na pulpicie.
-							</p>
-							<Link
-								href="/blog/jak-zainstalowac-planopie-jako-pwa"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
+						<div className="grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
+							{visibleArticles.map(article => (
+								<article key={article.href} className={`group flex min-h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${article.featured ? 'border-emerald-300 ring-1 ring-emerald-100' : 'border-slate-200 hover:border-slate-300'}`}>
+									<Link href={article.href} className="relative block aspect-[16/9] overflow-hidden bg-slate-100" aria-label={article.title}>
+										<Image src={article.image} alt={article.imageAlt} fill sizes="(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 33vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" />
+									</Link>
+									<div className="flex flex-1 flex-col p-5 md:p-6">
+										<div className="mb-3 flex min-h-6 flex-wrap items-center gap-2">
+											<span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{categoryLabels[article.category]}</span>
+											{article.badge && <span className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{article.badge}</span>}
+										</div>
+										<h3 className="m-0 text-xl font-semibold leading-snug !text-[#102f5e]">
+											<Link href={article.href} className="text-inherit no-underline hover:text-emerald-700">{article.title}</Link>
+										</h3>
+										<p className="mt-3 flex-1 text-[15px] leading-relaxed text-slate-600">{article.description}</p>
+										<Link href={article.href} className="mt-5 inline-flex min-h-10 items-center self-start font-semibold text-blue-700 no-underline transition hover:text-emerald-700 hover:underline underline-offset-4">
+											Czytaj artykuł <span className="ml-1.5" aria-hidden>→</span>
+										</Link>
+									</div>
+								</article>
+							))}
 						</div>
 
-						{/* Karta — roczny plan urlopów Excel / PDF / aplikacja */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-emerald-100/90">
-							<img
-								src="/img/roczny-plan.webp"
-								alt="Roczny plan urlopów — kalendarz i wnioski w Planopii"
-								className="rounded-md mb-4 h-48 object-cover"
-							/>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać w 2026?
-							</h3>
-							<p className="text-gray-600 flex-1">
-								Arkusz i eksport do PDF na start; checklista programu do wniosków urlopowych; nadgodziny i ewidencja — jak przejść z Excela do systemu z akceptacjami, bez chaosu wersji plików.
-							</p>
-							<Link
-								href="/blog/roczny-plan-urlopow-excel-pdf-aplikacja"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta — program do urlopów dla małej firmy */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-emerald-100/90">
-							<img
-								src="/img/plans-urlopnew.webp"
-								alt="Program do urlopów dla małej firmy — Planopia"
-								className="rounded-md mb-4 h-48 object-cover"
-							/>
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Program do urlopów dla małej firmy — jak wybrać (2026)
-							</h3>
-							<p className="text-gray-600 flex-1">
-								Kryteria wyboru, realnie przydatne funkcje, koszt i odpowiedź na pytanie, czy istnieje darmowy program do urlopów. Praktyczny przewodnik dla małych zespołów.
-							</p>
-							<Link
-								href="/blog/program-do-urlopow-dla-malej-firmy"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu - Dni wolne 2026 */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/dni wolnes.webp" alt="Kalendarz dni wolnych 2026" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Dni wolne 2026 – kompletny kalendarz świąt w Polsce
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Sprawdź wszystkie dni wolne 2026 w Polsce. Kompletny kalendarz świąt ustawowych z informacją o długich weekendach i poradami, jak efektywnie zaplanować urlopy w 2026 roku. Dowiedz się, które dni są ustawowo wolne od pracy.
-							</p>
-							<Link
-								href="/blog/dni-wolne-2026"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu - Kompleksowa aplikacja */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/kompleksowos.webp" alt="Kompleksowa aplikacja do zarządzania firmą" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Kompleksowa aplikacja do zarządzania firmą – wszystko w jednym miejscu
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Planopia to nie tylko aplikacja do ewidencji czasu pracy i urlopów. To kompleksowe narzędzie łączące ewidencję czasu, urlopy, grafiki pracy, czaty, tablice zadań i elastyczną konfigurację ról. Wszystko w jednym miejscu.
-							</p>
-							<Link
-								href="/blog/kompleksowa-aplikacja-do-zarzadzania-firma"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu 3 */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planowanie urlopows.webp" alt="Planowanie urlopów pracowników – narzędzia i praktyki" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Planowanie urlopów pracowników – najlepsze narzędzia i praktyki
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Planowanie urlopów to jedno z najczęstszych wyzwań w działach HR i u menedżerów zespołów. Tradycyjne metody – papierowe wnioski czy Excel – prowadzą do chaosu i błędów. Dowiedz się, jak kalendarz urlopowy online i aplikacje takie jak Planopia pomagają w prostym i skutecznym zarządzaniu nieobecnościami.
-							</p>
-							<Link
-								href="/blog/planowanie-urlopow"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						{/* Karta wpisu 4 */}
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/ewidencjas.webp" alt="Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Ewidencja czasu pracy online – nowoczesne rozwiązania dla firm
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Prowadzenie dokładnej ewidencji czasu pracy to obowiązek każdej firmy. Tradycyjne metody, takie jak papierowe listy obecności czy Excel, często są nieefektywne i podatne na błędy. Dlatego coraz więcej przedsiębiorstw wybiera programy i aplikacje online, które automatyzują i porządkują ten proces.
-							</p>
-							<Link
-								href="/blog/ewidencja-czasu-pracy-online"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						<article className="blog-pillar-guide-card bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-2 ring-emerald-300/90">
-							<span className="blog-pillar-guide-badge inline-flex w-fit mb-2 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold tracking-wide !text-white">
-								Główny przewodnik
-							</span>
-							<img src="/img/ewidencjas.webp" alt="Darmowa aplikacja do ewidencji czasu pracy Planopia" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Darmowa aplikacja do ewidencji czasu pracy i urlopów
-							</h3>
-							<p className="text-gray-600 flex-1">
-							30 dni pełnej aplikacji za darmo (do 5 osób); potem bezpłatna ewidencja czasu pracy do 5 aktywnych kont lub pakiety płatne z urlopami, grafikami, czatem i AI.
-							</p>
-							<Link
-								href={BLOG_PILLAR_PL.href}
-								className="blog-pillar-guide-cta white-text-btn mt-4 inline-block w-full sm:w-auto text-center bg-emerald-600 font-semibold py-2.5 px-5 rounded-lg shadow-sm transition hover:bg-emerald-700 !text-white hover:!text-white no-underline">
-								Czytaj przewodnik
-							</Link>
-						</article>
-
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/ewidencjas.webp" alt="Elektroniczna ewidencja czasu pracy – kompletny przewodnik" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Elektroniczna ewidencja czasu pracy - kompletny przewodnik
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Dowiedz się wszystkiego o elektronicznej ewidencji czasu pracy. Kompletny przewodnik po wyborze najlepszego programu do ewidencji czasu pracy dla Twojej firmy.
-							</p>
-							<Link
-								href="/blog/elektroniczna-ewidencja-czasu-pracy"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
-						</div>
-
-						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col">
-							<img src="/img/planowanie urlopows.webp" alt="Zarządzanie urlopami w firmie – kompletny przewodnik" className="rounded-md mb-4 h-48 object-cover" />
-							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-							Zarządzanie urlopami w firmie - kompletny przewodnik
-							</h3>
-							<p className="text-gray-600 flex-1">
-							Dowiedz się, jak efektywnie zarządzać urlopami w swojej firmie, minimalizując błędy i zwiększając satysfakcję pracowników.
-							</p>
-							<Link
-								href="/blog/zarzadzanie-urlopami"
-								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
-								Czytaj więcej
-							</Link>
+						<div className="mt-16 md:mt-20">
+							<BlogTopicsNav />
 						</div>
 					</div>
-				</div>
-			</section>
-
+				</section>
+			</main>
 		</>
 	)
 }

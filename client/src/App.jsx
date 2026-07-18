@@ -65,6 +65,7 @@ import { AlertProvider } from './context/AlertContext'
 import { TutorialProvider } from './context/TutorialContext'
 import { SocketProvider } from './context/SocketContext'
 import TimerChrome from './components/timer/TimerChrome'
+import MarketingCookieConsent from './components/MarketingCookieConsent'
 
 // Setup QueryClient z optymalnymi ustawieniami
 const queryClient = new QueryClient({
@@ -129,6 +130,7 @@ function AppContent() {
 	return (
 		<>
 			<TimerChrome />
+			<MarketingCookieConsent />
 
 		<div>
 			<ScrollToHashElement />

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import {
 	CONSENT_SETTINGS_EVENT_NAME,
+	DEFAULT_CONSENT,
 	loadGoogleTag,
 	readConsent,
 	updateGoogleConsent,
@@ -54,7 +55,7 @@ export default function CookieConsent() {
 	const t = copy[locale]
 	const [visible, setVisible] = useState(false)
 	const [details, setDetails] = useState(false)
-	const [choice, setChoice] = useState<ConsentChoice>({ analytics: false, marketing: false })
+	const [choice, setChoice] = useState<ConsentChoice>(DEFAULT_CONSENT)
 
 	useEffect(() => {
 		const saved = readConsent()
@@ -63,11 +64,13 @@ export default function CookieConsent() {
 			updateGoogleConsent(saved)
 			void loadGoogleTag(saved)
 		} else {
+			updateGoogleConsent(DEFAULT_CONSENT)
+			void loadGoogleTag(DEFAULT_CONSENT)
 			setVisible(true)
 		}
 
 		const openSettings = () => {
-			setChoice(readConsent() || { analytics: false, marketing: false })
+			setChoice(readConsent() || DEFAULT_CONSENT)
 			setDetails(true)
 			setVisible(true)
 		}

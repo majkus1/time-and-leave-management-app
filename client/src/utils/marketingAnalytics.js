@@ -1,11 +1,21 @@
 const CONSENT_COOKIE_NAME = 'planopia_consent_v1'
+export const CONSENT_EVENT_NAME = 'planopia:consent-updated'
+export const CONSENT_SETTINGS_EVENT_NAME = 'planopia:open-cookie-settings'
+export const DEFAULT_CONSENT = Object.freeze({ analytics: false, marketing: false })
+
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-DVKVCS2CQK'
 const GOOGLE_ADS_ID = import.meta.env.VITE_GOOGLE_ADS_ID || ''
 const GOOGLE_ADS_SIGNUP_LABEL = import.meta.env.VITE_GOOGLE_ADS_SIGNUP_LABEL || ''
 
 let initialized = false
 
-function readConsent() {
+function getCookieDomain() {
+	return window.location.hostname === 'planopia.pl' || window.location.hostname.endsWith('.planopia.pl')
+		? '; Domain=.planopia.pl'
+		: ''
+}
+
+export function readMarketingConsent() {
 	const raw = document.cookie
 		.split('; ')
 		.find(item => item.startsWith(`${CONSENT_COOKIE_NAME}=`))
@@ -17,10 +27,17 @@ function readConsent() {
 	try {
 		const value = JSON.parse(decodeURIComponent(raw))
 		if (typeof value.analytics !== 'boolean' || typeof value.marketing !== 'boolean') return null
-		return value
+		return { analytics: value.analytics, marketing: value.marketing }
 	} catch {
 		return null
 	}
+}
+
+export function writeMarketingConsent(choice) {
+	const maxAge = 180 * 24 * 60 * 60
+	const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+	document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(JSON.stringify(choice))}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}${getCookieDomain()}`
+	window.dispatchEvent(new CustomEvent(CONSENT_EVENT_NAME, { detail: choice }))
 }
 
 function ensureGtag() {
@@ -30,40 +47,53 @@ function ensureGtag() {
 	}
 }
 
+function setConsent(command, choice) {
+	window.gtag('consent', command, {
+		analytics_storage: choice.analytics ? 'granted' : 'denied',
+		ad_storage: choice.marketing ? 'granted' : 'denied',
+		ad_user_data: choice.marketing ? 'granted' : 'denied',
+		ad_personalization: choice.marketing ? 'granted' : 'denied',
+		...(command === 'default' ? { wait_for_update: 500 } : {}),
+	})
+}
+
 export function initializeMarketingAnalytics() {
 	if (initialized || typeof window === 'undefined') return
-	const consent = readConsent()
-	if (!consent?.analytics && !consent?.marketing) return
+	const consent = readMarketingConsent() || DEFAULT_CONSENT
 
 	initialized = true
 	ensureGtag()
-	window.gtag('consent', 'default', {
-		analytics_storage: consent.analytics ? 'granted' : 'denied',
-		ad_storage: consent.marketing ? 'granted' : 'denied',
-		ad_user_data: consent.marketing ? 'granted' : 'denied',
-		ad_personalization: consent.marketing ? 'granted' : 'denied',
-	})
+	setConsent('default', consent)
+	window.gtag('set', 'ads_data_redaction', true)
+	window.gtag('set', 'url_passthrough', true)
 
-	const script = document.createElement('script')
-	script.async = true
-	script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`
-	script.dataset.planopiaGoogleTag = 'true'
-	document.head.appendChild(script)
+	if (!document.querySelector('script[data-planopia-google-tag]')) {
+		const script = document.createElement('script')
+		script.async = true
+		script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`
+		script.dataset.planopiaGoogleTag = 'true'
+		document.head.appendChild(script)
+	}
 
 	window.gtag('js', new Date())
 	window.gtag('config', GA_MEASUREMENT_ID, {
 		cookie_domain: 'auto',
 		linker: { domains: ['planopia.pl', 'app.planopia.pl'] },
 	})
-	if (GOOGLE_ADS_ID && consent.marketing) {
-		window.gtag('config', GOOGLE_ADS_ID)
-	}
+	if (GOOGLE_ADS_ID) window.gtag('config', GOOGLE_ADS_ID)
+}
+
+export function updateMarketingConsent(choice) {
+	initializeMarketingAnalytics()
+	ensureGtag()
+	setConsent('update', choice)
+}
+
+export function openMarketingConsentSettings() {
+	window.dispatchEvent(new Event(CONSENT_SETTINGS_EVENT_NAME))
 }
 
 export function trackRegistrationConversion() {
-	const consent = readConsent()
-	if (!consent?.analytics && !consent?.marketing) return Promise.resolve()
-
 	initializeMarketingAnalytics()
 	ensureGtag()
 
@@ -81,7 +111,7 @@ export function trackRegistrationConversion() {
 			transport_type: 'beacon',
 		})
 
-		if (consent.marketing && GOOGLE_ADS_ID && GOOGLE_ADS_SIGNUP_LABEL) {
+		if (GOOGLE_ADS_ID && GOOGLE_ADS_SIGNUP_LABEL) {
 			window.gtag('event', 'conversion', {
 				send_to: `${GOOGLE_ADS_ID}/${GOOGLE_ADS_SIGNUP_LABEL}`,
 				transport_type: 'beacon',

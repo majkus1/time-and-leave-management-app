@@ -49,7 +49,7 @@ Contact: biuro@planopia.pl
    - Hosting and infrastructure providers (including Render.com — backend and database; Vercel or Netlify — planopia.pl website)
    - **OpenAI** (OpenAI, L.L.C.) — only when using AI features described in section 3.4
    - Payment operators (including Przelewy24, Stripe) — to the extent necessary for subscription billing
-   - Google LLC (Google Analytics, Google Tag Manager) — traffic analysis on planopia.pl
+   - Google LLC (Google Analytics, Google Tag Manager) — traffic analysis and campaign performance measurement on planopia.pl and app.planopia.pl
    - Government authorities upon request under applicable law
 
 4.2. All subcontractors are obligated to comply with data protection principles.
@@ -92,18 +92,20 @@ Contact: biuro@planopia.pl
 
 ## 7. Cookies
 
-7.1. The website uses cookies for:
+7.1. The planopia.pl and app.planopia.pl websites use cookies for:
    - Enabling basic functionality
    - Analysis of traffic and website usage (Google Analytics 4) - only after consent
    - Measurement of campaign performance and attribution of sign-ups to ads (Google Ads) - only after marketing consent
 
-7.2. Data from Google Analytics 4 and Google Ads is processed by Google LLC in accordance with Google’s privacy policy. These tools may use cookies and similar identifiers to analyze website usage and measure conversions.
+7.2. Before consent is given, the Google tag operates in Consent Mode with analytics and advertising storage denied. It may then send limited, cookieless technical signals to Google for aggregate measurement and modelling. Optional analytics and marketing cookies are not written or read until the relevant consent is granted.
 
-7.3. On the first visit, users can accept all optional cookies, reject them, or choose analytics and marketing categories separately. Refusing consent does not restrict access to the website or the ability to sign up.
+7.3. Data from Google Analytics 4 and Google Ads is processed by Google LLC in accordance with Google’s privacy policy. Once the relevant consent is granted, these tools may use cookies and similar identifiers to analyze website usage and measure conversions.
 
-7.4. Consent can be changed or withdrawn at any time using the “Cookie settings” link in the website footer. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
+7.4. On the first visit, users can accept all optional cookies, reject them, or choose analytics and marketing categories separately. Refusing consent does not restrict access to the website or the ability to sign up.
 
-7.5. The cookie choice is stored for 180 days unless the user deletes cookies or changes the settings earlier.
+7.5. Consent can be changed or withdrawn at any time using the “Cookie settings” link in the planopia.pl footer or the cookie settings button on public app.planopia.pl screens. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
+
+7.6. The cookie choice is stored for 180 days unless the user deletes cookies or changes the settings earlier.
 
 ## 8. Security Measures
 

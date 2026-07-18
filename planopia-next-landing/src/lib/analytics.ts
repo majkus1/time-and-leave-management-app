@@ -18,6 +18,7 @@ export const CONSENT_SETTINGS_EVENT_NAME = 'planopia:open-cookie-settings'
 
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-DVKVCS2CQK'
 export const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || ''
+export const DEFAULT_CONSENT: ConsentChoice = { analytics: false, marketing: false }
 
 let googleTagPromise: Promise<void> | null = null
 
@@ -84,7 +85,6 @@ export function updateGoogleConsent(choice: ConsentChoice) {
 }
 
 export function loadGoogleTag(choice: ConsentChoice): Promise<void> {
-	if (!choice.analytics && !choice.marketing) return Promise.resolve()
 	if (googleTagPromise) return googleTagPromise
 
 	initializeConsentMode()
@@ -120,8 +120,7 @@ export function loadGoogleTag(choice: ConsentChoice): Promise<void> {
 }
 
 export function trackEvent(name: string, params: Record<string, string | number | boolean | undefined> = {}) {
-	const consent = readConsent()
-	if (!consent?.analytics && !consent?.marketing) return
+	const consent = readConsent() || DEFAULT_CONSENT
 	void loadGoogleTag(consent).then(() => window.gtag?.('event', name, params))
 }
 
