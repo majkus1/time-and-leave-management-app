@@ -103,7 +103,7 @@ Contact: biuro@planopia.pl
 
 7.4. On the first visit, users can accept all optional cookies, reject them, or choose analytics and marketing categories separately. Refusing consent does not restrict access to the website or the ability to sign up.
 
-7.5. Consent can be changed or withdrawn at any time using the “Cookie settings” link in the planopia.pl footer or the cookie settings button on public app.planopia.pl screens. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
+7.5. Consent can be changed or withdrawn at any time using the “Cookie settings” link in the planopia.pl footer. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
 
 7.6. The cookie choice is stored for 180 days unless the user deletes cookies or changes the settings earlier.
 

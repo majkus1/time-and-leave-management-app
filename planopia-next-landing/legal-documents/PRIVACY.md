@@ -103,7 +103,7 @@ Kontakt: biuro@planopia.pl
 
 7.4. Przy pierwszej wizycie można zaakceptować wszystkie opcjonalne pliki cookie, odrzucić je albo osobno wybrać kategorię analityczną i marketingową. Brak zgody nie ogranicza dostępu do strony ani możliwości rejestracji.
 
-7.5. Zgodę można w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce planopia.pl albo przycisk ustawień cookies na publicznych ekranach app.planopia.pl. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej wycofaniem.
+7.5. Zgodę można w każdej chwili zmienić lub wycofać przez link „Ustawienia cookies” w stopce planopia.pl. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania dokonanego przed jej wycofaniem.
 
 7.6. Wybór dotyczący cookies jest przechowywany przez 180 dni, chyba że użytkownik wcześniej usunie pliki cookie lub zmieni ustawienia.
 

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import {
-	CONSENT_SETTINGS_EVENT_NAME,
 	DEFAULT_CONSENT,
 	readMarketingConsent,
 	updateMarketingConsent,
@@ -77,17 +76,6 @@ export default function MarketingCookieConsent() {
 		}
 	}, [publicPath])
 
-	useEffect(() => {
-		const openSettings = () => {
-			if (!publicPath) return
-			setChoice(readMarketingConsent() || DEFAULT_CONSENT)
-			setDetails(true)
-			setVisible(true)
-		}
-		window.addEventListener(CONSENT_SETTINGS_EVENT_NAME, openSettings)
-		return () => window.removeEventListener(CONSENT_SETTINGS_EVENT_NAME, openSettings)
-	}, [publicPath])
-
 	if (!publicPath) return null
 
 	const save = next => {
@@ -98,13 +86,7 @@ export default function MarketingCookieConsent() {
 		setDetails(false)
 	}
 
-	if (!visible) {
-		return (
-			<button type="button" className="app-cookie-settings" onClick={() => window.dispatchEvent(new Event(CONSENT_SETTINGS_EVENT_NAME))}>
-				{t.settings} cookies
-			</button>
-		)
-	}
+	if (!visible) return null
 
 	return (
 		<div className="app-cookie-layer" role="presentation">

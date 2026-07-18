@@ -1,6 +1,5 @@
 const CONSENT_COOKIE_NAME = 'planopia_consent_v1'
 export const CONSENT_EVENT_NAME = 'planopia:consent-updated'
-export const CONSENT_SETTINGS_EVENT_NAME = 'planopia:open-cookie-settings'
 export const DEFAULT_CONSENT = Object.freeze({ analytics: false, marketing: false })
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-DVKVCS2CQK'
@@ -87,10 +86,6 @@ export function updateMarketingConsent(choice) {
 	initializeMarketingAnalytics()
 	ensureGtag()
 	setConsent('update', choice)
-}
-
-export function openMarketingConsentSettings() {
-	window.dispatchEvent(new Event(CONSENT_SETTINGS_EVENT_NAME))
 }
 
 export function trackRegistrationConversion() {
