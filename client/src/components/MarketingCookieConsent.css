@@ -34,13 +34,13 @@
 	place-items: center;
 	border-radius: 7px;
 	background: var(--po-brand-soft);
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 	font-weight: 700;
 }
 
 .app-cookie-consent h2 {
 	margin: 0;
-	color: var(--po-text);
+	color: var(--po-text) !important;
 	font-family: 'Titillium Web', sans-serif;
 	font-size: 1.2rem;
 	font-weight: 600;
@@ -49,13 +49,13 @@
 
 .app-cookie-consent p {
 	margin: 5px 0 0;
-	color: var(--po-text-secondary);
+	color: var(--po-text-secondary) !important;
 	font-size: .94rem;
 	line-height: 1.48;
 }
 
 .app-cookie-consent a {
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
@@ -84,20 +84,20 @@
 }
 
 .app-cookie-option strong {
-	color: var(--po-text);
+	color: var(--po-text) !important;
 	font-size: .94rem;
 	font-weight: 600;
 }
 
 .app-cookie-option small {
-	color: var(--po-text-muted);
+	color: var(--po-text-muted) !important;
 	font-size: .82rem;
 	line-height: 1.35;
 }
 
 .app-cookie-option em {
 	flex: 0 0 auto;
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 	font-size: .75rem;
 	font-style: normal;
 }
@@ -133,19 +133,19 @@
 .app-cookie-button--quiet {
 	border-color: var(--po-border);
 	background: var(--po-surface);
-	color: var(--po-text-secondary);
+	color: var(--po-text-secondary) !important;
 }
 
 .app-cookie-button--secondary {
 	border-color: var(--po-brand);
 	background: var(--po-brand-soft);
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 }
 
 .app-cookie-button--primary {
 	border-color: var(--po-brand);
 	background: var(--po-brand);
-	color: #fff;
+	color: #fff !important;
 }
 
 .app-cookie-button:hover,
@@ -167,12 +167,29 @@
 	padding: 5px;
 	border: 0;
 	background: color-mix(in srgb, var(--po-surface) 90%, transparent);
-	color: var(--po-text-muted);
+	color: var(--po-text-muted) !important;
 	font: inherit;
 	font-size: .75rem;
 	text-decoration: underline;
 	text-underline-offset: 3px;
 	cursor: pointer;
+}
+
+[data-theme='dark'] .app-cookie-consent {
+	border-color: var(--po-border-strong);
+	background: #202b3d;
+	box-shadow:
+		0 22px 64px rgba(0, 0, 0, 0.68),
+		0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+[data-theme='dark'] .app-cookie-consent p {
+	color: #d8e1ec !important;
+}
+
+[data-theme='dark'] .app-cookie-button--quiet {
+	background: var(--po-surface-muted);
+	color: var(--po-text) !important;
 }
 
 @media (max-width: 640px) {
