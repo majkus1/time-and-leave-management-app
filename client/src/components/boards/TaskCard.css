@@ -1,0 +1,213 @@
+.task-detail-header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 16px;
+	margin-bottom: 12px;
+}
+
+.task-detail-title {
+	min-width: 0;
+	margin: 0;
+	color: var(--po-text) !important;
+	font-size: 1.45rem !important;
+	font-weight: 600;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+}
+
+.task-detail-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 0 auto;
+}
+
+.task-detail-action,
+.task-detail-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 36px;
+	border: 1px solid var(--po-border);
+	border-radius: 7px;
+	background: var(--po-surface-muted);
+	font: inherit;
+	font-size: .86rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.task-detail-action {
+	gap: 7px;
+	padding: 0 11px;
+}
+
+.task-detail-action__label {
+	color: inherit !important;
+	font-size: inherit !important;
+}
+
+.task-detail-action--edit {
+	color: var(--po-brand-text) !important;
+}
+
+.task-detail-action--edit:hover,
+.task-detail-action--edit:focus-visible {
+	border-color: var(--po-brand);
+	background: var(--po-brand-soft);
+	outline: none;
+}
+
+.task-detail-action--delete {
+	color: var(--po-danger) !important;
+}
+
+.task-detail-action--delete:hover,
+.task-detail-action--delete:focus-visible {
+	border-color: var(--po-danger);
+	background: var(--po-danger-soft);
+	outline: none;
+}
+
+.task-detail-action__edit-icon {
+	color: currentColor !important;
+	font-size: 1.05rem !important;
+	line-height: 1;
+}
+
+.task-detail-action__trash-icon {
+	width: 15px;
+	height: 15px;
+	background: currentColor;
+	-webkit-mask: url('/img/trash.png') center / contain no-repeat;
+	mask: url('/img/trash.png') center / contain no-repeat;
+}
+
+.task-detail-close {
+	width: 36px;
+	padding: 0;
+	color: var(--po-text-muted) !important;
+	font-size: 1.6rem;
+	font-weight: 400;
+}
+
+.task-detail-close:hover,
+.task-detail-close:focus-visible {
+	border-color: var(--po-border-strong);
+	background: var(--po-surface-hover);
+	color: var(--po-text) !important;
+	outline: none;
+}
+
+.task-detail-description {
+	max-width: 68ch;
+	margin: 0 0 16px;
+	color: var(--po-text-secondary) !important;
+	font-size: 1rem !important;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.task-detail-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 10px;
+	margin-top: 4px;
+}
+
+.task-detail-meta__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-height: 30px;
+	color: var(--po-text-secondary) !important;
+	font-size: .9rem;
+}
+
+.task-detail-meta__item span,
+.task-detail-meta__item strong {
+	color: inherit !important;
+	font-size: inherit !important;
+}
+
+.task-detail-meta .board-priority-badge,
+.task-detail-meta .task-card__calendar-only-badge {
+	display: inline-flex !important;
+	align-items: center;
+	min-height: 30px;
+	padding: 5px 10px !important;
+	font-size: .82rem !important;
+	line-height: 1.2;
+}
+
+.task-detail-meta__assignee {
+	flex: 1 1 100%;
+	min-width: 0;
+	padding-top: 4px;
+}
+
+.task-detail-meta__user-icon {
+	position: relative;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 16px;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+	opacity: .72;
+}
+
+.task-detail-meta__user-icon::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: -6px;
+	width: 20px;
+	height: 9px;
+	border: 1.5px solid currentColor;
+	border-top: 0;
+	border-radius: 0 0 10px 10px;
+	transform: translateX(-50%);
+}
+
+@media (max-width: 600px) {
+	.task-detail-header {
+		gap: 10px;
+	}
+
+	.task-detail-action {
+		width: 36px;
+		padding: 0;
+	}
+
+	.task-detail-action__label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+
+@media (max-width: 420px) {
+	.task-detail-header {
+		grid-template-columns: 1fr;
+	}
+
+	.task-detail-actions {
+		grid-row: 1;
+		justify-self: end;
+	}
+
+	.task-detail-title {
+		grid-row: 2;
+	}
+}

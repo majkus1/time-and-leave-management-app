@@ -12,6 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { API_URL } from '../../config.js'
 import { buildSchedulePayload, scheduleSummaryFromTask } from '../../utils/taskScheduleTime'
 import TaskScheduleTimeInput from './TaskScheduleTimeInput'
+import './TaskCard.css'
 
 const STATUSES = [
 	{ id: 'todo', color: '#e74c3c' },
@@ -632,91 +633,60 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 						</>
 					) : (
 						<>
-							<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '10px' }}>
-								<h3 style={{ 
-									color: '#2c3e50', 
-									fontSize: '24px',
-									fontWeight: '600',
-									margin: 0,
-									flex: 1,
-									minWidth: 0,
-									overflowWrap: 'anywhere',
-									wordBreak: 'break-word',
-									maxWidth: '100%'
-								}}>
+							<div className="task-detail-header">
+								<h3 className="task-detail-title">
 									{currentTask.title}
 								</h3>
-								<button
-									onClick={onClose}
-									style={{
-										background: 'transparent',
-										border: 'none',
-										fontSize: '30px',
-										lineHeight: 1,
-										padding: '2px 6px',
-										cursor: 'pointer',
-										color: '#7f8c8d',
-										marginLeft: '10px'
-									}}>
-									×
-								</button>
+								<div className="task-detail-actions">
+									{canEdit && (
+										<>
+											<button
+												type="button"
+												className="task-detail-action task-detail-action--edit"
+												onClick={() => setIsEditing(true)}
+												title={t('boards.edit') || 'Edytuj'}
+												aria-label={t('boards.edit') || 'Edytuj'}>
+												<span className="task-detail-action__edit-icon" aria-hidden="true">✎</span>
+												<span className="task-detail-action__label">{t('boards.edit') || 'Edytuj'}</span>
+											</button>
+											<button
+												type="button"
+												className="task-detail-action task-detail-action--delete"
+												onClick={handleDeleteTask}
+												title={t('boards.delete') || 'Usuń'}
+												aria-label={t('boards.delete') || 'Usuń'}>
+												<span className="task-detail-action__trash-icon" aria-hidden="true" />
+												<span className="task-detail-action__label">{t('boards.delete') || 'Usuń'}</span>
+											</button>
+										</>
+									)}
+									<button
+										type="button"
+										onClick={onClose}
+										className="task-detail-close"
+										aria-label={t('boards.close') || 'Zamknij'}
+										title={t('boards.close') || 'Zamknij'}>
+										×
+									</button>
+								</div>
 							</div>
 							{currentTask.description && (
-								<p style={{ 
-									color: '#7f8c8d', 
-									fontSize: '16px',
-									marginBottom: '20px',
-									whiteSpace: 'pre-wrap',
-									overflowWrap: 'anywhere',
-									wordBreak: 'break-word',
-									maxWidth: '100%'
-								}}>
+								<p className="task-detail-description">
 									{currentTask.description}
 								</p>
 							)}
-							{scheduleLine && (
-								<div className="task-card__schedule" style={{ color: '#34495e', fontSize: '15px', marginBottom: '12px', fontWeight: 500 }}>
-									📅 {scheduleLine}
-								</div>
-							)}
-							{currentTask.calendarOnly && (
-								<div style={{ marginBottom: '12px' }}>
+							<div className="task-detail-meta">
+								{scheduleLine && (
+									<div className="task-detail-meta__item task-card__schedule">
+										<span aria-hidden="true">📅</span>
+										<span>{scheduleLine}</span>
+									</div>
+								)}
+								{currentTask.calendarOnly && (
 									<span className="task-card__calendar-only-badge">
 										{t('boards.calendarOnlyBadge') || 'Szybkie zadanie'}
 									</span>
-								</div>
-							)}
-							{canEdit && (
-								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
-									<button
-										onClick={() => setIsEditing(true)}
-										style={{
-											padding: '8px 14px',
-											backgroundColor: '#00a846',
-											color: 'white',
-											border: 'none',
-											borderRadius: '6px',
-											cursor: 'pointer',
-											fontSize: '13px'
-										}}>
-										{t('boards.edit') || 'Edytuj'}
-									</button>
-									<button
-										onClick={handleDeleteTask}
-										style={{
-											padding: '8px 14px',
-											backgroundColor: '#dc3545',
-											color: 'white',
-											border: 'none',
-											borderRadius: '6px',
-											cursor: 'pointer',
-											fontSize: '13px'
-										}}>
-										{t('boards.delete') || 'Usuń'}
-									</button>
-								</div>
-							)}
-							<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+								)}
 								<span
 									className={`board-priority-badge board-priority-badge--${priorityKey}`}
 									style={{
@@ -730,9 +700,10 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 								}}>
 									{t('boards.priority') || 'Priorytet'}: {priorityLabel}
 								</span>
-							</div>
-							<div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '16px' }}>
-								<strong>{t('boards.assignTo') || 'Przypisz do'}:</strong> {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}
+								<div className="task-detail-meta__item task-detail-meta__assignee">
+									<span className="task-detail-meta__user-icon" aria-hidden="true" />
+									<span><strong>{t('boards.assignTo') || 'Przypisz do'}:</strong> {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}</span>
+								</div>
 							</div>
 						</>
 					)}
