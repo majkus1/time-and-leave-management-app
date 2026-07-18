@@ -312,6 +312,10 @@ label.auth-team-accept-row > span {
 }
 
 @media (max-width: 640px) {
+	.team-registration-page {
+		padding-top: 12px !important;
+	}
+
 	.auth-top-bar {
 		position: static;
 		align-self: flex-end;
