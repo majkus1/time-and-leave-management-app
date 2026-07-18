@@ -297,14 +297,31 @@ label.auth-team-accept-row > span {
 }
 
 /* Auth pages — top bar (języki + motyw) */
+.auth-page {
+	position: relative;
+}
+
 .auth-top-bar {
-	position: fixed;
+	position: absolute;
 	top: 12px;
 	right: 12px;
 	z-index: 100;
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+@media (max-width: 640px) {
+	.auth-top-bar {
+		position: static;
+		align-self: flex-end;
+		flex: 0 0 auto;
+		margin: 0;
+	}
+
+	.team-registration-page > .auth-top-bar {
+		margin-bottom: 12px;
+	}
 }
 
 .auth-top-bar__langs {
