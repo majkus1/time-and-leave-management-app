@@ -72,20 +72,6 @@
 	outline: none;
 }
 
-.task-detail-action__edit-icon {
-	color: currentColor !important;
-	font-size: 1.05rem !important;
-	line-height: 1;
-}
-
-.task-detail-action__trash-icon {
-	width: 15px;
-	height: 15px;
-	background: currentColor;
-	-webkit-mask: url('/img/trash.png') center / contain no-repeat;
-	mask: url('/img/trash.png') center / contain no-repeat;
-}
-
 .task-detail-close {
 	width: 36px;
 	padding: 0;
@@ -149,29 +135,6 @@
 	flex: 1 1 100%;
 	min-width: 0;
 	padding-top: 4px;
-}
-
-.task-detail-meta__user-icon {
-	position: relative;
-	width: 16px;
-	height: 16px;
-	flex: 0 0 16px;
-	border: 1.5px solid currentColor;
-	border-radius: 50%;
-	opacity: .72;
-}
-
-.task-detail-meta__user-icon::after {
-	content: '';
-	position: absolute;
-	left: 50%;
-	bottom: -6px;
-	width: 20px;
-	height: 9px;
-	border: 1.5px solid currentColor;
-	border-top: 0;
-	border-radius: 0 0 10px 10px;
-	transform: translateX(-50%);
 }
 
 @media (max-width: 600px) {

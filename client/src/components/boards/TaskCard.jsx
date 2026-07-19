@@ -646,7 +646,6 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 												onClick={() => setIsEditing(true)}
 												title={t('boards.edit') || 'Edytuj'}
 												aria-label={t('boards.edit') || 'Edytuj'}>
-												<span className="task-detail-action__edit-icon" aria-hidden="true">✎</span>
 												<span className="task-detail-action__label">{t('boards.edit') || 'Edytuj'}</span>
 											</button>
 											<button
@@ -655,7 +654,6 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 												onClick={handleDeleteTask}
 												title={t('boards.delete') || 'Usuń'}
 												aria-label={t('boards.delete') || 'Usuń'}>
-												<span className="task-detail-action__trash-icon" aria-hidden="true" />
 												<span className="task-detail-action__label">{t('boards.delete') || 'Usuń'}</span>
 											</button>
 										</>
@@ -701,8 +699,7 @@ function TaskCard({ task, onClick, onDelete, isModal = false, onClose, onUpdate,
 									{t('boards.priority') || 'Priorytet'}: {priorityLabel}
 								</span>
 								<div className="task-detail-meta__item task-detail-meta__assignee">
-									<span className="task-detail-meta__user-icon" aria-hidden="true" />
-									<span><strong>{t('boards.assignTo') || 'Przypisz do'}:</strong> {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}</span>
+									<span><strong>{t('boards.assignedTo') || 'Przypisane do'}:</strong> {assignedText || (t('boards.unassigned') || 'Nieprzypisane')}</span>
 								</div>
 							</div>
 						</>
