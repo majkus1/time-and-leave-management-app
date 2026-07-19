@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "AI for Time Tracking, Leave and Tasks | Planopia";
+const META_DESCRIPTION =
+  "See how AI connects time tracking, leave, tasks, and schedules to summarize team activity and support faster daily decisions.";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Planopia AI Assistant: time tracking, leave, tasks, and schedules in one system | Planopia",
+    absolute: META_TITLE,
   },
-  description: `The Planopia AI Assistant connects time tracking, leave, tasks, and schedules — team and HR workflow automation without scattered spreadsheets. ${blogArticleOfferLine.en}`,
+  description: META_DESCRIPTION,
   keywords: [
     "Planopia AI Assistant",
     "AI assistant for business",
@@ -45,9 +47,8 @@ export const metadata: Metadata = {
     publishedTime: "2026-03-27T12:00:00.000Z",
     modifiedTime: "2026-03-27T12:00:00.000Z",
     authors: ["Michał Lipka"],
-    title:
-      "Planopia AI Assistant: time tracking, leave, tasks, and schedules | Planopia",
-    description: `AI Assistant, time tracking, leave, tasks, and schedules in one system. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: "https://planopia.pl/img/aiass-en.webp",
@@ -59,9 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "Planopia AI Assistant: time tracking, leave, tasks, and schedules | Planopia",
-    description: `HR and team workflow automation in one app. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ["https://planopia.pl/img/aiass-en.webp"],
   },
   alternates: {

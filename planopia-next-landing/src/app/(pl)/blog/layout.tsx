@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: {
     absolute: "Blog Planopii — ewidencja czasu pracy i urlopy",
-    template: "%s | Blog Planopia"
   },
   description: "Porady o ewidencji czasu pracy, urlopach, grafikach i zarządzaniu zespołem. Praktyczna wiedza dla małych i średnich firm.",
   keywords: [

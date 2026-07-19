@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { planOfferingCopy } from "@/data/planOfferingCopy";
 import { LANDING_OG_IMAGE } from "@/data/landingHeroAssets";
 import { titilliumWeb } from "@/lib/siteFonts";
 import "../globals.css";
@@ -9,13 +8,16 @@ import LandingChatWidgetLazy from "@/components/LandingChatWidgetLazy";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
 
+const HOME_META_DESCRIPTION =
+  "Track work hours, leave, and schedules without spreadsheets. Start with a 30-day full trial, then use the free tier or choose a paid plan.";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://planopia.pl"),
   title: {
     default: "Planopia — free time tracking online | 30-day trial",
     template: "%s | Planopia"
   },
-  description: planOfferingCopy.en.metaShort,
+  description: HOME_META_DESCRIPTION,
   keywords: [
     "time tracking app",
     "free time tracking app",
@@ -54,7 +56,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en',
     siteName: 'Planopia',
     title: 'Planopia — free time tracking online | 30-day trial',
-    description: planOfferingCopy.en.metaShort,
+    description: HOME_META_DESCRIPTION,
     images: [
       {
         url: LANDING_OG_IMAGE.url,
@@ -68,7 +70,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia — free time tracking online | 30-day trial',
-    description: planOfferingCopy.en.metaShort,
+    description: HOME_META_DESCRIPTION,
     images: [LANDING_OG_IMAGE.url],
   },
   alternates: {

@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 
+const META_TITLE = 'Leave Management: Requests and Calendar | Planopia'
+const META_DESCRIPTION =
+	'Manage leave requests, approvals, and the team absence calendar online. Start with a 30-day full trial and keep HR workflows in one place.'
+
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
-	title: 'Leave management software — requests, calendar, approvals | Planopia',
-	description:
-		'Leave management software: online leave requests, approvals, and a team absence calendar. 30-day full trial free, then a plan with leave from 119 PLN net/month.',
+	title: { absolute: META_TITLE },
+	description: META_DESCRIPTION,
 	keywords: [
 		'leave management software',
 		'leave request software',
@@ -35,9 +38,8 @@ export const metadata: Metadata = {
 		alternateLocale: ['pl_PL'],
 		url: '/en/leave-management-software',
 		siteName: 'Planopia',
-		title: 'Leave management software — requests, calendar, approvals | Planopia',
-		description:
-			'Online leave requests, approvals, and a team leave calendar in one app. 30-day full trial free, then a plan with leave from 119 PLN net/month.',
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: '/img/plans-urlopnewen.webp',
@@ -49,8 +51,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Leave management software — Planopia',
-		description: 'Online leave requests, approvals, and a team leave calendar. 30-day full trial free.',
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/plans-urlopnewen.webp'],
 	},
 	alternates: {

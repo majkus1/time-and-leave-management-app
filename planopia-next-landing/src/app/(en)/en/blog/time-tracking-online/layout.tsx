@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "Online Time Tracking Software | Planopia";
+const META_DESCRIPTION =
+  "Track hours and overtime online, review monthly records, and export PDF/Excel reports. A practical guide to web-based time tracking.";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Online time tracking — app, software & hour registration | Planopia",
-  description:
-    `Online time tracking: web-based hour registration and overtime reports — no emailed Excel files. ${blogArticleOfferLine.en}`,
+  title: { absolute: META_TITLE },
+  description: META_DESCRIPTION,
   keywords: [
     "online time tracking",
     "time tracking app",
@@ -37,8 +39,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://planopia.pl/en/blog/time-tracking-online',
     siteName: 'Planopia',
-    title: 'Online time tracking — software & app (no spreadsheets) | Planopia',
-    description: `Hour registration and PDF/XLSX exports from a web app. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     publishedTime: '2025-08-25T12:00:00.000Z',
     modifiedTime: '2026-03-27T12:00:00.000Z',
     images: [
@@ -52,9 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Online time tracking — software & app | Planopia',
-    description:
-      `Online attendance system with exports — Planopia. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

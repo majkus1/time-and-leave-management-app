@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
 import { BLOG_LEAVE_PROGRAM_OG } from '@/data/blogLeaveProgramAssets'
+
+const META_TITLE = 'Program do urlopów dla małej firmy | Planopia'
+const META_DESCRIPTION =
+	'Dowiedz się, jak wybrać program do urlopów dla małej firmy: wnioski, akceptacje, kalendarz, koszt i prosty start bez Excela.'
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Program do urlopów dla małej firmy — jak wybrać (2026) | Planopia',
+		absolute: META_TITLE,
 	},
-	description:
-		'Jak wybrać program do urlopów dla małej firmy w 2026: kryteria, funkcje, koszt i czy istnieje darmowy program do urlopów. ' +
-		blogArticleOfferLine.pl,
+	description: META_DESCRIPTION,
 	keywords: [
 		'program do urlopów dla małej firmy',
 		'program do urlopów darmowy',
@@ -37,8 +38,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Program do urlopów dla małej firmy — jak wybrać (2026)',
-		description: `Kryteria wyboru, funkcje, koszt i darmowy start. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/blog/program-do-urlopow-dla-malej-firmy',
 		siteName: 'Planopia',
 		images: [
@@ -57,8 +58,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Program do urlopów dla małej firmy — jak wybrać (2026) | Planopia',
-		description: `Kryteria, funkcje i koszt programu urlopowego dla małej firmy. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [BLOG_LEAVE_PROGRAM_OG.url],
 		creator: '@planopia',
 	},

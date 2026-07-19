@@ -266,6 +266,13 @@ Implementacja zostala dodana jako osobny provider, bez zmian w flow P24:
   - checkout addon: `stripe:event:{id}`
   - eventy statusowe subskrypcji: `stripe:event:{id}`
 
+- Kompatybilnosc wersji API Stripe:
+  - subscription invoice: legacy `invoice.subscription` lub `invoice.parent.subscription_details.subscription`,
+  - cena linii: legacy `line.price.id` lub `line.pricing.price_details.price`,
+  - okres subskrypcji: legacy `subscription.current_period_end` lub `subscription.items.data[].current_period_end`,
+  - metadata planu i zespolu: subskrypcja, snapshot `parent.subscription_details` oraz metadata linii,
+  - sprzeczne identyfikatory lub niejednoznaczne okresy koncza webhook bledem do ponowienia zamiast cichego `skipped`.
+
 - Jedno miejsce mapowania `priceId`:
   - `server/services/stripe/stripePriceMapService.js`
   - zasilane przez `STRIPE_PRICE_MAP_JSON`
@@ -274,4 +281,3 @@ Implementacja zostala dodana jako osobny provider, bez zmian w flow P24:
 
 Do poprawnej walidacji sygnatury Stripe webhook konieczny jest surowy payload.
 W `server/index.js` dla sciezki Stripe webhook zapisywany jest `req.rawBody` podczas `express.json(...)`.
-

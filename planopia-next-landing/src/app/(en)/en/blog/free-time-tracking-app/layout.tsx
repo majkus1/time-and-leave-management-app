@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+
+const META_TITLE = "Free Time Tracking App for Teams | Planopia";
+const META_DESCRIPTION =
+  "Track work hours and leave in one app. Start with a 30-day full trial, then use free time tracking for up to 5 active accounts.";
 import { BLOG_FREE_APP_OG } from "@/data/blogFreeAppAssets";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Free Time Tracking App for Work Hours and Leave Management | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    "Planopia: 30-day full trial for teams up to 5 people — no card required to start; then free time tracking for 5 accounts or paid plans — leave, schedules, chat, and AI in pricing.",
+  description: META_DESCRIPTION,
   keywords: [
     "free time tracking app",
     "free work hours tracking",
@@ -41,9 +44,8 @@ export const metadata: Metadata = {
     publishedTime: '2024-10-18T12:00:00.000Z',
     modifiedTime: '2026-03-27T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'Free Time Tracking App for Work Hours and Leave Management | Planopia',
-    description:
-      'Free time tracking for up to 5 people after the trial; first month includes every Planopia module.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: BLOG_FREE_APP_OG.url,
@@ -55,9 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Time Tracking App for Work Hours and Leave Management | Planopia',
-    description:
-      'Stay on free work time tracking after the trial or upgrade for leave, schedules, chat, and AI.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [BLOG_FREE_APP_OG.url],
   },
   alternates: {

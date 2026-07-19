@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "Asystent AI: czas pracy, urlopy i zadania | Planopia";
+const META_DESCRIPTION =
+  "Zobacz, jak Asystent AI łączy dane o czasie pracy, urlopach, zadaniach i grafiku, aby szybciej podsumować sytuację zespołu.";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik w jednym systemie | Planopia",
+    absolute: META_TITLE,
   },
-  description: `Asystent AI łączy kontekst ewidencji czasu pracy, urlopów, zadań i grafiku — automatyzacja pracy zespołu i procesów HR bez rozproszenia danych. ${blogArticleOfferLine.pl}`,
+  description: META_DESCRIPTION,
   keywords: [
     "Asystent AI Planopia",
     "asystent AI w firmie",
@@ -45,9 +47,8 @@ export const metadata: Metadata = {
     publishedTime: "2026-03-27T12:00:00.000Z",
     modifiedTime: "2026-03-27T12:00:00.000Z",
     authors: ["Michał Lipka"],
-    title:
-      "Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik | Planopia",
-    description: `Asystent AI, ewidencja, urlopy, zadania i grafik w jednym systemie. ${blogArticleOfferLine.pl}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: "https://planopia.pl/img/aiass.webp",
@@ -59,9 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "Asystent AI w Planopii: ewidencja, urlopy, zadania i grafik | Planopia",
-    description: `Automatyzacja HR i pracy zespołu w jednej aplikacji. ${blogArticleOfferLine.pl}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ["https://planopia.pl/img/aiass.webp"],
   },
   alternates: {

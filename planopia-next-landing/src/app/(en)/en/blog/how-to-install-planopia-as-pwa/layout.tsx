@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "How to Install Planopia as a PWA | Planopia";
+const META_DESCRIPTION =
+  "Install Planopia as a PWA on iPhone, Android, or desktop. Follow the step-by-step guide for Safari, Chrome, and Edge.";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "How to Install Planopia as a PWA App? Installation Guide | Planopia",
+    absolute: META_TITLE,
   },
-  description: `Learn how to install Planopia as a PWA on iPhone, iPad, Android, and desktop browsers such as Chrome. Add time tracking and leave tools to your home screen or desktop. ${blogArticleOfferLine.en}`,
+  description: META_DESCRIPTION,
   keywords: [
     "PWA installation",
     "how to install PWA",
@@ -41,8 +44,8 @@ export const metadata: Metadata = {
     publishedTime: '2025-01-15T12:00:00.000Z',
     modifiedTime: '2025-01-15T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'How to Install Planopia as a PWA App? Installation Guide | Planopia',
-    description: `Planopia PWA on phone and desktop. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: 'https://planopia.pl/img/pwa1.png',
@@ -54,8 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'How to Install Planopia as a PWA App? Installation Guide | Planopia',
-    description: `Planopia PWA on phone and desktop. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/pwa1.png'],
   },
   alternates: {

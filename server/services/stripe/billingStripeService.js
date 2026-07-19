@@ -11,6 +11,13 @@ const billingActivationService = require('../billingActivationService')
 const { syncSeatLimitAfterStripePaidInvoice } = require('../billingPlanSeatLimitService')
 const { getStripeConfig } = require('./stripeConfig')
 const { getStripePriceDefinition } = require('./stripePriceMapService')
+const {
+	stripeId,
+	requireConsistentValue,
+	resolveInvoiceSubscriptionId,
+	resolvePlanAndPeriodFromInvoice,
+	resolveSubscriptionPeriodEndSeconds,
+} = require('./stripeBillingPayloadCompatibility')
 const { isPaidPlanKey, normalizePaidPlanKey, isCorePlanKey, isModuleKey } = require('../../constants/planCatalog')
 const entitlementsService = require('../entitlementsService')
 
@@ -61,6 +68,16 @@ function invoiceSeenKey(invoiceId) {
 	return `stripe:invoice:${invoiceId}`
 }
 
+function checkoutActivationKey(sessionId) {
+	return `stripe:checkout:${sessionId}:activation`
+}
+
+function subscriptionPeriodEndIso(subscription) {
+	return periodEndIsoFromUnixSeconds(
+		resolveSubscriptionPeriodEndSeconds(subscription, getStripePriceDefinition)
+	)
+}
+
 function resolvePlanIntentFromSubscriptionMetadata(metadata = {}) {
 	const planKey = String(metadata.planKey || '').trim()
 	const billingCycle = String(metadata.billingCycle || '').trim()
@@ -105,6 +122,30 @@ function collectModuleKeysFromStripeSubscription(subscription) {
 		}
 	}
 	return [...set].filter(isModuleKey)
+}
+
+async function resolveTeamIdFromSubscription(subscription) {
+	const candidateTeamIds = []
+	if (subscription?.metadata?.teamId) {
+		const metadataTeamId = safeObjectId(subscription.metadata.teamId)
+		if (!metadataTeamId) {
+			const error = new Error('Invalid Stripe subscription metadata teamId')
+			error.code = 'STRIPE_PAYLOAD'
+			throw error
+		}
+		candidateTeamIds.push(metadataTeamId)
+	}
+	const subscriptionId = stripeId(subscription)
+	if (subscriptionId) {
+		const teamBySubscription = await Team.findOne({ stripeSubscriptionId: subscriptionId }).select('_id')
+		if (teamBySubscription) candidateTeamIds.push(String(teamBySubscription._id))
+	}
+	const customerId = stripeId(subscription?.customer)
+	if (customerId) {
+		const teamByCustomer = await Team.findOne({ stripeCustomerId: customerId }).select('_id')
+		if (teamByCustomer) candidateTeamIds.push(String(teamByCustomer._id))
+	}
+	return requireConsistentValue(candidateTeamIds, 'Planopia team ids for Stripe subscription')
 }
 
 async function markStripeEvent(teamId, eventId, action, payload = {}) {
@@ -232,90 +273,116 @@ async function createStripeCheckoutSession(params) {
 
 async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
 	const invoiceId = String(invoice.id || '')
+	const subscriptionId = resolveInvoiceSubscriptionId(invoice)
 	let subscription = null
-	if (invoice.subscription) {
-		subscription = await stripe.subscriptions.retrieve(String(invoice.subscription), {
+	if (subscriptionId) {
+		subscription = await stripe.subscriptions.retrieve(subscriptionId, {
 			expand: ['items.data.price'],
 		})
 	}
-	const metadata = subscription?.metadata || {}
-	let teamId = safeObjectId(metadata.teamId)
-	if (!teamId && invoice.customer) {
-		const teamByCustomer = await Team.findOne({ stripeCustomerId: String(invoice.customer) }).select('_id')
-		teamId = teamByCustomer ? String(teamByCustomer._id) : null
+
+	const initialFacts = resolvePlanAndPeriodFromInvoice({
+		invoice,
+		subscription,
+		teamSnapshot: null,
+		getPriceDefinition: getStripePriceDefinition,
+	})
+	const candidateTeamIds = []
+	if (initialFacts.metadataTeamId) {
+		const metadataTeamId = safeObjectId(initialFacts.metadataTeamId)
+		if (!metadataTeamId) {
+			const error = new Error(`Invalid Stripe metadata teamId for invoice ${invoiceId}`)
+			error.code = 'STRIPE_PAYLOAD'
+			throw error
+		}
+		candidateTeamIds.push(metadataTeamId)
 	}
-	if (!teamId && subscription?.id) {
-		const teamBySub = await Team.findOne({ stripeSubscriptionId: String(subscription.id) }).select('_id')
-		teamId = teamBySub ? String(teamBySub._id) : null
+
+	const customerId = stripeId(invoice.customer)
+	if (customerId) {
+		const teamByCustomer = await Team.findOne({ stripeCustomerId: customerId }).select('_id')
+		if (teamByCustomer) candidateTeamIds.push(String(teamByCustomer._id))
 	}
-	if (!teamId) {
+	if (subscriptionId) {
+		const teamBySub = await Team.findOne({ stripeSubscriptionId: subscriptionId }).select('_id')
+		if (teamBySub) candidateTeamIds.push(String(teamBySub._id))
+	}
+
+	if (!candidateTeamIds.length) {
 		const invEmail = String(invoice.customer_email || '').trim().toLowerCase()
 		if (invEmail) {
 			const teamByEmail = await Team.findOne({ adminEmail: invEmail }).select('_id')
-			teamId = teamByEmail ? String(teamByEmail._id) : null
+			if (teamByEmail) candidateTeamIds.push(String(teamByEmail._id))
 		}
 	}
+	const teamId = requireConsistentValue(candidateTeamIds, 'Planopia team ids for Stripe invoice')
 	if (!teamId) {
 		console.warn(`[stripe] invoice.paid skipped: cannot resolve teamId for invoice=${invoiceId}`)
 		return null
 	}
 
-	let planKey = null
-	let billingCycle = null
 	const teamSnap = await Team.findById(teamId).select(
-		'stripePendingPlanKey stripePendingBillingCycle stripePendingModuleKeys'
+		'billingPlanKey billingCycle billingModuleKeys stripeCustomerId stripeSubscriptionId stripePendingPlanKey stripePendingBillingCycle stripePendingModuleKeys'
 	)
-	const moduleKeys = mergeModuleKeysArrays(
-		collectModuleKeysFromStripeSubscription(subscription),
-		teamSnap?.stripePendingModuleKeys
-	)
-
-	for (const item of subscription?.items?.data || []) {
-		const pid = item.price?.id
-		if (!pid) continue
-		try {
-			const def = getStripePriceDefinition(pid)
-			if (def.kind === 'plan') {
-				planKey = def.planKey
-				billingCycle = def.billingCycle
-				break
-			}
-		} catch (_) {
-			// skip
-		}
+	if (!teamSnap) {
+		const error = new Error(`Team not found for Stripe invoice ${invoiceId}`)
+		error.code = 'STRIPE_PAYLOAD'
+		throw error
+	}
+	if (customerId && teamSnap.stripeCustomerId && customerId !== teamSnap.stripeCustomerId) {
+		const error = new Error(`Stripe customer does not match team for invoice ${invoiceId}`)
+		error.code = 'STRIPE_PAYLOAD'
+		throw error
+	}
+	if (subscriptionId && teamSnap.stripeSubscriptionId && subscriptionId !== teamSnap.stripeSubscriptionId) {
+		const error = new Error(`Stripe subscription does not match team for invoice ${invoiceId}`)
+		error.code = 'STRIPE_PAYLOAD'
+		throw error
 	}
 
-	const fromMetaIntent = resolvePlanIntentFromSubscriptionMetadata(metadata)
-	if (!planKey && fromMetaIntent) {
-		planKey = fromMetaIntent.planKey
-		billingCycle = fromMetaIntent.billingCycle
-	}
-
+	const facts = resolvePlanAndPeriodFromInvoice({
+		invoice,
+		subscription,
+		teamSnapshot: teamSnap,
+		getPriceDefinition: getStripePriceDefinition,
+	})
+	let planKey = facts.planKey
+	let billingCycle = facts.billingCycle
 	if (!planKey || !billingCycle) {
 		const pending = resolvePlanIntentFromSubscriptionMetadata({
-			planKey: teamSnap?.stripePendingPlanKey,
-			billingCycle: teamSnap?.stripePendingBillingCycle,
+			planKey: teamSnap.stripePendingPlanKey,
+			billingCycle: teamSnap.stripePendingBillingCycle,
 		})
 		if (pending) {
 			planKey = pending.planKey
 			billingCycle = pending.billingCycle
 		}
 	}
-
 	if (!planKey || !billingCycle) {
 		console.warn(`[stripe] invoice.paid skipped: cannot resolve plan intent for invoice=${invoiceId}`)
 		return null
 	}
+	if (facts.usedTeamPlanFallback) {
+		const customerMatches = customerId && customerId === teamSnap.stripeCustomerId
+		const subscriptionMatches = subscriptionId && subscriptionId === teamSnap.stripeSubscriptionId
+		if (!customerMatches && !subscriptionMatches) {
+			const error = new Error(`Unsafe team-plan fallback for Stripe invoice ${invoiceId}`)
+			error.code = 'STRIPE_PAYLOAD'
+			throw error
+		}
+	}
 
-	const firstLine = Array.isArray(invoice.lines?.data) ? invoice.lines.data[0] : null
-	const periodEndIso =
-		periodEndIsoFromUnixSeconds(firstLine?.period?.end) ||
-		periodEndIsoFromUnixSeconds(subscription?.current_period_end)
+	const periodEndIso = periodEndIsoFromUnixSeconds(facts.periodEnd)
 	if (!periodEndIso) {
 		const err = new Error(`Missing period end for Stripe invoice ${invoiceId}`)
 		err.code = 'STRIPE_PAYLOAD'
 		throw err
 	}
+	const moduleKeys = mergeModuleKeysArrays(
+		facts.moduleKeys,
+		collectModuleKeysFromStripeSubscription(subscription),
+		teamSnap.stripePendingModuleKeys
+	)
 
 	return {
 		teamId,
@@ -324,7 +391,7 @@ async function resolveTeamAndPlanFromInvoice(stripe, invoice) {
 		moduleKeys,
 		periodEndIso,
 		invoiceId,
-		subscriptionId: subscription ? String(subscription.id) : '',
+		subscriptionId: subscriptionId || stripeId(subscription) || '',
 	}
 }
 
@@ -369,7 +436,7 @@ async function handleCheckoutSessionCompleted(event) {
 				const sub = await stripe.subscriptions.retrieve(String(data.subscription), {
 					expand: ['items.data.price'],
 				})
-				const periodEndIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+				const periodEndIso = subscriptionPeriodEndIso(sub)
 				let planKey = null
 				let billingCycle = null
 				for (const item of sub.items?.data || []) {
@@ -396,7 +463,7 @@ async function handleCheckoutSessionCompleted(event) {
 						planKey,
 						billingCycle,
 						periodEnd: periodEndIso,
-						idempotencyKey: eventSeenKey(event.id),
+						idempotencyKey: checkoutActivationKey(data.id),
 						actorLabel: 'stripe',
 						moduleKeys,
 					})
@@ -439,7 +506,7 @@ async function handleInvoicePaid(event, stripe) {
 	/** Kolejna rata subskrypcji — nie blokuj przedłużenia przy nadwyżce miejsc (sync + mail poniżej). */
 	const isRenewalCycle = String(invoice.billing_reason || '') === 'subscription_cycle'
 
-	await billingActivationService.activatePaidPlan({
+	const activation = await billingActivationService.activatePaidPlan({
 		teamId: resolved.teamId,
 		planKey: resolved.planKey,
 		billingCycle: resolved.billingCycle,
@@ -451,7 +518,7 @@ async function handleInvoicePaid(event, stripe) {
 	})
 	const team = await Team.findById(resolved.teamId)
 	if (team) {
-		team.stripeCustomerId = invoice.customer ? String(invoice.customer) : team.stripeCustomerId
+		team.stripeCustomerId = stripeId(invoice.customer) || team.stripeCustomerId
 		team.stripeSubscriptionId = resolved.subscriptionId || team.stripeSubscriptionId
 		team.stripeSubscriptionStatus = 'active'
 		team.stripeCancelAtPeriodEnd = false
@@ -467,19 +534,20 @@ async function handleInvoicePaid(event, stripe) {
 		console.error('[stripe] syncSeatLimitAfterStripePaidInvoice:', e.message || e)
 	}
 
-	return { handled: true, eventType: event.type, duplicate: false }
+	return { handled: true, eventType: event.type, duplicate: activation.duplicate === true }
 }
 
 async function handleSubscriptionUpdated(event) {
 	const sub = event.data?.object || {}
-	const teamId = safeObjectId(sub.metadata?.teamId)
+	const teamId = await resolveTeamIdFromSubscription(sub)
 	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
+	const currentPeriodEnd = resolveSubscriptionPeriodEndSeconds(sub, getStripePriceDefinition)
 
 	const marked = await markStripeEvent(teamId, event.id, 'stripe_subscription_updated', {
 		subscriptionId: sub.id,
 		status: sub.status,
 		cancelAtPeriodEnd: sub.cancel_at_period_end === true,
-		currentPeriodEnd: sub.current_period_end || null,
+		currentPeriodEnd: currentPeriodEnd || null,
 	})
 	if (!marked) return { handled: true, eventType: event.type, duplicate: true }
 
@@ -489,7 +557,7 @@ async function handleSubscriptionUpdated(event) {
 		team.stripeCustomerId = sub.customer ? String(sub.customer) : team.stripeCustomerId
 		team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
 		team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
-		const endIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+		const endIso = periodEndIsoFromUnixSeconds(currentPeriodEnd)
 		if (endIso) team.billingPeriodEnd = new Date(endIso)
 		if (sub.status && sub.status !== 'active' && sub.status !== 'trialing') {
 			team.billingStatus = 'inactive'
@@ -520,7 +588,7 @@ async function handleSubscriptionUpdated(event) {
 
 async function handleSubscriptionDeleted(event) {
 	const sub = event.data?.object || {}
-	const teamId = safeObjectId(sub.metadata?.teamId)
+	const teamId = await resolveTeamIdFromSubscription(sub)
 	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
 
 	const marked = await markStripeEvent(teamId, event.id, 'stripe_subscription_deleted', {
@@ -538,7 +606,7 @@ async function handleSubscriptionDeleted(event) {
 		team.stripeCustomerId = sub.customer ? String(sub.customer) : team.stripeCustomerId
 		const endIso =
 			periodEndIsoFromUnixSeconds(sub.ended_at) ||
-			periodEndIsoFromUnixSeconds(sub.current_period_end)
+			subscriptionPeriodEndIso(sub)
 		if (endIso) team.billingPeriodEnd = new Date(endIso)
 		await team.save()
 	}
@@ -666,7 +734,7 @@ async function cancelStripeSubscriptionForTeam(teamId) {
 	})
 	team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
 	team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
-	const endIso = periodEndIsoFromUnixSeconds(sub.current_period_end)
+	const endIso = subscriptionPeriodEndIso(sub)
 	if (endIso) team.billingPeriodEnd = new Date(endIso)
 	await team.save()
 	return {

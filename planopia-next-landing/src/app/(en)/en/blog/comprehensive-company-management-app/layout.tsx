@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "Company Management App: All-in-One | Planopia";
+const META_DESCRIPTION =
+  "See how one app combines time tracking, leave, schedules, tasks, and team chat. A practical guide to organizing daily operations.";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Comprehensive Company Management App – Everything in One Place | Planopia",
+    absolute: META_TITLE,
   },
-  description: `Planopia is a comprehensive company management app — time tracking, leave, schedules, chats, tasks, and roles. ${blogArticleOfferLine.en}`,
+  description: META_DESCRIPTION,
   keywords: [
     "comprehensive company management app",
     "team management app",
@@ -44,8 +47,8 @@ export const metadata: Metadata = {
     publishedTime: '2026-01-03T12:00:00.000Z',
     modifiedTime: '2026-01-03T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'Comprehensive Company Management App – Everything in One Place | Planopia',
-    description: `Time tracking, leave, schedules, chats, and tasks in one tool. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -57,8 +60,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Comprehensive Company Management App – Everything in One Place | Planopia',
-    description: `All-in-one operations for your team. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {

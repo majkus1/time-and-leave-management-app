@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Electronic Time Tracking Software | Planopia'
+const META_DESCRIPTION =
+	'Compare paper, spreadsheets, and electronic time tracking software. Learn what to check in reports, overtime, and online records.'
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Electronic time tracking — app, software & online system | Planopia',
+		absolute: META_TITLE,
 	},
-	description: `Electronic time tracking: choosing a program, replacing spreadsheets, PDF/XLSX exports. ${blogArticleOfferLine.en}`,
+	description: META_DESCRIPTION,
 	keywords: [
 		'electronic time tracking',
 		'time tracking software',
@@ -35,8 +38,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Electronic Time Tracking - Complete Guide | Planopia',
-		description: `Electronic attendance records for teams. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/en/blog/electronic-time-tracking',
 		siteName: 'Planopia',
 		images: [
@@ -55,8 +58,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Electronic time tracking — software & online app | Planopia',
-		description: `Spreadsheets vs time tracking software — guide. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

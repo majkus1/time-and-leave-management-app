@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
+
+const META_TITLE = "Employee Leave Planning Guide | Planopia";
+const META_DESCRIPTION =
+  "Plan employee leave with an online calendar, clear approvals, and shared absence data. A practical guide for small and growing teams.";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Employee Leave Planning – Best Tools and Practices | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    `Employee leave planning with an online calendar and approvals. ${blogArticleOfferLine.en}`,
+  description: META_DESCRIPTION,
   keywords: [
     "leave planning",
     "employee leave management",
@@ -42,8 +44,8 @@ export const metadata: Metadata = {
     publishedTime: '2025-08-25T12:00:00.000Z',
     modifiedTime: '2025-08-25T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
-    description: `Online leave calendar, approvals, and absence management. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnewen.webp',
@@ -55,9 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Employee Leave Planning – Best Tools and Practices | Planopia',
-    description:
-      `PTO calendar and HR reports. ${blogArticleOfferLine.en}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/plans-urlopnewen.webp'],
   },
   alternates: {

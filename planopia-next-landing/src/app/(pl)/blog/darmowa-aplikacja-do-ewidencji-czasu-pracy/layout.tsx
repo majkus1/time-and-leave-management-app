@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+
+const META_TITLE = "Darmowa ewidencja czasu pracy i urlopów | Planopia";
+const META_DESCRIPTION =
+  "Szukasz darmowej ewidencji czasu pracy i urlopów? Sprawdź Planopię przez 30 dni bez karty, a potem korzystaj z ewidencji do 5 kont.";
 import { BLOG_FREE_APP_OG } from "@/data/blogFreeAppAssets";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    "Planopia: 30 dni pełnej aplikacji dla zespołu do 5 osób, bez karty na start; potem darmowa ewidencja do 5 kont lub pakiety — urlopy, grafik, czat i AI w cenniku.",
+  description: META_DESCRIPTION,
   keywords: [
     "darmowa aplikacja do ewidencji czasu pracy",
     "darmowa ewidencja czasu pracy online",
@@ -41,9 +44,8 @@ export const metadata: Metadata = {
     publishedTime: '2024-10-18T12:00:00.000Z',
     modifiedTime: '2026-03-27T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia',
-    description:
-      'Darmowa ewidencja czasu pracy do 5 osób po okresie próbnym; 30 dni wcześniej z pełnymi modułami Planopii.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: BLOG_FREE_APP_OG.url,
@@ -55,9 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów | Planopia',
-    description:
-      'Planopia: darmowy plan ewidencji czasu pracy po trialu lub rozszerzenie o urlopy, grafiki i AI w cenniku.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [BLOG_FREE_APP_OG.url],
   },
   alternates: {

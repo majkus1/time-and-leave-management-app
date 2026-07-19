@@ -3,7 +3,9 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
-	title: 'Time tracking software — online, free tier | Planopia',
+	title: {
+		absolute: 'Time tracking software — online, free tier | Planopia',
+	},
 	description:
 		'Time tracking software online: hours, overtime, monthly calendar, and PDF/Excel reports. 30-day full trial, then free time tracking for up to 5 accounts.',
 	keywords: [

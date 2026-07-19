@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Ewidencja czasu pracy na budowie — poradnik | Planopia'
+const META_DESCRIPTION =
+	'Praktyczny poradnik ewidencji czasu pracy na budowie: godziny brygad, nadgodziny, zadania oraz raporty PDF/Excel bez papierowych kart.'
 
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Jak prowadzić ewidencję czasu pracy na budowie (bez Excela) | Planopia',
+		absolute: META_TITLE,
 	},
-	description:
-		'Ewidencja czasu pracy na budowie: jak uporządkować godziny, nadgodziny i rozliczenia. System zamiast kartek, zadania (Kanban), czat, raporty PDF/Excel i AI w Planopii.',
+	description: META_DESCRIPTION,
 	keywords: [
 		'ewidencja czasu pracy na budowie',
 		'firma budowlana',
@@ -40,9 +42,8 @@ export const metadata: Metadata = {
 		publishedTime: '2026-03-24T12:00:00.000Z',
 		modifiedTime: '2026-03-24T12:00:00.000Z',
 		authors: ['Michał Lipka'],
-		title: 'Jak prowadzić ewidencję czasu pracy na budowie (bez Excela) | Planopia',
-		description:
-			`Budowa i biuro w jednym systemie. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -54,8 +55,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Ewidencja czasu pracy na budowie | Planopia',
-		description: `Ewidencja na budowie bez Excela. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['https://planopia.pl/img/worktimeblog.webp'],
 	},
 	alternates: {

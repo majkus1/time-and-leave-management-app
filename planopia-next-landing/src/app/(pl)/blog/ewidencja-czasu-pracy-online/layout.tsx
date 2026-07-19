@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+
+const META_TITLE = "Ewidencja czasu pracy online — aplikacja | Planopia";
+const META_DESCRIPTION =
+  "Ewidencja czasu pracy online: godziny, nadgodziny, kalendarz i raporty PDF/Excel. Sprawdź Planopię przez 30 dni za darmo.";
 import "@/app/globals.css";
 
 /** Meta pod GSC: „ewidencja czasu pracy online”, „rejestracja czasu pracy online” — odróżnione od pillar „darmowa aplikacja”. */
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Ewidencja czasu pracy online — darmowa aplikacja web | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    "Program do ewidencji czasu pracy w przeglądarce: godziny, nadgodziny, raporty PDF i Excel. 30 dni pełnej wersji za darmo; potem ewidencja do 5 osób bez opłat.",
+  description: META_DESCRIPTION,
   keywords: [
     "ewidencja czasu pracy online",
     "rejestracja czasu pracy online",
@@ -40,9 +42,8 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-online',
     siteName: 'Planopia',
-    title: 'Ewidencja czasu pracy online — darmowa aplikacja web | Planopia',
-    description:
-      'Rejestracja godzin online, nadgodziny i eksport PDF/Excel — bez wysyłania arkuszy mailem. Wypróbuj Planopię: 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 osób.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     publishedTime: '2025-08-25T12:00:00.000Z',
     modifiedTime: '2026-05-31T12:00:00.000Z',
     images: [
@@ -56,9 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ewidencja czasu pracy online — darmowa aplikacja web | Planopia',
-    description:
-      'Aplikacja do ewidencji godzin w przeglądarce — raporty PDF/Excel, trial 30 dni, potem darmowy plan do 5 pracowników.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/desktop.png'],
   },
   alternates: {

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_DESCRIPTION =
+	'Filmy krok po kroku pokazujące obsługę Planopii, w tym ręczne dodawanie godzin. Oglądaj instrukcje na telefonie lub komputerze.'
 
 
 export const metadata: Metadata = {
 	title: {
 		absolute: 'Instrukcja wideo — jak korzystać z Planopii | Planopia',
 	},
-	description:
-		'Filmy krok po kroku: m.in. ręczne dodawanie godzin w ewidencji czasu pracy. Poradniki wideo do aplikacji Planopia — wygodnie na telefonie i komputerze.',
+	description: META_DESCRIPTION,
 	keywords: [
 		'Planopia instrukcja',
 		'poradnik Planopia',
@@ -40,8 +41,7 @@ export const metadata: Metadata = {
 		modifiedTime: '2026-03-24T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 		title: 'Instrukcja wideo — jak korzystać z Planopii | Planopia',
-		description:
-			`Wideo z aplikacji: ewidencja i inne moduły. ${blogArticleOfferLine.pl}`,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -54,8 +54,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Instrukcja wideo — jak korzystać z Planopii | Planopia',
-		description:
-			`Tutoriale Planopii — m.in. godziny w ewidencji. ${blogArticleOfferLine.pl}`,
+		description: META_DESCRIPTION,
 		images: ['https://planopia.pl/img/worktimeblog.webp'],
 	},
 	alternates: {

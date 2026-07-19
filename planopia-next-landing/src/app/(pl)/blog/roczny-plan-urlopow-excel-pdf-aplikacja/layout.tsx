@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Plan urlopów 2026: Excel, PDF czy aplikacja? | Planopia'
+const META_DESCRIPTION =
+	'Pobierz plan urlopów w Excelu i porównaj go z aplikacją do wniosków i akceptacji. Praktyczna checklista planowania urlopów na 2026 rok.'
 
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Roczny plan urlopów Excel, PDF i aplikacja — checklista 2026 | Planopia',
+		absolute: META_TITLE,
 	},
-	description: `Roczny plan urlopów w Excelu i PDF vs program do wniosków urlopowych: ograniczenia arkuszy, nadgodziny, migracja do aplikacji. ${blogArticleOfferLine.pl}`,
+	description: META_DESCRIPTION,
 	keywords: [
 		'roczny plan urlopów excel',
 		'plan urlopów pdf',
@@ -42,8 +45,8 @@ export const metadata: Metadata = {
 		publishedTime: '2026-03-27T12:00:00.000Z',
 		modifiedTime: '2026-03-27T12:00:00.000Z',
 		authors: ['Michał Lipka'],
-		title: 'Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać w 2026? | Planopia',
-		description: `Checklista programu do wniosków urlopowych i ograniczenia Excela. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: 'https://planopia.pl/img/roczny-plan.webp',
@@ -55,8 +58,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Roczny plan urlopów Excel, PDF i aplikacja | Planopia',
-		description: `Urlopy: arkusz, PDF czy system z akceptacjami? ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['https://planopia.pl/img/roczny-plan.webp'],
 	},
 	alternates: {

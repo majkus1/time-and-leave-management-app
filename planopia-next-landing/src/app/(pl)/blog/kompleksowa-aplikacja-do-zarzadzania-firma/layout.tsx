@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 
+const META_TITLE = "Czas pracy, urlopy i grafik w jednej aplikacji | Planopia";
+const META_DESCRIPTION =
+  "Połącz ewidencję czasu pracy, urlopy, grafiki, zadania i komunikację w jednej aplikacji. Zobacz, jak Planopia porządkuje pracę zespołu.";
+
 
 /** Meta: ewidencja + urlopy + grafik w jednym narzędziu (bez obietnicy pełnego ERP). */
 export const metadata: Metadata = {
   title: {
-    absolute:
-      "Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    "Zamiast osobnych arkuszy: godziny pracy, urlopy, grafiki, czat i zadania w Planopii. Dla małych zespołów — 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 osób.",
+  description: META_DESCRIPTION,
   keywords: [
     "ewidencja czasu pracy i urlopy",
     "aplikacja do zarządzania zespołem",
@@ -41,9 +43,8 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
     siteName: 'Planopia',
-    title: 'Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia',
-    description:
-      'Godziny, urlopy, grafiki pracy, czat i Kanban w jednym systemie — bez pięciu narzędzi. Wypróbuj Planopię: 30 dni trial, potem darmowa ewidencja do 5 osób.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     publishedTime: '2025-09-15T12:00:00.000Z',
     modifiedTime: '2026-05-17T12:00:00.000Z',
     images: [
@@ -57,9 +58,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ewidencja czasu pracy, urlopy i grafik — jedna aplikacja | Planopia',
-    description:
-      'Ewidencja godzin, wnioski urlopowe i grafiki w Planopii — jedna aplikacja zamiast Excela i kilku programów. Trial 30 dni za darmo.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {
@@ -82,4 +82,3 @@ export default function BlogSevenLayout({
 }) {
   return children;
 }
-

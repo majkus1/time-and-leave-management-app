@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Annual Leave Plan 2026: Excel, PDF or App | Planopia'
+const META_DESCRIPTION =
+	'Compare an annual leave plan in Excel or PDF with an online request and approval app. A practical 2026 checklist for small teams.'
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Annual leave plan: Excel, PDF & leave request app — 2026 guide | Planopia',
+		absolute: META_TITLE,
 	},
-	description: `Annual leave in Excel or PDF vs leave request software: spreadsheet limits, overtime tracking, small-team HR. ${blogArticleOfferLine.en}`,
+	description: META_DESCRIPTION,
 	keywords: [
 		'annual leave plan excel',
 		'leave calendar pdf',
@@ -34,8 +37,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Annual leave plan: Excel, PDF, and an app | Planopia',
-		description: `Checklist for leave workflows and when to move off spreadsheets. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/en/blog/annual-leave-plan-excel-pdf-app',
 		siteName: 'Planopia',
 		images: [
@@ -54,8 +57,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Annual leave plan: Excel, PDF, or an app? | Planopia',
-		description: `Practical checklist for teams. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/roczny-plan.webp'],
 		creator: '@planopia',
 	},

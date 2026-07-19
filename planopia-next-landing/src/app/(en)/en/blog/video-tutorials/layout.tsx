@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_DESCRIPTION =
+	'Step-by-step Planopia videos, including manual work-hour entries. Watch practical instructions on your phone or computer.'
 
 
 export const metadata: Metadata = {
 	title: {
 		absolute: 'Video tutorials — how to use Planopia | Planopia',
 	},
-	description:
-		`Step-by-step videos from the Planopia app, including manual hours in the time log. ${blogArticleOfferLine.en}`,
+	description: META_DESCRIPTION,
 	keywords: [
 		'Planopia tutorial',
 		'Planopia help',
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
 		modifiedTime: '2026-03-24T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 		title: 'Video tutorials — how to use Planopia | Planopia',
-		description: `Screen recordings: time tracking and more. ${blogArticleOfferLine.en}`,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Video tutorials — how to use Planopia | Planopia',
-		description: `Planopia video guides. ${blogArticleOfferLine.en}`,
+		description: META_DESCRIPTION,
 		images: ['https://planopia.pl/img/worktimeblog.webp'],
 	},
 	alternates: {

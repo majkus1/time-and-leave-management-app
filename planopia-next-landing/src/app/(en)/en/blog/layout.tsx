@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { planOfferingCopy } from "@/data/planOfferingCopy";
+
+const BLOG_META_DESCRIPTION =
+  "Practical guides to time tracking, leave planning, schedules, and team operations. Learn how to replace spreadsheets with clearer workflows.";
 
 export const metadata: Metadata = {
   title: {
-    default: "Blog – Planopia | Tips on Work Time Tracking and HR Management",
-    template: "%s | Planopia Blog"
+    absolute: "Planopia Blog — Time Tracking and Leave"
   },
-  description: `Planopia blog: time tracking, leave, HR, productivity. ${planOfferingCopy.en.metaShort}`,
+  description: BLOG_META_DESCRIPTION,
   keywords: [
     "Planopia blog",
     "free time tracking app",
@@ -39,8 +40,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://planopia.pl/en/blog',
     siteName: 'Planopia',
-    title: 'Planopia Blog – Tips on Work Time Tracking and HR',
-    description: 'Explore articles about work time tracking, leave planning, remote work, and modern HR practices from the creators of Planopia.',
+    title: 'Planopia Blog — Time Tracking and Leave',
+    description: BLOG_META_DESCRIPTION,
     images: [
       {
         url: 'https://planopia.pl/img/blog.webp',
@@ -52,8 +53,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Planopia Blog – Tips on Work Time Tracking and HR',
-    description: `Work hours, leave, and team productivity — Planopia blog. ${planOfferingCopy.en.metaShort}`,
+    title: 'Planopia Blog — Time Tracking and Leave',
+    description: BLOG_META_DESCRIPTION,
     images: ['https://planopia.pl/img/blog.webp'],
   },
   alternates: {

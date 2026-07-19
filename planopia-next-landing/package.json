@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seo:check": "node scripts/check-seo-metadata.mjs"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.2",

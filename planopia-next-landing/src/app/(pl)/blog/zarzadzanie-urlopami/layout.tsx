@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Zarządzanie urlopami w firmie — poradnik | Planopia'
+const META_DESCRIPTION =
+	'Uporządkuj zarządzanie urlopami w firmie: wnioski, akceptacje, kalendarz nieobecności i historia zmian bez arkuszy Excel.'
 
 export const metadata: Metadata = {
 	title: {
-		absolute:
-			'Zarządzanie urlopami w firmie — program, system i aplikacja urlopowa | Planopia',
+		absolute: META_TITLE,
 	},
-	description:
-		'Program do urlopów i zarządzanie urlopami pracowników: wnioski, kalendarz, zatwierdzenia bez chaosu w Excelu. ' + blogArticleOfferLine.pl,
+	description: META_DESCRIPTION,
 	keywords: [
 		'zarządzanie urlopami',
 		'aplikacja do urlopów',
@@ -42,8 +43,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Zarządzanie urlopami — system urlopowy i aplikacja dla firm | Planopia',
-		description: `Program do urlopów i ewidencja nieobecności w jednym narzędziu. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/blog/zarzadzanie-urlopami',
 		siteName: 'Planopia',
 		images: [
@@ -62,8 +63,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Zarządzanie urlopami — program i aplikacja dla firm | Planopia',
-		description: `System urlopowy zamiast arkuszy — Planopia. ${blogArticleOfferLine.pl}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

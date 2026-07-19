@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { blogArticleOfferLine } from "@/data/planOfferingCopy";
 import "@/app/globals.css";
+
+const META_TITLE = "Jak zainstalować Planopię jako PWA? | Planopia";
+const META_DESCRIPTION =
+  "Zainstaluj Planopię jako PWA na iPhonie, Androidzie lub komputerze. Instrukcja krok po kroku dla Safari, Chrome i Edge.";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia",
+    absolute: META_TITLE,
   },
-  description: `Instrukcja instalacji Planopii jako PWA na iPhonie, iPadzie, Androidzie oraz w przeglądarce na komputerze (np. Chrome). Dodaj apkę do ewidencji czasu pracy i urlopów na ekran główny, do menu lub na pulpit. ${blogArticleOfferLine.pl}`,
+  description: META_DESCRIPTION,
   keywords: [
     "PWA instalacja",
     "jak zainstalować PWA",
@@ -41,8 +44,8 @@ export const metadata: Metadata = {
     publishedTime: '2025-01-15T12:00:00.000Z',
     modifiedTime: '2025-01-15T12:00:00.000Z',
     authors: ['Michał Lipka'],
-    title: 'Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia',
-    description: `PWA Planopii na telefon i komputer. ${blogArticleOfferLine.pl}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: [
       {
         url: 'https://planopia.pl/img/pwa1.png',
@@ -54,8 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji | Planopia',
-    description: `PWA Planopii na telefon i komputer. ${blogArticleOfferLine.pl}`,
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/pwa1.png'],
   },
   alternates: {

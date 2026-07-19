@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Construction time tracking & crew scheduling | Planopia'
+const META_DESCRIPTION =
+	'Track crew hours, schedules, leave, tasks, and site reports in one app. Built for construction teams working across office and field.'
 
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
-	title: 'Construction time tracking & crew scheduling',
-	description: `Planopia for construction: crew time tracking, no-access field workers, schedules, leave, Kanban, team chat, PDF/Excel from site. ${blogArticleOfferLine.en}`,
+	title: { absolute: META_TITLE },
+	description: META_DESCRIPTION,
 	keywords: [
 		'construction time tracking',
 		'foreman time tracking',
@@ -36,8 +39,8 @@ export const metadata: Metadata = {
 		alternateLocale: ['pl_PL'],
 		url: '/en/for-construction-industry',
 		siteName: 'Planopia',
-		title: 'Construction time tracking & crew scheduling | Planopia',
-		description: `One app for crews and office. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: '/img/worktimeblog.webp',
@@ -49,8 +52,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Construction time tracking | Planopia',
-		description: `Crew schedules, leave, tasks, chat. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/worktimeblog.webp'],
 	},
 	alternates: {

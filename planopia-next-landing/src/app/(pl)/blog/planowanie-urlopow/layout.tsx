@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+
+const META_TITLE = "Planowanie urlopów — wnioski i kalendarz | Planopia";
+const META_DESCRIPTION =
+  "Planuj urlopy online: zbieraj wnioski, obsługuj akceptacje i sprawdzaj kalendarz nieobecności zespołu bez chaosu w Excelu.";
 import "@/app/globals.css";
 
 /** Meta pod GSC: „aplikacja do urlopów”, „zarządzanie urlopami”, „planowanie urlopów”. */
 export const metadata: Metadata = {
   title: {
-    absolute: "Aplikacja do urlopów — planowanie i wnioski online | Planopia",
+    absolute: META_TITLE,
   },
-  description:
-    "Kalendarz urlopów, wnioski i akceptacje w jednym systemie — koniec z chaosem w Excelu. Program do planowania urlopów; 30 dni trial, potem plan do 5 osób.",
+  description: META_DESCRIPTION,
   keywords: [
     "aplikacja do urlopów",
     "program do urlopów",
@@ -39,9 +42,8 @@ export const metadata: Metadata = {
     locale: 'pl_PL',
     url: 'https://planopia.pl/blog/planowanie-urlopow',
     siteName: 'Planopia',
-    title: 'Aplikacja do urlopów — planowanie i wnioski online | Planopia',
-    description:
-      'Planowanie urlopów pracowników: kalendarz, wnioski i akceptacje online. Wypróbuj Planopię — 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 kont.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     publishedTime: '2025-06-10T12:00:00.000Z',
     modifiedTime: '2026-05-17T12:00:00.000Z',
     images: [
@@ -55,9 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Aplikacja do urlopów — planowanie i wnioski online | Planopia',
-    description:
-      'Kalendarz urlopowy i wnioski w jednej aplikacji — bez papieru i Excela. Trial 30 dni, potem darmowy plan ewidencji do 5 osób.',
+    title: META_TITLE,
+    description: META_DESCRIPTION,
     images: ['https://planopia.pl/img/plans-urlopnew.webp'],
   },
   alternates: {

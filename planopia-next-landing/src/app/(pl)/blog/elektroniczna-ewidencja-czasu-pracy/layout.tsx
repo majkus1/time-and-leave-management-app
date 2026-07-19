@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
 
+const META_TITLE = 'Elektroniczna ewidencja czasu pracy 2026 | Planopia'
+const META_DESCRIPTION =
+	'Porównaj papier, Excel i program do elektronicznej ewidencji czasu pracy. Zobacz wymagania, raporty oraz sposób wyboru systemu dla firmy.'
+
 /** Meta pod GSC: „elektroniczna ewidencja czasu pracy” — przewodnik (papier/Excel vs program), nie duplikat „online”. */
 export const metadata: Metadata = {
 	title: {
-		absolute:
-			'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
+		absolute: META_TITLE,
 	},
-	description:
-		'Papier, Excel czy program? Porównanie metod ewidencji czasu pracy w 2026 (z tabelą), wymogi prawne i wybór systemu z raportami PDF/XLSX. 30 dni Planopii za darmo, potem darmowy plan.',
+	description: META_DESCRIPTION,
 	keywords: [
 		'elektroniczna ewidencja czasu pracy',
 		'elektroniczna ewidencja czasu pracy program',
@@ -37,9 +39,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
-		description:
-			'Kompletny przewodnik na 2026: kiedy przejść z papieru i Excela na elektroniczną ewidencję, tabela porównawcza i jaki program wybrać. Trial Planopii — 30 dni bez opłat.',
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy',
 		siteName: 'Planopia',
 		images: [
@@ -58,9 +59,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Elektroniczna ewidencja czasu pracy 2026 — Excel czy program? | Planopia',
-		description:
-			'Papier, Excel czy program do ewidencji? Tabela porównawcza i wybór narzędzia na 2026. Wypróbuj Planopię przez 30 dni za darmo.',
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

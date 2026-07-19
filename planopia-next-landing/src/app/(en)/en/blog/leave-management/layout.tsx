@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Leave Management Software for Teams | Planopia'
+const META_DESCRIPTION =
+	'Learn how leave management software organizes requests, approvals, balances, and the team absence calendar without spreadsheets.'
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Leave management — software, system & vacation app | Planopia',
+		absolute: META_TITLE,
 	},
-	description: `Leave management software: requests, calendar, approvals without spreadsheet chaos. ${blogArticleOfferLine.en}`,
+	description: META_DESCRIPTION,
 	keywords: [
 		'leave management',
 		'leave management software',
@@ -37,8 +40,8 @@ export const metadata: Metadata = {
 		},
 	},
 	openGraph: {
-		title: 'Leave management — vacation system & software | Planopia',
-		description: `Leave app with requests and approvals in one tool. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		url: 'https://planopia.pl/en/blog/leave-management',
 		siteName: 'Planopia',
 		images: [
@@ -57,8 +60,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Leave management — software for teams | Planopia',
-		description: `Vacation system instead of scattered sheets — Planopia. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['/img/desktop.png'],
 		creator: '@planopia',
 	},

@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
-import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+
+const META_TITLE = 'Construction Time Tracking Guide | Planopia'
+const META_DESCRIPTION =
+	'Organize crew hours, overtime, tasks, and PDF/Excel reports in one system. A practical time tracking guide for construction teams.'
 
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'How to track time on construction sites (without spreadsheets) | Planopia',
+		absolute: META_TITLE,
 	},
-	description:
-		'Construction time tracking: how to organize hours, overtime, and reporting. One system instead of paper, with Kanban, chat, PDF/Excel exports, and AI in Planopia.',
+	description: META_DESCRIPTION,
 	keywords: [
 		'construction time tracking',
 		'building company',
@@ -40,8 +42,8 @@ export const metadata: Metadata = {
 		publishedTime: '2026-03-24T12:00:00.000Z',
 		modifiedTime: '2026-03-24T12:00:00.000Z',
 		authors: ['Michał Lipka'],
-		title: 'How to track time on construction sites (without spreadsheets) | Planopia',
-		description: `Site and office in one system. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: [
 			{
 				url: 'https://planopia.pl/img/worktimeblog.webp',
@@ -53,8 +55,8 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: 'summary_large_image',
-		title: 'Time tracking on construction sites | Planopia',
-		description: `Jobsite hours without spreadsheets. ${blogArticleOfferLine.en}`,
+		title: META_TITLE,
+		description: META_DESCRIPTION,
 		images: ['https://planopia.pl/img/worktimeblog.webp'],
 	},
 	alternates: {

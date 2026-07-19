@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { planOfferingCopy } from "@/data/planOfferingCopy";
 import { LANDING_OG_IMAGE } from "@/data/landingHeroAssets";
 import { titilliumWeb } from "@/lib/siteFonts";
 import "../globals.css";
@@ -9,13 +8,16 @@ import LandingChatWidgetLazy from "@/components/LandingChatWidgetLazy";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
 
+const HOME_META_DESCRIPTION =
+  "Planopia łączy ewidencję czasu pracy, urlopy, grafiki i zadania. Zacznij od 30 dni za darmo, bez karty; potem wybierz darmowy plan lub pakiet.";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://planopia.pl"),
   title: {
     default: "Planopia — darmowa ewidencja czasu pracy online | 30 dni",
     template: "%s | Planopia"
   },
-  description: planOfferingCopy.pl.metaShort,
+  description: HOME_META_DESCRIPTION,
   keywords: [
     "ewidencja czasu pracy",
     "darmowa aplikacja ewidencja czasu pracy",
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl',
     siteName: 'Planopia',
     title: 'Planopia — darmowa ewidencja czasu pracy online | 30 dni',
-    description: planOfferingCopy.pl.metaShort,
+    description: HOME_META_DESCRIPTION,
     images: [
       {
         url: LANDING_OG_IMAGE.url,
@@ -65,7 +67,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Planopia — darmowa ewidencja czasu pracy online | 30 dni',
-    description: planOfferingCopy.pl.metaShort,
+    description: HOME_META_DESCRIPTION,
     images: [LANDING_OG_IMAGE.url],
   },
   alternates: {
