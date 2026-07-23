@@ -541,85 +541,6 @@ function Settings() {
 					<hr></hr>
 				</div>
 
-				{canEditSettings && !freemiumTier && (
-					<div
-						className="po-settings-panel"
-						style={{
-							backgroundColor: 'white',
-							borderRadius: '12px',
-							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-							padding: '20px',
-							marginBottom: '20px',
-						}}
-					>
-						<h3
-							style={{
-								color: '#2c3e50',
-								marginBottom: '16px',
-								fontSize: '20px',
-								fontWeight: '600',
-								paddingBottom: '10px',
-								borderBottom: '2px solid #00a846',
-							}}
-						>
-							{t('settings.dashboardSectionTitle')}
-						</h3>
-						<div
-							className="po-settings-toggle-row"
-							style={{
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								padding: '20px',
-								backgroundColor: '#f8f9fa',
-								borderRadius: '8px',
-								border: '1px solid #dee2e6',
-							}}
-						>
-							<div style={{ flex: 1 }}>
-								<label
-									style={{
-										display: 'flex',
-										alignItems: 'center',
-										cursor: 'pointer',
-										fontSize: '16px',
-										fontWeight: '500',
-										color: '#2c3e50',
-									}}
-								>
-									<input
-										type="checkbox"
-										checked={dashboardEnabled}
-										onChange={(e) => setDashboardEnabled(e.target.checked)}
-										style={{
-											width: '24px',
-											height: '24px',
-											marginRight: '12px',
-											cursor: 'pointer',
-											accentColor: '#00a846',
-										}}
-									/>
-									<span>{t('settings.dashboardEnabledLabel')}</span>
-								</label>
-								<p
-									style={{
-										marginTop: '8px',
-										marginBottom: 0,
-										fontSize: '14px',
-										color: '#7f8c8d',
-										marginLeft: '36px',
-										lineHeight: 1.55,
-									}}
-								>
-									{dashboardEnabled
-										? t('settings.dashboardEnabledDescription')
-										: t('settings.dashboardDisabledDescription')}
-								</p>
-							</div>
-						</div>
-					</div>
-				)}
-
 				{freemiumTier && pushOnlySettings && (
 					<div
 						className="po-settings-muted-banner"
@@ -957,6 +878,85 @@ function Settings() {
 							<span style={{ fontSize: '18px' }}>⚠️</span>
 							<span>{t('settings.saveSettingsReminder') || 'Ważne: Po wprowadzeniu jakichkolwiek zmian w konfiguracji poniżej, pamiętaj o zapisaniu ich przyciskiem "Zapisz ustawienia" na dole tej strony.'}</span>
 						</p>
+					</div>
+				)}
+
+				{canEditSettings && !freemiumTier && (
+					<div
+						className="po-settings-panel"
+						style={{
+							backgroundColor: 'white',
+							borderRadius: '12px',
+							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+							padding: '20px',
+							marginBottom: '20px',
+						}}
+					>
+						<h3
+							style={{
+								color: '#2c3e50',
+								marginBottom: '16px',
+								fontSize: '20px',
+								fontWeight: '600',
+								paddingBottom: '10px',
+								borderBottom: '2px solid #00a846',
+							}}
+						>
+							{t('settings.dashboardSectionTitle')}
+						</h3>
+						<div
+							className="po-settings-toggle-row"
+							style={{
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								padding: '20px',
+								backgroundColor: '#f8f9fa',
+								borderRadius: '8px',
+								border: '1px solid #dee2e6',
+							}}
+						>
+							<div style={{ flex: 1 }}>
+								<label
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										cursor: 'pointer',
+										fontSize: '16px',
+										fontWeight: '500',
+										color: '#2c3e50',
+									}}
+								>
+									<input
+										type="checkbox"
+										checked={dashboardEnabled}
+										onChange={(e) => setDashboardEnabled(e.target.checked)}
+										style={{
+											width: '24px',
+											height: '24px',
+											marginRight: '12px',
+											cursor: 'pointer',
+											accentColor: '#00a846',
+										}}
+									/>
+									<span>{t('settings.dashboardEnabledLabel')}</span>
+								</label>
+								<p
+									style={{
+										marginTop: '8px',
+										marginBottom: 0,
+										fontSize: '14px',
+										color: '#7f8c8d',
+										marginLeft: '36px',
+										lineHeight: 1.55,
+									}}
+								>
+									{dashboardEnabled
+										? t('settings.dashboardEnabledDescription')
+										: t('settings.dashboardDisabledDescription')}
+								</p>
+							</div>
+						</div>
 					</div>
 				)}
 

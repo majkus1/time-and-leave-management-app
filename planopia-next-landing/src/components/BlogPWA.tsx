@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
@@ -11,6 +12,24 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
+
+function InstallationSteps({ steps }: { steps: ReactNode[] }) {
+	return (
+		<ol className="space-y-4">
+			{steps.map((step, index) => (
+				<li key={index} className="flex items-start gap-3 text-gray-700">
+					<span
+						className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700"
+						aria-hidden="true"
+					>
+						{index + 1}
+					</span>
+					<span className="pt-0.5 leading-relaxed">{step}</span>
+				</li>
+			))}
+		</ol>
+	)
+}
 
 function BlogPWA() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -132,70 +151,96 @@ function BlogPWA() {
 						<h1 className="text-4xl font-bold mb-6">
 							Jak zainstalować Planopię jako aplikację PWA? Instrukcja instalacji
 						</h1>
-						<p className="text-gray-700 text-lg">
-							Planopia to <strong>Progressive Web App (PWA)</strong>, co oznacza, że możesz zainstalować ją bezpośrednio na swoim urządzeniu - zarówno na desktopie, jak i na urządzeniu mobilnym. 
-							Dzięki temu będziesz mieć szybki dostęp do aplikacji do ewidencji czasu pracy i zarządzania urlopami, 
-							bez konieczności otwierania przeglądarki za każdym razem.
+						<p className="text-gray-700 text-lg max-w-3xl">
+							Wybierz swoje urządzenie i przejdź od razu do krótkiej instrukcji. Instalacja zajmuje zwykle mniej niż minutę.
 						</p>
+						<nav className="grid gap-3 mt-7 sm:grid-cols-3" aria-label="Wybierz urządzenie">
+							<a href="#instalacja-ios" className="group rounded-lg border border-blue-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+								<span className="block text-sm font-semibold text-blue-700">iPhone i iPad</span>
+								<span className="mt-1 block text-sm text-gray-600">Instrukcja dla Safari</span>
+							</a>
+							<a href="#instalacja-android" className="group rounded-lg border border-blue-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+								<span className="block text-sm font-semibold text-blue-700">Android</span>
+								<span className="mt-1 block text-sm text-gray-600">Instrukcja dla Chrome</span>
+							</a>
+							<a href="#instalacja-komputer" className="group rounded-lg border border-blue-200 bg-white p-4 transition hover:border-blue-500 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+								<span className="block text-sm font-semibold text-blue-700">Komputer</span>
+								<span className="mt-1 block text-sm text-gray-600">Chrome, Edge lub Opera</span>
+							</a>
+						</nav>
 					</div>
 				</div>
 			</section>
 
-			<article className="max-w-4xl mx-auto px-6 py-12">
-				<h2 className="text-2xl font-semibold mb-4">Dlaczego warto zainstalować Planopię jako PWA?</h2>
-				<p className="mb-4 text-gray-700">
-					Instalacja Planopii jako aplikacji PWA na swoim urządzeniu (desktop lub mobilnym) przynosi wiele korzyści:
-				</p>
-				<ul className="list-disc pl-6 mb-6 text-gray-700 space-y-2">
-					<li><strong>Szybki dostęp</strong> – aplikacja jest zawsze pod ręką na ekranie głównym</li>
-					<li><strong>Działa jak natywna aplikacja</strong> – pełnoekranowy interfejs bez pasków przeglądarki</li>
-					<li><strong>Automatyczne aktualizacje</strong> – zawsze masz najnowszą wersję bez ręcznego aktualizowania</li>
-					<li><strong>Oszczędność miejsca</strong> – nie zajmuje dużo miejsca w pamięci telefonu</li>
-					<li><strong>Bezpieczeństwo</strong> – wszystkie dane są szyfrowane i bezpieczne</li>
-				</ul>
-
-				<h2 className="text-2xl font-semibold mb-4">Jak zainstalować Planopię jako PWA?</h2>
-				<p className="mb-6 text-gray-700">
-					Instalacja Planopii jako aplikacji PWA jest bardzo prosta i zajmuje zaledwie kilka sekund. 
-					Proces różni się nieznacznie w zależności od używanego urządzenia:
-				</p>
-
-				<div className="space-y-6 mb-8">
-					<div className="bg-gray-50 rounded-xl p-6">
-						<h3 className="text-xl font-semibold mb-3 text-blue-600">Na urządzeniach z iOS (iPhone, iPad)</h3>
-						<ol className="list-decimal pl-6 space-y-2 text-gray-700">
-							<li>Otwórz przeglądarkę Safari i przejdź do strony logowania Planopii: <strong>app.planopia.pl</strong></li>
-							<li>Kliknij na przycisk menu (trzy kropki) w prawym dolnym rogu ekranu</li>
-							<li>Wybierz opcję <strong>"Udostępnij"</strong></li>
-							<li>Przewiń w dół i wybierz <strong>"Dodaj do ekranu głównego"</strong></li>
-							<li>Potwierdź instalację, klikając <strong>"Dodaj"</strong></li>
-						</ol>
+			<article className="max-w-4xl mx-auto px-6 py-10">
+				<section aria-labelledby="installation-heading">
+					<div className="mb-7">
+						<p className="mb-2 text-sm font-semibold uppercase text-blue-700">Instrukcja krok po kroku</p>
+						<h2 id="installation-heading" className="text-2xl font-semibold mb-3">Zainstaluj Planopię na swoim urządzeniu</h2>
+						<p className="text-gray-700">Najpierw otwórz stronę logowania, a następnie wykonaj kroki odpowiednie dla swojego urządzenia.</p>
 					</div>
 
-					<div className="bg-gray-50 rounded-xl p-6">
-						<h3 className="text-xl font-semibold mb-3 text-blue-600">Na urządzeniach z Androidem</h3>
-						<ol className="list-decimal pl-6 space-y-2 text-gray-700">
-							<li>Otwórz przeglądarkę Chrome i przejdź do strony logowania Planopii: <strong>app.planopia.pl</strong></li>
-							<li>Kliknij na menu przeglądarki (trzy kropki) w prawym górnym rogu</li>
-							<li>Wybierz opcję <strong>"Zainstaluj aplikację"</strong> lub <strong>"Dodaj do ekranu głównego"</strong></li>
-							<li>Potwierdź instalację w oknie dialogowym</li>
-						</ol>
-					</div>
+					<div className="space-y-5 mb-12">
+						<section id="instalacja-ios" className="scroll-mt-28 overflow-hidden rounded-lg border border-blue-200 bg-white shadow-sm">
+							<div className="border-b border-blue-100 bg-blue-50 px-6 py-4">
+								<p className="text-sm font-semibold text-blue-700">Safari</p>
+								<h3 className="mt-1 text-xl font-semibold text-gray-900">iPhone i iPad</h3>
+							</div>
+							<div className="p-6">
+								<InstallationSteps steps={[
+									<>Otwórz Safari i przejdź do <a href="https://app.planopia.pl/" className="font-semibold text-blue-700 underline underline-offset-2">app.planopia.pl</a>.</>,
+									<>Naciśnij przycisk <strong>Udostępnij</strong> (kwadrat ze strzałką skierowaną w górę).</>,
+									<>Przewiń listę i wybierz <strong>Dodaj do ekranu początkowego</strong>.</>,
+									<>Sprawdź nazwę i naciśnij <strong>Dodaj</strong>. Ikona Planopii pojawi się na ekranie początkowym.</>,
+								]} />
+							</div>
+						</section>
 
-					<div className="bg-gray-50 rounded-xl p-6">
-						<h3 className="text-xl font-semibold mb-3 text-blue-600">Na komputerze (Desktop - Chrome, Edge, Opera)</h3>
-						<ol className="list-decimal pl-6 space-y-2 text-gray-700">
-							<li>Otwórz przeglądarkę Chrome, Edge lub Opera i przejdź do strony logowania Planopii: <strong>app.planopia.pl</strong></li>
-							<li>W pasku adresu przeglądarki (u góry) zobaczysz ikonę <strong>"Zainstaluj aplikację"</strong> lub <strong>"Install"</strong> po prawej stronie</li>
-							<li>Kliknij na tę ikonę lub wybierz opcję <strong>"Zainstaluj Planopię"</strong> z menu przeglądarki</li>
-							<li>Potwierdź instalację w oknie dialogowym</li>
-							<li>Po instalacji aplikacja pojawi się jako osobne okno, które możesz uruchomić z menu Start (Windows) lub Launchpad (macOS)</li>
-						</ol>
-						<p className="mt-3 text-gray-600 text-sm">
-							<strong>Uwaga:</strong> Aplikacja PWA na desktopie działa jak natywna aplikacja desktopowa - możesz ją przypiąć do paska zadań, otwierać w osobnym oknie i korzystać ze wszystkich funkcji bez przeglądarki!
-						</p>
+						<section id="instalacja-android" className="scroll-mt-28 overflow-hidden rounded-lg border border-green-200 bg-white shadow-sm">
+							<div className="border-b border-green-100 bg-green-50 px-6 py-4">
+								<p className="text-sm font-semibold text-green-700">Google Chrome</p>
+								<h3 className="mt-1 text-xl font-semibold text-gray-900">Telefon lub tablet z Androidem</h3>
+							</div>
+							<div className="p-6">
+								<InstallationSteps steps={[
+									<>Otwórz Chrome i przejdź do <a href="https://app.planopia.pl/" className="font-semibold text-blue-700 underline underline-offset-2">app.planopia.pl</a>.</>,
+									<>Naciśnij menu z trzema kropkami w prawym górnym rogu.</>,
+									<>Wybierz <strong>Zainstaluj aplikację</strong> lub <strong>Dodaj do ekranu głównego</strong>.</>,
+									<>Potwierdź instalację. Ikona Planopii pojawi się na ekranie głównym lub liście aplikacji.</>,
+								]} />
+							</div>
+						</section>
+
+						<section id="instalacja-komputer" className="scroll-mt-28 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+							<div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+								<p className="text-sm font-semibold text-gray-600">Chrome, Edge lub Opera</p>
+								<h3 className="mt-1 text-xl font-semibold text-gray-900">Komputer z Windows lub macOS</h3>
+							</div>
+							<div className="p-6">
+								<InstallationSteps steps={[
+									<>Otwórz obsługiwaną przeglądarkę i przejdź do <a href="https://app.planopia.pl/" className="font-semibold text-blue-700 underline underline-offset-2">app.planopia.pl</a>.</>,
+									<>Kliknij ikonę instalacji po prawej stronie paska adresu. Jeżeli jej nie widzisz, otwórz menu przeglądarki i wybierz opcję instalacji aplikacji.</>,
+									<>Wybierz <strong>Zainstaluj</strong> i potwierdź.</>,
+									<>Uruchamiaj Planopię z menu Start w Windows lub z Launchpada w macOS. Możesz też przypiąć ją do paska zadań.</>,
+								]} />
+							</div>
+						</section>
 					</div>
-				</div>
+				</section>
+
+				<section className="border-t border-gray-200 pt-10">
+					<h2 className="text-2xl font-semibold mb-4">Dlaczego warto zainstalować Planopię jako PWA?</h2>
+					<p className="mb-4 text-gray-700">
+						Planopia to Progressive Web App, dlatego możesz korzystać z niej podobnie jak ze zwykłej aplikacji, bez pobierania jej ze sklepu.
+					</p>
+					<ul className="list-disc pl-6 mb-8 text-gray-700 space-y-2">
+						<li><strong>Szybki dostęp</strong> – aplikacja jest zawsze pod ręką na ekranie głównym</li>
+						<li><strong>Działa jak natywna aplikacja</strong> – pełnoekranowy interfejs bez pasków przeglądarki</li>
+						<li><strong>Automatyczne aktualizacje</strong> – zawsze masz najnowszą wersję bez ręcznego aktualizowania</li>
+						<li><strong>Oszczędność miejsca</strong> – nie zajmuje dużo miejsca w pamięci telefonu</li>
+						<li><strong>Bezpieczeństwo</strong> – połączenie z aplikacją jest szyfrowane</li>
+					</ul>
+				</section>
 
 				<h2 className="text-2xl font-semibold mb-4">Gotowe! Jak korzystać z Planopii jako PWA?</h2>
 				<p className="mb-4 text-gray-700">

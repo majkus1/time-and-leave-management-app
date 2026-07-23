@@ -1448,45 +1448,6 @@ body.sidebar-collapsed .ReactModal__Content.tutorial-modal-content {
 	line-height: 1.5;
 }
 
-.tutorial-modal-video-link {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin-top: 14px;
-	padding: 10px 14px;
-	max-width: 100%;
-	box-sizing: border-box;
-	border-radius: 10px;
-	border: 1px solid #bae6fd;
-	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-	color: #0369a1 !important;
-	font-size: 15px;
-	font-weight: 600;
-	text-decoration: none;
-	transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-	box-shadow: 0 1px 2px rgba(14, 165, 233, 0.08);
-}
-
-.tutorial-modal-video-link:hover {
-	background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
-	border-color: #38bdf8;
-	box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
-}
-
-.tutorial-modal-video-link span:first-of-type {
-	flex: 1;
-	min-width: 0;
-	line-height: 1.35;
-	overflow-wrap: anywhere;
-}
-
-.tutorial-modal-video-link__arrow {
-	flex-shrink: 0;
-	opacity: 0.75;
-	font-size: 18px;
-	line-height: 1;
-}
-
 .tutorial-modal-sections {
 	display: flex;
 	flex-direction: column;
@@ -1676,12 +1637,6 @@ body.sidebar-collapsed .ReactModal__Content.tutorial-modal-content {
 		line-height: 1.45 !important;
 	}
 
-	.tutorial-modal-video-link {
-		font-size: 13px !important;
-		padding: 8px 10px !important;
-		gap: 8px !important;
-	}
-
 	.tutorial-modal-sections {
 		gap: 12px !important;
 		margin-bottom: 20px !important;
@@ -1754,9 +1709,6 @@ body.sidebar-collapsed .ReactModal__Content.tutorial-modal-content {
 		line-height: 1.55 !important;
 	}
 
-	.tutorial-modal-video-link__arrow {
-		font-size: 16px;
-	}
 }
 
 button, .btn {
@@ -3728,64 +3680,6 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 	height: 20px;
 }
 
-/* Light — animated green border highlights new theme switcher */
-[data-theme='light'] .po-sidebar-theme-btn {
-	position: relative;
-	isolation: isolate;
-	overflow: visible;
-	z-index: 0;
-}
-
-[data-theme='light'] .po-sidebar-theme-btn::after {
-	content: '';
-	position: absolute;
-	inset: -2px;
-	border-radius: 14px;
-	padding: 2px;
-	background: linear-gradient(
-		120deg,
-		rgba(0, 168, 70, 0.4),
-		#00a846,
-		#6ee07a,
-		#00a846,
-		rgba(0, 168, 70, 0.4)
-	);
-	background-size: 240% 240%;
-	animation: po-theme-switcher-border-flow 2.5s linear infinite;
-	-webkit-mask:
-		linear-gradient(#fff 0 0) content-box,
-		linear-gradient(#fff 0 0);
-	-webkit-mask-composite: xor;
-	mask:
-		linear-gradient(#fff 0 0) content-box,
-		linear-gradient(#fff 0 0);
-	mask-composite: exclude;
-	pointer-events: none;
-	z-index: -1;
-}
-
-[data-theme='light'] .sidebar-mobile-theme-slot .po-sidebar-theme-btn::after,
-[data-theme='light'] .auth-top-bar .po-sidebar-theme-btn::after {
-	border-radius: 12px;
-}
-
-@keyframes po-theme-switcher-border-flow {
-	0% {
-		background-position: 0% 50%;
-	}
-	100% {
-		background-position: 200% 50%;
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	[data-theme='light'] .po-sidebar-theme-btn::after {
-		animation: none;
-		background: #00a846;
-		background-size: 100% 100%;
-	}
-}
-
 /* Close Button */
 .sidebar-close-btn {
 	position: absolute;
@@ -3845,6 +3739,10 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 	line-height: 1.35;
 }
 
+.sidebar-navigation .sidebar-profile-link {
+	margin-bottom: 20px;
+}
+
 /* Desktop: dzwonek pod logo, nad mailem — równy odstęp góra/dół */
 @media (min-width: 1501px) {
 	.sidebar--desktop-bell .sidebar-logo {
@@ -3857,7 +3755,7 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 		align-items: center;
 		gap: 10px;
 		width: 100%;
-		margin: 12px 0;
+		margin: 18px 0 12px;
 	}
 
 	/* Desktop sidebar bell: kompaktowy rozmiar z zachowaniem wygodnego kliknięcia */
@@ -5622,6 +5520,34 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	margin: 0 !important;
 	max-width: none !important;
 	cursor: default !important;
+}
+
+.leave-availability-checker__controls {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.leave-availability-checker__controls--range {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.leave-availability-checker__controls input[type='date'] {
+	box-sizing: border-box;
+	width: 100% !important;
+	min-width: 0;
+}
+
+@media (max-width: 640px) {
+	.leave-availability-checker__controls,
+	.leave-availability-checker__controls--range {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 420px) {
+	.leave-availability-checker__controls,
+	.leave-availability-checker__controls--range {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 /* Board modals — centered overlay (overrides global ReactModal__Content margin-left) */

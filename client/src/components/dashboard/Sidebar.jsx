@@ -368,7 +368,7 @@ function Sidebar() {
 				<div className="sidebar-navigation">
 					<NavLink
 						to="/edit-profile"
-						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+						className={({ isActive }) => `nav-link sidebar-profile-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">
 							<img src="/img/user-avatar.png" alt="Profile" />
 						</div>
@@ -378,7 +378,6 @@ function Sidebar() {
 					{showDashboardLink && (
 					<NavLink
 						to="/dashboard"
-						style={{ marginTop: '20px'}}
 						className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 						<div className="nav-icon">
 							<img src="/img/home.png" alt="Dashboard" />

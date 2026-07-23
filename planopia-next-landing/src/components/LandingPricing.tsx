@@ -37,7 +37,7 @@ function formatMoney(locale: Locale, amount: number, decimals: number) {
 const MODULE_LABELS: Record<ModuleId, { pl: string; en: string }> = {
 	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
 	schedules_ai: { pl: 'Grafiki + AI', en: 'Schedules + AI' },
-	tasks: { pl: 'Zadania (Kanban)', en: 'Tasks (Kanban)' },
+	tasks: { pl: 'Zadania i Projekty', en: 'Tasks and Projects' },
 	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
 	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
 }
@@ -236,17 +236,25 @@ const copy = {
 		heroCoreTitle: 'Core',
 		heroCoreLead: 'Dla firm, które chcą odejść od Excela i papierowych wniosków urlopowych.',
 		heroCoreTeamHint: 'Dla zespołów do 100 użytkowników.',
-		heroCoreFeat1: 'Ewidencja czasu pracy zamiast arkuszy',
-		heroCoreFeat2: 'Urlopy i akceptacje w jednym miejscu',
-		heroCoreFeat3: 'Możliwość rozszerzenia o moduły, gdy zespół rośnie',
+		heroCoreFeat1: 'Ewidencja czasu pracy',
+		heroCoreFeat2: 'Urlopy i akceptacje',
+		heroCoreFeatReports: 'Raporty biznesowe',
+		heroCoreFeat3: 'Opcjonalnie: Timer + QR, Grafiki + AI, Zadania i Projekty, Czat i Asystent AI',
 		heroCoreCta: 'Wybierz Core',
 		heroProLead: 'Dla firm, które chcą zarządzać czasem pracy, urlopami, zadaniami i komunikacją w jednym miejscu.',
 		heroBusinessLead: 'Dla większych zespołów, które potrzebują wyższych limitów, wsparcia i dopasowania procesu.',
-		proBulletModules: 'Wszystkie moduły do pracy operacyjnej',
-		proBulletAi: 'AI do raportów i podsumowań (50 wiadomości / miesięcznie na zespół)',
+		bundleModules: [
+			'Ewidencja czasu pracy',
+			'Urlopy i akceptacje',
+			'Raporty biznesowe',
+			'Timer + QR',
+			'Grafiki + AI',
+			'Zadania i Projekty',
+			'Czat zespołowy',
+		],
+		proBulletAi: 'Asystent AI — 50 wiadomości miesięcznie na zespół',
 		proBulletUsers: 'Do 30 użytkowników',
-		businessBulletModules: 'Wszystkie moduły dla większego zespołu',
-		businessBulletAi: 'AI do analiz i decyzji (300 wiadomości / miesięcznie, zespół)',
+		businessBulletAi: 'Asystent AI — 300 wiadomości miesięcznie na zespół',
 		businessBulletUsers: 'Do 100 użytkowników',
 		businessBulletPriority: 'Priorytetowe wsparcie',
 		businessBulletIntegrations: 'Dodatkowe funkcje i integracje na życzenie pod Twój biznes',
@@ -260,9 +268,12 @@ const copy = {
 		tiersFootnote:
 			'* Płatny pakiet możesz anulować w dowolnym momencie. Przyciski prowadzą do sekcji „Pakiety i rozliczenia” w aplikacji — dokończ zakup po zalogowaniu.',
 		coreModalTitle: 'Konfiguracja Core',
-		coreModalHint: 'Wybierz wielkość zespołu, opcjonalnie moduły — suma poniżej.',
+		coreModalHint: 'Wybierz wielkość zespołu i potrzebne moduły dodatkowe — suma poniżej.',
 		coreStep1: 'Ile osób w zespole?',
-		coreStep2: 'Dodaj moduły (opcjonalnie)',
+		coreStep2: 'Moduły w Core',
+		coreIncludedLabel: 'W cenie pakietu',
+		coreOptionalLabel: 'Moduły dodatkowe (opcjonalnie)',
+		coreIncludedBadge: 'W cenie',
 		coreStep3: 'Podsumowanie',
 		coreSeatShort: 'do {{max}} użytkowników',
 		coreAiFootnote: '* AI: 50 wiadomości / miesięcznie na zespół.',
@@ -300,17 +311,25 @@ const copy = {
 		heroCoreTitle: 'Core',
 		heroCoreLead: 'For companies that want to leave spreadsheets and paper leave requests behind.',
 		heroCoreTeamHint: 'For teams up to 100 users.',
-		heroCoreFeat1: 'Time tracking instead of spreadsheets',
-		heroCoreFeat2: 'Leave and approvals in one place',
-		heroCoreFeat3: 'Option to expand with modules as the team grows',
+		heroCoreFeat1: 'Time tracking',
+		heroCoreFeat2: 'Leave requests and approvals',
+		heroCoreFeatReports: 'Business reports',
+		heroCoreFeat3: 'Optional: Timer + QR, Schedules + AI, Tasks and Projects, Team chat, and AI Assistant',
 		heroCoreCta: 'Choose Core',
 		heroProLead: 'For companies that want time tracking, leave, tasks, and team communication in one place.',
 		heroBusinessLead: 'For larger teams that need higher limits, support, and process fit.',
-		proBulletModules: 'All modules for daily operations',
-		proBulletAi: 'AI for reports and summaries (50 messages / month, team)',
+		bundleModules: [
+			'Time tracking',
+			'Leave requests and approvals',
+			'Business reports',
+			'Timer + QR',
+			'Schedules + AI',
+			'Tasks and Projects',
+			'Team chat',
+		],
+		proBulletAi: 'AI Assistant — 50 messages per month, per team',
 		proBulletUsers: 'Up to 30 users',
-		businessBulletModules: 'All modules for a larger team',
-		businessBulletAi: 'AI for analysis and decisions (300 messages / month, team)',
+		businessBulletAi: 'AI Assistant — 300 messages per month, per team',
 		businessBulletUsers: 'Up to 100 users',
 		businessBulletPriority: 'Priority support',
 		businessBulletIntegrations: 'Extra features and integrations tailored to your business',
@@ -325,9 +344,12 @@ const copy = {
 		tiersFootnote:
 			'* You can cancel a paid plan at any time. Buttons take you to Packages & billing in the app — complete your purchase after signing in.',
 		coreModalTitle: 'Configure Core',
-		coreModalHint: 'Pick team size, optionally add modules — totals below.',
+		coreModalHint: 'Pick team size and the add-on modules you need — totals below.',
 		coreStep1: 'How many people on the team?',
-		coreStep2: 'Add modules (optional)',
+		coreStep2: 'Modules in Core',
+		coreIncludedLabel: 'Included in the plan',
+		coreOptionalLabel: 'Optional add-on modules',
+		coreIncludedBadge: 'Included',
 		coreStep3: 'Summary',
 		coreSeatShort: 'Up to {{max}} users',
 		coreAiFootnote: '* AI: 50 messages / month, team.',
@@ -458,6 +480,25 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						</div>
 						<fieldset className="packages-core-fieldset">
 							<legend className="packages-core-legend packages-core-legend--vh">{t.coreStep2}</legend>
+							<p className="packages-core-modules-group-label">{t.coreIncludedLabel}</p>
+							<label className="packages-core-check packages-core-check--included">
+								<input type="checkbox" checked disabled readOnly />
+								<span>{t.heroCoreFeat1}</span>
+								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
+							</label>
+							<label className="packages-core-check packages-core-check--included">
+								<input type="checkbox" checked disabled readOnly />
+								<span>{t.heroCoreFeat2}</span>
+								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
+							</label>
+							<label className="packages-core-check packages-core-check--included">
+								<input type="checkbox" checked disabled readOnly />
+								<span>{t.heroCoreFeatReports}</span>
+								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
+							</label>
+							<p className="packages-core-modules-group-label packages-core-modules-group-label--optional">
+								{t.coreOptionalLabel}
+							</p>
 							{landingModules.map(m => (
 								<label key={m.id} className="packages-core-check">
 									<input
@@ -625,6 +666,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 									<span className="packages-tier__feature-check" aria-hidden>
 										✓
 									</span>
+									<span className="packages-tier__feature-text">
+										<strong>{t.heroCoreFeatReports}</strong>
+									</span>
+								</li>
+								<li className="packages-tier__feature">
+									<span className="packages-tier__feature-check" aria-hidden>
+										✓
+									</span>
 									<span className="packages-tier__feature-text">{t.heroCoreFeat3}</span>
 								</li>
 							</ul>
@@ -668,14 +717,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 									<ul className="packages-tier__features">
 										{bundle.id === 'pro' ? (
 											<>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">
-														<strong>{t.proBulletModules}</strong>
-													</span>
-												</li>
+												{t.bundleModules.map(module => (
+													<li key={module} className="packages-tier__feature">
+														<span className="packages-tier__feature-check" aria-hidden>
+															✓
+														</span>
+														<span className="packages-tier__feature-text">{module}</span>
+													</li>
+												))}
 												<li className="packages-tier__feature">
 													<span className="packages-tier__feature-check" aria-hidden>
 														✓
@@ -691,14 +740,14 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 											</>
 										) : (
 											<>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">
-														<strong>{t.businessBulletModules}</strong>
-													</span>
-												</li>
+												{t.bundleModules.map(module => (
+													<li key={module} className="packages-tier__feature">
+														<span className="packages-tier__feature-check" aria-hidden>
+															✓
+														</span>
+														<span className="packages-tier__feature-text">{module}</span>
+													</li>
+												))}
 												<li className="packages-tier__feature">
 													<span className="packages-tier__feature-check" aria-hidden>
 														✓

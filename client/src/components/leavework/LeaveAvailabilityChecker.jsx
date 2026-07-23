@@ -196,7 +196,10 @@ function LeaveAvailabilityChecker({
 					)}
 
 					<div>
-						<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', alignItems: 'end' }}>
+						<div
+							className={`leave-availability-checker__controls leave-availability-checker__controls--${mode}`}
+							style={{ display: 'grid', gap: '10px', alignItems: 'end' }}
+						>
 							<label className="leave-availability-checker__radio-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>
 								<input
 									type="radio"

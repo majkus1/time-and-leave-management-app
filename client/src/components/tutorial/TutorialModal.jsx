@@ -97,6 +97,18 @@ function TutorialModal({ isOpen, onClose }) {
 	// Podstawowe sekcje dla wszystkich użytkowników
 	const baseSections = [
 		{
+			id: 'start-dashboard',
+			title: i18n.resolvedLanguage === 'pl' ? 'Start' : 'Home dashboard',
+			icon: '/img/home.png',
+			description: i18n.resolvedLanguage === 'pl'
+				? 'Najważniejsze sprawy zespołu i Twojej pracy w jednym miejscu'
+				: 'Your work and the team’s priorities in one place',
+			path: '/dashboard',
+			content: i18n.resolvedLanguage === 'pl'
+				? 'Strona „Start” daje szybki obraz dnia: czas pracy, zadania, wnioski urlopowe, grafiki, komunikację i sprawy wymagające uwagi. Zakres informacji jest dopasowany do roli użytkownika oraz modułów planu, dzięki czemu każdy widzi przede wszystkim to, co pomaga mu działać.\n\nJeśli „Start” nie jest widoczny w menu, Administrator lub HR może włączyć go dla całego zespołu w Ustawieniach → Strona Start (pulpit główny).'
+				: 'The Home dashboard gives you a quick view of the day: work time, tasks, leave requests, schedules, communication, and items that need attention. Information is matched to the user’s role and the plan modules, so everyone sees what helps them act.\n\nIf Home is not visible in the sidebar, an Admin or HR user can enable it for the whole team under Settings → Home dashboard.',
+		},
+		{
 			id: 'login-session',
 			title: i18n.resolvedLanguage === 'pl' ? 'Logowanie i sesja' : 'Login and Session',
 			icon: '/img/auth.png',
@@ -397,6 +409,7 @@ function TutorialModal({ isOpen, onClose }) {
 
 	const pl = i18n.resolvedLanguage === 'pl'
 	const FREEMIUM_OMIT_BASE_IDS = new Set([
+		'start-dashboard',
 		'leave-request',
 		'timer',
 		'boards',
@@ -602,45 +615,6 @@ function TutorialModal({ isOpen, onClose }) {
 								: 'Learn about the main features of the app and how to use them')
 						}
 					</p>
-					<a
-						className="tutorial-modal-video-link"
-						href={
-							i18n.resolvedLanguage === 'pl'
-								? 'https://planopia.pl/blog/instrukcja-wideo-planopia'
-								: 'https://planopia.pl/en/blog/video-tutorials'
-						}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label={
-							i18n.resolvedLanguage === 'pl'
-								? 'Materiały wideo — otwiera się w nowej karcie'
-								: 'Video tutorials — opens in a new tab'
-						}
-					>
-						<svg
-							width="22"
-							height="22"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							aria-hidden
-							style={{ flexShrink: 0 }}
-						>
-							<circle cx="12" cy="12" r="10" />
-							<polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
-						</svg>
-						<span>
-							{i18n.resolvedLanguage === 'pl'
-								? 'Materiały wideo — krótkie nagrania z aplikacji'
-								: 'Video tutorials — short clips from the app'}
-						</span>
-						<span className="tutorial-modal-video-link__arrow" aria-hidden>
-							↗
-						</span>
-					</a>
 				</div>
 			</div>
 

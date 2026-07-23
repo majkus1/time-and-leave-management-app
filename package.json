@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-		"test:server": "node --test server/tests/entitlementsAndFreemiumPolicy.test.js server/tests/boardAccess.test.js server/tests/logAccessPolicy.test.js server/tests/vacationAccessPolicy.test.js server/tests/authTokens.test.js server/tests/userProfileAccessPolicy.test.js server/tests/chatChannelAccess.test.js server/tests/teamScopeAccess.test.js server/tests/timesheetAccess.test.js server/tests/supervisorAccessPolicy.test.js server/tests/uploadAccessPolicy.test.js server/tests/attachmentUploadPolicy.test.js server/tests/stripeBillingPayloadCompatibility.test.js",
+		"test:server": "node --test server/tests/entitlementsAndFreemiumPolicy.test.js server/tests/boardAccess.test.js server/tests/logAccessPolicy.test.js server/tests/vacationAccessPolicy.test.js server/tests/authTokens.test.js server/tests/userProfileAccessPolicy.test.js server/tests/chatChannelAccess.test.js server/tests/teamScopeAccess.test.js server/tests/timesheetAccess.test.js server/tests/supervisorAccessPolicy.test.js server/tests/uploadAccessPolicy.test.js server/tests/attachmentUploadPolicy.test.js server/tests/dashboardSummaryService.test.js server/tests/stripeBillingPayloadCompatibility.test.js",
     "migrate": "node server/migrations/addTeamIdToUsers.js",
     "simulate:trial-lapsed": "node server/scripts/simulateTeamTrialExpired.js",
     "simulate:legacy-grace": "node server/scripts/simulateTeamLegacyGrace.js",

@@ -1395,24 +1395,6 @@
 	background-color: var(--po-surface-hover) !important;
 }
 
-[data-theme='dark'] .tutorial-modal-video-link {
-	background: var(--po-info-soft) !important;
-	border-color: rgba(96, 165, 250, 0.4) !important;
-	color: var(--po-info) !important;
-	box-shadow: none !important;
-}
-
-[data-theme='dark'] .tutorial-modal-video-link:hover {
-	background: rgba(96, 165, 250, 0.2) !important;
-	border-color: var(--po-info) !important;
-	box-shadow: 0 2px 8px rgba(96, 165, 250, 0.15) !important;
-}
-
-[data-theme='dark'] .tutorial-modal-video-link span,
-[data-theme='dark'] .tutorial-modal-video-link svg {
-	color: var(--po-info) !important;
-}
-
 [data-theme='dark'] .tutorial-modal-section {
 	background-color: var(--po-surface) !important;
 	border-color: var(--po-border) !important;
@@ -1484,7 +1466,7 @@
 }
 
 [data-theme='dark'] .tutorial-modal-content p,
-[data-theme='dark'] .tutorial-modal-content span:not(.tutorial-modal-video-link__arrow),
+[data-theme='dark'] .tutorial-modal-content span,
 [data-theme='dark'] .tutorial-modal-content li {
 	color: inherit;
 }
@@ -7088,6 +7070,12 @@
 [data-theme='dark'] .packages-core-radio span,
 [data-theme='dark'] .packages-core-check span {
 	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .packages-core-check .packages-core-included-badge {
+	background: rgba(34, 197, 94, 0.16) !important;
+	border: 1px solid rgba(74, 222, 128, 0.34);
+	color: #86efac !important;
 }
 
 [data-theme='dark'] .packages-core-step__title {

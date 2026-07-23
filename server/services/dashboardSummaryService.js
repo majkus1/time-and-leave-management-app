@@ -15,8 +15,10 @@ const Settings = require('../models/Settings')(firmDb)
 const entitlementsService = require('./entitlementsService')
 const { isHoliday, getHolidaysInRange } = require('../utils/holidays')
 const { canSupervisorApproveLeaves, canSupervisorViewTimesheets } = require('./roleService')
-
-const BUNDLE_PLAN_KEYS = new Set(['pro', 'business', 'enterprise'])
+const {
+	buildDashboardModules,
+	loadPendingLeaveRequests,
+} = require('./dashboardSummaryHelpers')
 
 function startOfDay(date) {
 	const d = new Date(date)
@@ -96,19 +98,6 @@ function activeUserQuery(teamId) {
 		teamId,
 		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
 	}
-}
-
-function hasModule(entitlements, moduleKey) {
-	if (!moduleKey) return true
-	if (!entitlements) return false
-	if (entitlements.freemiumTier === true || entitlements.freemiumSeatBlocked === true) return false
-	if (entitlements.ai?.unrestricted === true) return true
-	if (entitlements.legacy === true || entitlements.legacyGrandfatheredActive === true) return true
-	if (entitlements.planKey === 'trial') return true
-	if (BUNDLE_PLAN_KEYS.has(entitlements.planKey)) return true
-	return Array.isArray(entitlements.modules?.effectiveKeys)
-		? entitlements.modules.effectiveKeys.includes(moduleKey)
-		: false
 }
 
 async function resolveViewerAndTeam(userId) {
@@ -265,14 +254,14 @@ async function buildLeaveSummary({ viewer, scope, teamUsers, todayStart, todayEn
 		.lean()
 
 	const pendingQueryIds = approvableIds.length > 0 ? approvableIds : [selfId]
-	const pending = await LeaveRequest.find({
+	const pendingQuery = {
 		userId: { $in: pendingQueryIds },
 		status: 'status.pending',
-	})
-		.populate('userId', 'firstName lastName username department')
-		.sort({ startDate: 1 })
-		.limit(8)
-		.lean()
+	}
+	const { pendingCount, pending } = await loadPendingLeaveRequests(
+		LeaveRequest,
+		pendingQuery
+	)
 
 	const upcoming = await LeaveRequest.find({
 		userId: { $in: teamMemberIds },
@@ -293,8 +282,8 @@ async function buildLeaveSummary({ viewer, scope, teamUsers, todayStart, todayEn
 		.lean()
 
 	return {
-		pendingCount: pending.length,
-		pendingPreview: pending.slice(0, 4).map(req => ({
+		pendingCount,
+		pendingPreview: pending.map(req => ({
 			id: req._id,
 			userName: personName(req.userId),
 			type: req.type,
@@ -537,23 +526,6 @@ async function buildCommunicationSummary({ viewer, modules }) {
 			title: item.title,
 			createdAt: item.createdAt,
 		})),
-	}
-}
-
-function buildDashboardModules(entitlements, timerEnabledSetting) {
-	const premiumUnlocked = entitlements.freemiumTier !== true && entitlements.freemiumSeatBlocked !== true
-	return {
-		work: true,
-		timeTracking:
-			timerEnabledSetting &&
-			entitlements.freemiumTier !== true &&
-			entitlements.freemiumSeatBlocked !== true,
-		leaves: premiumUnlocked,
-		tasks: premiumUnlocked && hasModule(entitlements, 'tasks'),
-		chat: premiumUnlocked && hasModule(entitlements, 'chat'),
-		schedules: premiumUnlocked && hasModule(entitlements, 'schedules_ai'),
-		ai: hasModule(entitlements, 'ai_assistant') || entitlements.ai?.hasAccess === true,
-		announcements: premiumUnlocked,
 	}
 }
 

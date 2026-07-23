@@ -125,8 +125,8 @@ function ProductPromotion() {
           <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
 		  <img src="/img/task-list.png" className='icon-landing-about' alt='Ikona tablic zadań Kanban' width={35} height={35} loading="lazy" decoding="async" />
             <div>
-			<p className="font-semibold text-gray-900">Tablice zadań</p>
-<p className="text-sm text-gray-600">Zarządzanie projektami i zadaniami w przejrzystych tablicach Kanban.</p>
+			<p className="font-semibold text-gray-900">Zadania i Projekty</p>
+<p className="text-sm text-gray-600">Zarządzanie zadaniami i projektami w przejrzystych tablicach Kanban.</p>
             </div>
           </div>
           {/* 7 */}
@@ -274,7 +274,6 @@ function ProductPromotion() {
 }
 
 export default ProductPromotion
-
 
 
 

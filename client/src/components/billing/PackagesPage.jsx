@@ -58,7 +58,7 @@ const PAID_PLAN_IDS = ['base_s', 'base_m', 'base_l', 'pro', 'business', 'enterpr
 const MODULE_LABELS = {
 	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
 	schedules_ai: { pl: 'Grafiki + AI', en: 'Schedules + AI' },
-	tasks: { pl: 'Zadania (kanban)', en: 'Tasks (Kanban)' },
+	tasks: { pl: 'Zadania i Projekty', en: 'Tasks and Projects' },
 	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
 	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
 }
@@ -1201,6 +1201,8 @@ export default function PackagesPage() {
 
 				{(() => {
 					const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+					const bundleModules = t('billingPackages.bundleModules', { returnObjects: true })
+					const bundleModuleLines = Array.isArray(bundleModules) ? bundleModules : []
 					const isCorePlanActive =
 						activePaid && ent && ['base_s', 'base_m', 'base_l'].includes(ent.planKey)
 					const corePb =
@@ -1245,14 +1247,14 @@ export default function PackagesPage() {
 								<ul className="packages-tier__features">
 									{tier.id === 'pro' ? (
 										<>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">
-													<strong>{t('billingPackages.proBulletModules')}</strong>
-												</span>
-											</li>
+											{bundleModuleLines.map(module => (
+												<li key={module} className="packages-tier__feature">
+													<span className="packages-tier__feature-check" aria-hidden>
+														✓
+													</span>
+													<span className="packages-tier__feature-text">{module}</span>
+												</li>
+											))}
 											<li className="packages-tier__feature">
 												<span className="packages-tier__feature-check" aria-hidden>
 													✓
@@ -1268,14 +1270,14 @@ export default function PackagesPage() {
 										</>
 									) : tier.id === 'business' ? (
 										<>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">
-													<strong>{t('billingPackages.businessBulletModules')}</strong>
-												</span>
-											</li>
+											{bundleModuleLines.map(module => (
+												<li key={module} className="packages-tier__feature">
+													<span className="packages-tier__feature-check" aria-hidden>
+														✓
+													</span>
+													<span className="packages-tier__feature-text">{module}</span>
+												</li>
+											))}
 											<li className="packages-tier__feature">
 												<span className="packages-tier__feature-check" aria-hidden>
 													✓
@@ -1423,6 +1425,14 @@ export default function PackagesPage() {
 											</span>
 											<span className="packages-tier__feature-text">
 												<strong>{t('billingPackages.heroCoreFeat2')}</strong>
+											</span>
+										</li>
+										<li className="packages-tier__feature">
+											<span className="packages-tier__feature-check" aria-hidden>
+												✓
+											</span>
+											<span className="packages-tier__feature-text">
+												<strong>{t('billingPackages.heroCoreFeatReports')}</strong>
 											</span>
 										</li>
 										<li className="packages-tier__feature">
@@ -1781,6 +1791,33 @@ export default function PackagesPage() {
 									<legend className="packages-core-legend packages-core-legend--vh">
 										{t('billingPackages.coreConfiguratorStep2Title')}
 									</legend>
+									<p className="packages-core-modules-group-label">
+										{t('billingPackages.coreConfiguratorIncludedLabel')}
+									</p>
+									<label className="packages-core-check packages-core-check--included">
+										<input type="checkbox" checked disabled readOnly />
+										<span>{t('billingPackages.heroCoreFeat1')}</span>
+										<span className="packages-core-included-badge">
+											{t('billingPackages.coreConfiguratorIncludedBadge')}
+										</span>
+									</label>
+									<label className="packages-core-check packages-core-check--included">
+										<input type="checkbox" checked disabled readOnly />
+										<span>{t('billingPackages.heroCoreFeat2')}</span>
+										<span className="packages-core-included-badge">
+											{t('billingPackages.coreConfiguratorIncludedBadge')}
+										</span>
+									</label>
+									<label className="packages-core-check packages-core-check--included">
+										<input type="checkbox" checked disabled readOnly />
+										<span>{t('billingPackages.heroCoreFeatReports')}</span>
+										<span className="packages-core-included-badge">
+											{t('billingPackages.coreConfiguratorIncludedBadge')}
+										</span>
+									</label>
+									<p className="packages-core-modules-group-label packages-core-modules-group-label--optional">
+										{t('billingPackages.coreConfiguratorOptionalLabel')}
+									</p>
 									{catalog.modules.map(m => (
 										<label key={m.id} className="packages-core-check">
 											<input

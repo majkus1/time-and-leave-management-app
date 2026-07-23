@@ -411,6 +411,41 @@
 	margin-top: 0.12rem;
 }
 
+.landing-pricing-app-clone .packages-core-modules-group-label {
+	margin: 0 0 0.55rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: #334155;
+}
+
+.landing-pricing-app-clone .packages-core-modules-group-label--optional {
+	margin-top: 1rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid #e2e8f0;
+}
+
+.landing-pricing-app-clone .packages-core-check--included {
+	align-items: center;
+	cursor: default;
+	color: #0f5132;
+}
+
+.landing-pricing-app-clone .packages-core-check--included input:disabled {
+	opacity: 1;
+	cursor: default;
+}
+
+.landing-pricing-app-clone .packages-core-included-badge {
+	margin-left: auto;
+	border-radius: 999px;
+	background: #dcfce7;
+	padding: 0.18rem 0.5rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: #166534;
+	white-space: nowrap;
+}
+
 .landing-pricing-app-clone .packages-core-total {
 	margin-top: 1rem;
 	padding: 0.65rem 0.85rem;
