@@ -15,6 +15,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { resolveExportExecutionContext } = require('./aiExportIntentService')
 const { roundWorkHoursForDisplay } = require('../utils/workHoursDisplay')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { getLeaveRequestQuantity } = require('../utils/leaveSettlement')
 const { PDF_REPORT_THEME } = require('../constants/pdfReportTheme')
 
 /** Gdy brak wpisu w Settings — te same nazwy co domyślne w models/Settings.js */
@@ -227,7 +228,10 @@ function labels(locale) {
 		from: en ? 'From' : 'Od',
 		to: en ? 'To' : 'Do',
 		type: en ? 'Type' : 'Typ',
-		days: en ? 'Days' : 'Dni',
+		days: en ? 'Amount' : 'Ilość',
+		unit: en ? 'Unit' : 'Jedn.',
+		unitDays: en ? 'days' : 'dni',
+		unitHours: en ? 'h' : 'godz.',
 		status: en ? 'Status' : 'Status',
 		date: en ? 'Date' : 'Data',
 		hours: en ? 'Hours' : 'Godziny',
@@ -241,11 +245,26 @@ function labels(locale) {
 	}
 }
 
+/**
+ * Ilosc wniosku w jego wlasnej jednostce (dni albo godziny) — liczba zostaje liczba,
+ * zeby Excel dalej mogl sumowac i sortowac, a jednostka idzie w osobnej kolumnie.
+ */
+function leaveExportAmount(request, settings) {
+	const quantity = getLeaveRequestQuantity(request, settings)
+	return roundDecimal(quantity.value, 2)
+}
+
+function leaveExportUnit(request, settings, L) {
+	return getLeaveRequestQuantity(request, settings).unit === 'hours' ? L.unitHours : L.unitDays
+}
+
 async function fetchLeaves(ctx) {
 	const { range, allowedUserIds, leaveStatuses, requestingUser } = ctx
 	let settings = null
 	if (requestingUser?.teamId) {
-		settings = await Settings.findOne({ teamId: requestingUser.teamId }).select('leaveRequestTypes').lean()
+		settings = await Settings.findOne({ teamId: requestingUser.teamId })
+			.select('leaveRequestTypes leaveCalculationMode leaveHoursPerDay')
+			.lean()
 	}
 	if (allowedUserIds.length === 0) return { rows: [], users: [], settings }
 	const rows = await LeaveRequest.find({
@@ -368,7 +387,8 @@ async function buildExcelLeaves(ctx, data) {
 		{ header: L.from, key: 'f', width: 12 },
 		{ header: L.to, key: 't', width: 12 },
 		{ header: L.type, key: 'ty', width: 22 },
-		{ header: L.days, key: 'd', width: 8 },
+		{ header: L.days, key: 'd', width: 10 },
+		{ header: L.unit, key: 'u', width: 8 },
 		{ header: L.status, key: 's', width: 22 },
 	]
 	for (const r of data.rows) {
@@ -377,7 +397,8 @@ async function buildExcelLeaves(ctx, data) {
 			f: formatDate(r.startDate),
 			t: formatDate(r.endDate),
 			ty: formatLeaveTypeForExport(data.settings, r.type, ctx.locale),
-			d: roundDecimal(r.daysRequested, 2),
+			d: leaveExportAmount(r, data.settings),
+			u: leaveExportUnit(r, data.settings, L),
 			s: formatLeaveStatusForExport(r.status, ctx.locale),
 		})
 	}
@@ -458,12 +479,13 @@ async function buildPdfLeaves(ctx, data) {
 		formatDate(r.startDate),
 		formatDate(r.endDate),
 		formatLeaveTypeForExport(data.settings, r.type, ctx.locale),
-		String(roundDecimal(r.daysRequested, 2) ?? ''),
+		String(leaveExportAmount(r, data.settings) ?? ''),
+		leaveExportUnit(r, data.settings, L),
 		formatLeaveStatusForExport(r.status, ctx.locale),
 	])
 	const content = [
 		{ text: `${L.leaves} — ${formatDate(ctx.range.start)}–${formatDate(ctx.range.end)}`, style: 'h', margin: [0, 0, 0, 10] },
-		pdfTable([L.name, L.from, L.to, L.type, L.days, L.status], rows, ['*', 50, 50, 55, 35, 60]),
+		pdfTable([L.name, L.from, L.to, L.type, L.days, L.unit, L.status], rows, ['*', 48, 48, 52, 32, 28, 56]),
 	]
 	if (data.rows.length > 120) {
 		content.push({ text: `+${data.rows.length - 120}…`, italics: true, fontSize: 8 })
@@ -570,10 +592,11 @@ async function buildPdfCombined(ctx, leavesData, workdaysData, tasksData) {
 			formatDate(r.startDate),
 			formatDate(r.endDate),
 			formatLeaveTypeForExport(leavesData.settings, r.type, ctx.locale),
-			String(roundDecimal(r.daysRequested, 2) ?? ''),
+			String(leaveExportAmount(r, leavesData.settings) ?? ''),
+			leaveExportUnit(r, leavesData.settings, L),
 			formatLeaveStatusForExport(r.status, ctx.locale),
 		])
-		content.push(pdfTable([L.name, L.from, L.to, L.type, L.days, L.status], lvRows, ['*', 45, 45, 50, 32, 55]))
+		content.push(pdfTable([L.name, L.from, L.to, L.type, L.days, L.unit, L.status], lvRows, ['*', 43, 43, 46, 30, 26, 52]))
 		if (leavesData.rows.length > 80) {
 			content.push({ text: `+${leavesData.rows.length - 80}…`, italics: true, fontSize: 8 })
 		}
@@ -652,7 +675,8 @@ async function buildExcelCombined(ctx, leavesData, workdaysData, tasksData) {
 		{ header: L.from, key: 'f', width: 12 },
 		{ header: L.to, key: 't', width: 12 },
 		{ header: L.type, key: 'ty', width: 22 },
-		{ header: L.days, key: 'd', width: 8 },
+		{ header: L.days, key: 'd', width: 10 },
+		{ header: L.unit, key: 'u', width: 8 },
 		{ header: L.status, key: 's', width: 22 },
 	]
 	for (const r of leavesData.rows) {
@@ -661,7 +685,8 @@ async function buildExcelCombined(ctx, leavesData, workdaysData, tasksData) {
 			f: formatDate(r.startDate),
 			t: formatDate(r.endDate),
 			ty: formatLeaveTypeForExport(leavesData.settings, r.type, ctx.locale),
-			d: roundDecimal(r.daysRequested, 2),
+			d: leaveExportAmount(r, leavesData.settings),
+			u: leaveExportUnit(r, leavesData.settings, L),
 			s: formatLeaveStatusForExport(r.status, ctx.locale),
 		})
 	}
