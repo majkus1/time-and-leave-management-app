@@ -109,5 +109,6 @@ module.exports = {
 	isLeaveRequestTypeValid,
 	requiresApproval,
 	getEnabledLeaveRequestTypes,
+	getLeaveRequestTypeById,
 	getLeaveRequestTypeName
 }
