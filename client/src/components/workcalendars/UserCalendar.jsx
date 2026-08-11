@@ -20,6 +20,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { useActiveTimer } from '../../hooks/useTimer'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { isHourlyLeaveRequest } from '../../utils/leaveSettlement'
 import WorkSessionList from './WorkSessionList'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useAlert } from '../../context/AlertContext'
@@ -516,6 +517,7 @@ function UserCalendar() {
 		if (!settings) return // Czekaj na załadowanie ustawień
 		let hours = 0
 		let leaveDays = 0
+		let hourlyLeaveHours = 0
 		let overtime = 0
 		let workDaysSet = new Set()
 		let otherAbsences = 0
@@ -566,6 +568,13 @@ function UserCalendar() {
 				(requestStartYear < year && requestEndYear > year) ||
 				(requestStartYear === year && requestEndYear === year && requestStartMonth <= month && requestEndMonth >= month)
 			) {
+				// Wniosek godzinowy nie jest pełnym dniem nieobecności — nie wchodzi do liczników
+				// dni, tylko dokłada godziny do sumy godzin urlopowych.
+				if (isHourlyLeaveRequest(request)) {
+					hourlyLeaveHours += Number(request.hoursRequested) || 0
+					return
+				}
+
 				// Sprawdź typ urlopu - użyj przetłumaczonego tekstu
 				const translatedType = t(request.type).toLowerCase()
 				const isVacation = translatedType.includes('urlop') || translatedType.includes('vacation') || translatedType.includes('leave')
@@ -650,9 +659,9 @@ function UserCalendar() {
 		setAdditionalHours(overtime)
 		setTotalWorkDays(workDaysSet.size)
 		setTotalLeaveDays(leaveDays)
-		// Oblicz godziny urlopu na podstawie konfiguracji
+		// Oblicz godziny urlopu: pełne dni × długość dnia + godziny z wniosków godzinowych
 		const leaveHoursPerDay = settings?.leaveHoursPerDay || 8
-		setTotalLeaveHours(leaveDays * leaveHoursPerDay)
+		setTotalLeaveHours(leaveDays * leaveHoursPerDay + hourlyLeaveHours)
 		setTotalOtherAbsences(otherAbsences)
 		setTotalHolidays(holidaysCount)
 	}

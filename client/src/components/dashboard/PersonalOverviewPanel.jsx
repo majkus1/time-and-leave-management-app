@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { isHourlyLeaveRequest } from '../../utils/leaveSettlement'
 
 const copy = {
 	pl: {
@@ -10,6 +11,7 @@ const copy = {
 		pending: 'Oczekujące',
 		limit: 'Limit',
 		days: 'dni',
+		hours: 'godz.',
 		requestLeave: 'Złóż wniosek',
 		planner: 'Planer urlopów',
 		nextLeave: 'Twój najbliższy urlop',
@@ -22,6 +24,7 @@ const copy = {
 		endsInDays: 'Kończy się za {{count}} dni',
 		todayHoliday: 'Dziś',
 		duration: '{{count}} dni',
+		durationHours: '{{count}} godz.',
 		noLimits: 'Brak skonfigurowanych limitów urlopowych dla Twojego konta.',
 		noHoliday: 'Brak nadchodzących świąt w kalendarzu zespołu.',
 	},
@@ -33,6 +36,7 @@ const copy = {
 		pending: 'Pending',
 		limit: 'Limit',
 		days: 'days',
+		hours: 'h',
 		requestLeave: 'Request leave',
 		planner: 'Leave planner',
 		nextLeave: 'Your next leave',
@@ -45,6 +49,7 @@ const copy = {
 		endsInDays: 'Ends in {{count}} days',
 		todayHoliday: 'Today',
 		duration: '{{count}} days',
+		durationHours: '{{count}} h',
 		noLimits: 'No leave limits are configured for your account.',
 		noHoliday: 'No upcoming holidays in the team calendar.',
 	},
@@ -81,6 +86,7 @@ function PersonalOverviewPanel({ personal, language }) {
 
 	const leaveLimits = personal.leaveLimits || []
 	const nextLeave = personal.nextLeave
+	const nextLeaveIsHourly = isHourlyLeaveRequest(nextLeave)
 	const holiday = personal.holidays?.next
 	const holidaysEnabled = personal.holidays?.enabled === true
 	const showLimits = leaveLimits.length > 0
@@ -109,7 +115,7 @@ function PersonalOverviewPanel({ personal, language }) {
 							<article key={item.typeId} className="po-dashboard-personal__limit-card">
 								<div className="po-dashboard-personal__limit-top">
 									<strong>{typeLabel(item)}</strong>
-									<span>{text.remaining}: {formatNumber(item.remaining, lang)} {text.days}</span>
+									<span>{text.remaining}: {formatNumber(item.remaining, lang)} {item.unit === 'hours' ? text.hours : text.days}</span>
 								</div>
 								<div className="po-dashboard-personal__limit-track" aria-hidden="true">
 									<div
@@ -137,9 +143,13 @@ function PersonalOverviewPanel({ personal, language }) {
 								<strong>{typeLabel(nextLeave)}</strong>
 								<p>{formatDateRange(nextLeave.startDate, nextLeave.endDate, lang)}</p>
 								<div className="po-dashboard-personal__next-leave-meta">
-									{nextLeave.daysRequested > 0 && (
-										<small>{text.duration.replace('{{count}}', formatNumber(nextLeave.daysRequested, lang))}</small>
-									)}
+									{nextLeaveIsHourly
+										? nextLeave.hoursRequested > 0 && (
+											<small>{text.durationHours.replace('{{count}}', formatNumber(nextLeave.hoursRequested, lang))}</small>
+										)
+										: nextLeave.daysRequested > 0 && (
+											<small>{text.duration.replace('{{count}}', formatNumber(nextLeave.daysRequested, lang))}</small>
+										)}
 									<small>
 										{nextLeave.isOngoing
 											? text.endsInDays.replace('{{count}}', String(nextLeave.daysRemaining ?? 0))

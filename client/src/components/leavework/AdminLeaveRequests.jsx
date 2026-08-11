@@ -9,6 +9,7 @@ import { useUpdateVacationDays } from '../../hooks/useVacation'
 import { useUserLeaveRequests, useUpdateLeaveRequestStatus } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { formatLeaveQuantityValue, getLeaveRequestQuantityLabel, resolveLeaveTypeSettlement } from '../../utils/leaveSettlement'
 import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filterLeaveRequestsByPeriod, filterLeaveRequestsByStatuses } from '../../utils/leaveRequestPeriod'
 import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
 import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
@@ -188,17 +189,26 @@ function AdminLeaveRequests() {
 							{leaveTypesWithLimit.map(leaveType => {
 								const typeName = i18n.resolvedLanguage === 'en' && leaveType.nameEn ? leaveType.nameEn : leaveType.name
 								const currentValue = leaveTypeDays[leaveType.id] || ''
+								// Pula jest liczba w jednostce typu — przy typie godzinowym 16 znaczy 16 godzin.
+								const typeSettlement = resolveLeaveTypeSettlement(settings, leaveType.id)
+								const isHourlyType = typeSettlement.unit === 'hours'
 								return (
 									<div key={leaveType.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
 										<label style={{ fontSize: '14px', fontWeight: '500' }}>{typeName}</label>
-										<input
-											type="number"
-											min="0"
-											value={currentValue}
-											onChange={e => handleLeaveTypeDaysChange(leaveType.id, e.target.value)}
-											style={{ width: '96px', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '8px' }}
-											className='focus:outline-none focus:ring-2 focus:ring-blue-500'
-										/>
+										<span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+											<input
+												type="number"
+												min="0"
+												step={isHourlyType ? '0.5' : '1'}
+												value={currentValue}
+												onChange={e => handleLeaveTypeDaysChange(leaveType.id, e.target.value)}
+												style={{ width: '96px', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '8px' }}
+												className='focus:outline-none focus:ring-2 focus:ring-blue-500'
+											/>
+											<span style={{ fontSize: '13px', color: '#6b7280', minWidth: '38px' }}>
+												{isHourlyType ? (t('leaveRequestInsights.hours') || 'godz.') : (t('leaveRequestInsights.days') || 'dni')}
+											</span>
+										</span>
 									</div>
 								)
 							})}

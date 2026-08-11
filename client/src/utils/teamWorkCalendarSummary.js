@@ -1,5 +1,6 @@
 import { getHolidaysInRange } from './holidays'
 import { getLeaveRequestTypeName } from './leaveRequestTypes'
+import { isHourlyLeaveRequest } from './leaveSettlement'
 
 function getWorkdayUserKey(day) {
 	if (!day?.userId) return 'unknown'
@@ -25,6 +26,7 @@ export function computeTeamTotalsForMonth({
 }) {
 	let hours = 0
 	let leaveDays = 0
+	let hourlyLeaveHours = 0
 	const workDaysSet = new Set()
 	let otherAbsences = 0
 	let overtime = 0
@@ -79,6 +81,13 @@ export function computeTeamTotalsForMonth({
 					requestStartMonth <= month &&
 					requestEndMonth >= month)
 			) {
+				// Wniosek godzinowy nie jest pełnym dniem nieobecności — nie wchodzi do liczników
+				// dni, tylko dokłada swoje godziny do sumy godzin urlopowych (niżej).
+				if (isHourlyLeaveRequest(request)) {
+					hourlyLeaveHours += Number(request.hoursRequested) || 0
+					return
+				}
+
 				const translatedType = getLeaveRequestTypeName(
 					settings,
 					request.type,
@@ -161,7 +170,9 @@ export function computeTeamTotalsForMonth({
 		totalHours: hours,
 		overtime,
 		leaveDays,
-		leaveHours: leaveDays * leaveHoursPerDay,
+		// leaveHours = pełne dni urlopu × długość dnia + godziny z wniosków godzinowych
+		leaveHours: leaveDays * leaveHoursPerDay + hourlyLeaveHours,
+		hourlyLeaveHours,
 		otherAbsences,
 		holidaysCount,
 	}
@@ -174,6 +185,7 @@ export function aggregateYearTeamTotals(monthlyRows) {
 		overtime: 0,
 		leaveDays: 0,
 		leaveHours: 0,
+		hourlyLeaveHours: 0,
 		otherAbsences: 0,
 		holidaysCount: 0,
 	}
@@ -183,6 +195,7 @@ export function aggregateYearTeamTotals(monthlyRows) {
 		acc.overtime += row.overtime
 		acc.leaveDays += row.leaveDays
 		acc.leaveHours += row.leaveHours
+		acc.hourlyLeaveHours += row.hourlyLeaveHours || 0
 		acc.otherAbsences += row.otherAbsences
 		acc.holidaysCount += row.holidaysCount
 		return acc

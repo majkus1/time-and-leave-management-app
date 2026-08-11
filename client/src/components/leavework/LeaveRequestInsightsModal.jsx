@@ -12,6 +12,7 @@ import {
 	filterLeaveRequestsByStatuses,
 } from '../../utils/leaveRequestPeriod'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { getLeaveRequestAmountInUnit, isHourlyLeaveRequest, resolveLeaveTypeSettlement } from '../../utils/leaveSettlement'
 import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
 import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
@@ -69,7 +70,8 @@ function LeaveRequestInsightsModal({
 	const durationUnit = settings?.leaveCalculationMode === 'hours'
 		? t('leaveRequestInsights.hours')
 		: t('leaveRequestInsights.days')
-	const limitUnit = t('leaveRequestInsights.days')
+	// Jednostka limitu wynika z typu, nie z globalnego ustawienia zespolu.
+	const unitLabel = (unit) => (unit === 'hours' ? t('leaveRequestInsights.hours') : t('leaveRequestInsights.days'))
 	const formatDuration = (value) => (
 		new Intl.NumberFormat(i18n.resolvedLanguage, { maximumFractionDigits: 1 }).format(value)
 	)
@@ -95,9 +97,9 @@ function LeaveRequestInsightsModal({
 			.map((request) => {
 				const statusKey = String(request?.status || '').replace('status.', '')
 				const daysInPeriod = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
-				const duration = settings?.leaveCalculationMode === 'hours'
-					? daysInPeriod * (Number(settings?.leaveHoursPerDay) || 8)
-					: daysInPeriod
+				const settlement = resolveLeaveTypeSettlement(settings, request?.type)
+				const rowUnit = isHourlyLeaveRequest(request) ? 'hours' : settlement.unit
+				const duration = getLeaveRequestAmountInUnit(request, rowUnit, settlement.hoursPerDay, daysInPeriod)
 				return {
 					id: request?._id,
 					type: getLeaveRequestTypeName(settings, request?.type, t, i18n.resolvedLanguage),
@@ -106,6 +108,7 @@ function LeaveRequestInsightsModal({
 					startDate: request?.startDate,
 					endDate: request?.endDate,
 					duration,
+					durationUnit: rowUnit,
 					daysInPeriod,
 					replacement: request?.replacement || '-',
 					additionalInfo: request?.additionalInfo || '-',
@@ -117,9 +120,7 @@ function LeaveRequestInsightsModal({
 	const yearlyBreakdownEnabled = selectedYear !== 'all' && selectedMonth === 'all'
 	const monthlySummaryRows = React.useMemo(() => {
 		if (!yearlyBreakdownEnabled) return []
-		const multiplier = settings?.leaveCalculationMode === 'hours'
-			? Number(settings?.leaveHoursPerDay) || 8
-			: 1
+		const primaryUnit = settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days'
 		return Array.from({ length: 12 }, (_, month) => {
 			const monthRequests = []
 			const totals = {
@@ -135,7 +136,9 @@ function LeaveRequestInsightsModal({
 				const days = countLeaveRequestDaysInPeriod(request, selectedYear, month, settings)
 				if (!days) continue
 				const statusKey = String(request?.status || '').replace('status.', '')
-				const duration = days * multiplier
+				// Wszystko sprowadzamy do jednostki wiodacej zespolu, zeby nie sumowac dni z godzinami.
+				const settlement = resolveLeaveTypeSettlement(settings, request?.type)
+				const duration = getLeaveRequestAmountInUnit(request, primaryUnit, settlement.hoursPerDay, days)
 				monthRequests.push(request)
 				totals.total += duration
 				if (LEAVE_REQUEST_STATUS_KEYS.includes(statusKey)) totals[statusKey] += duration
@@ -308,12 +311,13 @@ function LeaveRequestInsightsModal({
 				{
 					table: {
 						headerRows: 1,
-						widths: ['*', 55, 70, 70, 70],
+						widths: ['*', 45, 40, 60, 60, 60],
 						body: [
-							['Typ', 'Wnioski', `Łącznie (${durationUnit})`, `Zaakcept. (${durationUnit})`, `Oczek. (${durationUnit})`].map(text => ({ text, bold: true, color: '#ffffff' })),
+							['Typ', 'Wnioski', 'Jedn.', 'Łącznie', 'Zaakcept.', 'Oczek.'].map(text => ({ text, bold: true, color: '#ffffff' })),
 							...typeStats.map(row => [
 								getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
 								row.requests,
+								unitLabel(row.unit),
 								formatDuration(row.duration),
 								formatDuration(row.accepted),
 								formatDuration(row.pending),
@@ -442,12 +446,13 @@ function LeaveRequestInsightsModal({
 				{
 					name: 'Typy urlopów',
 					title: `Urlopy według typu - ${getPeriodLabel()}`,
-					colWidths: [30, 14, 18, 18, 18, 18],
+					colWidths: [30, 14, 10, 18, 18, 18, 18],
 					rows: [
-						['Typ', 'Wnioski', `Łącznie (${durationUnit})`, `Zaakceptowane (${durationUnit})`, `Oczekujące (${durationUnit})`, `Odrzucone (${durationUnit})`],
+						['Typ', 'Wnioski', 'Jednostka', 'Łącznie', 'Zaakceptowane', 'Oczekujące', 'Odrzucone'],
 						...typeStats.map(row => [
 							getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
 							row.requests,
+							unitLabel(row.unit),
 							row.duration,
 							row.accepted,
 							row.pending,
@@ -600,15 +605,15 @@ function LeaveRequestInsightsModal({
 							>
 								<div className="leave-insights-limit-card__top">
 									<strong>{getLeaveRequestTypeName(settings, stat.type, t, i18n.resolvedLanguage)}</strong>
-									<span>{formatDuration(stat.used)} / {formatDuration(stat.limit)} {limitUnit}</span>
+									<span>{formatDuration(stat.used)} / {formatDuration(stat.limit)} {unitLabel(stat.unit)}</span>
 								</div>
 								<div className="leave-insights-limit-card__progress" aria-hidden="true">
 									<span style={{ width: `${stat.usagePercent}%` }} />
 								</div>
 								<div className="leave-insights-limit-card__details">
-									<span>{t('leaveRequestInsights.limitRemaining', { count: formatDuration(Math.max(0, stat.remaining)), unit: limitUnit })}</span>
+									<span>{t('leaveRequestInsights.limitRemaining', { count: formatDuration(Math.max(0, stat.remaining)), unit: unitLabel(stat.unit) })}</span>
 									{stat.pending > 0 && (
-										<span>{t('leaveRequestInsights.limitPending', { count: formatDuration(stat.pending), unit: limitUnit })}</span>
+										<span>{t('leaveRequestInsights.limitPending', { count: formatDuration(stat.pending), unit: unitLabel(stat.unit) })}</span>
 									)}
 								</div>
 								{stat.isExceeded && <small>{t('leaveRequestInsights.limitExceeded')}</small>}
@@ -664,7 +669,7 @@ function LeaveRequestInsightsModal({
 									<div className="leave-insights-type-row__meta">
 										<strong>{getLeaveRequestTypeName(settings, stat.type, t, i18n.resolvedLanguage)}</strong>
 										<span>
-											{formatDuration(stat.duration)} {durationUnit} · {t('leaveRequestInsights.requestCount', { count: stat.requests })}
+											{formatDuration(stat.duration)} {unitLabel(stat.unit)} · {t('leaveRequestInsights.requestCount', { count: stat.requests })}
 										</span>
 									</div>
 									<div className="leave-insights-type-row__bar" aria-hidden="true">

@@ -91,6 +91,90 @@ describe('leave request period filters', () => {
 		})
 
 		expect(stats.pending).toBe(15)
+		// Brak typów godzinowych => zero mieszania, wynik identyczny jak przed zmianą.
+		expect(stats.mixed).toBe(false)
+		expect(stats.hasHourlyRequests).toBe(false)
+		expect(stats.days.pending).toBe(0)
+		expect(stats.hours.pending).toBe(15)
+	})
+
+	it('trzyma dni i godziny w osobnych kubelkach, gdy typ jest rozliczany godzinowo', () => {
+		const settings = {
+			workOnWeekends: true,
+			leaveCalculationMode: 'days',
+			leaveHoursPerDay: 8,
+			leaveRequestTypes: [
+				{ id: 'vacation', name: 'Urlop', isEnabled: true },
+				{ id: 'childcare', name: 'Opieka', isEnabled: true, settlementUnit: 'hours' },
+			],
+		}
+		const requests = [
+			{
+				...request('2026-05-04T00:00:00.000Z', '2026-05-06T00:00:00.000Z'),
+				status: 'status.accepted',
+				type: 'vacation',
+				daysRequested: 3,
+			},
+			{
+				...request('2026-05-07T00:00:00.000Z', '2026-05-07T00:00:00.000Z'),
+				status: 'status.accepted',
+				type: 'childcare',
+				daysRequested: 1,
+				hoursRequested: 4,
+				settlementUnit: 'hours',
+				hoursPerDaySnapshot: 8,
+			},
+		]
+
+		const stats = getLeaveRequestDurationStats(requests, 2026, 4, settings)
+		expect(stats.days.accepted).toBe(3)
+		expect(stats.hours.accepted).toBe(4)
+		// Pola wierzchnie zostają w jednostce wiodącej zespołu (tu: dni) i nie mieszają jednostek.
+		expect(stats.accepted).toBe(3)
+		expect(stats.unit).toBe('days')
+		expect(stats.mixed).toBe(true)
+	})
+
+	it('limity licza sie w jednostce typu, bez mieszania dni z godzinami', () => {
+		const settings = {
+			workOnWeekends: true,
+			leaveCalculationMode: 'days',
+			leaveHoursPerDay: 8,
+			leaveRequestTypes: [
+				{ id: 'vacation', name: 'Urlop', isEnabled: true, allowDaysLimit: true },
+				{ id: 'childcare', name: 'Opieka', isEnabled: true, allowDaysLimit: true, settlementUnit: 'hours' },
+			],
+		}
+		const requests = [
+			{
+				...request('2026-05-04T00:00:00.000Z', '2026-05-06T00:00:00.000Z'),
+				status: 'status.accepted',
+				type: 'vacation',
+				daysRequested: 3,
+			},
+			{
+				...request('2026-05-07T00:00:00.000Z', '2026-05-07T00:00:00.000Z'),
+				status: 'status.accepted',
+				type: 'childcare',
+				daysRequested: 1,
+				hoursRequested: 4,
+				settlementUnit: 'hours',
+				hoursPerDaySnapshot: 8,
+			},
+		]
+
+		const usage = getLeaveRequestLimitUsageStats(requests, 2026, 4, settings, {
+			vacation: 26,
+			childcare: 16,
+		})
+		const vacation = usage.find(row => row.type === 'vacation')
+		const childcare = usage.find(row => row.type === 'childcare')
+
+		expect(vacation.unit).toBe('days')
+		expect(vacation.used).toBe(3)
+		expect(childcare.unit).toBe('hours')
+		expect(childcare.used).toBe(4)
+		expect(childcare.remaining).toBe(12)
 	})
 
 	it('groups selected-period duration by leave request type', () => {

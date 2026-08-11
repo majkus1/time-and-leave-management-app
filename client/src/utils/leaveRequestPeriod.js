@@ -1,4 +1,18 @@
 import { isHolidayDate } from './holidays'
+import {
+	getLeaveRequestAmountInUnit,
+	isHourlyLeaveRequest,
+	resolveLeaveTypeSettlement,
+} from './leaveSettlement'
+
+const emptyDurationBucket = () => ({ total: 0, accepted: 0, pending: 0, rejected: 0, sent: 0 })
+
+/** Jednostka, w której należy pokazać dany wniosek (snapshot rekordu ma pierwszeństwo). */
+const requestDisplayUnit = (request, settings) =>
+	isHourlyLeaveRequest(request) ? 'hours' : resolveLeaveTypeSettlement(settings, request?.type).unit
+
+/** Jednostka wiodąca zespołu — w niej wystawiamy pola zgodne z dotychczasowym API. */
+const primaryTeamUnit = (settings) => (settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days')
 
 const toValidDate = (value) => {
 	const date = new Date(value)
@@ -132,27 +146,36 @@ export const getLeaveRequestDurationStats = (
 	selectedMonth = 'all',
 	settings = {}
 ) => {
-	const days = {
-		total: 0,
-		accepted: 0,
-		pending: 0,
-		rejected: 0,
-		sent: 0,
-	}
+	// Dwa osobne kubełki — dni i godziny nigdy nie są do siebie dodawane.
+	const buckets = { days: emptyDurationBucket(), hours: emptyDurationBucket() }
+	let hasHourlyRequests = false
 
 	for (const request of requests) {
 		const status = normalizeLeaveRequestStatus(request?.status)
 		if (!status) continue
-		const requestDays = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
-		days[status] += requestDays
-		days.total += requestDays
+		const dayCount = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
+		const settlement = resolveLeaveTypeSettlement(settings, request?.type)
+		const unit = requestDisplayUnit(request, settings)
+		const amount = getLeaveRequestAmountInUnit(request, unit, settlement.hoursPerDay, dayCount)
+		buckets[unit][status] += amount
+		buckets[unit].total += amount
+		if (isHourlyLeaveRequest(request)) hasHourlyRequests = true
 	}
 
-	const multiplier = settings?.leaveCalculationMode === 'hours'
-		? Number(settings?.leaveHoursPerDay) || 8
-		: 1
+	// Pola wierzchnie zostają w jednostce wiodącej zespołu, żeby dotychczasowi konsumenci
+	// widzieli dokładnie te same liczby co przed wprowadzeniem jednostki per typ.
+	const primaryUnit = primaryTeamUnit(settings)
+	const secondaryUnit = primaryUnit === 'hours' ? 'days' : 'hours'
+	const mixed = buckets[secondaryUnit].total > 0
 
-	return Object.fromEntries(Object.entries(days).map(([key, value]) => [key, value * multiplier]))
+	return {
+		...buckets[primaryUnit],
+		unit: primaryUnit,
+		days: buckets.days,
+		hours: buckets.hours,
+		mixed,
+		hasHourlyRequests,
+	}
 }
 
 export const getLeaveRequestTypeStats = (
@@ -162,17 +185,19 @@ export const getLeaveRequestTypeStats = (
 	settings = {}
 ) => {
 	const stats = new Map()
-	const multiplier = settings?.leaveCalculationMode === 'hours'
-		? Number(settings?.leaveHoursPerDay) || 8
-		: 1
 
 	for (const request of requests) {
 		const type = request?.type || 'unknown'
-		const duration = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings) * multiplier
+		const dayCount = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
+		const settlement = resolveLeaveTypeSettlement(settings, request?.type)
+		const unit = requestDisplayUnit(request, settings)
+		const duration = getLeaveRequestAmountInUnit(request, unit, settlement.hoursPerDay, dayCount)
 		if (!duration) continue
 
 		const current = stats.get(type) || {
 			type,
+			// Statystyki są per typ, więc jednostka jest jednoznaczna w obrębie wiersza.
+			unit,
 			requests: 0,
 			duration: 0,
 			accepted: 0,
@@ -201,6 +226,8 @@ export const getLeaveRequestLimitUsageStats = (
 	return leaveTypes
 		.filter(type => type?.allowDaysLimit && leaveTypeDays[type.id] !== undefined && leaveTypeDays[type.id] !== null)
 		.map((type) => {
+			// Jednostka rozstrzygana per typ — limit 16 przy typie godzinowym znaczy 16 godzin.
+			const settlement = resolveLeaveTypeSettlement(settings, type.id)
 			const limit = Number(leaveTypeDays[type.id]) || 0
 			let used = 0
 			let pending = 0
@@ -208,9 +235,15 @@ export const getLeaveRequestLimitUsageStats = (
 			for (const request of requests) {
 				if (request?.type !== type.id) continue
 				const status = normalizeLeaveRequestStatus(request?.status)
-				const days = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
-				if (status === 'accepted' || status === 'sent') used += days
-				if (status === 'pending') pending += days
+				const dayCount = countLeaveRequestDaysInPeriod(request, selectedYear, selectedMonth, settings)
+				const amount = getLeaveRequestAmountInUnit(
+					request,
+					settlement.unit,
+					settlement.hoursPerDay,
+					dayCount
+				)
+				if (status === 'accepted' || status === 'sent') used += amount
+				if (status === 'pending') pending += amount
 			}
 
 			const remaining = limit - used
@@ -218,6 +251,8 @@ export const getLeaveRequestLimitUsageStats = (
 
 			return {
 				type: type.id,
+				unit: settlement.unit,
+				hoursPerDay: settlement.hoursPerDay,
 				limit,
 				used,
 				pending,

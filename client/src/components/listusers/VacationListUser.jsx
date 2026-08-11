@@ -11,6 +11,7 @@ import { usePendingLeaveRequestsSummary } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { getLeaveRequestAmountInUnit, isHourlyLeaveRequest, resolveLeaveTypeSettlement } from '../../utils/leaveSettlement'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 import { useAuth } from '../../context/AuthContext'
@@ -690,10 +691,10 @@ function VacationListUser() {
 	}, [calendarView, currentYear, currentMonth, i18n.resolvedLanguage])
 
 	const exportSelectedMonth = calendarView === 'single' ? currentMonth : 'all'
+	// Jednostka wiodaca zespolu (naglowki zbiorcze); pojedyncze wiersze niosa wlasna jednostke.
 	const exportDurationUnit = settings?.leaveCalculationMode === 'hours' ? 'godz.' : 'dni'
-	const exportDurationMultiplier = settings?.leaveCalculationMode === 'hours'
-		? Number(settings?.leaveHoursPerDay) || 8
-		: 1
+	const exportPrimaryUnit = settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days'
+	const reportUnitLabel = (unit) => (unit === 'hours' ? 'godz.' : 'dni')
 	const formatReportNumber = (value, digits = 1) => (
 		new Intl.NumberFormat(i18n.resolvedLanguage, { maximumFractionDigits: digits }).format(Number(value) || 0)
 	)
@@ -716,9 +717,16 @@ function VacationListUser() {
 		const info = getStatusInfo(`status.${status}`)
 		return info.text || status
 	}
-	const getRequestDurationForReport = (request, month = exportSelectedMonth) => (
-		countLeaveRequestDaysInPeriod(request, currentYear, month, settings) * exportDurationMultiplier
+	const getRequestDurationUnit = (request) => (
+		isHourlyLeaveRequest(request) ? 'hours' : resolveLeaveTypeSettlement(settings, request?.type).unit
 	)
+	/** @param {String|null} forceUnit - wymus jednostke (sumy zbiorcze); domyslnie jednostka wniosku. */
+	const getRequestDurationForReport = (request, month = exportSelectedMonth, forceUnit = null) => {
+		const settlement = resolveLeaveTypeSettlement(settings, request?.type)
+		const unit = forceUnit || getRequestDurationUnit(request)
+		const dayCount = countLeaveRequestDaysInPeriod(request, currentYear, month, settings)
+		return getLeaveRequestAmountInUnit(request, unit, settlement.hoursPerDay, dayCount)
+	}
 	const getReportRequestRows = () => {
 		return filteredRequestsForTable.map((request) => {
 			const norm = normalizeLeaveStatus(request.status)
@@ -734,6 +742,7 @@ function VacationListUser() {
 				statusKey: norm,
 				status: statusLabel,
 				duration: getRequestDurationForReport(request),
+				durationUnit: reportUnitLabel(getRequestDurationUnit(request)),
 				replacement: request.replacement || request.substitute || 'Brak',
 				additionalInfo: request.additionalInfo || request.note || request.comment || 'Brak',
 			}
@@ -751,7 +760,8 @@ function VacationListUser() {
 		for (const request of filteredRequestsForTable) {
 			const employee = resolveEmployeeNameForRequest(request)
 			const status = normalizeLeaveStatus(request.status)
-			const duration = getRequestDurationForReport(request)
+			// Sumy zbiorcze sprowadzamy do jednostki wiodacej — inaczej dodalibysmy dni do godzin.
+			const duration = getRequestDurationForReport(request, exportSelectedMonth, exportPrimaryUnit)
 			const current = employeeMap.get(employee) || {
 				employee,
 				requests: 0,
@@ -780,7 +790,7 @@ function VacationListUser() {
 					sent: 0,
 				}
 				for (const request of filteredRequestsForTable) {
-					const duration = getRequestDurationForReport(request, month)
+					const duration = getRequestDurationForReport(request, month, exportPrimaryUnit)
 					if (!duration) continue
 					const status = normalizeLeaveStatus(request.status)
 					totals.requests += 1
@@ -913,9 +923,9 @@ function VacationListUser() {
 						name: 'Typy urlopów',
 						title: `Urlopy według typu - ${exportPeriodLabel}`,
 						subtitle: 'Struktura typów nieobecności i ich wpływ na dostępność zespołu.',
-						colWidths: [34, 12, 18, 18, 18, 18, 18],
+						colWidths: [34, 12, 11, 18, 18, 18, 18, 18],
 						rows: [
-							['Typ', 'Wnioski', `Łącznie (${exportDurationUnit})`, `Zaakceptowane (${exportDurationUnit})`, `Oczekujące (${exportDurationUnit})`, `Odrzucone (${exportDurationUnit})`, `Wysłane (${exportDurationUnit})`],
+							['Typ', 'Wnioski', 'Jednostka', 'Łącznie', 'Zaakceptowane', 'Oczekujące', 'Odrzucone', 'Wysłane'],
 							...typeRows,
 						],
 					},
@@ -923,9 +933,9 @@ function VacationListUser() {
 						name: 'Wnioski',
 						title: `Lista wniosków - ${exportPeriodLabel}`,
 						subtitle: 'Konkretne terminy i statusy zgodne z aktualnym widokiem.',
-						colWidths: [28, 13, 13, 30, 18, 14, 22, 32],
+						colWidths: [28, 13, 13, 30, 18, 14, 11, 22, 32],
 						rows: [
-							['Pracownik', 'Data od', 'Data do', 'Typ', 'Status', exportDurationUnit, 'Zastępstwo', 'Uwagi'],
+							['Pracownik', 'Data od', 'Data do', 'Typ', 'Status', 'Czas', 'Jednostka', 'Zastępstwo', 'Uwagi'],
 							...requestRows,
 						],
 					},
@@ -1084,14 +1094,15 @@ function VacationListUser() {
 					{
 						table: {
 							headerRows: 1,
-							widths: ['*', 48, 62, 58, 58, '*'],
+							widths: ['*', 44, 38, 56, 52, 52, '*'],
 							body: [
-								['Typ', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Zaakcept.', 'Oczek.', 'Udział'].map(text => ({ text, bold: true, color: theme.white })),
+								['Typ', 'Wnioski', 'Jedn.', 'Łącznie', 'Zaakcept.', 'Oczek.', 'Udział'].map(text => ({ text, bold: true, color: theme.white })),
 								...report.typeStats.map(row => {
 									const barWidth = maxTypeDuration > 0 ? Math.max(8, (row.duration / maxTypeDuration) * 100) : 0
 									return [
 										getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
 										row.requests,
+										reportUnitLabel(row.unit),
 										formatReportNumber(row.duration),
 										formatReportNumber(row.accepted),
 										formatReportNumber(row.pending),
@@ -1145,9 +1156,9 @@ function VacationListUser() {
 				{
 					table: {
 						headerRows: 1,
-						widths: [88, 48, 48, 82, 58, 42, '*'],
+						widths: [88, 48, 48, 82, 58, 38, 34, '*'],
 						body: [
-							['Pracownik', 'Od', 'Do', 'Typ', 'Status', exportDurationUnit, 'Uwagi'].map(text => ({ text, bold: true, color: theme.white })),
+							['Pracownik', 'Od', 'Do', 'Typ', 'Status', 'Czas', 'Jedn.', 'Uwagi'].map(text => ({ text, bold: true, color: theme.white })),
 							...report.requestRows.map(row => [
 								row.employee,
 								formatReportDate(row.startDate),
@@ -1155,6 +1166,7 @@ function VacationListUser() {
 								row.type,
 								{ text: row.status, color: statusColors[row.statusKey] || theme.navy, bold: true },
 								formatReportNumber(row.duration),
+								row.durationUnit,
 								row.additionalInfo,
 							]),
 						],

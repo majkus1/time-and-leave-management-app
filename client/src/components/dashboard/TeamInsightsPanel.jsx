@@ -32,6 +32,7 @@ const copy = {
 		leavePending: 'Do decyzji',
 		leaveApproved: 'Zaakceptowane w okresie',
 		leaveDays: 'Dni urlopowe',
+		leaveHours: 'Godziny urlopowe',
 		leaveUpcoming: 'Nadchodzące (45 dni)',
 		tasksTitle: 'Zadania',
 		tasksOpen: 'Otwarte',
@@ -71,6 +72,7 @@ const copy = {
 		leavePending: 'Awaiting decision',
 		leaveApproved: 'Approved in period',
 		leaveDays: 'Leave days',
+		leaveHours: 'Leave hours',
 		leaveUpcoming: 'Upcoming (45 days)',
 		tasksTitle: 'Tasks',
 		tasksOpen: 'Open',
@@ -361,6 +363,10 @@ function TeamInsightsPanel({ language, showWork, showLeaves, showTasks }) {
 							)}
 							<InsightKpi label={text.leaveApproved} value={formatNumber(insights.leave.approvedRequestsCount, lang)} />
 							<InsightKpi label={text.leaveDays} value={formatNumber(insights.leave.totalLeaveDays, lang)} tone="info" />
+							{/* Godziny z wnioskow godzinowych sa osobnym kafelkiem — nigdy nie sumujemy ich z dniami. */}
+							{insights.leave.totalLeaveHours > 0 && (
+								<InsightKpi label={text.leaveHours} value={formatNumber(insights.leave.totalLeaveHours, lang)} tone="info" />
+							)}
 							<InsightKpi label={text.leaveUpcoming} value={formatNumber(insights.leave.upcomingCount, lang)} />
 						</div>
 						<div className="po-dashboard-insights__chart">
