@@ -10,7 +10,12 @@ const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
-const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestConflicts')
+const {
+	findConflictingApprovedLeaveRequest,
+	findBlockingLeaveRequestOnDate,
+	sumHourlyLeaveHoursOnDate,
+} = require('../utils/leaveRequestConflicts')
+const { toDateKey: toLeaveDateKey } = require('../services/leaveScheduleConflictService')
 const { isHoliday } = require('../utils/holidays')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
@@ -18,6 +23,10 @@ const {
 	formatLeaveQuantityValue,
 	getLeaveRequestQuantity,
 	getLeaveRequestQuantityLabel,
+	hourlyValidationMessage,
+	isHourlyLeaveRequest,
+	resolveLeaveTypeSettlement,
+	validateHourlyLeaveSubmission,
 } = require('../utils/leaveSettlement')
 const {
 	resolveTeamScopedLeaveUserViewAccess,
@@ -433,12 +442,41 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		// Przy akceptacji (lub statusie sent) blokujemy kolizję z już aktywnym wnioskiem.
 		if (status === 'status.accepted' || status === 'status.sent') {
+			const approvingHourly = isHourlyLeaveRequest(leaveRequest)
+
+			if (approvingHourly) {
+				// Limit godzin w dniu trzeba sprawdzić PONOWNIE przy zatwierdzaniu: dwa oczekujące
+				// wnioski po 6 h przeszłyby walidację przy składaniu, a razem przekraczają dzień.
+				const approvalSettings = await Settings.getSettings(user.teamId)
+				const dateYmd = toLeaveDateKey(leaveRequest.startDate)
+				// Tylko już zatwierdzone godziny — inne wnioski OCZEKUJĄCE nie mogą blokować
+				// zatwierdzenia tego (inaczej dwa oczekujące blokowałyby się nawzajem).
+				const alreadyBookedHoursOnDay = await sumHourlyLeaveHoursOnDate({
+					LeaveRequest,
+					userId: leaveRequest.userId,
+					dateYmd,
+					excludeRequestId: leaveRequest._id,
+					statuses: ['status.accepted', 'status.sent'],
+				})
+				const settlement = resolveLeaveTypeSettlement(approvalSettings, leaveRequest.type)
+				const totalHours = Number(leaveRequest.hoursRequested) || 0
+				if (alreadyBookedHoursOnDay + totalHours > settlement.hoursPerDay) {
+					return res.status(409).json({
+						code: 'HOURLY_DAY_CAP_EXCEEDED',
+						message: hourlyValidationMessage('HOURLY_DAY_CAP_EXCEEDED', t, settlement.hoursPerDay),
+					})
+				}
+			}
+
 			const conflictingRequest = await findConflictingApprovedLeaveRequest({
 				LeaveRequest,
 				userId: leaveRequest.userId,
 				startDate: leaveRequest.startDate,
 				endDate: leaveRequest.endDate,
 				excludeRequestId: leaveRequest._id,
+				// Wniosek godzinowy nie zajmuje całego dnia — nie koliduje i nie jest blokowany
+				// przez inne wnioski godzinowe (o limit dzienny dba sprawdzenie powyżej).
+				ignoreHourly: true,
 			})
 
 			if (conflictingRequest) {
@@ -1131,7 +1169,7 @@ exports.cancelLeaveRequest = async (req, res) => {
 // Edycja wniosku urlopowego
 exports.updateLeaveRequest = async (req, res) => {
 	const { id } = req.params
-	const { type, startDate, endDate, daysRequested, replacement, additionalInfo } = req.body
+	const { type, startDate, endDate, daysRequested, hoursRequested, replacement, additionalInfo } = req.body
 	const { t } = req
 
 	try {
@@ -1191,43 +1229,127 @@ exports.updateLeaveRequest = async (req, res) => {
 		const typeRequiresApproval = requiresApproval(settings, type)
 		const oldTypeRequiresApproval = requiresApproval(settings, leaveRequest.type)
 
-		// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
-		const { trimmedStartDate, trimmedEndDate } = await trimWeekendsFromDateRange(startDate, endDate, teamId)
-		
-		// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć błąd
-		if (!trimmedStartDate || !trimmedEndDate) {
-			return res.status(400).json({ message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.' })
+		const settlement = resolveLeaveTypeSettlement(settings, type)
+		const isHourlyRequest = settlement.captureMode === 'hourly'
+		const wasHourlyRequest = isHourlyLeaveRequest(leaveRequest)
+
+		// Rekord dzienny, którego typ admin przełączył w międzyczasie na godziny: nie skracamy
+		// po cichu np. 5-dniowego wniosku do jednego dnia — każemy złożyć go od nowa.
+		if (isHourlyRequest && !wasHourlyRequest && Number(leaveRequest.daysRequested) > 1) {
+			return res.status(409).json({
+				code: 'SETTLEMENT_UNIT_CHANGED',
+				message:
+					'Typ tego wniosku jest teraz rozliczany godzinowo. Anuluj wniosek i złóż go ponownie na jeden dzień.',
+			})
 		}
-		
-		// Jeśli daty zostały zmienione, przelicz liczbę dni
-		let finalDaysRequested = daysRequested
-		if (trimmedStartDate !== startDate || trimmedEndDate !== endDate) {
-			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
-			finalDaysRequested = dates.length
+
+		let trimmedStartDate
+		let trimmedEndDate
+		let finalDaysRequested
+		let finalHoursRequested = null
+
+		if (isHourlyRequest) {
+			const startYmd = toLeaveDateKey(startDate)
+			const endYmd = toLeaveDateKey(endDate || startDate)
+
+			const workingDates = startYmd ? await generateDateRange(startYmd, startYmd, teamId) : []
+			if (!workingDates.length) {
+				return res.status(400).json({
+					message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.',
+				})
+			}
+
+			const alreadyBookedHoursOnDay = await sumHourlyLeaveHoursOnDate({
+				LeaveRequest,
+				userId: leaveRequest.userId,
+				dateYmd: startYmd,
+				excludeRequestId: leaveRequest._id,
+			})
+			const validation = validateHourlyLeaveSubmission({
+				settings,
+				typeId: type,
+				startYmd,
+				endYmd,
+				hoursRequested,
+				alreadyBookedHoursOnDay,
+			})
+			if (!validation.ok) {
+				return res.status(400).json({
+					code: validation.code,
+					message: hourlyValidationMessage(validation.code, t, settlement.hoursPerDay),
+				})
+			}
+
+			const blockingRequest = await findBlockingLeaveRequestOnDate({
+				LeaveRequest,
+				userId: leaveRequest.userId,
+				dateYmd: startYmd,
+				excludeRequestId: leaveRequest._id,
+			})
+			if (blockingRequest) {
+				return res.status(409).json({
+					message:
+						'Nie można zapisać zmian: ten dzień koliduje z już zatwierdzonym wnioskiem na cały dzień.',
+				})
+			}
+
+			trimmedStartDate = startYmd
+			trimmedEndDate = startYmd
+			finalDaysRequested = 1
+			finalHoursRequested = validation.hours
+		} else {
+			// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
+			const trimmed = await trimWeekendsFromDateRange(startDate, endDate, teamId)
+			trimmedStartDate = trimmed.trimmedStartDate
+			trimmedEndDate = trimmed.trimmedEndDate
+
+			// Jeśli nie ma żadnych dni roboczych w zakresie, zwróć błąd
+			if (!trimmedStartDate || !trimmedEndDate) {
+				return res.status(400).json({ message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.' })
+			}
+
+			// Jeśli daty zostały zmienione, przelicz liczbę dni
+			finalDaysRequested = daysRequested
+			if (trimmedStartDate !== startDate || trimmedEndDate !== endDate) {
+				const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
+				finalDaysRequested = dates.length
+			}
+
+			const conflictingRequest = await findConflictingApprovedLeaveRequest({
+				LeaveRequest,
+				userId: leaveRequest.userId,
+				startDate: trimmedStartDate,
+				endDate: trimmedEndDate,
+				excludeRequestId: leaveRequest._id,
+				ignoreHourly: true,
+			})
+			if (conflictingRequest) {
+				return res.status(409).json({
+					message:
+						'Nie można zapisać zmian: zakres dat koliduje z innym już zatwierdzonym wnioskiem tego użytkownika.',
+				})
+			}
 		}
 
 		const oldStartDate = leaveRequest.startDate
 		const oldEndDate = leaveRequest.endDate
-
-		const conflictingRequest = await findConflictingApprovedLeaveRequest({
-			LeaveRequest,
-			userId: leaveRequest.userId,
-			startDate: trimmedStartDate,
-			endDate: trimmedEndDate,
-			excludeRequestId: leaveRequest._id,
-		})
-		if (conflictingRequest) {
-			return res.status(409).json({
-				message:
-					'Nie można zapisać zmian: zakres dat koliduje z innym już zatwierdzonym wnioskiem tego użytkownika.',
-			})
-		}
 
 		// Aktualizuj wniosek
 		leaveRequest.type = type
 		leaveRequest.startDate = trimmedStartDate // Użyj przyciętych dat
 		leaveRequest.endDate = trimmedEndDate // Użyj przyciętych dat
 		leaveRequest.daysRequested = finalDaysRequested // Użyj przeliczonych dni
+		if (isHourlyRequest) {
+			leaveRequest.hoursRequested = finalHoursRequested
+			leaveRequest.settlementUnit = 'hours'
+			leaveRequest.hoursPerDaySnapshot = settlement.hoursPerDay
+		} else {
+			// KRYTYCZNE przy przejściu godziny -> dni: bez wyzerowania tych pól wniosek na zawsze
+			// zostałby „godzinowy" i przestałby blokować dzień pracy.
+			leaveRequest.hoursRequested = null
+			leaveRequest.settlementUnit = 'days'
+			leaveRequest.hoursPerDaySnapshot = null
+		}
 		leaveRequest.replacement = replacement
 		leaveRequest.additionalInfo = additionalInfo
 		
@@ -1238,13 +1360,18 @@ exports.updateLeaveRequest = async (req, res) => {
 		
 		await leaveRequest.save()
 
-		// Dla typów bez wymagania zatwierdzenia: zaktualizuj LeavePlan (jak L4)
-		if (!typeRequiresApproval) {
+		// Dla typów bez wymagania zatwierdzenia: zaktualizuj LeavePlan (jak L4).
+		// Wniosek godzinowy nigdy nie trafia do LeavePlan (to znacznik całego dnia urlopu),
+		// ale jeśli PRZED edycją był dzienny i auto-zatwierdzany, jego wpisy trzeba posprzątać.
+		const shouldWriteLeavePlan = !typeRequiresApproval && !isHourlyRequest
+		const hadLeavePlanEntries = !oldTypeRequiresApproval && !wasHourlyRequest
+
+		if (shouldWriteLeavePlan) {
 			const LeavePlan = require('../models/LeavePlan')(firmDb)
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
-			
+
 			// Usuń stare daty z LeavePlan (jeśli stary typ też nie wymagał zatwierdzenia)
-			if (!oldTypeRequiresApproval && (oldStartDate.toString() !== trimmedStartDate || oldEndDate.toString() !== trimmedEndDate)) {
+			if (hadLeavePlanEntries && (oldStartDate.toString() !== trimmedStartDate || oldEndDate.toString() !== trimmedEndDate)) {
 				const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)
 				await LeavePlan.deleteMany({ userId: userIdForPlan, date: { $in: oldDates } })
 			}
@@ -1267,8 +1394,8 @@ exports.updateLeaveRequest = async (req, res) => {
 				})
 			})
 			await Promise.all(leavePlanPromises)
-		} else if (!oldTypeRequiresApproval) {
-			// Jeśli zmieniono z typu bez wymagania zatwierdzenia na typ z wymaganiem, usuń z LeavePlan
+		} else if (hadLeavePlanEntries) {
+			// Zmiana na typ wymagający zatwierdzenia albo na typ godzinowy — usuń stare wpisy z LeavePlan
 			const LeavePlan = require('../models/LeavePlan')(firmDb)
 			const userIdForPlan = leaveRequest.userId._id || leaveRequest.userId
 			const oldDates = await generateDateRange(oldStartDate, oldEndDate, teamId)

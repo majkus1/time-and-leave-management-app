@@ -257,6 +257,39 @@ function validateHourlyLeaveSubmission({
 	return { ok: true, hours: roundQuantity(hours), hoursPerDay }
 }
 
+/** Komunikat dla użytkownika na podstawie kodu z validateHourlyLeaveSubmission. */
+function hourlyValidationMessage(code, t = null, hoursPerDay = DEFAULT_HOURS_PER_DAY) {
+	const translate = (key, fallback) => {
+		if (!t) return fallback
+		const translated = t(key, { hours: hoursPerDay })
+		return translated && translated !== key ? translated : fallback
+	}
+
+	switch (code) {
+		case 'HOURLY_SINGLE_DAY_ONLY':
+			return translate(
+				'leaveform.hourlyRangeError',
+				'Ten typ wniosku rozliczany jest godzinowo — wybierz jeden dzień.'
+			)
+		case 'HOURLY_HOURS_REQUIRED':
+			return translate('leaveform.hourlyHoursRequired', 'Podaj liczbę godzin większą od zera.')
+		case 'HOURLY_HOURS_RANGE':
+			return translate(
+				'leaveform.hourlyHoursRange',
+				`Liczba godzin nie może przekraczać długości dnia pracy (${hoursPerDay} h).`
+			)
+		case 'HOURLY_HOURS_STEP':
+			return translate('leaveform.hourlyHoursStep', 'Liczbę godzin podaj z dokładnością do 0,5 h.')
+		case 'HOURLY_DAY_CAP_EXCEEDED':
+			return translate(
+				'leaveform.hourlyDayCapError',
+				`Łączna liczba godzin urlopu w tym dniu przekroczyłaby długość dnia pracy (${hoursPerDay} h).`
+			)
+		default:
+			return translate('leaveform.hourlyInvalid', 'Nieprawidłowy wniosek godzinowy.')
+	}
+}
+
 module.exports = {
 	DEFAULT_HOURS_PER_DAY,
 	HOURLY_STEP,
@@ -278,4 +311,5 @@ module.exports = {
 	getLeaveRequestQuantityLabel,
 	formatLeaveQuantity,
 	validateHourlyLeaveSubmission,
+	hourlyValidationMessage,
 }

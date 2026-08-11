@@ -8,6 +8,7 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { createChatCompletionJson, isOpenAIConfigured } = require('./openaiService')
 const { getEnabledLeaveRequestTypes, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { findConflictingApprovedLeaveRequest } = require('../utils/leaveRequestConflicts')
+const { isHourlyCaptureType } = require('../utils/leaveSettlement')
 const { makeTrimAndRange } = require('../utils/leaveRequestDateUtils')
 
 const { trimWeekendsFromDateRange, generateDateRange } = makeTrimAndRange(Settings)
@@ -189,6 +190,21 @@ async function runLeaveDraftTurn(input) {
 		}
 	}
 
+	// Typ rozliczany godzinowo wymaga podania liczby godzin, czego szkic asystenta nie obsługuje.
+	// Odsyłamy do formularza zamiast tworzyć szkic z błędną liczbą dni.
+	if (isHourlyCaptureType(settings, typeId)) {
+		return {
+			reply:
+				locale === 'en'
+					? 'This leave type is settled in hours — please submit it in the leave request form, where you can enter the number of hours.'
+					: 'Ten typ wniosku rozliczany jest godzinowo — złóż go w formularzu wniosku urlopowego, gdzie podasz liczbę godzin.',
+			draft: null,
+			draftError: 'HOURLY_TYPE_UNSUPPORTED',
+			model,
+			usage,
+		}
+	}
+
 	if (!isIsoDate(startDate) || !isIsoDate(endDate)) {
 		return {
 			reply: assistantMessage || (locale === 'en' ? 'Invalid date format.' : 'Nieprawidłowy format daty.'),
@@ -263,6 +279,8 @@ async function runLeaveDraftTurn(input) {
 		userId: user._id,
 		startDate: trimmedStartDate,
 		endDate: trimmedEndDate,
+		// Wniosek godzinowy zajmuje tylko część dnia i nie blokuje zwykłego urlopu.
+		ignoreHourly: true,
 	})
 	if (conflict) {
 		return {
