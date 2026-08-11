@@ -5,6 +5,7 @@ const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
 const { isHoliday } = require('../utils/holidays')
+const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
 const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
 const {
 	resolveTeamScopedTimesheetWriteAccess,
@@ -149,10 +150,13 @@ exports.canStartTimerOnDate = async function canStartTimerOnDate(userId, date) {
 			return { canStart: false, reason: `Nie można uruchomić timera w święto: ${holidayInfo.name}` }
 		}
 
-		// Check if user has accepted leave request for this date
+		// Check if user has accepted leave request for this date.
+		// Wnioski godzinowe pomijamy — zajmują tylko część dnia, więc pracownik może
+		// normalnie pracować w pozostałych godzinach.
 		const acceptedLeaveRequests = await LeaveRequest.find({
 			userId: userId,
-			status: { $in: ['status.accepted', 'status.sent'] }
+			status: { $in: ['status.accepted', 'status.sent'] },
+			...NON_HOURLY_LEAVE_QUERY
 		})
 
 		for (const request of acceptedLeaveRequests) {

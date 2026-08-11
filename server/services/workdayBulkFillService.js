@@ -1,4 +1,5 @@
 const { isHoliday } = require('../utils/holidays')
+const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
 const { normalizeWorkdayPayload, toWarsawYmd } = require('../utils/workdayEntryValidation')
 const { mergeWorkBlocksIntoPayload } = require('../services/workdayPayloadService')
 const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
@@ -171,9 +172,11 @@ async function bulkFillWorkdays({
 			userId: targetUser._id,
 			date: { $gte: new Date(queryStart.getTime() - padMs), $lte: new Date(queryEnd.getTime() + padMs) },
 		}).lean(),
+		// Wnioski godzinowe pomijamy — nie mogą wykluczać dnia z masowego wypełniania.
 		LeaveRequestModel.find({
 			userId: targetUser._id,
 			status: { $in: ['status.accepted', 'status.sent'] },
+			...NON_HOURLY_LEAVE_QUERY,
 		}).lean(),
 	])
 

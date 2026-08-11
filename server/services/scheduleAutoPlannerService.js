@@ -2,6 +2,7 @@ const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { isHoliday } = require('../utils/holidays')
+const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
 
 const ACTIVE_USER_FILTER = {
 	$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
@@ -118,11 +119,13 @@ const buildLeaveConflictsMap = async ({ users, monthStart, monthEnd }) => {
 	const userIds = users.map((user) => user._id)
 	if (userIds.length === 0) return new Map()
 
+	// Wnioski godzinowe pomijamy — pracownik jest tego dnia dostępny do planowania.
 	const leaveRequests = await LeaveRequest.find({
 		userId: { $in: userIds },
 		status: { $in: ['status.accepted', 'status.sent'] },
 		startDate: { $lte: monthEnd },
-		endDate: { $gte: monthStart }
+		endDate: { $gte: monthStart },
+		...NON_HOURLY_LEAVE_QUERY
 	}).select('userId startDate endDate')
 
 	const conflictsByUser = new Map()

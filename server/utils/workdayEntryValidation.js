@@ -3,6 +3,7 @@
  * Aligned with client rules in MonthlyCalendar.jsx (weekends, holidays, accepted leave, one-action rules).
  */
 const { isHoliday } = require('./holidays')
+const { NON_HOURLY_LEAVE_QUERY } = require('./leaveSettlement')
 
 /**
  * Calendar date (YYYY-MM-DD) in Europe/Warsaw for an instant or ISO string.
@@ -188,9 +189,11 @@ async function validateNewWorkdayEntry(deps) {
 		}
 	}
 
+	// Wnioski godzinowe pomijamy — zajmują część dnia, więc nie blokują wpisu godzin pracy.
 	const acceptedLeaveRequests = await LeaveRequestModel.find({
 		userId,
 		status: { $in: ['status.accepted', 'status.sent'] },
+		...NON_HOURLY_LEAVE_QUERY,
 	}).lean()
 
 	const hasAcceptedRequest = acceptedLeaveRequests.some(request => {

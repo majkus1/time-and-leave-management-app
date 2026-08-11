@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db')
 const Schedule = require('../models/Schedule')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
+const { NON_HOURLY_LEAVE_QUERY, isHourlyLeaveRequest } = require('../utils/leaveSettlement')
 
 function toDateKey(value) {
 	if (!value) return null
@@ -132,11 +133,13 @@ async function userHasApprovedLeaveOnDate({ userId, date }) {
 	const dayStart = new Date(`${dayKey}T00:00:00.000Z`)
 	const dayEnd = new Date(`${dayKey}T23:59:59.999Z`)
 
+	// Wnioski godzinowe pomijamy — nie blokują wpisu do grafiku ani planowania.
 	const request = await LeaveRequest.findOne({
 		userId,
 		status: { $in: APPROVED_LEAVE_STATUSES },
 		startDate: { $lte: dayEnd },
 		endDate: { $gte: dayStart },
+		...NON_HOURLY_LEAVE_QUERY,
 	})
 		.select('_id')
 		.lean()
@@ -182,6 +185,10 @@ async function attachScheduleConflictsToLeaveRequests({ teamId, userId, leaveReq
 	})
 
 	return leaveRequests.map((request) => {
+		// Wniosek godzinowy nie koliduje z opublikowanym grafikiem — pracownik i tak pracuje tego dnia.
+		if (isHourlyLeaveRequest(request)) {
+			return serializeLeaveRequestWithConflict(request, [])
+		}
 		const conflicts = findConflictsInLeaveRange(request.startDate, request.endDate, scheduleEntriesByDate)
 		return serializeLeaveRequestWithConflict(request, conflicts)
 	})

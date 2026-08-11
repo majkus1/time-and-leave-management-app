@@ -24,6 +24,7 @@ const {
 	getLeaveRequestQuantity,
 	getLeaveRequestQuantityLabel,
 	hourlyValidationMessage,
+	isHourlyCaptureType,
 	isHourlyLeaveRequest,
 	resolveLeaveTypeSettlement,
 	validateHourlyLeaveSubmission,
@@ -304,7 +305,7 @@ exports.getUserLeaveRequests = async (req, res) => {
 }
 
 exports.checkLeaveScheduleConflicts = async (req, res) => {
-	const { startDate, endDate, targetUserId } = req.body || {}
+	const { startDate, endDate, targetUserId, type } = req.body || {}
 
 	if (!startDate || !endDate) {
 		return res.status(400).json({ message: 'startDate and endDate are required.' })
@@ -315,6 +316,14 @@ exports.checkLeaveScheduleConflicts = async (req, res) => {
 		const access = await resolveTeamScopedLeaveUserViewAccess(req.user.userId, effectiveTargetUserId)
 		if (access.error) {
 			return respondLeaveUserViewAccessError(res, access.error)
+		}
+
+		// Wniosek godzinowy nie koliduje z grafikiem — pracownik i tak pracuje tego dnia.
+		if (type) {
+			const conflictSettings = await Settings.getSettings(access.targetUser.teamId)
+			if (isHourlyCaptureType(conflictSettings, type)) {
+				return res.status(200).json({ hasConflicts: false, conflicts: [] })
+			}
 		}
 
 		const conflicts = await findScheduleConflictsForLeaveRange({
