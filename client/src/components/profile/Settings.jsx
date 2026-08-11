@@ -118,7 +118,8 @@ function Settings() {
 		nameEn: '',
 		requireApproval: true,
 		allowDaysLimit: false,
-		minDaysBefore: null
+		minDaysBefore: null,
+		settlementUnit: 'inherit'
 	})
 	const {
 		preferences: emailPreferences,
@@ -262,7 +263,8 @@ function Settings() {
 					customHolidays,
 					workHours: workHoursData,
 					leaveCalculationMode,
-					leaveHoursPerDay: leaveCalculationMode === 'hours' ? leaveHoursPerDay : undefined,
+					// Wysylamy zawsze: dlugosc dnia limituje takze wnioski godzinowe w zespole rozliczanym w dniach.
+					leaveHoursPerDay,
 					...(showTimerQrSettings ? { timerEnabled } : {}),
 					dashboardEnabled,
 					allowManagedNoAccessUsers,
@@ -409,6 +411,86 @@ function Settings() {
 		}
 	}
 
+	/**
+	 * Zmiana jednostki rozliczenia typu. Przejscie na godziny (lub z powrotem) zmienia
+	 * znaczenie pul przypisanych pracownikom, wiec wymaga swiadomego potwierdzenia.
+	 */
+	/** Wspolna kontrolka jednostki rozliczenia — ten sam markup dla typow systemowych i wlasnych. */
+	/** Czy jakikolwiek typ jest rozliczany godzinowo — wtedy dlugosc dnia jest potrzebna. */
+	const hasHourlySettlementType = leaveRequestTypes.some(type => type.settlementUnit === 'hours')
+
+	const renderSettlementUnitControl = (type) => {
+		const value = type.settlementUnit || 'inherit'
+		const inheritLabel = leaveCalculationMode === 'hours'
+			? (t('settings.settlementInheritHours') || 'Domyślnie zespołu (godziny)')
+			: (t('settings.settlementInheritDays') || 'Domyślnie zespołu (dni)')
+		return (
+			<div style={{ marginTop: '10px' }}>
+				<label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>
+					{t('settings.typeSettlementUnit') || 'Jednostka rozliczenia'}
+				</label>
+				<select
+					value={value}
+					onChange={e => handleUpdateTypeSettlementUnit(type.id, e.target.value)}
+					disabled={!canEditSettings}
+					style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '8px', maxWidth: '360px', width: '100%' }}
+				>
+					<option value="inherit">{inheritLabel}</option>
+					<option value="days">{t('settings.settlementDays') || 'W dniach'}</option>
+					<option value="hours">{t('settings.settlementHours') || 'W godzinach (jeden dzień + liczba godzin)'}</option>
+				</select>
+				{value === 'hours' && (
+					<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
+						{t('settings.settlementHoursNote')}
+					</small>
+				)}
+			</div>
+		)
+	}
+
+	const handleUpdateTypeSettlementUnit = async (typeId, nextUnit) => {
+		const current = leaveRequestTypes.find(type => type.id === typeId)
+		const previousUnit = current?.settlementUnit || 'inherit'
+		if (previousUnit === nextUnit) return
+
+		const teamDefaultUnit = leaveCalculationMode === 'hours' ? 'hours' : 'days'
+		const effective = (unit) => (unit === 'inherit' ? teamDefaultUnit : unit)
+		if (effective(previousUnit) !== effective(nextUnit)) {
+			const unitLabel = effective(nextUnit) === 'hours'
+				? (t('settings.settlementUnitHours') || 'godziny')
+				: (t('settings.settlementUnitDays') || 'dni')
+			const typeName = current?.name || typeId
+			const confirmed = await showConfirm(
+				t('settings.settlementFlipWarning', { type: typeName, unit: unitLabel })
+			)
+			if (!confirmed) return
+		}
+
+		try {
+			const updatedTypes = leaveRequestTypes.map(type =>
+				type.id === typeId ? { ...type, settlementUnit: nextUnit } : type
+			)
+			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
+			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
+		} catch (error) {
+			console.error('Error updating settlementUnit:', error)
+			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		}
+	}
+
+	/** Preset dla art. 188 KP: opieka nad dzieckiem rozliczana godzinowo (16 h rocznie). */
+	const handleApplyChildcarePreset = () => {
+		setNewCustomType({
+			name: t('settings.childcarePresetName') || 'Opieka nad dzieckiem (art. 188 KP)',
+			nameEn: 'Childcare leave (art. 188 LC)',
+			requireApproval: true,
+			allowDaysLimit: true,
+			minDaysBefore: null,
+			settlementUnit: 'hours',
+		})
+		setShowAddCustomTypeForm(true)
+	}
+
 	const handleAddCustomType = async () => {
 		if (!newCustomType.name.trim()) {
 			await showAlert(t('settings.leaveTypesNameRequired') || 'Nazwa typu jest wymagana')
@@ -421,9 +503,10 @@ function Settings() {
 				nameEn: newCustomType.nameEn.trim() || undefined,
 				requireApproval: newCustomType.requireApproval,
 				allowDaysLimit: newCustomType.allowDaysLimit,
-				minDaysBefore: newCustomType.minDaysBefore || null
+				minDaysBefore: newCustomType.minDaysBefore || null,
+				settlementUnit: newCustomType.settlementUnit || 'inherit'
 			})
-			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null })
+			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null, settlementUnit: 'inherit' })
 			setShowAddCustomTypeForm(false)
 			await showAlert(t('settings.leaveTypesAddSuccess') || 'Niestandardowy typ został dodany')
 		} catch (error) {
@@ -2076,7 +2159,7 @@ function Settings() {
 										</div>
 									</div>
 
-									{leaveCalculationMode === 'hours' && (
+									{(leaveCalculationMode === 'hours' || hasHourlySettlementType) && (
 										<div>
 											<label style={{
 												display: 'block',
@@ -2345,6 +2428,7 @@ function Settings() {
 																/>
 															</div>
 														)}
+														{renderSettlementUnitControl(type)}
 													</div>
 												</div>
 											)}
@@ -2390,6 +2474,26 @@ function Settings() {
 									>
 										+ {t('settings.addCustomType') || 'Dodaj typ'}
 										</button>
+								)}
+								{canEditSettings && !showAddCustomTypeForm && (
+									<button
+										type="button"
+										onClick={handleApplyChildcarePreset}
+										title={t('settings.childcarePresetHint')}
+										style={{
+											backgroundColor: '#fff',
+											color: '#28a745',
+											border: '1px solid #28a745',
+											padding: '8px 16px',
+											borderRadius: '6px',
+											fontSize: '14px',
+											fontWeight: '500',
+											cursor: 'pointer',
+											marginLeft: '8px'
+										}}
+									>
+										{t('settings.childcarePresetButton') || 'Dodaj: opieka nad dzieckiem (art. 188 KP)'}
+									</button>
 								)}
 									</div>
 
@@ -2585,6 +2689,25 @@ function Settings() {
 														/>
 													</div>
 												)}
+												<div style={{ marginTop: '12px' }}>
+													<label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '4px' }}>
+														{t('settings.typeSettlementUnit') || 'Jednostka rozliczenia'}
+													</label>
+													<select
+														value={newCustomType.settlementUnit || 'inherit'}
+														onChange={(e) => setNewCustomType({ ...newCustomType, settlementUnit: e.target.value })}
+														style={{ padding: '8px 10px', border: '1px solid #dee2e6', borderRadius: '4px', width: '100%', maxWidth: '360px' }}
+													>
+														<option value="inherit">{leaveCalculationMode === 'hours' ? (t('settings.settlementInheritHours') || 'Domyślnie zespołu (godziny)') : (t('settings.settlementInheritDays') || 'Domyślnie zespołu (dni)')}</option>
+														<option value="days">{t('settings.settlementDays') || 'W dniach'}</option>
+														<option value="hours">{t('settings.settlementHours') || 'W godzinach (jeden dzień + liczba godzin)'}</option>
+													</select>
+													{newCustomType.settlementUnit === 'hours' && (
+														<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
+															{t('settings.settlementHoursNote')}
+														</small>
+													)}
+												</div>
 											</div>
 										</div>
 										<div style={{
@@ -2596,7 +2719,7 @@ function Settings() {
 												type="button"
 												onClick={() => {
 													setShowAddCustomTypeForm(false)
-													setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null })
+													setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null, settlementUnit: 'inherit' })
 												}}
 												style={{
 													backgroundColor: '#6c757d',
@@ -2808,6 +2931,7 @@ function Settings() {
 																/>
 															</div>
 														)}
+														{renderSettlementUnitControl(type)}
 													</div>
 												</div>
 											</div>

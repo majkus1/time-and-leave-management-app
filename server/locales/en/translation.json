@@ -1,13 +1,13 @@
 {
 	"email": {
 		"leaveform": {
-		"option1": "Paid Vacation",
-		"option2": "Special Leave",
-		"option3": "On-Demand Leave",
-		"option4": "Unpaid Leave",
-		"option5": "Other Absence",
-		"option6": "Sick Leave (L4)",
-		"title": "New leave request",
+			"option1": "Paid Vacation",
+			"option2": "Special Leave",
+			"option3": "On-Demand Leave",
+			"option4": "Unpaid Leave",
+			"option5": "Other Absence",
+			"option6": "Sick Leave (L4)",
+			"title": "New leave request",
 			"employee": "Employee",
 			"type": "Type",
 			"dates": "Dates",
@@ -129,7 +129,13 @@
 		"option3": "On-Demand Leave",
 		"option4": "Unpaid Leave",
 		"option5": "Other Absence",
-		"option6": "Sick Leave (L4)"
+		"option6": "Sick Leave (L4)",
+		"hourlyRangeError": "This leave type is settled in hours — pick a single day.",
+		"hourlyHoursRequired": "Enter a number of hours greater than zero.",
+		"hourlyHoursRange": "The number of hours cannot exceed the length of a working day ({{hours}} h).",
+		"hourlyHoursStep": "Enter the number of hours in steps of 0.5 h.",
+		"hourlyDayCapError": "The total leave hours on this day would exceed the length of a working day ({{hours}} h).",
+		"hourlyInvalid": "Invalid hourly leave request."
 	},
 	"resetpass": {
 		"subject": "Reset your password on planopia.pl",

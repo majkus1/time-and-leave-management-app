@@ -15,6 +15,7 @@ import {
 	getLeaveRequestQuantity,
 	getLeaveRequestQuantityLabel,
 	resolveLeaveTypeSettlement,
+	validateHourlyLeaveSubmission,
 } from '../../utils/leaveSettlement'
 import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filterLeaveRequestsByPeriod, filterLeaveRequestsByStatuses } from '../../utils/leaveRequestPeriod'
 import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
@@ -28,6 +29,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 	const [startDate, setStartDate] = useState('')
 	const [endDate, setEndDate] = useState('')
 	const [daysRequested, setDaysRequested] = useState(0)
+	const [hoursRequested, setHoursRequested] = useState('')
 	const [replacement, setReplacement] = useState('')
 	const [additionalInfo, setAdditionalInfo] = useState('')
 	const [submitForEmployee, setSubmitForEmployee] = useState(false)
@@ -256,6 +258,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 	const [editStartDate, setEditStartDate] = useState('')
 	const [editEndDate, setEditEndDate] = useState('')
 	const [editDaysRequested, setEditDaysRequested] = useState(0)
+	const [editHoursRequested, setEditHoursRequested] = useState('')
 	const [editReplacement, setEditReplacement] = useState('')
 	const [editAdditionalInfo, setEditAdditionalInfo] = useState('')
 	const [showCancelModal, setShowCancelModal] = useState(null)
@@ -271,6 +274,21 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 	// Etykiety jednostki przekazywane do wspólnego helpera (client/src/utils/leaveSettlement.js)
 	const quantityLabels = React.useMemo(
 		() => ({ days: t('leaveform.days') || 'dni', hours: t('leaveform.hours') || 'godzin' }),
+		[t]
+	)
+
+	/** Komunikat dla kodu bledu z walidacji godzinowej (odpowiednik serwerowego hourlyValidationMessage). */
+	const hourlyValidationAlert = React.useCallback(
+		(code, hoursPerDay) => {
+			const keys = {
+				HOURLY_SINGLE_DAY_ONLY: 'leaveform.hourlyRangeError',
+				HOURLY_HOURS_REQUIRED: 'leaveform.hourlyHoursRequired',
+				HOURLY_HOURS_RANGE: 'leaveform.hourlyHoursRange',
+				HOURLY_HOURS_STEP: 'leaveform.hourlyHoursStep',
+				HOURLY_DAY_CAP_EXCEEDED: 'leaveform.hourlyDayCapError',
+			}
+			return t(keys[code] || 'leaveform.hourlyInvalid', { hours: hoursPerDay })
+		},
 		[t]
 	)
 
@@ -296,19 +314,40 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		[settings, type, t]
 	)
 
+	// Typ rozliczany godzinowo: jeden dzien + liczba godzin.
+	const isHourlyType = resolveLeaveTypeSettlement(settings, type).captureMode === 'hourly'
+	const isEditHourlyType = resolveLeaveTypeSettlement(settings, editType).captureMode === 'hourly'
+	const hoursPerDayLimit = resolveLeaveTypeSettlement(settings, type).hoursPerDay
+	const editHoursPerDayLimit = resolveLeaveTypeSettlement(settings, editType).hoursPerDay
+
+	// Przy typie godzinowym data konca zawsze rowna sie dacie poczatku.
 	useEffect(() => {
+		if (isHourlyType && startDate && endDate !== startDate) {
+			setEndDate(startDate)
+		}
+	}, [isHourlyType, startDate, endDate])
+
+	useEffect(() => {
+		if (isEditHourlyType && editStartDate && editEndDate !== editStartDate) {
+			setEditEndDate(editStartDate)
+		}
+	}, [isEditHourlyType, editStartDate, editEndDate])
+
+	useEffect(() => {
+		if (isHourlyType) return // liczbe godzin podaje uzytkownik, nie liczymy jej z zakresu dat
 		if (startDate && endDate && settings) {
 			const daysDiff = calculateDays(startDate, endDate)
 			setDaysRequested(daysDiff)
 		}
-	}, [startDate, endDate, settings, calculateDays])
+	}, [startDate, endDate, settings, calculateDays, isHourlyType])
 
 	useEffect(() => {
+		if (isEditHourlyType) return
 		if (editStartDate && editEndDate && settings) {
 			const daysDiff = calculateDays(editStartDate, editEndDate)
 			setEditDaysRequested(daysDiff)
 		}
-	}, [editStartDate, editEndDate, settings, calculateDays])
+	}, [editStartDate, editEndDate, settings, calculateDays, isEditHourlyType])
 
 	// Funkcja sprawdzająca kolizję dat z istniejącymi wnioskami
 	const hasDateConflict = (newStartDate, newEndDate, excludeRequestId = null, requests = displayedLeaveRequests) => {
@@ -456,8 +495,24 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 			}
 		}
 		
-		// Sprawdź kolizję z istniejącymi wnioskami
-		if (hasDateConflict(startDate, endDate)) {
+		// Wniosek godzinowy: walidacja liczby godzin (zrodlem prawdy pozostaje serwer).
+		if (isHourlyType) {
+			const validation = validateHourlyLeaveSubmission({
+				settings,
+				typeId: type,
+				startYmd: startDate,
+				endYmd: startDate,
+				hoursRequested,
+			})
+			if (!validation.ok) {
+				await showAlert(hourlyValidationAlert(validation.code, hoursPerDayLimit))
+				return
+			}
+		}
+
+		// Sprawdź kolizję z istniejącymi wnioskami.
+		// Wniosek godzinowy zajmuje tylko część dnia — o limit godzin w dniu dba serwer.
+		if (!isHourlyType && hasDateConflict(startDate, endDate)) {
 			await showAlert(t('leaveform.dateConflictError'))
 			return
 		}
@@ -470,21 +525,27 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		const employeeName = selectedManagedUser
 			? `${selectedManagedUser.firstName || ''} ${selectedManagedUser.lastName || ''}`.trim()
 			: ''
-		const confirmedDespiteSchedule = await confirmScheduleConflictsIfNeeded({
-			rangeStartDate: startDate,
-			rangeEndDate: endDate,
-			forTargetUserId: effectiveTargetUserId,
-			forEmployeeName: employeeName,
-			isForOtherEmployee: Boolean(effectiveTargetUserId),
-		})
+		// Wniosek godzinowy nie koliduje z grafikiem — pracownik i tak pracuje tego dnia.
+		const confirmedDespiteSchedule = isHourlyType
+			? true
+			: await confirmScheduleConflictsIfNeeded({
+				rangeStartDate: startDate,
+				rangeEndDate: endDate,
+				forTargetUserId: effectiveTargetUserId,
+				forEmployeeName: employeeName,
+				isForOtherEmployee: Boolean(effectiveTargetUserId),
+			})
 		if (!confirmedDespiteSchedule) return
 		
 		try {
 			const data = {
 				type,
 				startDate,
-				endDate,
-				daysRequested,
+				// Typ godzinowy zawsze na jeden dzien; liczbe dni wyznacza serwer.
+				endDate: isHourlyType ? startDate : endDate,
+				...(isHourlyType
+					? { hoursRequested: Number(hoursRequested) }
+					: { daysRequested }),
 				replacement,
 				additionalInfo,
 				...(effectiveTargetUserId ? { targetUserId: effectiveTargetUserId } : {}),
@@ -495,6 +556,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 			setStartDate('')
 			setEndDate('')
 			setDaysRequested(0)
+			setHoursRequested('')
 			setReplacement('')
 			setAdditionalInfo('')
 			if (!submitForEmployee) setTargetUserId('')
@@ -521,6 +583,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		setEditStartDate(new Date(request.startDate).toISOString().split('T')[0])
 		setEditEndDate(new Date(request.endDate).toISOString().split('T')[0])
 		setEditDaysRequested(request.daysRequested)
+		setEditHoursRequested(request.hoursRequested != null ? String(request.hoursRequested) : '')
 		setEditReplacement(request.replacement || '')
 		setEditAdditionalInfo(request.additionalInfo || '')
 	}
@@ -631,13 +694,29 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 			isForOtherEmployee: Boolean(effectiveTargetUserId),
 		})
 		if (!confirmedDespiteSchedule) return
-		
+
+		if (isEditHourlyType) {
+			const validation = validateHourlyLeaveSubmission({
+				settings,
+				typeId: editType,
+				startYmd: editStartDate,
+				endYmd: editStartDate,
+				hoursRequested: editHoursRequested,
+			})
+			if (!validation.ok) {
+				await showAlert(hourlyValidationAlert(validation.code, editHoursPerDayLimit))
+				return
+			}
+		}
+
 		try {
 			const data = {
 				type: editType,
 				startDate: editStartDate,
-				endDate: editEndDate,
-				daysRequested: editDaysRequested,
+				endDate: isEditHourlyType ? editStartDate : editEndDate,
+				...(isEditHourlyType
+					? { hoursRequested: Number(editHoursRequested) }
+					: { daysRequested: editDaysRequested }),
 				replacement: editReplacement,
 				additionalInfo: editAdditionalInfo
 			}
@@ -648,6 +727,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 			setEditStartDate('')
 			setEditEndDate('')
 			setEditDaysRequested(0)
+			setEditHoursRequested('')
 			setEditReplacement('')
 			setEditAdditionalInfo('')
 		} catch (error) {
@@ -823,46 +903,86 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 									</select>
 								</div>
 
-								<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-									<div>
-										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
-										<input
-											type="date"
-											value={startDate}
-											onChange={handleStartDateChange}
-											required
-											style={{ maxWidth: '300px' }}
-											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-										/>
-									</div>
-									<div>
-										<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
-										<input
-											type="date"
-											value={endDate}
-											min={startDate || undefined}
-											onChange={(e) => handleEndDateChange(e, true)}
-											required
-											style={{ maxWidth: '300px' }}
-											className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-										/>
-									</div>
-								</div>
+								{isHourlyType ? (
+									<>
+										<p style={{ margin: '0 0 4px', fontSize: '13px', color: '#6b7280' }}>
+											{t('leaveform.hourlySingleDayHint')}
+										</p>
+										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+											<div>
+												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+												<input
+													type="date"
+													value={startDate}
+													onChange={handleStartDateChange}
+													required
+													style={{ maxWidth: '300px' }}
+													className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+											</div>
+											<div>
+												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.hoursOnDay')}</label>
+												<input
+													type="number"
+													min="0.5"
+													max={hoursPerDayLimit}
+													step="0.5"
+													value={hoursRequested}
+													onChange={e => setHoursRequested(e.target.value)}
+													required
+													style={{ maxWidth: '300px' }}
+													className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+												<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
+													{t('leaveform.hourlyMax', { hours: hoursPerDayLimit })}
+												</small>
+											</div>
+										</div>
+									</>
+								) : (
+									<>
+										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+											<div>
+												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+												<input
+													type="date"
+													value={startDate}
+													onChange={handleStartDateChange}
+													required
+													style={{ maxWidth: '300px' }}
+													className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+											</div>
+											<div>
+												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateto')}</label>
+												<input
+													type="date"
+													value={endDate}
+													min={startDate || undefined}
+													onChange={(e) => handleEndDateChange(e, true)}
+													required
+													style={{ maxWidth: '300px' }}
+													className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+											</div>
+										</div>
 
-								<div>
-									<label className="block text-gray-700 font-medium mb-1">
-										{resolveLeaveTypeSettlement(settings, type).unit === 'hours'
-											? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
-											: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
-										}
-									</label>
-									<input
-										type="text"
-										value={formatLeaveValue(daysRequested).display}
-										readOnly
-										className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
-									/>
-								</div>
+										<div>
+											<label className="block text-gray-700 font-medium mb-1">
+												{resolveLeaveTypeSettlement(settings, type).unit === 'hours'
+													? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
+													: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
+												}
+											</label>
+											<input
+												type="text"
+												value={formatLeaveValue(daysRequested).display}
+												readOnly
+												className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
+											/>
+										</div>
+									</>
+								)}
 							</div>
 
 							<div className="leave-request-form__panel leave-request-form__panel--surface" style={{
@@ -1297,41 +1417,45 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 											style={{ maxWidth: '300px', marginLeft: '5px' }}
 											className="border border-gray-300 rounded-md px-4 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
-										<br></br>
-										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.dateto')}</label>
-										<input
-											type="date"
-											value={editEndDate}
-											min={editStartDate || undefined}
-											onChange={e => {
+										{!isEditHourlyType && (
+											<>
+												<br></br>
+												<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.dateto')}</label>
+												<input
+												type="date"
+												value={editEndDate}
+												min={editStartDate || undefined}
+												onChange={e => {
 												const selectedDate = e.target.value
 												if (!selectedDate) {
-													setEditEndDate('')
-													return
+												setEditEndDate('')
+												return
 												}
-
+												
 												// Jeśli wybrana data jest wcześniejsza niż data "od", nie akceptuj
 												if (editStartDate && selectedDate && isIsoDateBefore(selectedDate, editStartDate)) {
-													// Same mobile picker quirk as in the main form; clamp silently.
-													setEditEndDate(editStartDate)
-													return
+												// Same mobile picker quirk as in the main form; clamp silently.
+												setEditEndDate(editStartDate)
+												return
 												}
-
+												
 												const workOnWeekends = settings?.workOnWeekends !== false
 												
 												// Jeśli zespół nie pracuje w weekendy i NIE ma wybranej daty "od" (pojedyncza data "do"), zablokuj weekendy
 												// Ale jeśli jest wybrany zakres (od-do), pozwól na weekendy - będą pomijane w obliczeniach
 												if (!workOnWeekends && !editStartDate && isWeekend(selectedDate)) {
-													showAlert(t('leaveform.weekendEndDateError') || 'Nie można wybrać weekendu jako daty końcowej gdy zespół nie pracuje w weekendy. Wybierz najpierw datę początkową, aby utworzyć zakres.')
-													return
+												showAlert(t('leaveform.weekendEndDateError') || 'Nie można wybrać weekendu jako daty końcowej gdy zespół nie pracuje w weekendy. Wybierz najpierw datę początkową, aby utworzyć zakres.')
+												return
 												}
-
+												
 												setEditEndDate(selectedDate)
-											}}
-											required
-											style={{ maxWidth: '300px', marginLeft: '5px' }}
-											className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-										/>
+												}}
+												required
+												style={{ maxWidth: '300px', marginLeft: '5px' }}
+												className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+											</>
+										)}
 									</div>
 
 									<div>
@@ -1341,12 +1465,30 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 												: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
 											}
 										</label>
-										<input
+										{isEditHourlyType ? (
+											<>
+												<input
+													type="number"
+													min="0.5"
+													max={editHoursPerDayLimit}
+													step="0.5"
+													value={editHoursRequested}
+													onChange={e => setEditHoursRequested(e.target.value)}
+													required
+													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+												/>
+												<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
+													{t('leaveform.hourlyMax', { hours: editHoursPerDayLimit })}
+												</small>
+											</>
+										) : (
+											<input
 											type="text"
 											value={formatLeaveValue(editDaysRequested, editType).display}
 											readOnly
 											className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
-										/>
+											/>
+										)}
 									</div>
 
 									<div>

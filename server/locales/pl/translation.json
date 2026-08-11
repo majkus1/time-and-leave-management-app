@@ -1,13 +1,13 @@
 {
 	"email": {
 		"leaveform": {
-		"option1": "Urlop wypoczynkowy",
-		"option2": "Urlop okolicznościowy",
-		"option3": "Urlop na żądanie",
-		"option4": "Urlop bezpłatny",
-		"option5": "Inna nieobecność",
-		"option6": "Zwolnienie Lekarskie (L4)",
-		"title": "Nowe zgłoszenie urlopu/nieobecności",
+			"option1": "Urlop wypoczynkowy",
+			"option2": "Urlop okolicznościowy",
+			"option3": "Urlop na żądanie",
+			"option4": "Urlop bezpłatny",
+			"option5": "Inna nieobecność",
+			"option6": "Zwolnienie Lekarskie (L4)",
+			"title": "Nowe zgłoszenie urlopu/nieobecności",
 			"employee": "Pracownik",
 			"type": "Rodzaj",
 			"dates": "Daty",
@@ -129,7 +129,13 @@
 		"option3": "Urlop na żądanie",
 		"option4": "Urlop bezpłatny",
 		"option5": "Inna nieobecność",
-		"option6": "Zwolnienie Lekarskie (L4)"
+		"option6": "Zwolnienie Lekarskie (L4)",
+		"hourlyRangeError": "Ten typ wniosku rozliczany jest godzinowo — wybierz jeden dzień.",
+		"hourlyHoursRequired": "Podaj liczbę godzin większą od zera.",
+		"hourlyHoursRange": "Liczba godzin nie może przekraczać długości dnia pracy ({{hours}} h).",
+		"hourlyHoursStep": "Liczbę godzin podaj z dokładnością do 0,5 h.",
+		"hourlyDayCapError": "Łączna liczba godzin urlopu w tym dniu przekroczyłaby długość dnia pracy ({{hours}} h).",
+		"hourlyInvalid": "Nieprawidłowy wniosek godzinowy."
 	},
 	"resetpass": {
 		"subject": "Zresetuj swoje hasło w planopia.pl",
