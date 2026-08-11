@@ -21,6 +21,12 @@ const leaveRequestTypeSchema = new mongoose.Schema({
 	requireApproval: { type: Boolean, default: true }, // Czy wymaga zatwierdzenia (false = automatycznie akceptowany jak L4)
 	allowDaysLimit: { type: Boolean, default: false }, // Czy można ustawiać limit dni dla usera (dla systemowych: można włączyć/wyłączyć, dla custom: zawsze jeśli true)
 	minDaysBefore: { type: Number, default: null }, // Minimalna liczba dni przed urlopem, na ile trzeba złożyć wniosek (null = brak limitu, np. 5 = trzeba złożyć minimum 5 dni przed)
+	// Jednostka rozliczenia tego typu wniosku:
+	//   'inherit' (domyślnie) — dziedziczy globalne leaveCalculationMode zespołu, wniosek składany zakresem dat
+	//   'days'                — zawsze w dniach, niezależnie od ustawienia zespołu
+	//   'hours'               — wniosek składany jako jeden dzień + liczba godzin (np. opieka nad dzieckiem, art. 188 KP)
+	// Szczegóły rozstrzygania: server/utils/leaveSettlement.js
+	settlementUnit: { type: String, enum: ['inherit', 'days', 'hours'], default: 'inherit' },
 }, { _id: false })
 
 const workActivitySchema = new mongoose.Schema({

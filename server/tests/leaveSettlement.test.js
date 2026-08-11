@@ -12,6 +12,9 @@ const {
 	formatLeaveQuantityValue,
 	getLeaveQuantityLabel,
 	formatLeaveQuantity,
+	normalizeSettlementUnit,
+	buildSettlementUnitLookup,
+	resolveIncomingSettlementUnit,
 	NON_HOURLY_LEAVE_QUERY,
 } = require('../utils/leaveSettlement')
 
@@ -194,6 +197,32 @@ test('formatowanie zachowuje dotychczasowy zapis: godziny z jednym miejscem, dni
 
 	assert.strictEqual(getLeaveQuantityLabel(daySettings, 'leaveform.option1', { days: 'Dni', hours: 'Godziny' }), 'Dni')
 	assert.strictEqual(getLeaveQuantityLabel(hourGlobalSettings, 'leaveform.option1', { days: 'Dni', hours: 'Godziny' }), 'Godziny')
+})
+
+test('normalizeSettlementUnit: wszystko nieznane spada do inherit', () => {
+	assert.strictEqual(normalizeSettlementUnit('hours'), 'hours')
+	assert.strictEqual(normalizeSettlementUnit('days'), 'days')
+	assert.strictEqual(normalizeSettlementUnit('inherit'), 'inherit')
+	assert.strictEqual(normalizeSettlementUnit(undefined), 'inherit')
+	assert.strictEqual(normalizeSettlementUnit(null), 'inherit')
+	assert.strictEqual(normalizeSettlementUnit('WAT'), 'inherit')
+})
+
+test('resolveIncomingSettlementUnit: zapis bez tego pola nie kasuje ustawienia admina', () => {
+	const settings = makeSettings('hours', 'days')
+	const lookup = buildSettlementUnitLookup(settings)
+
+	// Klient nie przyslal pola -> zostaje to, co bylo zapisane.
+	assert.strictEqual(resolveIncomingSettlementUnit({ id: 'custom-childcare' }, lookup), 'hours')
+	// Klient przyslal jawna wartosc -> wygrywa wartosc z zadania.
+	assert.strictEqual(
+		resolveIncomingSettlementUnit({ id: 'custom-childcare', settlementUnit: 'days' }, lookup),
+		'days'
+	)
+	// Nowy typ, ktorego jeszcze nie ma w ustawieniach.
+	assert.strictEqual(resolveIncomingSettlementUnit({ id: 'custom-nowy' }, lookup), 'inherit')
+	// Odporne na brak lookupu.
+	assert.strictEqual(resolveIncomingSettlementUnit({ id: 'custom-childcare' }, undefined), 'inherit')
 })
 
 test('NON_HOURLY_LEAVE_QUERY obejmuje brak pola, null i zero', () => {

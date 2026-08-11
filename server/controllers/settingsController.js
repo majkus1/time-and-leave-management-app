@@ -2,6 +2,7 @@ const { firmDb } = require('../db/db')
 const Settings = require('../models/Settings')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
+const { buildSettlementUnitLookup, resolveIncomingSettlementUnit } = require('../utils/leaveSettlement')
 
 async function loadTeamForEntitlements(teamId) {
 	if (!teamId) return null
@@ -180,7 +181,9 @@ exports.updateSettings = async (req, res) => {
 			isEnabled: type.isEnabled,
 			requireApproval: type.requireApproval,
 			allowDaysLimit: type.allowDaysLimit,
-			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null
+			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null,
+			// Gdy pole nie przyszlo, zachowaj dotychczasowa jednostke (patrz leaveRequestTypeController).
+			settlementUnit: resolveIncomingSettlementUnit(type, buildSettlementUnitLookup(settings))
 			}))
 			
 			// Nie można usuwać typów systemowych, tylko je włączać/wyłączać

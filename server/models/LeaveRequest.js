@@ -8,7 +8,19 @@ const leaveRequestSchema = new mongoose.Schema({
 	},
 	startDate: { type: Date, required: true },
 	endDate: { type: Date, required: true },
+	// UWAGA na wspolistnienie pol ilosciowych (szczegoly: server/utils/leaveSettlement.js):
+	// - daysRequested jest wymagane ZAWSZE. Wniosek godzinowy zapisuje tu 1 (nie 0), bo pracownik
+	//   faktycznie jest czesciowo nieobecny tego dnia — dzieki temu kalendarze i liczniki dni
+	//   pozostaja spojne, a mieszanie jednostek naprawiamy jawnie w agregatach.
+	// - hoursRequested > 0 jest JEDYNYM dyskryminatorem wniosku godzinowego w runtime.
+	//   Nie wolno polegac na wartosci domyslnej settlementUnit: wnioski sa czytane przez .lean(),
+	//   ktore omija defaulty Mongoose, wiec stare rekordy wracaja calkiem bez tych pol.
+	// - settlementUnit i hoursPerDaySnapshot to zapis stanu z chwili zlozenia, dzieki czemu
+	//   pozniejsza zmiana jednostki typu przez admina nigdy nie zmienia znaczenia starych rekordow.
 	daysRequested: { type: Number, required: true },
+	hoursRequested: { type: Number, default: null },
+	settlementUnit: { type: String, enum: ['days', 'hours'], default: 'days' },
+	hoursPerDaySnapshot: { type: Number, default: null },
 	replacement: { type: String },
 	additionalInfo: { type: String },
 	// status: {

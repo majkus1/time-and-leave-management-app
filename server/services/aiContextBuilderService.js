@@ -455,6 +455,7 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		requireApproval: t.requireApproval !== false,
 		allowDaysLimit: !!t.allowDaysLimit,
 		minDaysBefore: t.minDaysBefore ?? null,
+		settlementUnit: t.settlementUnit || 'inherit',
 	}))
 
 	const workActivities = (settingsLean.workActivities || []).map(a => ({

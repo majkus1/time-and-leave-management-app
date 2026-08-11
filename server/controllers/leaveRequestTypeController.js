@@ -1,6 +1,11 @@
 const { firmDb } = require('../db/db')
 const Settings = require('../models/Settings')(firmDb)
 const User = require('../models/user')(firmDb)
+const {
+	buildSettlementUnitLookup,
+	normalizeSettlementUnit,
+	resolveIncomingSettlementUnit,
+} = require('../utils/leaveSettlement')
 
 /**
  * Pobierz wszystkie typy wniosków dla zespołu (włączone i wyłączone)
@@ -52,6 +57,7 @@ exports.updateLeaveRequestTypes = async (req, res) => {
 		}
 
 		const settings = await Settings.getSettings(requestingUser.teamId)
+		const existingSettlementUnitById = buildSettlementUnitLookup(settings)
 
 		// Walidacja typów
 		const validTypes = leaveRequestTypes.filter(type => {
@@ -71,7 +77,11 @@ exports.updateLeaveRequestTypes = async (req, res) => {
 			isEnabled: type.isEnabled,
 			requireApproval: type.requireApproval,
 			allowDaysLimit: type.allowDaysLimit,
-			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null
+			minDaysBefore: type.minDaysBefore !== null && type.minDaysBefore !== undefined && type.minDaysBefore > 0 ? type.minDaysBefore : null,
+			// Gdy klient nie przysyla settlementUnit (starsza wersja, inny formularz), zachowujemy
+			// dotychczasowa wartosc zamiast ja kasowac — inaczej zapis z innego ekranu wyzerowalby
+			// ustawienie zrobione w panelu typow.
+			settlementUnit: resolveIncomingSettlementUnit(type, existingSettlementUnitById)
 		}))
 
 		// Nie można usuwać typów systemowych, tylko je włączać/wyłączać
@@ -111,7 +121,7 @@ exports.updateLeaveRequestTypes = async (req, res) => {
  */
 exports.addCustomLeaveRequestType = async (req, res) => {
 	try {
-		const { name, nameEn, requireApproval, allowDaysLimit, minDaysBefore } = req.body
+		const { name, nameEn, requireApproval, allowDaysLimit, minDaysBefore, settlementUnit } = req.body
 
 		// Sprawdź uprawnienia - tylko Admin i HR
 		const requestingUser = await User.findById(req.user.userId)
@@ -166,7 +176,8 @@ exports.addCustomLeaveRequestType = async (req, res) => {
 			isEnabled: true,
 			requireApproval: requireApproval,
 			allowDaysLimit: allowDaysLimit,
-			minDaysBefore: minDaysBefore !== null && minDaysBefore !== undefined && minDaysBefore > 0 ? minDaysBefore : null
+			minDaysBefore: minDaysBefore !== null && minDaysBefore !== undefined && minDaysBefore > 0 ? minDaysBefore : null,
+			settlementUnit: normalizeSettlementUnit(settlementUnit)
 		}
 
 		if (!settings.leaveRequestTypes) {

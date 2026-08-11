@@ -33,6 +33,32 @@ const NON_HOURLY_LEAVE_QUERY = {
 	],
 }
 
+/** Sanityzacja pola typu wniosku — wszystko nieznane spada do 'inherit', czyli dzisiejszego zachowania. */
+function normalizeSettlementUnit(value) {
+	return value === 'days' || value === 'hours' ? value : 'inherit'
+}
+
+/** Mapa id typu -> zapisana jednostka, do zachowania wartości przy zapisach bez tego pola. */
+function buildSettlementUnitLookup(settings) {
+	const lookup = new Map()
+	for (const type of settings?.leaveRequestTypes || []) {
+		if (type?.id) lookup.set(String(type.id), type.settlementUnit)
+	}
+	return lookup
+}
+
+/**
+ * Jednostka do zapisania dla przychodzącego typu: gdy klient pola nie przysłał,
+ * zostaje wartość dotychczasowa (a nie ciche wyzerowanie do 'inherit').
+ */
+function resolveIncomingSettlementUnit(incomingType, existingLookup) {
+	if (incomingType?.settlementUnit !== undefined) {
+		return normalizeSettlementUnit(incomingType.settlementUnit)
+	}
+	const id = incomingType?.id ? String(incomingType.id).trim() : ''
+	return normalizeSettlementUnit(existingLookup?.get(id))
+}
+
 function normalizeHoursPerDay(value) {
 	const parsed = Number(value)
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_HOURS_PER_DAY
@@ -235,7 +261,10 @@ module.exports = {
 	DEFAULT_HOURS_PER_DAY,
 	HOURLY_STEP,
 	NON_HOURLY_LEAVE_QUERY,
+	buildSettlementUnitLookup,
 	normalizeHoursPerDay,
+	normalizeSettlementUnit,
+	resolveIncomingSettlementUnit,
 	roundQuantity,
 	resolveLeaveTypeSettlement,
 	isHourlyCaptureType,
