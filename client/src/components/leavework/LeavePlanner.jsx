@@ -12,6 +12,7 @@ import { useOwnVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { formatLeaveQuantity } from '../../utils/leaveSettlement'
 import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
 import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
 import LeaveRequestStatusFilterModal from './LeaveRequestStatusFilterModal'
@@ -539,10 +540,7 @@ function LeavePlanner() {
 											<div className="leave-planner-request-card__dates" style={{ fontSize: '14px', color: '#666' }}>
 												{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
 												<span className={`leave-planner-request-card__duration ${isPendingRequest ? 'is-pending' : 'is-accepted'}`} style={{ marginLeft: '10px', color: isPendingRequest ? '#1d4ed8' : '#059669' }}>
-													({settings?.leaveCalculationMode === 'hours'
-														? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
-														: `${request.daysRequested} ${t('leaveplanner.days')}`
-													})
+													({formatLeaveQuantity(request, settings, { days: t('leaveplanner.days'), hours: t('leaveplanner.hours') || 'godzin' })})
 												</span>
 											</div>
 											<div className="leave-planner-request-card__status">

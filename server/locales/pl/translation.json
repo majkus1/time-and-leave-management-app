@@ -214,7 +214,7 @@
 	"push": {
 		"leave": {
 			"newRequestTitle": "Nowy wniosek",
-			"newRequestBody": "{{userName}} złożył wniosek: {{type}} ({{startDate}} - {{endDate}}, {{days}} dni)",
+			"newRequestBody": "{{userName}} złożył wniosek: {{type}} ({{startDate}} - {{endDate}}, {{quantity}})",
 			"statusChangedTitle": "Status wniosku zmieniony",
 			"statusChangedBody": "Wniosek {{userName}} ({{type}}) został {{status}} przez {{updatedByName}}.",
 			"statusChangedSelfTitle": "Twój wniosek został {{status}}.",

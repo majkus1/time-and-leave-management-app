@@ -11,6 +11,7 @@ import { useUserLeaveRequests, useUserAcceptedLeaveRequests } from '../../hooks/
 import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { formatLeaveQuantity } from '../../utils/leaveSettlement'
 
 function EmployeeLeaveCalendar() {
 	const { userId } = useParams()
@@ -239,10 +240,7 @@ function EmployeeLeaveCalendar() {
 										{new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
 									</div>
 									<div className="leave-planner-request-card__duration is-accepted" style={{ fontSize: '12px', color: '#059669', fontWeight: '500' }}>
-										{settings?.leaveCalculationMode === 'hours' 
-											? `${(request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} ${t('leaveplanner.hours') || 'godzin'}`
-											: `${request.daysRequested} ${t('leaveplanner.days')}`
-										}
+										{formatLeaveQuantity(request, settings, { days: t('leaveplanner.days'), hours: t('leaveplanner.hours') || 'godzin' })}
 									</div>
 								</div>
 							))}

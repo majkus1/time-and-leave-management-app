@@ -9,6 +9,13 @@ import { useOwnVacationDays, useVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import {
+	formatLeaveQuantityValue,
+	getLeaveQuantityLabel,
+	getLeaveRequestQuantity,
+	getLeaveRequestQuantityLabel,
+	resolveLeaveTypeSettlement,
+} from '../../utils/leaveSettlement'
 import { LEAVE_REQUEST_STATUS_KEYS, createDefaultLeaveRequestStatusFilters, filterLeaveRequestsByPeriod, filterLeaveRequestsByStatuses } from '../../utils/leaveRequestPeriod'
 import LeaveRequestPeriodFilter from './LeaveRequestPeriodFilter'
 import LeaveRequestInsightsModal from './LeaveRequestInsightsModal'
@@ -261,35 +268,33 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
 	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
 
-	// Funkcja pomocnicza do formatowania wartości urlopu (dni lub godziny)
-	const formatLeaveValue = React.useCallback((days) => {
-		if (!settings) return { value: days, unit: t('leaveform.days') || 'dni', display: `${days} ${t('leaveform.days') || 'dni'}` }
-		
-		if (settings.leaveCalculationMode === 'hours') {
-			const hours = days * (settings.leaveHoursPerDay || 8)
-			return {
-				value: hours,
-				days: days,
-				unit: t('leaveform.hours') || 'godzin',
-				display: `${hours.toFixed(1)} ${t('leaveform.hours') || 'godzin'}`
-			}
-		} else {
-			return {
-				value: days,
-				days: days,
-				unit: t('leaveform.days') || 'dni',
-				display: `${days} ${t('leaveform.days') || 'dni'}`
-			}
-		}
-	}, [settings, t])
+	// Etykiety jednostki przekazywane do wspólnego helpera (client/src/utils/leaveSettlement.js)
+	const quantityLabels = React.useMemo(
+		() => ({ days: t('leaveform.days') || 'dni', hours: t('leaveform.hours') || 'godzin' }),
+		[t]
+	)
+
+	// Funkcja pomocnicza do formatowania wartości urlopu (dni lub godziny).
+	// Cienki wrapper na wspólny helper — jednostka wynika z typu wniosku, nie tylko z ustawienia zespołu.
+	const formatLeaveValue = React.useCallback(
+		(days, typeId = type) => {
+			const quantity = getLeaveRequestQuantity({ type: typeId, daysRequested: days }, settings)
+			const unit = quantity.unit === 'hours' ? quantityLabels.hours : quantityLabels.days
+			const shown = quantity.unit === 'hours' ? quantity.value.toFixed(1) : quantity.value
+			return { value: quantity.value, days, unit, display: `${shown} ${unit}` }
+		},
+		[settings, type, quantityLabels]
+	)
 
 	// Funkcja pomocnicza do pobrania etykiety (dni/godziny)
-	const getLeaveValueLabel = React.useCallback(() => {
-		if (!settings) return t('leaveform.days') || 'Dni'
-		return settings.leaveCalculationMode === 'hours' 
-			? (t('leaveform.hours') || 'Godziny')
-			: (t('leaveform.days') || 'Dni')
-	}, [settings, t])
+	const getLeaveValueLabel = React.useCallback(
+		(typeId = type) =>
+			getLeaveQuantityLabel(settings, typeId, {
+				days: t('leaveform.days') || 'Dni',
+				hours: t('leaveform.hours') || 'Godziny',
+			}),
+		[settings, type, t]
+	)
 
 	useEffect(() => {
 		if (startDate && endDate && settings) {
@@ -846,7 +851,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 
 								<div>
 									<label className="block text-gray-700 font-medium mb-1">
-										{settings?.leaveCalculationMode === 'hours' 
+										{resolveLeaveTypeSettlement(settings, type).unit === 'hours'
 											? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
 											: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
 										}
@@ -1007,10 +1012,8 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 											<strong>{t('leaveform.date')}:</strong> {formatDate(request.startDate)} - {formatDate(request.endDate)}
 										</p>
 										<p style={{ margin: 0 }}>
-											<strong>{settings?.leaveCalculationMode === 'hours' ? (t('leaveform.hoursRequested') || 'Liczba godzin') : (t('leaveform.daysRequested') || 'Liczba dni')}:</strong>{' '}
-											{settings?.leaveCalculationMode === 'hours'
-												? (request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)
-												: request.daysRequested}
+											<strong>{getLeaveRequestQuantityLabel(request, settings, { days: t('leaveform.daysRequested') || 'Liczba dni', hours: t('leaveform.hoursRequested') || 'Liczba godzin' })}:</strong>{' '}
+											{formatLeaveQuantityValue(request, settings)}
 										</p>
 										<p style={{ margin: 0 }}>
 											<strong>{t('leaveform.substitute').replace(':', '')}:</strong> {request.replacement || t('leaveform.empty')}
@@ -1333,14 +1336,14 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 
 									<div>
 										<label className="block text-gray-700 font-medium mb-1">
-											{settings?.leaveCalculationMode === 'hours' 
+											{resolveLeaveTypeSettlement(settings, editType).unit === 'hours'
 												? (t('leaveform.numberhoursreq') || 'Liczba godzin urlopu')
 												: (t('leaveform.numberdayreq') || 'Liczba dni urlopu')
 											}
 										</label>
 										<input
 											type="text"
-											value={formatLeaveValue(editDaysRequested).display}
+											value={formatLeaveValue(editDaysRequested, editType).display}
 											readOnly
 											className="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-not-allowed"
 										/>

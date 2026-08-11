@@ -15,6 +15,11 @@ const { isHoliday } = require('../utils/holidays')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const {
+	formatLeaveQuantityValue,
+	getLeaveRequestQuantity,
+	getLeaveRequestQuantityLabel,
+} = require('../utils/leaveSettlement')
+const {
 	resolveTeamScopedLeaveUserViewAccess,
 	resolveTeamScopedLeaveManageAccess,
 	sendTeamScopedLeaveViewAccessError,
@@ -479,8 +484,8 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveRequest.hours') || 'Godziny') : (t('email.leaveRequest.days') || 'Dni')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${getLeaveRequestQuantityLabel(leaveRequest, settings, { days: t('email.leaveRequest.days') || 'Dni', hours: t('email.leaveRequest.hours') || 'Godziny' })}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${formatLeaveQuantityValue(leaveRequest, settings)}</td>
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.updatedBy')}:</td>
@@ -1066,8 +1071,8 @@ exports.cancelLeaveRequest = async (req, res) => {
 							<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 						</tr>
 						<tr>
-							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
-							<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${getLeaveRequestQuantityLabel(leaveRequest, settings, { days: t('email.leaveform.days') || 'Dni', hours: t('email.leaveform.hours') || 'Godziny' })}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${formatLeaveQuantityValue(leaveRequest, settings)}</td>
 						</tr>
 					</table>
 				</div>
@@ -1340,18 +1345,19 @@ exports.updateLeaveRequest = async (req, res) => {
 							<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 						</tr>
 						<tr>
-							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
-							<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : daysRequested}</td>
+							<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${getLeaveRequestQuantityLabel(leaveRequest, settings, { days: t('email.leaveform.days') || 'Dni', hours: t('email.leaveform.hours') || 'Godziny' })}:</td>
+							<td style="padding: 8px 0; color: #1f2937;">${formatLeaveQuantityValue(leaveRequest, settings)}</td>
 						</tr>
 					</table>
 				</div>
 				${!typeRequiresApproval ? `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.l4Info')}</p>` : `<p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">${t('email.leaveform.clickButtonToReview')}</p>`}
 			`
 
+			const editQuantity = getLeaveRequestQuantity(leaveRequest, settings)
 			const qtyLabel =
-				settings.leaveCalculationMode === 'hours'
-					? `${(daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} h`
-					: `${daysRequested} ${t('email.leaveform.days') || 'dni'}`
+				editQuantity.unit === 'hours'
+					? `${editQuantity.value.toFixed(1)} h`
+					: `${editQuantity.value} ${t('email.leaveform.days') || 'dni'}`
 			const editPreview = `${user.firstName || ''} ${user.lastName || ''}`.trim() + ` · ${typeText} · ${startDate}–${endDate} · ${qtyLabel}`
 
 			// Wyślij email do wszystkich unikalnych odbiorców

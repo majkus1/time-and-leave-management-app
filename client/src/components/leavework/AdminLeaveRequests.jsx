@@ -259,10 +259,8 @@ function AdminLeaveRequests() {
 									<strong>{t('adminleavereq.date')}</strong> {formatDate(request.startDate)} - {formatDate(request.endDate)}
 								</p>
 								<p style={{ margin: 0 }}>
-									<strong>{settings?.leaveCalculationMode === 'hours' ? (t('adminleavereq.hours') || 'Liczba godzin') : (t('adminleavereq.days') || 'Liczba dni')}</strong>{' '}
-									{settings?.leaveCalculationMode === 'hours'
-										? (request.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)
-										: request.daysRequested}
+									<strong>{getLeaveRequestQuantityLabel(request, settings, { days: t('adminleavereq.days') || 'Liczba dni', hours: t('adminleavereq.hours') || 'Liczba godzin' })}</strong>{' '}
+									{formatLeaveQuantityValue(request, settings)}
 								</p>
 								<p style={{ margin: 0 }}>
 									<strong>{t('adminleavereq.subst')}</strong> {request.replacement || t('adminleavereq.none')}

@@ -214,7 +214,7 @@
 	"push": {
 		"leave": {
 			"newRequestTitle": "New leave request",
-			"newRequestBody": "{{userName}} submitted a request: {{type}} ({{startDate}} - {{endDate}}, {{days}} days)",
+			"newRequestBody": "{{userName}} submitted a request: {{type}} ({{startDate}} - {{endDate}}, {{quantity}})",
 			"statusChangedTitle": "Leave request status changed",
 			"statusChangedBody": "{{userName}}'s request ({{type}}) status has been changed to \"{{status}}\" by {{updatedByName}}",
 			"statusChangedSelfTitle": "Your leave request was {{status}}.",

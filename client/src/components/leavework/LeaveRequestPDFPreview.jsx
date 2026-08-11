@@ -6,6 +6,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '../../hooks/useSettings'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
+import { formatLeaveQuantityValue, getLeaveRequestQuantityLabel } from '../../utils/leaveSettlement'
 import { buildReportFilename } from '../../utils/export/reportFilename'
 import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 
@@ -137,8 +138,8 @@ function LeaveRequestPDFPreview() {
 									<span style={{ color: '#1f2937' }}>{formatDate(leaveRequest.endDate)}</span>
 								</p>
 								<p style={{ margin: '8px 0', fontSize: '14px' }}>
-									<strong style={{ color: '#374151', minWidth: '120px', display: 'inline-block' }}>{t('leavepdf.days')}</strong> 
-									<span style={{ color: '#1f2937' }}>{leaveRequest.daysRequested}</span>
+									<strong style={{ color: '#374151', minWidth: '120px', display: 'inline-block' }}>{getLeaveRequestQuantityLabel(leaveRequest, settings, { days: t('leavepdf.days'), hours: t('leavepdf.hours') })}</strong>
+									<span style={{ color: '#1f2937' }}>{formatLeaveQuantityValue(leaveRequest, settings)}</span>
 								</p>
 								<p style={{ margin: '8px 0', fontSize: '14px' }}>
 									<strong style={{ color: '#374151', minWidth: '120px', display: 'inline-block' }}>{t('leavepdf.personsub')} </strong>  

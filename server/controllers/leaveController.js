@@ -15,6 +15,11 @@ const { appUrl } = require('../config')
 const { isHoliday } = require('../utils/holidays')
 const { isLeaveRequestTypeValid, requiresApproval, getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const {
+	formatLeaveQuantityValue,
+	getLeaveRequestQuantity,
+	getLeaveRequestQuantityLabel,
+} = require('../utils/leaveSettlement')
+const {
 	isSameTeam,
 	isSelfUser,
 	hasAdminOrHrRole,
@@ -413,6 +418,10 @@ exports.submitLeaveRequest = async (req, res) => {
 		// Określ język na podstawie tłumaczeń
 		const language = t('email.leaveRequest.footerNotification')?.includes('automatycznie') ? 'pl' : 'en'
 		const typeText = getLeaveRequestTypeName(settings, type, t, language)
+		const quantityLabels = {
+			days: t('email.leaveform.days') || 'Dni',
+			hours: t('email.leaveform.hours') || 'Godziny',
+		}
 		const content = `
 			<p style="margin: 0 0 16px 0;">${!typeRequiresApproval ? t('email.leaveform.newAutoApprovedRequest') : t('email.leaveform.newRequestSupervisor')}</p>
 			<div style="background-color: #f9fafb; border-left: 4px solid #10b981; padding: 20px; margin: 24px 0; border-radius: 4px;">
@@ -437,8 +446,8 @@ exports.submitLeaveRequest = async (req, res) => {
 						<td style="padding: 8px 0; color: #1f2937;">${trimmedStartDate} - ${trimmedEndDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveform.hours') || 'Godziny') : (t('email.leaveform.days') || 'Dni')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (finalDaysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : finalDaysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${getLeaveRequestQuantityLabel(leaveRequest, settings, quantityLabels)}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${formatLeaveQuantityValue(leaveRequest, settings)}</td>
 					</tr>
 				</table>
 			</div>
@@ -446,10 +455,11 @@ exports.submitLeaveRequest = async (req, res) => {
 		`
 		
 		const employee = `${user.firstName || ''} ${user.lastName || ''}`.trim()
+		const previewQuantity = getLeaveRequestQuantity(leaveRequest, settings)
 		const qtyLabel =
-			settings.leaveCalculationMode === 'hours'
-				? `${(finalDaysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1)} h`
-				: `${finalDaysRequested} ${t('email.leaveform.days') || 'dni'}`
+			previewQuantity.unit === 'hours'
+				? `${previewQuantity.value.toFixed(1)} h`
+				: `${previewQuantity.value} ${t('email.leaveform.days') || 'dni'}`
 		const newLeavePreview = `${employee} · ${typeText} · ${trimmedStartDate}–${trimmedEndDate} · ${qtyLabel}`
 
 		// Wyślij email do wszystkich unikalnych odbiorców

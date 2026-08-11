@@ -5,6 +5,7 @@ const Settings = require('../models/Settings')(firmDb)
 const EmailNotificationPreference = require('../models/EmailNotificationPreference')(firmDb)
 const { appUrl } = require('../config')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { formatLeaveQuantityValue, getLeaveRequestQuantityLabel } = require('../utils/leaveSettlement')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { formatTaskScheduleForNotification } = require('../utils/taskScheduleTime')
 
@@ -235,8 +236,8 @@ const sendEmailToHR = async (leaveRequest, user, updatedByUser, t, updatedByInfo
 						<td style="padding: 8px 0; color: #1f2937;">${startDate} - ${endDate}</td>
 					</tr>
 					<tr>
-						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${settings.leaveCalculationMode === 'hours' ? (t('email.leaveRequest.hours') || 'Godziny') : (t('email.leaveRequest.days') || 'Dni')}:</td>
-						<td style="padding: 8px 0; color: #1f2937;">${settings.leaveCalculationMode === 'hours' ? (leaveRequest.daysRequested * (settings.leaveHoursPerDay || 8)).toFixed(1) : leaveRequest.daysRequested}</td>
+						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${getLeaveRequestQuantityLabel(leaveRequest, settings, { days: t('email.leaveRequest.days') || 'Dni', hours: t('email.leaveRequest.hours') || 'Godziny' })}:</td>
+						<td style="padding: 8px 0; color: #1f2937;">${formatLeaveQuantityValue(leaveRequest, settings)}</td>
 					</tr>
 					<tr>
 						<td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${t('email.leaveRequest.updatedBy')}:</td>

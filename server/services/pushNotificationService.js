@@ -5,6 +5,7 @@ const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
+const { formatLeaveQuantity } = require('../utils/leaveSettlement')
 const { recordPushNotification, recordPushForUserIds } = require('./userNotificationService')
 const { formatTaskScheduleForNotification } = require('../utils/taskScheduleTime')
 
@@ -713,11 +714,12 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	
 	// Get leave request type name (supports custom-* types from team settings)
 	let typeText = leaveRequest.type || 'Urlop'
+	let teamSettings = null
 	try {
 		const teamId = user?.teamId || leaveRequest?.teamId
 		if (teamId) {
-			const settings = await Settings.getSettings(teamId)
-			typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
+			teamSettings = await Settings.getSettings(teamId)
+			typeText = getLeaveRequestTypeName(teamSettings, leaveRequest.type, t, language)
 		}
 	} catch (error) {
 		// Fallback to translation/default handling below
@@ -740,16 +742,21 @@ const sendLeaveRequestPushNotification = async (leaveRequest, user, recipientUse
 	switch (notificationType) {
 		case 'new':
 			title = t ? t('push.leave.newRequestTitle') : 'Nowy wniosek'
+			// Jednostka bierze się z typu wniosku (godzinowy vs dzienny), tak samo jak w mailach.
+			const quantityText = formatLeaveQuantity(leaveRequest, teamSettings, {
+				days: language === 'en' ? 'days' : 'dni',
+				hours: language === 'en' ? 'h' : 'godz.',
+			})
 			body = t
 				? t('push.leave.newRequestBody', {
 						userName,
 						type: typeText,
 						startDate,
 						endDate,
-						days: leaveRequest.daysRequested,
+						quantity: quantityText,
 						...i18nPlainText,
 					})
-				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${leaveRequest.daysRequested} dni)`
+				: `${userName} złożył wniosek: ${typeText} (${startDate} - ${endDate}, ${quantityText})`
 			if (submittedByName) {
 				body += ` · Zgłoszono przez: ${submittedByName}`
 			}
