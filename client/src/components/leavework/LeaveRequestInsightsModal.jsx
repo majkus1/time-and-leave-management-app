@@ -7,6 +7,7 @@ import {
 	getLeaveRequestDurationStats,
 	getLeaveRequestLimitUsageStats,
 	getLeaveRequestStatusStats,
+	getLeaveDurationParts,
 	getLeaveRequestTypeStats,
 	getLeaveRequestYears,
 	filterLeaveRequestsByStatuses,
@@ -67,11 +68,16 @@ function LeaveRequestInsightsModal({
 		() => getLeaveRequestLimitUsageStats(visiblePeriodRequests, selectedYear, selectedMonth, settings, leaveTypeDays),
 		[visiblePeriodRequests, selectedYear, selectedMonth, settings, leaveTypeDays]
 	)
-	const durationUnit = settings?.leaveCalculationMode === 'hours'
-		? t('leaveRequestInsights.hours')
-		: t('leaveRequestInsights.days')
 	// Jednostka limitu wynika z typu, nie z globalnego ustawienia zespolu.
 	const unitLabel = (unit) => (unit === 'hours' ? t('leaveRequestInsights.hours') : t('leaveRequestInsights.days'))
+	/** Jednostka wiodaca zespolu i ta druga — obie pokazujemy osobno, bez konwersji. */
+	const primaryUnit = settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days'
+	const secondaryUnit = primaryUnit === 'hours' ? 'days' : 'hours'
+	/** Suma czasu z rozbiciem na jednostki — dni i godzin nie sprowadzamy do siebie nawzajem. */
+	const formatDurationTotal = (key) => getLeaveDurationParts(durationStats, key)
+		.map(part => `${formatDuration(part.value)} ${unitLabel(part.unit)}`)
+		.join(' · ')
+
 	const formatDuration = (value) => (
 		new Intl.NumberFormat(i18n.resolvedLanguage, { maximumFractionDigits: 1 }).format(value)
 	)
@@ -120,7 +126,6 @@ function LeaveRequestInsightsModal({
 	const yearlyBreakdownEnabled = selectedYear !== 'all' && selectedMonth === 'all'
 	const monthlySummaryRows = React.useMemo(() => {
 		if (!yearlyBreakdownEnabled) return []
-		const primaryUnit = settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days'
 		return Array.from({ length: 12 }, (_, month) => {
 			const monthRequests = []
 			const totals = {
@@ -131,22 +136,28 @@ function LeaveRequestInsightsModal({
 				pending: 0,
 				rejected: 0,
 				sent: 0,
+				// Suma w drugiej jednostce trzymana osobno — nie dodajemy godzin do dni.
+				secondaryTotal: 0,
 			}
 			for (const request of visiblePeriodRequests) {
 				const days = countLeaveRequestDaysInPeriod(request, selectedYear, month, settings)
 				if (!days) continue
 				const statusKey = String(request?.status || '').replace('status.', '')
-				// Wszystko sprowadzamy do jednostki wiodacej zespolu, zeby nie sumowac dni z godzinami.
 				const settlement = resolveLeaveTypeSettlement(settings, request?.type)
-				const duration = getLeaveRequestAmountInUnit(request, primaryUnit, settlement.hoursPerDay, days)
+				const unit = isHourlyLeaveRequest(request) ? 'hours' : settlement.unit
+				const duration = getLeaveRequestAmountInUnit(request, unit, settlement.hoursPerDay, days)
 				monthRequests.push(request)
-				totals.total += duration
-				if (LEAVE_REQUEST_STATUS_KEYS.includes(statusKey)) totals[statusKey] += duration
+				if (unit === primaryUnit) {
+					totals.total += duration
+					if (LEAVE_REQUEST_STATUS_KEYS.includes(statusKey)) totals[statusKey] += duration
+				} else {
+					totals.secondaryTotal += duration
+				}
 			}
 			totals.requests = monthRequests.length
 			return totals
 		})
-	}, [yearlyBreakdownEnabled, visiblePeriodRequests, selectedYear, settings])
+	}, [yearlyBreakdownEnabled, visiblePeriodRequests, selectedYear, settings, primaryUnit])
 
 	const formatDate = (value) => {
 		const date = new Date(value)
@@ -174,19 +185,19 @@ function LeaveRequestInsightsModal({
 		extension,
 	})
 	const buildInsightText = () => {
-		const acceptedDuration = durationStats.accepted || 0
-		const pendingDuration = durationStats.pending || 0
+		// Warunek liczy oba kubelki — wnioski moga byc wylacznie godzinowe.
+		const hasPending = getLeaveDurationParts(durationStats, 'pending').some(part => part.value > 0)
 		const topType = typeStats[0]
 		const lines = []
-		lines.push(`Zaakceptowane nieobecności: ${formatDuration(acceptedDuration)} ${durationUnit}.`)
-		if (pendingDuration > 0) lines.push(`Do decyzji pozostaje ${stats.pending} wniosków na ${formatDuration(pendingDuration)} ${durationUnit}.`)
+		lines.push(`Zaakceptowane nieobecności: ${formatDurationTotal('accepted')}.`)
+		if (hasPending) lines.push(`Do decyzji pozostaje ${stats.pending} wniosków na ${formatDurationTotal('pending')}.`)
 		if (topType) {
-			lines.push(`Największy udział ma ${getLeaveRequestTypeName(settings, topType.type, t, i18n.resolvedLanguage)}: ${formatDuration(topType.duration)} ${durationUnit}.`)
+			lines.push(`Największy udział ma ${getLeaveRequestTypeName(settings, topType.type, t, i18n.resolvedLanguage)}: ${formatDuration(topType.duration)} ${unitLabel(topType.unit)}.`)
 		}
 		if (yearlyBreakdownEnabled && monthlySummaryRows.length > 0) {
 			const topMonth = monthlySummaryRows.reduce((best, row) => row.total > best.total ? row : best, monthlySummaryRows[0])
 			if (topMonth?.total > 0) {
-				lines.push(`Największe obciążenie urlopowe w roku przypada na ${formatMonthName(topMonth.month)}: ${formatDuration(topMonth.total)} ${durationUnit}.`)
+				lines.push(`Największe obciążenie urlopowe w roku przypada na ${formatMonthName(topMonth.month)}: ${formatDuration(topMonth.total)} ${unitLabel(primaryUnit)}.`)
 			}
 		}
 		const exceeded = limitUsageStats.find(item => item.isExceeded)
@@ -198,11 +209,11 @@ function LeaveRequestInsightsModal({
 	const buildPdf = () => {
 		const theme = PDF_REPORT_THEME
 		const kpiCards = [
-			{ label: 'Wszystkie wnioski', value: stats.total, sub: `${formatDuration(durationStats.total)} ${durationUnit}`, color: theme.navy },
+			{ label: 'Wszystkie wnioski', value: stats.total, sub: formatDurationTotal('total'), color: theme.navy },
 			...activeStatusKeys.map(status => ({
 				label: statusLabels[status],
 				value: stats[status],
-				sub: `${formatDuration(durationStats[status])} ${durationUnit}`,
+				sub: formatDurationTotal(status),
 				color: status === 'accepted' ? theme.green : status === 'pending' ? theme.amber : status === 'rejected' ? theme.red : theme.purple,
 			})),
 		]
@@ -228,7 +239,7 @@ function LeaveRequestInsightsModal({
 						{
 							stack: [
 								{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: theme.headerSubtitle },
-								{ text: `Jednostka: ${durationUnit}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
+								{ text: `Jednostka wiodąca: ${unitLabel(primaryUnit)}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 								{ text: `Statusy: ${activeStatusLabel}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 							],
 							border: [false, false, false, false],
@@ -274,7 +285,7 @@ function LeaveRequestInsightsModal({
 				{ text: 'Podsumowanie miesięczne', style: 'sectionTitle' },
 				{
 					text: topMonth?.total > 0
-						? `Najwięcej czasu urlopowego w roku: ${formatMonthName(topMonth.month)} (${formatDuration(topMonth.total)} ${durationUnit}).`
+						? `Najwięcej czasu urlopowego w roku: ${formatMonthName(topMonth.month)} (${formatDuration(topMonth.total)} ${unitLabel(primaryUnit)}).`
 						: 'Brak wykorzystania urlopów w miesiącach spełniających wybrane filtry.',
 					color: theme.muted,
 					fontSize: 8.5,
@@ -283,19 +294,21 @@ function LeaveRequestInsightsModal({
 				{
 					table: {
 						headerRows: 1,
-						widths: ['*', 42, 55, ...activeStatusKeys.map(() => 55)],
+						widths: ['*', 42, 55, ...activeStatusKeys.map(() => 55), 55],
 						body: [
 							[
 								'Miesiąc',
 								'Wnioski',
-								`Łącznie (${durationUnit})`,
-								...activeStatusKeys.map(status => `${statusLabels[status]} (${durationUnit})`),
+								`Łącznie (${unitLabel(primaryUnit)})`,
+								...activeStatusKeys.map(status => `${statusLabels[status]} (${unitLabel(primaryUnit)})`),
+								`Razem (${unitLabel(secondaryUnit)})`,
 							].map(text => ({ text, bold: true, color: '#ffffff' })),
 							...monthlySummaryRows.map(row => [
 								formatMonthName(row.month),
 								row.requests,
 								formatDuration(row.total),
 								...activeStatusKeys.map(status => formatDuration(row[status] || 0)),
+								formatDuration(row.secondaryTotal || 0),
 							]),
 						],
 					},
@@ -336,11 +349,12 @@ function LeaveRequestInsightsModal({
 				{
 					table: {
 						headerRows: 1,
-						widths: ['*', 55, 55, 55, 65],
+						widths: ['*', 38, 50, 58, 52, 60],
 						body: [
-							['Typ', 'Limit', 'Wykorzystano', 'Oczekuje', 'Pozostało'].map(text => ({ text, bold: true, color: '#ffffff' })),
+							['Typ', 'Jedn.', 'Limit', 'Wykorzystano', 'Oczekuje', 'Pozostało'].map(text => ({ text, bold: true, color: '#ffffff' })),
 							...limitUsageStats.map(row => [
 								getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
+								unitLabel(row.unit),
 								formatDuration(row.limit),
 								formatDuration(row.used),
 								formatDuration(row.pending),
@@ -359,18 +373,19 @@ function LeaveRequestInsightsModal({
 			{
 				table: {
 					headerRows: 1,
-					widths: [76, 48, 48, 62, 42, '*', '*'],
+					widths: [72, 46, 46, 58, 38, 30, '*', '*'],
 					body: [
-						['Typ', 'Od', 'Do', 'Status', durationUnit, 'Zastępstwo', 'Uwagi'].map(text => ({ text, bold: true, color: '#ffffff' })),
+						['Typ', 'Od', 'Do', 'Status', 'Czas', 'Jedn.', 'Zastępstwo', 'Uwagi'].map(text => ({ text, bold: true, color: '#ffffff' })),
 						...(requestRows.length > 0 ? requestRows.map(row => [
 							row.type,
 							formatDate(row.startDate),
 							formatDate(row.endDate),
 							{ text: row.status, color: statusColors[row.statusKey] || theme.navy, bold: true },
 							formatDuration(row.duration),
+							unitLabel(row.durationUnit),
 							row.replacement,
 							row.additionalInfo,
-						]) : [[{ text: 'Brak wniosków w wybranym okresie.', colSpan: 7, alignment: 'center', color: theme.muted }, '', '', '', '', '', '']]),
+						]) : [[{ text: 'Brak wniosków w wybranym okresie.', colSpan: 8, alignment: 'center', color: theme.muted }, '', '', '', '', '', '', '']]),
 					],
 				},
 				layout: tableLayout,
@@ -419,27 +434,29 @@ function LeaveRequestInsightsModal({
 						['Metadane', 'Statusy', activeStatusLabel, ''],
 						['KPI', 'Wszystkie wnioski', stats.total, 'wnioski'],
 						...activeStatusKeys.map(status => ['KPI', statusLabels[status], stats[status], 'wnioski']),
-						['Czas', 'Łącznie', durationStats.total, durationUnit],
-						...activeStatusKeys.map(status => ['Czas', statusLabels[status], durationStats[status], durationUnit]),
+						['Czas', 'Łącznie', formatDurationTotal('total'), ''],
+						...activeStatusKeys.map(status => ['Czas', statusLabels[status], formatDurationTotal(status), '']),
 					],
 				},
 				...(yearlyBreakdownEnabled ? [{
 					name: 'Miesiące',
 					title: `Podsumowanie miesięczne - ${getPeriodLabel()}`,
 					subtitle: `Statusy: ${activeStatusLabel}`,
-					colWidths: [18, 12, 18, ...activeStatusKeys.map(() => 18)],
+					colWidths: [18, 12, 18, ...activeStatusKeys.map(() => 18), 18],
 					rows: [
 						[
 							'Miesiąc',
 							'Wnioski',
-							`Łącznie (${durationUnit})`,
-							...activeStatusKeys.map(status => `${statusLabels[status]} (${durationUnit})`),
+							`Łącznie (${unitLabel(primaryUnit)})`,
+							...activeStatusKeys.map(status => `${statusLabels[status]} (${unitLabel(primaryUnit)})`),
+							`Razem (${unitLabel(secondaryUnit)})`,
 						],
 						...monthlySummaryRows.map(row => [
 							formatMonthName(row.month),
 							row.requests,
 							row.total,
 							...activeStatusKeys.map(status => row[status] || 0),
+							row.secondaryTotal || 0,
 						]),
 					],
 				}] : []),
@@ -463,11 +480,12 @@ function LeaveRequestInsightsModal({
 				{
 					name: 'Limity',
 					title: `Wykorzystanie dostępnej puli - ${getPeriodLabel()}`,
-					colWidths: [30, 14, 16, 16, 16, 16],
+					colWidths: [30, 11, 14, 16, 16, 16, 16],
 					rows: [
-						['Typ', 'Limit', 'Wykorzystano', 'Oczekuje', 'Pozostało', 'Wykorzystanie %'],
+						['Typ', 'Jednostka', 'Limit', 'Wykorzystano', 'Oczekuje', 'Pozostało', 'Wykorzystanie %'],
 						...limitUsageStats.map(row => [
 							getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
+							unitLabel(row.unit),
 							row.limit,
 							row.used,
 							row.pending,
@@ -479,15 +497,16 @@ function LeaveRequestInsightsModal({
 				{
 					name: 'Wnioski',
 					title: `Lista wniosków - ${getPeriodLabel()}`,
-					colWidths: [28, 13, 13, 17, 12, 22, 22, 30],
+					colWidths: [28, 13, 13, 17, 12, 10, 22, 22, 30],
 					rows: [
-						['Typ', 'Data od', 'Data do', 'Status', durationUnit, 'Zastępstwo', 'Zgłoszono przez', 'Uwagi'],
+						['Typ', 'Data od', 'Data do', 'Status', 'Czas', 'Jednostka', 'Zastępstwo', 'Zgłoszono przez', 'Uwagi'],
 						...requestRows.map(row => [
 							row.type,
 							formatDate(row.startDate),
 							formatDate(row.endDate),
 							row.status,
 							row.duration,
+							unitLabel(row.durationUnit),
 							row.replacement,
 							row.submittedBy,
 							row.additionalInfo,
@@ -578,13 +597,13 @@ function LeaveRequestInsightsModal({
 				<div className="leave-insights-stat is-total">
 					<strong>{stats.total}</strong>
 					<span>{t('leaveRequestInsights.total')}</span>
-					<small>{formatDuration(durationStats.total)} {durationUnit}</small>
+					<small>{formatDurationTotal('total')}</small>
 				</div>
 				{activeStatusKeys.map(status => (
 					<div key={status} className={`leave-insights-stat ${STATUS_CLASS_NAMES[status]}`}>
 						<strong>{stats[status]}</strong>
 						<span>{t(`leaveRequestInsights.statuses.${status}`)}</span>
-						<small>{formatDuration(durationStats[status])} {durationUnit}</small>
+						<small>{formatDurationTotal(status)}</small>
 					</div>
 				))}
 			</div>
@@ -643,7 +662,7 @@ function LeaveRequestInsightsModal({
 								</div>
 								<div className="leave-insights-date-row__meta">
 									<span className={`leave-insights-date-status ${STATUS_CLASS_NAMES[row.statusKey] || ''}`}>{row.status}</span>
-									<small>{formatDuration(row.duration)} {durationUnit}</small>
+									<small>{formatDuration(row.duration)} {unitLabel(row.durationUnit)}</small>
 								</div>
 							</div>
 						))}

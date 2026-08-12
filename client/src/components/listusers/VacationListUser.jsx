@@ -24,6 +24,7 @@ import { buildPdfDocument, downloadPdf } from '../../utils/export/pdfDownload'
 import { PDF_REPORT_THEME } from '../../utils/export/pdfReportTheme'
 import { exportExcelButtonStyle, exportPdfButtonStyle } from '../../utils/export/exportButtonStyles'
 import {
+	getLeaveDurationParts,
 	LEAVE_REQUEST_STATUS_KEYS,
 	countLeaveRequestDaysInPeriod,
 	getLeaveRequestDurationStats,
@@ -692,9 +693,13 @@ function VacationListUser() {
 
 	const exportSelectedMonth = calendarView === 'single' ? currentMonth : 'all'
 	// Jednostka wiodaca zespolu (naglowki zbiorcze); pojedyncze wiersze niosa wlasna jednostke.
-	const exportDurationUnit = settings?.leaveCalculationMode === 'hours' ? 'godz.' : 'dni'
 	const exportPrimaryUnit = settings?.leaveCalculationMode === 'hours' ? 'hours' : 'days'
 	const reportUnitLabel = (unit) => (unit === 'hours' ? 'godz.' : 'dni')
+	const exportSecondaryUnit = exportPrimaryUnit === 'hours' ? 'days' : 'hours'
+	/** Suma czasu z rozbiciem na jednostki — bez konwersji godzin na dni. */
+	const formatDurationTotal = (stats, key) => getLeaveDurationParts(stats, key)
+		.map(part => `${formatReportNumber(part.value)} ${reportUnitLabel(part.unit)}`)
+		.join(' · ')
 	const formatReportNumber = (value, digits = 1) => (
 		new Intl.NumberFormat(i18n.resolvedLanguage, { maximumFractionDigits: digits }).format(Number(value) || 0)
 	)
@@ -760,8 +765,9 @@ function VacationListUser() {
 		for (const request of filteredRequestsForTable) {
 			const employee = resolveEmployeeNameForRequest(request)
 			const status = normalizeLeaveStatus(request.status)
-			// Sumy zbiorcze sprowadzamy do jednostki wiodacej — inaczej dodalibysmy dni do godzin.
-			const duration = getRequestDurationForReport(request, exportSelectedMonth, exportPrimaryUnit)
+			// Bez konwersji: dni i godziny sumujemy osobno (patrz getLeaveDurationParts).
+			const unit = getRequestDurationUnit(request)
+			const duration = getRequestDurationForReport(request)
 			const current = employeeMap.get(employee) || {
 				employee,
 				requests: 0,
@@ -770,10 +776,15 @@ function VacationListUser() {
 				pending: 0,
 				rejected: 0,
 				sent: 0,
+				secondaryTotal: 0,
 			}
 			current.requests += 1
-			current.total += duration
-			if (status) current[status] += duration
+			if (unit === exportPrimaryUnit) {
+				current.total += duration
+				if (status) current[status] += duration
+			} else {
+				current.secondaryTotal += duration
+			}
 			employeeMap.set(employee, current)
 		}
 
@@ -788,14 +799,20 @@ function VacationListUser() {
 					pending: 0,
 					rejected: 0,
 					sent: 0,
+					secondaryTotal: 0,
 				}
 				for (const request of filteredRequestsForTable) {
-					const duration = getRequestDurationForReport(request, month, exportPrimaryUnit)
+					const duration = getRequestDurationForReport(request, month)
 					if (!duration) continue
 					const status = normalizeLeaveStatus(request.status)
+					const unit = getRequestDurationUnit(request)
 					totals.requests += 1
-					totals.total += duration
-					if (status) totals[status] += duration
+					if (unit === exportPrimaryUnit) {
+						totals.total += duration
+						if (status) totals[status] += duration
+					} else {
+						totals.secondaryTotal += duration
+					}
 				}
 				return totals
 			})
@@ -840,9 +857,12 @@ function VacationListUser() {
 		}
 		try {
 			const report = getLeaveReportData()
+			// Kolejność komórek musi odpowiadać nagłówkom arkusza „Typy urlopów”:
+			// Typ | Wnioski | Jednostka | Łącznie | Zaakceptowane | Oczekujące | Odrzucone | Wysłane
 			const typeRows = report.typeStats.map(row => [
 				getLeaveRequestTypeName(settings, row.type, t, i18n.resolvedLanguage),
 				row.requests,
+				reportUnitLabel(row.unit),
 				row.duration,
 				row.accepted,
 				row.pending,
@@ -857,7 +877,10 @@ function VacationListUser() {
 				row.pending,
 				row.rejected,
 				row.sent,
+				row.secondaryTotal || 0,
 			])
+			// Kolejność komórek musi odpowiadać nagłówkom arkusza „Wnioski”:
+			// Pracownik | Data od | Data do | Typ | Status | Czas | Jednostka | Zastępstwo | Uwagi
 			const requestRows = report.requestRows.map(row => [
 				row.employee,
 				formatReportDate(row.startDate),
@@ -865,6 +888,7 @@ function VacationListUser() {
 				row.type,
 				row.status,
 				row.duration,
+				row.durationUnit,
 				row.replacement,
 				row.additionalInfo,
 			])
@@ -882,30 +906,32 @@ function VacationListUser() {
 							['Metadane', 'Statusy', report.statusLabel, ''],
 							['KPI', 'Wnioski łącznie', report.statusStats.total, 'wnioski'],
 							...report.activeStatusKeys.map(status => ['KPI', getReportStatusLabel(status), report.statusStats[status], 'wnioski']),
-							['Czas', 'Łącznie', report.durationStats.total, exportDurationUnit],
-							...report.activeStatusKeys.map(status => ['Czas', getReportStatusLabel(status), report.durationStats[status], exportDurationUnit]),
-							...(report.topEmployee ? [['Pracownicy', 'Największa liczba dni/godzin', report.topEmployee.employee, `${formatReportNumber(report.topEmployee.total)} ${exportDurationUnit}`]] : []),
-							...(report.topType ? [['Typy urlopów', 'Najczęstszy typ wg czasu', getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage), `${formatReportNumber(report.topType.duration)} ${exportDurationUnit}`]] : []),
-							...(report.topMonth?.total > 0 ? [['Miesiące', 'Największe obciążenie', formatReportMonthName(report.topMonth.month), `${formatReportNumber(report.topMonth.total)} ${exportDurationUnit}`]] : []),
+							['Czas', 'Łącznie', formatDurationTotal(report.durationStats, 'total'), ''],
+							...report.activeStatusKeys.map(status => ['Czas', getReportStatusLabel(status), formatDurationTotal(report.durationStats, status), '']),
+							...(report.topEmployee ? [['Pracownicy', 'Największa liczba dni/godzin', report.topEmployee.employee, `${formatReportNumber(report.topEmployee.total)} ${reportUnitLabel(exportPrimaryUnit)}`]] : []),
+							...(report.topType ? [['Typy urlopów', 'Najczęstszy typ wg czasu', getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage), `${formatReportNumber(report.topType.duration)} ${reportUnitLabel(report.topType.unit)}`]] : []),
+							...(report.topMonth?.total > 0 ? [['Miesiące', 'Największe obciążenie', formatReportMonthName(report.topMonth.month), `${formatReportNumber(report.topMonth.total)} ${reportUnitLabel(exportPrimaryUnit)}`]] : []),
 						],
 					},
 					...(calendarView === 'all-months' ? [{
 						name: 'Miesiące',
 						title: `Podsumowanie miesięczne - ${exportPeriodLabel}`,
 						subtitle: `Statusy: ${report.statusLabel}`,
-						colWidths: [18, 12, 18, ...report.activeStatusKeys.map(() => 18)],
+						colWidths: [18, 12, 18, ...report.activeStatusKeys.map(() => 18), 18],
 						rows: [
 							[
 								'Miesiąc',
 								'Wnioski',
-								`Łącznie (${exportDurationUnit})`,
-								...report.activeStatusKeys.map(status => `${getReportStatusLabel(status)} (${exportDurationUnit})`),
+								`Łącznie (${reportUnitLabel(exportPrimaryUnit)})`,
+								...report.activeStatusKeys.map(status => `${getReportStatusLabel(status)} (${reportUnitLabel(exportPrimaryUnit)})`),
+								`Razem (${reportUnitLabel(exportSecondaryUnit)})`,
 							],
 							...report.monthlySummaryRows.map(row => [
 								formatReportMonthName(row.month),
 								row.requests,
 								row.total,
 								...report.activeStatusKeys.map(status => row[status] || 0),
+								row.secondaryTotal || 0,
 							]),
 						],
 					}] : []),
@@ -913,9 +939,9 @@ function VacationListUser() {
 						name: 'Pracownicy',
 						title: `Urlopy według pracowników - ${exportPeriodLabel}`,
 						subtitle: 'Kto i w jakim wymiarze ma nieobecności w wybranym okresie.',
-						colWidths: [30, 12, 18, 18, 18, 18, 18],
+						colWidths: [30, 12, 18, 18, 18, 18, 18, 18],
 						rows: [
-							['Pracownik', 'Wnioski', `Łącznie (${exportDurationUnit})`, `Zaakceptowane (${exportDurationUnit})`, `Oczekujące (${exportDurationUnit})`, `Odrzucone (${exportDurationUnit})`, `Wysłane (${exportDurationUnit})`],
+							['Pracownik', 'Wnioski', `Łącznie (${reportUnitLabel(exportPrimaryUnit)})`, `Zaakceptowane (${reportUnitLabel(exportPrimaryUnit)})`, `Oczekujące (${reportUnitLabel(exportPrimaryUnit)})`, `Odrzucone (${reportUnitLabel(exportPrimaryUnit)})`, `Wysłane (${reportUnitLabel(exportPrimaryUnit)})`, `Razem (${reportUnitLabel(exportSecondaryUnit)})`],
 							...employeeRows,
 						],
 					},
@@ -973,11 +999,11 @@ function VacationListUser() {
 				fillColor: rowIndex => rowIndex === 0 ? theme.navy : (rowIndex % 2 === 0 ? theme.softRow : null),
 			}
 			const kpiCards = [
-				{ label: 'Wnioski łącznie', value: report.statusStats.total, sub: `${formatReportNumber(report.durationStats.total)} ${exportDurationUnit}`, color: theme.navy },
+				{ label: 'Wnioski łącznie', value: report.statusStats.total, sub: formatDurationTotal(report.durationStats, 'total'), color: theme.navy },
 				...report.activeStatusKeys.map(status => ({
 					label: getReportStatusLabel(status),
 					value: report.statusStats[status],
-					sub: `${formatReportNumber(report.durationStats[status])} ${exportDurationUnit}`,
+					sub: formatDurationTotal(report.durationStats, status),
 					color: statusColors[status] || theme.blue,
 				})),
 			]
@@ -985,22 +1011,22 @@ function VacationListUser() {
 			const maxEmployeeDuration = Math.max(...report.employeeStats.map(row => row.total), 0)
 			const maxMonthDuration = Math.max(...report.monthlySummaryRows.map(row => row.total), 0)
 			const insightLines = [
-				`Łącznie w wybranym okresie: ${report.statusStats.total} wniosków na ${formatReportNumber(report.durationStats.total)} ${exportDurationUnit}.`,
+				`Łącznie w wybranym okresie: ${report.statusStats.total} wniosków na ${formatDurationTotal(report.durationStats, 'total')}.`,
 			]
 			if (report.durationStats.accepted > 0) {
-				insightLines.push(`Zaakceptowane nieobecności obejmują ${formatReportNumber(report.durationStats.accepted)} ${exportDurationUnit}.`)
+				insightLines.push(`Zaakceptowane nieobecności obejmują ${formatDurationTotal(report.durationStats, 'accepted')}.`)
 			}
 			if (report.statusStats.pending > 0) {
-				insightLines.push(`Do decyzji pozostaje ${report.statusStats.pending} wniosków na ${formatReportNumber(report.durationStats.pending)} ${exportDurationUnit}.`)
+				insightLines.push(`Do decyzji pozostaje ${report.statusStats.pending} wniosków na ${formatDurationTotal(report.durationStats, 'pending')}.`)
 			}
 			if (report.topEmployee?.total > 0) {
-				insightLines.push(`Największe obciążenie po stronie pracownika: ${report.topEmployee.employee} (${formatReportNumber(report.topEmployee.total)} ${exportDurationUnit}).`)
+				insightLines.push(`Największe obciążenie po stronie pracownika: ${report.topEmployee.employee} (${formatReportNumber(report.topEmployee.total)} ${reportUnitLabel(exportPrimaryUnit)}).`)
 			}
 			if (report.topType?.duration > 0) {
-				insightLines.push(`Największy udział typu: ${getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage)} (${formatReportNumber(report.topType.duration)} ${exportDurationUnit}).`)
+				insightLines.push(`Największy udział typu: ${getLeaveRequestTypeName(settings, report.topType.type, t, i18n.resolvedLanguage)} (${formatReportNumber(report.topType.duration)} ${reportUnitLabel(report.topType.unit)}).`)
 			}
 			if (report.topMonth?.total > 0) {
-				insightLines.push(`Najbardziej obciążony miesiąc: ${formatReportMonthName(report.topMonth.month)} (${formatReportNumber(report.topMonth.total)} ${exportDurationUnit}).`)
+				insightLines.push(`Najbardziej obciążony miesiąc: ${formatReportMonthName(report.topMonth.month)} (${formatReportNumber(report.topMonth.total)} ${reportUnitLabel(exportPrimaryUnit)}).`)
 			}
 			const content = [
 				{
@@ -1019,7 +1045,7 @@ function VacationListUser() {
 							{
 								stack: [
 									{ text: `Wygenerowano: ${new Date().toLocaleString(i18n.resolvedLanguage)}`, fontSize: 8, color: theme.headerSubtitle },
-									{ text: `Jednostka: ${exportDurationUnit}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
+									{ text: `Jednostka wiodąca: ${reportUnitLabel(exportPrimaryUnit)}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 									{ text: `Statusy: ${report.statusLabel}`, fontSize: 8, color: theme.headerSubtitle, margin: [0, 5, 0, 0] },
 								],
 								border: [false, false, false, false],
@@ -1065,15 +1091,16 @@ function VacationListUser() {
 					{
 						table: {
 							headerRows: 1,
-							widths: ['*', 42, 58, '*'],
+							widths: ['*', 40, 52, 52, '*'],
 							body: [
-								['Miesiąc', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
+								['Miesiąc', 'Wnioski', `Łącznie (${reportUnitLabel(exportPrimaryUnit)})`, `Razem (${reportUnitLabel(exportSecondaryUnit)})`, 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
 								...report.monthlySummaryRows.map(row => {
 									const barWidth = maxMonthDuration > 0 ? Math.max(8, (row.total / maxMonthDuration) * 130) : 0
 									return [
 										formatReportMonthName(row.month),
 										row.requests,
 										formatReportNumber(row.total),
+										formatReportNumber(row.secondaryTotal || 0),
 										{ canvas: [
 											{ type: 'rect', x: 0, y: 3, w: 130, h: 6, r: 3, color: theme.barTrack },
 											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.blue },
@@ -1126,9 +1153,9 @@ function VacationListUser() {
 					{
 						table: {
 							headerRows: 1,
-							widths: ['*', 48, 62, 58, 58, '*'],
+							widths: ['*', 42, 54, 52, 50, 50, '*'],
 							body: [
-								['Pracownik', 'Wnioski', `Łącznie (${exportDurationUnit})`, 'Zaakcept.', 'Oczek.', 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
+								['Pracownik', 'Wnioski', `Łącznie (${reportUnitLabel(exportPrimaryUnit)})`, 'Zaakcept.', 'Oczek.', `Razem (${reportUnitLabel(exportSecondaryUnit)})`, 'Skala'].map(text => ({ text, bold: true, color: theme.white })),
 								...report.employeeStats.map(row => {
 									const barWidth = maxEmployeeDuration > 0 ? Math.max(8, (row.total / maxEmployeeDuration) * 100) : 0
 									return [
@@ -1137,6 +1164,7 @@ function VacationListUser() {
 										formatReportNumber(row.total),
 										formatReportNumber(row.accepted),
 										formatReportNumber(row.pending),
+										formatReportNumber(row.secondaryTotal || 0),
 										{ canvas: [
 											{ type: 'rect', x: 0, y: 3, w: 100, h: 6, r: 3, color: theme.barTrack },
 											{ type: 'rect', x: 0, y: 3, w: barWidth, h: 6, r: 3, color: theme.green },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	createDefaultLeaveRequestStatusFilters,
+	getLeaveDurationParts,
 	filterLeaveRequestsByPeriod,
 	filterLeaveRequestsByStatuses,
 	getLeaveRequestDurationStats,
@@ -265,5 +266,52 @@ describe('leave request period filters', () => {
 				usagePercent: 0,
 			}),
 		])
+	})
+})
+
+describe('getLeaveDurationParts', () => {
+	const settings = {
+		workOnWeekends: true,
+		leaveCalculationMode: 'days',
+		leaveHoursPerDay: 8,
+		leaveRequestTypes: [
+			{ id: 'vacation', name: 'Urlop', isEnabled: true },
+			{ id: 'childcare', name: 'Opieka', isEnabled: true, settlementUnit: 'hours' },
+		],
+	}
+	const dayReq = {
+		startDate: '2026-05-04T00:00:00.000Z', endDate: '2026-05-06T00:00:00.000Z',
+		status: 'status.accepted', type: 'vacation', daysRequested: 3,
+	}
+	const hourReq = {
+		startDate: '2026-05-07T00:00:00.000Z', endDate: '2026-05-07T00:00:00.000Z',
+		status: 'status.accepted', type: 'childcare', daysRequested: 1,
+		hoursRequested: 4, settlementUnit: 'hours', hoursPerDaySnapshot: 8,
+	}
+
+	it('pokazuje obie jednostki obok siebie, bez konwersji', () => {
+		const stats = getLeaveRequestDurationStats([dayReq, hourReq], 2026, 4, settings)
+		expect(getLeaveDurationParts(stats, 'accepted')).toEqual([
+			{ unit: 'days', value: 3 },
+			{ unit: 'hours', value: 4 },
+		])
+	})
+
+	it('REGRESJA: godziny nie mogą zniknąć z sumy zbiorczej', () => {
+		// Wcześniej kafelki pokazywały tylko kubełek jednostki wiodącej,
+		// więc 4 godziny opieki były niewidoczne w „Zaakceptowane”.
+		const stats = getLeaveRequestDurationStats([dayReq, hourReq], 2026, 4, settings)
+		const parts = getLeaveDurationParts(stats, 'accepted')
+		expect(parts.some(part => part.unit === 'hours' && part.value === 4)).toBe(true)
+	})
+
+	it('bez typów godzinowych zwraca jeden kubełek — jak przed zmianą', () => {
+		const stats = getLeaveRequestDurationStats([dayReq], 2026, 4, settings)
+		expect(getLeaveDurationParts(stats, 'accepted')).toEqual([{ unit: 'days', value: 3 }])
+	})
+
+	it('zero czasu daje jeden wpis w jednostce wiodącej zespołu', () => {
+		const stats = getLeaveRequestDurationStats([], 2026, 4, settings)
+		expect(getLeaveDurationParts(stats, 'accepted')).toEqual([{ unit: 'days', value: 0 }])
 	})
 })

@@ -178,6 +178,28 @@ export const getLeaveRequestDurationStats = (
 	}
 }
 
+/**
+ * Rozbicie sumy czasu na jednostki, do pokazania obok siebie.
+ *
+ * Dni i godzin nie sprowadzamy do wspólnej jednostki: `leaveHoursPerDay` to umowna
+ * długość dnia urlopu, a nie prawna równoważność. Przy zespole z 4-godzinnym dniem
+ * 16 h to cztery dni, a nie dwa — konwersja dawałaby liczby sprzeczne z art. 188 KP,
+ * który mówi o „2 dniach ALBO 16 godzinach".
+ *
+ * @returns {Array<{unit: 'days'|'hours', value: Number}>} kubełki niezerowe;
+ *   gdy wszystko jest zerowe — jeden wpis w jednostce wiodącej zespołu.
+ */
+export const getLeaveDurationParts = (stats, key = 'total') => {
+	if (!stats) return []
+	const days = Number(stats.days?.[key]) || 0
+	const hours = Number(stats.hours?.[key]) || 0
+	const parts = []
+	if (days > 0) parts.push({ unit: 'days', value: days })
+	if (hours > 0) parts.push({ unit: 'hours', value: hours })
+	if (parts.length === 0) parts.push({ unit: stats.unit || 'days', value: 0 })
+	return parts
+}
+
 export const getLeaveRequestTypeStats = (
 	requests = [],
 	selectedYear,
