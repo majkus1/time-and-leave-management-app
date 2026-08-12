@@ -32,6 +32,12 @@ export const useUpdateSettings = () => {
 		},
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['settings'] })
+			// Typy wniosków zapisują się razem z resztą ustawień, więc ich osobny cache
+			// też musi zostać odświeżony — inaczej ekran ustawień dalej porównywałby
+			// się ze starymi danymi i pokazywał niezapisane zmiany mimo udanego zapisu.
+			if (variables && Object.prototype.hasOwnProperty.call(variables, 'leaveRequestTypes')) {
+				queryClient.invalidateQueries({ queryKey: ['leaveRequestTypes'] })
+			}
 			if (variables && Object.prototype.hasOwnProperty.call(variables, 'dashboardEnabled')) {
 				queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
 			}

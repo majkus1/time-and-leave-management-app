@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
@@ -6,7 +6,12 @@ import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
 import { useSettings, useUpdateSettings } from '../../hooks/useSettings'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
-import { useLeaveRequestTypes, useUpdateLeaveRequestTypes, useAddCustomLeaveRequestType, useDeleteCustomLeaveRequestType } from '../../hooks/useLeaveRequestTypes'
+import { useLeaveRequestTypes } from '../../hooks/useLeaveRequestTypes'
+import {
+	buildTeamSettingsPayload,
+	buildTeamSettingsShape,
+	diffTeamSettings,
+} from '../../utils/teamSettingsDraft'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
 import { useEmailNotificationPreferences } from '../../hooks/useEmailNotificationPreferences'
 import Modal from 'react-modal'
@@ -88,9 +93,14 @@ function Settings() {
 	const [isPolishHolidaysModalOpen, setIsPolishHolidaysModalOpen] = useState(false)
 	
 	// Leave Request Types (niepotrzebne w uproszczonym widoku freemium)
-	const { data: leaveRequestTypes = [], isLoading: loadingLeaveTypes } = useLeaveRequestTypes({
+	const { data: leaveTypesData, isLoading: loadingLeaveTypes } = useLeaveRequestTypes({
 		enabled: canEditSettings && !freemiumTier,
 	})
+	/** Stabilna referencja — dopoki `data` jest undefined, memo zwraca wciaz te sama tablice. */
+	const serverLeaveTypes = React.useMemo(
+		() => (Array.isArray(leaveTypesData) ? leaveTypesData : []),
+		[leaveTypesData]
+	)
 	
 	// Push Notifications
 	const {
@@ -105,9 +115,19 @@ function Settings() {
 	const [emailPrefLoading, setEmailPrefLoading] = useState(false)
 	/** Na mobile zielona wskazówka PWA domyślnie zwinięta; od md w górę zawsze widoczna */
 	const [pushPwaTipMobileOpen, setPushPwaTipMobileOpen] = useState(false)
-	const updateLeaveRequestTypesMutation = useUpdateLeaveRequestTypes()
-	const addCustomLeaveRequestTypeMutation = useAddCustomLeaveRequestType()
-	const deleteCustomLeaveRequestTypeMutation = useDeleteCustomLeaveRequestType()
+	/**
+	 * Typy wnioskow sa edytowane jako SZKIC i zapisywane razem z reszta ustawien
+	 * przyciskiem „Zapisz ustawienia". Dotad kazdy przelacznik szedl od razu do bazy,
+	 * co bylo niespojne z reszta strony i nie pozwalalo zatwierdzic kilku zmian naraz.
+	 */
+	const [draftLeaveTypes, setDraftLeaveTypes] = useState([])
+	/**
+	 * Czy szkic typow zostal juz zasiany danymi z serwera. Dopoki nie, do porownania
+	 * uzywamy danych serwerowych — inaczej pusty szkic wygladalby jak „usunieto wszystkie typy".
+	 */
+	const [typesSeeded, setTypesSeeded] = useState(false)
+	/** Czy formularz wczytal juz ustawienia zespolu (przed tym stan to same wartosci domyslne). */
+	const [formHydrated, setFormHydrated] = useState(false)
 	const [showAddCustomTypeForm, setShowAddCustomTypeForm] = useState(false)
 	const saveSettingsSectionRef = useRef(null)
 	const scrollToSaveSettings = useCallback(() => {
@@ -140,9 +160,116 @@ function Settings() {
 		return Math.round(hours * 100) / 100
 	}
 
+	const buildSettingsShape = useCallback(
+		(source) => buildTeamSettingsShape(source, { freemiumTier }),
+		[freemiumTier]
+	)
+
+	/** Stan zapisany w bazie — punkt odniesienia dla wykrywania zmian. */
+	const savedShape = React.useMemo(() => {
+		if (!settings) return null
+		const savedWorkHours = Array.isArray(settings.workHours)
+			? settings.workHours
+			: (settings.workHours?.timeFrom && settings.workHours?.timeTo
+				? [{
+					timeFrom: normalizeHalfHourTime(settings.workHours.timeFrom),
+					timeTo: normalizeHalfHourTime(settings.workHours.timeTo),
+					hours: settings.workHours.hours || 0,
+				}]
+				: [])
+		return buildSettingsShape({
+			workOnWeekends: settings.workOnWeekends !== undefined ? settings.workOnWeekends : true,
+			includePolishHolidays: settings.includePolishHolidays === true,
+			includeCustomHolidays: settings.includeCustomHolidays === true,
+			customHolidays: Array.isArray(settings.customHolidays) ? settings.customHolidays : [],
+			workHours: savedWorkHours,
+			leaveCalculationMode: settings.leaveCalculationMode || 'days',
+			leaveHoursPerDay: settings.leaveHoursPerDay || 8,
+			timerEnabled: settings.timerEnabled !== undefined ? settings.timerEnabled : true,
+			dashboardEnabled: settings.dashboardEnabled === true,
+			allowManagedNoAccessUsers: settings.allowManagedNoAccessUsers === true,
+			allowManagedWorkdayEntries: settings.allowManagedWorkdayEntries === true,
+			allowManagedLeaveRequests: settings.allowManagedLeaveRequests === true,
+			workdayEntriesOnlyToday: settings.workdayEntriesOnlyToday === true,
+			leaveRequestTypes: serverLeaveTypes,
+		})
+	}, [settings, serverLeaveTypes, buildSettingsShape])
+
+	/**
+	 * Typy pokazywane i porownywane. Przed zasianiem szkicu sa to dane z serwera —
+	 * dzieki temu panel nigdy nie mignie pusty, a porownanie nie zglosi zmiany,
+	 * ktorej uzytkownik nie zrobil.
+	 */
+	const visibleLeaveTypes = typesSeeded ? draftLeaveTypes : serverLeaveTypes
+
+	/** Stan wynikajacy z tego, co jest teraz w formularzu. */
+	const currentShape = React.useMemo(() => buildSettingsShape({
+		workOnWeekends,
+		includePolishHolidays,
+		includeCustomHolidays,
+		customHolidays,
+		workHours: workHoursList,
+		leaveCalculationMode,
+		leaveHoursPerDay,
+		timerEnabled,
+		dashboardEnabled,
+		allowManagedNoAccessUsers,
+		allowManagedWorkdayEntries,
+		allowManagedLeaveRequests,
+		workdayEntriesOnlyToday,
+		leaveRequestTypes: visibleLeaveTypes,
+	}), [
+		buildSettingsShape, workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays,
+		workHoursList, leaveCalculationMode, leaveHoursPerDay, timerEnabled, dashboardEnabled,
+		allowManagedNoAccessUsers, allowManagedWorkdayEntries, allowManagedLeaveRequests,
+		workdayEntriesOnlyToday, visibleLeaveTypes,
+	])
+
+	/**
+	 * Nazwy pol roznicych sie od stanu zapisanego. Do serwera trafiaja WYLACZNIE te pola —
+	 * kazde pole w PUT /api/settings jest strzezone przez `!== undefined`, wiec pominiete
+	 * zachowuja wartosc z bazy. Dzieki temu zapis jednego przelacznika nie moze nadpisac
+	 * ustawien zmienionych w miedzyczasie przez innego administratora.
+	 */
+	const changedKeys = React.useMemo(
+		() => diffTeamSettings(currentShape, savedShape, formHydrated),
+		[currentShape, savedShape, formHydrated]
+	)
+	const hasUnsavedChanges = changedKeys.length > 0
+
+	/** Ostrzezenie przed zamknieciem karty z niezapisanymi zmianami. */
+	React.useEffect(() => {
+		if (!hasUnsavedChanges) return undefined
+		const onBeforeUnload = (e) => {
+			e.preventDefault()
+			e.returnValue = ''
+		}
+		window.addEventListener('beforeunload', onBeforeUnload)
+		return () => window.removeEventListener('beforeunload', onBeforeUnload)
+	}, [hasUnsavedChanges])
+
+	// Szkic typow trzymamy zsynchronizowany z serwerem, dopoki uzytkownik niczego nie zmienil.
+	const hasUnsavedChangesRef = useRef(false)
+	const typesSeededRef = useRef(false)
+	const formHydratedRef = useRef(false)
+	useEffect(() => { hasUnsavedChangesRef.current = hasUnsavedChanges }, [hasUnsavedChanges])
+	useEffect(() => {
+		// Brak danych (zapytanie wylaczone dla pracownika lub freemium) — nie ma czego zasiewac.
+		if (leaveTypesData === undefined) return
+		// Po zasianiu nie nadpisujemy tego, co uzytkownik wlasnie zmienia.
+		if (typesSeededRef.current && hasUnsavedChangesRef.current) return
+		setDraftLeaveTypes(serverLeaveTypes)
+		typesSeededRef.current = true
+		setTypesSeeded(true)
+	}, [leaveTypesData, serverLeaveTypes])
+
 	// Ustaw wartość początkową gdy settings się załadują
 	React.useEffect(() => {
-		if (settings) {
+		if (!settings) return
+		// Pierwsze wczytanie musi przejsc ZAWSZE. Kolejne (odswiezenie w tle po powrocie
+		// do karty) pomijamy, zeby nie nadpisac tego, co uzytkownik wlasnie zmienia.
+		if (formHydratedRef.current && hasUnsavedChangesRef.current) return
+		{
 			setWorkOnWeekends(settings.workOnWeekends !== undefined ? settings.workOnWeekends : true)
 			setIncludePolishHolidays(settings.includePolishHolidays === true)
 			setIncludeCustomHolidays(settings.includeCustomHolidays === true)
@@ -175,6 +302,8 @@ function Settings() {
 			}
 			setEditingWorkHoursIndex(null)
 			setNewWorkHours({ timeFrom: '', timeTo: '', hours: 0 })
+			formHydratedRef.current = true
+			setFormHydrated(true)
 		}
 	}, [settings])
 
@@ -238,42 +367,21 @@ function Settings() {
 	}
 
 	const handleSave = async () => {
-		try {
-			if (freemiumSlimSettings) {
-				const workHoursData = workHoursList.length > 0 ? workHoursList : null
-				await updateSettingsMutation.mutateAsync({
-					workOnWeekends,
-					includePolishHolidays,
-					includeCustomHolidays,
-					customHolidays,
-					workHours: workHoursData,
-					allowManagedNoAccessUsers,
-					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
-					allowManagedLeaveRequests: false,
-					workdayEntriesOnlyToday,
-				})
-			} else {
-				// Zapisz workHours jako tablicę (lub null jeśli pusta)
-				const workHoursData = workHoursList.length > 0 ? workHoursList : null
+		if (!hasUnsavedChanges) return
 
-				await updateSettingsMutation.mutateAsync({
-					workOnWeekends,
-					includePolishHolidays,
-					includeCustomHolidays,
-					customHolidays,
-					workHours: workHoursData,
-					leaveCalculationMode,
-					// Wysylamy zawsze: dlugosc dnia limituje takze wnioski godzinowe w zespole rozliczanym w dniach.
-					leaveHoursPerDay,
-					...(showTimerQrSettings ? { timerEnabled } : {}),
-					dashboardEnabled,
-					allowManagedNoAccessUsers,
-					allowManagedWorkdayEntries: allowManagedNoAccessUsers && allowManagedWorkdayEntries,
-					allowManagedLeaveRequests:
-						!freemiumTier && allowManagedNoAccessUsers && allowManagedLeaveRequests,
-					workdayEntriesOnlyToday,
-				})
-			}
+		// Freemium widzi tylko czesc ustawien — nie wysylamy pol, ktorych nie mial jak zmienic.
+		const allowedKeys = freemiumSlimSettings
+			? ['workOnWeekends', 'includePolishHolidays', 'includeCustomHolidays', 'customHolidays',
+			   'workHours', 'allowManagedNoAccessUsers', 'allowManagedWorkdayEntries',
+			   'allowManagedLeaveRequests', 'workdayEntriesOnlyToday']
+			: Object.keys(currentShape).filter(key => key !== 'timerEnabled' || showTimerQrSettings)
+
+		const payload = buildTeamSettingsPayload(currentShape, changedKeys, allowedKeys)
+
+		if (Object.keys(payload).length === 0) return
+
+		try {
+			await updateSettingsMutation.mutateAsync(payload)
 			await showAlert(t('settings.saveSuccess'))
 		} catch (error) {
 			console.error('Error updating settings:', error)
@@ -294,162 +402,67 @@ function Settings() {
 			return
 		}
 		
-		const newHoliday = { date: newHolidayDate, name: newHolidayName.trim() }
-		const updatedHolidays = [...customHolidays, newHoliday]
-		setCustomHolidays(updatedHolidays)
-		
-		// Zapisz od razu do bazy danych
-		try {
-			await updateSettingsMutation.mutateAsync({ 
-				workOnWeekends,
-				includePolishHolidays,
-				includeCustomHolidays,
-				customHolidays: updatedHolidays
-			})
-			setNewHolidayDate('')
-			setNewHolidayName('')
-			await showAlert(t('settings.holidayAddSuccess') || 'Święto zostało dodane pomyślnie')
-		} catch (error) {
-			console.error('Error adding custom holiday:', error)
-			// Cofnij zmianę w stanie jeśli zapis się nie powiódł
-			setCustomHolidays(customHolidays)
-			await showAlert(error.response?.data?.message || t('settings.holidayAddError') || 'Błąd podczas dodawania święta')
-		}
+		setCustomHolidays([...customHolidays, { date: newHolidayDate, name: newHolidayName.trim() }])
+		setNewHolidayDate('')
+		setNewHolidayName('')
 	}
 
-	const handleRemoveCustomHoliday = async (date) => {
-		const updatedHolidays = customHolidays.filter(h => h.date !== date)
-		setCustomHolidays(updatedHolidays)
-		
-		// Zapisz od razu do bazy danych
-		try {
-			await updateSettingsMutation.mutateAsync({ 
-				workOnWeekends,
-				includePolishHolidays,
-				includeCustomHolidays,
-				customHolidays: updatedHolidays
-			})
-			await showAlert(t('settings.holidayDeleteSuccess') || 'Święto zostało usunięte pomyślnie')
-		} catch (error) {
-			console.error('Error removing custom holiday:', error)
-			// Cofnij zmianę w stanie jeśli zapis się nie powiódł
-			setCustomHolidays(customHolidays)
-			await showAlert(error.response?.data?.message || t('settings.holidayDeleteError') || 'Błąd podczas usuwania święta')
-		}
+	const handleRemoveCustomHoliday = (date) => {
+		setCustomHolidays(customHolidays.filter(h => h.date !== date))
 	}
 
-	// Funkcje do zarządzania typami wniosków urlopowych
-	const handleToggleTypeEnabled = async (typeId) => {
-		try {
-			const updatedTypes = leaveRequestTypes.map(type => 
-				type.id === typeId ? { ...type, isEnabled: !type.isEnabled } : type
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error toggling type enabled:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
-		}
+	// Funkcje do zarządzania typami wniosków urlopowych.
+	// Wszystkie zmieniaja WYLACZNIE szkic — do bazy trafiaja przyciskiem „Zapisz ustawienia".
+	/** Kazdy zapis do szkicu przechodzi tedy — bazujemy na widocznej liscie i oznaczamy szkic jako zasiany. */
+	const writeDraftTypes = (nextTypes) => {
+		setDraftLeaveTypes(nextTypes)
+		typesSeededRef.current = true
+		setTypesSeeded(true)
 	}
 
-	const handleToggleTypeAllowDaysLimit = async (typeId) => {
-		try {
-			const updatedTypes = leaveRequestTypes.map(type => 
-				type.id === typeId ? { ...type, allowDaysLimit: !type.allowDaysLimit } : type
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error toggling allowDaysLimit:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
-		}
+	const patchDraftType = (typeId, patch) => {
+		writeDraftTypes(visibleLeaveTypes.map(type => (type.id === typeId ? { ...type, ...patch } : type)))
 	}
 
-	const handleToggleTypeMinDaysBefore = async (typeId) => {
-		try {
-			const type = leaveRequestTypes.find(t => t.id === typeId)
-			const newMinDaysBefore = type.minDaysBefore === null ? 5 : null // Domyślnie 5 dni jeśli włączamy (minimum z wyprzedzeniem)
-			const updatedTypes = leaveRequestTypes.map(t => 
-				t.id === typeId ? { ...t, minDaysBefore: newMinDaysBefore } : t
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error toggling minDaysBefore:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
-		}
+	const handleToggleTypeEnabled = (typeId) => {
+		const type = visibleLeaveTypes.find(t => t.id === typeId)
+		patchDraftType(typeId, { isEnabled: !type?.isEnabled })
+	}
+
+	const handleToggleTypeAllowDaysLimit = (typeId) => {
+		const type = visibleLeaveTypes.find(t => t.id === typeId)
+		patchDraftType(typeId, { allowDaysLimit: !type?.allowDaysLimit })
+	}
+
+	const handleToggleTypeMinDaysBefore = (typeId) => {
+		const type = visibleLeaveTypes.find(t => t.id === typeId)
+		// Domyślnie 5 dni jeśli włączamy (minimum z wyprzedzeniem)
+		patchDraftType(typeId, { minDaysBefore: type?.minDaysBefore == null ? 5 : null })
 	}
 
 	const handleUpdateTypeMinDaysBefore = async (typeId, value) => {
-		try {
-			const numValue = value === '' || value === null ? null : parseInt(value, 10)
-			if (numValue !== null && (isNaN(numValue) || numValue < 1)) {
-				await showAlert(t('settings.minDaysBeforeInvalid') || 'Liczba dni musi być większa niż 0')
-				return
-			}
-			const updatedTypes = leaveRequestTypes.map(type => 
-				type.id === typeId ? { ...type, minDaysBefore: numValue } : type
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error updating minDaysBefore:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
+		const numValue = value === '' || value === null ? null : parseInt(value, 10)
+		if (numValue !== null && (isNaN(numValue) || numValue < 1)) {
+			await showAlert(t('settings.minDaysBeforeInvalid') || 'Liczba dni musi być większa niż 0')
+			return
 		}
+		patchDraftType(typeId, { minDaysBefore: numValue })
 	}
 
-	const handleToggleTypeRequireApproval = async (typeId) => {
-		try {
-			const updatedTypes = leaveRequestTypes.map(type => 
-				type.id === typeId ? { ...type, requireApproval: !type.requireApproval } : type
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error toggling requireApproval:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
-		}
+	const handleToggleTypeRequireApproval = (typeId) => {
+		const type = visibleLeaveTypes.find(t => t.id === typeId)
+		patchDraftType(typeId, { requireApproval: !type?.requireApproval })
 	}
+
+	/** Czy jakikolwiek typ jest rozliczany godzinowo — wtedy dlugosc dnia jest potrzebna. */
+	const hasHourlySettlementType = visibleLeaveTypes.some(type => type.settlementUnit === 'hours')
 
 	/**
 	 * Zmiana jednostki rozliczenia typu. Przejscie na godziny (lub z powrotem) zmienia
 	 * znaczenie pul przypisanych pracownikom, wiec wymaga swiadomego potwierdzenia.
 	 */
-	/** Wspolna kontrolka jednostki rozliczenia — ten sam markup dla typow systemowych i wlasnych. */
-	/** Czy jakikolwiek typ jest rozliczany godzinowo — wtedy dlugosc dnia jest potrzebna. */
-	const hasHourlySettlementType = leaveRequestTypes.some(type => type.settlementUnit === 'hours')
-
-	const renderSettlementUnitControl = (type) => {
-		const value = type.settlementUnit || 'inherit'
-		const inheritLabel = leaveCalculationMode === 'hours'
-			? (t('settings.settlementInheritHours') || 'Domyślnie zespołu (godziny)')
-			: (t('settings.settlementInheritDays') || 'Domyślnie zespołu (dni)')
-		return (
-			<div style={{ marginTop: '10px' }}>
-				<label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>
-					{t('settings.typeSettlementUnit') || 'Jednostka rozliczenia'}
-				</label>
-				<select
-					value={value}
-					onChange={e => handleUpdateTypeSettlementUnit(type.id, e.target.value)}
-					disabled={!canEditSettings}
-					style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: '8px', maxWidth: '360px', width: '100%' }}
-				>
-					<option value="inherit">{inheritLabel}</option>
-					<option value="days">{t('settings.settlementDays') || 'W dniach'}</option>
-					<option value="hours">{t('settings.settlementHours') || 'W godzinach (jeden dzień + liczba godzin)'}</option>
-				</select>
-				{value === 'hours' && (
-					<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
-						{t('settings.settlementHoursNote')}
-					</small>
-				)}
-			</div>
-		)
-	}
-
 	const handleUpdateTypeSettlementUnit = async (typeId, nextUnit) => {
-		const current = leaveRequestTypes.find(type => type.id === typeId)
+		const current = visibleLeaveTypes.find(type => type.id === typeId)
 		const previousUnit = current?.settlementUnit || 'inherit'
 		if (previousUnit === nextUnit) return
 
@@ -465,17 +478,45 @@ function Settings() {
 			)
 			if (!confirmed) return
 		}
+		patchDraftType(typeId, { settlementUnit: nextUnit })
+	}
 
-		try {
-			const updatedTypes = leaveRequestTypes.map(type =>
-				type.id === typeId ? { ...type, settlementUnit: nextUnit } : type
-			)
-			await updateLeaveRequestTypesMutation.mutateAsync(updatedTypes)
-			await showAlert(t('settings.leaveTypesUpdateSuccess') || 'Typ wniosku został zaktualizowany')
-		} catch (error) {
-			console.error('Error updating settlementUnit:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesUpdateError') || 'Błąd podczas aktualizacji typu')
-		}
+	/** Wspolna kontrolka jednostki rozliczenia — ten sam markup dla typow systemowych i wlasnych. */
+	const renderSettlementUnitControl = (type) => {
+		const value = type.settlementUnit || 'inherit'
+		const inheritLabel = leaveCalculationMode === 'hours'
+			? (t('settings.settlementInheritHours') || 'Domyślnie zespołu (godziny)')
+			: (t('settings.settlementInheritDays') || 'Domyślnie zespołu (dni)')
+		return (
+			<div style={{ marginTop: '14px', maxWidth: '360px' }}>
+				<label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#2c3e50', marginBottom: '6px' }}>
+					{t('settings.typeSettlementUnit') || 'Jednostka rozliczenia'}
+				</label>
+				<select
+					value={value}
+					onChange={e => handleUpdateTypeSettlementUnit(type.id, e.target.value)}
+					disabled={!canEditSettings}
+					style={{
+						padding: '8px 10px',
+						border: '1px solid #dee2e6',
+						borderRadius: '4px',
+						fontSize: '14px',
+						width: '100%',
+						backgroundColor: canEditSettings ? '#fff' : '#f8f9fa',
+						cursor: canEditSettings ? 'pointer' : 'not-allowed'
+					}}
+				>
+					<option value="inherit">{inheritLabel}</option>
+					<option value="days">{t('settings.settlementDays') || 'W dniach'}</option>
+					<option value="hours">{t('settings.settlementHours') || 'W godzinach'}</option>
+				</select>
+				{value === 'hours' && (
+					<small style={{ display: 'block', marginTop: '6px', color: '#6b7280', fontSize: '13px', lineHeight: 1.5 }}>
+						{t('settings.settlementHoursNote')}
+					</small>
+				)}
+			</div>
+		)
 	}
 
 	/** Preset dla art. 188 KP: opieka nad dzieckiem rozliczana godzinowo (16 h rocznie). */
@@ -492,40 +533,39 @@ function Settings() {
 	}
 
 	const handleAddCustomType = async () => {
-		if (!newCustomType.name.trim()) {
+		const name = newCustomType.name.trim()
+		if (!name) {
 			await showAlert(t('settings.leaveTypesNameRequired') || 'Nazwa typu jest wymagana')
 			return
 		}
 
-		try {
-			await addCustomLeaveRequestTypeMutation.mutateAsync({
-				name: newCustomType.name.trim(),
-				nameEn: newCustomType.nameEn.trim() || undefined,
-				requireApproval: newCustomType.requireApproval,
-				allowDaysLimit: newCustomType.allowDaysLimit,
-				minDaysBefore: newCustomType.minDaysBefore || null,
-				settlementUnit: newCustomType.settlementUnit || 'inherit'
-			})
-			setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null, settlementUnit: 'inherit' })
-			setShowAddCustomTypeForm(false)
-			await showAlert(t('settings.leaveTypesAddSuccess') || 'Niestandardowy typ został dodany')
-		} catch (error) {
-			console.error('Error adding custom type:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesAddError') || 'Błąd podczas dodawania typu')
+		// Id w tym samym formacie co generowane po stronie serwera; unikalnosc w obrebie zespolu.
+		let id = `custom-${Date.now()}`
+		const existingIds = new Set(visibleLeaveTypes.map(type => type.id))
+		while (existingIds.has(id)) {
+			id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 		}
+
+		writeDraftTypes([...visibleLeaveTypes, {
+			id,
+			name,
+			nameEn: newCustomType.nameEn.trim() || undefined,
+			isSystem: false,
+			isEnabled: true,
+			requireApproval: newCustomType.requireApproval,
+			allowDaysLimit: newCustomType.allowDaysLimit,
+			minDaysBefore: newCustomType.minDaysBefore || null,
+			settlementUnit: newCustomType.settlementUnit || 'inherit',
+		}])
+		setNewCustomType({ name: '', nameEn: '', requireApproval: true, allowDaysLimit: false, minDaysBefore: null, settlementUnit: 'inherit' })
+		setShowAddCustomTypeForm(false)
 	}
 
 	const handleDeleteCustomType = async (typeId) => {
 		const confirmed = await showConfirm(t('settings.leaveTypesDeleteConfirm') || 'Czy na pewno chcesz usunąć ten typ wniosku?')
 		if (!confirmed) return
-
-		try {
-			await deleteCustomLeaveRequestTypeMutation.mutateAsync(typeId)
-			await showAlert(t('settings.leaveTypesDeleteSuccess') || 'Typ został usunięty')
-		} catch (error) {
-			console.error('Error deleting custom type:', error)
-			await showAlert(error.response?.data?.message || t('settings.leaveTypesDeleteError') || 'Błąd podczas usuwania typu')
-		}
+		// Typow systemowych nie da sie usunac — serwer i tak je zachowa.
+		writeDraftTypes(visibleLeaveTypes.filter(type => type.id !== typeId || type.isSystem))
 	}
 
 	// Push notification handlers
@@ -648,7 +688,9 @@ function Settings() {
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 						padding: '20px',
-						marginBottom: '20px'
+						marginBottom: '20px',
+						// Sekcja preferencji osobistych — inny tryb zapisu niz ustawienia zespolu.
+						borderLeft: '4px solid #a5d6a7'
 					}}>
 						<h3 style={{ 
 							color: '#2c3e50', 
@@ -658,6 +700,30 @@ function Settings() {
 						}}>
 							🔔 {t('settings.pushNotificationsTitle')}
 						</h3>
+						<div style={{
+							display: 'flex',
+							alignItems: 'flex-start',
+							gap: '8px',
+							flexWrap: 'wrap',
+							marginTop: '-8px',
+							marginBottom: '18px'
+						}}>
+							<span style={{
+								display: 'inline-block',
+								padding: '3px 10px',
+								borderRadius: '999px',
+								backgroundColor: '#e8f5e9',
+								color: '#2e7d32',
+								fontSize: '12px',
+								fontWeight: 600,
+								whiteSpace: 'nowrap'
+							}}>
+								{t('settings.instantSaveBadge') || 'Zapisuje się od razu'}
+							</span>
+							<span style={{ fontSize: '13px', color: '#7f8c8d', lineHeight: 1.5, flex: '1 1 240px' }}>
+								{t('settings.instantSaveNote')}
+							</span>
+						</div>
 						
 						{!pushSubscribed ? (
 							<div style={{ marginBottom: '20px' }}>
@@ -835,7 +901,9 @@ function Settings() {
 						borderRadius: '12px',
 						boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
 						padding: '20px',
-						marginBottom: '20px'
+						marginBottom: '20px',
+						// Sekcja preferencji osobistych — inny tryb zapisu niz ustawienia zespolu.
+						borderLeft: '4px solid #a5d6a7'
 					}}>
 						<h3 style={{ 
 							color: '#2c3e50', 
@@ -845,6 +913,30 @@ function Settings() {
 						}}>
 							✉️ {t('settings.emailNotificationsTitle')}
 						</h3>
+						<div style={{
+							display: 'flex',
+							alignItems: 'flex-start',
+							gap: '8px',
+							flexWrap: 'wrap',
+							marginTop: '-8px',
+							marginBottom: '18px'
+						}}>
+							<span style={{
+								display: 'inline-block',
+								padding: '3px 10px',
+								borderRadius: '999px',
+								backgroundColor: '#e8f5e9',
+								color: '#2e7d32',
+								fontSize: '12px',
+								fontWeight: 600,
+								whiteSpace: 'nowrap'
+							}}>
+								{t('settings.instantSaveBadge') || 'Zapisuje się od razu'}
+							</span>
+							<span style={{ fontSize: '13px', color: '#7f8c8d', lineHeight: 1.5, flex: '1 1 240px' }}>
+								{t('settings.instantSaveNote')}
+							</span>
+						</div>
 						<p style={{ color: '#7f8c8d', marginBottom: '15px' }}>
 							{t('settings.emailNotificationsDescription')}
 						</p>
@@ -2255,7 +2347,7 @@ function Settings() {
 								flexDirection: 'column',
 								gap: '15px'
 							}}>
-								{leaveRequestTypes.filter(type => type.isSystem).map(type => {
+								{visibleLeaveTypes.filter(type => type.isSystem).map(type => {
 									const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
 									return (
 										<div key={type.id} style={{
@@ -2354,6 +2446,10 @@ function Settings() {
 														/>
 														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+															{' '}
+															<span style={{ color: '#6b7280', fontWeight: 400 }}>
+																({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
+															</span>
 														</span>
 													</label>
 													<div style={{
@@ -2444,6 +2540,8 @@ function Settings() {
 								display: 'flex',
 								justifyContent: 'space-between',
 								alignItems: 'center',
+								gap: '12px',
+								flexWrap: 'wrap',
 								marginBottom: '15px'
 							}}>
 								<h4 style={{
@@ -2454,6 +2552,7 @@ function Settings() {
 								}}>
 									{t('settings.customTypes') || 'Typy niestandardowe'}
 								</h4>
+								<div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
 								{!showAddCustomTypeForm && (
 									<button
 										type="button"
@@ -2489,12 +2588,16 @@ function Settings() {
 											fontSize: '14px',
 											fontWeight: '500',
 											cursor: 'pointer',
-											marginLeft: '8px'
+											transition: 'all 0.2s',
+											whiteSpace: 'nowrap'
 										}}
+										onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4' }}
+										onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff' }}
 									>
-										{t('settings.childcarePresetButton') || 'Dodaj: opieka nad dzieckiem (art. 188 KP)'}
+										+ {t('settings.childcarePresetButton') || 'Opieka nad dzieckiem (art. 188 KP)'}
 									</button>
 								)}
+								</div>
 									</div>
 
 							{showAddCustomTypeForm && (
@@ -2615,6 +2718,10 @@ function Settings() {
 													/>
 													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 														{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+														{' '}
+														<span style={{ color: '#6b7280', fontWeight: 400 }}>
+															({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
+														</span>
 													</span>
 												</label>
 											</div>
@@ -2700,7 +2807,7 @@ function Settings() {
 													>
 														<option value="inherit">{leaveCalculationMode === 'hours' ? (t('settings.settlementInheritHours') || 'Domyślnie zespołu (godziny)') : (t('settings.settlementInheritDays') || 'Domyślnie zespołu (dni)')}</option>
 														<option value="days">{t('settings.settlementDays') || 'W dniach'}</option>
-														<option value="hours">{t('settings.settlementHours') || 'W godzinach (jeden dzień + liczba godzin)'}</option>
+														<option value="hours">{t('settings.settlementHours') || 'W godzinach'}</option>
 													</select>
 													{newCustomType.settlementUnit === 'hours' && (
 														<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
@@ -2737,16 +2844,15 @@ function Settings() {
 											<button
 												type="button"
 												onClick={handleAddCustomType}
-												disabled={addCustomLeaveRequestTypeMutation.isPending}
 												style={{
-													backgroundColor: addCustomLeaveRequestTypeMutation.isPending ? '#95a5a6' : '#28a745',
+													backgroundColor: '#28a745',
 													color: 'white',
 													border: 'none',
 													padding: '8px 16px',
 													borderRadius: '6px',
 													fontSize: '14px',
 													fontWeight: '500',
-													cursor: addCustomLeaveRequestTypeMutation.isPending ? 'not-allowed' : 'pointer'
+													cursor: 'pointer'
 												}}
 											>
 												{t('settings.add') || 'Dodaj'}
@@ -2756,13 +2862,13 @@ function Settings() {
 								</div>
 							)}
 
-							{leaveRequestTypes.filter(type => !type.isSystem).length > 0 ? (
+							{visibleLeaveTypes.filter(type => !type.isSystem).length > 0 ? (
 								<div style={{
 									display: 'flex',
 									flexDirection: 'column',
 									gap: '15px'
 								}}>
-									{leaveRequestTypes.filter(type => !type.isSystem).map(type => {
+									{visibleLeaveTypes.filter(type => !type.isSystem).map(type => {
 										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
 										return (
 											<div key={type.id} style={{
@@ -2796,12 +2902,11 @@ function Settings() {
 													<button
 														type="button"
 														onClick={() => handleDeleteCustomType(type.id)}
-														disabled={deleteCustomLeaveRequestTypeMutation.isPending}
 														style={{
 															backgroundColor: 'transparent',
 															border: 'none',
 															color: '#dc3545',
-															cursor: deleteCustomLeaveRequestTypeMutation.isPending ? 'not-allowed' : 'pointer',
+															cursor: 'pointer',
 															fontSize: '20px',
 															padding: '4px 8px',
 															marginLeft: '15px'
@@ -2857,6 +2962,10 @@ function Settings() {
 														/>
 														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
+															{' '}
+															<span style={{ color: '#6b7280', fontWeight: 400 }}>
+																({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
+															</span>
 														</span>
 													</label>
 													<div style={{
@@ -3115,19 +3224,42 @@ function Settings() {
 								marginBottom: '20px',
 							}}
 						>
+							{hasUnsavedChanges && (
+								<div style={{
+									display: 'flex',
+									alignItems: 'flex-start',
+									gap: '10px',
+									padding: '12px 14px',
+									marginBottom: '12px',
+									backgroundColor: '#fff8e1',
+									border: '1px solid #ffd66b',
+									borderRadius: '8px'
+								}}>
+									<span aria-hidden="true" style={{ fontSize: '18px', lineHeight: 1.2 }}>●</span>
+									<div>
+										<strong style={{ display: 'block', fontSize: '14px', color: '#7a5b00' }}>
+											{t('settings.unsavedChanges') || 'Masz niezapisane zmiany'}
+										</strong>
+										<span style={{ fontSize: '13px', color: '#7a5b00' }}>
+											{t('settings.unsavedChangesHint')}
+										</span>
+									</div>
+								</div>
+							)}
 							<button
 								onClick={handleSave}
-								disabled={updateSettingsMutation.isPending}
+								disabled={updateSettingsMutation.isPending || !hasUnsavedChanges}
+								title={hasUnsavedChanges ? undefined : (t('settings.noChanges') || 'Brak zmian do zapisania')}
 								style={{
 									width: '100%',
-									backgroundColor: updateSettingsMutation.isPending ? '#95a5a6' : '#00a846',
+									backgroundColor: (updateSettingsMutation.isPending || !hasUnsavedChanges) ? '#95a5a6' : '#00a846',
 									color: 'white',
 									border: 'none',
 									padding: '14px 24px',
 									borderRadius: '8px',
 									fontSize: '16px',
 									fontWeight: '600',
-									cursor: updateSettingsMutation.isPending ? 'not-allowed' : 'pointer',
+									cursor: (updateSettingsMutation.isPending || !hasUnsavedChanges) ? 'not-allowed' : 'pointer',
 									transition: 'all 0.2s',
 									boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 									display: 'flex',
@@ -3136,13 +3268,13 @@ function Settings() {
 									gap: '8px'
 								}}
 								onMouseEnter={(e) => {
-									if (!updateSettingsMutation.isPending) {
+									if (!updateSettingsMutation.isPending && hasUnsavedChanges) {
 										e.target.style.backgroundColor = '#009639'
 										e.target.style.boxShadow = '0 4px 8px rgba(0, 150, 57, 0.22)'
 									}
 								}}
 								onMouseLeave={(e) => {
-									if (!updateSettingsMutation.isPending) {
+									if (!updateSettingsMutation.isPending && hasUnsavedChanges) {
 										e.target.style.backgroundColor = '#00a846'
 										e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
 									}
