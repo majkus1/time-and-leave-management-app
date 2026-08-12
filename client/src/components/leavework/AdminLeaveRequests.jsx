@@ -57,6 +57,15 @@ function AdminLeaveRequests() {
 		return settings.leaveRequestTypes.filter(type => type.isEnabled && type.allowDaysLimit)
 	}, [settings])
 
+	/**
+	 * Czy ktorykolwiek typ z limitem rozlicza sie godzinowo. Jesli nie — naglowek karty
+	 * zostaje dokladnie taki jak dotad, wiec zespoly bez typow godzinowych nic nie zauwaza.
+	 */
+	const hasHourlyLimitType = React.useMemo(
+		() => leaveTypesWithLimit.some(type => resolveLeaveTypeSettlement(settings, type.id).unit === 'hours'),
+		[leaveTypesWithLimit, settings]
+	)
+
 	// Sync leaveTypeDays z user data
 	React.useEffect(() => {
 		if (user && user.leaveTypeDays) {
@@ -168,7 +177,9 @@ function AdminLeaveRequests() {
 				{leaveTypesWithLimit.length > 0 && (
 					<div className="admin-leave-days-card" style={{ marginBottom: '20px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '10px', backgroundColor: '#fff', maxWidth: '450px' }}>
 						<div className="leave-days-limit-header">
-							<span>{t('adminleavereq.label1') || 'Dni urlopu'}</span>
+							<span>{hasHourlyLimitType
+								? (t('adminleavereq.label1Mixed') || 'Limity urlopowe:')
+								: (t('adminleavereq.label1') || 'Dni urlopu')}</span>
 							<button
 								type="button"
 								className="leave-days-info-toggle"

@@ -905,39 +905,50 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 
 								{isHourlyType ? (
 									<>
-										<p style={{ margin: '0 0 4px', fontSize: '13px', color: '#6b7280' }}>
-											{t('leaveform.hourlySingleDayHint')}
-										</p>
 										<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
 											<div>
-												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.datefrom')}</label>
+												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.dateSingle') || 'Data:'}</label>
 												<input
 													type="date"
 													value={startDate}
 													onChange={handleStartDateChange}
 													required
-													style={{ maxWidth: '300px' }}
+													style={{ width: '100%', maxWidth: '300px' }}
 													className="leave-request-date-input border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 												/>
 											</div>
 											<div>
 												<label className="block text-gray-700 font-medium mb-1">{t('leaveform.hoursOnDay')}</label>
-												<input
-													type="number"
-													min="0.5"
-													max={hoursPerDayLimit}
-													step="0.5"
-													value={hoursRequested}
-													onChange={e => setHoursRequested(e.target.value)}
-													required
-													style={{ maxWidth: '300px' }}
-													className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-												/>
-												<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
-													{t('leaveform.hourlyMax', { hours: hoursPerDayLimit })}
-												</small>
+												<div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+													<input
+														type="number"
+														min="0.5"
+														max={hoursPerDayLimit}
+														step="0.5"
+														inputMode="decimal"
+														placeholder="0,0"
+														value={hoursRequested}
+														onChange={e => setHoursRequested(e.target.value)}
+														required
+														style={{ width: '100%', paddingRight: '52px' }}
+														className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+													/>
+													<span style={{
+														position: 'absolute',
+														right: '32px',
+														top: '50%',
+														transform: 'translateY(-50%)',
+														color: '#9ca3af',
+														fontSize: '14px',
+														pointerEvents: 'none'
+													}}>h</span>
+												</div>
 											</div>
 										</div>
+										<p style={{ margin: '2px 0 0', fontSize: '13px', color: '#6b7280', lineHeight: 1.5 }}>
+											{t('leaveform.hourlySingleDayHint')}{' '}
+											{t('leaveform.hourlyMax', { hours: hoursPerDayLimit })}
+										</p>
 									</>
 								) : (
 									<>
@@ -1388,7 +1399,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 									</div>
 
 									<div style={{ maxWidth: '400px', marginRight: '2px' }}>
-										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{t('leaveform.datefrom')}</label>
+										<label className="block text-gray-700 font-medium mb-1" style={{ marginRight: '5px' }}>{isEditHourlyType ? (t('leaveform.dateSingle') || 'Data:') : t('leaveform.datefrom')}</label>
 										<input
 											type="date"
 											value={editStartDate}
@@ -1467,16 +1478,30 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 										</label>
 										{isEditHourlyType ? (
 											<>
-												<input
+												<div style={{ position: 'relative', width: '100%' }}>
+													<input
 													type="number"
 													min="0.5"
 													max={editHoursPerDayLimit}
 													step="0.5"
+													inputMode="decimal"
+													placeholder="0,0"
 													value={editHoursRequested}
 													onChange={e => setEditHoursRequested(e.target.value)}
 													required
+													style={{ paddingRight: '52px' }}
 													className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-												/>
+													/>
+													<span style={{
+														position: 'absolute',
+														right: '32px',
+														top: '50%',
+														transform: 'translateY(-50%)',
+														color: '#9ca3af',
+														fontSize: '14px',
+														pointerEvents: 'none'
+													}}>h</span>
+												</div>
 												<small style={{ display: 'block', marginTop: '4px', color: '#6b7280' }}>
 													{t('leaveform.hourlyMax', { hours: editHoursPerDayLimit })}
 												</small>
