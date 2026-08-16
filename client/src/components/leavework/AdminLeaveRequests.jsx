@@ -193,7 +193,9 @@ function AdminLeaveRequests() {
 						</div>
 						{leaveDaysInfoOpen && (
 							<div id="leave-days-info" className="leave-days-info">
-								{t('adminleavereq.reminder')}
+								{settings?.autoDeductLeaveLimits === true
+									? t('adminleavereq.reminderAuto')
+									: t('adminleavereq.reminder')}
 							</div>
 						)}
 						<div style={{ display: 'grid', gap: '10px' }}>

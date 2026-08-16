@@ -33,6 +33,13 @@ const leaveRequestSchema = new mongoose.Schema({
 		enum: ['status.pending', 'status.accepted', 'status.rejected', 'status.sent'],
 		default: 'status.pending'
 	  },	  
+	// Slad automatycznego rozliczenia puli urlopowej (opcja zespolu, domyslnie wylaczona).
+	// null oznacza, ze automat nigdy nic z tego wniosku nie pobral — wtedy anulowanie
+	// niczego nie oddaje. Zwrot zawsze opiera sie na tej wartosci, a nie na przeliczeniu
+	// wniosku od nowa, dzieki czemu pozniejsza zmiana jednostki typu albo wylaczenie
+	// opcji nie zmienia tego, ile pracownikowi wraca.
+	autoDeductedAmount: { type: Number, default: null },
+	autoDeductedUnit: { type: String, enum: ['days', 'hours'], default: null },
 	createdAt: { type: Date, default: Date.now },
 	submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 	updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

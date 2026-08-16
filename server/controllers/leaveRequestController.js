@@ -10,6 +10,7 @@ const Settings = require('../models/Settings')(firmDb)
 const { appUrl } = require('../config')
 const { findSupervisorsForDepartment } = require('../services/roleService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
+const { applyLeaveBalanceAutoDeduction } = require('../services/leaveBalanceService')
 const {
 	findConflictingApprovedLeaveRequest,
 	findBlockingLeaveRequestOnDate,
@@ -496,6 +497,7 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			}
 		}
 
+		const previousStatus = leaveRequest.status
 		leaveRequest.status = status
 		leaveRequest.updatedBy = req.user.userId
 		await leaveRequest.save()
@@ -504,9 +506,18 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 		const endDate = leaveRequest.endDate.toISOString().split('T')[0]
 		const statusText = getLeaveStatusText(leaveRequest.status, t, 'requestFeminine')
 		const ownRequestStatusTitle = `${t('email.leaveRequest.requestUpdated')} ${statusText}.`
-		
+
 		// Pobierz Settings dla zespołu i nazwę typu
 		const settings = await Settings.getSettings(user.teamId)
+
+		// Automatyczne rozliczenie puli urlopowej (opcja zespołu, domyślnie wyłączona).
+		// Po utrwaleniu statusu, żeby awaria zapisu nie oddała dni, których nikt nie pobrał.
+		await applyLeaveBalanceAutoDeduction({
+			settings,
+			leaveRequest,
+			previousStatus,
+			nextStatus: leaveRequest.status,
+		})
 		const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
 		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 		
@@ -1095,6 +1106,16 @@ exports.cancelLeaveRequest = async (req, res) => {
 
 		// Usuń wniosek
 		await LeaveRequest.findByIdAndDelete(id)
+
+		// Anulowany wniosek nie zajmuje już puli — oddaj to, co automat wcześniej pobrał.
+		// Ślad znika razem z wnioskiem, więc nie ma czego utrwalać.
+		await applyLeaveBalanceAutoDeduction({
+			settings,
+			leaveRequest,
+			previousStatus: leaveRequest.status,
+			nextStatus: null,
+			persistLedger: false,
+		})
 
 		// Zbierz unikalnych odbiorców (bez duplikatów) - uwzględnia przełożonych z SupervisorConfig
 		const recipients = await getUniqueEmailRecipients(user, teamId, t)

@@ -483,6 +483,7 @@ async function buildStaticTeamSnapshot(teamId, locale) {
 		allowManagedWorkdayEntries: !!settingsLean.allowManagedWorkdayEntries,
 		allowManagedLeaveRequests: !!settingsLean.allowManagedLeaveRequests,
 		workdayEntriesOnlyToday: !!settingsLean.workdayEntriesOnlyToday,
+		autoDeductLeaveLimits: !!settingsLean.autoDeductLeaveLimits,
 	}
 
 	const boards = await Board.find({ teamId, isActive: true })

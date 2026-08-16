@@ -12,6 +12,19 @@ const PENDING_STATUSES = new Set(['status.pending', 'pending'])
 const LEAVE_REQUESTS_UPDATED_EVENT = 'leave-requests-updated'
 const SCHEDULE_UPDATED_EVENT = 'schedule-updated'
 
+/**
+ * Uniewaznia miejsca, w ktorych trzymana jest pula urlopowa pracownika.
+ *
+ * Przy wlaczonym automatycznym rozliczaniu zmiana statusu wniosku przesuwa saldo po
+ * stronie serwera. Ekran /leave-requests/:userId czyta je z zapytania o uzytkownika
+ * (['users', id]), a nie z vacation-days — dlatego uniewazniamy OBA zrodla, inaczej
+ * liczba odswiezylaby sie dopiero po przeladowaniu strony.
+ */
+const invalidateLeaveBalances = (queryClient, userId) => {
+	queryClient.invalidateQueries({ queryKey: userId ? ['users', userId] : ['users'] })
+	queryClient.invalidateQueries({ queryKey: ['vacation'] })
+}
+
 const normalizeUserId = (value) => {
 	if (!value) return null
 	if (typeof value === 'string') return value
@@ -84,6 +97,9 @@ export const useUserLeaveRequests = (userId) => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests', 'accepted', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['vacation', 'days', userId] })
+			// Ekran wnioskow czyta pule urlopowa z zapytania o uzytkownika — bez tego
+			// zatwierdzenie przez innego administratora nie odswiezyloby liczby.
+			queryClient.invalidateQueries({ queryKey: ['users', userId] })
 		}
 
 		const handleScheduleUpdated = () => {
@@ -122,6 +138,25 @@ export const useVisibleLeaveUsers = ({ enabled = true } = {}) => {
 			return response.data
 		},
 		enabled,
+		staleTime: 2 * 60 * 1000,
+		cacheTime: 5 * 60 * 1000,
+	})
+}
+
+// Query hook - kto zobaczy i będzie mógł zatwierdzić wniosek danego typu.
+// Liczy to serwer tą samą funkcją co przy zapisie, więc podgląd się nie rozjeżdża.
+export const useLeaveRequestRecipients = ({ type, targetUserId = '', enabled = true } = {}) => {
+	return useQuery({
+		queryKey: ['leaveRequests', 'recipients', type, targetUserId],
+		queryFn: async () => {
+			const response = await axios.get(`${API_URL}/api/leaveworks/leave-request-recipients`, {
+				params: { type, ...(targetUserId ? { targetUserId } : {}) },
+				withCredentials: true,
+			})
+			return response.data
+		},
+		enabled: enabled && !!type,
+		retry: false,
 		staleTime: 2 * 60 * 1000,
 		cacheTime: 5 * 60 * 1000,
 	})
@@ -340,6 +375,7 @@ export const useCreateLeaveRequest = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
 			invalidateDashboardSummary(queryClient)
+			invalidateLeaveBalances(queryClient)
 		},
 	})
 }
@@ -373,6 +409,10 @@ export const useUpdateLeaveRequestStatus = () => {
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
 			invalidateDashboardSummary(queryClient)
+			// Pula urlopowa moze sie zmienic przy zmianie statusu (automatyczne rozliczanie),
+			// a ekran wnioskow czyta ja z zapytania o uzytkownika — bez tego liczba
+			// odswiezalaby sie dopiero po przeladowaniu strony.
+			invalidateLeaveBalances(queryClient, variables.userId)
 			if (variables.userId) {
 				queryClient.setQueryData(['leaveRequests', 'user', variables.userId], (old) => {
 					if (!old) return old
@@ -400,6 +440,7 @@ export const useCancelLeaveRequest = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['leaveRequests'] })
 			invalidateDashboardSummary(queryClient)
+			invalidateLeaveBalances(queryClient)
 		},
 	})
 }

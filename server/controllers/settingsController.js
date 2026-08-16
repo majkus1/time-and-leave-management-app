@@ -61,6 +61,7 @@ exports.updateSettings = async (req, res) => {
 			allowManagedWorkdayEntries,
 			allowManagedLeaveRequests,
 			workdayEntriesOnlyToday,
+			autoDeductLeaveLimits,
 		} = req.body
 		
 		// Sprawdź uprawnienia - tylko Admin i HR
@@ -263,6 +264,11 @@ exports.updateSettings = async (req, res) => {
 		}
 		if (workdayEntriesOnlyToday !== undefined && typeof workdayEntriesOnlyToday === 'boolean') {
 			settings.workdayEntriesOnlyToday = workdayEntriesOnlyToday
+		}
+		// Samo przełączenie niczego nie przelicza wstecz — automat rusza dopiero
+		// przy kolejnej zmianie statusu wniosku, więc włączenie nie rusza istniejących sald.
+		if (autoDeductLeaveLimits !== undefined && typeof autoDeductLeaveLimits === 'boolean') {
+			settings.autoDeductLeaveLimits = autoDeductLeaveLimits
 		}
 
 		if (!settings.allowManagedNoAccessUsers) {

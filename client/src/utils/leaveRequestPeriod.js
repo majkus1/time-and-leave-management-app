@@ -4,6 +4,7 @@ import {
 	isHourlyLeaveRequest,
 	resolveLeaveTypeSettlement,
 } from './leaveSettlement'
+import { resolveLeaveLimitView, sumAutoDeductedAmount } from './leaveLimitView'
 
 const emptyDurationBucket = () => ({ total: 0, accepted: 0, pending: 0, rejected: 0, sent: 0 })
 
@@ -245,6 +246,7 @@ export const getLeaveRequestLimitUsageStats = (
 	leaveTypeDays = {}
 ) => {
 	const leaveTypes = Array.isArray(settings?.leaveRequestTypes) ? settings.leaveRequestTypes : []
+	const autoMode = settings?.autoDeductLeaveLimits === true
 	return leaveTypes
 		.filter(type => type?.allowDaysLimit && leaveTypeDays[type.id] !== undefined && leaveTypeDays[type.id] !== null)
 		.map((type) => {
@@ -268,20 +270,29 @@ export const getLeaveRequestLimitUsageStats = (
 				if (status === 'pending') pending += amount
 			}
 
-			const remaining = limit - used
-			const usagePercent = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0
+			// Przy włączonym automatycznym rozliczaniu zapisana liczba jest już saldem
+			// po odjęciu urlopów — odejmowanie zużycia drugi raz zaniżyłoby wynik.
+			const view = resolveLeaveLimitView({
+				storedValue: limit,
+				used,
+				pending,
+				autoDeducted: autoMode
+					? sumAutoDeductedAmount(requests, type.id, settlement.unit, settlement.hoursPerDay)
+					: 0,
+				autoMode,
+			})
 
 			return {
 				type: type.id,
 				unit: settlement.unit,
 				hoursPerDay: settlement.hoursPerDay,
-				limit,
+				limit: view.limit,
 				used,
 				pending,
-				remaining,
-				usagePercent,
-				isExceeded: limit > 0 && used > limit,
-				isAtRisk: limit > 0 && used <= limit && used + pending > limit,
+				remaining: view.remaining,
+				usagePercent: view.usagePercent,
+				isExceeded: view.isExceeded,
+				isAtRisk: view.isAtRisk,
 			}
 		})
 }

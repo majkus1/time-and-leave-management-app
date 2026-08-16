@@ -1,14 +1,17 @@
 const { firmDb } = require('../db/db')
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const User = require('../models/user')(firmDb)
-const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const LeavePlan = require('../models/LeavePlan')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { sendLeaveRequestPushNotification } = require('../services/pushNotificationService')
-const { findSupervisorsForDepartment } = require('../services/roleService')
+const {
+	resolveLeaveRequestRecipients,
+	formatLeaveRecipientsForDisplay,
+} = require('../services/leaveRecipientsService')
+const { applyLeaveBalanceAutoDeduction } = require('../services/leaveBalanceService')
 const { emitLeaveRequestsUpdated } = require('../utils/leaveRealtime')
 const {
 	findConflictingApprovedLeaveRequest,
@@ -35,89 +38,6 @@ const {
 
 const ACTIVE_USER_FILTER = {
 	$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
-}
-
-// Funkcja pomocnicza do zbierania unikalnych odbiorców emaili (bez duplikatów)
-async function getUniqueEmailRecipients(user, teamId, t) {
-	const { canSupervisorApproveLeaves } = require('../services/roleService')
-	
-	// 1. Zbierz przełożonych z działów
-	const userDepartments = Array.isArray(user.department) ? user.department : (user.department ? [user.department] : [])
-	const allSupervisors = []
-	for (const dept of userDepartments) {
-		const deptSupervisors = await findSupervisorsForDepartment(dept, teamId)
-		allSupervisors.push(...deptSupervisors)
-	}
-	
-	// 2. Zbierz przełożonych z SupervisorConfig (selectedEmployees) - nawet jeśli nie są w tym samym dziale
-	const supervisorConfigs = await SupervisorConfig.find({
-		teamId,
-		selectedEmployees: user._id,
-		'permissions.canApproveLeaves': true,
-		'permissions.canApproveLeavesSelectedEmployees': true
-	}).select('supervisorId')
-	
-	const supervisorIdsFromConfig = supervisorConfigs.map(config => config.supervisorId)
-	const supervisorsFromConfig = await User.find({
-		_id: { $in: supervisorIdsFromConfig },
-		teamId,
-		roles: { $in: ['Przełożony (Supervisor)'] }
-	})
-	
-	// Połącz przełożonych z działów i z konfiguracji
-	const allPotentialSupervisors = [...allSupervisors, ...supervisorsFromConfig]
-	const uniqueSupervisors = Array.from(new Map(allPotentialSupervisors.map(sup => [sup._id.toString(), sup])).values())
-	const potentialSupervisors = uniqueSupervisors.filter(sup => sup.username !== user.username)
-	
-	// 3. Sprawdź uprawnienia każdego przełożonego
-	const supervisors = []
-	for (const supervisor of potentialSupervisors) {
-		const supervisorObj = await User.findById(supervisor._id)
-		if (!supervisorObj) continue
-		const canApprove = await canSupervisorApproveLeaves(supervisorObj, user)
-		if (canApprove) {
-			supervisors.push(supervisorObj)
-		}
-	}
-
-	// 4. Zbierz HR
-	const hrUsers = await User.find({
-		teamId,
-		roles: { $in: ['HR'] },
-	}).select('username firstName lastName')
-
-	// 5. Zbierz Adminów (jeśli nie ma przełożonych ani HR)
-	let adminUsers = []
-	if (supervisors.length === 0 && hrUsers.length === 0) {
-		adminUsers = await User.find({
-			teamId,
-			roles: { $in: ['Admin'] },
-		}).select('username firstName lastName')
-	}
-
-	// 6. Połącz wszystkie listy i usuń duplikaty na podstawie username
-	const allRecipients = [...supervisors, ...hrUsers, ...adminUsers]
-	const uniqueRecipientsMap = new Map()
-	
-	for (const recipient of allRecipients) {
-		// Użyj username jako klucza do deduplikacji
-		if (recipient.username && recipient.username !== user.username) {
-			// Jeśli użytkownik już nie jest w mapie, dodaj go
-			// Jeśli jest, preferuj pełny obiekt (z firstName, lastName) zamiast tylko username
-			if (!uniqueRecipientsMap.has(recipient.username)) {
-				uniqueRecipientsMap.set(recipient.username, recipient)
-			} else {
-				// Jeśli już jest, ale obecny ma więcej danych, zamień
-				const existing = uniqueRecipientsMap.get(recipient.username)
-				if (recipient.firstName && recipient.lastName && (!existing.firstName || !existing.lastName)) {
-					uniqueRecipientsMap.set(recipient.username, recipient)
-				}
-			}
-		}
-	}
-
-	// Zwróć unikalną listę odbiorców
-	return Array.from(uniqueRecipientsMap.values())
 }
 
 // Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
@@ -416,53 +336,20 @@ exports.submitLeaveRequest = async (req, res) => {
 		})
 		await leaveRequest.save()
 
+		// Typ bez zatwierdzania trafia od razu na status „wysłany", czyli od razu zajmuje pulę.
+		// Przy typach wymagających zatwierdzenia plan wyjdzie pusty — pula ruszy się dopiero
+		// przy akceptacji przełożonego.
+		await applyLeaveBalanceAutoDeduction({
+			settings,
+			leaveRequest,
+			previousStatus: undefined,
+			nextStatus: leaveRequest.status,
+		})
+
 		// Zbierz odbiorców emaili:
 		// - Jeśli nie wymaga zatwierdzenia (jak L4): przełożeni + HR/Admin (tylko powiadomienie)
 		// - Jeśli wymaga zatwierdzenia: przełożeni (do zatwierdzenia)
-		let recipients = []
-		if (!typeRequiresApproval) {
-			// Zbierz przełożonych (standardowa logika)
-			const supervisors = await getUniqueEmailRecipients(user, teamId, t)
-			
-			// Zbierz HR (tylko aktywnych)
-			const hrUsers = await User.find({
-				teamId,
-				roles: { $in: ['HR'] },
-				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-			}).select('username firstName lastName')
-			
-			// Jeśli nie ma HR, zbierz Adminów (tylko aktywnych)
-			let adminUsers = []
-			if (hrUsers.length === 0) {
-				adminUsers = await User.find({
-					teamId,
-					roles: { $in: ['Admin'] },
-					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-				}).select('username firstName lastName')
-			}
-			
-			// Połącz wszystkie listy i usuń duplikaty
-			const allRecipients = [...supervisors, ...hrUsers, ...adminUsers]
-			const uniqueRecipientsMap = new Map()
-			
-			for (const recipient of allRecipients) {
-				if (recipient.username && recipient.username !== user.username) {
-					if (!uniqueRecipientsMap.has(recipient.username)) {
-						uniqueRecipientsMap.set(recipient.username, recipient)
-					} else {
-						const existing = uniqueRecipientsMap.get(recipient.username)
-						if (recipient.firstName && recipient.lastName && (!existing.firstName || !existing.lastName)) {
-							uniqueRecipientsMap.set(recipient.username, recipient)
-						}
-					}
-				}
-			}
-			
-			recipients = Array.from(uniqueRecipientsMap.values())
-		} else {
-			// Standardowa logika dla innych typów wniosków
-			recipients = await getUniqueEmailRecipients(user, teamId, t)
-		}
+		const { recipients } = await resolveLeaveRequestRecipients({ user, teamId, typeRequiresApproval })
 
 		// Dla typów bez wymagania zatwierdzenia: automatycznie dodaj do LeavePlan (jak L4).
 		// Wniosek godzinowy pomijamy — LeavePlan oznacza CAŁY zaplanowany dzień urlopu,
@@ -593,5 +480,53 @@ exports.submitLeaveRequest = async (req, res) => {
 	} catch (error) {
 		console.error('Błąd podczas zgłaszania nieobecności:', error)
 		res.status(500).json({ message: 'Błąd podczas zgłaszania nieobecności' })
+	}
+}
+
+// Podgląd dla formularza: kto zobaczy ten wniosek i będzie mógł go zatwierdzić.
+// Liczone tą samą funkcją co przy zapisie, więc podgląd nie może się rozjechać.
+// Tylko odczyt — nic nie zapisuje i nie wysyła.
+exports.getLeaveRequestRecipients = async (req, res) => {
+	const { type, targetUserId } = req.query
+
+	try {
+		// teamId bierzemy z bazy, tak samo jak w submitLeaveRequest, a nie z tokenu.
+		const requestingUser = await User.findOne({
+			_id: req.user.userId,
+			...ACTIVE_USER_FILTER,
+		})
+		if (!requestingUser) {
+			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+		const settings = await Settings.getSettings(requestingUser.teamId)
+
+		// Te same reguły dostępu co przy składaniu wniosku za pracownika.
+		const targetAccess = await resolveLeaveRequestSubmitTarget({
+			requestingUserId: req.user.userId,
+			targetUserId,
+			settings,
+		})
+		if (targetAccess.error) {
+			return res.status(targetAccess.error.status).json({ message: targetAccess.error.message })
+		}
+		const user = targetAccess.targetUser
+
+		if (!isLeaveRequestTypeValid(settings, type)) {
+			return res.status(400).json({ message: 'Nieprawidłowy typ wniosku urlopowego.' })
+		}
+
+		const { mode, recipients } = await resolveLeaveRequestRecipients({
+			user,
+			teamId: user.teamId,
+			typeRequiresApproval: requiresApproval(settings, type),
+		})
+
+		res.json({
+			mode,
+			recipients: formatLeaveRecipientsForDisplay(recipients, { requesterId: user._id }),
+		})
+	} catch (error) {
+		console.error('Błąd podczas pobierania odbiorców wniosku:', error)
+		res.status(500).json({ message: 'Błąd podczas pobierania odbiorców wniosku' })
 	}
 }
