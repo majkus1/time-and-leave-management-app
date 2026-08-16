@@ -4,7 +4,7 @@ import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import Loader from '../Loader'
 import { useAlert } from '../../context/AlertContext'
-import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers, useAvailabilityCheckerLeaveRequests, checkLeaveScheduleConflicts } from '../../hooks/useLeaveRequests'
+import { useOwnLeaveRequests, useUserLeaveRequests, useCreateLeaveRequest, useCancelLeaveRequest, useUpdateLeaveRequest, useVisibleLeaveUsers, useLeaveRequestRecipients, useAvailabilityCheckerLeaveRequests, checkLeaveScheduleConflicts } from '../../hooks/useLeaveRequests'
 import { useOwnVacationDays, useVacationDays } from '../../hooks/useVacation'
 import { useSettings } from '../../hooks/useSettings'
 import { isHolidayDate as checkHolidayDate } from '../../utils/holidays'
@@ -61,6 +61,15 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		() => managedLeaveUsers.find(user => user._id === effectiveTargetUserId) || null,
 		[managedLeaveUsers, effectiveTargetUserId]
 	)
+	// Podgląd odbiorców. Gdy „zgłaszam za pracownika" jest włączone, ale pracownik
+	// nie został jeszcze wybrany, nie pytamy serwera — lista dotyczyłaby wtedy
+	// składającego, a nie pracownika, więc wprowadzałaby w błąd.
+	const recipientsQueryReady = !submitForEmployee || !!targetUserId
+	const { data: recipientsInfo, isLoading: loadingRecipients } = useLeaveRequestRecipients({
+		type,
+		targetUserId: effectiveTargetUserId,
+		enabled: recipientsQueryReady,
+	})
 	const { data: targetLeaveRequests = [], isLoading: loadingTargetRequests } = useUserLeaveRequests(effectiveTargetUserId)
 	const { data: targetVacationData, isLoading: loadingTargetVacation } = useVacationDays(effectiveTargetUserId, {
 		enabled: !!effectiveTargetUserId,
@@ -1025,6 +1034,41 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 									/>
 								</div>
 							</div>
+
+							{recipientsQueryReady && !!type && !loadingRecipients && recipientsInfo && (
+								<div
+									className={`leave-request-form__notice leave-request-form__notice--${
+										recipientsInfo.recipients.length === 0 ? 'warning' : 'info'
+									}`}
+									style={{
+										marginBottom: '14px',
+										padding: '10px 12px',
+										border: `1px solid ${recipientsInfo.recipients.length === 0 ? '#fcd34d' : '#bfdbfe'}`,
+										borderRadius: '8px',
+										backgroundColor: recipientsInfo.recipients.length === 0 ? '#fffbeb' : '#f0f7ff',
+										color: recipientsInfo.recipients.length === 0 ? '#78350f' : '#0f3b67',
+										fontSize: '13px',
+										lineHeight: 1.5,
+									}}>
+									{recipientsInfo.recipients.length === 0 ? (
+										t('leaveform.recipientsEmpty')
+									) : (
+										<>
+											{recipientsInfo.mode === 'approval'
+												? t('leaveform.recipientsApproval')
+												: t('leaveform.recipientsNotification')}{' '}
+											{recipientsInfo.recipients.map((recipient, index) => (
+												<React.Fragment key={recipient.id}>
+													{index > 0 && ', '}
+													<strong>{`${recipient.firstName} ${recipient.lastName}`.trim()}</strong>
+													{recipient.roles.length > 0 &&
+														` (${recipient.roles.map(role => t(`leaveform.recipientRole.${role}`)).join(', ')})`}
+												</React.Fragment>
+											))}
+										</>
+									)}
+								</div>
+							)}
 
 							<div style={{ width: '100%' }}>
 							<button

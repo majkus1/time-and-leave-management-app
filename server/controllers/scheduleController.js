@@ -4,7 +4,7 @@ const User = require('../models/user')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const { emitScheduleUpdated } = require('../utils/scheduleRealtime')
-const { canSupervisorManageSchedule } = require('../services/roleService')
+const { canSupervisorManageSchedule, canManageScheduleEntries } = require('../services/roleService')
 const { autoGenerateScheduleMonth } = require('../services/scheduleAutoPlannerService')
 const { runScheduleAutoDraftTurn } = require('../services/aiScheduleAutoDraftService')
 const entitlementsService = require('../services/entitlementsService')
@@ -92,25 +92,6 @@ const normalizeAvailabilityWindows = (timeWindows) => {
 		uniqueMap.set(`${window.timeFrom}-${window.timeTo}`, window)
 	}
 	return Array.from(uniqueMap.values())
-}
-
-const canManageScheduleEntries = async (user, schedule) => {
-	if (!user || !schedule) return false
-	const isAdmin = user.roles && user.roles.includes('Admin')
-	const isHR = user.roles && user.roles.includes('HR')
-	if (isAdmin || isHR) {
-		return user.teamId.toString() === schedule.teamId.toString()
-	}
-
-	const isCreator =
-		schedule.type === 'custom' &&
-		schedule.createdBy &&
-		schedule.createdBy.toString() === user._id.toString()
-	if (isCreator) {
-		return user.teamId.toString() === schedule.teamId.toString()
-	}
-
-	return canSupervisorManageSchedule(user, schedule)
 }
 
 // Helper function to create schedule for department

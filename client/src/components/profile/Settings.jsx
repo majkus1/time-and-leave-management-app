@@ -75,6 +75,7 @@ function Settings() {
 	const [allowManagedWorkdayEntries, setAllowManagedWorkdayEntries] = useState(false)
 	const [allowManagedLeaveRequests, setAllowManagedLeaveRequests] = useState(false)
 	const [workdayEntriesOnlyToday, setWorkdayEntriesOnlyToday] = useState(false)
+	const [autoDeductLeaveLimits, setAutoDeductLeaveLimits] = useState(false)
 	
 	// State for work hours (tablica konfiguracji)
 	const [workHoursList, setWorkHoursList] = useState([])
@@ -191,6 +192,7 @@ function Settings() {
 			allowManagedWorkdayEntries: settings.allowManagedWorkdayEntries === true,
 			allowManagedLeaveRequests: settings.allowManagedLeaveRequests === true,
 			workdayEntriesOnlyToday: settings.workdayEntriesOnlyToday === true,
+			autoDeductLeaveLimits: settings.autoDeductLeaveLimits === true,
 			leaveRequestTypes: serverLeaveTypes,
 		})
 	}, [settings, serverLeaveTypes, buildSettingsShape])
@@ -217,12 +219,13 @@ function Settings() {
 		allowManagedWorkdayEntries,
 		allowManagedLeaveRequests,
 		workdayEntriesOnlyToday,
+		autoDeductLeaveLimits,
 		leaveRequestTypes: visibleLeaveTypes,
 	}), [
 		buildSettingsShape, workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays,
 		workHoursList, leaveCalculationMode, leaveHoursPerDay, timerEnabled, dashboardEnabled,
 		allowManagedNoAccessUsers, allowManagedWorkdayEntries, allowManagedLeaveRequests,
-		workdayEntriesOnlyToday, visibleLeaveTypes,
+		workdayEntriesOnlyToday, autoDeductLeaveLimits, visibleLeaveTypes,
 	])
 
 	/**
@@ -282,6 +285,7 @@ function Settings() {
 			setAllowManagedWorkdayEntries(settings.allowManagedWorkdayEntries === true)
 			setAllowManagedLeaveRequests(settings.allowManagedLeaveRequests === true)
 			setWorkdayEntriesOnlyToday(settings.workdayEntriesOnlyToday === true)
+			setAutoDeductLeaveLimits(settings.autoDeductLeaveLimits === true)
 			
 			// Initialize work hours (obsługa starego formatu dla kompatybilności wstecznej)
 			if (settings.workHours) {
@@ -373,7 +377,7 @@ function Settings() {
 		const allowedKeys = freemiumSlimSettings
 			? ['workOnWeekends', 'includePolishHolidays', 'includeCustomHolidays', 'customHolidays',
 			   'workHours', 'allowManagedNoAccessUsers', 'allowManagedWorkdayEntries',
-			   'allowManagedLeaveRequests', 'workdayEntriesOnlyToday']
+			   'allowManagedLeaveRequests', 'workdayEntriesOnlyToday', 'autoDeductLeaveLimits']
 			: Object.keys(currentShape).filter(key => key !== 'timerEnabled' || showTimerQrSettings)
 
 		const payload = buildTeamSettingsPayload(currentShape, changedKeys, allowedKeys)
@@ -2294,6 +2298,63 @@ function Settings() {
 											</p>
 										</div>
 									)}
+
+									<div style={{
+										marginTop: '20px',
+										paddingTop: '20px',
+										borderTop: '1px solid #dee2e6'
+									}}>
+										<label style={{
+											display: 'flex',
+											alignItems: 'flex-start',
+											cursor: 'pointer',
+											fontWeight: '600',
+											color: '#2c3e50',
+											fontSize: '16px'
+										}}>
+											<input
+												type="checkbox"
+												checked={autoDeductLeaveLimits}
+												onChange={(e) => setAutoDeductLeaveLimits(e.target.checked)}
+												style={{
+													width: '24px',
+													height: '24px',
+													marginRight: '12px',
+													marginTop: '1px',
+													cursor: 'pointer',
+													accentColor: '#00a846',
+													flexShrink: 0
+												}}
+											/>
+											<span>{t('settings.autoDeductLeaveLimitsTitle')}</span>
+										</label>
+										<p style={{
+											marginTop: '8px',
+											marginLeft: '36px',
+											marginBottom: 0,
+											fontSize: '14px',
+											color: '#6c757d',
+											lineHeight: 1.5
+										}}>
+											{t('settings.autoDeductLeaveLimitsDescription')}
+										</p>
+										{autoDeductLeaveLimits && (
+											<p style={{
+												marginTop: '10px',
+												marginLeft: '36px',
+												marginBottom: 0,
+												padding: '10px 12px',
+												border: '1px solid #bfdbfe',
+												borderRadius: '8px',
+												backgroundColor: '#f0f7ff',
+												color: '#0f3b67',
+												fontSize: '13px',
+												lineHeight: 1.5
+											}}>
+												{t('settings.autoDeductLeaveLimitsHint')}
+											</p>
+										)}
+									</div>
 								</div>
 							</div>
 						)}
@@ -2402,7 +2463,7 @@ function Settings() {
 											{type.isEnabled && (
 												<div style={{
 													display: 'grid',
-													gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+													gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
 													gap: '15px',
 													marginTop: '12px',
 													paddingTop: '12px',
@@ -2430,7 +2491,7 @@ function Settings() {
 													</label>
 													<label style={{
 														display: 'flex',
-														alignItems: 'center',
+														alignItems: 'flex-start',
 														cursor: 'pointer'
 													}}>
 														<input
@@ -2441,15 +2502,22 @@ function Settings() {
 																width: '18px',
 																height: '18px',
 																cursor: 'pointer',
-																marginRight: '8px'
+																marginRight: '8px',
+																marginTop: '2px'
 															}}
 														/>
 														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
-															{' '}
-															<span style={{ color: '#6b7280', fontWeight: 400 }}>
-																({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
-															</span>
+															<small style={{
+																display: 'block',
+																fontSize: '12px',
+																color: '#6b7280',
+																fontWeight: 400,
+																marginTop: '3px',
+																lineHeight: 1.45
+															}}>
+																{t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'}
+															</small>
 														</span>
 													</label>
 													<div style={{
@@ -2677,7 +2745,7 @@ function Settings() {
 										}}>
 											<div style={{
 												display: 'grid',
-												gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+												gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
 												gap: '15px'
 											}}>
 												<label style={{
@@ -2702,7 +2770,7 @@ function Settings() {
 												</label>
 												<label style={{
 													display: 'flex',
-													alignItems: 'center',
+													alignItems: 'flex-start',
 													cursor: 'pointer'
 												}}>
 													<input
@@ -2713,15 +2781,22 @@ function Settings() {
 															width: '18px',
 															height: '18px',
 															cursor: 'pointer',
-															marginRight: '8px'
+															marginRight: '8px',
+															marginTop: '2px'
 														}}
 													/>
 													<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 														{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
-														{' '}
-														<span style={{ color: '#6b7280', fontWeight: 400 }}>
-															({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
-														</span>
+														<small style={{
+															display: 'block',
+															fontSize: '12px',
+															color: '#6b7280',
+															fontWeight: 400,
+															marginTop: '3px',
+															lineHeight: 1.45
+														}}>
+															{t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'}
+														</small>
 													</span>
 												</label>
 											</div>
@@ -2918,7 +2993,7 @@ function Settings() {
 												</div>
 												<div style={{
 													display: 'grid',
-													gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+													gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
 													gap: '15px',
 													marginTop: '12px',
 													paddingTop: '12px',
@@ -2946,7 +3021,7 @@ function Settings() {
 													</label>
 													<label style={{
 														display: 'flex',
-														alignItems: 'center',
+														alignItems: 'flex-start',
 														cursor: 'pointer'
 													}}>
 														<input
@@ -2957,15 +3032,22 @@ function Settings() {
 																width: '18px',
 																height: '18px',
 																cursor: 'pointer',
-																marginRight: '8px'
+																marginRight: '8px',
+																marginTop: '2px'
 															}}
 														/>
 														<span style={{ fontSize: '14px', color: '#2c3e50' }}>
 															{t('settings.allowDaysLimit') || 'Możliwość ustawienia liczby dni'}
-															{' '}
-															<span style={{ color: '#6b7280', fontWeight: 400 }}>
-																({t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'})
-															</span>
+															<small style={{
+																display: 'block',
+																fontSize: '12px',
+																color: '#6b7280',
+																fontWeight: 400,
+																marginTop: '3px',
+																lineHeight: 1.45
+															}}>
+																{t('settings.allowDaysLimitHint') || 'roczna pula, którą przypisujesz pracownikowi'}
+															</small>
 														</span>
 													</label>
 													<div style={{

@@ -212,6 +212,36 @@ exports.canSupervisorManageSchedule = async (supervisor, schedule = null) => {
 }
 
 /**
+ * Czy użytkownik może redagować wpisy w konkretnym grafiku.
+ *
+ * To jest zarazem reguła widoczności SZKICÓW: wpisy z isPublished === false widzi
+ * wyłącznie ten, kto danym grafikiem zarządza. Trzymamy ją przy pozostałych regułach
+ * ról, żeby moduł grafików i dashboard pytały o to samo w jednym miejscu.
+ *
+ * @param {Object} user
+ * @param {Object} schedule - musi mieć teamId, type, createdBy, departmentName i members
+ * @returns {Promise<Boolean>}
+ */
+exports.canManageScheduleEntries = async (user, schedule) => {
+	if (!user || !schedule) return false
+	const isAdmin = user.roles && user.roles.includes('Admin')
+	const isHR = user.roles && user.roles.includes('HR')
+	if (isAdmin || isHR) {
+		return user.teamId.toString() === schedule.teamId.toString()
+	}
+
+	const isCreator =
+		schedule.type === 'custom' &&
+		schedule.createdBy &&
+		schedule.createdBy.toString() === user._id.toString()
+	if (isCreator) {
+		return user.teamId.toString() === schedule.teamId.toString()
+	}
+
+	return exports.canSupervisorManageSchedule(user, schedule)
+}
+
+/**
  * Sprawdza czy użytkownik jest w jednym z działów (dla wielu działów)
  * @param {Array<String>} userDepartments - tablica działów użytkownika
  * @param {String|Array<String>} targetDepartment - pojedynczy dział lub tablica działów do sprawdzenia

@@ -153,6 +153,13 @@ const settingsSchema = new mongoose.Schema({
 		type: Boolean,
 		default: false,
 		required: true
+	},
+	// Automatyczne rozliczanie puli urlopowej. Domyślnie wyłączone — zespoły,
+	// które tego nie włączą, korygują liczby dni ręcznie, dokładnie jak dotąd.
+	autoDeductLeaveLimits: {
+		type: Boolean,
+		default: false,
+		required: true
 	}
 }, {
 	timestamps: true
@@ -190,6 +197,7 @@ settingsSchema.statics.getSettings = async function(teamId) {
 			allowManagedWorkdayEntries: false,
 			allowManagedLeaveRequests: false,
 			workdayEntriesOnlyToday: false,
+			autoDeductLeaveLimits: false,
 		})
 	} else {
 		// Migracja: jeśli istnieje stary dokument z includeHolidays, zamień na includePolishHolidays
@@ -250,6 +258,8 @@ settingsSchema.statics.getSettings = async function(teamId) {
 		if (settings.allowManagedWorkdayEntries === undefined) settings.allowManagedWorkdayEntries = false
 		if (settings.allowManagedLeaveRequests === undefined) settings.allowManagedLeaveRequests = false
 		if (settings.workdayEntriesOnlyToday === undefined) settings.workdayEntriesOnlyToday = false
+		// Istniejące zespoły dostają opcję wyłączoną — ich salda mają działać jak dotąd.
+		if (settings.autoDeductLeaveLimits === undefined) settings.autoDeductLeaveLimits = false
 		if (!Array.isArray(settings.workActivities)) settings.workActivities = []
 		if (settings.dashboardEnabled === undefined) settings.dashboardEnabled = false
 		

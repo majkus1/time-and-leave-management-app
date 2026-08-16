@@ -45,6 +45,7 @@ export function buildTeamSettingsShape(source = {}, { freemiumTier = false } = {
 		allowManagedLeaveRequests:
 			!freemiumTier && allowManaged && source.allowManagedLeaveRequests === true,
 		workdayEntriesOnlyToday: source.workdayEntriesOnlyToday,
+		autoDeductLeaveLimits: source.autoDeductLeaveLimits === true,
 		leaveRequestTypes: (source.leaveRequestTypes || []).map(type => ({
 			id: type.id,
 			name: type.name,

@@ -5,6 +5,7 @@ const {
 	getLeaveRequestAmountInUnit,
 	resolveLeaveTypeSettlement,
 } = require('../utils/leaveSettlement')
+const { resolveLeaveLimitView, sumAutoDeductedAmount } = require('../utils/leaveLimitView')
 
 const BUNDLE_PLAN_KEYS = new Set(['pro', 'business', 'enterprise'])
 
@@ -36,6 +37,60 @@ function buildDashboardModules(entitlements, timerEnabledSetting) {
 		ai: premiumUnlocked && hasModule(entitlements, 'ai_assistant'),
 		announcements: premiumUnlocked,
 	}
+}
+
+/**
+ * Przecięcie listy pracowników z konkretnym zakresem uprawnień.
+ *
+ * Zakres oglądającego to SUMA osób, którym może podglądać ewidencję i którym może
+ * zatwierdzać urlopy — te dwa zbiory nie muszą się pokrywać. Każda sekcja analiz
+ * musi więc zawęzić się do swojego zbioru osobno, inaczej dane jednego rodzaju
+ * wyciekną przez uprawnienie do drugiego.
+ *
+ * @param {Array<Object>} targetUsers - pracownicy wybrani filtrami
+ * @param {Array<Object>} scopeUsers - pracownicy objęci danym uprawnieniem
+ * @returns {Array<Object>}
+ */
+function filterUsersInScope(targetUsers, scopeUsers) {
+	if (!Array.isArray(targetUsers) || !Array.isArray(scopeUsers)) return []
+	const allowed = new Set(scopeUsers.map(user => String(user?._id)))
+	return targetUsers.filter(user => allowed.has(String(user?._id)))
+}
+
+function toIdSet(values) {
+	if (values instanceof Set) return new Set([...values].map(String))
+	return new Set((Array.isArray(values) ? values : []).map(String))
+}
+
+/**
+ * Ilu pracowników nie uzupełniło dziś ewidencji — czyli kogo realnie trzeba popędzić.
+ *
+ * Z liczenia wypadają osoby na całodniowej nieobecności: nie mają czego uzupełniać,
+ * a doliczanie ich zawyżało wskaźnik. Nieobecność GODZINOWA nie zwalnia z ewidencji —
+ * kilka godzin opieki zostawia resztę dnia do zaraportowania.
+ *
+ * @param {Object} params
+ * @param {Array<String>} params.scopeUserIds - pracownicy, których ewidencję oglądający widzi
+ * @param {Iterable<String>} params.recordedUserIds - kto ma już wpis na dziś
+ * @param {Iterable<String>} params.excusedUserIds - kto ma dziś całodniową nieobecność
+ * @param {Boolean} params.isWorkingDay - false dla weekendu i święta
+ * @returns {Number}
+ */
+function countMissingWorkdayEntries({
+	scopeUserIds = [],
+	recordedUserIds = [],
+	excusedUserIds = [],
+	isWorkingDay = true,
+}) {
+	if (!isWorkingDay) return 0
+	const recorded = toIdSet(recordedUserIds)
+	const excused = toIdSet(excusedUserIds)
+
+	return (Array.isArray(scopeUserIds) ? scopeUserIds : []).reduce((count, userId) => {
+		const key = String(userId)
+		if (excused.has(key) || recorded.has(key)) return count
+		return count + 1
+	}, 0)
 }
 
 async function loadPendingLeaveRequests(LeaveRequestModel, pendingQuery) {
@@ -111,6 +166,7 @@ function resolveViewerLeaveTypeDays(viewerDoc) {
 function buildPersonalLeaveLimits({ viewerDoc, ownRequests, settings, year }) {
 	const leaveTypes = Array.isArray(settings?.leaveRequestTypes) ? settings.leaveRequestTypes : []
 	const leaveTypeDays = resolveViewerLeaveTypeDays(viewerDoc)
+	const autoMode = settings?.autoDeductLeaveLimits === true
 
 	return leaveTypes
 		.filter(type => {
@@ -143,19 +199,30 @@ function buildPersonalLeaveLimits({ viewerDoc, ownRequests, settings, year }) {
 				if (status === 'pending') pending += amount
 			}
 
-			const remaining = Math.round((limit - used) * 10) / 10
+			// Przy włączonym automatycznym rozliczaniu leaveTypeDays to już saldo po
+			// odjęciu urlopów, więc odejmowanie zużycia drugi raz byłoby błędem.
+			const view = resolveLeaveLimitView({
+				storedValue: limit,
+				used,
+				pending,
+				autoDeducted: autoMode
+					? sumAutoDeductedAmount(ownRequests, type.id, settlement.unit, settlement.hoursPerDay)
+					: 0,
+				autoMode,
+			})
+
 			return {
 				typeId: type.id,
 				typeName: type.name,
 				typeNameEn: type.nameEn || type.name,
 				unit: settlement.unit,
 				hoursPerDay: settlement.hoursPerDay,
-				limit,
+				limit: view.limit,
 				used: Math.round(used * 10) / 10,
 				pending: Math.round(pending * 10) / 10,
-				remaining,
-				usagePercent: limit > 0 ? Math.min(100, Math.max(0, Math.round((used / limit) * 1000) / 10)) : 0,
-				isAtRisk: limit > 0 && used <= limit && used + pending > limit,
+				remaining: view.remaining,
+				usagePercent: Math.round(view.usagePercent * 10) / 10,
+				isAtRisk: view.isAtRisk,
 			}
 		})
 		.sort((a, b) => b.limit - a.limit)
@@ -163,6 +230,8 @@ function buildPersonalLeaveLimits({ viewerDoc, ownRequests, settings, year }) {
 
 module.exports = {
 	buildDashboardModules,
+	countMissingWorkdayEntries,
+	filterUsersInScope,
 	loadPendingLeaveRequests,
 	normalizeLeaveRequestStatus,
 	countLeaveRequestDaysInYear,

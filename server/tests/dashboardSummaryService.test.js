@@ -5,6 +5,8 @@ const assert = require('node:assert/strict')
 
 const {
 	buildDashboardModules,
+	countMissingWorkdayEntries,
+	filterUsersInScope,
 	loadPendingLeaveRequests,
 	buildPersonalLeaveLimits,
 } = require('../services/dashboardSummaryHelpers')
@@ -18,6 +20,105 @@ function coreEntitlements(moduleKeys, ai = {}) {
 		ai,
 	}
 }
+
+describe('countMissingWorkdayEntries — kogo realnie trzeba popędzić', () => {
+	const zespol = ['a', 'b', 'c', 'd', 'e']
+
+	it('liczy tylko tych bez wpisu', () => {
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: zespol,
+			recordedUserIds: ['a', 'b', 'c'],
+		})
+		assert.equal(wynik, 2)
+	})
+
+	it('nie liczy osób na całodniowym urlopie', () => {
+		// 10 osób, 3 na urlopie, 2 zapomniały — ma wyjść 2, nie 5.
+		const dziesiec = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10']
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: dziesiec,
+			recordedUserIds: ['u1', 'u2', 'u3', 'u4', 'u5'],
+			excusedUserIds: ['u6', 'u7', 'u8'],
+		})
+		assert.equal(wynik, 2)
+	})
+
+	it('osoba na urlopie, która i tak zrobiła wpis, nie psuje liczby', () => {
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: zespol,
+			recordedUserIds: ['a', 'b'],
+			excusedUserIds: ['b', 'c'],
+		})
+		// zostają d i e
+		assert.equal(wynik, 2)
+	})
+
+	it('w weekend i święto nikogo nie popędzamy', () => {
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: zespol,
+			recordedUserIds: [],
+			isWorkingDay: false,
+		})
+		assert.equal(wynik, 0)
+	})
+
+	it('nigdy nie schodzi poniżej zera', () => {
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: ['a'],
+			recordedUserIds: ['a', 'b', 'c'],
+			excusedUserIds: ['a'],
+		})
+		assert.equal(wynik, 0)
+	})
+
+	it('przyjmuje zbiór zamiast tablicy i porównuje identyfikatory jako tekst', () => {
+		const wynik = countMissingWorkdayEntries({
+			scopeUserIds: [1, 2, 3],
+			recordedUserIds: new Set(['1']),
+			excusedUserIds: new Set([2]),
+		})
+		assert.equal(wynik, 1)
+	})
+
+	it('pusty zakres daje zero', () => {
+		assert.equal(countMissingWorkdayEntries({ scopeUserIds: [] }), 0)
+		assert.equal(countMissingWorkdayEntries({}), 0)
+	})
+})
+
+describe('filterUsersInScope — zakres per uprawnienie', () => {
+	const anna = { _id: 'anna' }
+	const bartek = { _id: 'bartek' }
+	const celina = { _id: 'celina' }
+
+	it('zwraca tylko pracowników objętych danym uprawnieniem', () => {
+		const wynik = filterUsersInScope([anna, bartek, celina], [bartek, celina])
+		assert.deepEqual(wynik.map(u => u._id), ['bartek', 'celina'])
+	})
+
+	it('uprawnienie do ewidencji nie wpuszcza pracownika do zakresu urlopowego', () => {
+		// Przełożony widzi ewidencję Anny, ale zatwierdza urlopy tylko Bartkowi.
+		const zakresEwidencji = [anna, bartek]
+		const zakresUrlopowy = [bartek]
+		assert.deepEqual(filterUsersInScope([anna], zakresEwidencji).map(u => u._id), ['anna'])
+		assert.deepEqual(filterUsersInScope([anna], zakresUrlopowy), [])
+	})
+
+	it('pusty zakres uprawnienia nie przepuszcza nikogo', () => {
+		assert.deepEqual(filterUsersInScope([anna, bartek], []), [])
+	})
+
+	it('porównuje identyfikatory jako tekst, nie przez referencję', () => {
+		const jakoObiekt = { _id: { toString: () => 'anna' } }
+		assert.equal(filterUsersInScope([jakoObiekt], [anna]).length, 1)
+	})
+
+	it('nie wywraca się na brakujących danych', () => {
+		assert.deepEqual(filterUsersInScope(null, [anna]), [])
+		assert.deepEqual(filterUsersInScope([anna], null), [])
+		assert.deepEqual(filterUsersInScope([null, anna], [anna]).map(u => u._id), ['anna'])
+	})
+})
 
 describe('dashboardSummaryService module access', () => {
 	it('nie udostępnia Asystenta AI dla CORE z samym schedules_ai i dostępną pulą AI', () => {

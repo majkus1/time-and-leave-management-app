@@ -101,6 +101,9 @@ const copy = {
 		dueSoon: 'Terminy blisko',
 		schedule: 'Grafik dzisiaj',
 		draftShifts: 'Robocze wpisy',
+		mySchedule: 'Twój grafik na najbliższe dni',
+		myScheduleEmpty: 'Brak zaplanowanych zmian na najbliższe dni.',
+		draftBadge: 'Robocze',
 		communication: 'Komunikacja',
 		unreadChat: 'Czat',
 		unreadAnnouncements: 'Komunikaty',
@@ -182,6 +185,9 @@ const copy = {
 		dueSoon: 'Due soon',
 		schedule: 'Today schedule',
 		draftShifts: 'Draft entries',
+		mySchedule: 'Your schedule for the coming days',
+		myScheduleEmpty: 'No shifts planned for the coming days.',
+		draftBadge: 'Draft',
 		communication: 'Communication',
 		unreadChat: 'Chat',
 		unreadAnnouncements: 'Announcements',
@@ -812,6 +818,24 @@ function Dashboard() {
 									) : (
 										<EmptyState text={text.noData} />
 									)}
+								</Section>
+							)}
+
+							{/* Własny grafik na kolejne dni — pokazujemy tylko, gdy pracownik ma zaplanowane zmiany. */}
+							{summary.schedule?.enabled && summary.schedule.myUpcoming?.length > 0 && (
+								<Section title={text.mySchedule} action={<Link to="/schedule">{text.viewAll}</Link>}>
+									<ul className="po-dashboard-list">
+										{summary.schedule.myUpcoming.map(entry => (
+											<li key={entry.id} className="po-dashboard-list__item">
+												<strong>{formatDateLong(entry.date, language)}</strong>
+												<span>
+													{entry.timeFrom} - {entry.timeTo}
+													{entry.isPublished === false ? ` · ${text.draftBadge}` : ''}
+												</span>
+												<small>{entry.scheduleName}</small>
+											</li>
+										))}
+									</ul>
 								</Section>
 							)}
 
