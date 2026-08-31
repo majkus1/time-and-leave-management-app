@@ -17,6 +17,7 @@ const {
 	findConflictingApprovedLeaveRequest,
 	findBlockingLeaveRequestOnDate,
 	sumHourlyLeaveHoursOnDate,
+	findDuplicateOpenLeaveRequest,
 } = require('../utils/leaveRequestConflicts')
 const { toDateKey: toLeaveDateKey } = require('../services/leaveScheduleConflictService')
 const { appUrl } = require('../config')
@@ -311,6 +312,24 @@ exports.submitLeaveRequest = async (req, res) => {
 						'Ten zakres dat koliduje z już zatwierdzonym wnioskiem. Zmień daty albo zaktualizuj istniejący wniosek.',
 				})
 			}
+		}
+
+		// Ochrona przed podwojnym wyslaniem tego samego formularza. Blokada w kliencie
+		// moze zawiesc (odswiezenie strony, ponowione zadanie), wiec ostatnie slowo ma serwer.
+		const duplicateRequest = await findDuplicateOpenLeaveRequest({
+			LeaveRequest,
+			userId,
+			type,
+			startDate: trimmedStartDate,
+			endDate: trimmedEndDate,
+			hoursRequested: finalHoursRequested,
+		})
+		if (duplicateRequest) {
+			return res.status(409).json({
+				code: 'DUPLICATE_LEAVE_REQUEST',
+				message:
+					'Taki wniosek już istnieje i czeka na rozpatrzenie. Sprawdź listę swoich wniosków.',
+			})
 		}
 
 		// Ustaw status: jeśli nie wymaga zatwierdzenia -> "sent", w przeciwnym razie -> "pending"
