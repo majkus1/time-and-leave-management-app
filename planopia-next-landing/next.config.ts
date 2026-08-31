@@ -58,6 +58,17 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
+      // Wpisy z materiałami wideo zastąpione instrukcją tekstową (sierpień 2026).
+      {
+        source: '/blog/instrukcja-wideo-planopia',
+        destination: '/jak-korzystac',
+        permanent: true,
+      },
+      {
+        source: '/en/blog/video-tutorials',
+        destination: '/en/how-to-use',
+        permanent: true,
+      },
     ];
     
     // Redirect www to non-www (obsługiwane przez Vercel lub middleware)

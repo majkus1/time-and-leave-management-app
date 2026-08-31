@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -60,6 +61,7 @@ function ENBlog() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
+						<LandingSolutionsDropdown locale="en" />
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"
@@ -187,7 +189,7 @@ function ENBlog() {
 								Short screen recordings from the app — for example, how to manually add work hours in the time log. Watch on your phone or desktop; we will keep adding new clips over time.
 							</p>
 							<Link
-								href="/en/blog/video-tutorials"
+								href="/en/how-to-use"
 								className="mt-4 inline-block bg-white-600 text-dark font-semibold py-2 px-4 rounded transition">
 								Read more
 							</Link>

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
@@ -12,6 +13,7 @@ import {
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import BlogAiAssistantHeroVideo from './BlogAiAssistantHeroVideo'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 const PAGE_URL = 'https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik'
 const ARTICLE_IMAGE = 'https://planopia.pl/img/aiass.webp'
@@ -96,6 +98,7 @@ function BlogAiAssistant() {
 						<Link href="/#cennik" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link href="/blog" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition" onClick={toggleMenu}>
 							Blog
@@ -259,7 +262,7 @@ function BlogAiAssistant() {
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">Jak zacząć i gdzie obejrzeć interfejs</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
 							Zarejestruj zespół (okres próbny i plany opisane są na stronie produktu), zaproś użytkowników i skonfiguruj moduły zgodnie z potrzebami. Jeśli wolisz format wideo, zajrzyj do{' '}
-							<Link href="/blog/instrukcja-wideo-planopia" className="text-blue-600 font-medium hover:underline">
+							<Link href="/jak-korzystac" className="text-blue-600 font-medium hover:underline">
 								instrukcji wideo Planopii
 							</Link>{' '}
 							— krótkie nagrania z aplikacji ułatwiają start bez czytania długiej dokumentacji.
@@ -295,6 +298,11 @@ function BlogAiAssistant() {
 					</section>
 
 					<BlogRelatedLinks slug="asystent-ai-planopia-ewidencja-urlopy-zadania-grafik" className="mt-10" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-03-27', label: '27 marca 2026 r.' }}
+					/>
 				</div>
 			</article>
 

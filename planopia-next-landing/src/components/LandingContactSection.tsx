@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import axios from 'axios'
 import { API_URL } from '@/config'
 import { landingContactCopy } from '@/data/landingContactCopy'
+import { trackEvent } from '@/lib/analytics'
 import { FOOTER_UI, LANDING_SELLER } from '@/data/landingFooterData'
 
 const LandingContactDatePicker = dynamic(() => import('./LandingContactDatePicker'), {
@@ -13,14 +14,30 @@ const LandingContactDatePicker = dynamic(() => import('./LandingContactDatePicke
 
 type Locale = 'pl' | 'en'
 
-export default function LandingContactSection({ locale }: { locale: Locale }) {
+/**
+ * Na stronie glownej sekcja jest jedna z wielu, wiec naglowek to h2.
+ * Na osobnej stronie /kontakt to jest glowny temat strony — wtedy h1,
+ * inaczej strona nie ma zadnego h1.
+ */
+export default function LandingContactSection({
+	locale,
+	headingLevel = 'h2',
+}: {
+	locale: Locale
+	headingLevel?: 'h1' | 'h2'
+}) {
+	const Heading = headingLevel
 	const t = landingContactCopy[locale]
 	const companyUi = FOOTER_UI[locale]
 	const [email2, setEmail2] = useState('')
+	const [companyName, setCompanyName] = useState('')
+	const [phone, setPhone] = useState('')
+	const [teamSize, setTeamSize] = useState('')
 	const [datetime, setDatetime] = useState<Date | null>(null)
 	const [userMessage, setUserMessage] = useState('')
 	const [msg2, setMsg2] = useState('')
 	const [datePickerActive, setDatePickerActive] = useState(false)
+	const [submitting, setSubmitting] = useState(false)
 
 	const dateInputClassName =
 		'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white/80 hover:bg-white'
@@ -33,18 +50,35 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 			alert(t.alert)
 			return
 		}
+		if (submitting) return
+		setSubmitting(true)
 		try {
 			await axios.post(`${API_URL}/api/public/schedule-call`, {
 				email: email2,
+				companyName,
+				phone,
+				teamSize,
 				datetime: datetime?.toISOString(),
 				message: userMessage,
 			})
+			// Druga sciezka konwersji obok begin_sign_up — bez tego zdarzenia nie da sie ocenic,
+			// czy kontakt z czlowiekiem w ogole dziala.
+			trackEvent('generate_lead', {
+				method: datetime ? 'schedule_call' : 'contact_form',
+				has_company: companyName.trim() !== '',
+				has_phone: phone.trim() !== '',
+			})
 			setMsg2(t.success)
 			setEmail2('')
+			setCompanyName('')
+			setPhone('')
+			setTeamSize('')
 			setDatetime(null)
 			setUserMessage('')
 		} catch {
 			setMsg2(t.error)
+		} finally {
+			setSubmitting(false)
 		}
 	}
 
@@ -53,7 +87,7 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 			<div className="max-w-7xl mx-auto">
 				<div className="landing-contact-heading">
 					<p className="landing-contact-eyebrow landing-section-eyebrow">{t.eyebrow}</p>
-					<h2 className="landing-contact-title text-3xl md:text-4xl font-bold">{t.title}</h2>
+					<Heading className="landing-contact-title text-3xl md:text-4xl font-bold">{t.title}</Heading>
 				</div>
 				<p className="landing-contact-lead mt-3 text-left">{t.lead}</p>
 
@@ -157,6 +191,49 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 									/>
 								</div>
 
+								<div className="grid gap-4 sm:grid-cols-2">
+									<div>
+										<label htmlFor="contact-company" className="block text-sm font-semibold text-gray-700 mb-2">
+											{t.companyLabelForm}
+										</label>
+										<input
+											id="contact-company"
+											type="text"
+											className={dateInputClassName}
+											placeholder={t.companyPlaceholder}
+											value={companyName}
+											onChange={e => setCompanyName(e.target.value)}
+										/>
+									</div>
+									<div>
+										<label htmlFor="contact-phone" className="block text-sm font-semibold text-gray-700 mb-2">
+											{t.phoneLabel}
+										</label>
+										<input
+											id="contact-phone"
+											type="tel"
+											className={dateInputClassName}
+											placeholder={t.phonePlaceholder}
+											value={phone}
+											onChange={e => setPhone(e.target.value)}
+										/>
+									</div>
+								</div>
+
+								<div>
+									<label htmlFor="contact-team-size" className="block text-sm font-semibold text-gray-700 mb-2">
+										{t.teamSizeLabel}
+									</label>
+									<input
+										id="contact-team-size"
+										type="text"
+										className={dateInputClassName}
+										placeholder={t.teamSizePlaceholder}
+										value={teamSize}
+										onChange={e => setTeamSize(e.target.value)}
+									/>
+								</div>
+
 								<div>
 									<label htmlFor="contact-date" className="block text-sm font-semibold text-gray-700 mb-2">
 										{t.dateLabel}
@@ -202,7 +279,8 @@ export default function LandingContactSection({ locale }: { locale: Locale }) {
 
 								<button
 									type="submit"
-									className="landing-contact-submit w-full text-white rounded-lg px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+									disabled={submitting}
+									className="landing-contact-submit w-full text-white rounded-lg px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60 disabled:transform-none"
 								>
 									{t.submit}
 								</button>

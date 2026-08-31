@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -83,6 +84,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPolish ? "Cennik" : "Pricing"}
 						</Link>
+						<LandingSolutionsDropdown locale={isPolish ? 'pl' : 'en'} />
 						<LandingIndustriesDropdown locale={isPolish ? 'pl' : 'en'} />
 						<Link
 							href={isPolish ? "/blog" : "/en/blog"}
@@ -90,7 +92,7 @@ export default function BlogHeader({ lang = 'pl', enUrl = '/en/blog/comprehensiv
 							Blog
 						</Link>
 						<Link
-							href={isPolish ? "/#kontakt" : "/en#contact"}
+							href={isPolish ? "/kontakt" : "/en#contact"}
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPolish ? "Kontakt" : "Contact"}
 						</Link>

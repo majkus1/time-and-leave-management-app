@@ -2,6 +2,7 @@ import Link from 'next/link'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import AnimatedBlogImages from './AnimatedBlogImages'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 export default function BlogHolidays2026Content() {
 	const blogPostingSchema = {
@@ -19,12 +20,12 @@ export default function BlogHolidays2026Content() {
 			"name": "Planopia",
 			"logo": {
 				"@type": "ImageObject",
-				"url": "https://planopia.pl/img/planopiaheader.webp"
+				"url": "https://planopia.pl/img/new-logoplanopia.webp"
 			}
 		},
 		"url": "https://planopia.pl/blog/dni-wolne-2026",
 		"datePublished": "2026-01-05",
-		"dateModified": "2026-01-05",
+		"dateModified": "2026-08-26",
 		"inLanguage": "pl-PL",
 		"keywords": "dni wolne 2026, święta 2026, kalendarz dni wolnych 2026, dni ustawowo wolne 2026, planowanie urlopów 2026, roczny plan urlopów 2026 excel darmowy, program do urlopów darmowy",
 		"mainEntityOfPage": {
@@ -56,6 +57,9 @@ export default function BlogHolidays2026Content() {
 								z informacją o długich weekendach i poradami, jak efektywnie <strong>zaplanować urlopy w 2026 roku</strong>. 
 								Dowiedz się, które dni są ustawowo wolne od pracy i jak najlepiej wykorzystać długie weekendy.
 							</p>
+							<div className="mt-4 text-sm text-gray-600">
+								<time dateTime="2026-08-26">Opublikowano: 5 stycznia 2026 r. · Zaktualizowano: 26 sierpnia 2026 r.</time>
+							</div>
 
 							<BlogHeroDualCtaCards
 								locale="pl"
@@ -100,7 +104,7 @@ export default function BlogHolidays2026Content() {
 				<article className="max-w-6xl mx-auto px-6 py-12">
 					<h2 className="text-2xl font-semibold mb-3">Kalendarz dni wolnych 2026 – lista wszystkich świąt</h2>
 					<p className="mb-4 text-gray-700">
-						W 2026 roku w Polsce mamy <strong>13 dni ustawowo wolnych od pracy</strong>. Poniżej znajdziesz kompletną listę 
+						W 2026 roku w Polsce mamy <strong>14 dni ustawowo wolnych od pracy</strong> — od 2025 roku dniem wolnym jest także Wigilia. Poniżej znajdziesz kompletną listę 
 						wszystkich świąt z datami i dniami tygodnia, aby móc zaplanować urlopy i długie weekendy.
 					</p>
 
@@ -169,7 +173,7 @@ export default function BlogHolidays2026Content() {
 							</li>
 						</ul>
 						<p className="text-sm text-gray-600 mt-3">
-							<strong>Uwaga:</strong> 15 sierpnia przypada w sobotę. Zgodnie z przepisami, pracownikom przysługuje dodatkowy dzień wolny do odbioru.
+							<strong>Uwaga:</strong> 15 sierpnia przypada w sobotę. Pracodawca musi wtedy obniżyć wymiar czasu pracy o 8 godzin i wyznaczyć inny dzień wolny (art. 130 § 2 Kodeksu pracy).
 						</p>
 					</div>
 
@@ -204,7 +208,7 @@ export default function BlogHolidays2026Content() {
 							</li>
 						</ul>
 						<p className="text-sm text-gray-600 mt-3">
-							<strong>Uwaga:</strong> 26 grudnia przypada w sobotę. Zgodnie z przepisami, pracownikom przysługuje dodatkowy dzień wolny do odbioru.
+							<strong>Uwaga:</strong> 26 grudnia przypada w sobotę. Pracodawca musi wtedy obniżyć wymiar czasu pracy o 8 godzin i wyznaczyć inny dzień wolny (art. 130 § 2 Kodeksu pracy).
 						</p>
 					</div>
 
@@ -249,17 +253,19 @@ export default function BlogHolidays2026Content() {
 
 					<h2 className="text-2xl font-semibold mb-3 mt-8">Święta przypadające w weekend – dodatkowe dni wolne</h2>
 					<p className="mb-4 text-gray-700">
-						W 2026 roku niektóre święta przypadają w sobotę lub niedzielę. Zgodnie z przepisami prawa pracy, 
-						jeśli święto ustawowo wolne od pracy przypada w sobotę, pracownikowi przysługuje <strong>dodatkowy dzień wolny</strong> 
-						do wykorzystania w innym terminie. W 2026 roku dotyczy to:
+						W 2026 roku niektóre święta przypadają w sobotę lub niedzielę. Jeżeli święto przypada w dniu wolnym
+						z tytułu przeciętnie pięciodniowego tygodnia pracy — czyli zwykle w sobotę — pracodawca musi obniżyć
+						wymiar czasu pracy o 8 godzin i wyznaczyć <strong>inny dzień wolny</strong>. Wynika to z
+						art. 130 § 2 Kodeksu pracy. W 2026 roku dotyczy to:
 					</p>
 					<ul className="list-disc pl-6 mb-4 text-gray-700">
 						<li><strong>15 sierpnia (sobota)</strong> – Wniebowzięcie Najświętszej Maryi Panny – dzień wolny do odbioru</li>
 						<li><strong>26 grudnia (sobota)</strong> – Boże Narodzenie (drugi dzień) – dzień wolny do odbioru</li>
 					</ul>
 					<p className="mb-4 text-gray-700">
-						Te dodatkowe dni wolne możesz wykorzystać w dowolnym terminie, co daje jeszcze więcej możliwości 
-						planowania długich weekendów i urlopów.
+						Święta wypadające w niedzielę — 3 maja i 1 listopada 2026 r. — dodatkowego dnia wolnego nie generują,
+						bo niedziela jest wyłączona z tej zasady. Termin dnia wolnego za sobotnie święto wyznacza pracodawca
+						w obrębie okresu rozliczeniowego, a nie pracownik według uznania.
 					</p>
 
 					<h2 className="text-2xl font-semibold mb-3 mt-8">Planowanie urlopów w 2026 roku – praktyczne porady</h2>
@@ -299,7 +305,7 @@ export default function BlogHolidays2026Content() {
 
 					<h2 className="text-2xl font-semibold mb-3 mt-8">Podsumowanie – dni wolne 2026</h2>
 					<p className="mb-4 text-gray-700">
-						W 2026 roku w Polsce mamy <strong>13 dni ustawowo wolnych od pracy</strong>. Dwa z nich (15 sierpnia i 26 grudnia) 
+						W 2026 roku w Polsce mamy <strong>14 dni ustawowo wolnych od pracy</strong> — od 2025 roku dniem wolnym jest także Wigilia. Dwa z nich (15 sierpnia i 26 grudnia) 
 						przypadają w sobotę, co daje pracownikom dodatkowe dni wolne do odbioru. Dzięki odpowiedniemu planowaniu urlopów 
 						możesz wykorzystać długie weekendy i przedłużyć okresy wypoczynku nawet do 9-10 dni.
 					</p>
@@ -324,6 +330,17 @@ export default function BlogHolidays2026Content() {
 							Załóż darmowy zespół
 						</Link>
 					</div>
+
+					<BlogArticleCredibility
+						sources={[
+							{ label: 'Kodeks pracy — tekst jednolity (art. 130 § 2 — obniżenie wymiaru czasu pracy za święto)', href: 'https://eli.gov.pl/api/acts/DU/2025/277/text/T/D20250277L.pdf' },
+							{ label: 'Ustawa z dnia 18 stycznia 1951 r. o dniach wolnych od pracy — wykaz świąt ustawowo wolnych od pracy w Polsce' },
+							{ label: 'Państwowa Inspekcja Pracy — pytania i odpowiedzi dla pracodawców', href: 'https://www.pip.gov.pl/dla-pracodawcow/pytania-i-odpowiedzi' },
+						]}
+						verifiedOn="26 sierpnia 2026 r."
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+					/>
 
 					<BlogRelatedLinks slug="dni-wolne-2026" className="mt-10" />
 				</article>

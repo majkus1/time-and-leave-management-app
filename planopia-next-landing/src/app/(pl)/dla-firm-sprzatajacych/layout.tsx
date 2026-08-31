@@ -44,7 +44,15 @@ export const metadata: Metadata = {
 		description: 'Grafik ekip, ewidencja godzin, urlopy i zadania w jednym miejscu.',
 		images: ['/img/sprzatajaca.webp'],
 	},
-	alternates: { canonical: '/dla-firm-sprzatajacych' },
+	// Brak wersji EN tej strony — deklarujemy ja jako wylacznie polska,
+	// zeby nie obiecywac Google odpowiednika, ktorego nie ma.
+	alternates: {
+		canonical: '/dla-firm-sprzatajacych',
+		languages: {
+			'x-default': '/dla-firm-sprzatajacych',
+			pl: '/dla-firm-sprzatajacych',
+		},
+	},
 	category: 'technology',
 }
 

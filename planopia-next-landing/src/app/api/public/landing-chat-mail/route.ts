@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
 import { landingChatMailRateLimit } from '@/lib/landingChat/rateLimit'
+import {
+	OFFICE_TO,
+	createLandingTransporter,
+	escapeHtml,
+	getClientIp,
+	isMailEnabled,
+} from '@/lib/landingMail'
 
 const MAX_MESSAGE = 4000
-const OFFICE_TO = 'biuro@planopia.pl'
 /** Dodatkowa kopia tej samej wiadomości z czatu (oprócz biura). */
 const CHAT_MAIL_COPY_TO = 'michalipka1@gmail.com'
-
-function getClientIp(request: NextRequest): string {
-	const xf = request.headers.get('x-forwarded-for')
-	if (xf) return xf.split(',')[0]?.trim() || 'unknown'
-	return request.headers.get('x-real-ip')?.trim() || 'unknown'
-}
-
-function isMailEnabled(): boolean {
-	if (process.env.LANDING_CHAT_MAIL_ENABLED === 'false') return false
-	return Boolean(process.env.EMAIL_USER?.trim() && process.env.EMAIL_PASS?.trim())
-}
 
 function sanitizeMessage(s: unknown): string | null {
 	if (typeof s !== 'string') return null
@@ -70,15 +64,7 @@ export async function POST(request: NextRequest) {
 	const pageUrl = typeof body.pageUrl === 'string' ? body.pageUrl.slice(0, 2000) : ''
 
 	try {
-		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
-			port: 465,
-			secure: true,
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		})
+		const transporter = createLandingTransporter()
 
 		const subj =
 			locale === 'pl'
@@ -112,10 +98,3 @@ ${replyEmail ? `<p><strong>Odpowiedź na:</strong> ${escapeHtml(replyEmail)}</p>
 	}
 }
 
-function escapeHtml(s: string): string {
-	return s
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-}

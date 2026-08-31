@@ -11,6 +11,10 @@ export const LANDING_SELLER = {
 	regon: '543372505',
 	websiteHref: 'https://ml-devworks.com/',
 	websiteLabel: 'ml-devworks.com',
+	// Do tej pory stopka nie zawierala zadnego sposobu kontaktu — ani maila, ani telefonu.
+	email: 'biuro@planopia.pl',
+	phoneLabel: '+48 516 598 792',
+	phoneHref: 'tel:+48516598792',
 } as const
 
 export type FooterCopy = {
@@ -24,6 +28,9 @@ export type FooterCopy = {
 	complaintsIntro: string
 	complaintsLink: string
 	brandLine: string
+	contactHeading: string
+	contactCta: string
+	contactCtaHref: string
 }
 
 export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
@@ -38,6 +45,9 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 		complaintsIntro: 'Reklamacje:',
 		complaintsLink: 'procedura reklamacji',
 		brandLine: 'Czas pracy, urlopy i zadania — w jednym systemie.',
+		contactHeading: 'Kontakt',
+		contactCta: 'Umów rozmowę',
+		contactCtaHref: '/kontakt',
 	},
 	en: {
 		legalHeading: 'Legal',
@@ -50,6 +60,10 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 		complaintsIntro: 'Complaints:',
 		complaintsLink: 'complaints procedure',
 		brandLine: 'Time tracking, leave, and tasks — in one system.',
+		contactHeading: 'Contact',
+		contactCta: 'Book a call',
+		// Wersja EN nie ma osobnej strony kontaktu — kotwica na stronie glownej.
+		contactCtaHref: '/en#contact',
 	},
 }
 
@@ -66,6 +80,9 @@ export const FOOTER_SOLUTIONS: Record<LandingLocale, FooterLegalLink[]> = {
 	pl: [
 		{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 		{ href: '/program-do-urlopow', label: 'Program do urlopów' },
+		{ href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
+		{ href: '/rejestracja-czasu-pracy-qr', label: 'Rejestracja czasu pracy przez QR' },
+		{ href: '/ewidencja-nadgodzin', label: 'Ewidencja nadgodzin' },
 		{ href: '/dla-firm-sprzatajacych', label: 'Dla firm sprzątających' },
 		{ href: '/dla-gastronomii', label: 'Dla gastronomii' },
 		{ href: '/dla-branzy-budowlanej', label: 'Dla firm budowlanych' },
@@ -73,6 +90,9 @@ export const FOOTER_SOLUTIONS: Record<LandingLocale, FooterLegalLink[]> = {
 	en: [
 		{ href: '/en/time-tracking-software', label: 'Time tracking software' },
 		{ href: '/en/leave-management-software', label: 'Leave management software' },
+		{ href: '/en/work-schedule-software', label: 'Work schedule software' },
+		{ href: '/en/qr-time-clocking', label: 'QR time clocking' },
+		{ href: '/en/overtime-tracking', label: 'Overtime tracking' },
 		{ href: '/en/for-construction-industry', label: 'For construction' },
 	],
 }

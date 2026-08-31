@@ -6,6 +6,7 @@ import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -96,6 +97,7 @@ function ENBlogAiAssistant() {
 						<Link href="/en#prices" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
+						<LandingSolutionsDropdown locale="en" />
 						<LandingIndustriesDropdown locale="en" />
 						<Link href="/en/blog" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition" onClick={toggleMenu}>
 							Blog
@@ -257,7 +259,7 @@ function ENBlogAiAssistant() {
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">How to start and where to watch the product</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
 							Register your team (trial and plans are described on the product pages), invite users, and configure modules as needed. If you prefer video, open{' '}
-							<Link href="/en/blog/video-tutorials" className="text-blue-600 font-medium hover:underline">
+							<Link href="/en/how-to-use" className="text-blue-600 font-medium hover:underline">
 								Planopia video tutorials
 							</Link>{' '}
 							— short screen recordings help you get started without reading a long manual.

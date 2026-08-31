@@ -48,7 +48,9 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/blog/dni-wolne-2026',
     siteName: 'Planopia',
     publishedTime: '2026-01-05T12:00:00.000Z',
-    modifiedTime: '2026-01-05T12:00:00.000Z',
+    // Musi zgadzac sie z dateModified w JSON-LD i z widoczna data w tresci —
+    // trzy rozne daty aktualizacji to sprzeczny sygnal swiezosci.
+    modifiedTime: '2026-08-26T12:00:00.000Z',
     authors: ['Michał Lipka'],
     title: META_TITLE,
     description: META_DESCRIPTION,

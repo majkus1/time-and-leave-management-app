@@ -43,7 +43,7 @@ export const industryConstructionCopy: Record<
 		videoBody:
 			'Krótkie nagrania prosto z aplikacji — m.in. jak dodać godziny w ewidencji czasu pracy. Świetny start zaraz po założeniu zespołu.',
 		videoCta: 'Otwórz instrukcję wideo',
-		videoHref: '/blog/instrukcja-wideo-planopia',
+		videoHref: '/jak-korzystac',
 		problemsTitle: 'Co najczęściej psuje rozliczenia na budowie?',
 		problems: [
 			'Chaos w godzinach i nadgodzinach — dane rozrzucone między kartki, SMS-y i arkusze.',
@@ -123,7 +123,7 @@ export const industryConstructionCopy: Record<
 		videoBody:
 			'Short clips recorded inside the app — for example, how to add hours in the time log. A great first step right after you create a team.',
 		videoCta: 'Open video tutorials',
-		videoHref: '/en/blog/video-tutorials',
+		videoHref: '/en/how-to-use',
 		problemsTitle: 'What usually breaks construction payroll and planning?',
 		problems: [
 			'Chaotic hours and overtime — data split across paper, SMS, and spreadsheets.',

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
@@ -12,6 +13,7 @@ import {
 } from '../data/landingNav'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 function BlogOne() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -38,7 +40,7 @@ function BlogOne() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/planopiaheader.webp"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"url": "https://planopia.pl/blog/ewidencja-czasu-pracy-online",
@@ -107,6 +109,7 @@ function BlogOne() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
@@ -180,6 +183,11 @@ function BlogOne() {
 								slug="ewidencja-czasu-pracy-online"
 								position="top"
 								className="mt-6 md:mt-8"
+							/>
+							<BlogArticleCredibility
+								author="Michał Lipka"
+								authorHref="/o-autorze"
+								updatedOn={{ iso: '2026-05-31', label: '31 maja 2026 r.' }}
 							/>
 
 							<BlogHeroDualCtaCards

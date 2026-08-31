@@ -9,22 +9,22 @@ const copy: Record<
 	{ kicker: string; title: string; description: string; cta: string; href: string; sectionId: string; aria: string }
 > = {
 	pl: {
-		kicker: 'Materiały wideo',
+		kicker: 'Instrukcja',
 		title: 'Jak korzystać z Planopii?',
-		description: 'Krótkie nagrania z aplikacji — krok po kroku, na telefonie i komputerze.',
-		cta: 'Instrukcja wideo',
-		href: '/blog/instrukcja-wideo-planopia',
-		sectionId: 'instrukcja-wideo',
-		aria: 'Instrukcja wideo Planopia',
+		description: 'Ta sama instrukcja, którą masz w aplikacji — każdy ekran po kolei, od logowania po raporty.',
+		cta: 'Otwórz instrukcję',
+		href: '/jak-korzystac',
+		sectionId: 'instrukcja',
+		aria: 'Instrukcja obsługi Planopii',
 	},
 	en: {
-		kicker: 'Video guides',
+		kicker: 'User guide',
 		title: 'How to use Planopia',
-		description: 'Short clips from the app — step by step, on phone and desktop.',
-		cta: 'Video tutorials',
-		href: '/en/blog/video-tutorials',
-		sectionId: 'video-tutorials',
-		aria: 'Planopia video tutorials',
+		description: 'The same guide you get inside the app — every screen in order, from login to reports.',
+		cta: 'Open the guide',
+		href: '/en/how-to-use',
+		sectionId: 'how-to-use',
+		aria: 'Planopia user guide',
 	},
 }
 

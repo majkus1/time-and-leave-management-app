@@ -24,12 +24,17 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 						<p className="landing-polished-subtitle font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
 							{offering.heroSub}
 						</p>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							className="landing-polished-hero-cta inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition mt-4"
-						>
-							{copy.cta}
-						</Link>
+						<div className="landing-polished-hero-actions">
+							<Link
+								href="https://app.planopia.pl/team-registration"
+								className="landing-polished-hero-cta inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-4 shadow hover:bg-green-700 transition"
+							>
+								{copy.cta}
+							</Link>
+							<Link href={copy.secondaryCtaHref} className="landing-polished-hero-secondary">
+								{copy.secondaryCta}
+							</Link>
+						</div>
 						<div className="landing-polished-proof">
 							{copy.proof.map(item => (
 								<span key={item}>{item}</span>

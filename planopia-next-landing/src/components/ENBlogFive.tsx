@@ -6,6 +6,7 @@ import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -72,6 +73,7 @@ function ENBlogFive() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
+						<LandingSolutionsDropdown locale="en" />
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"

@@ -67,7 +67,81 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.85,
     },
-    
+
+    // Grafiki pracy — modul platny (59 zl/mies), do tej pory bez wlasnej strony
+    {
+      url: 'https://planopia.pl/program-do-grafikow-pracy',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: 'https://planopia.pl/en/work-schedule-software',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+
+    // Rejestracja QR / lista obecnosci — modul platny (39 zl/mies)
+    {
+      url: 'https://planopia.pl/rejestracja-czasu-pracy-qr',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: 'https://planopia.pl/en/qr-time-clocking',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+
+    // Nadgodziny — czesc wpisu dziennego, dziala takze w planie bezplatnym
+    {
+      url: 'https://planopia.pl/ewidencja-nadgodzin',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: 'https://planopia.pl/en/overtime-tracking',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
+
+    // Kalendarz swiat 2027 — rocznik, ktorego wczesniej nie bylo
+    {
+      url: 'https://planopia.pl/blog/dni-wolne-2027',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+
+    // Klaster grafikow — do tej pory najslabiej pokryty temat na blogu
+    {
+      url: 'https://planopia.pl/blog/jak-ulozyc-grafik-pracy',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+
+    // Strona autora — sygnal E-E-A-T dla tresci o prawie pracy
+    {
+      url: 'https://planopia.pl/o-autorze',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+
+    // Contact — druga sciezka konwersji obok samoobslugowej rejestracji
+    {
+      url: 'https://planopia.pl/kontakt',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.7,
+    },
+
     // Blog main pages
     {
       url: 'https://planopia.pl/blog',
@@ -83,6 +157,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     
     // Blog articles - High priority (holidays 2026)
+	{
+	  url: 'https://planopia.pl/blog/urlop-wypoczynkowy-ile-dni',
+	  lastModified: new Date('2026-08-02'),
+	  changeFrequency: 'monthly',
+	  priority: 0.82,
+	},
+	{
+	  url: 'https://planopia.pl/blog/l4-na-urlopie-wypoczynkowym',
+	  lastModified: new Date('2026-08-03'),
+	  changeFrequency: 'monthly',
+	  priority: 0.82,
+	},
+	{
+	  url: 'https://planopia.pl/blog/urlopy-i-dni-wolne-dla-pracownikow',
+	  lastModified: new Date('2026-08-18'),
+	  changeFrequency: 'monthly',
+	  priority: 0.82,
+	},
+	{
+	  url: 'https://planopia.pl/blog/plan-urlopow-2027-excel-pdf',
+	  lastModified: new Date('2026-08-19'),
+	  changeFrequency: 'weekly',
+	  priority: 0.9,
+	},
+	{
+	  url: 'https://planopia.pl/blog/ewidencja-czasu-pracy-excel-wzor',
+	  lastModified: new Date('2026-08-19'),
+	  changeFrequency: 'monthly',
+	  priority: 0.88,
+	},
     {
       url: 'https://planopia.pl/blog/dni-wolne-2026',
       lastModified: new Date(),
@@ -174,13 +278,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // Blog — video tutorials / user guide
     {
-      url: 'https://planopia.pl/blog/instrukcja-wideo-planopia',
+      url: 'https://planopia.pl/jak-korzystac',
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.85,
     },
     {
-      url: 'https://planopia.pl/en/blog/video-tutorials',
+      url: 'https://planopia.pl/en/how-to-use',
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.85,

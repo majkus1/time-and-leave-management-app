@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -69,6 +70,7 @@ export default function LegalHeader({ lang = 'pl' }: LegalHeaderProps) {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							{isPL ? 'Cennik' : 'Pricing'}
 						</Link>
+						<LandingSolutionsDropdown locale={isPL ? 'pl' : 'en'} />
 						<LandingIndustriesDropdown locale={isPL ? 'pl' : 'en'} />
 						<Link
 							href={isPL ? "/blog" : "/en/blog"}

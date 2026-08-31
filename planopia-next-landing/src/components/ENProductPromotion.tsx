@@ -14,7 +14,26 @@ const LandingAIHighlight = dynamic(() => import('./LandingAIHighlight'), {
 })
 
 const AboutAppShowcaseVideos = dynamic(() => import('./AboutAppShowcaseVideos'), {
-	loading: () => <div className="about-app-mockup-wrap min-h-[280px] w-full" aria-hidden />,
+	loading: () => (
+		// Placeholder trzyma DOKLADNIE te sama wysokosc co gotowy komponent,
+		// zeby hydracja nie przesunela sekcji pod spodem.
+		<div className="about-app-mockup-wrap w-full" aria-hidden>
+			<div className="w-full max-w-[1000px]">
+				<div className="hidden flex-col gap-5 lg:flex">
+					<div className="w-full rounded-xl bg-gray-100" style={{ aspectRatio: '1902 / 912' }} />
+					<div className="w-full rounded-xl bg-gray-100" style={{ aspectRatio: '1902 / 912' }} />
+				</div>
+				<div className="lg:hidden">
+					<div
+						className="mx-auto rounded-xl bg-gray-100"
+						style={{ aspectRatio: '358 / 780', height: 'min(600px, 70vh)' }}
+					/>
+					{/* Odpowiednik rzedu kropek w gotowym komponencie (mt-3 + h-1.5) */}
+					<div className="mt-3 h-1.5" />
+				</div>
+			</div>
+		</div>
+	),
 })
 
 const LandingPricing = dynamic(() => import('./LandingPricing'))
@@ -50,13 +69,13 @@ function ENProductPromotion() {
 				<div className="max-w-7xl mx-auto">
 					<div className="landing-about-heading-block mb-8">
 						<p className="landing-about-heading-eyebrow landing-section-eyebrow">
-							Everything you need in one system
+							{planOfferingCopy.en.aboutEyebrow}
 						</p>
 						<h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">
-							Comprehensive company management app
+							{planOfferingCopy.en.aboutTitle}
 						</h2>
 						<p className="landing-about-intro mt-4 text-lg text-gray-600">
-							Planopia organizes everyday administration: time tracking, leave management, work schedules, chats, task boards, and an AI Assistant. Instead of chasing spreadsheets, emails, and paper requests, you keep team data in one place and generate reports faster for the team, accounting, and owners.
+							{planOfferingCopy.en.aboutLead}
 						</p>
 					</div>
 					<div

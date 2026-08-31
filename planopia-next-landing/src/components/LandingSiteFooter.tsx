@@ -107,6 +107,17 @@ export default function LandingSiteFooter() {
 									{t.blogAll} →
 								</Link>
 							</li>
+							{/* Tylko PL — blog EN nie ma tej obsady autorskiej. */}
+							{locale === 'pl' && (
+								<li>
+									<Link
+										href="/o-autorze"
+										className="text-sm text-slate-600 transition hover:text-emerald-800 hover:underline underline-offset-4"
+									>
+										O autorze
+									</Link>
+								</li>
+							)}
 						</ul>
 					</nav>
 
@@ -142,6 +153,36 @@ export default function LandingSiteFooter() {
 								{LANDING_SELLER.websiteLabel}
 							</a>
 						</p>
+						<div className="mt-4 border-t border-slate-200/80 pt-4">
+							<h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+								{t.contactHeading}
+							</h3>
+							<p className="mt-2 text-sm">
+								<a
+									href={`mailto:${LANDING_SELLER.email}`}
+									className="font-medium text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
+								>
+									{LANDING_SELLER.email}
+								</a>
+							</p>
+							<p className="mt-1 text-sm">
+								<a
+									href={LANDING_SELLER.phoneHref}
+									className="font-medium text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
+								>
+									{LANDING_SELLER.phoneLabel}
+								</a>
+							</p>
+							<p className="mt-2 text-sm">
+								<Link
+									href={t.contactCtaHref}
+									className="font-medium text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
+								>
+									{t.contactCta} →
+								</Link>
+							</p>
+						</div>
+
 						<p className="mt-4 border-t border-slate-200/80 pt-4 text-xs text-slate-500">
 							{t.complaintsIntro}{' '}
 							<Link href={complaintsHref} className="font-medium text-emerald-800 hover:underline underline-offset-2">

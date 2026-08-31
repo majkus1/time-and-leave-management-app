@@ -797,7 +797,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							<p className="packages-enterprise-strip__body">{t.enterpriseStripBody}</p>
 						</div>
 						<div className="packages-enterprise-strip__cta">
-							<Link className="packages-enterprise-strip__btn" href={locale === 'pl' ? '/#kontakt' : '/en#contact'}>
+							<Link className="packages-enterprise-strip__btn" href={locale === 'pl' ? '/kontakt' : '/en#contact'}>
 								{t.enterpriseCta}
 							</Link>
 						</div>
