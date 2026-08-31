@@ -6,6 +6,7 @@ import Link from 'next/link'
 import BlogTopicsNav from './BlogTopicsNav'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import MobileMenu from './MobileMenu'
 import {
 	industryMobileConfig,
@@ -15,7 +16,7 @@ import {
 import { BLOG_PILLAR_PL } from '@/data/blogInternalLinks'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
 
-type BlogCategory = 'all' | 'time' | 'leave' | 'industries' | 'product'
+type BlogCategory = 'all' | 'time' | 'leave' | 'schedules' | 'industries' | 'product'
 
 type BlogArticle = {
 	href: string
@@ -32,6 +33,7 @@ const categories: { value: BlogCategory; label: string }[] = [
 	{ value: 'all', label: 'Wszystkie tematy' },
 	{ value: 'time', label: 'Ewidencja czasu pracy' },
 	{ value: 'leave', label: 'Urlopy i planowanie' },
+	{ value: 'schedules', label: 'Grafiki i harmonogramy' },
 	{ value: 'industries', label: 'Branże i zastosowania' },
 	{ value: 'product', label: 'Planopia i instrukcje' },
 ]
@@ -39,6 +41,7 @@ const categories: { value: BlogCategory; label: string }[] = [
 const categoryLabels: Record<Exclude<BlogCategory, 'all'>, string> = {
 	time: 'Ewidencja czasu',
 	leave: 'Urlopy i planowanie',
+	schedules: 'Grafiki',
 	industries: 'Branże',
 	product: 'Planopia',
 }
@@ -53,6 +56,69 @@ const articles: BlogArticle[] = [
 		category: 'time',
 		featured: true,
 		badge: 'Główny przewodnik',
+	},
+	{
+		href: '/blog/urlop-wypoczynkowy-ile-dni',
+		title: 'Urlop wypoczynkowy 2026: ile dni przysługuje?',
+		description: 'Wymiar 20 lub 26 dni, niepełny etat, staż urlopowy i nowe zasady z 2026 roku — z prostym kalkulatorem i przykładami.',
+		image: '/img/urlop-wypoczynkowy-ile-dni.webp',
+		imageAlt: 'Urlop wypoczynkowy 2026 — wymiar 20 lub 26 dni i kalkulator',
+		category: 'leave',
+		badge: 'Prawo pracy 2026',
+	},
+	{
+		href: '/blog/ewidencja-czasu-pracy-excel-wzor',
+		title: 'Ewidencja czasu pracy Excel — darmowy wzór',
+		description: 'Gotowa karta ewidencji zgodna z rozporządzeniem: automatyczne liczenie godzin i nadgodzin, kody nieobecności, wersja PDF do druku.',
+		image: '/img/ewidencja-czasu-pracy-excel-wzor.webp',
+		imageAlt: 'Wzór karty ewidencji czasu pracy w Excelu',
+		category: 'time',
+		badge: 'Wzór do pobrania',
+	},
+	{
+		href: '/blog/jak-ulozyc-grafik-pracy',
+		title: 'Jak ułożyć grafik pracy zgodnie z Kodeksem pracy',
+		description: 'Doba pracownicza, 11 godzin odpoczynku dobowego, 35 godzin tygodniowego i wymiar czasu pracy — oraz pięć błędów, które najczęściej psują grafik.',
+		image: '/img/aigrafik.webp',
+		imageAlt: 'Grafik pracy zespołu w aplikacji Planopia',
+		category: 'schedules',
+		badge: 'Prawo pracy',
+	},
+	{
+		href: '/blog/dni-wolne-2027',
+		title: 'Dni wolne 2027 — kalendarz świąt w Polsce',
+		description: 'Wszystkie 14 dni ustawowo wolnych — z Wigilią — dwa święta w sobotę i mosty, które z jednego dnia urlopu robią cztery dni wolnego.',
+		image: '/img/plan-urlopow-2027-excel-pdf.webp',
+		imageAlt: 'Kalendarz dni wolnych 2027 w Polsce',
+		category: 'leave',
+		badge: 'Kalendarz 2027',
+	},
+	{
+		href: '/blog/plan-urlopow-2027-excel-pdf',
+		title: 'Plan urlopów 2027 — darmowy wzór Excel i PDF',
+		description: 'Gotowy arkusz z automatycznym liczeniem dni roboczych, wersja PDF do druku i komplet dni wolnych 2027 — do pobrania bez rejestracji.',
+		image: '/img/plan-urlopow-2027-excel-pdf.webp',
+		imageAlt: 'Roczny plan urlopów 2027 — wzór Excel i PDF',
+		category: 'leave',
+		badge: 'Nowość 2027',
+	},
+	{
+		href: '/blog/urlopy-i-dni-wolne-dla-pracownikow',
+		title: 'Jakie urlopy przysługują pracownikowi?',
+		description: 'Urlop szkoleniowy, okolicznościowy, opiekuńczy, siła wyższa i dni na poszukiwanie pracy — pełna lista uprawnień z wymiarami i przykładami.',
+		image: '/img/urlopy-i-dni-wolne-pracownikow.webp',
+		imageAlt: 'Urlopy i dni wolne przysługujące pracownikom',
+		category: 'leave',
+		badge: 'Prawo pracy',
+	},
+	{
+		href: '/blog/l4-na-urlopie-wypoczynkowym',
+		title: 'L4 na urlopie wypoczynkowym: co z urlopem?',
+		description: 'Sprawdź, kiedy choroba przerywa urlop, jak odzyskać niewykorzystane dni i jakie formalności obowiązują podczas wyjazdu zagranicznego.',
+		image: '/img/l4-na-urlopie-wypoczynkowym.webp',
+		imageAlt: 'L4 na urlopie wypoczynkowym — odzyskanie niewykorzystanych dni',
+		category: 'leave',
+		badge: 'Prawo pracy',
 	},
 	{
 		href: '/blog/jak-zarzadzac-firma-sprzatajaca',
@@ -86,15 +152,6 @@ const articles: BlogArticle[] = [
 		image: '/img/aibloga.webp',
 		imageAlt: 'Asystent AI w Planopii — ewidencja, urlopy, zadania i grafik',
 		category: 'product',
-	},
-	{
-		href: '/blog/instrukcja-wideo-planopia',
-		title: 'Instrukcja wideo — jak korzystać z Planopii',
-		description: 'Krótkie nagrania pokazujące pracę z aplikacją, w tym dodawanie godzin w ewidencji na telefonie i komputerze.',
-		image: '/img/video.webp',
-		imageAlt: 'Instrukcja wideo Planopia — poradniki z aplikacji',
-		category: 'product',
-		badge: 'Wideo',
 	},
 	{
 		href: '/blog/jak-zainstalowac-planopie-jako-pwa',
@@ -224,6 +281,7 @@ function Blog() {
 						<Link href="/#oaplikacji" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">O Aplikacji</Link>
 						<Link href="/#asystent-ai" className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">Asystent AI</Link>
 						<Link href="/#cennik" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Cennik</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link href="/blog" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Blog</Link>
 						<Link href="/#kontakt" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">Kontakt</Link>

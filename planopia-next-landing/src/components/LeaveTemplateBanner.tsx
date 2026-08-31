@@ -1,7 +1,10 @@
 import Link from 'next/link'
 
-const DOWNLOAD_HREF = '/downloads/roczny-plan-urlopow-2026-planopia.xlsx'
-const PILLAR_HREF = '/blog/roczny-plan-urlopow-excel-pdf-aplikacja'
+const DOWNLOAD_HREF = '/downloads/roczny-plan-urlopow-2027-planopia.xlsx'
+const PDF_HREF = '/downloads/roczny-plan-urlopow-2027-planopia.pdf'
+// Prowadzi do wpisu o wzorze 2027, a nie do porownania formatow: baner podaje sam plik,
+// a tamten wpis dokłada kalendarz świąt, mosty i instrukcję wypełniania.
+const PILLAR_HREF = '/blog/plan-urlopow-2027-excel-pdf'
 
 type Props = {
 	/** Domyślnie odstęp my-10; ustaw np. "mt-10" gdy baner kończy artykuł. */
@@ -48,11 +51,12 @@ export default function LeaveTemplateBanner({ className = 'my-10' }: Props) {
 						id="leave-template-banner-heading"
 						className="mt-1 text-xl font-bold leading-snug text-gray-900 md:text-2xl"
 					>
-						Pobierz roczny plan urlopów 2026 w Excelu
+						Pobierz roczny plan urlopów 2027 w Excelu
 					</h2>
 					<p className="mt-2 text-sm leading-relaxed text-gray-700 md:text-base">
 						Gotowy plik XLSX: lista pracowników, wnioski, automatyczne liczenie dni roboczych, roczny widok i
-						podsumowanie obłożenia. Edytuj w Excelu lub Arkuszach Google, albo wydrukuj do PDF.
+						podsumowanie obłożenia. Uwzględnia wszystkie 14 dni wolnych w 2027 roku, razem z Wigilią. Edytuj w Excelu lub
+						Arkuszach Google — jest też wersja PDF do druku.
 					</p>
 
 					<div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -63,11 +67,18 @@ export default function LeaveTemplateBanner({ className = 'my-10' }: Props) {
 						>
 							Pobierz szablon Excel
 						</a>
+						<a
+							href={PDF_HREF}
+							download
+							className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-emerald-600 px-6 py-3 text-base font-semibold text-emerald-700 transition hover:bg-emerald-50"
+						>
+							Wersja PDF do druku
+						</a>
 						<Link
 							href={PILLAR_HREF}
 							className="inline-flex items-center text-base font-semibold text-blue-700 underline-offset-4 hover:text-blue-800 hover:underline"
 						>
-							Przewodnik: Excel, PDF czy aplikacja? →
+							Kalendarz 2027, mosty i instrukcja →
 						</Link>
 					</div>
 				</div>

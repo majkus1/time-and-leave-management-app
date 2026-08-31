@@ -49,7 +49,7 @@ const COPY: Record<
 		videoBody:
 			'Krótkie nagrania prosto z aplikacji — m.in. jak dodać godziny w ewidencji czasu pracy. Świetny start zaraz po założeniu zespołu.',
 		videoCta: 'Otwórz instrukcję wideo',
-		videoHref: '/blog/instrukcja-wideo-planopia',
+		videoHref: '/jak-korzystac',
 		problemTitle: 'Jak to wygląda w praktyce',
 		problemBullets: [
 			'Brak jednej listy godzin — każdy kierownik prowadzi „swoje” notatki.',
@@ -120,7 +120,7 @@ const COPY: Record<
 		videoBody:
 			'Short clips recorded inside the app — for example, how to add hours in the time log. A great first step right after you create a team.',
 		videoCta: 'Open video tutorials',
-		videoHref: '/en/blog/video-tutorials',
+		videoHref: '/en/how-to-use',
 		problemTitle: 'What it looks like in the real world',
 		problemBullets: [
 			'No single source of truth for hours — each supervisor keeps their own notes.',
@@ -204,7 +204,7 @@ export default function BlogConstructionTimeTrackingArticle({ locale }: Props) {
 		publisher: {
 			'@type': 'Organization',
 			name: 'Planopia',
-			logo: { '@type': 'ImageObject', url: 'https://planopia.pl/img/planopiaheader.webp' },
+			logo: { '@type': 'ImageObject', url: 'https://planopia.pl/img/new-logoplanopia.webp' },
 		},
 		url,
 		datePublished: '2026-03-24',

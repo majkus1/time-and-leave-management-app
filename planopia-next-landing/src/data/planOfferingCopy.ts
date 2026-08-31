@@ -26,15 +26,13 @@ export const planOfferingCopy = {
 				title: 'Urlopy bez gonienia po akceptacje',
 				text: 'Wniosek, akceptacja, historia zmian i powiadomienia zostają w aplikacji.',
 			},
-			{
-				title: 'Raporty i statystyki w kilka kliknięć',
-				text: 'PDF/Excel zamienia czas pracy, urlopy i nadgodziny w gotowe podsumowania dla księgowości i managera.',
-			},
-			{
-				title: 'Cena ma kontekst zespołu',
-				text: 'Core od 119 zł netto miesięcznie. Jedna odzyskana godzina administracji potrafi pokryć koszt.',
-			},
 		],
+		// Sekcja #oaplikacji. Nazywa specjalizacje (czas pracy zespolu) zamiast szerokiej
+		// kategorii „zarzadzanie firma", ktorej produkt nie obejmuje.
+		aboutEyebrow: 'Jeden system zamiast arkuszy i maili',
+		aboutTitle: 'Wszystko wokół czasu pracy zespołu — w jednym systemie',
+		aboutLead:
+			'Planopia porządkuje to, co dzieje się wokół czasu pracy: ewidencję godzin, urlopy i grafik. W tym samym miejscu masz zadania, czat i Asystenta AI, więc dane nie rozjeżdżają się po arkuszach, mailach i papierowych wnioskach.',
 		blogJsonLdExtra:
 			' Artykuły o ewidencji czasu pracy i HR; w aplikacji trial 30 dni, potem darmowy plan ewidencji lub pakiety płatne.',
 	},
@@ -61,15 +59,12 @@ export const planOfferingCopy = {
 				title: 'Leave without approval chasing',
 				text: 'Requests, approvals, change history, and notifications stay inside the app.',
 			},
-			{
-				title: 'Reports and stats in a few clicks',
-				text: 'PDF/Excel turns work time, leave, and overtime into summaries for accounting and managers.',
-			},
-			{
-				title: 'Pricing has team context',
-				text: 'Core starts at 119 PLN net/month. One recovered admin hour can cover the cost.',
-			},
 		],
+		// Blizniak sekcji #oaplikacji — musi mowic to samo co wersja PL.
+		aboutEyebrow: 'One system instead of spreadsheets and emails',
+		aboutTitle: "Everything around your team's working time — in one system",
+		aboutLead:
+			'Planopia organizes what happens around working time: hours, leave, and schedules. In the same place you get tasks, chat, and the AI Assistant, so data stops drifting across spreadsheets, emails, and paper requests.',
 		blogJsonLdExtra:
 			' Articles on time tracking and HR workflows; in the app: 30-day trial, then a free time tracking tier or paid plans.',
 	},

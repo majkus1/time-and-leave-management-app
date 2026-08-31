@@ -5,12 +5,14 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 function BlogFive() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -115,6 +117,7 @@ function BlogFive() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
@@ -179,6 +182,11 @@ function BlogFive() {
 							</p>
 							<div className="max-w-4xl mx-0 md:mx-auto text-left mb-6">
 								<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" position="top" />
+								<BlogArticleCredibility
+									author="Michał Lipka"
+									authorHref="/o-autorze"
+									updatedOn={{ iso: '2026-05-31', label: '31 maja 2026 r.' }}
+								/>
 							</div>
 							<div>
 								<Link

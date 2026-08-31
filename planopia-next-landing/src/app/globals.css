@@ -2426,6 +2426,18 @@ textarea {
 	.navdesktop {
 		display: flex !important;
 		align-items: center;
+		/* Po dołożeniu menu „Rozwiązania" dziewięć pozycji przy odstępie 32px (space-x-8)
+		   zostawiało w progu breakpointu tylko 69px luzu — pasek wyglądał na wciśnięty.
+		   Zerujemy marginesy z Tailwinda i sterujemy odstępem przez gap.
+		   !important, bo utility `space-x-8` kompiluje się do `gap` i wygrywa specyficznością. */
+		gap: 18px !important;
+	}
+
+	/* `space-x-8` ustawia margin-right na dzieciach (nie margin-left), więc zerujemy oba —
+	   inaczej odstęp sumuje się z gapem do 50px, pozycje się ściskają i łamią na dwie linie. */
+	.navdesktop > * {
+		margin-left: 0 !important;
+		margin-right: 0 !important;
 	}
 }
 
@@ -2803,6 +2815,53 @@ textarea {
 	box-shadow: 0 6px 14px rgba(0, 120, 54, 0.18) !important;
 }
 
+/* Dwa CTA obok siebie: rejestracja samoobslugowa + rozmowa z czlowiekiem.
+   Odstep trzyma kontener, wiec zerujemy wlasny margines przycisku glownego. */
+#planopia-welcome .landing-polished-hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-top: 22px;
+}
+
+#planopia-welcome .landing-polished-hero-actions .landing-polished-hero-cta {
+	margin-top: 0 !important;
+}
+
+/* Uwaga: kontener hero ma klasę `ordering`, a globalna reguła `.ordering a` wymusza
+   zielone tło i biały tekst na każdym linku w środku. Dlatego wszystkie własności
+   koloru muszą tu być z !important — inaczej przycisk wychodzi zielony na zielonym. */
+#planopia-welcome .landing-polished-hero-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 15px 25px;
+	border: 2px solid #00a63e !important;
+	border-radius: 12px;
+	background-color: #ffffff !important;
+	color: #00733f !important;
+	-webkit-text-fill-color: #00733f !important;
+	font-size: 21px;
+	font-weight: 700 !important;
+	text-decoration: none !important;
+	box-shadow: 0 2px 6px rgba(0, 120, 54, 0.1);
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+#planopia-welcome .landing-polished-hero-secondary:hover {
+	background-color: #00a63e !important;
+	border-color: #00a63e !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	box-shadow: 0 6px 14px rgba(0, 120, 54, 0.22);
+}
+
+#planopia-welcome .landing-polished-hero-secondary:focus-visible {
+	outline: 3px solid #00733f;
+	outline-offset: 2px;
+}
+
 #planopia-welcome .landing-polished-proof {
 	display: flex;
 	flex-wrap: wrap;
@@ -3117,10 +3176,22 @@ textarea {
 		margin-bottom: 12px;
 	}
 
+	#planopia-welcome .landing-polished-hero-actions {
+		margin-top: 16px;
+		gap: 10px;
+	}
+
 	#planopia-welcome .landing-polished-hero-cta {
 		width: 100%;
-		margin-top: 16px !important;
+		margin-top: 0 !important;
 		text-align: center;
+		font-size: 17px;
+	}
+
+	/* Na mobile oba przyciski na pelna szerokosc, jeden pod drugim. */
+	#planopia-welcome .landing-polished-hero-secondary {
+		width: 100%;
+		padding: 13px 20px;
 		font-size: 17px;
 	}
 
@@ -3970,6 +4041,16 @@ main article a.blog-leave-excel-cta,
 main article a.blog-leave-excel-cta:visited,
 main article a.blog-leave-excel-cta:hover,
 main article a.blog-leave-excel-cta:focus-visible {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: none !important;
+}
+
+/* CTA w poradniku o wymiarze urlopu: globalny kolor linków nie może obniżać kontrastu. */
+main article a.blog-annual-leave-cta,
+main article a.blog-annual-leave-cta:visited,
+main article a.blog-annual-leave-cta:hover,
+main article a.blog-annual-leave-cta:focus-visible {
 	color: #ffffff !important;
 	-webkit-text-fill-color: #ffffff !important;
 	text-decoration: none !important;

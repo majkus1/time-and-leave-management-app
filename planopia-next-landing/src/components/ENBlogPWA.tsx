@@ -6,6 +6,7 @@ import BlogRelatedLinks from './BlogRelatedLinks'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -37,7 +38,7 @@ function ENBlogPWA() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/planopiaheader.webp"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"url": "https://planopia.pl/en/blog/how-to-install-planopia-as-pwa",
@@ -71,6 +72,7 @@ function ENBlogPWA() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Pricing
 						</Link>
+						<LandingSolutionsDropdown locale="en" />
 						<LandingIndustriesDropdown locale="en" />
 						<Link
 							href="/en/blog"

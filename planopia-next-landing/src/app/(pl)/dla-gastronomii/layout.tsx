@@ -44,7 +44,15 @@ export const metadata: Metadata = {
 		description: 'Grafik restauracji, ewidencja godzin, urlopy i zadania w jednym miejscu.',
 		images: ['/img/gastronomia.webp'],
 	},
-	alternates: { canonical: '/dla-gastronomii' },
+	// Brak wersji EN tej strony — deklarujemy ja jako wylacznie polska,
+	// zeby nie obiecywac Google odpowiednika, ktorego nie ma.
+	alternates: {
+		canonical: '/dla-gastronomii',
+		languages: {
+			'x-default': '/dla-gastronomii',
+			pl: '/dla-gastronomii',
+		},
+	},
 	category: 'technology',
 }
 

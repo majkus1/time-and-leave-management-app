@@ -6,9 +6,12 @@
 const WINDOW_MS = 15 * 60 * 1000
 const MAX_CHAT_REQUESTS = 24
 const MAX_MAIL_REQUESTS = 12
+/** Formularz kontaktowy — niżej niż czat, bo każde wysłanie ląduje w skrzynce biura. */
+const MAX_CONTACT_REQUESTS = 8
 
 const chatBuckets = new Map<string, number[]>()
 const mailBuckets = new Map<string, number[]>()
+const contactBuckets = new Map<string, number[]>()
 
 function prune(map: Map<string, number[]>, now: number) {
 	if (map.size < 5000) return
@@ -46,4 +49,8 @@ export function landingChatRateLimit(ip: string): { ok: true } | { ok: false; re
 
 export function landingChatMailRateLimit(ip: string): { ok: true } | { ok: false; retryAfterSec: number } {
 	return hit(mailBuckets, ip, MAX_MAIL_REQUESTS)
+}
+
+export function landingContactRateLimit(ip: string): { ok: true } | { ok: false; retryAfterSec: number } {
+	return hit(contactBuckets, ip, MAX_CONTACT_REQUESTS)
 }

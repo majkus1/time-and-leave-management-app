@@ -102,8 +102,56 @@ async function sumHourlyLeaveHoursOnDate({
 	return roundQuantity(total)
 }
 
+/**
+ * Otwarty wniosek identyczny z wlasnie skladanym — ten sam typ i ten sam zakres dat.
+ *
+ * Zabezpiecza przed podwojnym wyslaniem formularza (dwa klikniecia, powrot z historii,
+ * ponowione zadanie). Dziala niezaleznie od tego, co zrobi przegladarka.
+ *
+ * Statusy: `pending` i `sent` — czyli wnioski jeszcze zywe. Zamkniete (odrzucone,
+ * anulowane) nie blokuja zlozenia nowego.
+ *
+ * Wnioski godzinowe dodatkowo porownujemy po liczbie godzin: kod celowo dopuszcza
+ * kilka zgloszen na ten sam dzien (patrz `sumHourlyLeaveHoursOnDate`), wiec za duplikat
+ * uznajemy dopiero identyczna liczbe godzin.
+ */
+async function findDuplicateOpenLeaveRequest({
+	LeaveRequest,
+	userId,
+	type,
+	startDate,
+	endDate,
+	hoursRequested,
+	excludeRequestId,
+}) {
+	const startBounds = dayBounds(startDate)
+	const endBounds = dayBounds(endDate)
+
+	const query = {
+		userId,
+		type,
+		status: { $in: ['status.pending', 'status.sent'] },
+		startDate: { $gte: startBounds.start, $lte: startBounds.end },
+		endDate: { $gte: endBounds.start, $lte: endBounds.end },
+	}
+
+	// O trybie rozstrzyga wylacznie liczba godzin (nie `settlementUnit`).
+	if (Number(hoursRequested) > 0) {
+		query.hoursRequested = Number(hoursRequested)
+	} else {
+		Object.assign(query, NON_HOURLY_LEAVE_QUERY)
+	}
+
+	if (excludeRequestId) {
+		query._id = { $ne: excludeRequestId }
+	}
+
+	return LeaveRequest.findOne(query)
+}
+
 module.exports = {
 	findConflictingApprovedLeaveRequest,
+	findDuplicateOpenLeaveRequest,
 	findBlockingLeaveRequestOnDate,
 	sumHourlyLeaveHoursOnDate,
 }

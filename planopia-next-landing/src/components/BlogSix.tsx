@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
@@ -12,6 +13,7 @@ import {
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import LeaveTemplateBanner from './LeaveTemplateBanner'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 function BlogSix() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -132,6 +134,7 @@ function BlogSix() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
@@ -509,6 +512,11 @@ function BlogSix() {
 					<LeaveTemplateBanner className="mt-10" />
 
 					<BlogRelatedLinks slug="zarzadzanie-urlopami" className="mt-10" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-03-27', label: '27 marca 2026 r.' }}
+					/>
 				</div>
 			</article>
 

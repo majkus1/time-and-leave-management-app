@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Modal from 'react-modal'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
@@ -278,6 +278,12 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		(managedLeaveEnabled && loadingVisibleLeaveUsers) ||
 		(!!effectiveTargetUserId && (loadingTargetRequests || loadingTargetVacation))
 	const isSubmitting = createLeaveRequestMutation.isPending || createLeaveRequestMutation.isLoading
+	/** Blokada podwojnego wyslania. `isSubmitting` zapala sie dopiero przy mutacji, a przed nia jest
+	 *  walidacja, zapytanie o kolizje z grafikiem i okno potwierdzenia — przez ten czas przycisk
+	 *  pozostawal aktywny i drugie klikniecie tworzylo drugi wniosek. Ref dziala natychmiast, bez
+	 *  czekania na rerender; stan sluzy tylko do wygaszenia przycisku. */
+	const submitLockRef = useRef(false)
+	const [isSubmitLocked, setIsSubmitLocked] = useState(false)
 	const isUpdating = updateLeaveRequestMutation.isPending || updateLeaveRequestMutation.isLoading
 
 	// Etykiety jednostki przekazywane do wspólnego helpera (client/src/utils/leaveSettlement.js)
@@ -419,8 +425,9 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		}
 	}
 
-	const submitLeaveRequest = async e => {
-		e.preventDefault()
+	/** Wlasciwa obsluga wyslania. Blokade trzyma wrapper `submitLeaveRequest`,
+	 *  wiec kazdy wczesny `return` w srodku zwalnia ja automatycznie. */
+	const runSubmitLeaveRequest = async () => {
 		
 		// Walidacja dat
 		if (startDate && endDate && isIsoDateBefore(endDate, startDate)) {
@@ -572,6 +579,19 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 		} catch (error) {
 			console.error('Błąd podczas wysyłania wniosku:', error)
 			await showAlert(error.response?.data?.message || t('leaveform.alertfail'))
+		}
+	}
+
+	const submitLeaveRequest = async e => {
+		e.preventDefault()
+		if (submitLockRef.current) return
+		submitLockRef.current = true
+		setIsSubmitLocked(true)
+		try {
+			await runSubmitLeaveRequest()
+		} finally {
+			submitLockRef.current = false
+			setIsSubmitLocked(false)
 		}
 	}
 
@@ -1073,7 +1093,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 							<div style={{ width: '100%' }}>
 							<button
 								type="submit"
-								disabled={isSubmitting}
+								disabled={isSubmitting || isSubmitLocked}
 								className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600"
 								style={{ width: '100%' }}>
 								{isSubmitting ? (

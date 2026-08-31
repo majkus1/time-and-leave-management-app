@@ -23,6 +23,8 @@ interface MobileMenuProps {
 		alt: string
 	}
 	/** Sekcja pod główną nawigacją (np. Branże) */
+	solutionsSectionTitle?: string
+	solutionsLinks?: Array<{ href: string; label: string }>
 	industrySectionTitle?: string
 	industryLinks?: Array<{ href: string; label: string; iconSrc?: string }>
 	/** Po ilu elementach z menuItems wstawić „Branże” (np. 3 = po Cenniku). Brak = na końcu listy (stare zachowanie). */
@@ -38,12 +40,15 @@ export default function MobileMenu({
 	loginHref = 'https://app.planopia.pl/',
 	registerHref = 'https://app.planopia.pl/team-registration',
 	languageSwitcher,
+	solutionsSectionTitle,
+	solutionsLinks = [],
 	industrySectionTitle,
 	industryLinks = [],
 	industryInsertIndex
 }: MobileMenuProps) {
 	const [isClosing, setIsClosing] = React.useState(false)
 	const [industryOpen, setIndustryOpen] = React.useState(false)
+	const [solutionsOpen, setSolutionsOpen] = React.useState(false)
 	const isPL = lang === 'pl'
 
 	// Reset closing state when menu opens
@@ -140,8 +145,12 @@ export default function MobileMenu({
 	const navBefore = insertIdx === null ? defaultMenuItems : defaultMenuItems.slice(0, insertIdx)
 	const navAfter = insertIdx === null ? [] : defaultMenuItems.slice(insertIdx)
 	/* sloty nawigacji: linki + ewentualnie przycisk „Branże”; przy rozwinięciu + podlinki */
-	const collapsedNavSlots = navBefore.length + (hasIndustry ? 1 : 0) + navAfter.length
-	const menuCount = collapsedNavSlots + (industryOpen ? industryLinks.length : 0)
+	const hasSolutions = Boolean(solutionsSectionTitle && solutionsLinks.length > 0)
+	/** Ile slotow zajmuja rozwiazania — potrzebne do opoznien animacji ponizej. */
+	const solutionsSlots = (hasSolutions ? 1 : 0) + (solutionsOpen ? solutionsLinks.length : 0)
+	const beforeIndustry = navBefore.length + solutionsSlots
+	const collapsedNavSlots = navBefore.length + (hasSolutions ? 1 : 0) + (hasIndustry ? 1 : 0) + navAfter.length
+	const menuCount = collapsedNavSlots + (industryOpen ? industryLinks.length : 0) + (solutionsOpen ? solutionsLinks.length : 0)
 
 	// Keep menu visible during closing animation even if isOpen becomes false
 	if (!isOpen && !isClosing) return null
@@ -176,12 +185,42 @@ export default function MobileMenu({
 								{item.label}
 							</Link>
 						))}
-						{hasIndustry && (
+						{hasSolutions && (
 							<>
 								<button
 									type="button"
 									className="mobile-menu-item mobile-menu-industry-toggle !text-blue-600 hover:!text-blue-600"
 									style={{ animationDelay: `${navBefore.length * 0.05}s` }}
+									onClick={() => setSolutionsOpen((v) => !v)}
+									aria-expanded={solutionsOpen}
+									aria-controls="mobile-menu-solutions-list">
+									<span className="!text-blue-600">{solutionsSectionTitle}</span>
+									<span className="mobile-menu-industry-chevron !text-blue-600" aria-hidden>
+										{solutionsOpen ? '▾' : '▸'}
+									</span>
+								</button>
+								{solutionsOpen && (
+									<div id="mobile-menu-solutions-list" className="mobile-menu-industry-children">
+										{solutionsLinks.map((item, i) => (
+											<Link
+												key={item.href}
+												href={item.href}
+												onClick={handleClose}
+												className="mobile-menu-item mobile-menu-industry-child"
+												style={{ animationDelay: `${(navBefore.length + 1 + i) * 0.05}s` }}>
+												<span className="min-w-0 leading-5">{item.label}</span>
+											</Link>
+										))}
+									</div>
+								)}
+							</>
+						)}
+						{hasIndustry && (
+							<>
+								<button
+									type="button"
+									className="mobile-menu-item mobile-menu-industry-toggle !text-blue-600 hover:!text-blue-600"
+									style={{ animationDelay: `${beforeIndustry * 0.05}s` }}
 									onClick={() => setIndustryOpen((v) => !v)}
 									aria-expanded={industryOpen}
 									aria-controls="mobile-menu-industry-list">
@@ -199,7 +238,7 @@ export default function MobileMenu({
 												onClick={handleClose}
 												className="mobile-menu-item mobile-menu-industry-child"
 												style={{
-													animationDelay: `${(navBefore.length + 1 + i) * 0.05}s`
+													animationDelay: `${(beforeIndustry + 1 + i) * 0.05}s`
 												}}>
 												{item.iconSrc && (
 													<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-50" aria-hidden>
@@ -215,7 +254,7 @@ export default function MobileMenu({
 						)}
 						{navAfter.map((item, index) => {
 							const slot =
-								navBefore.length + (hasIndustry ? 1 : 0) + (industryOpen ? industryLinks.length : 0) + index
+								beforeIndustry + (hasIndustry ? 1 : 0) + (industryOpen ? industryLinks.length : 0) + index
 							return (
 								<Link
 									key={`a-${index}-${item.href}`}

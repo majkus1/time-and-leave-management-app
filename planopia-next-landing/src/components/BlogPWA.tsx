@@ -6,12 +6,14 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '../data/landingNav'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 function InstallationSteps({ steps }: { steps: ReactNode[] }) {
 	return (
@@ -56,7 +58,7 @@ function BlogPWA() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/planopiaheader.webp"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"url": "https://planopia.pl/blog/jak-zainstalowac-planopie-jako-pwa",
@@ -90,6 +92,7 @@ function BlogPWA() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
@@ -281,6 +284,11 @@ function BlogPWA() {
 				</div>
 
 				<BlogRelatedLinks slug="jak-zainstalowac-planopie-jako-pwa" className="mt-10 max-w-3xl mx-auto" />
+				<BlogArticleCredibility
+					author="Michał Lipka"
+					authorHref="/o-autorze"
+					updatedOn={{ iso: '2025-01-15', label: '15 stycznia 2025 r.' }}
+				/>
 			</article>
 
 			{/* FOOTER */}

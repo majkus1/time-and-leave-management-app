@@ -43,7 +43,7 @@ const UI: Record<
 	}
 > = {
 	pl: {
-		h1: 'Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać w 2026?',
+		h1: 'Roczny plan urlopów: Excel, PDF i aplikacja — co wybrać?',
 		lead:
 			'Wielu pracodawców zaczyna od **arkusza Excel** lub **eksportu do PDF**, żeby zobaczyć urlopy zespołu w jednym widoku. To działa przy małej skali — przy większej liczbie osób i częstych zmianach warto rozważyć **program do wniosków urlopowych** z historią i powiadomieniami. Poniżej: praktyczna checklista i jak Planopia mieści się w tym modelu cenowym.',
 		trialCard: (
@@ -98,7 +98,7 @@ const UI: Record<
 				a: 'Nie — wiele zespołów migruje etapami: najpierw porządek w arkuszu, potem import lub równoległe prowadzenie urlopów w aplikacji, aż zespół przyzwyczai się do obiegu wniosków.',
 			},
 			{
-				q: 'Czy „roczny plan urlopów 2026 pdf” zastąpi aplikację?',
+				q: 'Czy roczny plan urlopów w PDF zastąpi aplikację?',
 				a: 'PDF jest dobry do udostępnienia **zdjęcia sytuacji w jednym momencie**. Nie zastąży jednak bieżących zmian ani akceptacji — do tego służy system z uprawnieniami i historią.',
 			},
 			{
@@ -108,11 +108,12 @@ const UI: Record<
 		],
 		ctaTitle: 'Pobierz gotowy roczny plan urlopów w Excelu',
 		ctaLead:
-			'Darmowy szablon XLSX zawiera listę pracowników, wnioski urlopowe, automatyczne liczenie dni roboczych, roczny widok i podsumowanie obłożenia.',
+			'Darmowy szablon XLSX na 2027 rok: lista pracowników, wnioski urlopowe, automatyczne liczenie dni roboczych, roczny widok i podsumowanie obłożenia.',
 		ctaBtn: 'Pobierz szablon Excel',
 		relatedTitle: 'Powiązane artykuły',
 		related: [
 			{ href: '/program-do-urlopow', label: 'Program do urlopów — wnioski i kalendarz' },
+			{ href: '/blog/plan-urlopow-2027-excel-pdf', label: 'Gotowy wzór planu urlopów 2027 (Excel i PDF)' },
 			{ href: '/blog/dni-wolne-2026', label: 'Dni wolne 2026 — kalendarz świąt' },
 			{ href: '/blog/planowanie-urlopow', label: 'Planowanie urlopów pracowników' },
 			{ href: '/blog/zarzadzanie-urlopami', label: 'Zarządzanie urlopami w firmie' },
@@ -121,10 +122,10 @@ const UI: Record<
 		jsonDesc:
 			'Roczny plan urlopów w Excelu i PDF versus aplikacja: checklista programu do wniosków urlopowych, ograniczenia arkuszy, migracja do Planopii.',
 		jsonKeywords:
-			'roczny plan urlopów excel, plan urlopów pdf, program do wniosków urlopowych, program kadrowy urlopy, oprogramowanie do ewidencji nadgodzin, zarządzanie urlopami',
+			'roczny plan urlopów excel, plan urlopów pdf, excel czy program do urlopów, program do wniosków urlopowych, program kadrowy urlopy, zarządzanie urlopami',
 	},
 	en: {
-		h1: 'Annual leave plan: Excel, PDF, and an app — what to pick in 2026?',
+		h1: 'Annual leave plan: Excel, PDF, and an app — what to pick?',
 		lead:
 			'Many teams start with **Excel** or a **PDF snapshot** to see everyone’s leave in one view. That works at small scale; with more people and frequent changes, a **leave request workflow** with history and notifications pays off. Below: a practical checklist and how Planopia’s pricing model fits.',
 		trialCard: (
@@ -235,12 +236,14 @@ function stripBoldMarkersForJsonLd(s: string): string {
 
 export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }) {
 	const t = UI[locale]
-	const downloadHref = '/downloads/roczny-plan-urlopow-2026-planopia.xlsx'
+	// Zawsze najswiezszy dostepny wzor — etykiety CTA sa bez roku, wiec podmiana nie tworzy rozjazdu.
+	const downloadHref = '/downloads/roczny-plan-urlopow-2027-planopia.xlsx'
 	const url =
 		locale === 'pl'
 			? 'https://planopia.pl/blog/roczny-plan-urlopow-excel-pdf-aplikacja'
 			: 'https://planopia.pl/en/blog/annual-leave-plan-excel-pdf-app'
 	const datePublished = '2026-03-27'
+	const dateModified = '2026-08-31'
 	const overtimeHref =
 		locale === 'pl' ? '/blog/ewidencja-czasu-pracy-online' : '/en/blog/time-tracking-online'
 
@@ -254,11 +257,11 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 		publisher: {
 			'@type': 'Organization',
 			name: 'Planopia',
-			logo: { '@type': 'ImageObject', url: 'https://planopia.pl/img/planopiaheader.webp' },
+			logo: { '@type': 'ImageObject', url: 'https://planopia.pl/img/new-logoplanopia.webp' },
 		},
 		url,
 		datePublished,
-		dateModified: datePublished,
+		dateModified,
 		inLanguage: locale === 'pl' ? 'pl-PL' : 'en-US',
 		keywords: t.jsonKeywords,
 		mainEntityOfPage: { '@type': 'WebPage', '@id': url },

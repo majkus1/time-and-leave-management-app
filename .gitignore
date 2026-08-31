@@ -4,3 +4,8 @@
 /node_modules
 
 .env
+
+# Lokalna konfiguracja Claude Code (agenci przegladu, komendy, launch.json).
+# Narzedzie pracy, nie czesc produktu — zostaje na maszynie.
+.claude/
+CLAUDE.md

@@ -26,6 +26,9 @@ export const BLOG_TOPICS_PL = [
 			{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 			{ href: '/blog/ewidencja-czasu-pracy-online', label: 'Ewidencja online — aplikacja web' },
 			{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja — Excel vs program' },
+			{ href: '/blog/ewidencja-czasu-pracy-excel-wzor', label: 'Ewidencja czasu pracy — darmowy wzór Excel i PDF' },
+			{ href: '/rejestracja-czasu-pracy-qr', label: 'Rejestracja czasu pracy przez QR' },
+			{ href: '/ewidencja-nadgodzin', label: 'Ewidencja nadgodzin' },
 		],
 	},
 	{
@@ -33,12 +36,29 @@ export const BLOG_TOPICS_PL = [
 		title: 'Urlopy i planowanie',
 		description: 'Kalendarz, wnioski, Excel/PDF i święta w Polsce.',
 		links: [
+			{ href: '/blog/plan-urlopow-2027-excel-pdf', label: 'Plan urlopów 2027 — darmowy wzór Excel i PDF' },
+			{ href: '/blog/urlop-wypoczynkowy-ile-dni', label: 'Urlop wypoczynkowy 2026 — wymiar i kalkulator' },
+			{ href: '/blog/urlopy-i-dni-wolne-dla-pracownikow', label: 'Urlopy i dni wolne pracownika — pełna lista' },
+			{ href: '/blog/l4-na-urlopie-wypoczynkowym', label: 'L4 na urlopie — jak odzyskać niewykorzystane dni' },
 			{ href: '/program-do-urlopow', label: 'Program do urlopów — wnioski i kalendarz' },
 			{ href: '/blog/program-do-urlopow-dla-malej-firmy', label: 'Program do urlopów dla małej firmy' },
 			{ href: '/blog/planowanie-urlopow', label: 'Aplikacja do urlopów — planowanie' },
 			{ href: '/blog/zarzadzanie-urlopami', label: 'Zarządzanie urlopami w firmie' },
-			{ href: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja', label: 'Plan urlopów 2026: Excel, PDF, aplikacja' },
+			{ href: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja', label: 'Roczny plan urlopów: Excel, PDF czy aplikacja' },
+			{ href: '/blog/dni-wolne-2027', label: 'Dni wolne 2027 — kalendarz świąt' },
 			{ href: '/blog/dni-wolne-2026', label: 'Dni wolne 2026 — kalendarz świąt' },
+		],
+	},
+	{
+		id: 'grafiki',
+		title: 'Grafiki i harmonogramy pracy',
+		description: 'Zasady z Kodeksu pracy, grafik zmianowy i automatyczne układanie rozkładu.',
+		links: [
+			{ href: '/blog/jak-ulozyc-grafik-pracy', label: 'Jak ułożyć grafik zgodnie z Kodeksem pracy' },
+			{ href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
+			{ href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji', label: 'Grafik pracy w restauracji — przykład' },
+			{ href: '/ewidencja-nadgodzin', label: 'Ewidencja nadgodzin' },
+			{ href: '/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik', label: 'Asystent AI w grafiku' },
 		],
 	},
 	{
@@ -46,6 +66,7 @@ export const BLOG_TOPICS_PL = [
 		title: 'Branże i zastosowania',
 		description: 'Rozwiązania dopasowane do specyfiki pracy zespołu.',
 		links: [
+			{ href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
 			{ href: '/dla-firm-sprzatajacych', label: 'Firmy sprzątające — landing' },
 			{ href: '/blog/jak-zarzadzac-firma-sprzatajaca', label: 'Jak zarządzać firmą sprzątającą' },
 			{ href: '/dla-gastronomii', label: 'Gastronomia — landing' },
@@ -62,7 +83,7 @@ export const BLOG_TOPICS_PL = [
 			{ href: '/blog/kompleksowa-aplikacja-do-zarzadzania-firma', label: 'Ewidencja, urlopy i grafik w jednej aplikacji' },
 			{ href: '/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik', label: 'Asystent AI w Planopii' },
 			{ href: '/blog/jak-zainstalowac-planopie-jako-pwa', label: 'Instalacja Planopii jako PWA' },
-			{ href: '/blog/instrukcja-wideo-planopia', label: 'Instrukcja wideo z aplikacji' },
+			{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii' },
 		],
 	},
 ] as const
@@ -89,6 +110,7 @@ const L = {
 		label: 'Roczny plan urlopów: Excel, PDF, aplikacja',
 	},
 	dniWolne: { href: '/blog/dni-wolne-2026', label: 'Dni wolne 2026' },
+	dniWolne2027: { href: '/blog/dni-wolne-2027', label: 'Dni wolne 2027 — kalendarz świąt' },
 	kompleksowa: {
 		href: '/blog/kompleksowa-aplikacja-do-zarzadzania-firma',
 		label: 'Ewidencja, urlopy i grafik — jedna aplikacja',
@@ -113,7 +135,7 @@ const L = {
 		label: 'Asystent AI — ewidencja, urlopy, grafik',
 	},
 	pwa: { href: '/blog/jak-zainstalowac-planopie-jako-pwa', label: 'Instalacja Planopii jako PWA' },
-	wideo: { href: '/blog/instrukcja-wideo-planopia', label: 'Instrukcja wideo Planopia' },
+	wideo: { href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii' },
 	cennik: { href: '/#cennik', label: 'Cennik Planopii' },
 	programUrlopow: { href: '/program-do-urlopow', label: 'Program do urlopów' },
 	programEwidencja: { href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
@@ -121,37 +143,94 @@ const L = {
 		href: '/blog/program-do-urlopow-dla-malej-firmy',
 		label: 'Program do urlopów dla małej firmy',
 	},
+	urlopWypoczynkowy: {
+		href: '/blog/urlop-wypoczynkowy-ile-dni',
+		label: 'Urlop wypoczynkowy 2026 — wymiar i kalkulator',
+	},
+	l4NaUrlopie: {
+		href: '/blog/l4-na-urlopie-wypoczynkowym',
+		label: 'L4 na urlopie — jak odzyskać niewykorzystane dni',
+	},
+	urlopyDniWolne: {
+		href: '/blog/urlopy-i-dni-wolne-dla-pracownikow',
+		label: 'Urlopy i dni wolne pracownika — pełna lista',
+	},
+	planUrlopow2027: {
+		href: '/blog/plan-urlopow-2027-excel-pdf',
+		label: 'Plan urlopów 2027 — darmowy wzór Excel i PDF',
+	},
+	jakUlozycGrafik: {
+		href: '/blog/jak-ulozyc-grafik-pracy',
+		label: 'Jak ułożyć grafik zgodnie z Kodeksem pracy',
+	},
+	programGrafikow: { href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
+	restauracjaGrafik: {
+		href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji',
+		label: 'Grafik pracy w restauracji — przykład',
+	},
+	wzorEwidencji: {
+		href: '/blog/ewidencja-czasu-pracy-excel-wzor',
+		label: 'Ewidencja czasu pracy — darmowy wzór Excel i PDF',
+	},
 } as const
 
 /** Konfiguracja powiązań per slug (ścieżka bez /blog/). */
 export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
+	'dni-wolne-2027': {
+		relatedTitle: 'Więcej o planowaniu urlopów',
+		related: [L.planUrlopow2027, L.programUrlopow, L.rocznyPlan, L.urlopWypoczynkowy, L.planowanie, L.jakUlozycGrafik],
+	},
+	'jak-ulozyc-grafik-pracy': {
+		relatedTitle: 'Więcej o grafikach i czasie pracy',
+		related: [L.programGrafikow, L.restauracjaGrafik, L.gastronomiaLanding, L.sprzatanieLanding, L.programEwidencja, L.wzorEwidencji],
+	},
 	'darmowa-aplikacja-do-ewidencji-czasu-pracy': {
 		relatedTitle: 'Więcej o ewidencji i urlopach',
 		related: [L.programEwidencja, L.online, L.elektroniczna, L.programUrlopow, L.budowa, L.rocznyPlan],
 	},
 	'ewidencja-czasu-pracy-online': {
 		showPillarBanner: true,
-		related: [L.programEwidencja, L.pillar, L.elektroniczna, L.budowa, L.kompleksowa],
+		related: [L.wzorEwidencji, L.programEwidencja, L.pillar, L.elektroniczna, L.budowa, L.kompleksowa],
 	},
 	'elektroniczna-ewidencja-czasu-pracy': {
 		showPillarBanner: true,
-		related: [L.programEwidencja, L.pillar, L.online, L.budowa, L.planowanie],
+		related: [L.wzorEwidencji, L.programEwidencja, L.pillar, L.online, L.budowa, L.planowanie],
 	},
 	'program-do-urlopow-dla-malej-firmy': {
 		relatedTitle: 'Więcej o urlopach',
-		related: [L.programUrlopow, L.rocznyPlan, L.planowanie, L.zarzadzanie, L.dniWolne, L.pillar],
+		related: [L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.rocznyPlan, L.planowanie, L.zarzadzanie],
 	},
 	'planowanie-urlopow': {
-		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.zarzadzanie, L.rocznyPlan, L.dniWolne],
+		related: [L.dniWolne2027, L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.zarzadzanie, L.rocznyPlan],
 	},
 	'zarzadzanie-urlopami': {
-		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.planowanie, L.rocznyPlan, L.kompleksowa],
+		related: [L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.programUrlopowMalaFirma, L.planowanie, L.rocznyPlan],
 	},
 	'roczny-plan-urlopow-excel-pdf-aplikacja': {
-		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.dniWolne, L.planowanie, L.zarzadzanie],
+		related: [L.programUrlopow, L.urlopWypoczynkowy, L.programUrlopowMalaFirma, L.dniWolne2027, L.planowanie, L.zarzadzanie],
 	},
 	'dni-wolne-2026': {
-		related: [L.rocznyPlan, L.planowanie, L.pillar, L.zarzadzanie],
+		related: [L.dniWolne2027, L.urlopWypoczynkowy, L.rocznyPlan, L.planowanie, L.zarzadzanie],
+	},
+	'urlop-wypoczynkowy-ile-dni': {
+		relatedTitle: 'Więcej o urlopach i planowaniu',
+		related: [L.planUrlopow2027, L.programUrlopow, L.l4NaUrlopie, L.urlopyDniWolne, L.planowanie, L.rocznyPlan],
+	},
+	'l4-na-urlopie-wypoczynkowym': {
+		relatedTitle: 'Więcej o urlopach i planowaniu',
+		related: [L.programUrlopow, L.urlopWypoczynkowy, L.urlopyDniWolne, L.planowanie, L.zarzadzanie, L.rocznyPlan],
+	},
+	'urlopy-i-dni-wolne-dla-pracownikow': {
+		relatedTitle: 'Więcej o urlopach i planowaniu',
+		related: [L.planUrlopow2027, L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.dniWolne, L.planowanie],
+	},
+	'plan-urlopow-2027-excel-pdf': {
+		relatedTitle: 'Więcej o urlopach i planowaniu',
+		related: [L.dniWolne2027, L.programUrlopow, L.rocznyPlan, L.urlopWypoczynkowy, L.urlopyDniWolne, L.planowanie],
+	},
+	'ewidencja-czasu-pracy-excel-wzor': {
+		relatedTitle: 'Więcej o ewidencji czasu pracy',
+		related: [L.programEwidencja, L.pillar, L.online, L.elektroniczna, L.budowa, L.planUrlopow2027],
 	},
 	'kompleksowa-aplikacja-do-zarzadzania-firma': {
 		related: [L.pillar, L.online, L.planowanie, L.ai],
@@ -172,10 +251,7 @@ export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
 	},
 	'jak-zainstalowac-planopie-jako-pwa': {
 		related: [L.pillar, L.online, L.wideo, L.kompleksowa],
-	},
-	'instrukcja-wideo-planopia': {
-		related: [L.pillar, L.online, L.pwa, L.planowanie],
-	},
+	},
 }
 
 const L_EN = {
@@ -209,7 +285,7 @@ const L_EN = {
 		label: 'Planopia AI Assistant',
 	},
 	pwa: { href: '/en/blog/how-to-install-planopia-as-pwa', label: 'Install Planopia as PWA' },
-	videoTutorials: { href: '/en/blog/video-tutorials', label: 'Video tutorials' },
+	videoTutorials: { href: '/en/how-to-use', label: 'How to use Planopia' },
 	leaveSoftware: { href: '/en/leave-management-software', label: 'Leave management software' },
 	timeSoftware: { href: '/en/time-tracking-software', label: 'Time tracking software' },
 } as const
@@ -261,11 +337,7 @@ export const BLOG_ARTICLE_LINKS_EN: Record<string, BlogArticleLinkConfig> = {
 	'time-tracking-on-construction-sites': {
 		relatedTitle: 'Related articles',
 		related: [L_EN.constructionLanding, L_EN.timeSoftware, L_EN.pillar, L_EN.online],
-	},
-	'video-tutorials': {
-		relatedTitle: 'Related articles',
-		related: [L_EN.pillar, L_EN.online, L_EN.pwa, L_EN.leave],
-	},
+	},
 }
 
 export function getBlogArticleLinkConfig(

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
-const META_TITLE = 'Annual Leave Plan 2026: Excel, PDF or App | Planopia'
+const META_TITLE = 'Annual leave plan: Excel, PDF or an app | Planopia'
 const META_DESCRIPTION =
-	'Compare an annual leave plan in Excel or PDF with an online request and approval app. A practical 2026 checklist for small teams.'
+	'Compare an annual leave plan in Excel or PDF with an online request and approval app. A practical checklist and a free spreadsheet template.'
 
 export const metadata: Metadata = {
 	title: {
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 		locale: 'en_US',
 		type: 'article',
 		publishedTime: '2026-03-27T00:00:00.000Z',
-		modifiedTime: '2026-03-27T00:00:00.000Z',
+		modifiedTime: '2026-08-31T00:00:00.000Z',
 		authors: ['Michał Lipka'],
 	},
 	twitter: {

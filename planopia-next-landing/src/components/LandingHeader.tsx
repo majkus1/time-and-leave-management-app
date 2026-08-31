@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsEn,
@@ -96,6 +97,7 @@ export default function LandingHeader({ locale }: { locale: Locale }) {
 								</a>
 							)
 						)}
+						<LandingSolutionsDropdown locale={locale} />
 						<LandingIndustriesDropdown locale={locale} />
 						{t.nav.slice(MOBILE_INDUSTRY_INSERT_INDEX).map(item =>
 							'isLink' in item && item.isLink ? (

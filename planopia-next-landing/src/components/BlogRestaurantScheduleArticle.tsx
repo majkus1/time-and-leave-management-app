@@ -2,6 +2,7 @@ import Link from 'next/link'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
 import { LANDING_APP_GALLERY_IMAGES } from '@/data/landingAppGallery'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 const canonical = 'https://planopia.pl/blog/jak-ulozyc-grafik-pracy-w-restauracji'
 const registerHref = 'https://app.planopia.pl/team-registration'
@@ -202,6 +203,11 @@ export default function BlogRestaurantScheduleArticle() {
 					</section>
 
 					<BlogRelatedLinks slug="jak-ulozyc-grafik-pracy-w-restauracji" locale="pl" className="mt-10" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-07-17', label: '17 lipca 2026 r.' }}
+					/>
 				</article>
 			</main>
 		</>

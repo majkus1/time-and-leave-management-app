@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import BlogRelatedLinks from './BlogRelatedLinks'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 export default function BlogSevenContent() {
 	const blogPostingSchema = {
@@ -18,7 +19,7 @@ export default function BlogSevenContent() {
 			"name": "Planopia",
 			"logo": {
 				"@type": "ImageObject",
-				"url": "https://planopia.pl/img/planopiaheader.webp"
+				"url": "https://planopia.pl/img/new-logoplanopia.webp"
 			}
 		},
 		"url": "https://planopia.pl/blog/kompleksowa-aplikacja-do-zarzadzania-firma",
@@ -293,6 +294,11 @@ export default function BlogSevenContent() {
 					</section>
 
 					<BlogRelatedLinks slug="kompleksowa-aplikacja-do-zarzadzania-firma" className="mt-10" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-01-03', label: '3 stycznia 2026 r.' }}
+					/>
 				</article>
 			</main>
 

@@ -18,7 +18,7 @@ export default function ENBlogSevenContent() {
 			"name": "Planopia",
 			"logo": {
 				"@type": "ImageObject",
-				"url": "https://planopia.pl/img/planopiaheader.webp"
+				"url": "https://planopia.pl/img/new-logoplanopia.webp"
 			}
 		},
 		"url": "https://planopia.pl/en/blog/comprehensive-company-management-app",

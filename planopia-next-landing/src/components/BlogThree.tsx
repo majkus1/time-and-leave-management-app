@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MobileMenu from './MobileMenu'
 import HamburgerButton from './HamburgerButton'
 import LandingIndustriesDropdown from './LandingIndustriesDropdown'
+import LandingSolutionsDropdown from './LandingSolutionsDropdown'
 import {
 	industryMobileConfig,
 	landingMobileNavItemsPl,
@@ -13,6 +14,7 @@ import {
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import LeaveTemplateBanner from './LeaveTemplateBanner'
+import BlogArticleCredibility from './BlogArticleCredibility'
 
 function BlogThree() {
 	const [menuOpen, setMenuOpen] = useState(false)
@@ -39,7 +41,7 @@ function BlogThree() {
 							"name": "Planopia",
 							"logo": {
 								"@type": "ImageObject",
-								"url": "https://planopia.pl/img/planopiaheader.webp"
+								"url": "https://planopia.pl/img/new-logoplanopia.webp"
 							}
 						},
 						"url": "https://planopia.pl/blog/planowanie-urlopow",
@@ -70,6 +72,7 @@ function BlogThree() {
 							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
 							Cennik
 						</Link>
+						<LandingSolutionsDropdown locale="pl" />
 						<LandingIndustriesDropdown locale="pl" />
 						<Link
 							href="/blog"
@@ -229,6 +232,11 @@ function BlogThree() {
 				<LeaveTemplateBanner className="mt-10" />
 
 				<BlogRelatedLinks slug="planowanie-urlopow" className="mt-10" />
+				<BlogArticleCredibility
+					author="Michał Lipka"
+					authorHref="/o-autorze"
+					updatedOn={{ iso: '2026-05-17', label: '17 maja 2026 r.' }}
+				/>
 			</article>
 
 			{/* FOOTER */}

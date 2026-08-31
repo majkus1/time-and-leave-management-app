@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
-const META_TITLE = 'Plan urlopów 2026: Excel, PDF czy aplikacja? | Planopia'
+const META_TITLE = 'Roczny plan urlopów: Excel, PDF czy aplikacja | Planopia'
 const META_DESCRIPTION =
-	'Pobierz plan urlopów w Excelu i porównaj go z aplikacją do wniosków i akceptacji. Praktyczna checklista planowania urlopów na 2026 rok.'
+	'Porównanie rocznego planu urlopów w Excelu i PDF z aplikacją do wniosków i akceptacji. Checklista wyboru i darmowy wzór arkusza do pobrania.'
 
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 	keywords: [
 		'roczny plan urlopów excel',
 		'plan urlopów pdf',
-		'roczny plan urlopów 2026 excel darmowy',
+		'excel czy program do urlopów',
 		'program do wniosków urlopowych',
 		'program kadrowy urlopy',
 		'oprogramowanie do ewidencji nadgodzin',
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 		url: 'https://planopia.pl/blog/roczny-plan-urlopow-excel-pdf-aplikacja',
 		siteName: 'Planopia',
 		publishedTime: '2026-03-27T12:00:00.000Z',
-		modifiedTime: '2026-03-27T12:00:00.000Z',
+		modifiedTime: '2026-08-31T12:00:00.000Z',
 		authors: ['Michał Lipka'],
 		title: META_TITLE,
 		description: META_DESCRIPTION,

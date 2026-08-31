@@ -16,6 +16,15 @@ const MOBILE_VIDEOS = LANDING_SHOWCASE_MOBILE_VIDEOS
 /** Jak wcześniej w sekcji „O aplikacji” — gdy na telefonie wideo nie wystartuje (np. oszczędzanie baterii). */
 const MOBILE_FALLBACK_IMG = LANDING_SHOWCASE_MOBILE_FALLBACK
 
+/**
+ * Rzeczywiste proporcje materiałów (odczytane z nagłówków MP4).
+ * Trzymamy je jako aspect-ratio na KAŻDYM pudełku, żeby przeglądarka znała wysokość
+ * zanim cokolwiek się wczyta. Bez tego box ma zerową wysokość do czasu pobrania
+ * metadanych i cała sekcja pod spodem podskakuje.
+ */
+const DESKTOP_RATIO = '1902 / 912'
+const MOBILE_RATIO = '358 / 780'
+
 type Props = { locale: 'pl' | 'en' }
 
 export default function AboutAppShowcaseVideos({ locale }: Props) {
@@ -46,7 +55,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 		if (!el) return
 		const io = new IntersectionObserver(
 			([entry]) => setInView(entry.isIntersecting),
-			{ rootMargin: '120px 0px', threshold: 0.1 }
+			{ rootMargin: '200px 0px', threshold: 0 }
 		)
 		io.observe(el)
 		return () => io.disconnect()
@@ -85,44 +94,37 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 		})
 	}, [reduceMotion, isLg, inView])
 
-	// Desktop pair: start / replay when phase is active (wide + pair + in viewport)
+	const showMobileCarousel = !isLg || (isLg && !showDesktopPair)
+	const effectiveMobileIndex = reduceMotion ? 0 : mobileIndex
+	/** Klipy desktop maja sens tylko na szerokim ukladzie i tylko gdy sekcja jest w poblizu. */
+	const desktopActive = isLg && showDesktopPair && inView
+	const mobileActive = inView && showMobileCarousel && !(!isLg && mobileStaticFallback)
+
+	// Para desktop: start / restart, gdy faza jest aktywna. Elementy pozostaja w DOM,
+	// wiec wyjscie z viewportu tylko zatrzymuje odtwarzanie — nic sie nie przebudowuje.
 	useEffect(() => {
-		if (!isLg || !showDesktopPair || !inView) return
+		if (!desktopActive) {
+			desktopRefs.current.forEach(el => el?.pause())
+			return
+		}
 		desktopEndedRef.current = [false, false]
 		desktopRefs.current.forEach(el => {
 			if (!el) return
 			el.currentTime = 0
-			if (reduceMotion) {
-				el.loop = true
-			} else {
-				el.loop = false
-			}
+			el.loop = reduceMotion
 			const p = el.play()
 			if (p && typeof p.catch === 'function') p.catch(() => {})
 		})
-	}, [isLg, showDesktopPair, reduceMotion, inView])
-
-	useEffect(() => {
-		if (!isLg || showDesktopPair) return
-		desktopRefs.current.forEach(el => el?.pause())
-	}, [isLg, showDesktopPair])
+	}, [desktopActive, reduceMotion])
 
 	// Po zmianie szerokości (np. obrót telefonu) ponów próbę wideo zamiast trzymać stary fallback
 	useEffect(() => {
 		setMobileStaticFallback(false)
 	}, [isLg])
 
-	// Mobile clips: play active, pause rest — tylko gdy sekcja w viewport
-	const showMobileCarousel = !isLg || (isLg && !showDesktopPair)
-	const effectiveMobileIndex = reduceMotion ? 0 : mobileIndex
-	const shouldLoadMobileVideos = inView && showMobileCarousel
-
+	// Klipy mobilne: gra aktywny, reszta zapauzowana.
 	useEffect(() => {
-		if (!shouldLoadMobileVideos) {
-			mobileRefs.current.forEach(el => el?.pause())
-			return
-		}
-		if (!isLg && mobileStaticFallback) {
+		if (!mobileActive) {
 			mobileRefs.current.forEach(el => el?.pause())
 			return
 		}
@@ -135,8 +137,7 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 				return
 			}
 			el.currentTime = 0
-			if (reduceMotion) el.loop = true
-			else el.loop = false
+			el.loop = reduceMotion
 			const p = el.play()
 			if (p && typeof p.then === 'function') {
 				p.then(() => {
@@ -146,41 +147,51 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 				})
 			}
 		})
-	}, [shouldLoadMobileVideos, effectiveMobileIndex, reduceMotion, isLg, mobileStaticFallback])
+	}, [mobileActive, effectiveMobileIndex, reduceMotion, isLg])
 
-	/* Desktop: pełna szerokość w opakowaniu */
-	const desktopVideoClass =
-		'block w-full bg-white object-contain object-center outline-none [border:0]'
-
-	/* Mobile: naturalna szerokość klipu (bez w-full), max. szerokość kolumny, wyśrodkowanie */
-	const mobileVideoClass =
-		'mx-auto block h-auto w-auto max-w-full max-h-[600px] rounded-xl bg-white shadow-xl outline-none [border:0]'
-
-	const showDesktopVideos = isLg && showDesktopPair && inView
+	const mediaClass = 'block h-full w-full bg-white object-contain object-center outline-none [border:0]'
 
 	return (
 		<div
 			ref={wrapRef}
-			className="about-app-mockup-wrap relative flex w-full min-h-[280px] flex-col justify-center lg:min-h-0"
+			className="about-app-mockup-wrap relative flex w-full flex-col justify-center"
 		>
-			{/* Wide: dwa klipy desktop — renderowane tylko na lg i w viewport (brak src na mobile) */}
-			{showDesktopVideos ? (
-				<div className="flex w-full max-w-[1000px] flex-col gap-5">
+			{/*
+			 * Scena desktop wyznacza wysokosc calej sekcji na szerokim ukladzie.
+			 * Karuzela telefonowa jest nad nia pozycjonowana absolutnie, wiec przelaczanie
+			 * faz zmienia wylacznie widocznosc — uklad strony nie drgnie.
+			 */}
+			<div className="relative w-full max-w-[1000px] lg:mx-0">
+				<div
+					className={[
+						'flex w-full flex-col gap-5',
+						isLg ? 'transition-opacity duration-500' : 'invisible h-0 overflow-hidden',
+						// Para desktop zostaje w ukladzie (wyznacza wysokosc sceny), ale gasnie,
+						// gdy na wierzchu pokazuje sie telefon — inaczej przebijalaby sie dookola niego.
+						isLg && !showDesktopPair ? 'opacity-0' : 'opacity-100',
+					].join(' ')}
+					aria-hidden={isLg && !showDesktopPair}
+				>
 					{DESKTOP_VIDEOS.map((src, i) => (
 						<div
 							key={src}
 							className="overflow-hidden rounded-xl bg-white shadow-xl"
+							style={{ aspectRatio: DESKTOP_RATIO }}
 						>
+							{/*
+							 * Brak autoPlay i preload="none": 43 MB na klip nie zaczyna sie sciagac,
+							 * dopoki sekcja nie jest w poblizu — odtwarzanie startuje z efektu.
+							 */}
 							<video
 								ref={el => {
 									desktopRefs.current[i] = el
 								}}
-								className={`w-full ${desktopVideoClass}`}
+								className={mediaClass}
 								src={src}
 								muted
 								playsInline
 								preload="none"
-								autoPlay
+								poster={MOBILE_FALLBACK_IMG[locale]}
 								loop={reduceMotion}
 								onEnded={reduceMotion ? undefined : () => handleDesktopEnded(i as 0 | 1)}
 								aria-label={`${desktopLabel} ${i + 1} / ${DESKTOP_VIDEOS.length}`}
@@ -188,66 +199,64 @@ export default function AboutAppShowcaseVideos({ locale }: Props) {
 						</div>
 					))}
 				</div>
-			) : isLg && showDesktopPair ? (
-				<img
-					src={MOBILE_FALLBACK_IMG[locale]}
-					alt={desktopLabel}
-					className={`w-full max-w-[1000px] rounded-xl shadow-xl ${desktopVideoClass}`}
-					loading="lazy"
-					decoding="async"
-				/>
-			) : null}
 
-			{/* Mobile: kontener na pełną szerokość kolumny; samo wideo wyśrodkowane (mx-auto), bez rozciągania */}
-			<div className={showMobileCarousel ? 'flex w-full flex-col items-center' : 'hidden'}>
-				{!inView || (!isLg && mobileStaticFallback) ? (
-					<img
-						src={MOBILE_FALLBACK_IMG[locale]}
-						alt={mobileLabel}
-						className={mobileVideoClass}
-						loading="lazy"
-						decoding="async"
-					/>
-				) : shouldLoadMobileVideos ? (
-					MOBILE_VIDEOS.map((src, i) => (
-						<video
-							key={src}
-							ref={el => {
-								mobileRefs.current[i] = el
-							}}
-							className={i === effectiveMobileIndex ? mobileVideoClass : 'hidden'}
-							src={src}
-							muted
-							playsInline
-							preload="none"
-							poster={MOBILE_FALLBACK_IMG[locale]}
-							loop={reduceMotion}
-							onEnded={reduceMotion ? undefined : handleMobileEnded}
-							aria-hidden={i !== effectiveMobileIndex}
-							aria-label={`${mobileLabel} ${i + 1} / ${MOBILE_VIDEOS.length}`}
-						/>
-					))
-				) : (
-					<img
-						src={MOBILE_FALLBACK_IMG[locale]}
-						alt={mobileLabel}
-						className={mobileVideoClass}
-						loading="lazy"
-						decoding="async"
-					/>
-				)}
-				{!reduceMotion && shouldLoadMobileVideos && !(!isLg && mobileStaticFallback) && (
-					<div className="mt-3 flex justify-center gap-2" aria-hidden>
-						{MOBILE_VIDEOS.map((_, i) => (
-							<span
-								key={i}
-								className={`h-1.5 rounded-full transition-all duration-300 ${
-									i === mobileIndex ? 'w-6 bg-green-600' : 'w-1.5 bg-gray-300'
-								}`}
+				{/* Telefon: w toku na malych ekranach, nakladka na duzych */}
+				<div
+					className={[
+						'flex w-full flex-col items-center',
+						isLg ? 'absolute inset-0 justify-center transition-opacity duration-500' : '',
+						isLg && !showMobileCarousel ? 'pointer-events-none opacity-0' : 'opacity-100',
+					].join(' ')}
+					aria-hidden={isLg && !showMobileCarousel}
+				>
+					<div
+						className="relative mx-auto w-auto max-h-[600px] overflow-hidden rounded-xl bg-white shadow-xl"
+						style={{ aspectRatio: MOBILE_RATIO, height: 'min(600px, 70vh)' }}
+					>
+						{!isLg && mobileStaticFallback ? (
+							<img
+								src={MOBILE_FALLBACK_IMG[locale]}
+								alt={mobileLabel}
+								className={mediaClass}
+								loading="lazy"
+								decoding="async"
 							/>
-						))}
+						) : (
+							MOBILE_VIDEOS.map((src, i) => (
+								<video
+									key={src}
+									ref={el => {
+										mobileRefs.current[i] = el
+									}}
+									className={`${mediaClass} ${i === effectiveMobileIndex ? '' : 'hidden'}`}
+									src={src}
+									muted
+									playsInline
+									preload="none"
+									poster={MOBILE_FALLBACK_IMG[locale]}
+									loop={reduceMotion}
+									onEnded={reduceMotion ? undefined : handleMobileEnded}
+									aria-hidden={i !== effectiveMobileIndex}
+									aria-label={`${mobileLabel} ${i + 1} / ${MOBILE_VIDEOS.length}`}
+								/>
+							))
+						)}
 					</div>
-				)}
+
+					{/* Kropki maja stala wysokosc, zeby ich pojawienie sie niczego nie przesuwalo */}
+					<div className="mt-3 flex h-1.5 justify-center gap-2" aria-hidden>
+						{!reduceMotion &&
+							!(!isLg && mobileStaticFallback) &&
+							MOBILE_VIDEOS.map((_, i) => (
+								<span
+									key={i}
+									className={`h-1.5 rounded-full transition-all duration-300 ${
+										i === mobileIndex ? 'w-6 bg-green-600' : 'w-1.5 bg-gray-300'
+									}`}
+								/>
+							))}
+					</div>
+				</div>
 			</div>
 		</div>
 	)
