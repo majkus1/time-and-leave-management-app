@@ -63,6 +63,7 @@ export default function TeamAccessNoticePage() {
 				/>
 				<h1 className="team-access-notice__title">{title}</h1>
 				<p className="team-access-notice__body">{body}</p>
+				{seatsIssue ? <p className="team-access-notice__hint">{t('teamAccessNotice.seatsHint')}</p> : null}
 				<div className="team-access-notice__actions">
 					{showBackButton ? (
 						<button type="button" className="team-access-notice__btn primary" onClick={() => navigate('/dashboard')}>
