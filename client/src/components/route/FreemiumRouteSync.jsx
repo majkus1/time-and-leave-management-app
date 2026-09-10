@@ -96,6 +96,13 @@ export default function FreemiumRouteSync() {
 			return
 		}
 
+		// Blokada miejsc zniknęła (admin przyciął zespół albo kupił pakiet), a pracownik wciąż ogląda
+		// komunikat — ta trasa jest dozwolona także w limicie, więc bez tej reguły nikt by go stamtąd nie wyprowadził.
+		if (p === TEAM_ACCESS_NOTICE_PATH && new URLSearchParams(location.search).get('reason') === 'seats') {
+			navigate(appHomePath({ canUseDashboard }), { replace: true })
+			return
+		}
+
 		if (
 			freemiumAppRestricted &&
 			!isFreemiumAppPathAllowed(p, { userIsAdmin, staffBilling, canCalendars: canFreemiumCalendars })
@@ -111,6 +118,7 @@ export default function FreemiumRouteSync() {
 		freemiumSeatBlocked,
 		freemiumAppRestricted,
 		location.pathname,
+		location.search,
 		navigate,
 		role,
 		canFreemiumCalendars,
