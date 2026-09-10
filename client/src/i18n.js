@@ -51,7 +51,7 @@ i18n
 					teamAccessNotice: {
 						title: 'Limited access',
 						seatsBody:
-							'Your team is on the free tier with a limit of {{max}} user accounts. There are currently too many active accounts — an administrator must remove users in Team management (or upgrade the plan) before the full app is available again. If you are not an administrator, please contact your team admin.',
+							'Your team is on the free tier, which allows up to {{max}} accounts. There are more active accounts right now, so the app is locked for the whole team. To unlock it, the administrator must reduce the team to {{max}} accounts in Team management, or an administrator or HR must purchase a package under Packages & billing. If you have neither role, please contact your team administrator.',
 						billingBody:
 							'Packages and billing are available only to users with the Administrator or HR role. Ask your team administrator if you need to change the plan or resolve billing.',
 						settingsBody:
@@ -2180,7 +2180,7 @@ i18n
 					teamAccessNotice: {
 						title: 'Ograniczony dostęp',
 						seatsBody:
-							'Zespół jest w trybie darmowym z limitem {{max}} kont użytkowników. Obecnie jest ich za dużo — administrator musi usunąć konta w Zarządzaniu zespołem (lub wykupić plan), zanim aplikacja znów będzie w pełni dostępna. Jeśli nie jesteś administratorem, skontaktuj się z administratorem zespołu.',
+							'Zespół jest w trybie darmowym, w którym może korzystać maksymalnie {{max}} kont. Obecnie aktywnych kont jest więcej, dlatego aplikacja jest zablokowana dla całego zespołu. Aby ją odblokować, administrator musi zmniejszyć zespół do {{max}} kont w Zarządzaniu zespołem albo administrator lub HR musi wykupić pakiet w Pakietach i rozliczeniach. Jeśli nie masz żadnej z tych ról, skontaktuj się z administratorem zespołu.',
 						billingBody:
 							'Sekcja Pakiety i rozliczenia jest dostępna tylko dla ról Administrator i HR. Zmiany planu lub rozliczenia załatwia administrator zespołu.',
 						settingsBody:

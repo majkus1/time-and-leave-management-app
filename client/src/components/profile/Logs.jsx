@@ -9,6 +9,7 @@ import { useUsers, useUpdateUserRoles, useDeleteUser, useResendPasswordLink, use
 import { useDepartments, useCreateDepartment, useDeleteDepartment, useDepartmentUsers } from '../../hooks/useDepartments'
 import { useUserLogs, useAllLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import {
 	useBillingSuperPaidPlanTeams,
 	useBillingSuperStripePaidPlanTeams,
@@ -65,6 +66,8 @@ function Logs() {
 	const { data: deletedUsers = [], isLoading: loadingDeletedUsers } = useDeletedUsers()
 	const restoreUserMutation = useRestoreUser()
 	const permanentlyDeleteUserMutation = usePermanentlyDeleteUser()
+	// Przy blokadzie miejsc (freemium > 5 kont) serwer odrzuca przywracanie — zwiększałoby liczbę kont.
+	const { freemiumSeatBlocked } = useFreemiumAccess({ enabled: true })
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
@@ -2879,6 +2882,7 @@ function Logs() {
 												display: 'flex',
 												gap: '10px'
 											}}>
+												{!freemiumSeatBlocked && (
 												<button
 													onClick={async () => {
 														const userDisplayName = getUserDisplayName(user)
@@ -2915,6 +2919,7 @@ function Logs() {
 												>
 													{t('logs.restoreUser') || 'Przywróć'}
 												</button>
+												)}
 												<button
 													onClick={async () => {
 														const userDisplayName = getUserDisplayName(user)

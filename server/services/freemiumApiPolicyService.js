@@ -4,14 +4,43 @@ const { isSuperAdminUser } = require('../utils/logAccessPolicy')
 /**
  * Polityka dostępu API dla zespołów w trybie freemium (wygasły trial / niewznowiona subskrypcja / koniec okresu legacy).
  * Wyodrębniona od middleware — łatwa do testów i jednego miejsca na listy ścieżek.
+ *
+ * Dwa tryby:
+ *  - w limicie miejsc (<= freemiumMaxAppSeats): ewidencja czasu pracy i kalendarz, bez QR i licznika;
+ *    Admin/HR dodatkowo zarządzanie zespołem oraz pakiety i rozliczenia;
+ *  - ponad limit: zespół ma zejść do limitu albo kupić pakiet. Admin/HR widzą tylko to, co jest
+ *    do tego potrzebne; pozostałe role — wyłącznie komunikat (żadnych danych aplikacji).
  */
+
+const ROLE_ADMIN = 'Admin'
+const ROLE_HR = 'HR'
+
+function hasRole(roles, name) {
+	return Array.isArray(roles) && roles.includes(name)
+}
+
+function isAdminRoles(roles) {
+	return hasRole(roles, ROLE_ADMIN)
+}
+
+/** Admin lub HR — role, które mogą naprawić sytuację zespołu (zakup pakietu). */
+function isBillingStaffRoles(roles) {
+	return isAdminRoles(roles) || hasRole(roles, ROLE_HR)
+}
 
 function freemiumMaxAppSeats() {
 	return TRIAL.maxUsers
 }
 
+/**
+ * Ścieżka w takiej postaci, w jakiej zobaczy ją router. Express dopasowuje trasy bez rozróżniania
+ * wielkości liter, z końcowym ukośnikiem i po zdublowanych ukośnikach — bez tej normalizacji
+ * `/API/schedules/` omijałoby politykę, a router i tak obsłużyłby żądanie.
+ */
 function normalizeApiPath(req) {
-	return (req.originalUrl || req.url || '').split('?')[0]
+	const raw = (req.originalUrl || req.url || '').split('?')[0]
+	const collapsed = raw.replace(/\/{2,}/g, '/').toLowerCase()
+	return collapsed.length > 1 ? collapsed.replace(/\/+$/, '') : collapsed
 }
 
 function isFreemiumTimerPath(path) {
@@ -35,67 +64,70 @@ function matchesOwnTeamGet(path, method, teamId) {
 	return m && m[1].toLowerCase() === String(teamId).toLowerCase()
 }
 
+/** Odczyty ekranów, które Admin/HR widzą przy blokadzie miejsc (sidebar, dzwonek, ustawienia). */
+const SEAT_OVERAGE_STAFF_READ_PREFIXES = ['/api/settings', '/api/email-notifications']
+/** Powiadomienia, push i zgłoszenia do pomocy — Admin/HR muszą móc skontaktować się z nami, gdy utkną. */
+const SEAT_OVERAGE_STAFF_PREFIXES = ['/api/notifications', '/api/push', '/api/tickets']
+/** Zarządzanie zespołem — to, czego używa ekran przycinania kont (tylko Admin), łącznie z konfiguracją przełożonych. */
+const SEAT_OVERAGE_ADMIN_PREFIXES = ['/api/departments', '/api/userlogs', '/api/supervisors']
+
 /**
- * Zespół ma > freemiumMaxAppSeats() aktywnych kont — tylko billing + przycinanie zespołu (bez dodawania użytkowników).
+ * Zespół ma > freemiumMaxAppSeats() aktywnych kont.
+ * Pracownik / przełożony: nic poza wylogowaniem i uprawnieniami (komunikat po stronie klienta).
+ * HR: pakiety i rozliczenia. Admin: dodatkowo zarządzanie zespołem — bez dodawania i przywracania kont,
+ * bo to zwiększałoby liczbę miejsc zamiast ją zmniejszać.
  */
-function isFreemiumSeatOverageAllowed(path, method, teamId) {
+function isFreemiumSeatOverageAllowed(path, method, teamId, roles = []) {
 	if (isFreemiumBaseEscape(path, method)) return true
+	if (!isBillingStaffRoles(roles)) return false
+
 	if (matchesOwnTeamGet(path, method, teamId)) return true
+	if (pathStartsWithAny(path, SEAT_OVERAGE_STAFF_READ_PREFIXES)) return method === 'GET'
+	if (pathStartsWithAny(path, SEAT_OVERAGE_STAFF_PREFIXES)) return true
+
+	if (!isAdminRoles(roles)) return false
 
 	if (path.startsWith('/api/teams/')) {
-		const m = /^\/api\/teams\/([a-f\d]{24})(\/users|\/check-limit)$/i.exec(path)
+		const m = /^\/api\/teams\/([a-f\d]{24})(\/users|\/check-limit|\/permanent)?$/i.exec(path)
 		if (!m || m[1].toLowerCase() !== String(teamId).toLowerCase()) return false
 		if (m[2] === '/users' && method === 'GET') return true
 		if (m[2] === '/check-limit' && method === 'POST') return true
+		// Usunięcie własnego zespołu to też wyjście z blokady — Admin ma do niego prawo.
+		if ((m[2] === undefined || m[2] === '/permanent') && method === 'DELETE') return true
 		return false
 	}
 
 	if (path.startsWith('/api/users')) {
 		if (method === 'POST' && path === '/api/users/register') return false
+		if (/\/restore$/.test(path)) return false
 		return true
 	}
 
-	/** Lista kalendarzy i podgląd ewidencji — Admin / HR / przełożony muszą móc pracować przy przycinaniu zespołu. */
-		if (
-		pathStartsWithAny(path, [
-			'/api/workdays',
-			'/api/work-activities',
-			'/api/time-entry',
-			'/api/calendar',
-			'/api/departments',
-			'/api/leaveworks',
-			'/api/supervisors',
-		])
-	) {
-		return true
-	}
-
-	if (pathStartsWithAny(path, ['/api/settings', '/api/email-notifications', '/api/tickets'])) return true
-
-	/** Powiadomienia, push i logi — nie blokują panelu admina przy przycinaniu zespołu. */
-	if (pathStartsWithAny(path, ['/api/notifications', '/api/push', '/api/userlogs'])) return true
-
-	return false
+	return pathStartsWithAny(path, SEAT_OVERAGE_ADMIN_PREFIXES)
 }
 
 const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/workdays',
 	/** Czynności ewidencji — konfiguracja (Admin/HR) i rozbicie wpisów w kalendarzu. */
 	'/api/work-activities',
-	'/api/time-entry',
 	'/api/calendar',
 	'/api/settings',
 	'/api/email-notifications',
 	'/api/supervisors',
 	'/api/departments',
-	/** Wnioski urlopowe (GET m.in. accepted-leave-requests) — lista kalendarzy / ewidencja zespołu na freemium. */
-	'/api/leaveworks',
 	'/api/userlogs',
-	'/api/qr',
 	'/api/push',
 	'/api/notifications',
 	/** Centrum pomocy — zgłoszenia wsparcia (UI tylko Admin). */
 	'/api/tickets',
+]
+
+/** Prefiksy dostępne w freemium wyłącznie do odczytu. */
+const FREEMIUM_ACTIVE_READ_ONLY_PREFIXES = [
+	/** Listy do kalendarzy (accepted-leave-requests itp.) — bez składania wniosków, urlopy są w planie płatnym. */
+	'/api/leaveworks',
+	/** Wpisy wejść/wyjść widoczne w kalendarzu — rejestracja przez QR jest wyłączona. */
+	'/api/time-entry',
 ]
 
 function pathStartsWithAny(path, prefixes) {
@@ -112,11 +144,14 @@ function isPlatformSuperAdminActivityAllowed(path, decodedUser) {
 }
 
 /**
- * Freemium z liczbą miejsc w limicie — wąski zestaw modułów (bez timera, bez grafiku/urlopów/tablic itd.).
+ * Freemium z liczbą miejsc w limicie — ewidencja i kalendarz bez QR i licznika;
+ * zarządzanie zespołem i rozliczenia przez /api/users, /api/teams i /api/billing.
  */
 function isFreemiumActiveTierAllowed(path, method) {
 	if (isFreemiumBaseEscape(path, method)) return true
 	if (isFreemiumTimerPath(path)) return false
+	if (path.startsWith('/api/qr')) return false
+	if (pathStartsWithAny(path, FREEMIUM_ACTIVE_READ_ONLY_PREFIXES)) return method === 'GET'
 	if (pathStartsWithAny(path, FREEMIUM_ACTIVE_EXTRA_PREFIXES)) return true
 	if (path.startsWith('/api/users')) return true
 	if (path.startsWith('/api/teams')) return true
@@ -130,4 +165,5 @@ module.exports = {
 	isFreemiumSeatOverageAllowed,
 	isFreemiumActiveTierAllowed,
 	isPlatformSuperAdminActivityAllowed,
+	isBillingStaffRoles,
 }

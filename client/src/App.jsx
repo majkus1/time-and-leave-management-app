@@ -55,6 +55,7 @@ import PackagesPage from './components/billing/PackagesPage'
 import { isPlatformSuperAdmin } from './utils/platformSuperAdmin'
 import { isAdmin, isHR, isSupervisor, isWorker } from './utils/roleHelpers'
 import { handleAuthError } from './utils/authErrorHandler'
+import { useFreemiumAccess } from './hooks/useFreemiumAccess'
 import { API_URL } from './config.js'
 import '../src/style.css'
 import './theme.css'
@@ -91,8 +92,13 @@ function AppContent() {
 	const isSupervisorRole = isSupervisor(role)
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
-	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
-	
+	// Przy blokadzie miejsc (freemium > 5 kont) serwer odrzuca to zapytanie — nie ma po co go wysyłać.
+	const { freemiumSeatBlocked } = useFreemiumAccess({ enabled: !!loggedIn })
+	const { data: supervisorConfig } = useSupervisorConfig(
+		userId,
+		isSupervisorRole && !isAdminRole && !isHRRole && !freemiumSeatBlocked
+	)
+
 	// Sprawdź uprawnienia zgodnie z hierarchią ról
 	// Admin i HR mają zawsze pełny dostęp, ignorujemy SupervisorConfig
 	const canApproveLeaves = isAdminRole || isHRRole 

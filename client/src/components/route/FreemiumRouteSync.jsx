@@ -6,34 +6,29 @@ import { useDashboardAccess } from '../../hooks/useDashboardAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
 import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
 import { appHomePath } from '../../utils/appHomePath'
+import { isFreemiumSeatEscapePath } from '../../utils/freemiumSeatEscape'
 
 const TEAM_ACCESS_NOTICE_PATH = '/team-access-notice'
 
-const FREEMIUM_APP_PATHS = new Set([
-	'/work-time',
-	'/edit-profile',
-	'/calendars-list',
-	'/documents',
-	'/team-management',
-	'/create-user',
-])
-
-function isFreemiumAppPathAllowed(pathname, { staffBilling, userIsAdmin }) {
+/**
+ * Freemium w limicie miejsc: ewidencja czasu pracy i profil dla wszystkich; listy ewidencji dla
+ * Admin / HR / przełożonego z uprawnieniem; zarządzanie zespołem dla Admina; pakiety dla Admin / HR.
+ * Bez QR, urlopów, grafików, zadań, czatu i asystenta — te są w planie płatnym.
+ */
+function isFreemiumAppPathAllowed(pathname, { userIsAdmin, staffBilling, canCalendars }) {
 	if (pathname === TEAM_ACCESS_NOTICE_PATH) return true
-	if (pathname === '/settings') return true
-	if (pathname === '/helpcenter') return userIsAdmin
-	if (pathname === '/packages') return staffBilling
-	if (FREEMIUM_APP_PATHS.has(pathname)) {
-		if (
-			(pathname === '/team-management' || pathname === '/create-user' || pathname === '/documents') &&
-			!userIsAdmin
-		) {
-			return false
-		}
+	if (pathname === '/work-time' || pathname === '/edit-profile' || pathname === '/settings') return true
+	if (canCalendars && (pathname === '/calendars-list' || pathname.startsWith('/work-calendars/'))) return true
+	if (staffBilling && pathname === '/packages') return true
+	if (
+		userIsAdmin &&
+		(pathname === '/team-management' ||
+			pathname === '/create-user' ||
+			pathname === '/documents' ||
+			pathname === '/helpcenter')
+	) {
 		return true
 	}
-	if (pathname.startsWith('/work-calendars/')) return true
-	if (pathname.startsWith('/qr-scan/')) return true
 	return false
 }
 
@@ -47,15 +42,6 @@ export default function FreemiumRouteSync() {
 	const isSupervisorRole = isSupervisor(role)
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
-	const { data: supervisorConfig } = useSupervisorConfig(
-		userId,
-		isSupervisorRole && !isAdminRole && !isHRRole
-	)
-	const canFreemiumCalendars = useMemo(() => {
-		if (isAdminRole || isHRRole) return true
-		if (isSupervisorRole && supervisorConfig?.permissions?.canViewTimesheets !== false) return true
-		return false
-	}, [isAdminRole, isHRRole, isSupervisorRole, supervisorConfig])
 	const {
 		isLoading,
 		isFetching,
@@ -66,6 +52,16 @@ export default function FreemiumRouteSync() {
 	} = useFreemiumAccess({
 		enabled: !!loggedIn,
 	})
+	// Przy blokadzie miejsc serwer i tak odrzuci to zapytanie — nie ma po co go wysyłać.
+	const { data: supervisorConfig } = useSupervisorConfig(
+		userId,
+		isSupervisorRole && !isAdminRole && !isHRRole && !freemiumSeatBlocked
+	)
+	const canFreemiumCalendars = useMemo(() => {
+		if (isAdminRole || isHRRole) return true
+		if (isSupervisorRole && supervisorConfig?.permissions?.canViewTimesheets !== false) return true
+		return false
+	}, [isAdminRole, isHRRole, isSupervisorRole, supervisorConfig])
 	const { canUseDashboard } = useDashboardAccess({ enabled: !!loggedIn })
 
 	useEffect(() => {
@@ -88,38 +84,29 @@ export default function FreemiumRouteSync() {
 			return
 		}
 
+		// Ponad limit miejsc: zespół ma zejść do limitu albo kupić pakiet. Admin i HR lądują w pakietach,
+		// reszta widzi komunikat — ta sama lista ścieżek co przy 403 z serwera (freemiumSeatEscape).
 		if (freemiumSeatBlocked) {
-			if (p === TEAM_ACCESS_NOTICE_PATH) {
-				if (staffBilling) {
-					navigate('/packages', { replace: true })
-					return
-				}
-				return
-			}
-			if (p === '/dashboard' && !canUseDashboard) {
-				navigate('/work-time', { replace: true })
-				return
-			}
-			if (p === '/work-time') return
-			if (p === '/edit-profile') return
-			if (staffBilling && p === '/packages') return
-			if (p === '/settings') return
-			if (userIsAdmin && (p === '/team-management' || p === '/documents' || p === '/helpcenter')) return
-			if (
-				canFreemiumCalendars &&
-				(p === '/calendars-list' || p.startsWith('/work-calendars/'))
-			) {
-				return
-			}
-			if (staffBilling) {
+			if (p === TEAM_ACCESS_NOTICE_PATH && staffBilling) {
 				navigate('/packages', { replace: true })
 				return
 			}
-			navigate(`${TEAM_ACCESS_NOTICE_PATH}?reason=seats`, { replace: true })
+			if (isFreemiumSeatEscapePath(p, role)) return
+			navigate(staffBilling ? '/packages' : `${TEAM_ACCESS_NOTICE_PATH}?reason=seats`, { replace: true })
 			return
 		}
 
-		if (freemiumAppRestricted && !isFreemiumAppPathAllowed(p, { staffBilling, userIsAdmin })) {
+		// Blokada miejsc zniknęła (admin przyciął zespół albo kupił pakiet), a pracownik wciąż ogląda
+		// komunikat — ta trasa jest dozwolona także w limicie, więc bez tej reguły nikt by go stamtąd nie wyprowadził.
+		if (p === TEAM_ACCESS_NOTICE_PATH && new URLSearchParams(location.search).get('reason') === 'seats') {
+			navigate(appHomePath({ canUseDashboard }), { replace: true })
+			return
+		}
+
+		if (
+			freemiumAppRestricted &&
+			!isFreemiumAppPathAllowed(p, { userIsAdmin, staffBilling, canCalendars: canFreemiumCalendars })
+		) {
 			navigate(freemiumHome, { replace: true })
 		}
 	}, [
@@ -131,6 +118,7 @@ export default function FreemiumRouteSync() {
 		freemiumSeatBlocked,
 		freemiumAppRestricted,
 		location.pathname,
+		location.search,
 		navigate,
 		role,
 		canFreemiumCalendars,

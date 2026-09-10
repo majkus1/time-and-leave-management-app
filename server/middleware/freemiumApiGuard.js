@@ -14,9 +14,9 @@ function freemiumForbiddenPayload(seatOverCapacity) {
 		return {
 			code: 'FREEMIUM_SEAT_OVER_CAPACITY',
 			message:
-				'W trybie darmowym może korzystać maksymalnie 5 użytkowników. Usuń nadmiarowe konta w Zarządzaniu zespołem (tylko administrator), aby odblokować aplikację.',
+				'W trybie darmowym może korzystać maksymalnie 5 kont. Zespół musi zejść do 5 kont w Zarządzaniu zespołem (administrator) albo wykupić pakiet w Pakietach i rozliczeniach (administrator lub HR).',
 			messageEn:
-				'The free tier allows up to 5 users. Remove extra accounts in Team management (admin only) to unlock the app.',
+				'The free tier allows up to 5 accounts. The team must reduce to 5 accounts in Team management (administrator) or purchase a package under Packages & billing (administrator or HR).',
 		}
 	}
 	return {
@@ -69,8 +69,10 @@ async function freemiumApiGuardAsync(req, res, next) {
 		const maxSeats = freemiumApiPolicyService.freemiumMaxAppSeats()
 		const seatOverCapacity = seatCount > maxSeats
 
+		// Rola z tokena sesji — przy blokadzie miejsc decyduje, czy ktoś może cokolwiek naprawić.
+		const roles = Array.isArray(decoded.roles) ? decoded.roles : []
 		const allowed = seatOverCapacity
-			? freemiumApiPolicyService.isFreemiumSeatOverageAllowed(path, req.method, decoded.teamId)
+			? freemiumApiPolicyService.isFreemiumSeatOverageAllowed(path, req.method, decoded.teamId, roles)
 			: freemiumApiPolicyService.isFreemiumActiveTierAllowed(path, req.method)
 
 		if (allowed) return next()
