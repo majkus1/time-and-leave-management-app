@@ -46,6 +46,10 @@ export default function TeamAccessNoticePage() {
 		navigate('/login', { replace: true })
 	}
 
+	// Przy blokadzie miejsc pracownik nie ma dokąd wrócić — każda inna trasa odbija na ten ekran.
+	// Przycisk „wróć" tylko udawałby wyjście; zostaje wylogowanie. Admin / HR są przekierowani wyżej.
+	const showBackButton = !seatsIssue
+
 	return (
 		<div className="team-access-notice">
 			<Helmet>
@@ -60,29 +64,16 @@ export default function TeamAccessNoticePage() {
 				<h1 className="team-access-notice__title">{title}</h1>
 				<p className="team-access-notice__body">{body}</p>
 				<div className="team-access-notice__actions">
-					{(userIsAdmin || userIsHR) && seatsIssue ? (
-						<button
-							type="button"
-							className="team-access-notice__btn primary"
-							onClick={() => navigate('/packages')}
-						>
-							{t('teamAccessNotice.goPackages')}
-						</button>
-					) : (
+					{showBackButton ? (
 						<button type="button" className="team-access-notice__btn primary" onClick={() => navigate('/dashboard')}>
 							{t('teamAccessNotice.backDashboard')}
 						</button>
-					)}
-					{userIsAdmin && seatsIssue ? (
-						<button
-							type="button"
-							className="team-access-notice__btn secondary"
-							onClick={() => navigate('/team-management')}
-						>
-							{t('teamAccessNotice.goTeamManagement')}
-						</button>
 					) : null}
-					<button type="button" className="team-access-notice__btn secondary" onClick={handleLogout}>
+					<button
+						type="button"
+						className={`team-access-notice__btn ${showBackButton ? 'secondary' : 'primary'}`}
+						onClick={handleLogout}
+					>
 						{t('teamAccessNotice.logout')}
 					</button>
 				</div>

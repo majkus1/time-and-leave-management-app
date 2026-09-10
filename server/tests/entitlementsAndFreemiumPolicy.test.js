@@ -61,26 +61,32 @@ describe('freemiumApiPolicyService', () => {
 		)
 	})
 
-	it('seat overcapacity: GET team users dla własnego teamId dozwolone', () => {
+	it('seat overcapacity: GET team users dla własnego teamId dozwolone tylko Adminowi', () => {
 		const teamId = '507f1f77bcf86cd799439011'
 		assert.equal(
-			policy.isFreemiumSeatOverageAllowed(`/api/teams/${teamId}/users`, 'GET', teamId),
+			policy.isFreemiumSeatOverageAllowed(`/api/teams/${teamId}/users`, 'GET', teamId, ['Admin']),
 			true
+		)
+		assert.equal(
+			policy.isFreemiumSeatOverageAllowed(`/api/teams/${teamId}/users`, 'GET', teamId, ['Pracownik (Worker)']),
+			false
 		)
 	})
 
-	it('seat overcapacity: work-activities dozwolone (ewidencja / konfiguracja czynności), dashboard zablokowany', () => {
+	it('seat overcapacity: ewidencja i dashboard zablokowane — zespół ma zejść do limitu albo kupić pakiet', () => {
 		const teamId = '507f1f77bcf86cd799439011'
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/dashboard/summary', 'GET', teamId), false)
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'GET', teamId), true)
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'POST', teamId), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/dashboard/summary', 'GET', teamId, ['Admin']), false)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/work-activities', 'GET', teamId, ['Admin']), false)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/workdays', 'GET', teamId, ['Pracownik (Worker)']), false)
 	})
 
-	it('seat overcapacity: notifications, push i userlogs dozwolone (panel admina)', () => {
+	it('seat overcapacity: notifications, push (Admin / HR) i userlogs (Admin) dozwolone; pracownik nie', () => {
 		const teamId = '507f1f77bcf86cd799439011'
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/notifications', 'GET', teamId), true)
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/push/preferences', 'GET', teamId), true)
-		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/userlogs/abc', 'GET', teamId), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/notifications', 'GET', teamId, ['HR']), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/push/preferences', 'GET', teamId, ['Admin']), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/userlogs/abc', 'GET', teamId, ['Admin']), true)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/userlogs/abc', 'GET', teamId, ['HR']), false)
+		assert.equal(policy.isFreemiumSeatOverageAllowed('/api/notifications', 'GET', teamId, ['Pracownik (Worker)']), false)
 	})
 
 	it('normalizeApiPath obcina query string', () => {

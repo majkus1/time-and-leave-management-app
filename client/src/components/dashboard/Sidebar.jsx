@@ -67,7 +67,11 @@ function Sidebar() {
 	const isSupervisorRole = isSupervisor(role)
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
-	const { data: supervisorConfig } = useSupervisorConfig(userId, isSupervisorRole && !isAdminRole && !isHRRole)
+	// Przy blokadzie miejsc serwer odrzuca to zapytanie — bez bramki 403 wymusza twardy reload zamiast nawigacji.
+	const { data: supervisorConfig } = useSupervisorConfig(
+		userId,
+		isSupervisorRole && !isAdminRole && !isHRRole && !freemiumSeatBlocked
+	)
 	const { data: settings } = useSettings()
 	
 	// Sprawdź uprawnienia zgodnie z hierarchią ról
@@ -104,9 +108,9 @@ function Sidebar() {
 	const showAiAssistantLink =
 		showPremiumModules &&
 		canShowBillingModuleNav(billingEnt, 'ai_assistant', billingEntLoading)
-	/** Kalendarze / ewidencje zespołu — także freemium i przy blokadzie miejsc (Admin / HR / przełożony z uprawnieniem). */
+	/** Kalendarze / ewidencje zespołu — także freemium w limicie miejsc (Admin / HR / przełożony z uprawnieniem); przy blokadzie miejsc nie. */
 	const showAdminCalendars =
-		isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets)
+		!compactFreemiumNav && (isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets))
 	const showAdminLeaveList =
 		!compactFreemiumNav &&
 		showPremiumModules &&
@@ -366,6 +370,8 @@ function Sidebar() {
 
 				{/* Navigation Buttons */}
 				<div className="sidebar-navigation">
+					{/* Blokada miejsc: Admin / HR widzą tylko to, czym mogą naprawić sytuację zespołu. */}
+					{!compactFreemiumNav && (
 					<NavLink
 						to="/edit-profile"
 						className={({ isActive }) => `nav-link sidebar-profile-link ${isActive ? 'active' : ''}`}>
@@ -374,6 +380,7 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btn1')}</span>
 					</NavLink>
+					)}
 
 					{showDashboardLink && (
 					<NavLink
@@ -547,6 +554,7 @@ function Sidebar() {
 						</div>
 					)}
                         <div className="admin-section">
+							{!compactFreemiumNav && (
 							<NavLink
 								to="/settings"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
@@ -555,7 +563,8 @@ function Sidebar() {
 								</div>
 								<span className="nav-text">{t('sidebar.btnSettings')}</span>
 							</NavLink>
-							
+							)}
+
 							{/* Przycisk "Jak korzystać" — widoczny dla wszystkich (także freemium) */}
 							<button
 								type="button"
@@ -592,7 +601,10 @@ function Sidebar() {
 					{/* Admin / HR (pakiety); tworzenie użytk. i logi — jak wcześniej. Centrum pomocy nad Pakietami (jeden link Pakiety). */}
 					{(canOpenCreateUser || isAdmin(role) || isHRRole || username === 'michalipka1@gmail.com') && (
 						<div className="admin-section">
-							{(canOpenCreateUser || username === 'michalipka1@gmail.com') && !compactFreemiumNav && (
+							{/* Freemium w limicie: konta dodaje tylko Admin (tak samo jak FreemiumRouteSync). */}
+							{(canOpenCreateUser || username === 'michalipka1@gmail.com') &&
+								!compactFreemiumNav &&
+								(!narrowFreemiumNav || isAdminRole) && (
 							<NavLink
 								to="/create-user"
 								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
