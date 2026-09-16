@@ -67,6 +67,7 @@ i18n
 						doneSubtitle: 'Your team is ready. Everything else is in the menu on the left.',
 						hide: 'Hide this list',
 						hideDone: 'Hide',
+						hideShort: 'Hide',
 					},
 					teamAccessNotice: {
 						title: 'Limited access',
@@ -2217,6 +2218,7 @@ i18n
 						doneSubtitle: 'Zespół jest ustawiony. Reszta czeka w menu po lewej.',
 						hide: 'Ukryj tę listę',
 						hideDone: 'Ukryj',
+						hideShort: 'Ukryj',
 					},
 					teamAccessNotice: {
 						title: 'Ograniczony dostęp',

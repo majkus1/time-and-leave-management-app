@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 import { BILLING_ENTITLEMENTS_QUERY_KEY } from './useBilling'
+import { ONBOARDING_STATUS_QUERY_KEY } from './useOnboarding'
 
 // Query hook - pobieranie wszystkich użytkowników
 export const useUsers = () => {
@@ -48,6 +49,7 @@ export const useCreateUser = () => {
 		onSuccess: (data, variables) => {
 			// Invaliduj listę użytkowników
 			queryClient.invalidateQueries({ queryKey: ['users'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['teamMembers'] })
 			// Invaliduj informacje o zespole jeśli teamId jest dostępne
 			if (variables.teamId) {

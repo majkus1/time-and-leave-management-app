@@ -163,25 +163,62 @@
 	text-decoration: none;
 }
 
+.po-onboarding__aside {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 10px;
+	flex: 0 0 auto;
+}
+
+/* „Ukryj” w rogu karty — od razu widoczne, bez szukania na dole listy. */
+.po-onboarding__dismiss {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 7px 12px;
+	border-radius: 9px;
+	border: 1px solid var(--po-border-strong);
+	background: var(--po-surface);
+	font-size: 13px !important;
+	font-weight: 600;
+	color: var(--po-text-secondary) !important;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.po-onboarding__dismiss span {
+	font-size: 13px !important;
+	color: inherit !important;
+}
+
+.po-onboarding__dismiss:hover {
+	background: var(--po-surface-hover);
+	border-color: var(--po-text-muted);
+	color: var(--po-text) !important;
+}
+
 .po-onboarding__foot {
 	position: static;
 	display: flex;
 	justify-content: flex-end;
-	margin-top: 10px;
+	margin-top: 14px;
 }
 
-.po-onboarding__dismiss {
-	background: transparent;
+.po-onboarding__done-btn {
+	padding: 9px 18px;
+	border-radius: 9px;
 	border: none;
-	padding: 6px 4px;
-	font-size: 13px !important;
-	color: var(--po-text-muted) !important;
+	background: var(--po-brand);
+	color: #fff !important;
+	font-size: 14px !important;
+	font-weight: 600;
 	cursor: pointer;
-	transition: color 0.15s ease;
+	transition: background 0.15s ease;
 }
 
-.po-onboarding__dismiss:hover {
-	color: var(--po-text) !important;
+.po-onboarding__done-btn:hover {
+	background: var(--po-brand-hover);
 }
 
 .po-onboarding--done {
@@ -226,8 +263,16 @@
 		gap: 12px;
 	}
 
-	.po-onboarding__progress {
+	.po-onboarding__aside {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
 		width: 100%;
+	}
+
+	.po-onboarding__progress {
+		flex: 1 1 auto;
+		min-width: 0;
 		text-align: left;
 	}
 

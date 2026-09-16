@@ -76,13 +76,27 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 						{data.allDone ? t('onboarding.doneSubtitle') : t('onboarding.subtitle')}
 					</p>
 				</div>
-				<div className="po-onboarding__progress" aria-hidden="true">
-					<span className="po-onboarding__progress-label">
-						{t('onboarding.progress', { done: data.doneCount, total: data.total })}
-					</span>
-					<span className="po-onboarding__progress-bar">
-						<span style={{ width: `${(data.doneCount / data.total) * 100}%` }} />
-					</span>
+				<div className="po-onboarding__aside">
+					<div className="po-onboarding__progress" aria-hidden="true">
+						<span className="po-onboarding__progress-label">
+							{t('onboarding.progress', { done: data.doneCount, total: data.total })}
+						</span>
+						<span className="po-onboarding__progress-bar">
+							<span style={{ width: `${(data.doneCount / data.total) * 100}%` }} />
+						</span>
+					</div>
+					<button
+						type="button"
+						className="po-onboarding__dismiss"
+						onClick={() => dismiss.mutate()}
+						disabled={dismiss.isPending}
+						aria-label={t('onboarding.hide')}
+					>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+							<path d="M18 6 6 18M6 6l12 12" />
+						</svg>
+						<span>{t('onboarding.hideShort')}</span>
+					</button>
 				</div>
 			</div>
 
@@ -103,16 +117,13 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 				))}
 			</ol>
 
-			<div className="po-onboarding__foot">
-				<button
-					type="button"
-					className="po-onboarding__dismiss"
-					onClick={() => dismiss.mutate()}
-					disabled={dismiss.isPending}
-				>
-					{data.allDone ? t('onboarding.hideDone') : t('onboarding.hide')}
-				</button>
-			</div>
+			{data.allDone ? (
+				<div className="po-onboarding__foot">
+					<button type="button" className="po-onboarding__done-btn" onClick={() => dismiss.mutate()} disabled={dismiss.isPending}>
+						{t('onboarding.hideDone')}
+					</button>
+				</div>
+			) : null}
 		</section>
 	)
 }

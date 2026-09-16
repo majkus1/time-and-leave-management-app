@@ -4,6 +4,7 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 import { useSocket } from '../context/SocketContext'
 import { invalidateDashboardSummary } from './useDashboardSummary'
+import { ONBOARDING_STATUS_QUERY_KEY } from './useOnboarding'
 
 /** Podczas refetch zachowaj poprzednie dane — kalendarz nie traci stanu UI. */
 const keepPreviousQueryData = (previousData) => previousData
@@ -96,6 +97,7 @@ export const useCreateWorkday = () => {
 		onSuccess: () => {
 			// Invalidate wszystkie workdays queries, żeby pobrać prawdziwe dane z serwera
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			// Also invalidate timer sessions queries in case workday contains sessions
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			invalidateDashboardSummary(queryClient)
@@ -115,6 +117,7 @@ export const useCreateWorkdayForUser = (userId) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			invalidateDashboardSummary(queryClient)
@@ -137,6 +140,7 @@ export const useBulkFillWorkdays = (userId = null) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			if (userId) {
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
@@ -184,6 +188,7 @@ export const useUpdateWorkday = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			// Also invalidate timer sessions queries in case workday contains sessions
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			invalidateDashboardSummary(queryClient)
@@ -203,6 +208,7 @@ export const useUpdateWorkdayForUser = (userId) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			invalidateDashboardSummary(queryClient)
@@ -245,6 +251,7 @@ export const useDeleteWorkday = () => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			// Also invalidate timer sessions queries to update the session list immediately
 			queryClient.invalidateQueries({ queryKey: ['timer', 'sessions'] })
 			invalidateDashboardSummary(queryClient)
@@ -268,6 +275,7 @@ export const useClearWorkdaysForMonth = (userId = null) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			if (userId) {
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 				queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
@@ -290,6 +298,7 @@ export const useDeleteWorkdayForUser = (userId) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			invalidateDashboardSummary(queryClient)
@@ -309,6 +318,7 @@ export const useReviewWorkdayForUser = (userId) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['workdays'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'user', userId] })
 			queryClient.invalidateQueries({ queryKey: ['workdays', 'team'] })
 			invalidateDashboardSummary(queryClient)

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 
 import { BILLING_ENTITLEMENTS_QUERY_KEY } from './useBilling'
+import { ONBOARDING_STATUS_QUERY_KEY } from './useOnboarding'
 
 // Query hook - pobieranie ustawień
 export const useSettings = () => {
@@ -32,6 +33,7 @@ export const useUpdateSettings = () => {
 		},
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['settings'] })
+			queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY })
 			// Typy wniosków zapisują się razem z resztą ustawień, więc ich osobny cache
 			// też musi zostać odświeżony — inaczej ekran ustawień dalej porównywałby
 			// się ze starymi danymi i pokazywał niezapisane zmiany mimo udanego zapisu.
