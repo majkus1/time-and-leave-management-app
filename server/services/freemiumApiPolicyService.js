@@ -120,6 +120,8 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/notifications',
 	/** Centrum pomocy — zgłoszenia wsparcia (UI tylko Admin). */
 	'/api/tickets',
+	/** Lista „pierwsze kroki” po założeniu zespołu — pomaga także zespołom, którym skończył się trial. */
+	'/api/onboarding',
 ]
 
 /** Prefiksy dostępne w freemium wyłącznie do odczytu. */

@@ -1,0 +1,201 @@
+/* Karta „pierwsze kroki” — kolory wyłącznie ze zmiennych motywu, działa w jasnym i ciemnym. */
+.po-onboarding {
+	margin: 0 0 20px;
+	padding: 22px 24px 16px;
+	border-radius: 14px;
+	background: var(--po-surface);
+	border: 1px solid var(--po-border);
+	box-shadow: 0 6px 20px var(--po-shadow);
+	color: var(--po-text);
+}
+
+.po-onboarding__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 20px;
+	margin-bottom: 18px;
+}
+
+.po-onboarding__eyebrow {
+	display: block;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--po-brand-text);
+	margin-bottom: 4px;
+}
+
+.po-onboarding__title {
+	margin: 0 0 4px;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--po-text);
+}
+
+.po-onboarding__subtitle {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--po-text-secondary);
+}
+
+.po-onboarding__progress {
+	flex: 0 0 auto;
+	min-width: 140px;
+	text-align: right;
+}
+
+.po-onboarding__progress-label {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--po-text-muted);
+	margin-bottom: 6px;
+}
+
+.po-onboarding__progress-bar {
+	display: block;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--po-surface-hover);
+	overflow: hidden;
+}
+
+.po-onboarding__progress-bar > span {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--po-brand);
+	transition: width 0.3s ease;
+}
+
+.po-onboarding__steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 10px;
+}
+
+.po-onboarding__step {
+	display: grid;
+	grid-template-columns: 32px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 14px;
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: var(--po-surface-muted);
+	border: 1px solid transparent;
+}
+
+.po-onboarding__step.is-done {
+	background: var(--po-brand-soft);
+}
+
+.po-onboarding__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	font-size: 14px;
+	font-weight: 700;
+	background: var(--po-surface);
+	border: 1px solid var(--po-border-strong);
+	color: var(--po-text-secondary);
+}
+
+.po-onboarding__step.is-done .po-onboarding__mark {
+	background: var(--po-brand);
+	border-color: var(--po-brand);
+	color: #fff;
+}
+
+.po-onboarding__step-text strong {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--po-text);
+}
+
+.po-onboarding__step.is-done .po-onboarding__step-text strong {
+	color: var(--po-brand-text);
+}
+
+.po-onboarding__step-text p {
+	margin: 2px 0 0;
+	font-size: 13.5px;
+	line-height: 1.45;
+	color: var(--po-text-secondary);
+}
+
+.po-onboarding__cta {
+	white-space: nowrap;
+	padding: 8px 16px;
+	border-radius: 9px;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	background: var(--po-brand);
+	color: #fff;
+	transition: background 0.15s ease;
+}
+
+.po-onboarding__cta:hover {
+	background: var(--po-brand-hover);
+	color: #fff;
+	text-decoration: none;
+}
+
+.po-onboarding__foot {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 10px;
+}
+
+.po-onboarding__dismiss {
+	background: transparent;
+	border: none;
+	padding: 6px 4px;
+	font-size: 13px;
+	color: var(--po-text-muted);
+	cursor: pointer;
+	transition: color 0.15s ease;
+}
+
+.po-onboarding__dismiss:hover {
+	color: var(--po-text);
+}
+
+.po-onboarding--done {
+	border-color: var(--po-brand-soft);
+}
+
+@media (max-width: 640px) {
+	.po-onboarding {
+		padding: 18px 16px 12px;
+	}
+
+	.po-onboarding__head {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.po-onboarding__progress {
+		width: 100%;
+		text-align: left;
+	}
+
+	.po-onboarding__step {
+		grid-template-columns: 32px minmax(0, 1fr);
+	}
+
+	.po-onboarding__cta {
+		grid-column: 2;
+		justify-self: start;
+	}
+}

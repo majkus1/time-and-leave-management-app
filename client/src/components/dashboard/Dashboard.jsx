@@ -11,6 +11,7 @@ import { formatTimerClock } from '../../utils/timerDisplay'
 import TeamInsightsPanel from './TeamInsightsPanel'
 import PersonalOverviewPanel from './PersonalOverviewPanel'
 import './Dashboard.css'
+import OnboardingChecklist from '../onboarding/OnboardingChecklist'
 
 function launchWelcomeConfetti() {
 	const canvas = document.createElement('canvas')
@@ -678,6 +679,8 @@ function Dashboard() {
 								</div>
 							</div>
 						</header>
+
+						<OnboardingChecklist />
 
 						<div className={`po-dashboard-command ${showTimer ? '' : 'po-dashboard-command--single'}`}>
 							{showTimer && (
