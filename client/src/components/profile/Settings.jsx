@@ -724,7 +724,7 @@ function Settings() {
 							marginTop: '-8px',
 							marginBottom: '18px'
 						}}>
-							<span style={{
+							<span className="po-settings-instant-pill" style={{
 								display: 'inline-block',
 								padding: '3px 10px',
 								borderRadius: '999px',
@@ -937,7 +937,7 @@ function Settings() {
 							marginTop: '-8px',
 							marginBottom: '18px'
 						}}>
-							<span style={{
+							<span className="po-settings-instant-pill" style={{
 								display: 'inline-block',
 								padding: '3px 10px',
 								borderRadius: '999px',

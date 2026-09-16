@@ -7548,3 +7548,9 @@
 [data-theme='dark'] #list-employee .evidence-team-table-wrap tbody tr[style*='border-top'] {
 	border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Pigulka „Zapisuje sie od razu” w ustawieniach ma kolory inline pod jasny motyw; w ciemnym globalny kolor spanow (jasny) ginal na jasnozielonym tle. */
+[data-theme='dark'] .po-settings-instant-pill {
+	background-color: rgba(0, 168, 70, 0.18) !important;
+	color: #6ee7a0 !important;
+}
