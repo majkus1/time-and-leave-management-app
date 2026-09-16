@@ -40,7 +40,6 @@ export function buildTeamSettingsShape(source = {}, { freemiumTier = false } = {
 		leaveHoursPerDay: source.leaveHoursPerDay,
 		timerEnabled: source.timerEnabled,
 		dashboardEnabled: source.dashboardEnabled,
-		tutorialAutoOpen: source.tutorialAutoOpen !== false,
 		allowManagedNoAccessUsers: allowManaged,
 		allowManagedWorkdayEntries: allowManaged && source.allowManagedWorkdayEntries === true,
 		allowManagedLeaveRequests:

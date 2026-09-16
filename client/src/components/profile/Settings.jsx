@@ -71,7 +71,6 @@ function Settings() {
 	const [leaveHoursPerDay, setLeaveHoursPerDay] = useState(8)
 	const [timerEnabled, setTimerEnabled] = useState(true)
 	const [dashboardEnabled, setDashboardEnabled] = useState(false)
-	const [tutorialAutoOpen, setTutorialAutoOpen] = useState(true)
 	const [allowManagedNoAccessUsers, setAllowManagedNoAccessUsers] = useState(false)
 	const [allowManagedWorkdayEntries, setAllowManagedWorkdayEntries] = useState(false)
 	const [allowManagedLeaveRequests, setAllowManagedLeaveRequests] = useState(false)
@@ -189,7 +188,6 @@ function Settings() {
 			leaveHoursPerDay: settings.leaveHoursPerDay || 8,
 			timerEnabled: settings.timerEnabled !== undefined ? settings.timerEnabled : true,
 			dashboardEnabled: settings.dashboardEnabled === true,
-			tutorialAutoOpen: settings.tutorialAutoOpen !== false,
 			allowManagedNoAccessUsers: settings.allowManagedNoAccessUsers === true,
 			allowManagedWorkdayEntries: settings.allowManagedWorkdayEntries === true,
 			allowManagedLeaveRequests: settings.allowManagedLeaveRequests === true,
@@ -217,7 +215,6 @@ function Settings() {
 		leaveHoursPerDay,
 		timerEnabled,
 		dashboardEnabled,
-		tutorialAutoOpen,
 		allowManagedNoAccessUsers,
 		allowManagedWorkdayEntries,
 		allowManagedLeaveRequests,
@@ -226,7 +223,7 @@ function Settings() {
 		leaveRequestTypes: visibleLeaveTypes,
 	}), [
 		buildSettingsShape, workOnWeekends, includePolishHolidays, includeCustomHolidays, customHolidays,
-		workHoursList, leaveCalculationMode, leaveHoursPerDay, timerEnabled, dashboardEnabled, tutorialAutoOpen,
+		workHoursList, leaveCalculationMode, leaveHoursPerDay, timerEnabled, dashboardEnabled,
 		allowManagedNoAccessUsers, allowManagedWorkdayEntries, allowManagedLeaveRequests,
 		workdayEntriesOnlyToday, autoDeductLeaveLimits, visibleLeaveTypes,
 	])
@@ -284,7 +281,6 @@ function Settings() {
 			setLeaveHoursPerDay(settings.leaveHoursPerDay || 8)
 			setTimerEnabled(settings.timerEnabled !== undefined ? settings.timerEnabled : true)
 			setDashboardEnabled(settings.dashboardEnabled === true)
-			setTutorialAutoOpen(settings.tutorialAutoOpen !== false)
 			setAllowManagedNoAccessUsers(settings.allowManagedNoAccessUsers === true)
 			setAllowManagedWorkdayEntries(settings.allowManagedWorkdayEntries === true)
 			setAllowManagedLeaveRequests(settings.allowManagedLeaveRequests === true)
@@ -381,7 +377,7 @@ function Settings() {
 		const allowedKeys = freemiumSlimSettings
 			? ['workOnWeekends', 'includePolishHolidays', 'includeCustomHolidays', 'customHolidays',
 			   'workHours', 'allowManagedNoAccessUsers', 'allowManagedWorkdayEntries',
-			   'allowManagedLeaveRequests', 'workdayEntriesOnlyToday', 'autoDeductLeaveLimits', 'tutorialAutoOpen']
+			   'allowManagedLeaveRequests', 'workdayEntriesOnlyToday', 'autoDeductLeaveLimits']
 			: Object.keys(currentShape).filter(key => key !== 'timerEnabled' || showTimerQrSettings)
 
 		const payload = buildTeamSettingsPayload(currentShape, changedKeys, allowedKeys)
@@ -1137,81 +1133,6 @@ function Settings() {
 									{dashboardEnabled
 										? t('settings.dashboardEnabledDescription')
 										: t('settings.dashboardDisabledDescription')}
-								</p>
-							</div>
-						</div>
-					</div>
-				)}
-
-				{canEditSettings && (
-					<div
-						className="po-settings-panel"
-						style={{
-							backgroundColor: 'white',
-							borderRadius: '12px',
-							boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-							padding: '20px',
-							marginBottom: '20px',
-						}}
-					>
-						<h3
-							style={{
-								color: '#2c3e50',
-								marginBottom: '16px',
-								fontSize: '20px',
-								fontWeight: '600',
-							}}
-						>
-							{t('settings.tutorialSectionTitle')}
-						</h3>
-						<div
-							className="po-settings-toggle-row"
-							style={{
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								padding: '20px',
-								backgroundColor: '#f8f9fa',
-								borderRadius: '8px',
-								border: '1px solid #dee2e6',
-							}}
-						>
-							<div style={{ flex: 1 }}>
-								<label
-									style={{
-										display: 'flex',
-										alignItems: 'center',
-										cursor: 'pointer',
-										fontSize: '16px',
-										fontWeight: '500',
-										color: '#2c3e50',
-									}}
-								>
-									<input
-										type="checkbox"
-										checked={tutorialAutoOpen}
-										onChange={(e) => setTutorialAutoOpen(e.target.checked)}
-										style={{
-											width: '24px',
-											height: '24px',
-											marginRight: '12px',
-											cursor: 'pointer',
-											accentColor: '#00a846',
-										}}
-									/>
-									<span>{t('settings.tutorialAutoOpenLabel')}</span>
-								</label>
-								<p
-									style={{
-										marginTop: '8px',
-										marginBottom: 0,
-										fontSize: '14px',
-										color: '#7f8c8d',
-										marginLeft: '36px',
-										lineHeight: 1.55,
-									}}
-								>
-									{t('settings.tutorialAutoOpenDescription')}
 								</p>
 							</div>
 						</div>

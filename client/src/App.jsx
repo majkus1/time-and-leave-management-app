@@ -41,7 +41,6 @@ import { useSupervisorConfig } from './hooks/useSupervisor'
 // import ENBlogThree from './components/ENBlogThree.jsx'
 import HelpTicket from './components/tickets/HelpTicket.jsx'
 import FreemiumRouteSync from './components/route/FreemiumRouteSync.jsx'
-import TutorialAutoOpen from './components/tutorial/TutorialAutoOpen.jsx'
 import HomeRedirect from './components/route/HomeRedirect.jsx'
 import FreemiumDashboardGuard from './components/route/FreemiumDashboardGuard.jsx'
 import TeamAccessNoticePage from './components/route/TeamAccessNoticePage.jsx'
@@ -143,7 +142,6 @@ function AppContent() {
 			<ScrollToHashElement />
 			<ScrollToTop />
 			<FreemiumRouteSync />
-			<TutorialAutoOpen />
 			<PWANavigationBar />
 			{isCheckingAuth ? (
 				<div className="content-with-loader">

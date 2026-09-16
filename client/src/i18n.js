@@ -2017,9 +2017,6 @@ i18n
 						timerEnabledDescription: 'QR and work time counter function is enabled. Users can use QR codes to register work time and work time counter with sessions.',
 						timerDisabledDescription: 'QR and work time counter function is disabled. Users will not be able to use QR codes or work time counter.',
 						dashboardSectionTitle: 'Start page (home dashboard)',
-						tutorialSectionTitle: 'Tutorial',
-						tutorialAutoOpenLabel: 'Open the tutorial on first login',
-						tutorialAutoOpenDescription: 'New team members see a short guide to the app after their first login. It is always available under “How to use?” in the menu.',
 						dashboardEnabledLabel: 'Show Start page for the team',
 						dashboardEnabledDescription:
 							'The “Start” link appears in the sidebar. After login, users land on the home dashboard with team stats, leave overview, and shortcuts — instead of going straight to Work time.',
@@ -4141,9 +4138,6 @@ i18n
 						timerEnabledDescription: 'Funkcja QR i licznika czasu pracy jest włączona. Użytkownicy mogą używać kodów QR do rejestracji czasu pracy oraz licznika czasu pracy z sesjami.',
 						timerDisabledDescription: 'Funkcja QR i licznika czasu pracy jest wyłączona. Użytkownicy nie będą mogli używać kodów QR ani licznika czasu pracy.',
 						dashboardSectionTitle: 'Strona Start (pulpit główny)',
-						tutorialSectionTitle: 'Samouczek',
-						tutorialAutoOpenLabel: 'Otwieraj samouczek przy pierwszym logowaniu',
-						tutorialAutoOpenDescription: 'Nowa osoba zobaczy krótki przewodnik po aplikacji po pierwszym zalogowaniu. Zawsze można go otworzyć z menu „Jak korzystać?”.',
 						dashboardEnabledLabel: 'Włącz stronę Start dla zespołu',
 						dashboardEnabledDescription:
 							'W menu bocznym pojawi się link „Start”. Po zalogowaniu użytkownicy trafiają na pulpit z podsumowaniem: statystyki, urlopy i skróty — zamiast od razu na Ewidencję czasu pracy.',

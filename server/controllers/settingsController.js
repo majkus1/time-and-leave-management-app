@@ -57,7 +57,6 @@ exports.updateSettings = async (req, res) => {
 			leaveHoursPerDay,
 			timerEnabled,
 			dashboardEnabled,
-			tutorialAutoOpen,
 			allowManagedNoAccessUsers,
 			allowManagedWorkdayEntries,
 			allowManagedLeaveRequests,
@@ -248,10 +247,6 @@ exports.updateSettings = async (req, res) => {
 				}
 			}
 			settings.dashboardEnabled = dashboardEnabled
-		}
-
-		if (tutorialAutoOpen !== undefined && typeof tutorialAutoOpen === 'boolean') {
-			settings.tutorialAutoOpen = tutorialAutoOpen
 		}
 
 		// Krok „ustaw godziny i święta” na liście pierwszych kroków: liczy się pierwszy świadomy zapis ustawień.
