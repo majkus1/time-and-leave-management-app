@@ -805,7 +805,7 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const content = `
 		<p style="margin:0 0 12px 0;">Dzień dobry,</p>
 		<p style="margin:0 0 12px 0;">Dziękujemy za wybór <strong>Planopii</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się, że są Państwo z nami.</p>
-		<p style="margin:0 0 12px 0;"><strong>Fakturę za zakup</strong> wyślemy w ciągu najbliższych dni na ten adres e-mail.</p>
+		<p style="margin:0 0 12px 0;">Fakturę wystawimy w <strong>KSeF</strong> (Krajowym Systemie e-Faktur) i prześlemy na ten adres e-mail w ciągu kilku dni.</p>
 		<p style="margin:0 0 12px 0;">W razie pytań prosimy o kontakt na tego maila lub w aplikacji w <strong>Centrum pomocy</strong> — chętnie pomożemy.</p>
 		<p style="margin:0;">Pozdrawiamy,<br>Zespół Planopia</p>
 	`

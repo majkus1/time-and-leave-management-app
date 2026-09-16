@@ -69,4 +69,26 @@ function ownerLeadDue({ usersCount, sessionDays, paid, alerted }) {
 	return usersCount >= 3 || sessionDays >= 3
 }
 
-module.exports = { LIFECYCLE_KINDS, WINDOWS, TRIAL_WINDOWS, dueLifecycleKind, ownerLeadDue }
+/**
+ * Maile wokół opłaconego pakietu. Rodzaj ma w sobie datę końca okresu, więc każde
+ * odnowienie dostaje własny komplet przypomnień, a dziennik nadal chroni przed dublem.
+ *
+ * Przypomnienia przed końcem — tylko płatności jednorazowe (P24); subskrypcja Stripe
+ * odnawia się sama i takie przypomnienie byłoby mylące. Mail o wygaśnięciu — każdy.
+ *
+ * @param {{ daysToEnd:number, hasStripeSubscription:boolean, active:boolean, lapsed:boolean, periodEndKey:string, sentKinds?:string[] }} facts
+ * @returns {string|null}
+ */
+function dueBillingKind({ daysToEnd, hasStripeSubscription, active, lapsed, periodEndKey, sentKinds = [] }) {
+	if (!Number.isFinite(daysToEnd) || !periodEndKey) return null
+	const sent = new Set(sentKinds)
+	const pick = kind => (sent.has(kind) ? null : kind)
+
+	if (lapsed && daysToEnd >= -7 && daysToEnd <= -1) return pick(`paid_lapsed:${periodEndKey}`)
+	if (!active || hasStripeSubscription) return null
+	if (daysToEnd >= 0 && daysToEnd <= 1) return pick(`paid_renewal_1d:${periodEndKey}`)
+	if (daysToEnd >= 5 && daysToEnd <= 8) return pick(`paid_renewal_7d:${periodEndKey}`)
+	return null
+}
+
+module.exports = { LIFECYCLE_KINDS, WINDOWS, TRIAL_WINDOWS, dueLifecycleKind, dueBillingKind, ownerLeadDue }

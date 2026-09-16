@@ -5,7 +5,9 @@ const LifecycleEmailLog = require('../models/LifecycleEmailLog')(firmDb)
 const { countTeamSeats } = require('./teamSeatCountService')
 const { sendEmail, getEmailTemplate, escapeHtml } = require('./emailService')
 const { appUrl } = require('../config')
-const { dueLifecycleKind, ownerLeadDue } = require('../utils/lifecycleEmailPolicy')
+const { dueLifecycleKind, dueBillingKind, ownerLeadDue } = require('../utils/lifecycleEmailPolicy')
+const entitlementsService = require('./entitlementsService')
+const { normalizePaidPlanKey } = require('../constants/planCatalog')
 const {
 	SPECIAL_ELEVATED_SEAT_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
@@ -149,6 +151,109 @@ function buildLifecycleEmail(kind, team, facts = {}) {
 	}
 }
 
+const PLAN_LABELS = {
+	base_s: 'Core (do 15 osób)',
+	base_m: 'Core (do 30 osób)',
+	base_l: 'Core (do 100 osób)',
+	pro: 'PRO',
+	business: 'Business',
+	enterprise: 'Enterprise',
+}
+
+function planLabel(planKey) {
+	const nk = normalizePaidPlanKey(planKey)
+	return PLAN_LABELS[nk] || String(planKey || 'pakiet')
+}
+
+function formatDatePl(value) {
+	if (!value) return '—'
+	return new Date(value).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Warsaw' })
+}
+
+function cycleLabel(billingCycle) {
+	return billingCycle === 'annual' ? 'rozliczenie roczne' : 'rozliczenie miesięczne'
+}
+
+const KSEF_LINE =
+	'Fakturę wystawimy w <strong>KSeF</strong> (Krajowym Systemie e-Faktur) i prześlemy na ten adres e-mail w ciągu kilku dni.'
+
+/**
+ * Potwierdzenie po udanej płatności (P24 i Stripe): co kupiono, do kiedy dostęp, faktura w KSeF.
+ * Pierwszy zakup i odnowienie mają inny ton, ale tę samą treść rzeczową.
+ */
+function buildPaymentConfirmationEmail(team, { planKey, billingCycle, periodEnd, isFirst }) {
+	const name = escapeHtml(team.name || 'Twój zespół')
+	const label = escapeHtml(planLabel(planKey))
+	const until = formatDatePl(periodEnd)
+	return {
+		subject: isFirst ? 'Potwierdzenie zakupu — Planopia' : 'Potwierdzenie odnowienia pakietu — Planopia',
+		title: isFirst ? 'Dziękujemy za wybór Planopii' : 'Pakiet odnowiony',
+		content:
+			paragraph('Dzień dobry,') +
+			paragraph(
+				isFirst
+					? `płatność za pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) dla zespołu <strong>${name}</strong> dotarła. Wszystkie funkcje pakietu są już aktywne — dostęp do <strong>${until}</strong>.`
+					: `pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) zespołu <strong>${name}</strong> został odnowiony. Dostęp do <strong>${until}</strong>.`
+			) +
+			paragraph(KSEF_LINE) +
+			paragraph('W razie pytań wystarczy odpisać na tego maila albo napisać w aplikacji w Centrum pomocy.') +
+			paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+		buttonText: 'Otwórz Planopię',
+		buttonLink: appUrl,
+	}
+}
+
+/** Maile wokół końca opłaconego okresu — rodzaje z lifecycleEmailPolicy.dueBillingKind. */
+function buildBillingEmail(kind, team, facts = {}) {
+	const name = escapeHtml(team.name || 'Twój zespół')
+	const label = escapeHtml(planLabel(team.billingPlanKey))
+	const until = formatDatePl(team.billingPeriodEnd)
+	const base = kind.split(':')[0]
+	const daysToEnd = Number.isFinite(facts.daysToEnd) ? facts.daysToEnd : null
+	const manyAccounts = Number.isFinite(facts.usersCount) && facts.usersCount > 5
+
+	if (base === 'paid_renewal_7d' || base === 'paid_renewal_1d') {
+		const when = daysToEnd != null && daysToEnd <= 1 ? 'jutro' : `za ${daysToEnd} dni`
+		return {
+			subject: daysToEnd != null && daysToEnd <= 1 ? `Pakiet ${planLabel(team.billingPlanKey)} wygasa jutro` : `Pakiet ${planLabel(team.billingPlanKey)} wygasa ${when}`,
+			title: 'Przedłuż pakiet, żeby nic nie zniknęło',
+			content:
+				paragraph('Dzień dobry,') +
+				paragraph(
+					`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> jest opłacony do <strong>${until}</strong>. Płatność BLIK / przelewem jest jednorazowa i nie odnawia się sama.`
+				) +
+				paragraph(
+					'Po tym dniu zespół przechodzi na plan darmowy: zostaje ewidencja czasu pracy do 5 kont, a urlopy, grafiki, zadania, czat i asystent AI czekają na przedłużenie. Dane nigdzie nie znikają.'
+				) +
+				(manyAccounts
+					? paragraph('Zespół ma więcej niż 5 kont — bez przedłużenia z aplikacji będzie mógł korzystać tylko administrator, do czasu opłacenia pakietu lub zmniejszenia zespołu.')
+					: '') +
+				paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+			buttonText: 'Przedłuż pakiet',
+			buttonLink: `${appUrl}/packages`,
+		}
+	}
+	if (base === 'paid_lapsed') {
+		return {
+			subject: 'Pakiet wygasł — zespół jest na planie darmowym',
+			title: 'Dostęp ograniczony do ewidencji',
+			content:
+				paragraph('Dzień dobry,') +
+				paragraph(`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> wygasł <strong>${until}</strong> i nie został przedłużony.`) +
+				paragraph(
+					'Dane zespołu są na miejscu. Urlopy, grafiki, zadania, czat i asystent AI wracają w chwili wyboru pakietu — bez ponownej konfiguracji.'
+				) +
+				(manyAccounts
+					? paragraph('Zespół ma więcej niż 5 kont, więc do czasu przedłużenia z aplikacji korzysta tylko administrator.')
+					: '') +
+				paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+			buttonText: 'Wybierz pakiet',
+			buttonLink: `${appUrl}/packages`,
+		}
+	}
+	throw new Error('Unknown billing email kind: ' + kind)
+}
+
 function buildOwnerLeadEmail(team, facts) {
 	const name = escapeHtml(team.name || '')
 	const rows = [
@@ -208,9 +313,22 @@ async function sendLifecycleEmailForTeam(team, kind, facts = {}) {
 	if (!team || isExcludedTeam(team)) return { sent: false, reason: 'excluded' }
 	const to = String(team.adminEmail || '').trim()
 	if (!to) return { sent: false, reason: 'no-email' }
-	const mail = buildLifecycleEmail(kind, team, facts)
+	const mail = kind.startsWith('paid_') ? buildBillingEmail(kind, team, facts) : buildLifecycleEmail(kind, team, facts)
 	const html = getEmailTemplate(mail.title, mail.content, mail.buttonText || null, mail.buttonLink || null, null)
 	return sendClaimed(team._id, kind, to, mail.subject, html)
+}
+
+/**
+ * Po aktywacji opłaconego planu (wywoływane z billingActivationService). Klucz w dzienniku
+ * to klucz idempotencji aktywacji — jedna płatność, jeden mail, także przy powtórzonym webhooku.
+ */
+async function sendPaymentConfirmationForTeam(team, { planKey, billingCycle, periodEnd, isFirst, idempotencyKey }) {
+	if (!team || isExcludedTeam(team)) return { sent: false, reason: 'excluded' }
+	const to = String(team.adminEmail || '').trim()
+	if (!to) return { sent: false, reason: 'no-email' }
+	const mail = buildPaymentConfirmationEmail(team, { planKey, billingCycle, periodEnd, isFirst })
+	const html = getEmailTemplate(mail.title, mail.content, mail.buttonText, mail.buttonLink, null)
+	return sendClaimed(team._id, `paid_confirm:${idempotencyKey}`, to, mail.subject, html)
 }
 
 async function sendOwnerLead(team, facts) {
@@ -261,11 +379,43 @@ async function runLifecycleEmailsOnce({ now = new Date(), dryRun = false } = {})
 		}
 	}
 
-	if (dryRun) return { dryRun: true, teamsChecked: teams.length, plan }
+	// Opłacone pakiety wokół końca okresu (±8 dni) — niezależnie od wieku zespołu.
+	const paidTeams = await Team.find({
+		billingPeriodEnd: { $gte: new Date(now.getTime() - 8 * DAY_MS), $lte: new Date(now.getTime() + 8 * DAY_MS) },
+		isActive: { $ne: false },
+		$or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+	}).lean()
+	for (const team of paidTeams) {
+		if (isExcludedTeam(team)) continue
+		const end = new Date(team.billingPeriodEnd)
+		const kind = dueBillingKind({
+			daysToEnd: Math.ceil((end.getTime() - now.getTime()) / DAY_MS),
+			hasStripeSubscription: Boolean(team.stripeSubscriptionId),
+			active: entitlementsService.isPaidSubscriptionActive(team, now),
+			lapsed: entitlementsService.isPaidPlanPeriodLapsed(team, now),
+			periodEndKey: end.toISOString().slice(0, 10),
+			sentKinds: await sentKindsForTeam(team._id),
+		})
+		if (!kind) continue
+		plan.push({
+			team: team.name,
+			to: team.adminEmail,
+			kind,
+			daysToEnd: Math.ceil((end.getTime() - now.getTime()) / DAY_MS),
+			usersCount: await countTeamSeats(team._id),
+			teamId: String(team._id),
+		})
+	}
 
+	if (dryRun) return { dryRun: true, teamsChecked: teams.length + paidTeams.length, plan }
+
+	const allTeams = [...teams, ...paidTeams]
 	const results = []
 	for (const item of plan) {
-		const team = teams.find(t => t.name === item.team && t.adminEmail === item.to) || teams.find(t => t.name === item.team)
+		const team =
+			(item.teamId && allTeams.find(t => String(t._id) === item.teamId)) ||
+			allTeams.find(t => t.name === item.team && t.adminEmail === item.to) ||
+			allTeams.find(t => t.name === item.team)
 		try {
 			const r =
 				item.kind === OWNER_LEAD_KIND
@@ -277,13 +427,16 @@ async function runLifecycleEmailsOnce({ now = new Date(), dryRun = false } = {})
 			results.push({ ...item, sent: false, reason: 'error' })
 		}
 	}
-	return { dryRun: false, teamsChecked: teams.length, results }
+	return { dryRun: false, teamsChecked: allTeams.length, results }
 }
 
 module.exports = {
 	runLifecycleEmailsOnce,
 	sendLifecycleEmailForTeam,
+	sendPaymentConfirmationForTeam,
 	buildLifecycleEmail,
+	buildBillingEmail,
+	buildPaymentConfirmationEmail,
 	isExcludedTeam,
 	OWNER_LEAD_KIND,
 }

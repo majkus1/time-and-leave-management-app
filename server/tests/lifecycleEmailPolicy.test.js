@@ -1,7 +1,35 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const { dueLifecycleKind, ownerLeadDue, LIFECYCLE_KINDS } = require('../utils/lifecycleEmailPolicy')
+const { dueLifecycleKind, dueBillingKind, ownerLeadDue, LIFECYCLE_KINDS } = require('../utils/lifecycleEmailPolicy')
+
+const bill = (daysToEnd, extra = {}) =>
+	dueBillingKind({ daysToEnd, hasStripeSubscription: false, active: true, lapsed: false, periodEndKey: '2026-10-01', sentKinds: [], ...extra })
+
+test('pakiet P24: przypomnienie 7 dni i 1 dzien przed koncem, z data okresu w rodzaju', () => {
+	assert.equal(bill(7), 'paid_renewal_7d:2026-10-01')
+	assert.equal(bill(5), 'paid_renewal_7d:2026-10-01')
+	assert.equal(bill(1), 'paid_renewal_1d:2026-10-01')
+	assert.equal(bill(0), 'paid_renewal_1d:2026-10-01')
+	assert.equal(bill(3), null)
+	assert.equal(bill(20), null)
+	assert.equal(bill(7, { sentKinds: ['paid_renewal_7d:2026-10-01'] }), null)
+	// kolejny okres = nowy klucz, wiec nowe przypomnienie
+	assert.equal(bill(7, { periodEndKey: '2026-11-01', sentKinds: ['paid_renewal_7d:2026-10-01'] }), 'paid_renewal_7d:2026-11-01')
+})
+
+test('subskrypcja Stripe nie dostaje przypomnien przed koncem (odnawia sie sama)', () => {
+	assert.equal(bill(7, { hasStripeSubscription: true }), null)
+	assert.equal(bill(1, { hasStripeSubscription: true }), null)
+})
+
+test('wygasniecie: mail 1-7 dni po koncu, niezaleznie od dostawcy, raz na okres', () => {
+	assert.equal(bill(-1, { active: false, lapsed: true }), 'paid_lapsed:2026-10-01')
+	assert.equal(bill(-7, { active: false, lapsed: true, hasStripeSubscription: true }), 'paid_lapsed:2026-10-01')
+	assert.equal(bill(-8, { active: false, lapsed: true }), null)
+	assert.equal(bill(-3, { active: false, lapsed: true, sentKinds: ['paid_lapsed:2026-10-01'] }), null)
+	assert.equal(bill(-3, { active: true, lapsed: false }), null)
+})
 
 const due = (ageDays, extra = {}) => dueLifecycleKind({ ageDays, usersCount: 1, paid: false, sentKinds: [], ...extra })
 
