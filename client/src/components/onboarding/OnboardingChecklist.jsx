@@ -5,6 +5,9 @@ import { useOnboardingStatus, useDismissOnboarding } from '../../hooks/useOnboar
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './OnboardingChecklist.css'
 
+/** Kotwica sekcji świąt na stronie ustawień — Settings.jsx przewija do niej po wczytaniu. */
+export const SETTINGS_HOLIDAYS_ANCHOR = 'settings-holidays-section'
+
 function CheckIcon() {
 	return (
 		<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -16,6 +19,9 @@ function CheckIcon() {
 /**
  * „Pierwsze kroki” po założeniu zespołu. Widoczna dla Admina / HR, dopóki nie zrobią trzech rzeczy
  * albo jej nie ukryją. Kroki liczy serwer z faktycznych danych — nie da się jej „odklikać”.
+ *
+ * Nagłówek i stopka to <div>, nie <header>/<footer>: globalny styl aplikacji robi
+ * `header { position: fixed }` i karta rozjeżdżała się na produkcji.
  */
 export default function OnboardingChecklist() {
 	const { t } = useTranslation()
@@ -42,7 +48,7 @@ export default function OnboardingChecklist() {
 			done: data.steps.settings.done,
 			title: t('onboarding.step2Title'),
 			body: t('onboarding.step2Body'),
-			to: '/settings',
+			to: `/settings#${SETTINGS_HOLIDAYS_ANCHOR}`,
 			cta: t('onboarding.step2Cta'),
 		},
 		{
@@ -57,7 +63,7 @@ export default function OnboardingChecklist() {
 
 	return (
 		<section className={`po-onboarding ${data.allDone ? 'po-onboarding--done' : ''}`} aria-label={t('onboarding.title')}>
-			<header className="po-onboarding__head">
+			<div className="po-onboarding__head">
 				<div>
 					<span className="po-onboarding__eyebrow">{t('onboarding.eyebrow')}</span>
 					<h2 className="po-onboarding__title">
@@ -75,7 +81,7 @@ export default function OnboardingChecklist() {
 						<span style={{ width: `${(data.doneCount / data.total) * 100}%` }} />
 					</span>
 				</div>
-			</header>
+			</div>
 
 			<ol className="po-onboarding__steps">
 				{steps.map((step, index) => (
@@ -94,7 +100,7 @@ export default function OnboardingChecklist() {
 				))}
 			</ol>
 
-			<footer className="po-onboarding__foot">
+			<div className="po-onboarding__foot">
 				<button
 					type="button"
 					className="po-onboarding__dismiss"
@@ -103,7 +109,7 @@ export default function OnboardingChecklist() {
 				>
 					{data.allDone ? t('onboarding.hideDone') : t('onboarding.hide')}
 				</button>
-			</footer>
+			</div>
 		</section>
 	)
 }

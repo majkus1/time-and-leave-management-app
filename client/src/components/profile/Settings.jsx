@@ -89,6 +89,18 @@ function Settings() {
 	const pushOnlySettings = !canEditSettings
 	/** Freemium + Admin/HR: tylko weekendy i święta (reszta ukryta). */
 	const freemiumSlimSettings = Boolean(canEditSettings && freemiumTier)
+
+	// „Ustaw” z listy pierwszych kroków prowadzi tu z kotwicą (#settings-holidays-section);
+	// globalny ScrollToHashElement odpala się za wcześnie — sekcja pojawia się dopiero po wczytaniu ustawień.
+	useEffect(() => {
+		if (loadingSettings) return
+		const hash = window.location.hash.replace('#', '')
+		if (!hash) return
+		const timer = setTimeout(() => {
+			document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		}, 200)
+		return () => clearTimeout(timer)
+	}, [loadingSettings])
 	const [isInfoExpanded, setIsInfoExpanded] = useState(false)
 	const [isHolidayInfoExpanded, setIsHolidayInfoExpanded] = useState(false)
 	const [isPolishHolidaysModalOpen, setIsPolishHolidaysModalOpen] = useState(false)
@@ -1385,7 +1397,8 @@ function Settings() {
 						</div>
 
 						{/* Sekcja konfiguracji dni świątecznych */}
-						<h3 style={{ 
+						<h3 id="settings-holidays-section" style={{
+							scrollMarginTop: '90px',
 							color: '#2c3e50',
 							marginTop: '40px',
 							marginBottom: '20px',

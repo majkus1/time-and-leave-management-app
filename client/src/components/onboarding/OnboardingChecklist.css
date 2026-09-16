@@ -1,5 +1,12 @@
-/* Karta „pierwsze kroki” — kolory wyłącznie ze zmiennych motywu, działa w jasnym i ciemnym. */
+/*
+ * Karta „pierwsze kroki”. Kolory wyłącznie ze zmiennych motywu — działa w jasnym i ciemnym.
+ *
+ * Globalne style aplikacji (style.css) wymuszają `!important` na p / span / h2
+ * (kolor #213555, rozmiar 16px) i ustawiają `header { position: fixed }` — stąd
+ * własne `!important` na tekstach i zwykłe <div> zamiast <header>/<footer>.
+ */
 .po-onboarding {
+	position: relative;
 	margin: 0 0 20px;
 	padding: 22px 24px 16px;
 	border-radius: 14px;
@@ -10,6 +17,7 @@
 }
 
 .po-onboarding__head {
+	position: static;
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
@@ -19,27 +27,27 @@
 
 .po-onboarding__eyebrow {
 	display: block;
-	font-size: 12px;
+	font-size: 12px !important;
 	font-weight: 600;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 	margin-bottom: 4px;
 }
 
 .po-onboarding__title {
 	margin: 0 0 4px;
-	font-size: 20px;
+	font-size: 20px !important;
 	font-weight: 700;
 	line-height: 1.2;
-	color: var(--po-text);
+	color: var(--po-text) !important;
 }
 
 .po-onboarding__subtitle {
 	margin: 0;
-	font-size: 14px;
+	font-size: 14px !important;
 	line-height: 1.5;
-	color: var(--po-text-secondary);
+	color: var(--po-text-secondary) !important;
 }
 
 .po-onboarding__progress {
@@ -50,9 +58,9 @@
 
 .po-onboarding__progress-label {
 	display: block;
-	font-size: 13px;
+	font-size: 13px !important;
 	font-weight: 600;
-	color: var(--po-text-muted);
+	color: var(--po-text-muted) !important;
 	margin-bottom: 6px;
 }
 
@@ -102,56 +110,57 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	font-size: 14px;
+	font-size: 14px !important;
 	font-weight: 700;
 	background: var(--po-surface);
 	border: 1px solid var(--po-border-strong);
-	color: var(--po-text-secondary);
+	color: var(--po-text-secondary) !important;
 }
 
 .po-onboarding__step.is-done .po-onboarding__mark {
 	background: var(--po-brand);
 	border-color: var(--po-brand);
-	color: #fff;
+	color: #fff !important;
 }
 
 .po-onboarding__step-text strong {
 	display: block;
-	font-size: 15px;
+	font-size: 15px !important;
 	font-weight: 600;
-	color: var(--po-text);
+	color: var(--po-text) !important;
 }
 
 .po-onboarding__step.is-done .po-onboarding__step-text strong {
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
 }
 
 .po-onboarding__step-text p {
 	margin: 2px 0 0;
-	font-size: 13.5px;
+	font-size: 13.5px !important;
 	line-height: 1.45;
-	color: var(--po-text-secondary);
+	color: var(--po-text-secondary) !important;
 }
 
 .po-onboarding__cta {
 	white-space: nowrap;
 	padding: 8px 16px;
 	border-radius: 9px;
-	font-size: 14px;
+	font-size: 14px !important;
 	font-weight: 600;
 	text-decoration: none;
 	background: var(--po-brand);
-	color: #fff;
+	color: #fff !important;
 	transition: background 0.15s ease;
 }
 
 .po-onboarding__cta:hover {
 	background: var(--po-brand-hover);
-	color: #fff;
+	color: #fff !important;
 	text-decoration: none;
 }
 
 .po-onboarding__foot {
+	position: static;
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 10px;
@@ -161,18 +170,30 @@
 	background: transparent;
 	border: none;
 	padding: 6px 4px;
-	font-size: 13px;
-	color: var(--po-text-muted);
+	font-size: 13px !important;
+	color: var(--po-text-muted) !important;
 	cursor: pointer;
 	transition: color 0.15s ease;
 }
 
 .po-onboarding__dismiss:hover {
-	color: var(--po-text);
+	color: var(--po-text) !important;
 }
 
 .po-onboarding--done {
 	border-color: var(--po-brand-soft);
+}
+
+[data-theme='dark'] .po-onboarding__step.is-done {
+	background: rgba(0, 168, 70, 0.14);
+}
+
+[data-theme='dark'] .po-onboarding__step.is-done .po-onboarding__step-text strong {
+	color: #6ee7a0 !important;
+}
+
+[data-theme='dark'] .po-onboarding__eyebrow {
+	color: #6ee7a0 !important;
 }
 
 @media (max-width: 640px) {
