@@ -1323,6 +1323,7 @@ i18n
 						status: 'Status',
 						empty: 'None',
 						updatedBy: 'By',
+						settledFromPool: 'Settled from balance: {{amount}}',
 						alertsucces: 'Request has been successfully sent!',
 						alertfail: 'An error occurred while sending',
 						statuses: {
@@ -1496,6 +1497,7 @@ i18n
 					btn2: 'Reject',
 					btn3: 'PDF Preview',
 					updateSuccess: 'Request status updated successfully',
+					updateSuccessBalance: 'Status updated. Leave balance: {{delta}}, {{left}} left.',
 					updateError: 'Failed to update request status',
 				},
 					leavepdf: {
@@ -3479,6 +3481,7 @@ i18n
 						status: 'Status',
 						empty: 'Brak',
 						updatedBy: 'przez',
+						settledFromPool: 'Rozliczono z puli: {{amount}}',
 						alertsucces: 'Wniosek został pomyślnie wysłany!',
 						alertfail: 'Wystąpił błąd podczas wysyłania wniosku. Spróbuj ponownie.',
 						statuses: {
@@ -3652,6 +3655,7 @@ i18n
 					btn2: 'Odrzuć',
 					btn3: 'Podgląd PDF',
 					updateSuccess: 'Status wniosku został pomyślnie zaktualizowany',
+					updateSuccessBalance: 'Status zaktualizowany. Pula urlopowa: {{delta}}, zostało {{left}}.',
 					updateError: 'Nie udało się zaktualizować statusu wniosku',
 				},
 					leavepdf: {

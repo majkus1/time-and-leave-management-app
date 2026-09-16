@@ -110,6 +110,24 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 				days: leaveTypeDays[type.id] || 0
 			}))
 	}, [enabledLeaveTypes, leaveTypeDays, settings])
+
+	// Podświetlenie salda, które właśnie się zmieniło (automatyczne rozliczenie po decyzji przełożonego
+	// przychodzi przez socket bez przeładowania — bez wyróżnienia zmiana liczby łatwo umyka).
+	const leaveTypeDaysKey = JSON.stringify(leaveTypeDays)
+	const prevLeaveTypeDaysRef = useRef(null)
+	const [flashedTypeIds, setFlashedTypeIds] = useState([])
+	useEffect(() => {
+		const prev = prevLeaveTypeDaysRef.current
+		prevLeaveTypeDaysRef.current = leaveTypeDaysKey
+		if (prev == null || prev === leaveTypeDaysKey) return
+		const before = JSON.parse(prev)
+		const after = JSON.parse(leaveTypeDaysKey)
+		const changed = Object.keys(after).filter(k => before[k] !== undefined && before[k] !== after[k])
+		if (!changed.length) return
+		setFlashedTypeIds(changed)
+		const timer = setTimeout(() => setFlashedTypeIds([]), 2600)
+		return () => clearTimeout(timer)
+	}, [leaveTypeDaysKey])
 	
 	// Ustaw domyślny typ po załadowaniu settings
 	React.useEffect(() => {
@@ -818,7 +836,7 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 									{leaveTypesWithDays.map(type => {
 										const displayName = i18n.resolvedLanguage === 'en' && type.nameEn ? type.nameEn : type.name
 										return (
-											<div key={type.id} className="leave-request-form__type-row" style={{ 
+											<div key={type.id} className={`leave-request-form__type-row ${flashedTypeIds.includes(type.id) ? 'is-updated' : ''}`} style={{ 
 												display: 'flex', 
 												justifyContent: 'space-between',
 												alignItems: 'center',
@@ -1199,6 +1217,13 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 													{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 												</span>
 											)}
+											{request.autoDeductedAmount != null && request.status !== 'status.rejected' && (
+												<span className="leave-request-card__meta leave-request-card__ledger" style={{ fontSize: '13px', color: 'var(--po-brand-text)' }}>
+													{t('leaveform.settledFromPool', {
+														amount: `−${request.autoDeductedAmount} ${request.autoDeductedUnit === 'hours' ? (t('leaveform.hours') || 'godz.') : (t('leaveform.days') || 'dni')}`,
+													})}
+												</span>
+											)}
 										</div>
 									</div>
 
@@ -1231,6 +1256,13 @@ import LeaveScheduleConflictConfirmContent from './LeaveScheduleConflictConfirmC
 											<p className="leave-request-updated-by-mobile" style={{ margin: 0, color: '#6b7280' }}>
 												{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 											</p>
+										)}
+										{request.autoDeductedAmount != null && request.status !== 'status.rejected' && (
+											<span className="leave-request-card__meta leave-request-card__ledger" style={{ fontSize: '13px', color: 'var(--po-brand-text)' }}>
+												{t('leaveform.settledFromPool', {
+													amount: `−${request.autoDeductedAmount} ${request.autoDeductedUnit === 'hours' ? (t('leaveform.hours') || 'godz.') : (t('leaveform.days') || 'dni')}`,
+												})}
+											</span>
 										)}
 									</div>
 
