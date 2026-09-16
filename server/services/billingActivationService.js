@@ -92,6 +92,7 @@ async function activatePaidPlan({
 	team.billingStatus = 'active'
 	team.billingCycle = billingCycle
 	team.billingPeriodEnd = end
+	const isFirstPaidActivation = team.billingHadPaidPlan !== true
 	team.maxUsers = limits.maxUsers
 	team.billingHadPaidPlan = true
 	if (limits.tierType === 'bundle') {
@@ -117,6 +118,25 @@ async function activatePaidPlan({
 			actorLabel,
 		},
 	})
+
+	// Potwierdzenie dla klienta tylko po realnej platnosci (P24 / Stripe) — nie po recznej aktywacji.
+	// Blad maila nie moze cofnac aktywacji; dublowanie webhooka trzyma klucz idempotencji.
+	if (['p24', 'stripe', 'stripe-recovery'].includes(String(actorLabel))) {
+		try {
+			const lifecycleEmailService = require('./lifecycleEmailService')
+			void lifecycleEmailService
+				.sendPaymentConfirmationForTeam(team, {
+					planKey: nk,
+					billingCycle,
+					periodEnd: end,
+					isFirst: isFirstPaidActivation,
+					idempotencyKey,
+				})
+				.catch(err => console.error('[lifecycleEmails] potwierdzenie platnosci:', err.message))
+		} catch (err) {
+			console.error('[lifecycleEmails] potwierdzenie platnosci:', err.message)
+		}
+	}
 
 	const logUserId = await resolveLogUserId(team._id)
 	if (logUserId) {

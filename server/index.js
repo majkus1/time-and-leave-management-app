@@ -79,7 +79,8 @@ firmDb.on('connected', async () => {
 			}
 			if (SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(team.name)) {
 				let billingChanged = false
-				if (team.billingPlanKey !== 'pro' && team.billingPlanKey !== 'starter' && team.billingPlanKey !== 'base_s') {
+				// Kazdy platny plan zostaje; nadpisujemy na PRO tylko brak planu / trial (wczesniej twarda lista gubila M, L i XS).
+				if (!require('./constants/planCatalog').isPaidPlanKey(team.billingPlanKey)) {
 					team.billingPlanKey = 'pro'
 					billingChanged = true
 				}
@@ -429,6 +430,7 @@ app.use('/api/boards', require('./routes/boardRoutes'))
 app.use('/api/schedules', require('./routes/scheduleRoutes'))
 app.use('/api/supervisors', supervisorRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/onboarding', require('./routes/onboardingRoutes'))
 app.use('/api/leave-request-types', leaveRequestTypeRoutes)
 app.use('/api/work-activities', workActivityRoutes)
 app.use('/api/push', pushRoutes)
@@ -536,4 +538,5 @@ app.io = io
 server.listen(process.env.PORT || 3000, () => {
 	const port = process.env.PORT || 3000
 	console.log(`Server running on port ${port}`)
+	require('./jobs/lifecycleEmailsJob').startLifecycleEmailsJob()
 })

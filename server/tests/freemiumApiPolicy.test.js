@@ -100,6 +100,8 @@ test('w limicie: zarządzanie zespołem i rozliczenia dostępne', () => {
 	assert.equal(active(`/api/teams/${TEAM}/check-limit`, 'POST'), true)
 	assert.equal(active('/api/billing/entitlements', 'GET'), true)
 	assert.equal(active('/api/tickets/create', 'POST'), true)
+	assert.equal(active('/api/onboarding/status', 'GET'), true)
+	assert.equal(overage('/api/onboarding/status', 'GET', ADMIN), false)
 })
 
 test('normalizeApiPath: wielkość liter, końcowy i zdublowany ukośnik nie omijają polityki', () => {

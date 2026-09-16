@@ -15,7 +15,7 @@ export function TutorialProvider({ children }) {
 	}, [])
 
 	return (
-		<TutorialContext.Provider value={{ openTutorial, closeTutorial }}>
+		<TutorialContext.Provider value={{ isOpen, openTutorial, closeTutorial }}>
 			{children}
 			<TutorialModal isOpen={isOpen} onClose={closeTutorial} />
 		</TutorialContext.Provider>

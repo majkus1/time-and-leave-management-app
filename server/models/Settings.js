@@ -134,6 +134,21 @@ const settingsSchema = new mongoose.Schema({
 		default: false,
 		required: true
 	},
+	// Samouczek otwiera się sam przy pierwszym logowaniu każdej osoby (zespół może to wyłączyć)
+	tutorialAutoOpen: {
+		type: Boolean,
+		default: true,
+		required: true
+	},
+	// Lista „pierwsze kroki” po założeniu zespołu: kiedy ukryta i kiedy Admin pierwszy raz zapisał ustawienia
+	onboardingDismissedAt: {
+		type: Date,
+		default: null
+	},
+	onboardingSettingsSavedAt: {
+		type: Date,
+		default: null
+	},
 	allowManagedNoAccessUsers: {
 		type: Boolean,
 		default: false,
@@ -192,7 +207,10 @@ settingsSchema.statics.getSettings = async function(teamId) {
 			customHolidays: [],
 			leaveRequestTypes: getDefaultSystemLeaveTypes(),
 			timerEnabled: false,
-			dashboardEnabled: true,
+			// Nowe zespoły startują od ewidencji — pusty pulpit przy pierwszym logowaniu zniechęcał.
+			// Admin włącza Start w ustawieniach, gdy zespół ma już dane. Istniejące zespoły zachowują swoją wartość.
+			dashboardEnabled: false,
+			tutorialAutoOpen: true,
 			allowManagedNoAccessUsers: false,
 			allowManagedWorkdayEntries: false,
 			allowManagedLeaveRequests: false,
@@ -262,6 +280,7 @@ settingsSchema.statics.getSettings = async function(teamId) {
 		if (settings.autoDeductLeaveLimits === undefined) settings.autoDeductLeaveLimits = false
 		if (!Array.isArray(settings.workActivities)) settings.workActivities = []
 		if (settings.dashboardEnabled === undefined) settings.dashboardEnabled = false
+		if (settings.tutorialAutoOpen === undefined) settings.tutorialAutoOpen = true
 		
 		await settings.save()
 	}

@@ -100,7 +100,7 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, 
 	<table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
 		<tr>
 			<td align="center" style="padding: 40px 20px;">
-				<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+				<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
 					<!-- Header -->
 					<tr>
 						<td style="padding: 40px 40px 30px 40px; text-align: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px 8px 0 0;">
@@ -805,7 +805,7 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const content = `
 		<p style="margin:0 0 12px 0;">Dzień dobry,</p>
 		<p style="margin:0 0 12px 0;">Dziękujemy za wybór <strong>Planopii</strong> dla zespołu <strong>${safeTeam}</strong>. Cieszymy się, że są Państwo z nami.</p>
-		<p style="margin:0 0 12px 0;"><strong>Fakturę za zakup</strong> wyślemy w ciągu najbliższych dni na ten adres e-mail.</p>
+		<p style="margin:0 0 12px 0;">Fakturę wystawimy w <strong>KSeF</strong> (Krajowym Systemie e-Faktur) i prześlemy na ten adres e-mail w ciągu kilku dni.</p>
 		<p style="margin:0 0 12px 0;">W razie pytań prosimy o kontakt na tego maila lub w aplikacji w <strong>Centrum pomocy</strong> — chętnie pomożemy.</p>
 		<p style="margin:0;">Pozdrawiamy,<br>Zespół Planopia</p>
 	`
