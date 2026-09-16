@@ -23,7 +23,7 @@ function CheckIcon() {
  * Nagłówek i stopka to <div>, nie <header>/<footer>: globalny styl aplikacji robi
  * `header { position: fixed }` i karta rozjeżdżała się na produkcji.
  */
-export default function OnboardingChecklist() {
+export default function OnboardingChecklist({ variant = 'default' }) {
 	const { t } = useTranslation()
 	const location = useLocation()
 	const { loggedIn, role } = useAuth()
@@ -62,7 +62,10 @@ export default function OnboardingChecklist() {
 	]
 
 	return (
-		<section className={`po-onboarding ${data.allDone ? 'po-onboarding--done' : ''}`} aria-label={t('onboarding.title')}>
+		<section
+			className={`po-onboarding po-onboarding--${variant} ${data.allDone ? 'po-onboarding--done' : ''}`}
+			aria-label={t('onboarding.title')}
+		>
 			<div className="po-onboarding__head">
 				<div>
 					<span className="po-onboarding__eyebrow">{t('onboarding.eyebrow')}</span>

@@ -8,7 +8,7 @@ function WorkTimePage() {
 		<>
 			<Sidebar />
 			<div className="content p-3">
-				<OnboardingChecklist />
+				<OnboardingChecklist variant="worktime" />
 				<div className="calendar-section">
 					<MonthlyCalendar />
 				</div>

@@ -7,6 +7,10 @@
  */
 .po-onboarding {
 	position: relative;
+	box-sizing: border-box;
+	max-width: 100%;
+	min-width: 0;
+	overflow-wrap: anywhere;
 	margin: 0 0 20px;
 	padding: 22px 24px 16px;
 	border-radius: 14px;
@@ -194,6 +198,22 @@
 
 [data-theme='dark'] .po-onboarding__eyebrow {
 	color: #6ee7a0 !important;
+}
+
+/*
+ * Na ekranach z paskiem mobilnym (style.css: .calendar-section dostaje margin-top: 95px)
+ * to karta jest pierwsza na stronie ewidencji — offset pod pasek przejmuje ona,
+ * a kalendarz pod nią już go nie potrzebuje.
+ */
+@media (max-width: 1500px) {
+	.po-onboarding--worktime {
+		margin-top: 95px;
+		margin-bottom: 16px;
+	}
+
+	.po-onboarding--worktime + .calendar-section {
+		margin-top: 0 !important;
+	}
 }
 
 @media (max-width: 640px) {
