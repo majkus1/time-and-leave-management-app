@@ -19,7 +19,8 @@ const OWNER_LEAD_KIND = 'owner_lead'
 /** Zespoły testowe i specjalne nie dostają maili sprzedażowych. */
 function isExcludedTeam(team) {
 	const name = String(team?.name || '')
-	if (/^test|playwright|^e2e/i.test(name)) return true
+	// „Test”, „test-2”, „TEST freemium…” — tak; „Testa Sp. z o.o.” — nie.
+	if (/^(test|testy|testowy|e2e)(\b|[\d_-])|playwright/i.test(name)) return true
 	const email = String(team?.adminEmail || '').toLowerCase()
 	if (!email.includes('@')) return true
 	if (/@(test\.planopia\.pl|playwright\.com|example\.com|example\.org)$/.test(email)) return true
@@ -49,8 +50,10 @@ function steps(items) {
  * Treści po polsku, krótko i po ludzku. Każdy mail ma jeden cel i jeden przycisk.
  * @returns {{ subject:string, title:string, content:string, buttonText?:string, buttonLink?:string }}
  */
-function buildLifecycleEmail(kind, team) {
+function buildLifecycleEmail(kind, team, facts = {}) {
 	const name = escapeHtml(team.name || 'Twój zespół')
+	const daysLeft = Number.isFinite(facts.trialDaysLeft) ? facts.trialDaysLeft : 7
+	const daysLeftText = daysLeft <= 1 ? 'jutro' : `za ${daysLeft} dni`
 	switch (kind) {
 		case 'welcome':
 			return {
@@ -103,11 +106,11 @@ function buildLifecycleEmail(kind, team) {
 			}
 		case 'trial_ending':
 			return {
-				subject: 'Za tydzień kończy się okres próbny',
+				subject: daysLeft <= 1 ? 'Jutro kończy się okres próbny' : `Za ${daysLeft} dni kończy się okres próbny`,
 				title: 'Co zostaje, a co wymaga pakietu',
 				content:
 					paragraph('Dzień dobry,') +
-					paragraph(`okres próbny zespołu <strong>${name}</strong> kończy się za 7 dni. Nic nie znika z dnia na dzień:`) +
+					paragraph(`okres próbny zespołu <strong>${name}</strong> kończy się ${daysLeftText}. Nic nie znika z dnia na dzień:`) +
 					steps([
 						'<strong>Zostaje za darmo:</strong> ewidencja czasu pracy i kalendarze dla zespołu do 5 kont.',
 						'<strong>Wymaga pakietu:</strong> urlopy, grafiki, zadania, czat, asystent AI, a także zespół powyżej 5 osób.',
@@ -186,24 +189,41 @@ async function claim(teamId, kind, to) {
 	}
 }
 
-async function sendLifecycleEmailForTeam(team, kind) {
+/**
+ * Wysyłka pod ochroną dziennika. Gdy SMTP odrzuci, wpis jest zwalniany — inaczej mail
+ * „zajęty, ale niewysłany” przepadałby na zawsze, a późniejszy krok cyklu zamykałby wcześniejsze.
+ */
+async function sendClaimed(teamId, kind, to, subject, html) {
+	if (!(await claim(teamId, kind, to))) return { sent: false, reason: 'already-sent' }
+	try {
+		await sendEmail(to, null, subject, html)
+	} catch (e) {
+		await LifecycleEmailLog.deleteOne({ teamId, kind }).catch(() => {})
+		throw e
+	}
+	return { sent: true }
+}
+
+async function sendLifecycleEmailForTeam(team, kind, facts = {}) {
 	if (!team || isExcludedTeam(team)) return { sent: false, reason: 'excluded' }
 	const to = String(team.adminEmail || '').trim()
 	if (!to) return { sent: false, reason: 'no-email' }
-	if (!(await claim(team._id, kind, to))) return { sent: false, reason: 'already-sent' }
-	const mail = buildLifecycleEmail(kind, team)
+	const mail = buildLifecycleEmail(kind, team, facts)
 	const html = getEmailTemplate(mail.title, mail.content, mail.buttonText || null, mail.buttonLink || null, null)
-	await sendEmail(to, null, mail.subject, html)
-	return { sent: true }
+	return sendClaimed(team._id, kind, to, mail.subject, html)
 }
 
 async function sendOwnerLead(team, facts) {
 	const to = ownerEmail()
 	if (!to) return { sent: false, reason: 'no-owner-email' }
-	if (!(await claim(team._id, OWNER_LEAD_KIND, to))) return { sent: false, reason: 'already-sent' }
 	const mail = buildOwnerLeadEmail(team, facts)
-	await sendEmail(to, null, mail.subject, getEmailTemplate(mail.title, mail.content, null, null, null))
-	return { sent: true }
+	return sendClaimed(team._id, OWNER_LEAD_KIND, to, mail.subject, getEmailTemplate(mail.title, mail.content, null, null, null))
+}
+
+/** Dni do końca trialu wg faktycznej daty (ręczne przedłużenie też się liczy); null, gdy nie ma trialu. */
+function trialDaysLeftFor(team, now) {
+	if (team.billingPlanKey !== 'trial' || !team.trialEndsAt) return null
+	return Math.ceil((new Date(team.trialEndsAt).getTime() - now.getTime()) / DAY_MS)
 }
 
 async function sessionDaysForTeam(teamId) {
@@ -230,9 +250,10 @@ async function runLifecycleEmailsOnce({ now = new Date(), dryRun = false } = {})
 		const usersCount = await countTeamSeats(team._id)
 		const paid = team.billingHadPaidPlan === true
 		const sentKinds = await sentKindsForTeam(team._id)
+		const trialDaysLeft = trialDaysLeftFor(team, now)
 
-		const kind = dueLifecycleKind({ ageDays, usersCount, paid, sentKinds })
-		if (kind) plan.push({ team: team.name, to: team.adminEmail, kind, ageDays, usersCount })
+		const kind = dueLifecycleKind({ ageDays, usersCount, paid, sentKinds, trialDaysLeft })
+		if (kind) plan.push({ team: team.name, to: team.adminEmail, kind, ageDays, usersCount, trialDaysLeft })
 
 		const sessionDays = await sessionDaysForTeam(team._id)
 		if (ownerLeadDue({ usersCount, sessionDays, paid, alerted: sentKinds.includes(OWNER_LEAD_KIND) })) {
@@ -249,7 +270,7 @@ async function runLifecycleEmailsOnce({ now = new Date(), dryRun = false } = {})
 			const r =
 				item.kind === OWNER_LEAD_KIND
 					? await sendOwnerLead(team, item)
-					: await sendLifecycleEmailForTeam(team, item.kind)
+					: await sendLifecycleEmailForTeam(team, item.kind, item)
 			results.push({ ...item, ...r })
 		} catch (e) {
 			console.error('[lifecycleEmails]', item.kind, item.team, e.message)

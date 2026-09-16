@@ -79,7 +79,8 @@ firmDb.on('connected', async () => {
 			}
 			if (SPECIAL_MANUAL_BILLING_TEAM_NAMES.includes(team.name)) {
 				let billingChanged = false
-				if (team.billingPlanKey !== 'pro' && team.billingPlanKey !== 'starter' && team.billingPlanKey !== 'base_s') {
+				// Kazdy platny plan zostaje; nadpisujemy na PRO tylko brak planu / trial (wczesniej twarda lista gubila M, L i XS).
+				if (!require('./constants/planCatalog').isPaidPlanKey(team.billingPlanKey)) {
 					team.billingPlanKey = 'pro'
 					billingChanged = true
 				}

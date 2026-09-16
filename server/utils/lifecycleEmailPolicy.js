@@ -17,7 +17,21 @@ const WINDOWS = {
 	winback: [40, 50],
 }
 
-function inWindow(kind, ageDays) {
+/**
+ * Kroki o końcu trialu liczymy z faktycznej daty jego końca, jeśli ją znamy — ręcznie
+ * przedłużony trial nie może dostać „kończy się za 7 dni” w 23. dniu od rejestracji.
+ * Bez tej daty (null) wracamy do okien liczonych od rejestracji.
+ */
+const TRIAL_WINDOWS = {
+	trial_ending: [4, 8],
+	trial_ended: [-7, 0],
+}
+
+function inWindow(kind, ageDays, trialDaysLeft) {
+	if (TRIAL_WINDOWS[kind] && Number.isFinite(trialDaysLeft)) {
+		const [from, to] = TRIAL_WINDOWS[kind]
+		return trialDaysLeft >= from && trialDaysLeft <= to
+	}
 	const [from, to] = WINDOWS[kind]
 	return ageDays >= from && ageDays <= to
 }
@@ -27,10 +41,10 @@ function inWindow(kind, ageDays) {
  * po przerwie, nie dostaje trzech maili w jeden poranek. Kolejność LIFECYCLE_KINDS to
  * kolejność cyklu; wysłany późniejszy krok zamyka wcześniejsze.
  *
- * @param {{ ageDays:number, usersCount:number, paid:boolean, sentKinds?:string[] }} facts
+ * @param {{ ageDays:number, usersCount:number, paid:boolean, sentKinds?:string[], trialDaysLeft?:number|null }} facts
  * @returns {string|null}
  */
-function dueLifecycleKind({ ageDays, usersCount, paid, sentKinds = [] }) {
+function dueLifecycleKind({ ageDays, usersCount, paid, sentKinds = [], trialDaysLeft = null }) {
 	if (!Number.isFinite(ageDays) || ageDays < 0) return null
 	const sent = new Set(sentKinds)
 	const lastSentIndex = LIFECYCLE_KINDS.reduce((acc, k, i) => (sent.has(k) ? i : acc), -1)
@@ -38,7 +52,7 @@ function dueLifecycleKind({ ageDays, usersCount, paid, sentKinds = [] }) {
 	for (let i = LIFECYCLE_KINDS.length - 1; i >= 0; i--) {
 		const kind = LIFECYCLE_KINDS[i]
 		if (i <= lastSentIndex) break
-		if (!inWindow(kind, ageDays)) continue
+		if (!inWindow(kind, ageDays, trialDaysLeft)) continue
 		if (kind !== 'welcome' && paid) continue
 		if (kind === 'add_team' && usersCount > 1) continue
 		return kind
@@ -55,4 +69,4 @@ function ownerLeadDue({ usersCount, sessionDays, paid, alerted }) {
 	return usersCount >= 3 || sessionDays >= 3
 }
 
-module.exports = { LIFECYCLE_KINDS, WINDOWS, dueLifecycleKind, ownerLeadDue }
+module.exports = { LIFECYCLE_KINDS, WINDOWS, TRIAL_WINDOWS, dueLifecycleKind, ownerLeadDue }

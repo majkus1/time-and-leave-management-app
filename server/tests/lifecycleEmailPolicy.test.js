@@ -43,6 +43,20 @@ test('ten sam rodzaj nie wychodzi dwa razy', () => {
 	assert.equal(due(25, { sentKinds: ['trial_ending'] }), null)
 })
 
+test('koniec trialu liczony z faktycznej daty, gdy jest znana — przedluzony trial nie dostaje maila w 23. dniu', () => {
+	// trial przedluzony recznie: 25 dni od rejestracji, ale do konca jeszcze 20 dni
+	assert.equal(due(25, { trialDaysLeft: 20 }), null)
+	assert.equal(due(25, { trialDaysLeft: 7 }), 'trial_ending')
+	assert.equal(due(10, { trialDaysLeft: 5 }), 'trial_ending')
+	assert.equal(due(31, { trialDaysLeft: 0 }), 'trial_ended')
+	assert.equal(due(33, { trialDaysLeft: -3 }), 'trial_ended')
+	// w oknie win-back (40+ dni) wygrywa pozniejszy krok cyklu — jeden mail, nie dwa
+	assert.equal(due(40, { trialDaysLeft: -3 }), 'winback')
+	assert.equal(due(31, { trialDaysLeft: 10 }), null)
+	// bez daty konca — okna od rejestracji jak dotad
+	assert.equal(due(25, { trialDaysLeft: null }), 'trial_ending')
+})
+
 test('sygnal dla wlasciciela: 3 konta lub 3 dni logowan, raz, tylko niezaplacone', () => {
 	assert.equal(ownerLeadDue({ usersCount: 3, sessionDays: 1, paid: false, alerted: false }), true)
 	assert.equal(ownerLeadDue({ usersCount: 1, sessionDays: 3, paid: false, alerted: false }), true)
