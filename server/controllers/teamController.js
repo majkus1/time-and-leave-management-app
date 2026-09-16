@@ -190,6 +190,16 @@ exports.registerTeam = async (req, res) => {
 		// dotychczasową wartość dashboardEnabled w swoim dokumencie ustawień.
 		await Settings.getSettings(newTeam._id);
 
+		// Powitanie z trzema krokami — od razu, nie z dziennego joba. Błąd maila nie psuje rejestracji.
+		try {
+			const lifecycleEmailService = require('../services/lifecycleEmailService')
+			void lifecycleEmailService.sendLifecycleEmailForTeam(newTeam, 'welcome').catch(err => {
+				console.error('[lifecycleEmails] welcome:', err.message)
+			})
+		} catch (err) {
+			console.error('[lifecycleEmails] welcome:', err.message)
+		}
+
 		// Record legal document acceptances (TERMS and PRIVACY) — wymagane wyżej
 		// Note: DPA is automatically accepted when first employee is added
 		if (acceptedDocuments.length > 0) {
