@@ -110,12 +110,25 @@ function AdminLeaveRequests() {
 	const updateLeaveRequestStatus = async (id, newStatus) => {
 		setUpdatingRequestId(id)
 		try {
-			await updateLeaveRequestStatusMutation.mutateAsync({
+			const result = await updateLeaveRequestStatusMutation.mutateAsync({
 				id,
 				status: newStatus,
 				userId,
 			})
-			await showAlert(t('adminleavereq.updateSuccess'))
+			// Automatyczne rozliczenie puli: pokaż, co się stało z saldem, zamiast samego „zaktualizowano”.
+			const balance = result?.balance
+			if (balance?.applied) {
+				const unitLabel = balance.unit === 'hours' ? (t('leaveform.hours') || 'godz.') : (t('leaveform.days') || 'dni')
+				const sign = balance.action === 'refund' ? '+' : '−'
+				await showAlert(
+					t('adminleavereq.updateSuccessBalance', {
+						delta: `${sign}${balance.amount} ${unitLabel}`,
+						left: `${balance.nextBalance} ${unitLabel}`,
+					})
+				)
+			} else {
+				await showAlert(t('adminleavereq.updateSuccess'))
+			}
 		} catch (error) {
 			console.error('Błąd podczas aktualizacji statusu zgłoszenia:', error)
 			const backendMessage =
@@ -270,6 +283,13 @@ function AdminLeaveRequests() {
 											{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 										</span>
 									)}
+									{request.autoDeductedAmount != null && request.status !== 'status.rejected' && (
+										<span className="leave-request-card__meta leave-request-card__ledger" style={{ fontSize: '13px', color: 'var(--po-brand-text)' }}>
+											{t('leaveform.settledFromPool', {
+												amount: `−${request.autoDeductedAmount} ${request.autoDeductedUnit === 'hours' ? (t('leaveform.hours') || 'godz.') : (t('leaveform.days') || 'dni')}`,
+											})}
+										</span>
+									)}
 								</div>
 							</div>
 
@@ -301,6 +321,13 @@ function AdminLeaveRequests() {
 									<p className="leave-request-updated-by-mobile leave-request-card__meta" style={{ margin: 0, color: '#6b7280' }}>
 										{t('leaveform.updatedBy')}: {request.updatedBy.firstName} {request.updatedBy.lastName}
 									</p>
+								)}
+								{request.autoDeductedAmount != null && request.status !== 'status.rejected' && (
+									<span className="leave-request-card__meta leave-request-card__ledger" style={{ fontSize: '13px', color: 'var(--po-brand-text)' }}>
+										{t('leaveform.settledFromPool', {
+											amount: `−${request.autoDeductedAmount} ${request.autoDeductedUnit === 'hours' ? (t('leaveform.hours') || 'godz.') : (t('leaveform.days') || 'dni')}`,
+										})}
+									</span>
 								)}
 								{request.submittedBy && (
 									<p className="leave-request-card__meta" style={{ margin: 0, color: '#6b7280' }}>

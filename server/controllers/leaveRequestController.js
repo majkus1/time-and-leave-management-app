@@ -513,12 +513,34 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 
 		// Automatyczne rozliczenie puli urlopowej (opcja zespołu, domyślnie wyłączona).
 		// Po utrwaleniu statusu, żeby awaria zapisu nie oddała dni, których nikt nie pobrał.
-		await applyLeaveBalanceAutoDeduction({
+		const balance = await applyLeaveBalanceAutoDeduction({
 			settings,
 			leaveRequest,
 			previousStatus,
 			nextStatus: leaveRequest.status,
 		})
+
+		// Pobierz zaktualizowany leaveRequest z populate
+		const updatedLeaveRequest = await LeaveRequest.findById(id)
+			.populate({
+				path: 'updatedBy',
+				select: 'firstName lastName',
+				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
+			})
+			.lean()
+
+		// Status i pula są zapisane — odpowiadamy od razu (klient dostaje też wynik rozliczenia,
+		// żeby pokazać nowe saldo). Maile i push idą w tle; ich błędy nie dotykają odpowiedzi.
+		emitLeaveRequestsUpdated(req, {
+			teamId: user.teamId || req.user.teamId,
+			userId: user._id,
+			leaveRequestId: updatedLeaveRequest?._id || leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'status-updated',
+		})
+		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest, balance })
+
+		try {
 		const language = t('email.leaveRequest.footerNotification').includes('automatycznie') ? 'pl' : 'en'
 		const typeText = getLeaveRequestTypeName(settings, leaveRequest.type, t, language)
 		
@@ -651,23 +673,9 @@ exports.updateLeaveRequestStatus = async (req, res) => {
 			console.error('Error preparing HR push notifications:', hrPushError)
 		}
 
-		// Pobierz zaktualizowany leaveRequest z populate
-		const updatedLeaveRequest = await LeaveRequest.findById(id)
-			.populate({
-				path: 'updatedBy',
-				select: 'firstName lastName',
-				match: { $or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }] }
-			})
-			.lean()
-
-		emitLeaveRequestsUpdated(req, {
-			teamId: user.teamId || req.user.teamId,
-			userId: user._id,
-			leaveRequestId: updatedLeaveRequest?._id || leaveRequest._id,
-			status: leaveRequest.status,
-			action: 'status-updated',
-		})
-		res.status(200).json({ message: 'Status updated successfully.', leaveRequest: updatedLeaveRequest })
+		} catch (backgroundError) {
+			console.error('Powiadomienia o zmianie statusu (w tle):', backgroundError)
+		}
 	} catch (error) {
 		console.error('Error updating leave request status:', error)
 		res.status(500).json({ message: 'Failed to update leave request status.' })
@@ -1118,6 +1126,17 @@ exports.cancelLeaveRequest = async (req, res) => {
 			persistLedger: false,
 		})
 
+		// Wniosek usunięty, pula oddana — odpowiadamy od razu. Powiadomienia w tle.
+		emitLeaveRequestsUpdated(req, {
+			teamId: teamId || req.user.teamId,
+			userId: user._id,
+			leaveRequestId: leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'cancelled',
+		})
+		res.status(200).json({ message: 'Leave request cancelled successfully.' })
+
+		try {
 		// Zbierz unikalnych odbiorców (bez duplikatów) - uwzględnia przełożonych z SupervisorConfig
 		const recipients = await getUniqueEmailRecipients(user, teamId, t)
 
@@ -1163,10 +1182,11 @@ exports.cancelLeaveRequest = async (req, res) => {
 						t
 					),
 					{ teamId, preview: cancelPreview }
-				)
+				).catch(error => {
+					console.error('Mail o anulowaniu wniosku nie wyszedł:', error?.message || error)
+				})
 			)
-
-			await Promise.all(emailPromises)
+			void emailPromises
 		}
 
 		// Send push notifications to recipients (non-blocking)
@@ -1183,14 +1203,9 @@ exports.cancelLeaveRequest = async (req, res) => {
 			}
 		}
 
-		emitLeaveRequestsUpdated(req, {
-			teamId: teamId || req.user.teamId,
-			userId: user._id,
-			leaveRequestId: leaveRequest._id,
-			status: leaveRequest.status,
-			action: 'cancelled',
-		})
-		res.status(200).json({ message: 'Leave request cancelled successfully.' })
+		} catch (backgroundError) {
+			console.error('Powiadomienia o anulowaniu wniosku (w tle):', backgroundError)
+		}
 	} catch (error) {
 		console.error('Error cancelling leave request:', error)
 		res.status(500).send('Failed to cancel leave request.')

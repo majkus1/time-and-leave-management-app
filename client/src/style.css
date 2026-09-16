@@ -8293,3 +8293,19 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 		margin-left: 0;
 	}
 }
+
+/* Saldo urlopowe, które właśnie zmieniło się automatycznie — krótkie wyróżnienie w obu motywach. */
+@keyframes po-balance-updated {
+	0% { box-shadow: 0 0 0 0 rgba(0, 168, 70, 0.55); }
+	35% { box-shadow: 0 0 0 6px rgba(0, 168, 70, 0.22); }
+	100% { box-shadow: 0 0 0 0 rgba(0, 168, 70, 0); }
+}
+
+.leave-request-form__type-row.is-updated {
+	animation: po-balance-updated 1.3s ease-out 2;
+}
+
+.leave-request-form__type-row.is-updated .leave-request-form__type-value {
+	transition: transform 0.25s ease;
+	transform: scale(1.12);
+}
