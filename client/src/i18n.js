@@ -326,11 +326,6 @@ i18n
 						stripeModulesNeedStripe:
 							'Paying for Core with add-on modules by card requires Stripe checkout and every priceId mapped in STRIPE_PRICE_MAP_JSON.',
 						tierFeatures: {
-							base_xs: [
-								'Core — up to 8 users',
-								'Time tracking & leave',
-								'Optional add-on modules (timer, schedules, tasks, chat, AI)',
-							],
 							base_s: [
 								'Core — up to 15 users',
 								'Time tracking & leave',
@@ -2480,11 +2475,6 @@ i18n
 						stripeModulesNeedStripe:
 							'Płatność kartą za Core z modułami wymaga checkout Stripe i kompletu priceId w STRIPE_PRICE_MAP_JSON.',
 						tierFeatures: {
-							base_xs: [
-								'Core — do 8 użytkowników',
-								'Ewidencja czasu pracy i urlopy',
-								'Dodatkowe moduły opcjonalnie: timer, grafiki, zadania, czat, AI',
-							],
 							base_s: [
 								'Core — do 15 użytkowników',
 								'Ewidencja czasu pracy i urlopy',

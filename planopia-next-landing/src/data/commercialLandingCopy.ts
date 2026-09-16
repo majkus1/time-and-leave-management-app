@@ -89,7 +89,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Wnioski urlopowe i kalendarz urlopów to część pełnej aplikacji. Masz je przez 30 dni okresu próbnego, a potem w dowolnym planie płatnym:',
 			pricingBullets: [
 				'30 dni za darmo — pełna aplikacja z urlopami dla zespołu do 5 osób.',
-				'Plan CORE od 59 zł netto / mies. (do 8 osób; 119 zł do 15, 199 zł do 30, 349 zł do 100) — urlopy są w cenie planu.',
+				'Plan CORE od 119 zł netto / mies. (do 15 osób; 199 zł do 30, 349 zł do 100) — urlopy są w cenie planu.',
 				'Pakiety PRO (239 zł, do 30 osób) i BUSINESS (479 zł, do 100 osób) — urlopy plus wszystkie pozostałe moduły i Asystent AI.',
 			],
 			pricingNote:
@@ -120,7 +120,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Uporządkuj urlopy w firmie',
 			ctaNote:
-				'30 dni pełnej aplikacji za darmo. Potem plan z urlopami od 59 zł netto/mies. lub darmowa ewidencja czasu pracy.',
+				'30 dni pełnej aplikacji za darmo. Potem plan z urlopami od 119 zł netto/mies. lub darmowa ewidencja czasu pracy.',
 			relatedTitle: 'Powiązane materiały',
 			related: [
 				{ href: '/blog/program-do-urlopow-dla-malej-firmy', label: 'Program do urlopów dla małej firmy — jak wybrać' },
@@ -134,9 +134,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/plans-urlopnew.webp',
 			heroImageAlt: 'Kalendarz urlopów i wnioski urlopowe w aplikacji Planopia',
 			breadcrumbName: 'Program do urlopów',
-			offerPrice: '59',
+			offerPrice: '119',
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; moduł urlopów w planach płatnych (CORE od 59 zł netto/mies. lub pakiet).',
+				'30 dni pełnej aplikacji za darmo; moduł urlopów w planach płatnych (CORE od 119 zł netto/mies. lub pakiet).',
 		},
 		en: {
 			eyebrow: 'Leave management software',
@@ -175,7 +175,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Leave requests and the leave calendar are part of the full app. You get them during the 30-day trial and then on any paid plan:',
 			pricingBullets: [
 				'30 days free — full app with leave for a team of up to 5 users.',
-				'CORE plan from 59 PLN net / month (up to 8 users; 119 up to 15, 199 up to 30, 349 up to 100) — leave is included in the plan.',
+				'CORE plan from 119 PLN net / month (up to 15 users; 199 up to 30, 349 up to 100) — leave is included in the plan.',
 				'PRO (239 PLN, up to 30 users) and BUSINESS (479 PLN, up to 100 users) — leave plus all other modules and the AI Assistant.',
 			],
 			pricingNote:
@@ -206,7 +206,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Bring order to company leave',
 			ctaNote:
-				'30 days of the full app free. Then a plan with leave from 59 PLN net/month, or free time tracking.',
+				'30 days of the full app free. Then a plan with leave from 119 PLN net/month, or free time tracking.',
 			relatedTitle: 'Related resources',
 			related: [
 				{ href: '/en/blog/annual-leave-plan-excel-pdf-app', label: 'Annual leave plan: Excel, PDF, app' },
@@ -219,9 +219,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/plans-urlopnewen.webp',
 			heroImageAlt: 'Leave calendar and leave requests in the Planopia app',
 			breadcrumbName: 'Leave management software',
-			offerPrice: '59',
+			offerPrice: '119',
 			offerDescription:
-				'30-day full trial free; leave module on paid plans (CORE from 59 PLN net/month or a package).',
+				'30-day full trial free; leave module on paid plans (CORE from 119 PLN net/month or a package).',
 		},
 	},
 	time: {
@@ -263,7 +263,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), bez podawania karty na start.',
 				'Po próbie: darmowa ewidencja czasu pracy do 5 aktywnych kont — bez opłat.',
-				'Większy zespół lub licznik czasu i QR: plan CORE od 59 zł netto/mies. lub pakiet PRO/BUSINESS.',
+				'Większy zespół lub licznik czasu i QR: plan CORE od 119 zł netto/mies. lub pakiet PRO/BUSINESS.',
 			],
 			pricingNote:
 				'Licznik czasu i kody QR to moduł dodatkowy (na planie CORE od 39 zł netto/mies.) lub element pakietu PRO/BUSINESS. Ręczna ewidencja, kalendarz i eksport PDF/XLSX działają także w planie darmowym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
@@ -349,7 +349,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), no card required to start.',
 				'After the trial: free time tracking for up to 5 active accounts — at no cost.',
-				'Bigger team, or time clock and QR: CORE plan from 59 PLN net/month, or a PRO/BUSINESS package.',
+				'Bigger team, or time clock and QR: CORE plan from 119 PLN net/month, or a PRO/BUSINESS package.',
 			],
 			pricingNote:
 				'The time clock and QR codes are an add-on module (on CORE from 39 PLN net/month) or part of a PRO/BUSINESS package. Manual time tracking, calendar, and PDF/XLSX export also work on the free tier. Annual billing: pay for 10 months instead of 12.',
@@ -479,9 +479,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/aigrafik.webp',
 			heroImageAlt: 'Grafik pracy zespołu w aplikacji Planopia',
 			breadcrumbName: 'Program do grafików pracy',
-			offerPrice: '118',
+			offerPrice: '178',
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (od 59 zł netto/mies., do 8 osób) z modułem Grafiki + AI (59 zł netto/mies.), razem od 118 zł, albo pakiet PRO od 239 zł.',
+				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (119 zł netto/mies.) z modułem Grafiki + AI (59 zł netto/mies.), razem 178 zł, albo pakiet PRO od 239 zł.',
 		},
 		en: {
 			eyebrow: 'Work schedule software',
@@ -561,9 +561,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/aigrafik-en.webp',
 			heroImageAlt: 'Team work schedule in the Planopia app',
 			breadcrumbName: 'Work schedule software',
-			offerPrice: '118',
+			offerPrice: '178',
 			offerDescription:
-				'30-day full trial free; the cheapest route is a CORE plan (from 59 PLN net/month, up to 8 users) plus the Schedules + AI module (59 PLN net/month), from 118 PLN together, or a PRO package from 239 PLN.',
+				'30-day full trial free; the cheapest route is a CORE plan (119 PLN net/month) plus the Schedules + AI module (59 PLN net/month), 178 PLN together, or a PRO package from 239 PLN.',
 		},
 	},
 	attendance: {
@@ -647,9 +647,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/desktopnews.webp',
 			heroImageAlt: 'Rejestracja czasu pracy i lista obecności w aplikacji Planopia',
 			breadcrumbName: 'Rejestracja czasu pracy przez QR',
-			offerPrice: '98',
+			offerPrice: '158',
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (od 59 zł netto/mies., do 8 osób) z modułem Timer + QR (39 zł netto/mies.), razem od 98 zł, albo pakiet PRO od 239 zł.',
+				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (119 zł netto/mies.) z modułem Timer + QR (39 zł netto/mies.), razem 158 zł, albo pakiet PRO od 239 zł.',
 		},
 		en: {
 			eyebrow: 'Time clocking and attendance',
@@ -729,9 +729,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/desktop-ennews.webp',
 			heroImageAlt: 'QR time clocking and attendance in the Planopia app',
 			breadcrumbName: 'QR time clocking',
-			offerPrice: '98',
+			offerPrice: '158',
 			offerDescription:
-				'30-day full trial free; the cheapest route is a CORE plan (from 59 PLN net/month, up to 8 users) plus the Timer + QR module (39 PLN net/month), from 98 PLN together, or a PRO package from 239 PLN.',
+				'30-day full trial free; the cheapest route is a CORE plan (119 PLN net/month) plus the Timer + QR module (39 PLN net/month), 158 PLN together, or a PRO package from 239 PLN.',
 		},
 	},
 	overtime: {
@@ -773,7 +773,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), bez podawania karty na start.',
 				'Po próbie: bezpłatna ewidencja czasu pracy i nadgodzin do 5 aktywnych kont.',
-				'Większy zespół: plan CORE od 59 zł netto/mies. albo pakiet PRO lub BUSINESS.',
+				'Większy zespół: plan CORE od 119 zł netto/mies. albo pakiet PRO lub BUSINESS.',
 			],
 			pricingNote:
 				'Automatyczne oznaczanie nadgodzin przez licznik czasu i kody QR to moduł dodatkowy (39 zł netto/mies. na planie CORE) lub część pakietu PRO/BUSINESS. Ręczne wpisy, kalendarz i eksport PDF/XLSX działają w planie bezpłatnym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
@@ -856,7 +856,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), no card required to start.',
 				'After the trial: free time and overtime records for up to 5 active accounts.',
-				'A larger team: a CORE plan from 59 PLN net/month, or a PRO or BUSINESS package.',
+				'A larger team: a CORE plan from 119 PLN net/month, or a PRO or BUSINESS package.',
 			],
 			pricingNote:
 				'Flagging overtime automatically through the work timer and QR codes is a paid module (39 PLN net/month on CORE) or part of a PRO/BUSINESS package. Manual entries, the calendar, and PDF/XLSX export work on the free tier. Annual billing: you pay for 10 months instead of 12.',

@@ -115,7 +115,7 @@ function buildLifecycleEmail(kind, team, facts = {}) {
 						'<strong>Zostaje za darmo:</strong> ewidencja czasu pracy i kalendarze dla zespołu do 5 kont.',
 						'<strong>Wymaga pakietu:</strong> urlopy, grafiki, zadania, czat, asystent AI, a także zespół powyżej 5 osób.',
 					]) +
-					paragraph('Pakiety zaczynają się od 59 zł netto miesięcznie (do 8 osób), a rozliczenie roczne to 10 miesięcy zamiast 12.') +
+					paragraph('Pakiety zaczynają się od 119 zł netto miesięcznie, a rozliczenie roczne to 10 miesięcy zamiast 12.') +
 					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
 				buttonText: 'Zobacz pakiety',
 				buttonLink: `${appUrl}/packages`,

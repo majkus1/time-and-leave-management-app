@@ -367,7 +367,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 	const t = copy[locale]
 	const [billing, setBilling] = useState<Billing>('monthly')
 	const [coreModalOpen, setCoreModalOpen] = useState(false)
-	const [corePlan, setCorePlan] = useState<CorePlanId>('base_xs')
+	const [corePlan, setCorePlan] = useState<CorePlanId>('base_s')
 	const [coreMods, setCoreMods] = useState<ModuleId[]>([])
 
 	const billingCycleParam = billing === 'yearly' ? 'annual' : 'monthly'
@@ -682,7 +682,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 								type="button"
 								className="packages-tier__cta"
 								onClick={() => {
-									setCorePlan('base_xs')
+									setCorePlan('base_s')
 									setCoreMods([])
 									setCoreModalOpen(true)
 								}}

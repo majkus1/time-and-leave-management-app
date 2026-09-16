@@ -45,7 +45,6 @@ function isInvoiceCompleteFromEnt(bi) {
 
 const TIER_LABELS = {
 	starter: 'Core — do 15 użytkowników',
-	base_xs: 'Core — do 8 użytkowników',
 	base_s: 'Core — do 15 użytkowników',
 	base_m: 'Core — do 30 użytkowników',
 	base_l: 'Core — do 100 użytkowników',
@@ -54,7 +53,7 @@ const TIER_LABELS = {
 	enterprise: 'Enterprise',
 }
 
-const PAID_PLAN_IDS = ['base_xs', 'base_s', 'base_m', 'base_l', 'pro', 'business', 'enterprise']
+const PAID_PLAN_IDS = ['base_s', 'base_m', 'base_l', 'pro', 'business', 'enterprise']
 
 const MODULE_LABELS = {
 	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
@@ -292,7 +291,7 @@ export default function PackagesPage() {
 	const [cancelStripeModalOpen, setCancelStripeModalOpen] = useState(false)
 	const [note, setNote] = useState('')
 	const [coreConfiguratorOpen, setCoreConfiguratorOpen] = useState(false)
-	const [coreConfiguratorPlanKey, setCoreConfiguratorPlanKey] = useState('base_xs')
+	const [coreConfiguratorPlanKey, setCoreConfiguratorPlanKey] = useState('base_s')
 	const [coreConfiguratorMods, setCoreConfiguratorMods] = useState([])
 	const [justSent, setJustSent] = useState(false)
 	const [p24BusyKey, setP24BusyKey] = useState(null)
@@ -770,7 +769,7 @@ export default function PackagesPage() {
 			}
 			return
 		}
-		if (plan && ['base_xs', 'base_s', 'base_m', 'base_l'].includes(plan)) {
+		if (plan && ['base_s', 'base_m', 'base_l'].includes(plan)) {
 			if (ent && paidSubscriptionActive(ent) && ent.planKey === plan) {
 				appliedQueryRef.current = true
 				return
@@ -1205,7 +1204,7 @@ export default function PackagesPage() {
 					const bundleModules = t('billingPackages.bundleModules', { returnObjects: true })
 					const bundleModuleLines = Array.isArray(bundleModules) ? bundleModules : []
 					const isCorePlanActive =
-						activePaid && ent && ['base_xs', 'base_s', 'base_m', 'base_l'].includes(ent.planKey)
+						activePaid && ent && ['base_s', 'base_m', 'base_l'].includes(ent.planKey)
 					const corePb =
 						coreMonthlyMinPln != null
 							? priceBlock(coreMonthlyMinPln, billing, t, i18n.resolvedLanguage)
@@ -1449,7 +1448,7 @@ export default function PackagesPage() {
 										className="packages-tier__cta"
 										disabled={!canSubmitPurchaseRequest || onlineStatusLoading}
 										onClick={() => {
-											setCoreConfiguratorPlanKey('base_xs')
+											setCoreConfiguratorPlanKey('base_s')
 											setCoreConfiguratorMods([])
 											setCoreConfiguratorOpen(true)
 										}}
