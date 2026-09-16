@@ -381,11 +381,11 @@ function CreateUser() {
                                                 <button
                                                     type="button"
                                                     onClick={handleAddDepartment}
-                                                    disabled={!newDepartmentName.trim()}
+                                                    disabled={!newDepartmentName.trim() || createDepartmentMutation.isPending}
                                                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                                     style={{ marginBottom: '10px', marginRight: '10px', marginTop: '10px' }}
                                                 >
-                                                    {t('newuser.departmentAddButton')}
+                                                    {createDepartmentMutation.isPending ? t('newuser.departmentAdding') : t('newuser.departmentAddButton')}
                                                 </button>
                                                 {departments.length > 0 && (
                                                     <button

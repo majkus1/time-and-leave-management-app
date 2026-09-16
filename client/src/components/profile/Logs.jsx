@@ -928,19 +928,19 @@ function Logs() {
 									type="button"
 									className="btn btn-primary"
 									onClick={handleAddGlobalDepartment}
-									disabled={!globalNewDepartmentName.trim()}
+									disabled={!globalNewDepartmentName.trim() || createDepartmentMutation.isPending}
 									style={{ 
 										padding: '10px 20px',
 										borderRadius: '6px',
 										border: '1px solid #00a846',
 										backgroundColor: '#00a846',
 										color: 'white',
-										cursor: globalNewDepartmentName.trim() ? 'pointer' : 'not-allowed',
-										opacity: globalNewDepartmentName.trim() ? 1 : 0.5,
+										cursor: createDepartmentMutation.isPending ? 'wait' : globalNewDepartmentName.trim() ? 'pointer' : 'not-allowed',
+										opacity: createDepartmentMutation.isPending ? 0.7 : globalNewDepartmentName.trim() ? 1 : 0.5,
 										fontSize: '14px',
 										fontWeight: '500'
 									}}>
-									{t('newuser.departmentAddButton')}
+									{createDepartmentMutation.isPending ? t('newuser.departmentAdding') : t('newuser.departmentAddButton')}
 								</button>
 								<button
 									type="button"
@@ -1683,17 +1683,17 @@ function Logs() {
 																		type="button"
 																		className="btn btn-primary"
 																		onClick={handleAddNewDepartment}
-																		disabled={!newDepartmentName.trim()}
+																		disabled={!newDepartmentName.trim() || createDepartmentMutation.isPending}
 																		style={{ 
 																			padding: '8px 16px',
 																			borderRadius: '6px',
 																			border: '1px solid #00a846',
 																			backgroundColor: '#00a846',
 																			color: 'white',
-																			cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
-																			opacity: newDepartmentName.trim() ? 1 : 0.5
+																			cursor: createDepartmentMutation.isPending ? 'wait' : newDepartmentName.trim() ? 'pointer' : 'not-allowed',
+																			opacity: createDepartmentMutation.isPending ? 0.7 : newDepartmentName.trim() ? 1 : 0.5
 																		}}>
-																		{t('newuser.departmentAddButton')}
+																		{createDepartmentMutation.isPending ? t('newuser.departmentAdding') : t('newuser.departmentAddButton')}
 																	</button>
 																	<button
 																		type="button"
@@ -2401,7 +2401,7 @@ function Logs() {
 															type="button"
 															className="btn btn-primary"
 															onClick={handleAddNewDepartment}
-															disabled={!newDepartmentName.trim()}
+															disabled={!newDepartmentName.trim() || createDepartmentMutation.isPending}
 															style={{ 
 																width: '100%',
 																padding: '12px 16px',
@@ -2410,10 +2410,10 @@ function Logs() {
 																backgroundColor: '#00a846',
 																color: 'white',
 																fontSize: '14px',
-																cursor: newDepartmentName.trim() ? 'pointer' : 'not-allowed',
-																opacity: newDepartmentName.trim() ? 1 : 0.5
+																cursor: createDepartmentMutation.isPending ? 'wait' : newDepartmentName.trim() ? 'pointer' : 'not-allowed',
+																opacity: createDepartmentMutation.isPending ? 0.7 : newDepartmentName.trim() ? 1 : 0.5
 															}}>
-															{t('newuser.departmentAddButton')}
+															{createDepartmentMutation.isPending ? t('newuser.departmentAdding') : t('newuser.departmentAddButton')}
 														</button>
 														<button
 															type="button"
