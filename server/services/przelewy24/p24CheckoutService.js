@@ -13,6 +13,7 @@ const { p24Request, assertP24Ok } = require('./p24HttpClient')
 
 const PLAN_LABELS = {
 	starter: 'Core (do 15 osób)',
+	base_xs: 'Core (do 8 osób)',
 	base_s: 'Core (do 15 osób)',
 	base_m: 'Core (do 30 osób)',
 	base_l: 'Core (do 100 osób)',

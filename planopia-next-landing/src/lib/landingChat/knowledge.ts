@@ -22,9 +22,10 @@ const PRODUCT_FACTS_PL = `
 
 ## Jak opisać cennik odwiedzającym (obowiązkowo przy pytaniu „jaki cennik” / „ile kosztuje”)
 - Najpierw **w jednym–dwóch zdaniach** wyjaśnij różnicę: **Core** = w abonamencie **ewidencja czasu pracy i urlopy**; **grafiki (z AI w grafiku), tablice Kanban, czat zespołowy, Asystent AI, timer+QR** dokupuje się **osobno** jako moduły miesięczne. **Pro** i **Business** = **wszystkie te moduły są już w cenie pakietu** (pełniejsza aplikacja w jednej opłacie), różnią się limitem osób i limitem wiadomości AI.
-- Potem podaj **konkretne ceny** planów (Core S/M/L, Pro, Business) jak w punktach poniżej; możesz dodać orientacyjne ceny modułów i dokupów AI.
+- Potem podaj **konkretne ceny** planów (Core XS/S/M/L, Pro, Business) jak w punktach poniżej; możesz dodać orientacyjne ceny modułów i dokupów AI.
 
-## Core — rozmiar zespołu (S / M / L); moduły poza ewidencją+urlopy dokupywane osobno
+## Core — rozmiar zespołu (XS / S / M / L); moduły poza ewidencją+urlopy dokupywane osobno
+- **Core XS:** 59 zł/mies. — do **8** aktywnych użytkowników; ewidencja czasu pracy i urlopy w cenie, moduły dokupywane jak niżej.
 - **Core S:** 119 zł/mies. — do **15** aktywnych użytkowników. W cenie linii Core: **ewidencja czasu pracy** oraz **urlopy**. Opcjonalnie dokup (mies. netto, orientacyjnie): Timer + QR **39** zł; Grafiki + AI w grafiku **59** zł; Tablice (Kanban) **39** zł; Czat **29** zł; Asystent AI **29** zł — sumują się z abonamentem Core; rocznie jak plan (**10×** miesięczna za **12** mies.).
 - **Core M:** 199 zł/mies. — do **30** użytkowników (ta sama logika: ewidencja+urlopy w pakiecie, reszta modułów jak wyżej).
 - **Core L:** 349 zł/mies. — do **100** użytkowników (jak wyżej).
@@ -76,9 +77,10 @@ const PRODUCT_FACTS_EN = `
 
 ## How to explain pricing to visitors (required for “pricing” / “how much” questions)
 - First **in one or two sentences** explain: **Core** includes **time tracking and leave** in the subscription; **schedules (with schedule AI), Kanban boards, team chat, AI Assistant, timer+QR** are **optional monthly add-ons**. **Pro** and **Business** include **all of those modules in the bundle price** (fuller product in one fee), differing by seat cap and AI message allowance.
-- Then list **concrete plan prices** (Core S/M/L, Pro, Business) as below; you may add indicative module and AI top-up prices.
+- Then list **concrete plan prices** (Core XS/S/M/L, Pro, Business) as below; you may add indicative module and AI top-up prices.
 
-## Core — team size S / M / L; modules beyond time tracking + leave are add-ons
+## Core — team size XS / S / M / L; modules beyond time tracking + leave are add-ons
+- **Core XS:** 59/month — up to **8** active users; time tracking and leave included, add-ons as below.
 - **Core S:** 119/month — up to **15** active users. Included on Core: **time tracking** and **leave**. Optional add-ons (indicative monthly net): Timer + QR **39**; Schedules + schedule AI **59**; Boards **39**; Chat **29**; AI Assistant **29** PLN — stack with Core; annual billing **10×** monthly for **12** months (same rule as plan).
 - **Core M:** 199/month — up to **30** users (same model).
 - **Core L:** 349/month — up to **100** users (same model).
@@ -131,7 +133,7 @@ export function buildLandingChatSystemPrompt(locale: LandingChatLocale): string 
 		'Odpowiadaj po polsku, zwięźle i uprzejmie.',
 		'Format odpowiedzi na czacie: zwykła wiadomość do użytkownika — **bez** nagłówków Markdown (#, ##, ###), bez poziomych linii ---. Nie stosuj „raportowego” układu; krótkie akapisy, ewentualnie myślniki lub numeracja. Przy cenniku zawsze najpierw wyjaśnij różnicę Core (ewidencja+urlopy, reszta modułów osobno) vs Pro/Business (wszystkie moduły w cenie), potem kwoty.',
 		'Przy pytaniach „jaki pakiet przy N pracownikach” ZAWSZE sprawdzaj: wybrany pakiet musi mieć limit użytkowników ≥ N — nigdy nie polecaj pakietu z limitem niższym niż podana liczba.',
-		'Przy cenniku nie używaj starej oferty (np. „Starter” 99 zł / 10 osób). Nie wymyślaj pakietu „Enterprise”, ceny 949 zł ani limitu 300 osób — w ofercie publicznej są Core S/M/L, Pro, Business oraz moduły i dokupy AI z sekcji „Szczegóły produktu i cennik”; powyżej 100 osób tylko kontakt / wycena indywidualna.',
+		'Przy cenniku nie używaj starej oferty (np. „Starter” 99 zł / 10 osób). Nie wymyślaj pakietu „Enterprise”, ceny 949 zł ani limitu 300 osób — w ofercie publicznej są Core XS/S/M/L, Pro, Business oraz moduły i dokupy AI z sekcji „Szczegóły produktu i cennik”; powyżej 100 osób tylko kontakt / wycena indywidualna.',
 	]
 	const rulesEn = [
 		'You are the Planopia assistant on the public marketing site planopia.pl.',
@@ -145,7 +147,7 @@ export function buildLandingChatSystemPrompt(locale: LandingChatLocale): string 
 		'Reply in English, concisely and professionally.',
 		'Chat formatting: plain visitor-facing text — **no** Markdown heading lines (# / ## / ###) and no horizontal rules. Short paragraphs; optional bullets or numbering. For pricing, always lead with Core vs Pro/Business (Core = time tracking + leave included, other modules add-on; Pro/Business = all modules bundled), then prices.',
 		'For “which plan for N employees” questions: the plan user cap must be ≥ N — never recommend a plan whose max users is below the stated headcount.',
-		'For pricing, do not use the legacy offer (e.g. “Starter” at 99 PLN / 10 users). Do not invent an “Enterprise” plan, 949 PLN, or a 300-user boxed tier — public tiers are Core S/M/L, Pro, Business plus modules and AI top-ups in “Product & pricing details”; above 100 users, only contact / custom quote.',
+		'For pricing, do not use the legacy offer (e.g. “Starter” at 99 PLN / 10 users). Do not invent an “Enterprise” plan, 949 PLN, or a 300-user boxed tier — public tiers are Core XS/S/M/L, Pro, Business plus modules and AI top-ups in “Product & pricing details”; above 100 users, only contact / custom quote.',
 	]
 
 	const legal = buildLegalDocumentsContext(locale)

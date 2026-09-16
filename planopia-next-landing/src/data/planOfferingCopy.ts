@@ -5,11 +5,11 @@
 export const planOfferingCopy = {
 	pl: {
 		metaLong:
-			'Planopia: ewidencja czasu pracy online, urlopy, grafiki, raporty PDF/Excel, czaty, tablice Kanban i Asystent AI bez Excela i papierowych wniosków. 30 dni za darmo z pełną aplikacją (do 5 użytkowników, limity Asystenta AI). Potem możesz zostać na bezpłatnym planie z ewidencją czasu pracy do 5 aktywnych kont albo wykupić pakiet z pełnymi modułami i AI — od 119 zł netto miesięcznie (Core).',
+			'Planopia: ewidencja czasu pracy online, urlopy, grafiki, raporty PDF/Excel, czaty, tablice Kanban i Asystent AI bez Excela i papierowych wniosków. 30 dni za darmo z pełną aplikacją (do 5 użytkowników, limity Asystenta AI). Potem możesz zostać na bezpłatnym planie z ewidencją czasu pracy do 5 aktywnych kont albo wykupić pakiet z pełnymi modułami i AI — od 59 zł netto miesięcznie (Core).',
 		metaShort:
 			'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela. 30 dni pełnej aplikacji za darmo, bez karty. Potem ewidencja do 5 osób lub pakiety z modułami i AI.',
 		jsonLdOfferDescription:
-			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
+			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 59 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
 		heroH1: 'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela',
 		heroSub:
 			'30 dni za darmo, bez karty. Potem darmowa ewidencja do 5 osób albo pakiet z raportami i AI.',
@@ -38,11 +38,11 @@ export const planOfferingCopy = {
 	},
 	en: {
 		metaLong:
-			'Planopia: online time tracking, leave, schedules, PDF/Excel reports, team chat, Kanban boards, and an AI Assistant without scattered spreadsheets or paper requests. 30-day free trial with the full product (up to 5 users, AI limits during trial). Then stay on a free time tracking plan for up to 5 active accounts, or upgrade for full modules and AI — from 119 PLN net per month (Core).',
+			'Planopia: online time tracking, leave, schedules, PDF/Excel reports, team chat, Kanban boards, and an AI Assistant without scattered spreadsheets or paper requests. 30-day free trial with the full product (up to 5 users, AI limits during trial). Then stay on a free time tracking plan for up to 5 active accounts, or upgrade for full modules and AI — from 59 PLN net per month (Core).',
 		metaShort:
 			'Free time tracking, leave, and schedules without spreadsheets. 30-day full trial, no card. Then free tier for 5 users or paid plans with full modules and AI.',
 		jsonLdOfferDescription:
-			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
+			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 59 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
 		heroH1: 'Free time tracking, leave, and schedules without spreadsheets',
 		heroSub:
 			'30 days free, no card. Then keep free time tracking for up to 5 people, or upgrade for reports and AI.',

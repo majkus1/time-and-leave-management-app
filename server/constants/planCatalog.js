@@ -2,7 +2,7 @@
  * Cennik Planopia — single source of truth (apka, aktywacja, webhooks).
  *
  * Produkt „Core”: jedna linia produktowa z trzema rozmiarami zespołu + moduły opcjonalne.
- * Identyfikatory techniczne w kodzie / Stripe / Mongo: `base_s` (≤15), `base_m` (≤30), `base_l` (≤100).
+ * Identyfikatory techniczne w kodzie / Stripe / Mongo: `base_xs` (≤8), `base_s` (≤15), `base_m` (≤30), `base_l` (≤100).
  * Pakiety PRO / BUSINESS / ENTERPRISE: wszystkie moduły w cenie (`pro`, `business`, `enterprise`).
  * Klucz `starter` w Mongo = alias legacy → normalizuj do `base_s`.
  */
@@ -40,6 +40,17 @@ const AI_ASSISTANT_MODULE_MONTHLY_MESSAGES = 50
  * tierType: `core` = moduły z billingModuleKeys; `bundle` = wszystkie moduły z PAID_PLANS.includedModules
  */
 const PAID_PLANS = {
+	/**
+	 * Najmniejszy CORE — dla mikrofirm 6–8 osób, które wyrastają z darmowego limitu 5 kont
+	 * albo potrzebują urlopów. Dane: kto płacił, płacił po przekroczeniu 5 osób; 15 miejsc za 119 zł
+	 * było dla nich za duże.
+	 */
+	base_xs: {
+		maxUsers: 8,
+		aiMessagesPerMonth: 0,
+		includedModules: [],
+		tierType: 'core',
+	},
 	base_s: {
 		maxUsers: 15,
 		aiMessagesPerMonth: 0,
@@ -93,6 +104,7 @@ const CANONICAL_PAID_PLAN_KEYS = Object.keys(PAID_PLANS)
 
 /** Ceny mies. netto PLN — CORE + pakiety (zgodnie z cennikiem marketingowym) */
 const MONTHLY_NET_PRICES_PLN = {
+	base_xs: 59,
 	base_s: 119,
 	base_m: 199,
 	base_l: 349,

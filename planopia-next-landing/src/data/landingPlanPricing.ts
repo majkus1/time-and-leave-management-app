@@ -9,9 +9,10 @@ export const landingTrial = {
 	aiTrialOneOffTotal: 10,
 }
 
-export const landingCoreMinMonthlyNetPln = 119
+export const landingCoreMinMonthlyNetPln = 59
 
 export const landingCoreTiers = [
+	{ id: 'base_xs' as const, maxUsers: 8, monthlyNetPln: 59 },
 	{ id: 'base_s' as const, maxUsers: 15, monthlyNetPln: 119 },
 	{ id: 'base_m' as const, maxUsers: 30, monthlyNetPln: 199 },
 	{ id: 'base_l' as const, maxUsers: 100, monthlyNetPln: 349 },
