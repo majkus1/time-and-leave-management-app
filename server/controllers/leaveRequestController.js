@@ -99,14 +99,15 @@ async function filterRecipientsByLeaveEmailPreference(recipients, teamId) {
 }
 
 // Funkcja pomocnicza do generowania wszystkich dat w zakresie (z pominięciem weekendów i świąt)
-async function generateDateRange(startDate, endDate, teamId) {
+// `preloadedSettings`: wywołujący, który ma już ustawienia zespołu, oszczędza podróż do bazy.
+async function generateDateRange(startDate, endDate, teamId, preloadedSettings = null) {
 	const dates = []
 	const start = new Date(startDate)
 	const end = new Date(endDate)
 	const current = new Date(start)
 	
 	// Pobierz ustawienia dla zespołu
-	const settings = await Settings.getSettings(teamId)
+	const settings = preloadedSettings || (await Settings.getSettings(teamId))
 	const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
 	
 	while (current <= end) {
@@ -134,8 +135,8 @@ async function generateDateRange(startDate, endDate, teamId) {
 }
 
 // Funkcja pomocnicza do przycinania dat do dni roboczych (usuwanie weekendów z początku i końca)
-async function trimWeekendsFromDateRange(startDate, endDate, teamId) {
-	const settings = await Settings.getSettings(teamId)
+async function trimWeekendsFromDateRange(startDate, endDate, teamId, preloadedSettings = null) {
+	const settings = preloadedSettings || (await Settings.getSettings(teamId))
 	const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
 	
 	// Jeśli pracuje w weekendy, nie trzeba przycinać

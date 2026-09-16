@@ -233,7 +233,7 @@ exports.submitLeaveRequest = async (req, res) => {
 			// Dzień musi być roboczy. generateDateRange odsiewa i weekendy, i święta —
 			// w przeciwieństwie do trimWeekendsFromDateRange, które przy workOnWeekends
 			// wychodzi wcześniej i świąt w ogóle nie sprawdza.
-			const workingDates = startYmd ? await generateDateRange(startYmd, startYmd, teamId) : []
+			const workingDates = startYmd ? await generateDateRange(startYmd, startYmd, teamId, settings) : []
 			if (!workingDates.length) {
 				return res.status(400).json({
 					message: t('leaveform.weekendOnlyError') || 'Nie można złożyć wniosku urlopowego wyłącznie na dni weekendowe lub świąteczne, gdy zespół nie pracuje w weekendy.',
@@ -280,7 +280,7 @@ exports.submitLeaveRequest = async (req, res) => {
 			finalHoursRequested = validation.hours
 		} else {
 			// Przycinij daty do dni roboczych (usuń weekendy z początku i końca zakresu)
-			const trimmed = await trimWeekendsFromDateRange(startDate, endDate, teamId)
+			const trimmed = await trimWeekendsFromDateRange(startDate, endDate, teamId, settings)
 			trimmedStartDate = trimmed.trimmedStartDate
 			trimmedEndDate = trimmed.trimmedEndDate
 
@@ -292,7 +292,7 @@ exports.submitLeaveRequest = async (req, res) => {
 			// Jeśli daty zostały zmienione, przelicz liczbę dni
 			finalDaysRequested = daysRequested
 			if (trimmedStartDate !== startDate || trimmedEndDate !== endDate) {
-				const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
+				const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId, settings)
 				finalDaysRequested = dates.length
 			}
 
@@ -374,7 +374,7 @@ exports.submitLeaveRequest = async (req, res) => {
 		// Wniosek godzinowy pomijamy — LeavePlan oznacza CAŁY zaplanowany dzień urlopu,
 		// a kilkugodzinna nieobecność nim nie jest (i nie blokuje dnia pracy).
 		if (!typeRequiresApproval && !isHourlyRequest) {
-			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId)
+			const dates = await generateDateRange(trimmedStartDate, trimmedEndDate, teamId, settings)
 			const leavePlanPromises = dates.map(date => {
 				// Sprawdź czy już istnieje plan na ten dzień
 				return LeavePlan.findOne({ userId, date }).then(existing => {
@@ -406,6 +406,19 @@ exports.submitLeaveRequest = async (req, res) => {
 			return
 		}
 
+		// Wniosek jest zapisany i rozliczony — odpowiadamy od razu. Maile i push idą w tle:
+		// wcześniej odpowiedź czekała na SMTP (sekundy), choć dane były już w bazie.
+		emitLeaveRequestsUpdated(req, {
+			teamId,
+			userId,
+			leaveRequestId: leaveRequest._id,
+			status: leaveRequest.status,
+			action: 'created',
+		})
+		res.status(201).json({ message: 'Wniosek został wysłany.', leaveRequest })
+
+		// Od tego miejsca żaden błąd nie może dotknąć odpowiedzi — tylko log.
+		try {
 		// Określ język na podstawie tłumaczeń
 		const language = t('email.leaveRequest.footerNotification')?.includes('automatycznie') ? 'pl' : 'en'
 		const typeText = getLeaveRequestTypeName(settings, type, t, language)
@@ -467,10 +480,11 @@ exports.submitLeaveRequest = async (req, res) => {
 					t
 				),
 				{ teamId, preview: newLeavePreview }
-			)
+			).catch(error => {
+				console.error('Mail o nowym wniosku nie wyszedł:', error?.message || error)
+			})
 		)
-
-		await Promise.all(emailPromises)
+		void emailPromises
 
 		// Send push notifications to recipients (non-blocking)
 		if (recipients.length > 0) {
@@ -488,14 +502,9 @@ exports.submitLeaveRequest = async (req, res) => {
 			}
 		}
 
-		emitLeaveRequestsUpdated(req, {
-			teamId,
-			userId,
-			leaveRequestId: leaveRequest._id,
-			status: leaveRequest.status,
-			action: 'created',
-		})
-		res.status(201).json({ message: 'Wniosek został wysłany i powiadomienie zostało dostarczone.', leaveRequest })
+		} catch (backgroundError) {
+			console.error('Powiadomienia o nowym wniosku (w tle):', backgroundError)
+		}
 	} catch (error) {
 		console.error('Błąd podczas zgłaszania nieobecności:', error)
 		res.status(500).json({ message: 'Błąd podczas zgłaszania nieobecności' })
