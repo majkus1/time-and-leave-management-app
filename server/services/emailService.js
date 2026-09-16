@@ -100,7 +100,7 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, 
 	<table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5;">
 		<tr>
 			<td align="center" style="padding: 40px 20px;">
-				<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+				<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
 					<!-- Header -->
 					<tr>
 						<td style="padding: 40px 40px 30px 40px; text-align: center; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px 8px 0 0;">
