@@ -143,27 +143,57 @@ const getEmailTemplate = (title, content, buttonText = null, buttonLink = null, 
 	`
 }
 
+/**
+ * Jeden wspólny transporter z pulą połączeń. Wcześniej każdy mail otwierał nowe
+ * połączenie SMTP z uzgodnieniem TLS (sekundy); pula trzyma je otwarte między mailami.
+ * Dostawca z .env (SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / EMAIL_FROM),
+ * domyślnie Gmail z EMAIL_USER / EMAIL_PASS — przełączenie to sama zmiana zmiennych.
+ */
+let sharedTransporter = null
+function getTransporter() {
+	if (sharedTransporter) return sharedTransporter
+	const port = Number(process.env.SMTP_PORT || 465)
+	sharedTransporter = nodemailer.createTransport({
+		host: process.env.SMTP_HOST || 'smtp.gmail.com',
+		port,
+		secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE !== 'false' : port === 465,
+		auth: {
+			user: process.env.SMTP_USER || process.env.EMAIL_USER,
+			pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
+		},
+		pool: true,
+		maxConnections: 3,
+		maxMessages: 100,
+	})
+	return sharedTransporter
+}
+
+function fromAddress() {
+	const explicit = (process.env.EMAIL_FROM || '').trim()
+	if (explicit) return explicit
+	const fromEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || 'michalipka1@gmail.com').trim()
+	return `"Planopia" <${fromEmail}>`
+}
+
 const sendEmail = async (to, link, subject, html, meta = {}) => {
 	const recipients = normalizeEmailRecipients(to)
 	if (recipients.length === 0) return
 
-	const transporter = nodemailer.createTransport({
-		host: 'smtp.gmail.com',
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASS,
-		},
-	})
-
-	const fromEmail = (process.env.EMAIL_USER || 'michalipka1@gmail.com').trim()
-	await transporter.sendMail({
-		from: `"Planopia" <${fromEmail}>`,
-		to: recipients.length === 1 ? recipients[0] : recipients,
-		subject,
-		html,
-	})
+	try {
+		await getTransporter().sendMail({
+			from: fromAddress(),
+			to: recipients.length === 1 ? recipients[0] : recipients,
+			subject,
+			html,
+		})
+	} catch (error) {
+		// Zerwane połączenie z puli — następny mail zbuduje transporter od nowa.
+		try {
+			sharedTransporter?.close?.()
+		} catch (_) {}
+		sharedTransporter = null
+		throw error
+	}
 
 	const teamId = meta && meta.teamId
 	if (teamId) {

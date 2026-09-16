@@ -102,25 +102,23 @@ exports.createDepartment = async (req, res) => {
 		const newDepartment = new Department({ name: trimmedName, teamId })
 		await newDepartment.save()
 
-		try {
-			await createChannelForDepartment(teamId, trimmedName)
-		} catch (error) {
-			console.error('Error creating channel for department:', error)
-		}
-
-		try {
-			await createBoardForDepartment(teamId, trimmedName)
-		} catch (error) {
-			console.error('Error creating board for department:', error)
-		}
-
-		try {
-			await createScheduleForDepartment(teamId, trimmedName)
-		} catch (error) {
-			console.error('Error creating schedule for department:', error)
-		}
-
 		res.status(201).json({ message: 'Dział został utworzony', department: newDepartment })
+
+		// Kanał, tablica i grafik działu powstają w tle — to ~10 sekwencyjnych zapytań,
+		// na które użytkownik nie musi czekać. Klient odświeża listy z opóźnieniem (useDepartments).
+		void (async () => {
+			for (const [label, create] of [
+				['channel', createChannelForDepartment],
+				['board', createBoardForDepartment],
+				['schedule', createScheduleForDepartment],
+			]) {
+				try {
+					await create(teamId, trimmedName)
+				} catch (error) {
+					console.error(`Error creating ${label} for department:`, error)
+				}
+			}
+		})()
 	} catch (error) {
 		console.error('Error in createDepartment:', error)
 

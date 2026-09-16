@@ -35,9 +35,15 @@ export const useCreateDepartment = () => {
 		onSuccess: () => {
 			// Invalidate all department queries (dla różnych teamId)
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
-			// Invaliduj tablice zadań i grafiki - mogą zostać utworzone dla działu
-			queryClient.invalidateQueries({ queryKey: ['boards'] })
-			queryClient.invalidateQueries({ queryKey: ['schedules'] })
+			// Tablica i grafik działu powstają na serwerze w tle, po odpowiedzi — odświeżamy
+			// od razu i jeszcze raz po chwili, żeby pojawiły się bez przeładowania strony.
+			const refreshDependants = () => {
+				queryClient.invalidateQueries({ queryKey: ['boards'] })
+				queryClient.invalidateQueries({ queryKey: ['schedules'] })
+				queryClient.invalidateQueries({ queryKey: ['channels'] })
+			}
+			refreshDependants()
+			setTimeout(refreshDependants, 2500)
 		},
 	})
 }
