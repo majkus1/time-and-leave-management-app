@@ -233,7 +233,7 @@ function ProductPromotion() {
       </p>
     </div>
 
-    <div className="landing-audience-cards grid md:grid-cols-3 gap-6 mb-4">
+    <div className="landing-audience-cards grid md:grid-cols-3 gap-6">
       {/* 1: Małe zespoły */}
       <div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center gap-3">

@@ -13,6 +13,8 @@ export const landingChatCopy = {
 		sectionLead:
 			'Kody QR na budowach, urlopy godzinowe, grafiki, ceny dla Twojego zespołu — asystent odpowiada na podstawie tego, jak aplikacja naprawdę działa. Bez limitu pytań i bez rejestracji.',
 		sectionHint: 'Wybierz temat albo wpisz własne pytanie.',
+		guideTitle: 'Nie chcesz czytać całej instrukcji? Zapytaj asystenta',
+		guideHint: 'Odpowiada na podstawie tej instrukcji i cennika — wybierz temat albo wpisz pytanie. Bez limitu i bez rejestracji.',
 		placeholder: 'Napisz pytanie…',
 		send: 'Wyślij',
 		thinking: 'Asystent pisze…',
@@ -52,6 +54,8 @@ export const landingChatCopy = {
 		sectionLead:
 			'QR codes on job sites, hourly leave, schedules, pricing for your team — the assistant answers from how the app actually works. No question limit, no sign-up.',
 		sectionHint: 'Pick a topic or type your own question.',
+		guideTitle: 'Don’t want to read the whole guide? Ask the assistant',
+		guideHint: 'It answers from this guide and the pricing — pick a topic or type a question. No limit, no sign-up.',
 		placeholder: 'Type your question…',
 		send: 'Send',
 		thinking: 'The assistant is typing…',

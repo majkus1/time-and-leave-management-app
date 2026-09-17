@@ -35,16 +35,22 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 								{copy.secondaryCta}
 							</Link>
 						</div>
-						<p className="landing-polished-hero-ask">
-							<a href={copy.askAssistantHref} className="landing-polished-hero-ask__link">
-								{copy.askAssistant} →
-							</a>
-						</p>
 						<div className="landing-polished-proof">
 							{copy.proof.map(item => (
 								<span key={item}>{item}</span>
 							))}
 						</div>
+						<p className="landing-polished-hero-ask">
+							<a href={copy.askAssistantHref} className="landing-polished-hero-ask__link">
+								<span className="landing-polished-hero-ask__icon" aria-hidden>
+									<img src="/img/planio-czat.png" alt="" width={28} height={28} loading="lazy" decoding="async" />
+								</span>
+								<span className="landing-polished-hero-ask__text">{copy.askAssistant}</span>
+								<span className="landing-polished-hero-ask__arrow" aria-hidden>
+									→
+								</span>
+							</a>
+						</p>
 					</div>
 					<img
 						src={LANDING_HERO_LCP.src}

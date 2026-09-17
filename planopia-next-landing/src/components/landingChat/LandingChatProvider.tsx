@@ -183,7 +183,11 @@ export function LandingChatProvider({
 			threshold: 0.2,
 		})
 		io.observe(el)
-		return () => io.disconnect()
+		// Po odmontowaniu sekcji (nawigacja na inną stronę) FAB ma wrócić — obserwator nie zgłosi już „poza ekranem”.
+		return () => {
+			io.disconnect()
+			setSectionVisible(false)
+		}
 	}, [])
 
 	const requestFocus = useCallback(() => setFocusRequest(n => n + 1), [])

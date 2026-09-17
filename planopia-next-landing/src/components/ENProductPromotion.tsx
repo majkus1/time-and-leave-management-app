@@ -215,7 +215,7 @@ function ENProductPromotion() {
 						</p>
 					</div>
 
-					<div className="landing-audience-cards grid md:grid-cols-3 gap-6 mb-4">
+					<div className="landing-audience-cards grid md:grid-cols-3 gap-6">
 						<div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
 								<img src="/img/groupses.png" alt="Small teams 1-15 people" className="w-10 h-10 rounded-lg object-contain" width={40} height={40} loading="lazy" decoding="async" />

@@ -1,18 +1,15 @@
 'use client'
 
 import { useId, useLayoutEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
 import LandingChatPanel, { ChatIcon } from '@/components/landingChat/LandingChatPanel'
 import { useLandingChatOptional } from '@/components/landingChat/LandingChatProvider'
-import { isLandingHomePath } from '@/components/landingChat/landingChatCopy'
 
 /**
  * Pływający przycisk + panel czatu na każdej stronie landingu. Stan rozmowy jest wspólny z sekcją na stronie
- * głównej (LandingChatProvider), więc pytanie zadane w sekcji jest widoczne tu po przejściu na /blog.
- * Gdy sekcja jest na ekranie, przycisk znika — jeden czat na raz.
+ * głównej / w instrukcji (LandingChatProvider), więc pytanie zadane w sekcji jest widoczne tu po przejściu na /blog.
+ * Gdy sekcja czatu jest na ekranie, przycisk znika — jeden czat na raz.
  */
 export default function LandingChatWidget() {
-	const pathname = usePathname()
 	const chat = useLandingChatOptional()
 	const panelId = useId()
 	/** Menu mobilne ustawia `mobile-menu-open` na body — ten sam z-index co panel (9999) kładł czat wizualnie NAD menu. */
@@ -31,18 +28,19 @@ export default function LandingChatWidget() {
 
 	if (!enabledPublic || !chat) return null
 	const { copy, open, openPanel, closePanel, sectionVisible } = chat
-	const hideFab = isLandingHomePath(pathname) && sectionVisible && !open
+	const hideFab = sectionVisible && !open
 
 	return (
 		<div
 			className={`landing-chat-widget pointer-events-none fixed bottom-0 right-0 z-[9997] flex flex-col items-end gap-2 p-4 md:p-5 [&_*]:pointer-events-auto ${mobileMenuOpen ? 'hidden' : ''}`}
+			data-open={open ? 'true' : 'false'}
 		>
 			{open && (
 				<div
 					role="dialog"
 					aria-modal="true"
 					aria-labelledby={panelId}
-					className="landing-chat-panel flex max-h-[min(640px,calc(100vh-6rem))] w-[min(100vw-2rem,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200/80"
+					className="landing-chat-panel flex h-[min(54rem,calc(100vh-11rem))] w-[min(100vw-2rem,27rem)] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200/80"
 				>
 					<div className="flex items-center justify-between gap-2 border-b border-emerald-700/20 bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3">
 						{/* div zamiast h2: globalne `h2 { color: #213555 !important }` nadpisuje biały tekst */}

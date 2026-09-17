@@ -5109,23 +5109,32 @@ a.blog-pillar-banner-link:focus-visible {
 	}
 }
 
-/* Final homepage rhythm: more breathing room between landing sections, scoped to PL/EN homepage only */
+/* Rytm strony głównej: JEDNA wartość odstępu dla wszystkich sekcji (odstęp między sekcjami = 2 × padding),
+   trzy progi szerokości. Nowa sekcja na stronie głównej = dopisz ją do tej listy, inaczej wypadnie z rytmu. */
+:root {
+	--landing-section-pad: 112px;
+}
+
 #planopia-welcome.landing-polished-hero,
 .industry-landing-hero.landing-polished-hero {
 	padding-top: 84px !important;
-	padding-bottom: 84px !important;
+	/* Dół hero w tym samym rytmie co reszta sekcji */
+	padding-bottom: var(--landing-section-pad) !important;
 }
 
 #oaplikacji,
 #aboutapp,
 #dlakogo,
 #for,
+.landing-value-proof-section,
 .landing-ai-highlight,
+.landing-chat-section:not(.landing-chat-section--guide),
 .landing-pricing,
 .landing-video-guide-teaser,
-.landing-contact-section {
-	padding-top: 96px !important;
-	padding-bottom: 96px !important;
+.landing-contact-section,
+.landing-faq-section {
+	padding-top: var(--landing-section-pad) !important;
+	padding-bottom: var(--landing-section-pad) !important;
 }
 
 .landing-video-guide-teaser {
@@ -5134,22 +5143,14 @@ a.blog-pillar-banner-link:focus-visible {
 }
 
 @media (min-width: 1200px) {
+	:root {
+		--landing-section-pad: 128px;
+	}
+
 	#planopia-welcome.landing-polished-hero,
 	.industry-landing-hero.landing-polished-hero {
 		padding-top: 92px !important;
-		padding-bottom: 92px !important;
-	}
-
-	#oaplikacji,
-	#aboutapp,
-	#dlakogo,
-	#for,
-	.landing-ai-highlight,
-	.landing-pricing,
-	.landing-video-guide-teaser,
-	.landing-contact-section {
-		padding-top: 108px !important;
-		padding-bottom: 108px !important;
+		padding-bottom: var(--landing-section-pad) !important;
 	}
 }
 
@@ -5157,19 +5158,11 @@ a.blog-pillar-banner-link:focus-visible {
 	#planopia-welcome.landing-polished-hero,
 	.industry-landing-hero.landing-polished-hero {
 		padding-top: 34px !important;
-		padding-bottom: 64px !important;
+		padding-bottom: var(--landing-section-pad) !important;
 	}
 
-	#oaplikacji,
-	#aboutapp,
-	#dlakogo,
-	#for,
-	.landing-ai-highlight,
-	.landing-pricing,
-	.landing-video-guide-teaser,
-	.landing-contact-section {
-		padding-top: 68px !important;
-		padding-bottom: 68px !important;
+	:root {
+		--landing-section-pad: 80px;
 	}
 }
 
@@ -5425,6 +5418,28 @@ a.landing-polished-hero-cta:focus-visible,
 	background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
 }
 
+/* Wariant na /jak-korzystac: zwarta karta pod nagłówkiem strony, w kolumnie 4xl jak reszta instrukcji */
+.landing-chat-section--guide {
+	background: #ffffff;
+	border-bottom: 1px solid #e2e8f0;
+	padding-top: 40px !important;
+	padding-bottom: 40px !important;
+}
+
+.landing-chat-section.landing-chat-section--guide .landing-chat-section__head {
+	max-width: none;
+	margin-bottom: 1.1rem;
+}
+
+.landing-chat-section.landing-chat-section--guide .landing-chat-section__title {
+	font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.75rem) !important;
+	margin-bottom: 0.5rem;
+}
+
+.landing-chat-section--guide .landing-chat-core--section {
+	height: clamp(28rem, 76vh, 56rem);
+}
+
 /* Nagłówek jak w pozostałych sekcjach (landing-value-proof__header, landing-audience-heading): do lewej, wąska kolumna */
 .landing-chat-section__head {
 	max-width: 720px;
@@ -5475,7 +5490,8 @@ a.landing-polished-hero-cta:focus-visible,
 }
 
 .landing-chat-core--section {
-	height: min(34rem, 78vh);
+	/* Wysokość od ekranu: na dużym monitorze czat ma ~80% wysokości, żeby nie przewijać po każdej odpowiedzi */
+	height: clamp(30rem, 80vh, 60rem);
 }
 
 .landing-chat-core--widget {
@@ -5759,23 +5775,71 @@ a.landing-polished-hero-cta:focus-visible,
 	-webkit-text-fill-color: #ffffff !important;
 }
 
-/* Hero — trzecia ścieżka: pytanie do asystenta */
+/* Hero — trzecia ścieżka: pytanie do asystenta. Kontener hero ma klasę `ordering`, a globalne
+   `.ordering a` maluje każdy link na zielono z białym tekstem — stąd !important na tle i kolorze. */
 #planopia-welcome .landing-polished-hero-ask {
-	margin: 0.75rem 0 0;
+	margin: 22px 0 0;
 }
 
 #planopia-welcome .landing-polished-hero-ask__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 16px 7px 7px;
+	border-radius: 999px;
+	background-color: #eefbf3 !important;
+	border: 1px solid rgba(0, 166, 62, 0.3);
 	color: #00733f !important;
 	-webkit-text-fill-color: #00733f !important;
 	font-size: 15px !important;
-	font-weight: 600;
-	text-decoration: underline;
-	text-underline-offset: 3px;
+	font-weight: 600 !important;
+	line-height: 1.2;
+	text-decoration: none !important;
+	box-shadow: 0 1px 2px rgba(0, 120, 54, 0.06);
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-#planopia-welcome .landing-polished-hero-ask__link:hover {
-	color: #00a63e !important;
-	-webkit-text-fill-color: #00a63e !important;
+#planopia-welcome .landing-polished-hero-ask__link:hover,
+#planopia-welcome .landing-polished-hero-ask__link:focus-visible {
+	background-color: #e1f6e9 !important;
+	border-color: rgba(0, 166, 62, 0.6);
+	box-shadow: 0 6px 14px rgba(0, 120, 54, 0.14);
+	transform: translateY(-1px);
+}
+
+#planopia-welcome .landing-polished-hero-ask__icon {
+	display: inline-flex;
+	width: 30px;
+	height: 30px;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(0, 120, 54, 0.18);
+	overflow: hidden;
+}
+
+#planopia-welcome .landing-polished-hero-ask__icon img {
+	width: 26px;
+	height: 26px;
+	object-fit: contain;
+}
+
+#planopia-welcome .landing-polished-hero-ask__text,
+#planopia-welcome .landing-polished-hero-ask__arrow {
+	color: #00733f !important;
+	-webkit-text-fill-color: #00733f !important;
+	font-size: 15px !important;
+	font-weight: 600 !important;
+}
+
+#planopia-welcome .landing-polished-hero-ask__arrow {
+	transition: transform 0.15s ease;
+}
+
+#planopia-welcome .landing-polished-hero-ask__link:hover .landing-polished-hero-ask__arrow {
+	transform: translateX(3px);
 }
 
 /* Widget: FAB znika, gdy sekcja czatu jest na ekranie (strona główna) */
@@ -5789,9 +5853,32 @@ a.landing-polished-hero-cta:focus-visible,
 	padding: 0.75rem 0.85rem;
 }
 
+/* Nagłówek strony ma z-index 10000 — otwarty panel (na każdym ekranie) musi być nad nim */
+.landing-chat-widget[data-open='true'] {
+	z-index: 10002;
+}
+
+/* Widget na telefonie: panel zajmuje cały ekran (dvh = bez paska adresu), przycisk FAB pod nim znika */
+@media (max-width: 640px) {
+	.landing-chat-widget .landing-chat-panel {
+		position: fixed;
+		inset: 0;
+		width: 100vw !important;
+		height: 100dvh !important;
+		max-height: none !important;
+		border-radius: 0 !important;
+		border: none !important;
+	}
+
+	.landing-chat-widget[data-open='true'] .landing-chat-fab {
+		display: none;
+	}
+
+}
+
 @media (max-width: 640px) {
 	.landing-chat-core--section {
-		height: min(36rem, 76vh);
+		height: min(52rem, 84svh);
 	}
 
 	.landing-chat-core--section .landing-chat-core__messages {
@@ -5828,4 +5915,83 @@ a.landing-polished-hero-cta:focus-visible,
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+}
+
+/* =============================================================================
+   Menu mobilne — linki jako karty w stylu landingu (większe, z akcentem po prawej).
+   Przyciski Logowanie / Załóż zespół bez zmian. Kolory tekstu: reguły „Mobile menu: kolory” wyżej.
+   ============================================================================= */
+.mobile-menu-panel .mobile-menu-nav {
+	gap: 0.6rem;
+}
+
+.mobile-menu-panel .mobile-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 1rem 1.15rem;
+	border-radius: 14px;
+	border: 1px solid rgba(16, 47, 94, 0.08);
+	background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+	box-shadow: 0 6px 16px rgba(16, 47, 94, 0.05);
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
+}
+
+/* Strzałka po prawej tylko dla linków — rozwijane „Rozwiązania”/„Branże” mają własny chevron */
+.mobile-menu-panel .mobile-menu-item:not(.mobile-menu-industry-toggle):not(.mobile-menu-industry-child)::after {
+	content: '→';
+	flex: 0 0 auto;
+	color: #00a63e !important;
+	-webkit-text-fill-color: #00a63e !important;
+	font-size: 1.05rem;
+	opacity: 0.85;
+	transition: transform 0.18s ease;
+}
+
+.mobile-menu-panel .mobile-menu-item:hover,
+.mobile-menu-panel .mobile-menu-item:focus-visible,
+.mobile-menu-panel .mobile-menu-item:active {
+	background: linear-gradient(180deg, #f2fbf5 0%, #e9f8ee 100%);
+	border-color: rgba(0, 166, 62, 0.45);
+	box-shadow: 0 10px 22px rgba(0, 120, 54, 0.12);
+	transform: translateX(4px);
+}
+
+.mobile-menu-panel .mobile-menu-item:hover::after,
+.mobile-menu-panel .mobile-menu-item:active::after {
+	transform: translateX(3px);
+}
+
+.mobile-menu-panel button.mobile-menu-item.mobile-menu-industry-toggle,
+/* globalne span { 16px !important } — etykieta rozwijanych pozycji ma być tej samej wielkości co linki */
+.mobile-menu-panel button.mobile-menu-item.mobile-menu-industry-toggle > span:first-child {
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+}
+
+.mobile-menu-panel .mobile-menu-industry-chevron {
+	color: #00a63e !important;
+	-webkit-text-fill-color: #00a63e !important;
+	font-size: 0.9rem;
+	opacity: 1;
+}
+
+.mobile-menu-panel .mobile-menu-industry-children {
+	gap: 0.4rem;
+	margin: 0.25rem 0 0.35rem 0.6rem;
+	padding-left: 0.75rem;
+	border-left: 2px solid rgba(0, 166, 62, 0.35);
+}
+
+.mobile-menu-panel .mobile-menu-item.mobile-menu-industry-child {
+	padding: 0.8rem 1rem;
+	border-radius: 12px;
+	font-size: 1rem !important;
+	font-weight: 600 !important;
+	box-shadow: none;
+	background: #ffffff;
 }
