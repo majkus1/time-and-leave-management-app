@@ -35,6 +35,11 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 								{copy.secondaryCta}
 							</Link>
 						</div>
+						<p className="landing-polished-hero-ask">
+							<a href={copy.askAssistantHref} className="landing-polished-hero-ask__link">
+								{copy.askAssistant} →
+							</a>
+						</p>
 						<div className="landing-polished-proof">
 							{copy.proof.map(item => (
 								<span key={item}>{item}</span>

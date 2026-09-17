@@ -9,6 +9,10 @@ const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
 })
 
+const LandingChatSection = dynamic(() => import('./LandingChatSection'), {
+	loading: () => <div className="min-h-[520px] w-full" aria-hidden />,
+})
+
 const LandingAIHighlight = dynamic(() => import('./LandingAIHighlight'), {
 	loading: () => <div className="min-h-[200px] w-full" aria-hidden />,
 })
@@ -215,6 +219,8 @@ function ProductPromotion() {
 </section>
 
 <LandingAIHighlight locale="pl" />
+
+<LandingChatSection locale="pl" />
 
 
 <section id="dlakogo" className="py-12 bg-gray-50 px-4 for">

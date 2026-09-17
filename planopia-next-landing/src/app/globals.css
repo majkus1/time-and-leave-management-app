@@ -5415,3 +5415,415 @@ a.landing-polished-hero-cta:focus-visible,
 	.cookie-button { width: 100%; }
 	.cookie-consent__option { align-items: flex-start; }
 }
+
+/* =============================================================================
+   Czat asystenta: sekcja na stronie głównej + wspólny rdzeń (chipy, podpowiedzi, CTA, listy)
+   Globalne `h2 / p / span { … !important }` wymagają nadpisań z !important.
+   ============================================================================= */
+
+.landing-chat-section {
+	background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 100%);
+}
+
+.landing-chat-section__head {
+	max-width: 820px;
+	margin: 0 auto 1.75rem;
+	text-align: center;
+}
+
+.landing-chat-section .landing-chat-section__title {
+	color: #102f5e !important;
+	-webkit-text-fill-color: #102f5e !important;
+	font-size: clamp(1.65rem, 1.25rem + 1.35vw, 2.45rem) !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+	line-height: 1.18 !important;
+	margin: 0 0 1rem;
+}
+
+.landing-chat-section .landing-chat-section__lead {
+	color: rgba(16, 47, 94, 0.82) !important;
+	-webkit-text-fill-color: rgba(16, 47, 94, 0.82) !important;
+	font-size: 1.05rem !important;
+	line-height: 1.65 !important;
+	margin: 0 0 0.5rem;
+}
+
+.landing-chat-section .landing-chat-section__hint {
+	color: #64748b !important;
+	-webkit-text-fill-color: #64748b !important;
+	font-size: 0.95rem !important;
+	margin: 0;
+}
+
+.landing-chat-section__panel {
+	max-width: 960px;
+	margin: 0 auto;
+	border-radius: 1.5rem;
+	border: 1px solid rgba(16, 47, 94, 0.1);
+	background: #ffffff;
+	box-shadow: 0 24px 60px rgba(16, 47, 94, 0.1);
+	overflow: hidden;
+}
+
+.landing-chat-core {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.landing-chat-core--section {
+	height: min(38rem, 78vh);
+}
+
+.landing-chat-core--widget {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.landing-chat-core__topics {
+	padding: 0.85rem 1rem 0.75rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #ffffff;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.landing-chat-core--widget .landing-chat-core__topics {
+	padding: 0.65rem 0.75rem 0.6rem;
+	gap: 0.45rem;
+}
+
+.landing-chat-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.landing-chat-core--widget .landing-chat-chips {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	scrollbar-width: none;
+	padding-bottom: 2px;
+}
+
+.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar {
+	display: none;
+}
+
+/* W widgecie podpowiedzi też w jednym przewijanym wierszu — panel ma 24rem szerokości */
+.landing-chat-core--widget .landing-chat-suggestions {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	scrollbar-width: none;
+	padding-bottom: 2px;
+}
+
+.landing-chat-core--widget .landing-chat-suggestions::-webkit-scrollbar {
+	display: none;
+}
+
+.landing-chat-core--widget .landing-chat-suggestion {
+	flex: 0 0 auto;
+	max-width: 18rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.landing-chat-chip {
+	flex: 0 0 auto;
+	border: 1px solid rgba(0, 166, 62, 0.35);
+	background: #ffffff;
+	color: #00733f !important;
+	font-family: 'Titillium Web', sans-serif !important;
+	font-size: 0.85rem !important;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 0.38rem 0.8rem;
+	border-radius: 999px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.landing-chat-chip:hover:not(:disabled):not(.landing-chat-chip--active) {
+	background: rgba(0, 166, 62, 0.08);
+	border-color: rgba(0, 166, 62, 0.6);
+}
+
+.landing-chat-chip:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.landing-chat-chip--active {
+	background: #00a63e !important;
+	border-color: #00a63e !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+
+.landing-chat-suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.landing-chat-suggestion {
+	border: 1px solid rgba(16, 47, 94, 0.14);
+	background: #f8fafc;
+	color: #102f5e !important;
+	font-family: 'Titillium Web', sans-serif !important;
+	font-size: 0.82rem !important;
+	line-height: 1.3;
+	text-align: left;
+	padding: 0.4rem 0.7rem;
+	border-radius: 0.75rem;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.landing-chat-suggestion:hover:not(:disabled) {
+	background: #eef6f1;
+	border-color: rgba(0, 166, 62, 0.4);
+}
+
+.landing-chat-suggestion:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.landing-chat-core__messages {
+	scroll-behavior: smooth;
+}
+
+.landing-chat-core--section .landing-chat-core__messages {
+	padding: 1rem 1.25rem;
+}
+
+/* Treść asystenta: globalne p/span nadpisują rozmiar — w bąbelku trzymamy 15px */
+.landing-chat-bubble--assistant,
+.landing-chat-bubble--assistant p,
+.landing-chat-bubble--assistant span,
+.landing-chat-bubble--assistant li {
+	font-size: 15px !important;
+	line-height: 1.55 !important;
+	color: #1f2937 !important;
+	-webkit-text-fill-color: #1f2937 !important;
+}
+
+.landing-chat-bubble--assistant strong {
+	color: #111827 !important;
+}
+
+.landing-chat-md__list {
+	margin: 0.25rem 0 0.25rem 1.1rem;
+	padding: 0;
+}
+
+.landing-chat-md__list--ul {
+	list-style: disc;
+}
+
+.landing-chat-md__list--ol {
+	list-style: decimal;
+}
+
+.landing-chat-md__list li + li {
+	margin-top: 0.2rem;
+}
+
+.landing-chat-note,
+.landing-chat-core .landing-chat-note {
+	font-size: 11.5px !important;
+	color: #6b7280 !important;
+	-webkit-text-fill-color: #6b7280 !important;
+	line-height: 1.4 !important;
+}
+
+.landing-chat-core .landing-chat-link {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: 'Titillium Web', sans-serif !important;
+}
+
+.landing-chat-core .landing-chat-btn {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	font-family: 'Titillium Web', sans-serif !important;
+}
+
+.landing-chat-core .landing-chat-input {
+	font-size: 16px !important;
+	font-family: 'Titillium Web', sans-serif !important;
+}
+
+/* Wskaźnik „pisze…” */
+.landing-chat-typing {
+	display: inline-flex;
+	gap: 4px;
+	align-items: center;
+	height: 1.2rem;
+}
+
+.landing-chat-typing span {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #94a3b8;
+	animation: landing-chat-typing 1.2s infinite ease-in-out;
+}
+
+.landing-chat-typing span:nth-child(2) {
+	animation-delay: 0.15s;
+}
+
+.landing-chat-typing span:nth-child(3) {
+	animation-delay: 0.3s;
+}
+
+@keyframes landing-chat-typing {
+	0%,
+	80%,
+	100% {
+		transform: translateY(0);
+		opacity: 0.5;
+	}
+	40% {
+		transform: translateY(-3px);
+		opacity: 1;
+	}
+}
+
+/* CTA po odpowiedzi (znacznik [[CTA:…]] z modelu) */
+.landing-chat-cta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem 1rem;
+	margin: 0.25rem 0 0 3.1rem;
+	padding: 0.75rem 1rem;
+	border-radius: 1rem;
+	border: 1px solid rgba(0, 166, 62, 0.3);
+	background: linear-gradient(135deg, rgba(0, 166, 62, 0.08), rgba(0, 166, 62, 0.02));
+}
+
+.landing-chat-core--widget .landing-chat-cta {
+	margin-left: 0;
+}
+
+.landing-chat-cta__text {
+	color: #14532d !important;
+	font-size: 0.9rem !important;
+	font-weight: 600;
+}
+
+.landing-chat-cta__btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.55rem 1rem;
+	border-radius: 0.75rem;
+	background: #00a63e !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	font-weight: 700;
+	font-size: 0.9rem !important;
+	text-decoration: none !important;
+	box-shadow: 0 10px 20px rgba(0, 166, 62, 0.22);
+	transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.landing-chat-cta__btn:hover {
+	background: #009639 !important;
+	transform: translateY(-1px);
+}
+
+.landing-chat-cta__btn--secondary {
+	background: #ffffff !important;
+	color: #00733f !important;
+	-webkit-text-fill-color: #00733f !important;
+	border: 2px solid #00a63e;
+	box-shadow: none;
+}
+
+.landing-chat-cta__btn--secondary:hover {
+	background: #00a63e !important;
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+}
+
+/* Hero — trzecia ścieżka: pytanie do asystenta */
+#planopia-welcome .landing-polished-hero-ask {
+	margin: 0.75rem 0 0;
+}
+
+#planopia-welcome .landing-polished-hero-ask__link {
+	color: #00733f !important;
+	-webkit-text-fill-color: #00733f !important;
+	font-size: 15px !important;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+#planopia-welcome .landing-polished-hero-ask__link:hover {
+	color: #00a63e !important;
+	-webkit-text-fill-color: #00a63e !important;
+}
+
+/* Widget: FAB znika, gdy sekcja czatu jest na ekranie (strona główna) */
+.landing-chat-fab--hidden {
+	opacity: 0;
+	pointer-events: none !important;
+	transform: translateY(12px);
+}
+
+.landing-chat-panel .landing-chat-core__composer {
+	padding: 0.75rem 0.85rem;
+}
+
+@media (max-width: 640px) {
+	.landing-chat-core--section {
+		height: min(36rem, 76vh);
+	}
+
+	.landing-chat-core--section .landing-chat-core__messages {
+		padding: 0.75rem;
+	}
+
+	.landing-chat-cta {
+		margin-left: 0;
+	}
+
+	.landing-chat-section__panel {
+		border-radius: 1rem;
+	}
+
+	/* Na telefonie 10 chipów + podpowiedzi zajmowałyby pół ekranu — jeden przewijany wiersz */
+	.landing-chat-core--section .landing-chat-chips,
+	.landing-chat-core--section .landing-chat-suggestions {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		padding-bottom: 2px;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.landing-chat-core--section .landing-chat-chips::-webkit-scrollbar,
+	.landing-chat-core--section .landing-chat-suggestions::-webkit-scrollbar {
+		display: none;
+	}
+
+	.landing-chat-core--section .landing-chat-suggestion {
+		flex: 0 0 auto;
+		max-width: 85vw;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
