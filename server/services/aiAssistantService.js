@@ -543,6 +543,7 @@ exports.runAssistantTurn = async function runAssistantTurn(input) {
 
 	const { content, model, usage } = await createChatCompletion({
 		messages: openaiMessages,
+		path: 'data_chat',
 		temperature: 0.35,
 		maxTokens: 4096,
 	})
@@ -565,13 +566,15 @@ exports.iterateAssistantTurnStream = async function* iterateAssistantTurnStream(
 
 	for await (const ev of createChatCompletionStream({
 		messages: openaiMessages,
+		path: 'data_chat',
 		temperature: 0.2,
 		maxTokens: 4096,
 	})) {
 		if (ev.type === 'delta') {
 			yield { type: 'delta', text: ev.text }
 		} else if (ev.type === 'done') {
-			yield { type: 'end', model: ev.model }
+			// `usage` trafia do logu kosztów w kontrolerze; klient ignoruje nieznane pola.
+			yield { type: 'end', model: ev.model, usage: ev.usage || null }
 		}
 	}
 

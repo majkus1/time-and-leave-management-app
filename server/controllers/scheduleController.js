@@ -1378,6 +1378,7 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 		const { scheduleId } = req.params
 		const { messages, year, month, locale } = req.body || {}
 		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const aiStartedAt = Date.now()
 		const result = await runScheduleAutoDraftTurn({
 			userId: req.user.userId,
 			scheduleId,
@@ -1387,6 +1388,7 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 			locale,
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
+		require('../services/aiUsageLogService').recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'schedule_draft', mode: 'schedule', model: result.model, usage: result.usage, durationMs: Date.now() - aiStartedAt })
 		const schedDoc = await Schedule.findById(scheduleId).select('name').lean()
 		const schedLabel = schedDoc?.name || String(scheduleId)
 		const who = req.user?.username || '—'

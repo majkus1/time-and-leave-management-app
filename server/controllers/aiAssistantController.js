@@ -7,6 +7,7 @@ const { runWorkdayDraftTurn } = require('../services/aiWorkdayDraftService')
 const entitlementsService = require('../services/entitlementsService')
 const { createLog } = require('../services/logService')
 const { respondAiAssistantError, aiAssistantSseErrorPayload } = require('../utils/clientSafeErrors')
+const { recordAiUsage } = require('../services/aiUsageLogService')
 
 const logAiUse = (req, action, details) => {
 	const who = req.user?.username || '—'
@@ -31,6 +32,7 @@ exports.chat = async (req, res) => {
 		const { messages, periodPreset, dateFrom, dateTo, locale } = req.body || {}
 
 		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const startedAt = Date.now()
 		const result = await runAssistantTurn({
 			userId: req.user.userId,
 			messages,
@@ -41,6 +43,7 @@ exports.chat = async (req, res) => {
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
 		logAiUse(req, 'AI_ASSISTANT_CHAT', 'Asystent AI — rozmowa (czat)')
+		recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'data_chat', mode: 'chat', model: result.model, usage: result.usage, durationMs: Date.now() - startedAt })
 
 		res.json({
 			reply: result.reply,
@@ -77,6 +80,8 @@ exports.chatStream = async (req, res) => {
 		const { messages, periodPreset, dateFrom, dateTo, locale } = req.body || {}
 
 		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const startedAt = Date.now()
+		let streamEnd = null
 		for await (const ev of iterateAssistantTurnStream({
 			userId: req.user.userId,
 			messages,
@@ -85,11 +90,15 @@ exports.chatStream = async (req, res) => {
 			dateTo,
 			locale,
 		})) {
+			if (ev.type === 'end') streamEnd = ev
 			writeSse(ev)
 		}
 		try {
 			await entitlementsService.consumeAiMessageForUser(req.user.userId)
 			logAiUse(req, 'AI_ASSISTANT_CHAT', 'Asystent AI — rozmowa (czat, strumień)')
+			if (streamEnd) {
+				recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'data_chat', mode: 'chat', model: streamEnd.model, usage: streamEnd.usage, durationMs: Date.now() - startedAt })
+			}
 		} catch (consumeErr) {
 			writeSse(
 				aiAssistantSseErrorPayload({
@@ -127,6 +136,7 @@ exports.leaveDraft = async (req, res) => {
 	try {
 		const { messages, locale } = req.body || {}
 		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const startedAt = Date.now()
 		const result = await runLeaveDraftTurn({
 			userId: req.user.userId,
 			messages,
@@ -134,6 +144,7 @@ exports.leaveDraft = async (req, res) => {
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
 		logAiUse(req, 'AI_ASSISTANT_LEAVE_DRAFT', 'Asystent AI — szkic wniosku urlopowego')
+		recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'json_draft', mode: 'leave', model: result.model, usage: result.usage, durationMs: Date.now() - startedAt })
 		res.json({
 			reply: result.reply,
 			draft: result.draft,
@@ -156,6 +167,7 @@ exports.workdayDraft = async (req, res) => {
 	try {
 		const { messages, locale } = req.body || {}
 		await entitlementsService.assertAiMessageAllowedForUser(req.user.userId)
+		const startedAt = Date.now()
 		const result = await runWorkdayDraftTurn({
 			userId: req.user.userId,
 			messages,
@@ -163,6 +175,7 @@ exports.workdayDraft = async (req, res) => {
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
 		logAiUse(req, 'AI_ASSISTANT_WORKDAY_DRAFT', 'Asystent AI — szkic wpisu ewidencji czasu')
+		recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'json_draft', mode: 'workday', model: result.model, usage: result.usage, durationMs: Date.now() - startedAt })
 		res.json({
 			reply: result.reply,
 			draft: result.draft,

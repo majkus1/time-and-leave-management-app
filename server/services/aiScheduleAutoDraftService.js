@@ -236,6 +236,7 @@ async function runScheduleAutoDraftTurn(input) {
 
 	const { content, model, usage } = await createChatCompletionJson({
 		messages: openaiMessages,
+		path: 'schedule_draft',
 		temperature: 0.25,
 		maxTokens: 2200,
 	})

@@ -86,6 +86,9 @@ Team insights chat uses OpenAI from the server. Set in `.env`:
 
 - `OPENAI_API_KEY` — required to enable `/api/ai-assistant/chat`
 - `OPENAI_MODEL` — optional, default `gpt-4o-mini`
+- `OPENAI_MODEL_DATA_CHAT`, `OPENAI_MODEL_HELP`, `OPENAI_MODEL_JSON` — optional per-path overrides (team-data chat, product help, JSON drafts/export intent)
+- `OPENAI_REASONING_EFFORT_DATA_CHAT|HELP|JSON_DRAFT|SCHEDULE_DRAFT|EXPORT_INTENT` — optional, only for reasoning models (gpt-5*, o*); defaults low/minimal/minimal/medium/minimal
+- Token usage and estimated cost per call are stored in `aiusagelogs` (see `server/constants/openaiPricing.js`)
 
 Domain instructions for the model live in `docs/AI_ASSISTANT_CONTEXT.md`.
 
