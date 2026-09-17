@@ -127,8 +127,8 @@
 		],
 		"question": "Czy pracownik, który nie ma konta i nie loguje się, może być w ewidencji?",
 		"mustMatch": [
-			"bez dostępu",
-			"tak"
+			"tak",
+			"ustawien|włącz|bez dostępu|bez konta"
 		]
 	},
 	{
@@ -203,7 +203,7 @@
 		],
 		"question": "Co widzi przełożony i kto ustawia jego zakres?",
 		"mustMatch": [
-			"dział|wybran",
+			"dział|wybran|podwładn|swoich pracownik",
 			"Administrator|admin"
 		]
 	},

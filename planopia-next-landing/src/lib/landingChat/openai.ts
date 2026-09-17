@@ -38,7 +38,7 @@ export function resolveLandingModel(env: NodeJS.ProcessEnv = process.env): strin
 }
 
 export function resolveLandingReasoningEffort(env: NodeJS.ProcessEnv = process.env): string {
-	return String(env.OPENAI_REASONING_EFFORT_LANDING || 'low').trim()
+	return String(env.OPENAI_REASONING_EFFORT_LANDING || 'minimal').trim()
 }
 
 export type ChatCompletionBodyOptions = {

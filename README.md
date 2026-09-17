@@ -98,7 +98,8 @@ Team insights chat uses OpenAI from the server. Set in `.env`:
 - Rules for reading team data (roles, holidays, data glossary) live in `docs/AI_DATA_CONTEXT_RULES.md`.
 - Tests: `server/tests/productKnowledge.test.js` (server) and `cd planopia-next-landing && npm run test:knowledge` (selector twin, shared cases in `scripts/knowledge-select-cases.json`).
 - Golden questions (manual, costs tokens): `node scripts/ai-golden-questions.mjs --target=landing` — see the script header.
-- Landing env: `OPENAI_MODEL_LANDING` (falls back to `OPENAI_MODEL`, default `gpt-4o-mini`), `OPENAI_REASONING_EFFORT_LANDING` (default `low`).
+- Landing env: `OPENAI_MODEL_LANDING` (falls back to `OPENAI_MODEL`, default `gpt-4o-mini`), `OPENAI_REASONING_EFFORT_LANDING` (default `minimal` — reasoning tokens add 1–3 s to the first token without improving product FAQ answers).
+- Cost report (read-only, from `aiusagelogs`): `npm run ai:usage` (current month) or `node server/scripts/aiUsageReport.js 2026-09 --team=<teamId>`.
 
 ## License
 

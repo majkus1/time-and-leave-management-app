@@ -5,8 +5,8 @@ module.exports = {
 	order: 4,
 	title: { pl: 'Grafiki pracy', en: 'Work schedules' },
 	summary: {
-		pl: 'Planowanie zmian w kalendarzu miesięcznym, dyspozycyjność, automatyczne uzupełnianie miesiąca i panel AI szkicu.',
-		en: 'Shift planning in a monthly calendar, availability, automatic month fill and an AI draft panel.',
+		pl: 'Planowanie zmian w kalendarzu miesięcznym; grafik może układać się automatycznie (auto-uzupełnianie miesiąca lub szkic AI); dyspozycyjność pracowników.',
+		en: 'Shift planning in a monthly calendar; the schedule can be filled automatically (auto-fill or an AI draft); employee availability.',
 	},
 	keywords: {
 		pl: ['grafik', 'harmonogram', 'na zmian', ' zmiany ', 'zmianow', 'zmianach', 'nocn', 'rann', 'popołudn', 'dyspozycyjn', 'automatycz', 'uzupełn', 'szkic', 'publik', 'obsad'],
@@ -19,6 +19,7 @@ module.exports = {
 	},
 	body: {
 		pl: `### Jak działa
+- **Tak, grafik może układać się automatycznie** — na dwa sposoby: „Auto-uzupełnianie miesiąca” (reguły: zmiany, obsada, dyspozycyjność) albo panel AI szkicu (opis słowami). Oba tworzą szkic, który planujący sprawdza i publikuje.
 - Menu → „Grafik”: lista grafików. Każdy dział dostaje własny grafik automatycznie po utworzeniu działu; Administrator/HR mogą też tworzyć grafiki niestandardowe z dowolnymi osobami.
 - W grafiku (kalendarz miesiąca) przypisujesz pracowników do dni i godzin (zmiany), z notatkami. Wpisy mogą być robocze (szkic) i publikowane — pracownicy widzą przypisane zmiany po publikacji, w swoim kalendarzu.
 - W grafiku widać zaakceptowane urlopy, nieobecności i zgłoszenia bez akceptacji (np. L4) — nie zaplanujesz zmiany osobie na urlopie bez ostrzeżenia.
