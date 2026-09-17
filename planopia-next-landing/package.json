@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seo:check": "node scripts/check-seo-metadata.mjs"
+    "seo:check": "node scripts/check-seo-metadata.mjs",
+    "test:knowledge": "node --experimental-strip-types --test src/lib/landingChat/knowledgeSelect.test.mts"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.2",

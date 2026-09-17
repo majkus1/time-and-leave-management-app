@@ -1,0 +1,41 @@
+name: Product knowledge check
+
+# Pilnuje, żeby wygenerowana baza wiedzy landingu była zgodna ze źródłem w server/constants
+# (po edycji modułów lub cennika trzeba uruchomić `npm run knowledge:build` i zacommitować wynik).
+
+on:
+  pull_request:
+    paths:
+      - "server/constants/**"
+      - "server/utils/productKnowledgeRender.js"
+      - "server/tests/productKnowledge.test.js"
+      - "scripts/build-product-knowledge.mjs"
+      - "planopia-next-landing/src/data/productKnowledge.generated.ts"
+      - "planopia-next-landing/src/data/landingPlanPricing.generated.ts"
+      - ".github/workflows/knowledge-check.yml"
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  knowledge:
+    name: knowledge:check + productKnowledge tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Skrypt i test używają tylko wbudowanych modułów Node — bez npm ci.
+      - name: Generated files up to date
+        run: node scripts/build-product-knowledge.mjs --check
+
+      - name: Knowledge tests
+        run: node --test server/tests/productKnowledge.test.js

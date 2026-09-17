@@ -1,0 +1,280 @@
+[
+	{
+		"id": "qr-phone-many-codes",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy kod QR skanuje się zwykłym telefonem i czy mogę mieć osobne kody na różne budowy?",
+		"mustMatch": [
+			"aparat|telefon",
+			"osobn|wiele|każd|dowoln",
+			"nazw"
+		],
+		"mustNotMatch": [
+			"GPS[^.]{0,40}(tak|dostępn|sprawdza lokalizację)"
+		]
+	},
+	{
+		"id": "qr-gps",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy QR sprawdza lokalizację GPS pracownika?",
+		"mustMatch": [
+			"\\bnie\\b"
+		],
+		"mustNotMatch": [
+			"geofenc[^.]{0,30}(tak|dostępn)"
+		]
+	},
+	{
+		"id": "qr-same-code-exit",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"module": "qr",
+		"question": "Czy mogę zeskanować przy wyjściu inny kod niż przy wejściu?",
+		"mustMatch": [
+			"tym samym|ten sam"
+		]
+	},
+	{
+		"id": "qr-free-plan",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy kody QR działają w darmowym planie?",
+		"mustMatch": [
+			"\\bnie\\b",
+			"pakiet|moduł|Timer|Licznik|Pro|Business"
+		]
+	},
+	{
+		"id": "price-20-people",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Ile kosztuje Planopia dla 20 osób?",
+		"mustMatch": [
+			"Core M",
+			"199",
+			"Pro",
+			"239"
+		],
+		"mustNotMatch": [
+			"949",
+			"Enterprise",
+			"Core S[^.]{0,40}(polec|wystarcz)"
+		]
+	},
+	{
+		"id": "price-annual",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy jest taniej przy płatności rocznej?",
+		"mustMatch": [
+			"10"
+		]
+	},
+	{
+		"id": "business-ai-messages",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Ile wiadomości AI ma pakiet Business?",
+		"mustMatch": [
+			"300"
+		]
+	},
+	{
+		"id": "plan-45-people-en",
+		"locale": "en",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Which plan should I choose for 45 people?",
+		"mustMatch": [
+			"Core L|Business"
+		],
+		"mustNotMatch": [
+			"Core M[^.]{0,40}(recommend|enough|fits)",
+			"949",
+			"Enterprise"
+		]
+	},
+	{
+		"id": "no-access-employees",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy pracownik, który nie ma konta i nie loguje się, może być w ewidencji?",
+		"mustMatch": [
+			"bez dostępu",
+			"tak"
+		]
+	},
+	{
+		"id": "ai-privacy",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy moje dane trafiają do AI bez mojej wiedzy?",
+		"mustMatch": [
+			"OpenAI|uprawnie|pytani"
+		]
+	},
+	{
+		"id": "schedule-auto",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy grafik może układać się automatycznie?",
+		"mustMatch": [
+			"tak",
+			"automat|uzupełn"
+		]
+	},
+	{
+		"id": "leave-hourly",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy pracownik może wziąć urlop na 2 godziny?",
+		"mustMatch": [
+			"godzin",
+			"typ|jednostk|ustawien"
+		]
+	},
+	{
+		"id": "chat-private",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy w czacie da się pisać prywatnie do jednej osoby?",
+		"mustMatch": [
+			"tak|prywatn"
+		]
+	},
+	{
+		"id": "pwa-store",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy jest aplikacja do pobrania z App Store albo Google Play?",
+		"mustMatch": [
+			"\\bnie\\b",
+			"PWA|ekranu głównego|przeglądar"
+		]
+	},
+	{
+		"id": "supervisor-scope",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Co widzi przełożony i kto ustawia jego zakres?",
+		"mustMatch": [
+			"dział|wybran",
+			"Administrator|admin"
+		]
+	},
+	{
+		"id": "invoice-ksef",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy dostanę fakturę i jak zapłacić BLIKiem?",
+		"mustMatch": [
+			"faktur",
+			"KSeF",
+			"BLIK|Przelewy24"
+		]
+	},
+	{
+		"id": "after-trial",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Co zostaje za darmo po okresie próbnym?",
+		"mustMatch": [
+			"ewidencj",
+			"5"
+		],
+		"mustNotMatch": [
+			"urlop[^.]{0,30}(zostaj|dostępn|w cenie)"
+		]
+	},
+	{
+		"id": "payroll-integration",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy Planopia integruje się z programem kadrowo-płacowym i liczy wynagrodzenia?",
+		"mustMatch": [
+			"\\bnie\\b"
+		],
+		"mustNotMatch": [
+			"integr[^.]{0,30}(tak|dostępn|możliw)"
+		]
+	},
+	{
+		"id": "kiosk-mode",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy mogę postawić tablet przy wejściu, żeby wszyscy odbijali się na jednym urządzeniu?",
+		"mustMatch": [
+			"\\bnie\\b",
+			"własn|swoim|każdy"
+		]
+	},
+	{
+		"id": "sso-google",
+		"locale": "en",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Can employees log in with their Google account?",
+		"mustMatch": [
+			"\\bno\\b|not available|does not"
+		]
+	}
+]

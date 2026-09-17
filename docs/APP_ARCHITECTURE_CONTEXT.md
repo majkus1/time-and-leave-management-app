@@ -1,6 +1,6 @@
 # Planopia — kontekst aplikacji (dla narzędzi / review)
 
-Zwięzły opis **zgodny z kodem** w tym repozytorium. Szczegóły płatności / AI: `docs/billing-payments-current-flow.md`, `docs/AI_ASSISTANT_CONTEXT.md`.
+Zwięzły opis **zgodny z kodem** w tym repozytorium. Szczegóły płatności / AI: `docs/billing-payments-current-flow.md`, `docs/AI_DATA_CONTEXT_RULES.md`, `server/constants/productKnowledge/`.
 
 ---
 
@@ -125,7 +125,7 @@ Skrót **ścieżek użytkownika + backendu** — szczegóły implementacji w wym
 
 ### Asystent AI
 
-- **`/api/ai-assistant`** + widok `/ai-assistant`. Limity zależne od planu / modułu `ai_assistant` / trial / legacy — szczegóły: `docs/AI_ASSISTANT_CONTEXT.md`, `entitlementsService` (zużycie, pakiety).
+- **`/api/ai-assistant`** + widok `/ai-assistant`. Limity zależne od planu / modułu `ai_assistant` / trial / legacy — szczegóły: `server/constants/productKnowledge/ai.js`, `docs/AI_DATA_CONTEXT_RULES.md`, `entitlementsService` (zużycie, pakiety).
 
 ### Tickety (centrum pomocy)
 

@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildLandingChatSystemPrompt, type LandingChatLocale } from '@/lib/landingChat/knowledge'
+import { productKnowledgeModules } from '@/data/productKnowledge.generated'
 import { landingChatRateLimit } from '@/lib/landingChat/rateLimit'
+import {
+	buildChatCompletionBody,
+	estimateCostUsd,
+	normalizeUsage,
+	resolveLandingModel,
+	resolveLandingReasoningEffort,
+	type OpenAiUsage,
+} from '@/lib/landingChat/openai'
 
 const MAX_MESSAGES = 20
 const MAX_CONTENT_LEN = 2500
 const MAX_TOTAL_INPUT_CHARS = 12000
-const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
 const MAX_COMPLETION_TOKENS = 900
+
+const KNOWN_MODULE_IDS = new Set<string>(productKnowledgeModules.map(m => m.id))
+
+function sanitizeModuleId(raw: unknown): string | null {
+	return typeof raw === 'string' && KNOWN_MODULE_IDS.has(raw) ? raw : null
+}
 
 type ChatRole = 'user' | 'assistant'
 
@@ -67,7 +81,7 @@ export async function POST(request: NextRequest) {
 		)
 	}
 
-	let body: { messages?: unknown; locale?: string }
+	let body: { messages?: unknown; locale?: string; module?: unknown }
 	try {
 		body = await request.json()
 	} catch {
@@ -81,25 +95,35 @@ export async function POST(request: NextRequest) {
 	}
 
 	const apiKey = process.env.OPENAI_API_KEY!.trim()
-	const system = buildLandingChatSystemPrompt(locale)
+	const moduleId = sanitizeModuleId(body.module)
+	const lastUserText = messages[messages.length - 1].content
+	const prompt = buildLandingChatSystemPrompt(locale, { moduleId, lastUserText })
 
 	const openaiMessages = [
-		{ role: 'system' as const, content: system },
+		{ role: 'system' as const, content: prompt.system },
 		...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
 	]
 
+	const model = resolveLandingModel()
+	const startedAt = Date.now()
 	const res = await fetch('https://api.openai.com/v1/chat/completions', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			Authorization: `Bearer ${apiKey}`,
 		},
-		body: JSON.stringify({
-			model: MODEL,
-			messages: openaiMessages,
-			max_tokens: MAX_COMPLETION_TOKENS,
-			temperature: 0.35,
-		}),
+		body: JSON.stringify(
+			buildChatCompletionBody({
+				model,
+				messages: openaiMessages,
+				temperature: 0.35,
+				maxOutputTokens: MAX_COMPLETION_TOKENS,
+				reasoningEffort: resolveLandingReasoningEffort(),
+				verbosity: 'low',
+				promptCacheKey: prompt.promptCacheKey,
+			}),
+		),
+		signal: AbortSignal.timeout(60_000),
 	})
 
 	if (!res.ok) {
@@ -109,6 +133,8 @@ export async function POST(request: NextRequest) {
 	}
 
 	const data = (await res.json()) as {
+		model?: string
+		usage?: OpenAiUsage
 		choices?: { message?: { content?: string } }[]
 	}
 
@@ -117,5 +143,18 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({ error: 'empty_response' }, { status: 502 })
 	}
 
-	return NextResponse.json({ message: text })
+	/* Landing nie ma bazy — użycie tokenów idzie do logów Vercela (bez treści rozmowy). */
+	const usedModel = data.model || model
+	console.info('[landing-chat] usage', {
+		model: usedModel,
+		locale,
+		module: moduleId,
+		knowledgeModules: prompt.moduleIds,
+		legal: prompt.includesLegal,
+		...normalizeUsage(data.usage),
+		estimatedCostUsd: estimateCostUsd(usedModel, data.usage),
+		durationMs: Date.now() - startedAt,
+	})
+
+	return NextResponse.json({ message: text, meta: { modules: prompt.moduleIds } })
 }

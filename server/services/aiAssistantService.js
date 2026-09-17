@@ -12,6 +12,7 @@ const {
 	shouldAttachPolishCalendarHint,
 	extractYearsFromText,
 } = require('../utils/polishPublicHolidays')
+const { buildProductKnowledgeBlock, computeKnowledgeVersion } = require('../utils/productKnowledgeRender')
 
 /** User message sounds like work / summary / period question — safe to apply date overrides from text. */
 function isAssistantRangeIntentText(t) {
@@ -303,14 +304,19 @@ function tryCalendarYearOverrideFromMessage(lastUserText, baseRange) {
 
 const MAX_USER_MESSAGES = 24
 const MAX_MESSAGE_LENGTH = 8000
-const DOC_PATH = path.join(__dirname, '../../docs/AI_ASSISTANT_CONTEXT.md')
+const DATA_RULES_PATH = path.join(__dirname, '../../docs/AI_DATA_CONTEXT_RULES.md')
+const KNOWLEDGE_MODULES_PER_TURN = 3
 
-function loadDomainInstructions() {
+let dataRulesCache = null
+/** Zasady czytania DATA CONTEXT — czytane raz na proces (wcześniej readFileSync przy każdym żądaniu). */
+function loadDataContextRules() {
+	if (dataRulesCache) return dataRulesCache
 	try {
-		return fs.readFileSync(DOC_PATH, 'utf8')
+		dataRulesCache = fs.readFileSync(DATA_RULES_PATH, 'utf8')
 	} catch {
-		return 'Planopia: HR and time tracking app. Use only the provided DATA CONTEXT. Answer in the user language.'
+		dataRulesCache = 'Use only the provided DATA CONTEXT for numbers, names and statuses. Answer in the user language.'
 	}
+	return dataRulesCache
 }
 
 function resolveDateRange(preset, dateFrom, dateTo) {
@@ -432,9 +438,15 @@ async function prepareAssistantTurn(input) {
 		monthFromMessageKey,
 	})
 
-	const domainDoc = loadDomainInstructions()
-
 	const lastUserText = lastUserForRange?.content || ''
+	const knowledgeBlock = buildProductKnowledgeBlock({
+		locale,
+		lastUserText,
+		max: KNOWLEDGE_MODULES_PER_TURN,
+		alwaysInclude: ['ai'],
+		fallback: ['general'],
+	})
+	const dataRules = loadDataContextRules()
 	let polishCalendarBlock = ''
 	if (shouldAttachPolishCalendarHint(lastUserText)) {
 		const yearSet = new Set()
@@ -454,8 +466,8 @@ async function prepareAssistantTurn(input) {
 
 	const productVsDataRule =
 		locale === 'en'
-			? '**Two sources (Planopia-only questions):** (1) **DOMAIN DOCUMENT** — official Planopia feature guide: use it for "Does Planopia have…?", "Where is…?", how menus work (dashboard, schedules, leave, boards, chat, AI). Say you do not know only if the feature is not described there. (2) **DATA CONTEXT** — live team data: use it ONLY for numbers, names, leave statuses, hours, tasks, and settings snapshots. For those, never invent facts; if missing, say so.'
-			: '**Dwa źródła (pytania o Planopię):** (1) **DOMAIN DOCUMENT** — przewodnik po funkcjach Planopii: stosuj przy pytaniach „czy jest…?”, „gdzie znajdę…?”, jak działa menu (czas pracy, grafiki, urlopy, tablice, czat, AI). Nie mów „nie mam informacji o aplikacji”, jeśli jest to opisane poniżej. (2) **DATA CONTEXT** — dane zespołu z bazy: TYLKO do liczb, imion, statusów urlopów, godzin, zadań. Tu nie zmyślaj; jak brak danych — przyznaj się.'
+			? '**Two sources (Planopia-only questions):** (1) **PRODUCT KNOWLEDGE** — official Planopia feature guide: use it for "Does Planopia have…?", "Where is…?", how menus work (dashboard, schedules, leave, boards, chat, AI). Say you do not know only if the feature is not described there. (2) **DATA CONTEXT** — live team data: use it ONLY for numbers, names, leave statuses, hours, tasks, and settings snapshots. For those, never invent facts; if missing, say so.'
+			: '**Dwa źródła (pytania o Planopię):** (1) **WIEDZA O PLANOPII** — przewodnik po funkcjach Planopii: stosuj przy pytaniach „czy jest…?”, „gdzie znajdę…?”, jak działa menu (czas pracy, grafiki, urlopy, tablice, czat, AI). Nie mów „nie mam informacji o aplikacji”, jeśli jest to opisane poniżej. (2) **DATA CONTEXT** — dane zespołu z bazy: TYLKO do liczb, imion, statusów urlopów, godzin, zadań. Tu nie zmyślaj; jak brak danych — przyznaj się.'
 
 	const generalKnowledgeRule =
 		locale === 'en'
@@ -491,8 +503,8 @@ async function prepareAssistantTurn(input) {
 
 	const systemParts = [
 		locale === 'en'
-			? 'You are **AI Asystent** in Planopia: a precise assistant for **team / HR / time-tracking** questions using the DOMAIN DOCUMENT and DATA CONTEXT below, **and** a helpful assistant for **general** questions (learning, problem-solving, everyday topics) when the user is not asking about app data.'
-			: 'Jesteś **AI Asystent** w Planopii: dokładny przy pytaniach o **zespół, HR, czas pracy** (DOMAIN DOCUMENT + DATA CONTEXT poniżej) **oraz** pomocny przy **pytaniach ogólnych** (nauka, rozwiązywanie problemów, codzienne tematy), gdy użytkownik nie pyta o dane z aplikacji.',
+			? 'You are **AI Asystent** in Planopia: a precise assistant for **team / HR / time-tracking** questions using the PRODUCT KNOWLEDGE and DATA CONTEXT below, **and** a helpful assistant for **general** questions (learning, problem-solving, everyday topics) when the user is not asking about app data.'
+			: 'Jesteś **AI Asystent** w Planopii: dokładny przy pytaniach o **zespół, HR, czas pracy** (WIEDZA O PLANOPII + DATA CONTEXT poniżej) **oraz** pomocny przy **pytaniach ogólnych** (nauka, rozwiązywanie problemów, codzienne tematy), gdy użytkownik nie pyta o dane z aplikacji.',
 		`Reply in ${locale === 'en' ? 'English' : 'Polish'} unless the user clearly uses another language.`,
 		productVsDataRule,
 		generalKnowledgeRule,
@@ -500,7 +512,6 @@ async function prepareAssistantTurn(input) {
 		workActivitiesRule,
 		businessReportRule,
 		periodFromMessageRule,
-		...(customDateRangeUiRule ? [customDateRangeUiRule] : []),
 		'Do not invent employees, hours, or leave requests when answering from DATA CONTEXT.',
 		locale === 'en'
 			? '**Leave requests:** The DATA CONTEXT “Leave requests…” block lists **all active team members**. It uses `Meta.leaveHorizonTo` (may extend beyond `periodTo`) so **future** approved leaves appear. Rows under **[Upcoming — … after Meta.periodTo]** are the user’s / team’s **next** leaves — use these for “when is my next leave?”. Never claim no access when the block exists. `(none)` only if there are truly no rows.'
@@ -523,29 +534,34 @@ async function prepareAssistantTurn(input) {
 			? '**Tasks (Kanban):** Each line includes dueDate, workPeriod, placement (calendar-only vs board), and **status/priority already as plain language** in DATA CONTEXT. The Tasks block only lists cards whose **due date or work period intersects** `Meta.periodFrom`–`Meta.periodTo`, plus **new unscheduled** cards (no due / no work period) **created** in that window — not every card edited in the month. For period or monthly summaries, use a **table that lists every task** from the Tasks block with **full title**, status, priority, due date — do not collapse to counts-only or English codes (`todo`/`done`) when the model should mirror the labels from the lines.'
 			: '**Zadania (Kanban):** W każdej linii są dueDate, workPeriod, placement oraz **status i priority już jako czytelny tekst** (po polsku) w DATA CONTEXT. Blok Tasks zawiera tylko karty, których **termin lub okres realizacji przecina** `Meta.periodFrom`–`Meta.periodTo`, oraz **nowe bez terminu i bez okresu** utworzone w tym oknie — nie wszystkie edytowane w miesiącu. Przy podsumowaniu okresu/miesiąca podaj **tabelę ze wszystkimi zadaniami** z bloku Tasks: **pełny tytuł**, status, priorytet, termin — nie ograniczaj się do samych liczb ani kodów `todo`/`done`; powtarzaj etykiety statusów jak w liniach kontekstu.',
 		'Write for end users in plain language. Do NOT mention internal field names (e.g. workOnWeekends), JSON keys, database keys, or raw booleans like "false"/"true". Explain settings in everyday words (e.g. "W ustawieniach zespołu weekendy nie są traktowane jako zwykłe dni pracy przy ewidencji" instead of quoting technical identifiers).',
-		'--- DOMAIN DOCUMENT ---',
-		domainDoc,
+		'--- WIEDZA O PLANOPII / PRODUCT KNOWLEDGE ---',
+		knowledgeBlock.text,
+		'--- DATA CONTEXT RULES ---',
+		dataRules,
+		...(customDateRangeUiRule ? [customDateRangeUiRule] : []),
 		...(polishCalendarBlock ? ['--- POLISH PUBLIC HOLIDAYS (computed reference) ---', polishCalendarBlock] : []),
 		'--- DATA CONTEXT ---',
 		contextText,
 	]
 
 	const openaiMessages = [{ role: 'system', content: systemParts.join('\n\n') }, ...messages]
+	const promptCacheKey = `planopia:data:${locale}:${computeKnowledgeVersion()}`
 
-	return { openaiMessages, meta }
+	return { openaiMessages, meta: { ...meta, knowledgeModules: knowledgeBlock.moduleIds }, promptCacheKey }
 }
 
 /**
  * @param {object} input
  */
 exports.runAssistantTurn = async function runAssistantTurn(input) {
-	const { openaiMessages, meta } = await prepareAssistantTurn(input)
+	const { openaiMessages, meta, promptCacheKey } = await prepareAssistantTurn(input)
 
 	const { content, model, usage } = await createChatCompletion({
 		messages: openaiMessages,
 		path: 'data_chat',
 		temperature: 0.35,
 		maxTokens: 4096,
+		promptCacheKey,
 	})
 
 	return {
@@ -561,7 +577,7 @@ exports.runAssistantTurn = async function runAssistantTurn(input) {
  * @param {object} input — same shape as runAssistantTurn
  */
 exports.iterateAssistantTurnStream = async function* iterateAssistantTurnStream(input) {
-	const { openaiMessages, meta } = await prepareAssistantTurn(input)
+	const { openaiMessages, meta, promptCacheKey } = await prepareAssistantTurn(input)
 	yield { type: 'meta', meta }
 
 	for await (const ev of createChatCompletionStream({
@@ -569,6 +585,7 @@ exports.iterateAssistantTurnStream = async function* iterateAssistantTurnStream(
 		path: 'data_chat',
 		temperature: 0.2,
 		maxTokens: 4096,
+		promptCacheKey,
 	})) {
 		if (ev.type === 'delta') {
 			yield { type: 'delta', text: ev.text }
