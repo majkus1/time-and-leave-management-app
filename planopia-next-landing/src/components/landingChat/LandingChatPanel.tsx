@@ -22,10 +22,18 @@ function ModuleChips({ variant }: { variant: Variant }) {
 	const { copy, modules, module, setModule, busy } = useLandingChat()
 	const rowRef = useRef<HTMLDivElement>(null)
 
-	/* Wiersz chipów przewija się poziomo (widget, telefon) — aktywny chip ma być widoczny po odtworzeniu rozmowy. */
+	/*
+	 * Wiersz chipów przewija się poziomo (widget, telefon) — aktywny chip ma być widoczny po odtworzeniu rozmowy.
+	 * Tylko scrollLeft wiersza: scrollIntoView przewijało całą stronę do sekcji przy każdym wejściu na planopia.pl.
+	 */
 	useEffect(() => {
-		const active = rowRef.current?.querySelector<HTMLElement>('.landing-chat-chip--active')
-		active?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+		const row = rowRef.current
+		const active = row?.querySelector<HTMLElement>('.landing-chat-chip--active')
+		if (!row || !active || row.scrollWidth <= row.clientWidth) return
+		const rowRect = row.getBoundingClientRect()
+		const chipRect = active.getBoundingClientRect()
+		if (chipRect.left < rowRect.left) row.scrollLeft += chipRect.left - rowRect.left - 8
+		else if (chipRect.right > rowRect.right) row.scrollLeft += chipRect.right - rowRect.right + 8
 	}, [module])
 
 	return (
