@@ -2792,6 +2792,8 @@ textarea {
 .landing-polished-hero .landing-polished-subtitle,
 #underheader.landing-polished-subtitle {
 	max-width: 660px;
+	/* Dwa zdania podtytułu = dwie linie (znak nowej linii w planOfferingCopy) */
+	white-space: pre-line;
 	margin-top: 14px !important;
 	padding-top: 0;
 	border-top: 0;
@@ -3166,6 +3168,8 @@ textarea {
 	.landing-polished-hero .landing-polished-subtitle,
 	#underheader.landing-polished-subtitle {
 		margin-top: 10px !important;
+		/* Na telefonie zdania ciągiem — wymuszone łamanie dawałoby sieroty w wąskiej kolumnie */
+		white-space: normal;
 		padding-top: 0;
 		font-size: 18px !important;
 		line-height: 1.45;
