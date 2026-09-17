@@ -170,6 +170,7 @@ function renderNotAvailable(catalog = planCatalog) {
  * Blok WIEDZA O PLANOPII do promptu: indeks wszystkich modułów + pełna treść modułów dopasowanych
  * do ostatniego pytania (+ `alwaysInclude`) + wspólna lista „czego nie ma”.
  * Używany przez czat z danymi i tryb pomocy; kolejność: jawny moduł, trafienia, alwaysInclude.
+ * `all: true` = wszystkie moduły w stałej kolejności (stabilny prefiks promptu → cache OpenAI; tryb pomocy).
  */
 function buildProductKnowledgeBlock({
 	locale = 'pl',
@@ -178,22 +179,26 @@ function buildProductKnowledgeBlock({
 	max = 3,
 	alwaysInclude = [],
 	fallback = [],
+	all = false,
 	modules = KNOWLEDGE_MODULES,
 	catalog = planCatalog,
 } = {}) {
 	const loc = LOCALES.includes(locale) ? locale : 'pl'
 	const sections = compileKnowledgeSections(loc, { modules, catalog })
 	const byId = new Map(sections.map(s => [s.id, s]))
-	const ids = selectKnowledgeModules({ modules, moduleId, lastUserText, max, fallback }).map(m => m.id)
-	for (const id of alwaysInclude) if (!ids.includes(id)) ids.push(id)
+	const ids = all
+		? [...sections].sort((a, b) => a.order - b.order).map(s => s.id)
+		: selectKnowledgeModules({ modules, moduleId, lastUserText, max, fallback }).map(m => m.id)
+	if (!all) for (const id of alwaysInclude) if (!ids.includes(id)) ids.push(id)
 
-	const parts = [
-		loc === 'en'
+	const header = all
+		? loc === 'en'
+			? 'Index of Planopia feature modules (full text of every module follows):'
+			: 'Indeks modułów funkcji Planopii (poniżej pełna treść wszystkich modułów):'
+		: loc === 'en'
 			? 'Index of Planopia feature modules (full text below only for the modules relevant to the last question; for another module answer from its summary and point to the "How Planopia works" help mode):'
-			: 'Indeks modułów funkcji Planopii (pełna treść poniżej tylko dla modułów pasujących do ostatniego pytania; przy pytaniu o inny moduł odpowiadaj z opisu i wskaż tryb pomocy „Jak działa Planopia”):',
-		buildKnowledgeIndex(modules, loc),
-		'',
-	]
+			: 'Indeks modułów funkcji Planopii (pełna treść poniżej tylko dla modułów pasujących do ostatniego pytania; przy pytaniu o inny moduł odpowiadaj z opisu i wskaż tryb pomocy „Jak działa Planopia”):'
+	const parts = [header, buildKnowledgeIndex(modules, loc), '']
 	for (const id of ids) {
 		const s = byId.get(id)
 		if (!s) continue

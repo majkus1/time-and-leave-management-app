@@ -122,6 +122,8 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/tickets',
 	/** Lista „pierwsze kroki” po założeniu zespołu — pomaga także zespołom, którym skończył się trial. */
 	'/api/onboarding',
+	/** Asystent w trybie „jak działa Planopia” — wiedza o produkcie bez danych zespołu, także po trialu. */
+	'/api/ai-help',
 ]
 
 /** Prefiksy dostępne w freemium wyłącznie do odczytu. */
