@@ -25,7 +25,7 @@ Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopo
 - Rejestracja zespołu: {{app.url}}/team-registration — podajesz nazwę firmy (zespołu), imię, nazwisko i e-mail. Osoba zakładająca zostaje Administratorem. Bez karty płatniczej.
 - Okres próbny: {{trial.days}} dni pełnej aplikacji (wszystkie moduły) dla zespołu do {{trial.maxUsers}} osób, z pulą {{trial.aiMessages}} wiadomości asystenta AI.
 - Pierwsze kroki po założeniu zespołu (lista widoczna nad ewidencją): dodaj pracowników, ustaw godziny pracy i święta, wpisz pierwszy dzień pracy.
-- Nowy zespół startuje od strony „Czas pracy” (ewidencja). Stronę „Start” (pulpit z KPI) Administrator może włączyć w Ustawieniach.
+- Nowy zespół startuje od strony „Czas pracy” (ewidencja). Strona „Start” (pulpit) jest w nowych zespołach domyślnie wyłączona — włącza ją Administrator w Ustawieniach (patrz niżej).
 
 ### Plan darmowy (po okresie próbnym)
 Po {{trial.days}} dniach, jeśli zespół nie wybierze pakietu, zostaje na bezpłatnym planie bezterminowo:
@@ -33,6 +33,18 @@ Po {{trial.days}} dniach, jeśli zespół nie wybierze pakietu, zostaje na bezp�
 - limit: {{trial.maxUsers}} aktywnych kont;
 - nie działa: licznik czasu i kody QR, składanie wniosków urlopowych, grafiki, zadania, czat, komunikaty, asystent AI z danymi zespołu, strona Start.
 - Jeśli zespół ma więcej niż {{trial.maxUsers}} kont, aplikacja jest zablokowana dla wszystkich poza Administratorem i HR, którzy widzą tylko zarządzanie zespołem i pakiety — trzeba zmniejszyć zespół do {{trial.maxUsers}} kont albo wykupić pakiet. Dane nie znikają.
+
+### Strona Start (pulpit)
+Źródło: dashboardSummaryService. Domyślnie wyłączona w nowych zespołach; Administrator włącza ją w Ustawieniach → „Strona Start”. Dostępna w okresie próbnym i planach płatnych, nie w planie darmowym. Po włączeniu jest pierwszą stroną po zalogowaniu i pokazuje (zawsze w granicach roli i uprawnień):
+- **Dziś**: własny wpis dnia (godziny, nadgodziny, nieobecność, notatka, stan zatwierdzenia) i uruchomiony licznik (od kiedy, czy przerwa/nadgodziny, opis pracy).
+- **Mój miesiąc**: suma godzin i nadgodzin, liczba dni z wpisami, dni zatwierdzone i odrzucone.
+- **Zespół w tym miesiącu** (Administrator, HR, przełożony w swoim zakresie): sumy godzin i nadgodzin, ile osób ma wpis, aktywne liczniki oraz **kto dziś nie ma jeszcze wpisu** (bez osób na urlopie i w dni wolne).
+- **Urlopy**: wnioski czekające na decyzję (u osób, które zatwierdzają) z podglądem, nadchodzące urlopy w zespole, własne pule dni.
+- **Zadania** (gdy moduł włączony): otwarte zadania, wysoki priorytet, z terminem w najbliższych dniach.
+- **Grafik** (gdy moduł włączony): dzisiejsze zmiany w zasięgu użytkownika, własne najbliższe zmiany, liczba wpisów roboczych (szkic).
+- **Komunikacja**: nieprzeczytane powiadomienia, komunikaty i wiadomości na czacie.
+- **Szybkie akcje**: „Uzupełnij czas pracy”, „Zgłoś urlop” / „Sprawdź wnioski”, zadania, grafiki, asystent AI, a dla Administratora/HR „Pakiety i rozliczenia”.
+Pulpit tylko pokazuje dane — wpisy, wnioski i zadania dodaje się na właściwych stronach (skróty prowadzą prosto tam).
 
 ### Telefon i instalacja
 Na telefonie: otwórz stronę aplikacji w przeglądarce i wybierz „Dodaj do ekranu głównego”; na komputerze „Zainstaluj aplikację”. Zainstalowana wersja otwiera się szybciej i lepiej obsługuje powiadomienia push. Nie ma osobnej aplikacji w App Store / Google Play — PWA zastępuje ją.
@@ -51,6 +63,7 @@ Dane są przechowywane na serwerach w USA (Oregon) na podstawie Standardowych Kl
 - Nie prowadzi kadr i płac (nie liczy wynagrodzeń, nie wysyła deklaracji ZUS/PIT) i nie integruje się z programami kadrowo-płacowymi.
 - Nie rozlicza delegacji ani floty.
 - Nie ma logowania kontem Google/Microsoft (SSO).
+- Strona Start nie ma własnych wykresów do eksportu ani konfigurowalnych widżetów — zestaw bloków jest stały, zależny od roli i włączonych modułów.
 
 ### Gdzie w aplikacji / kto może
 Rejestracja: {{app.url}}/team-registration (każdy). Ustawienia zespołu: menu → Ustawienia (Administrator, HR). Pakiety: menu → Pakiety i rozliczenia (Administrator, HR). Pomoc: menu → Centrum pomocy (Administrator) albo e-mail biuro@planopia.pl.`,

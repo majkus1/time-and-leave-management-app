@@ -41,7 +41,7 @@ Opcja w Ustawieniach (domyślnie wyłączona): osoby, które nie logują się i 
 - Czynności w ewidencji: lista, grupowanie, „Mierz wykonanie” z jednostką.
 - Typy urlopów: nazwa (PL/EN), wymaga akceptacji, pula dni, minimalne wyprzedzenie, jednostka (dni/godziny); rozliczanie urlopu w dniach lub godzinach; automatyczne rozliczanie puli.
 - Licznik i kody QR (włącz/wyłącz; kody z nazwą miejsca).
-- Strona Start (pulpit KPI) — włącz/wyłącz.
+- Strona Start (pulpit) — włącz/wyłącz; w nowych zespołach domyślnie wyłączona, po włączeniu jest pierwszą stroną po zalogowaniu (opis w module „Planopia — ogólnie”).
 - Pracownicy bez dostępu (+ wpisy ewidencji i wnioski za nich).
 - Wpisy w ewidencji tylko na dziś.
 - W planie darmowym dostępne: weekendy, święta, godziny pracy, czynności, pracownicy bez dostępu (bez wniosków za nich).
