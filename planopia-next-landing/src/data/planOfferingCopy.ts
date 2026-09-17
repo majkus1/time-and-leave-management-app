@@ -12,8 +12,7 @@ export const planOfferingCopy = {
 			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
 		heroH1: 'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela',
 		// Najpierw trwały plan darmowy (najmocniejszy argument), 30 dni pełnej wersji jako bonus; słowa jak w H1.
-		heroSub:
-			'Ewidencja czasu pracy dla zespołu do 5 osób za darmo — bez limitu czasu i bez karty. Na start dostajesz też 30 dni pełnej aplikacji z urlopami i grafikami.',
+		heroSub: 'Do 5 osób za darmo, bez limitu czasu i bez karty. Na start 30 dni pełnej wersji.',
 		valueEyebrow: 'Dlaczego nie Excel?',
 		valueTitle: 'Excel nie przypilnuje procesu. Planopia tak.',
 		valueLead:
@@ -45,8 +44,7 @@ export const planOfferingCopy = {
 		jsonLdOfferDescription:
 			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
 		heroH1: 'Free time tracking, leave, and schedules without spreadsheets',
-		heroSub:
-			'Free time tracking for teams of up to 5 people — no time limit, no card. You also get the full app with leave and schedules free for the first 30 days.',
+		heroSub: 'Free for up to 5 people, no time limit, no card. Full version free for the first 30 days.',
 		valueEyebrow: 'Why not spreadsheets?',
 		valueTitle: 'Spreadsheets do not manage the process. Planopia does.',
 		valueLead:
