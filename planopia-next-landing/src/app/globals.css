@@ -5117,7 +5117,8 @@ a.blog-pillar-banner-link:focus-visible {
 
 #planopia-welcome.landing-polished-hero,
 .industry-landing-hero.landing-polished-hero {
-	padding-top: 84px !important;
+	/* Góra hero: więcej powietrza pod menu, w rytmie odstępów sekcji poniżej */
+	padding-top: 108px !important;
 	/* Dół hero w tym samym rytmie co reszta sekcji */
 	padding-bottom: var(--landing-section-pad) !important;
 }
@@ -5149,7 +5150,7 @@ a.blog-pillar-banner-link:focus-visible {
 
 	#planopia-welcome.landing-polished-hero,
 	.industry-landing-hero.landing-polished-hero {
-		padding-top: 92px !important;
+		padding-top: 124px !important;
 		padding-bottom: var(--landing-section-pad) !important;
 	}
 }
