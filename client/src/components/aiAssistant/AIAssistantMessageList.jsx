@@ -84,7 +84,7 @@ function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onInten
 /**
  * Scrollable message list; assistant bubbles render Markdown (GFM).
  */
-function AIAssistantMessageList({ messages, onIntentExport, busy }) {
+function AIAssistantMessageList({ messages, onIntentExport, busy, emptyHint }) {
 	const { t } = useTranslation()
 	const bottomRef = useRef(null)
 
@@ -102,7 +102,7 @@ function AIAssistantMessageList({ messages, onIntentExport, busy }) {
 						alt=""
 						draggable={false}
 					/>
-					<p className="ai-assistant-empty__hint">{t('aiAssistant.emptyHint')}</p>
+					<p className="ai-assistant-empty__hint">{emptyHint || t('aiAssistant.emptyHint')}</p>
 				</div>
 			)}
 			{messages.map((m, i) => (

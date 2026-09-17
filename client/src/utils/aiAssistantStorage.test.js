@@ -80,3 +80,27 @@ describe('aiAssistantStorage', () => {
 		expect(raw.sessions[0].messages[0].content).toBe('short')
 	})
 })
+
+describe('aiAssistantStorage — tryb sesji (pomoc „Jak działa Planopia”)', () => {
+	it('nowa sesja startuje w trybie chat bez modułu; nadpisania działają', () => {
+		const { createEmptySession } = require('./aiAssistantStorage.js')
+		expect(createEmptySession().mode).toBe('chat')
+		expect(createEmptySession().helpModule).toBeNull()
+		const help = createEmptySession({ mode: 'help', helpModule: 'qr' })
+		expect(help.mode).toBe('help')
+		expect(help.helpModule).toBe('qr')
+	})
+
+	it('stare sesje bez pola mode są czytane jako chat, nieznany tryb wraca do chat', () => {
+		const parsed = parseSessionsStore({
+			sessions: [
+				{ id: 'a', messages: [] },
+				{ id: 'b', messages: [], mode: 'help', helpModule: 'leave' },
+				{ id: 'c', messages: [], mode: 'weird', helpModule: 42 },
+			],
+			activeId: 'a',
+		})
+		expect(parsed.sessions.map(s => s.mode)).toEqual(['chat', 'help', 'chat'])
+		expect(parsed.sessions.map(s => s.helpModule)).toEqual([null, 'leave', null])
+	})
+})

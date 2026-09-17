@@ -7554,3 +7554,13 @@
 	background-color: rgba(0, 168, 70, 0.18) !important;
 	color: #6ee7a0 !important;
 }
+
+[data-theme='dark'] .tutorial-modal-nav-btn--secondary {
+	background-color: var(--po-surface-muted) !important;
+	border: 1px solid var(--po-border) !important;
+	color: var(--po-brand-text) !important;
+}
+
+[data-theme='dark'] .tutorial-modal-nav-btn--secondary:hover {
+	background-color: var(--po-surface-hover) !important;
+}

@@ -1390,3 +1390,145 @@
 	background: var(--po-surface-muted);
 	border-color: var(--po-border);
 }
+
+/* =============================================================================
+   Tryb „Jak działa Planopia” — chipy modułów, podpowiedzi, baner, plakietka
+   ============================================================================= */
+
+.ai-assistant-header__badge--help {
+	background: rgba(16, 185, 129, 0.14);
+	color: #047857;
+}
+
+.ai-assistant-banner--help {
+	background: linear-gradient(90deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.06));
+	border: 1px solid rgba(102, 126, 234, 0.35);
+	color: #312e81;
+	margin-bottom: 0.5rem;
+}
+
+.ai-assistant-banner__link {
+	color: #4338ca;
+	font-weight: 600;
+	text-decoration: underline;
+}
+
+.ai-assistant-toolbar__btn--help.ai-assistant-toolbar__btn--active {
+	background: #ede9fe;
+	border-color: #8b5cf6;
+	color: #4c1d95;
+}
+
+.ai-assistant-help {
+	margin-top: 0.75rem;
+	padding: 0.75rem 0.9rem;
+	border-radius: 12px;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	background: #f8fafc;
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+
+.ai-assistant-help__row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.ai-assistant-help__label {
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #64748b !important;
+}
+
+.ai-assistant-help__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.ai-assistant-help__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.35rem 0.7rem 0.35rem 0.5rem;
+}
+
+.ai-assistant-help__chip-icon {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+	flex: 0 0 auto;
+}
+
+.ai-assistant-chip--active .ai-assistant-help__chip-icon {
+	filter: brightness(0) invert(1);
+}
+
+.ai-assistant-help__suggestions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.ai-assistant-help__suggestion {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.ai-assistant-help__error {
+	margin: 0;
+	font-size: 0.85rem;
+	color: #92400e !important;
+}
+
+@media (max-width: 640px) {
+	.ai-assistant-help {
+		padding: 0.6rem 0.65rem;
+	}
+
+	.ai-assistant-help__chip {
+		font-size: 0.8rem;
+	}
+
+	.ai-assistant-help__suggestion {
+		flex: 1 1 100%;
+	}
+}
+
+[data-theme='dark'] .ai-assistant-help {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-help__label {
+	color: var(--po-text-muted) !important;
+}
+
+[data-theme='dark'] .ai-assistant-banner--help {
+	background: var(--po-surface-hover);
+	border-color: var(--po-border);
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .ai-assistant-banner__link {
+	color: var(--po-brand-text);
+}
+
+[data-theme='dark'] .ai-assistant-header__badge--help {
+	background: rgba(16, 185, 129, 0.2);
+	color: #6ee7b7;
+}
+
+[data-theme='dark'] .ai-assistant-toolbar__btn--help.ai-assistant-toolbar__btn--active {
+	background: var(--po-surface-hover) !important;
+	border-color: var(--po-brand-text) !important;
+	color: var(--po-brand-text) !important;
+}
+
+[data-theme='dark'] .ai-assistant-help__error {
+	color: #fcd34d !important;
+}

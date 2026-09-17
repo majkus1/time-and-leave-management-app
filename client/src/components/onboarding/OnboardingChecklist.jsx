@@ -117,6 +117,13 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 				))}
 			</ol>
 
+			<p className="po-onboarding__help">
+				{t('onboarding.helpPrompt')}{' '}
+				<Link to="/ai-assistant?mode=help&module=general" className="po-onboarding__help-link">
+					{t('onboarding.helpLink')}
+				</Link>
+			</p>
+
 			{data.allDone ? (
 				<div className="po-onboarding__foot">
 					<button type="button" className="po-onboarding__done-btn" onClick={() => dismiss.mutate()} disabled={dismiss.isPending}>

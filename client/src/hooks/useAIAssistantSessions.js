@@ -5,6 +5,7 @@ import {
 	createEmptyStore,
 	defaultDates,
 	loadAiSessionsStore,
+	normalizeSessionMode,
 	saveAiSessionsStore,
 } from '../utils/aiAssistantStorage'
 
@@ -73,11 +74,13 @@ export function useAIAssistantSessions() {
 	}, [patchActive])
 
 	const setPeriodPreset = useCallback(v => patchActive({ periodPreset: v }), [patchActive])
+	const setMode = useCallback(v => patchActive({ mode: normalizeSessionMode(v) }), [patchActive])
+	const setHelpModule = useCallback(v => patchActive({ helpModule: typeof v === 'string' && v ? v : null }), [patchActive])
 	const setDateFrom = useCallback(v => patchActive({ dateFrom: v }), [patchActive])
 	const setDateTo = useCallback(v => patchActive({ dateTo: v }), [patchActive])
 
-	const newSession = useCallback(() => {
-		const s = createEmptySession()
+	const newSession = useCallback((overrides = {}) => {
+		const s = createEmptySession(overrides)
 		setData(d => {
 			const next = [s, ...d.sessions].slice(0, MAX_SESSIONS)
 			return { activeId: s.id, sessions: next }
@@ -123,6 +126,10 @@ export function useAIAssistantSessions() {
 		setLastMeta,
 		periodPreset: activeSession.periodPreset || 'month',
 		setPeriodPreset,
+		mode: normalizeSessionMode(activeSession.mode),
+		setMode,
+		helpModule: typeof activeSession.helpModule === 'string' ? activeSession.helpModule : null,
+		setHelpModule,
 		dateFrom: activeSession.dateFrom || defaultDates().dateFrom,
 		dateTo: activeSession.dateTo || defaultDates().dateTo,
 		setDateFrom,

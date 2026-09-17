@@ -9,7 +9,7 @@ import { useTheme } from '../../context/ThemeContext'
  * @param {boolean} [props.statusPending] — pierwsze pobranie statusu (nie pokazuj „wyłączony” zanim przyjdzie odpowiedź)
  * @param {boolean} [props.statusError] — błąd pobrania statusu
  */
-function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError }) {
+function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError, helpMode = false }) {
 	const { t } = useTranslation()
 	const { isDark } = useTheme()
 	const planioLogoSrc = isDark ? '/img/star.png' : '/img/planio.png'
@@ -17,6 +17,7 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 	const introList = Array.isArray(introBullets) ? introBullets : []
 
 	const showQuota =
+		!helpMode &&
 		!statusPending &&
 		!statusError &&
 		enabled &&
@@ -50,6 +51,11 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 				{!statusPending && !statusError && !enabled && (
 					<span className="ai-assistant-header__badge ai-assistant-header__badge--off">
 						{t('aiAssistant.disabledBadge')}
+					</span>
+				)}
+				{helpMode && (
+					<span className="ai-assistant-header__badge ai-assistant-header__badge--help" role="status">
+						{t('aiAssistant.help.noQuotaBadge')}
 					</span>
 				)}
 			</div>
