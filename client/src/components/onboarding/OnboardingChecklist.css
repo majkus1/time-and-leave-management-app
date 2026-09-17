@@ -285,3 +285,15 @@
 		justify-self: start;
 	}
 }
+
+.po-onboarding__help {
+	margin: 12px 0 0;
+	font-size: 13px !important;
+	color: var(--po-text-muted) !important;
+}
+
+.po-onboarding__help-link {
+	color: var(--po-brand-text) !important;
+	font-weight: 600;
+	text-decoration: underline;
+}

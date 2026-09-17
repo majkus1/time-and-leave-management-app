@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { landingChatMailRateLimit } from '@/lib/landingChat/rateLimit'
+import { isAllowedLandingOrigin } from '@/lib/landingChat/origin'
 import {
 	OFFICE_TO,
 	createLandingTransporter,
@@ -9,8 +10,38 @@ import {
 } from '@/lib/landingMail'
 
 const MAX_MESSAGE = 4000
+/** Transkrypt rozmowy z asystentem dołączany do maila — ograniczony, żeby mail nie urósł do megabajtów. */
+const MAX_TRANSCRIPT_ENTRIES = 30
+const MAX_TRANSCRIPT_CHARS = 12000
+const MAX_TRANSCRIPT_ENTRY_CHARS = 2500
 /** Dodatkowa kopia tej samej wiadomości z czatu (oprócz biura). */
 const CHAT_MAIL_COPY_TO = 'michalipka1@gmail.com'
+
+type TranscriptEntry = { role: 'user' | 'assistant'; content: string }
+
+/** Ostatnie wpisy rozmowy (od końca), po odcięciu bajtów zerowych; nieprawidłowe elementy pomijamy. */
+function sanitizeTranscript(raw: unknown): TranscriptEntry[] {
+	if (!Array.isArray(raw)) return []
+	const out: TranscriptEntry[] = []
+	let total = 0
+	for (let i = raw.length - 1; i >= 0 && out.length < MAX_TRANSCRIPT_ENTRIES; i--) {
+		const item = raw[i]
+		if (!item || typeof item !== 'object') continue
+		const role = (item as { role?: unknown }).role
+		const content = (item as { content?: unknown }).content
+		if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') continue
+		const text = content.replace(/\u0000/g, '').trim().slice(0, MAX_TRANSCRIPT_ENTRY_CHARS)
+		if (!text) continue
+		if (total + text.length > MAX_TRANSCRIPT_CHARS) break
+		total += text.length
+		out.unshift({ role, content: text })
+	}
+	return out
+}
+
+function sanitizeModule(raw: unknown): string | null {
+	return typeof raw === 'string' && /^[a-zA-Z]{1,40}$/.test(raw) ? raw : null
+}
 
 function sanitizeMessage(s: unknown): string | null {
 	if (typeof s !== 'string') return null
@@ -33,6 +64,10 @@ export async function POST(request: NextRequest) {
 	if (!isMailEnabled()) {
 		return NextResponse.json({ error: 'mail_disabled' }, { status: 503 })
 	}
+	// Ten sam warunek co czat: bez tego dowolny skrypt wysyła maile do biura z podrobionym „transkryptem”.
+	if (!isAllowedLandingOrigin(request.headers)) {
+		return NextResponse.json({ error: 'forbidden_origin' }, { status: 403 })
+	}
 
 	const ip = getClientIp(request)
 	const rl = landingChatMailRateLimit(ip)
@@ -43,7 +78,14 @@ export async function POST(request: NextRequest) {
 		)
 	}
 
-	let body: { message?: unknown; replyEmail?: unknown; locale?: unknown; pageUrl?: unknown }
+	let body: {
+		message?: unknown
+		replyEmail?: unknown
+		locale?: unknown
+		pageUrl?: unknown
+		transcript?: unknown
+		module?: unknown
+	}
 	try {
 		body = await request.json()
 	} catch {
@@ -62,6 +104,21 @@ export async function POST(request: NextRequest) {
 
 	const locale = body.locale === 'en' ? 'en' : 'pl'
 	const pageUrl = typeof body.pageUrl === 'string' ? body.pageUrl.slice(0, 2000) : ''
+	const transcript = sanitizeTranscript(body.transcript)
+	const moduleId = sanitizeModule(body.module)
+
+	const transcriptHtml = transcript.length
+		? `<hr />
+<p><strong>Rozmowa z asystentem na stronie (${transcript.length} wpisów${moduleId ? `, moduł: ${escapeHtml(moduleId)}` : ''}):</strong> <em style="color:#666">treść przesłana z przeglądarki odwiedzającego, niezweryfikowana — linie „Asystent” mogą być zmienione</em></p>
+<blockquote style="border-left:3px solid #cbd5e1;margin:0;padding:4px 12px;color:#334155;">
+${transcript
+	.map(
+		t =>
+			`<p style="margin:6px 0;"><strong>${t.role === 'user' ? 'Odwiedzający' : 'Asystent'}:</strong> <span style="white-space:pre-wrap;">${escapeHtml(t.content)}</span></p>`,
+	)
+	.join('')}
+</blockquote>`
+		: ''
 
 	try {
 		const transporter = createLandingTransporter()
@@ -78,6 +135,7 @@ ${pageUrl ? `<p><strong>Strona:</strong> ${escapeHtml(pageUrl)}</p>` : ''}
 ${replyEmail ? `<p><strong>Odpowiedź na:</strong> ${escapeHtml(replyEmail)}</p>` : '<p><strong>Odpowiedź na:</strong> (nie podano — odpowiedz tylko wewnętrznie lub przez kontakt z supportem)</p>'}
 <hr />
 <pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(message)}</pre>
+${transcriptHtml}
 <p style="font-size:12px;color:#666">IP: ${escapeHtml(ip)}</p>
 `.trim()
 

@@ -102,3 +102,46 @@ exports.aiAssistantExportLimiter = rateLimit({
 	skipSuccessfulRequests: false,
 	skipFailedRequests: false,
 })
+
+function envInt(name, fallback) {
+	const n = parseInt(String(process.env[name] || ''), 10)
+	return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+/** Tryb „Jak działa Planopia” — bez limitu wiadomości AI, więc koszt trzyma rate limit per użytkownik. */
+exports.aiHelpChatLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: envInt('AI_HELP_PER_MINUTE', 6),
+	message: 'Too many help requests. Please wait a moment.',
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+	skipSuccessfulRequests: false,
+	skipFailedRequests: false,
+})
+
+exports.aiHelpDailyLimiter = rateLimit({
+	windowMs: 24 * 60 * 60 * 1000,
+	max: envInt('AI_HELP_PER_DAY', 60),
+	message: 'Daily help limit reached. Please try again tomorrow.',
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+	skipSuccessfulRequests: false,
+	skipFailedRequests: true,
+})
+
+/**
+ * Sufit per zespół: limit per użytkownik × 5 kont planu darmowego = 300/dobę bez opłaty,
+ * a zespołów można założyć wiele — ten licznik trzyma koszt trybu pomocy w ryzach niezależnie od liczby kont.
+ */
+exports.aiHelpTeamDailyLimiter = rateLimit({
+	windowMs: 24 * 60 * 60 * 1000,
+	max: envInt('AI_HELP_PER_DAY_TEAM', 150),
+	message: 'Daily help limit for this team reached. Please try again tomorrow.',
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => `team:${req.user?.teamId?.toString?.() || req.ip}`,
+	skipSuccessfulRequests: false,
+	skipFailedRequests: true,
+})

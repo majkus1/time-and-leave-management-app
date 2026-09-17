@@ -13,11 +13,13 @@ const TEAM_ACCESS_NOTICE_PATH = '/team-access-notice'
 /**
  * Freemium w limicie miejsc: ewidencja czasu pracy i profil dla wszystkich; listy ewidencji dla
  * Admin / HR / przełożonego z uprawnieniem; zarządzanie zespołem dla Admina; pakiety dla Admin / HR.
- * Bez QR, urlopów, grafików, zadań, czatu i asystenta — te są w planie płatnym.
+ * Bez QR, urlopów, grafików, zadań i czatu — te są w planie płatnym. Asystent tylko w trybie pomocy
+ * „Jak działa Planopia” (serwer: /api/ai-help w FREEMIUM_ACTIVE_EXTRA_PREFIXES).
  */
 function isFreemiumAppPathAllowed(pathname, { userIsAdmin, staffBilling, canCalendars }) {
 	if (pathname === TEAM_ACCESS_NOTICE_PATH) return true
 	if (pathname === '/work-time' || pathname === '/edit-profile' || pathname === '/settings') return true
+	if (pathname === '/ai-assistant') return true
 	if (canCalendars && (pathname === '/calendars-list' || pathname.startsWith('/work-calendars/'))) return true
 	if (staffBilling && pathname === '/packages') return true
 	if (

@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import Sidebar from '../dashboard/Sidebar'
@@ -9,9 +9,12 @@ import AIAssistantPeriodBar from './AIAssistantPeriodBar'
 import AIAssistantSessionSidebar from './AIAssistantSessionSidebar'
 import AIAssistantMessageList from './AIAssistantMessageList'
 import AIAssistantComposer from './AIAssistantComposer'
+import AIAssistantHelpModules from './AIAssistantHelpModules'
 import {
 	useAIAssistantStatus,
+	useAIHelpModules,
 	streamAIAssistantChat,
+	streamAIHelpChat,
 	downloadAiIntentExport,
 	buildExportText,
 	messagesForApi,
@@ -19,6 +22,8 @@ import {
 	postAiWorkdayDraft,
 } from '../../hooks/useAIAssistant'
 import { BILLING_ENTITLEMENTS_QUERY_KEY } from '../../hooks/useBilling'
+import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
+import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequests'
 import { useCreateWorkday } from '../../hooks/useWorkdays'
 import { useAlert } from '../../context/AlertContext'
@@ -40,7 +45,25 @@ function formatDateInput(d) {
 function AIAssistant() {
 	const { t, i18n } = useTranslation()
 	const queryClient = useQueryClient()
-	const { data: status, isPending: statusPending, isError: statusError } = useAIAssistantStatus()
+	const location = useLocation()
+	const navigate = useNavigate()
+	const { role, loggedIn } = useAuth()
+	const locale = i18n.resolvedLanguage === 'en' ? 'en' : 'pl'
+
+	/**
+	 * Plan darmowy i CORE bez modułu AI: /api/ai-assistant/* odpowiada 403 (a 403 z kodem freemium przekierowuje
+	 * całą stronę), więc statusu nie pytamy — zostaje wyłącznie tryb pomocy „Jak działa Planopia”.
+	 */
+	const { data: billingEnt, isLoading: billingEntLoading, freemiumTier } = useFreemiumAccess({ enabled: !!loggedIn })
+	const helpOnly = !!billingEnt && (freemiumTier || !canShowBillingModuleNav(billingEnt, 'ai_assistant', false))
+	const dataChatQueriesEnabled = !!billingEnt && !billingEntLoading && !helpOnly
+
+	const {
+		data: status,
+		isPending: statusQueryPending,
+		isError: statusError,
+	} = useAIAssistantStatus({ enabled: dataChatQueriesEnabled })
+	const statusPending = dataChatQueriesEnabled ? statusQueryPending : billingEntLoading
 	const [streaming, setStreaming] = useState(false)
 
 	const sessionsApi = useAIAssistantSessions()
@@ -52,6 +75,10 @@ function AIAssistant() {
 		setLastMeta,
 		periodPreset,
 		setPeriodPreset,
+		mode: assistantMode,
+		setMode: setAssistantMode,
+		helpModule,
+		setHelpModule,
 		dateFrom,
 		setDateFrom,
 		dateTo,
@@ -70,15 +97,33 @@ function AIAssistant() {
 
 	const [error, setError] = useState(null)
 	const [quotaBlocked, setQuotaBlocked] = useState(false)
-	/** 'chat' | 'leave' | 'workday' */
-	const [assistantMode, setAssistantMode] = useState('chat')
 	const [pendingLeaveDraft, setPendingLeaveDraft] = useState(null)
 	const [pendingWorkdayDraft, setPendingWorkdayDraft] = useState(null)
+
+	const {
+		data: helpModulesData,
+		isError: helpModulesError,
+	} = useAIHelpModules(locale, { enabled: !!loggedIn })
+	const helpModules = helpModulesData?.modules || []
+
+	// Bez czatu z danymi każda sesja jest sesją pomocy.
+	useEffect(() => {
+		if (helpOnly && assistantMode !== 'help') setAssistantMode('help')
+	}, [helpOnly, assistantMode, setAssistantMode])
+
+	// Deep link z samouczka / listy „pierwsze kroki”: /ai-assistant?mode=help&module=qr → nowa sesja pomocy.
+	useEffect(() => {
+		const params = new URLSearchParams(location.search)
+		if (params.get('mode') !== 'help') return
+		const moduleParam = params.get('module')
+		const moduleId = moduleParam && /^[a-zA-Z]+$/.test(moduleParam) ? moduleParam : null
+		newSession({ mode: 'help', helpModule: moduleId })
+		navigate(location.pathname, { replace: true })
+	}, [location.search, location.pathname, navigate, newSession])
 
 	const createLeaveMutation = useCreateLeaveRequest()
 	const createWorkdayMutation = useCreateWorkday()
 	const { showAlert } = useAlert()
-	const { role } = useAuth()
 
 	const monthlyReportPromptKey = useMemo(() => {
 		if (isAdmin(role) || isHR(role)) return 'aiAssistant.quick.monthlyReportAdminHr'
@@ -101,13 +146,26 @@ function AIAssistant() {
 		ent?.metered === true &&
 		(ent?.needsSubscription === true || ent?.hasAccess === false)
 
+	const isHelpMode = assistantMode === 'help'
 	const busy = streaming || createLeaveMutation.isPending || createWorkdayMutation.isPending
-	const disabled = statusPending || statusError || !enabled || aiBillingBlock
+	const dataChatDisabled = statusPending || statusError || !enabled || aiBillingBlock
+	// Tryb pomocy nie zależy od statusu czatu z danymi (limit AI, moduł planu) — tylko od zalogowania.
+	const disabled = isHelpMode ? !loggedIn : dataChatDisabled
 
 	useEffect(() => {
 		setPendingLeaveDraft(null)
 		setPendingWorkdayDraft(null)
 	}, [activeId])
+
+	const switchMode = useCallback(
+		next => {
+			setAssistantMode(assistantMode === next ? 'chat' : next)
+			setPendingLeaveDraft(null)
+			setPendingWorkdayDraft(null)
+			setLastMeta(null)
+		},
+		[assistantMode, setAssistantMode, setLastMeta]
+	)
 
 	const sendUserMessage = useCallback(
 		async (text, opts = {}) => {
@@ -143,7 +201,32 @@ function AIAssistant() {
 			setMessages(withAssistantStart)
 
 			try {
-				if (assistantMode === 'leave') {
+				if (assistantMode === 'help') {
+					setLastMeta(null)
+					await streamAIHelpChat(
+						{
+							messages: messagesForApi(withUser),
+							locale,
+							module: helpModule,
+						},
+						{
+							onDelta: chunk => {
+								setMessages(prev => {
+									const next = [...prev]
+									const lastIdx = next.length - 1
+									if (lastIdx >= 0 && next[lastIdx].role === 'assistant') {
+										next[lastIdx] = {
+											...next[lastIdx],
+											content: next[lastIdx].content + chunk,
+										}
+									}
+									messagesRef.current = next
+									return next
+								})
+							},
+						}
+					)
+				} else if (assistantMode === 'leave') {
 					setLastMeta(null)
 					const data = await postAiLeaveDraft({
 						messages: messagesForApi(withUser),
@@ -235,12 +318,17 @@ function AIAssistant() {
 				setMessages(prev)
 			} finally {
 				setStreaming(false)
-				queryClient.invalidateQueries({ queryKey: ['ai-assistant-status'] })
-				queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+				// Tryb pomocy nie zużywa limitu — bez odświeżania statusu i uprawnień.
+				if (assistantMode !== 'help') {
+					queryClient.invalidateQueries({ queryKey: ['ai-assistant-status'] })
+					queryClient.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+				}
 			}
 		},
 		[
 			assistantMode,
+			helpModule,
+			locale,
 			periodPreset,
 			dateFrom,
 			dateTo,
@@ -376,12 +464,13 @@ function AIAssistant() {
 					</div>
 					<div className="ai-assistant-shell">
 						<AIAssistantHeader
-							enabled={enabled}
+							enabled={isHelpMode ? true : enabled}
 							aiEntitlements={ent}
-							statusPending={statusPending}
-							statusError={statusError}
+							statusPending={isHelpMode ? false : statusPending}
+							statusError={isHelpMode ? false : statusError}
+							helpMode={isHelpMode}
 						/>
-						{!statusPending && !statusError && !enabled && (
+						{!isHelpMode && !statusPending && !statusError && !enabled && (
 							<div className="ai-assistant-banner" role="status">
 								{t('aiAssistant.configHint')}
 							</div>
@@ -406,6 +495,19 @@ function AIAssistant() {
 								{t('aiAssistant.workday.banner')}
 							</div>
 						)}
+						{isHelpMode && (
+							<div className="ai-assistant-banner ai-assistant-banner--help" role="status">
+								{helpOnly ? t('aiAssistant.help.bannerHelpOnly') : t('aiAssistant.help.banner')}
+								{helpOnly && (isAdmin(role) || isHR(role)) && (
+									<>
+										{' '}
+										<Link to="/packages" className="ai-assistant-banner__link">
+											{t('aiAssistant.quotaLink')}
+										</Link>
+									</>
+								)}
+							</div>
+						)}
 						{assistantMode === 'chat' && (
 							<AIAssistantPeriodBar
 								preset={periodPreset}
@@ -424,34 +526,51 @@ function AIAssistant() {
 							<button type="button" className="ai-assistant-toolbar__btn" onClick={exportTxt} disabled={messages.length === 0}>
 								{t('aiAssistant.exportTxt')}
 							</button>
-							<button
-								type="button"
-								className={`ai-assistant-toolbar__btn${assistantMode === 'leave' ? ' ai-assistant-toolbar__btn--active' : ''}`}
-								onClick={() => {
-									setAssistantMode(m => (m === 'leave' ? 'chat' : 'leave'))
-									setPendingLeaveDraft(null)
-									setPendingWorkdayDraft(null)
-									setLastMeta(null)
-								}}
-								disabled={disabled || busy}
-							>
-								{assistantMode === 'leave' ? t('aiAssistant.leave.modeOff') : t('aiAssistant.leave.modeOn')}
-							</button>
-							<button
-								type="button"
-								className={`ai-assistant-toolbar__btn${assistantMode === 'workday' ? ' ai-assistant-toolbar__btn--active' : ''}`}
-								onClick={() => {
-									setAssistantMode(m => (m === 'workday' ? 'chat' : 'workday'))
-									setPendingLeaveDraft(null)
-									setPendingWorkdayDraft(null)
-									setLastMeta(null)
-								}}
-								disabled={disabled || busy}
-							>
-								{assistantMode === 'workday' ? t('aiAssistant.workday.modeOff') : t('aiAssistant.workday.modeOn')}
-							</button>
+							{!helpOnly && (
+								<>
+									<button
+										type="button"
+										className={`ai-assistant-toolbar__btn${assistantMode === 'leave' ? ' ai-assistant-toolbar__btn--active' : ''}`}
+										onClick={() => switchMode('leave')}
+										disabled={dataChatDisabled || busy}
+									>
+										{assistantMode === 'leave' ? t('aiAssistant.leave.modeOff') : t('aiAssistant.leave.modeOn')}
+									</button>
+									<button
+										type="button"
+										className={`ai-assistant-toolbar__btn${assistantMode === 'workday' ? ' ai-assistant-toolbar__btn--active' : ''}`}
+										onClick={() => switchMode('workday')}
+										disabled={dataChatDisabled || busy}
+									>
+										{assistantMode === 'workday' ? t('aiAssistant.workday.modeOff') : t('aiAssistant.workday.modeOn')}
+									</button>
+									<button
+										type="button"
+										className={`ai-assistant-toolbar__btn ai-assistant-toolbar__btn--help${isHelpMode ? ' ai-assistant-toolbar__btn--active' : ''}`}
+										onClick={() => switchMode('help')}
+										disabled={busy}
+									>
+										{isHelpMode ? t('aiAssistant.help.modeOff') : t('aiAssistant.help.modeOn')}
+									</button>
+								</>
+							)}
 						</div>
-						<AIAssistantMessageList messages={messages} onIntentExport={handleIntentExport} busy={busy} />
+						{isHelpMode && (
+							<AIAssistantHelpModules
+								modules={helpModules}
+								activeModule={helpModule}
+								onSelectModule={setHelpModule}
+								onAsk={q => sendUserMessage(q)}
+								disabled={disabled || busy}
+								loadError={helpModulesError}
+							/>
+						)}
+						<AIAssistantMessageList
+							messages={messages}
+							onIntentExport={handleIntentExport}
+							busy={busy}
+							emptyHint={isHelpMode ? t('aiAssistant.help.emptyHint') : undefined}
+						/>
 						<AIAssistantComposer
 							onSend={sendUserMessage}
 							monthlyReportHint={t(monthlyReportHintKey)}
@@ -477,9 +596,12 @@ function AIAssistant() {
 									? t('aiAssistant.leave.placeholder')
 									: assistantMode === 'workday'
 										? t('aiAssistant.workday.placeholder')
-										: undefined
+										: isHelpMode
+											? t('aiAssistant.help.placeholder')
+											: undefined
 							}
 							showQuickPrompts={assistantMode === 'chat'}
+							showPrivacyHint={!isHelpMode}
 						/>
 						{pendingLeaveDraft && (
 							<AIAssistantLeaveDraftPanel

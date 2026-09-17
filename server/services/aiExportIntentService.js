@@ -6,6 +6,7 @@ const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const { resolveDetailedDataScope } = require('./aiAssistantScopeService')
 const { createChatCompletionJson } = require('./openaiService')
+const { recordAiUsage } = require('./aiUsageLogService')
 const {
 	resolveAssistantDateRange,
 	resolveAssistantRangeWithMessage,
@@ -90,7 +91,7 @@ function shouldPreferCombinedReport(userMessage) {
  * @param {string} locale
  * @returns {Promise<object|null>}
  */
-async function extractExportIntentJson(userMessage, locale) {
+async function extractExportIntentJson(userMessage, locale, usageMeta = null) {
 	const lang = locale === 'en' ? 'en' : 'pl'
 	const system = `You classify whether the user wants to DOWNLOAD / EXPORT data as Excel or PDF from the Planopia HR app (not only a conversational answer).
 Reply with JSON only, no markdown:
@@ -111,14 +112,19 @@ Rules:
 - departmentHint: short fragment of department name if mentioned, else null.
 Language context: ${lang}.`
 
-	const { content } = await createChatCompletionJson({
+	const startedAt = Date.now()
+	const { content, model, usage } = await createChatCompletionJson({
 		messages: [
 			{ role: 'system', content: system },
 			{ role: 'user', content: userMessage.slice(0, 8000) },
 		],
+		path: 'export_intent',
 		maxTokens: 350,
 		temperature: 0.1,
 	})
+	if (usageMeta?.teamId) {
+		recordAiUsage({ ...usageMeta, path: 'export_intent', model, usage, durationMs: Date.now() - startedAt })
+	}
 
 	let parsed
 	try {
@@ -184,7 +190,10 @@ exports.buildExportOfferAfterChat = async function buildExportOfferAfterChat({
 
 	let raw
 	try {
-		raw = await extractExportIntentJson(lastUserMessage, locale)
+		raw = await extractExportIntentJson(lastUserMessage, locale, {
+			teamId: requestingUser.teamId,
+			userId: requestingUser._id,
+		})
 	} catch (e) {
 		console.error('aiExportIntentService.extractExportIntentJson:', e.message)
 		raw = null

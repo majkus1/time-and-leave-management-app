@@ -9,6 +9,10 @@ const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
 })
 
+const LandingChatSection = dynamic(() => import('./LandingChatSection'), {
+	loading: () => <div className="min-h-[520px] w-full" aria-hidden />,
+})
+
 const LandingAIHighlight = dynamic(() => import('./LandingAIHighlight'), {
 	loading: () => <div className="min-h-[200px] w-full" aria-hidden />,
 })
@@ -199,6 +203,8 @@ function ENProductPromotion() {
 
 			<LandingAIHighlight locale="en" />
 
+			<LandingChatSection locale="en" />
+
 			<section id="for" className="py-12 bg-gray-50 px-4 for">
 				<div className="max-w-7xl mx-auto">
 					<div className="landing-audience-heading mb-10">
@@ -209,7 +215,7 @@ function ENProductPromotion() {
 						</p>
 					</div>
 
-					<div className="landing-audience-cards grid md:grid-cols-3 gap-6 mb-4">
+					<div className="landing-audience-cards grid md:grid-cols-3 gap-6">
 						<div className="landing-audience-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
 							<div className="flex items-center gap-3">
 								<img src="/img/groupses.png" alt="Small teams 1-15 people" className="w-10 h-10 rounded-lg object-contain" width={40} height={40} loading="lazy" decoding="async" />

@@ -112,6 +112,7 @@ async function runWorkdayDraftTurn(input) {
 
 	const { content, model, usage } = await createChatCompletionJson({
 		messages: openaiMessages,
+		path: 'json_draft',
 		temperature: 0.2,
 		maxTokens: 3200,
 	})

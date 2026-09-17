@@ -5,6 +5,34 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import { useSupervisorConfig } from '../../hooks/useSupervisor'
+/** Sekcja samouczka → moduł trybu pomocy asystenta (server/constants/productKnowledge). Brak wpisu = bez przycisku. */
+const TUTORIAL_SECTION_HELP_MODULE = {
+	'start-dashboard': 'general',
+	'login-session': 'general',
+	'pwa-install': 'general',
+	'edit-profile': 'settingsRoles',
+	'leave-request': 'leave',
+	timesheet: 'timeTracking',
+	timer: 'qr',
+	boards: 'tasks',
+	schedule: 'schedules',
+	chat: 'chat',
+	'ai-assistant': 'ai',
+	announcements: 'chat',
+	'leave-planner': 'leave',
+	'leave-plans': 'leave',
+	settings: 'settingsRoles',
+	'create-user': 'settingsRoles',
+	'team-management': 'settingsRoles',
+	'timesheets-admin': 'timeTracking',
+	'leave-approval': 'leave',
+	'packages-billing-legal': 'packages',
+	'reports-exports': 'timeTracking',
+	'help-center': 'general',
+	'settings-personal': 'chat',
+	'freemium-overview': 'packages',
+}
+
 function TutorialModal({ isOpen, onClose }) {
 	const { t, i18n } = useTranslation()
 	const navigate = useNavigate()
@@ -789,6 +817,18 @@ function TutorialModal({ isOpen, onClose }) {
 										<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
 											<path d="M5 12h14M12 5l7 7-7 7"></path>
 										</svg>
+									</button>
+								)}
+								{TUTORIAL_SECTION_HELP_MODULE[section.id] && (
+									<button
+										type="button"
+										className="tutorial-modal-nav-btn tutorial-modal-nav-btn--secondary"
+										onClick={(e) => {
+											e.stopPropagation()
+											handleNavigateToSection(`/ai-assistant?mode=help&module=${TUTORIAL_SECTION_HELP_MODULE[section.id]}`)
+										}}
+									>
+										{t('aiAssistant.help.askAboutModule')}
 									</button>
 								)}
 							</div>

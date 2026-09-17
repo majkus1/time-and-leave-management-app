@@ -19,7 +19,14 @@ export function defaultDates() {
 	return { dateFrom: fmt(from), dateTo: fmt(now) }
 }
 
-export function createEmptySession() {
+/** Tryby sesji: czat z danymi zespołu, szkice (urlop / ewidencja) i pomoc „Jak działa Planopia”. */
+export const AI_SESSION_MODES = ['chat', 'leave', 'workday', 'help']
+
+export function normalizeSessionMode(mode) {
+	return AI_SESSION_MODES.includes(mode) ? mode : 'chat'
+}
+
+export function createEmptySession(overrides = {}) {
 	const { dateFrom, dateTo } = defaultDates()
 	return {
 		id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -29,7 +36,10 @@ export function createEmptySession() {
 		periodPreset: 'month',
 		dateFrom,
 		dateTo,
+		mode: 'chat',
+		helpModule: null,
 		updatedAt: Date.now(),
+		...overrides,
 	}
 }
 
@@ -48,7 +58,15 @@ export function parseSessionsStore(parsed) {
 	if (!Array.isArray(sessions) || sessions.length === 0 || typeof activeId !== 'string') {
 		return null
 	}
-	return { sessions, activeId }
+	// Sesje sprzed trybu pomocy nie mają `mode` — traktuj jak czat z danymi.
+	return {
+		sessions: sessions.map(s =>
+			s && typeof s === 'object'
+				? { ...s, mode: normalizeSessionMode(s.mode), helpModule: typeof s.helpModule === 'string' ? s.helpModule : null }
+				: s
+		),
+		activeId,
+	}
 }
 
 /**

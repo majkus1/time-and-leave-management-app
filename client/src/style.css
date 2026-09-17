@@ -8309,3 +8309,15 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	transition: transform 0.25s ease;
 	transform: scale(1.12);
 }
+
+/* Samouczek — drugi przycisk „Zapytaj asystenta o ten moduł” (tryb pomocy AI) */
+.tutorial-modal-nav-btn--secondary {
+	margin-top: 8px;
+	background-color: #eef2ff;
+	color: #3730a3 !important;
+	border: 1px solid #c7d2fe;
+}
+
+.tutorial-modal-nav-btn--secondary:hover {
+	background-color: #e0e7ff;
+}

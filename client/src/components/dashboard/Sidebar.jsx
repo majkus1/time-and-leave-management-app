@@ -105,9 +105,8 @@ function Sidebar() {
 		showPremiumModules && canShowBillingModuleNav(billingEnt, 'tasks', billingEntLoading)
 	const showChatLink =
 		showPremiumModules && canShowBillingModuleNav(billingEnt, 'chat', billingEntLoading)
-	const showAiAssistantLink =
-		showPremiumModules &&
-		canShowBillingModuleNav(billingEnt, 'ai_assistant', billingEntLoading)
+	/** Asystent ma tryb pomocy „Jak działa Planopia” bez modułu planu i w planie darmowym — link znika tylko przy blokadzie miejsc. */
+	const showAiAssistantLink = !compactFreemiumNav && !billingEntLoading
 	/** Kalendarze / ewidencje zespołu — także freemium w limicie miejsc (Admin / HR / przełożony z uprawnieniem); przy blokadzie miejsc nie. */
 	const showAdminCalendars =
 		!compactFreemiumNav && (isAdminRole || isHRRole || (isSupervisorRole && canViewTimesheets))

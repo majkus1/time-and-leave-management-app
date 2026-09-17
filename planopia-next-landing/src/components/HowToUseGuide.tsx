@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LandingChatSection from '@/components/LandingChatSection'
 import { HOW_TO_SECTIONS, type HowToLocale, type HowToSection } from '@/data/howToUseSections'
 
 const UI = {
@@ -169,6 +170,9 @@ export default function HowToUseGuide({ locale }: { locale: HowToLocale }) {
 							<p className="mt-4 text-lg leading-relaxed text-slate-700">{t.lead}</p>
 						</div>
 					</header>
+
+					{/* Asystent na samej górze: odpowiada z tej samej wiedzy, którą opisuje instrukcja poniżej */}
+					<LandingChatSection locale={locale} variant="guide" />
 
 					<div className="mx-auto max-w-4xl px-5 py-10 sm:px-6 md:py-14">
 						<nav className="rounded-lg border border-slate-200 bg-slate-50 p-5" aria-labelledby="toc-heading">

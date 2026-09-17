@@ -125,3 +125,15 @@ test('isBillingStaffRoles: Admin i HR, nikt inny', () => {
 	assert.equal(policy.isBillingStaffRoles(SUPERVISOR), false)
 	assert.equal(policy.isBillingStaffRoles(undefined), false)
 })
+
+test('w limicie: tryb „jak działa Planopia” (/api/ai-help) działa, czat z danymi (/api/ai-assistant) nie', () => {
+	assert.equal(active('/api/ai-help/modules', 'GET'), true)
+	assert.equal(active('/api/ai-help/chat', 'POST'), true)
+	assert.equal(active('/api/ai-help/chat/stream', 'POST'), true)
+	assert.equal(active('/api/ai-assistant/chat', 'POST'), false)
+	// Blokada miejsc: pomoc AI nie należy do zestawu „zejdź do limitu albo kup pakiet”
+	for (const roles of [ADMIN, HR, WORKER, SUPERVISOR]) {
+		assert.equal(overage('/api/ai-help/chat', 'POST', roles), false)
+		assert.equal(overage('/api/ai-help/modules', 'GET', roles), false)
+	}
+})

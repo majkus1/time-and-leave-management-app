@@ -5,6 +5,8 @@ import "../globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieConsent from "@/components/CookieConsent";
 import LandingChatWidgetLazy from "@/components/LandingChatWidgetLazy";
+import { LandingChatProvider } from "@/components/landingChat/LandingChatProvider";
+import { landingChatModulesForUi } from "@/lib/landingChat/modulesForUi";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
 
@@ -109,9 +111,12 @@ export default function PlRootLayout({
       >
         <GoogleAnalytics />
         <LandingNavigationEffects />
-        {children}
-        <LandingSiteFooter />
-        <LandingChatWidgetLazy />
+        {/* Jeden stan czatu dla sekcji na stronie głównej i widgetu na pozostałych stronach */}
+        <LandingChatProvider locale="pl" modules={landingChatModulesForUi("pl")}>
+          {children}
+          <LandingSiteFooter />
+          <LandingChatWidgetLazy />
+        </LandingChatProvider>
         <CookieConsent />
       </body>
     </html>

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { API_URL } from '../config.js'
 import { buildReportFilename } from '../utils/export/reportFilename'
 
-export function useAIAssistantStatus() {
+export function useAIAssistantStatus({ enabled = true } = {}) {
 	return useQuery({
 		queryKey: ['ai-assistant-status'],
 		queryFn: async () => {
@@ -13,7 +13,144 @@ export function useAIAssistantStatus() {
 			return data
 		},
 		staleTime: 30 * 1000,
+		enabled,
 	})
+}
+
+/** Moduły trybu „Jak działa Planopia” (chipy + podpowiedzi); treść wiedzy zostaje na serwerze. */
+export function useAIHelpModules(locale, { enabled = true } = {}) {
+	const loc = locale === 'en' ? 'en' : 'pl'
+	return useQuery({
+		queryKey: ['ai-help-modules', loc],
+		queryFn: async () => {
+			const { data } = await axios.get(`${API_URL}/api/ai-help/modules`, {
+				params: { locale: loc },
+				withCredentials: true,
+			})
+			return data
+		},
+		staleTime: 60 * 60 * 1000,
+		enabled,
+	})
+}
+
+async function fetchCsrfToken(signal) {
+	const csrfRes = await fetch(`${API_URL}/api/csrf-token`, {
+		credentials: 'include',
+		signal,
+	})
+	if (!csrfRes.ok) {
+		throw new Error('CSRF token request failed')
+	}
+	const { csrfToken } = await csrfRes.json()
+	return csrfToken
+}
+
+async function throwStreamHttpError(res) {
+	let message = res.statusText || 'Request failed'
+	let code
+	const ct = res.headers.get('content-type')
+	try {
+		if (ct && ct.includes('application/json')) {
+			const j = await res.json()
+			message = j.error || message
+			code = j.code
+		} else {
+			const t = await res.text()
+			if (t) message = t
+		}
+	} catch {
+		/* keep message */
+	}
+	const e = new Error(message)
+	if (code) e.code = code
+	throw e
+}
+
+function dispatchSseEvent(data, { onMeta, onDelta, onEnd, onExportOffer }) {
+	if (data.type === 'meta' && data.meta != null) {
+		onMeta?.(data.meta)
+	} else if (data.type === 'delta' && typeof data.text === 'string') {
+		onDelta?.(data.text)
+	} else if (data.type === 'end') {
+		onEnd?.(data.model)
+	} else if (data.type === 'exportOffer' && data.offer) {
+		onExportOffer?.(data.offer)
+	} else if (data.type === 'error') {
+		const e = new Error(data.message || 'Stream error')
+		if (data.code) e.code = data.code
+		throw e
+	}
+}
+
+/**
+ * Wspólny parser SSE (`data: {...}` rozdzielane pustą linią) dla czatu z danymi i trybu pomocy.
+ * @param {Response} res
+ * @param {{ onMeta?, onDelta?, onEnd?, onExportOffer? }} handlers
+ */
+export async function readSseStream(res, handlers = {}) {
+	if (!res.body) {
+		throw new Error('Empty response body')
+	}
+	const reader = res.body.getReader()
+	const decoder = new TextDecoder()
+	let buffer = ''
+
+	const handleRaw = raw => {
+		const line = raw
+			.split('\n')
+			.map(l => l.replace(/\r$/, ''))
+			.find(l => l.startsWith('data: '))
+		if (!line) return
+		let data
+		try {
+			data = JSON.parse(line.slice(6).trim())
+		} catch {
+			return
+		}
+		dispatchSseEvent(data, handlers)
+	}
+
+	while (true) {
+		const { done, value } = await reader.read()
+		if (done) break
+		buffer += decoder.decode(value, { stream: true })
+
+		let sep
+		while ((sep = buffer.indexOf('\n\n')) !== -1) {
+			const raw = buffer.slice(0, sep)
+			buffer = buffer.slice(sep + 2)
+			handleRaw(raw)
+		}
+	}
+
+	if (buffer.trim()) handleRaw(buffer)
+}
+
+/**
+ * Tryb „Jak działa Planopia” — SSE bez limitu wiadomości AI.
+ * @param {{ messages: Array, locale?: string, module?: string|null }} body
+ * @param {{ signal?: AbortSignal, onMeta?, onDelta?, onEnd? }} handlers
+ */
+export async function streamAIHelpChat(body, handlers = {}) {
+	const { signal } = handlers
+	const csrfToken = await fetchCsrfToken(signal)
+	const res = await fetch(`${API_URL}/api/ai-help/chat/stream`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-CSRF-Token': csrfToken,
+		},
+		body: JSON.stringify({
+			messages: body.messages,
+			locale: body.locale || 'pl',
+			module: body.module || null,
+		}),
+		signal,
+	})
+	if (!res.ok) await throwStreamHttpError(res)
+	await readSseStream(res, handlers)
 }
 
 /**
@@ -47,16 +184,8 @@ export function useAIAssistantChatMutation() {
  * @param {(offer: object) => void} [handlers.onExportOffer] — server detected export request; file is built from DB on download.
  */
 export async function streamAIAssistantChat(body, handlers = {}) {
-	const { signal, onMeta, onDelta, onEnd, onExportOffer } = handlers
-
-	const csrfRes = await fetch(`${API_URL}/api/csrf-token`, {
-		credentials: 'include',
-		signal,
-	})
-	if (!csrfRes.ok) {
-		throw new Error('CSRF token request failed')
-	}
-	const { csrfToken } = await csrfRes.json()
+	const { signal } = handlers
+	const csrfToken = await fetchCsrfToken(signal)
 
 	const res = await fetch(`${API_URL}/api/ai-assistant/chat/stream`, {
 		method: 'POST',
@@ -75,97 +204,8 @@ export async function streamAIAssistantChat(body, handlers = {}) {
 		signal,
 	})
 
-	if (!res.ok) {
-		let message = res.statusText || 'Request failed'
-		let code
-		const ct = res.headers.get('content-type')
-		try {
-			if (ct && ct.includes('application/json')) {
-				const j = await res.json()
-				message = j.error || message
-				code = j.code
-			} else {
-				const t = await res.text()
-				if (t) message = t
-			}
-		} catch {
-			/* keep message */
-		}
-		const e = new Error(message)
-		if (code) e.code = code
-		throw e
-	}
-
-	if (!res.body) {
-		throw new Error('Empty response body')
-	}
-
-	const reader = res.body.getReader()
-	const decoder = new TextDecoder()
-	let buffer = ''
-
-	while (true) {
-		const { done, value } = await reader.read()
-		if (done) break
-		buffer += decoder.decode(value, { stream: true })
-
-		let sep
-		while ((sep = buffer.indexOf('\n\n')) !== -1) {
-			const raw = buffer.slice(0, sep)
-			buffer = buffer.slice(sep + 2)
-
-			const line = raw
-				.split('\n')
-				.map(l => l.replace(/\r$/, ''))
-				.find(l => l.startsWith('data: '))
-			if (!line) continue
-
-			let data
-			try {
-				data = JSON.parse(line.slice(6).trim())
-			} catch {
-				continue
-			}
-
-			if (data.type === 'meta' && data.meta != null) {
-				onMeta?.(data.meta)
-			} else if (data.type === 'delta' && typeof data.text === 'string') {
-				onDelta?.(data.text)
-			} else if (data.type === 'end') {
-				onEnd?.(data.model)
-			} else if (data.type === 'exportOffer' && data.offer) {
-				onExportOffer?.(data.offer)
-			} else if (data.type === 'error') {
-				const e = new Error(data.message || 'Stream error')
-				if (data.code) e.code = data.code
-				throw e
-			}
-		}
-	}
-
-	if (buffer.trim()) {
-		const line = buffer
-			.split('\n')
-			.map(l => l.replace(/\r$/, ''))
-			.find(l => l.startsWith('data: '))
-		if (line) {
-			let data
-			try {
-				data = JSON.parse(line.slice(6).trim())
-			} catch {
-				return
-			}
-			if (data.type === 'meta' && data.meta != null) onMeta?.(data.meta)
-			else if (data.type === 'delta' && typeof data.text === 'string') onDelta?.(data.text)
-			else if (data.type === 'end') onEnd?.(data.model)
-			else if (data.type === 'exportOffer' && data.offer) onExportOffer?.(data.offer)
-			else if (data.type === 'error') {
-				const e = new Error(data.message || 'Stream error')
-				if (data.code) e.code = data.code
-				throw e
-			}
-		}
-	}
+	if (!res.ok) await throwStreamHttpError(res)
+	await readSseStream(res, handlers)
 }
 
 /**

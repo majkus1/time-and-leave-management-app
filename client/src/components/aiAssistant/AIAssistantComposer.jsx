@@ -27,6 +27,7 @@ function AIAssistantComposer({
 	busy,
 	placeholder,
 	showQuickPrompts = true,
+	showPrivacyHint = true,
 }) {
 	const { t } = useTranslation()
 	const monthlyHint = monthlyReportHintProp || t('aiAssistant.monthlyReportHint')
@@ -143,9 +144,11 @@ function AIAssistantComposer({
 					{busy ? '…' : t('aiAssistant.send')}
 				</button>
 			</div>
-			<p className="ai-assistant-composer__privacy" role="note">
-				{t('aiAssistant.composerPrivacyHint')}
-			</p>
+			{showPrivacyHint && (
+				<p className="ai-assistant-composer__privacy" role="note">
+					{t('aiAssistant.composerPrivacyHint')}
+				</p>
+			)}
 		</div>
 	)
 }

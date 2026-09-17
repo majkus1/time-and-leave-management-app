@@ -86,8 +86,20 @@ Team insights chat uses OpenAI from the server. Set in `.env`:
 
 - `OPENAI_API_KEY` — required to enable `/api/ai-assistant/chat`
 - `OPENAI_MODEL` — optional, default `gpt-4o-mini`
+- `OPENAI_MODEL_DATA_CHAT`, `OPENAI_MODEL_HELP`, `OPENAI_MODEL_JSON` — optional per-path overrides (team-data chat, product help, JSON drafts/export intent)
+- `OPENAI_REASONING_EFFORT_DATA_CHAT|HELP|JSON_DRAFT|SCHEDULE_DRAFT|EXPORT_INTENT` — optional, only for reasoning models (gpt-5*, o*); defaults low/minimal/minimal/medium/minimal
+- Token usage and estimated cost per call are stored in `aiusagelogs` (see `server/constants/openaiPricing.js`)
+- `/api/ai-help` (“How Planopia works” mode): answers from the product knowledge only, no team data, does **not** consume the AI message quota, available on the free plan and on Core without the AI module; abuse limits per user `AI_HELP_PER_MINUTE` (default 6), `AI_HELP_PER_DAY` (default 60) and per team `AI_HELP_PER_DAY_TEAM` (default 150)
 
-Domain instructions for the model live in `docs/AI_ASSISTANT_CONTEXT.md`.
+### Product knowledge (shared by the in-app assistant and the landing chat)
+
+- Source of truth: `server/constants/productKnowledge/*.js` — one module per feature area, Polish text is canonical, prices are `{{price.*}}` placeholders rendered from `planCatalog.js` (`server/utils/productKnowledgeRender.js`).
+- The landing (separate Next.js package) gets a generated copy: `npm run knowledge:build` writes `planopia-next-landing/src/data/productKnowledge.generated.ts` and `landingPlanPricing.generated.ts`; `npm run knowledge:check` (CI) fails when they are stale. **Change a feature → update its module → run the build → commit both.**
+- Rules for reading team data (roles, holidays, data glossary) live in `docs/AI_DATA_CONTEXT_RULES.md`.
+- Tests: `server/tests/productKnowledge.test.js` (server) and `cd planopia-next-landing && npm run test:knowledge` (selector twin, shared cases in `scripts/knowledge-select-cases.json`).
+- Golden questions (manual, costs tokens): `node scripts/ai-golden-questions.mjs --target=landing` — see the script header.
+- Landing env: `OPENAI_MODEL_LANDING` (falls back to `OPENAI_MODEL`, default `gpt-4o-mini`), `OPENAI_REASONING_EFFORT_LANDING` (default `minimal` — reasoning tokens add 1–3 s to the first token without improving product FAQ answers).
+- Cost report (read-only, from `aiusagelogs`): `npm run ai:usage` (current month) or `node server/scripts/aiUsageReport.js 2026-09 --team=<teamId>`.
 
 ## License
 

@@ -1,0 +1,23 @@
+[
+	{ "text": "Czy kod QR skanuje się zwykłym telefonem i czy mogę mieć osobne kody na różne budowy?", "first": "qr" },
+	{ "text": "Czy QR sprawdza GPS?", "first": "qr" },
+	{ "text": "Czy wyjdę innym kodem niż wszedłem?", "first": "qr" },
+	{ "text": "czy QR działa w darmowym planie", "first": "qr", "includes": ["packages"] },
+	{ "text": "ile kosztuje dla 20 osob", "first": "packages" },
+	{ "text": "Which plan for 45 people?", "first": "packages" },
+	{ "text": "czy faktury są w KSeF", "first": "packages" },
+	{ "text": "czy urlop mozna wziac na kilka godzin", "first": "leave" },
+	{ "text": "jak działa grafik i czy układa się automatycznie", "first": "schedules" },
+	{ "text": "jak dodać pracownika bez dostępu", "first": "settingsRoles" },
+	{ "text": "jaki zakres widzi przełożony", "first": "settingsRoles" },
+	{ "text": "co można ustawić dla całego zespołu", "first": "settingsRoles" },
+	{ "text": "czy dane trafiają do AI bez mojej wiedzy", "first": "ai" },
+	{ "text": "ile wiadomości AI ma Business", "first": "ai", "includes": ["packages"] },
+	{ "text": "czy wysyłacie maile z powiadomieniami", "first": "chat" },
+	{ "text": "Is there a Kanban board?", "first": "tasks" },
+	{ "text": "czy pracownik może wpisać godziny tylko dziś", "first": "timeTracking" },
+	{ "text": "czy działa na telefonie", "first": "general" },
+	{ "text": "jak działa Planopia", "first": "general", "fallback": ["general"] },
+	{ "text": "hej", "first": "general", "fallback": ["general"] },
+	{ "text": "co potrafi grafik", "first": "packages", "moduleId": "packages", "includes": ["schedules"] }
+]
