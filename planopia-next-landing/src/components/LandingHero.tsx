@@ -21,9 +21,6 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 						<h1 className="landing-polished-title text-2xl sm:text-3xl font-bold text-blue-700">
 							{offering.heroH1}
 						</h1>
-						<p className="landing-polished-subtitle font-semibold text-gray-800 mt-2 max-w-xl" id="underheader">
-							{offering.heroSub}
-						</p>
 						<div className="landing-polished-hero-actions">
 							<Link
 								href="https://app.planopia.pl/team-registration"

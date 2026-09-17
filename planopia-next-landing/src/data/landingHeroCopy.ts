@@ -8,7 +8,8 @@ export const landingHeroCopy = {
 		// Trzecia sciezka: pytanie do asystenta zamiast telefonu z pytaniem „czy QR skanuje sie telefonem”.
 		askAssistant: 'Masz pytanie? Zapytaj asystenta, jak działa Planopia',
 		askAssistantHref: '#asystent',
-		proof: ['Bez karty płatniczej', 'Gotowe w 2 minuty'],
+		// Zamiast podtytułu: to, czego H1 nie mówi — plan darmowy jest bezterminowy, 30 dni pełnej wersji to bonus.
+		proof: ['Do 5 osób za darmo, bezterminowo', '30 dni pełnej wersji', 'Bez karty'],
 		imageAlt: 'biznesmen zaznaczający aplikację',
 	},
 	en: {
@@ -18,7 +19,7 @@ export const landingHeroCopy = {
 		secondaryCtaHref: '/en#contact',
 		askAssistant: 'Have a question? Ask the assistant how Planopia works',
 		askAssistantHref: '#assistant',
-		proof: ['No credit card', 'Ready in 2 minutes', 'Free tier after trial'],
+		proof: ['Free for up to 5 people, no time limit', '30 days of the full version', 'No card needed'],
 		imageAlt: 'businessman managing calendar in the app',
 	},
 } as const
