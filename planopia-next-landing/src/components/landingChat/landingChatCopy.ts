@@ -7,7 +7,7 @@ export const LANDING_CONTACT_ANCHOR: Record<LandingChatLocale, string> = { pl: '
 
 export const landingChatCopy = {
 	pl: {
-		title: 'Planio - Asystent',
+		title: 'Asystent Planopii',
 		sectionEyebrow: 'Zapytaj, zanim założysz konto',
 		sectionTitle: 'Zapytaj asystenta, jak działa Planopia',
 		sectionLead:
@@ -15,14 +15,14 @@ export const landingChatCopy = {
 		sectionHint: 'Wybierz temat albo wpisz własne pytanie.',
 		placeholder: 'Napisz pytanie…',
 		send: 'Wyślij',
-		thinking: 'Planio pisze…',
+		thinking: 'Asystent pisze…',
 		error: 'Nie udało się uzyskać odpowiedzi. Spróbuj ponownie za chwilę.',
 		errorRate: 'Zbyt wiele wiadomości. Spróbuj za chwilę.',
 		errorDisabled: 'Czat jest chwilowo niedostępny.',
-		welcome: 'Cześć, jestem Planio. Zapytaj, jak działa Planopia — o funkcje, ceny albo o to, czy pasuje do Twojej firmy.',
+		welcome: 'Cześć! Zapytaj, jak działa Planopia — o funkcje, ceny albo o to, czy pasuje do Twojej firmy.',
 		close: 'Zamknij czat',
 		open: 'Otwórz czat z asystentem',
-		chatIconAlt: 'Ikona asystenta Planio na stronie',
+		chatIconAlt: 'Ikona asystenta Planopii',
 		topicsLabel: 'Temat',
 		topicAll: 'Dowolny temat',
 		suggestionsLabel: 'Przykładowe pytania',
@@ -46,7 +46,7 @@ export const landingChatCopy = {
 		privacy: 'Nie podawaj w czacie danych osobowych. Rozmowa zostaje w tej przeglądarce.',
 	},
 	en: {
-		title: 'Planio - Assistant',
+		title: 'Planopia Assistant',
 		sectionEyebrow: 'Ask before you sign up',
 		sectionTitle: 'Ask the assistant how Planopia works',
 		sectionLead:
@@ -54,14 +54,14 @@ export const landingChatCopy = {
 		sectionHint: 'Pick a topic or type your own question.',
 		placeholder: 'Type your question…',
 		send: 'Send',
-		thinking: 'Planio is typing…',
+		thinking: 'The assistant is typing…',
 		error: 'Could not get a reply. Please try again in a moment.',
 		errorRate: 'Too many messages. Please wait a bit.',
 		errorDisabled: 'Chat is temporarily unavailable.',
-		welcome: 'Hi! I’m Planio. Ask how Planopia works — features, pricing, or whether it fits your company.',
+		welcome: 'Hi! Ask how Planopia works — features, pricing, or whether it fits your company.',
 		close: 'Close chat',
 		open: 'Open assistant chat',
-		chatIconAlt: 'Planio assistant icon on the landing page',
+		chatIconAlt: 'Planopia assistant icon',
 		topicsLabel: 'Topic',
 		topicAll: 'Any topic',
 		suggestionsLabel: 'Sample questions',
