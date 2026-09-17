@@ -49,102 +49,102 @@ function steps(items) {
 }
 
 /**
- * Treści po polsku, krótko i po ludzku. Każdy mail ma jeden cel i jeden przycisk.
+ * Treści po polsku, uprzejmie (forma „Państwo”), krótko. Każdy mail ma jeden cel i jeden przycisk.
  * @returns {{ subject:string, title:string, content:string, buttonText?:string, buttonLink?:string }}
  */
 function buildLifecycleEmail(kind, team, facts = {}) {
-	const name = escapeHtml(team.name || 'Twój zespół')
+	const name = escapeHtml(team.name || 'Państwa zespół')
 	const daysLeft = Number.isFinite(facts.trialDaysLeft) ? facts.trialDaysLeft : 7
 	const daysLeftText = daysLeft <= 1 ? 'jutro' : `za ${daysLeft} dni`
 	switch (kind) {
 		case 'welcome':
 			return {
-				subject: 'Witaj w Planopii — trzy kroki na start',
+				subject: 'Witamy w Planopii — trzy kroki na start',
 				title: `Zespół ${name} jest gotowy`,
 				content:
-					paragraph('Dzień dobry,') +
-					paragraph('konto założone. Żeby Planopia zaczęła pracować dla zespołu, wystarczą trzy rzeczy:') +
+					paragraph('Szanowni Państwo,') +
+					paragraph('dziękujemy za założenie zespołu w Planopii. Aby aplikacja zaczęła pracować dla Państwa, wystarczą trzy kroki:') +
 					steps([
-						'<strong>Dodaj pracowników</strong> — każdy dostaje własne konto i sam wpisuje swój czas.',
-						'<strong>Ustaw godziny pracy i święta</strong> — dni wolne podpowiadają się w ewidencji.',
-						'<strong>Wpisz pierwszy dzień</strong> — kliknij dzień w kalendarzu i zapisz godziny.',
+						'<strong>Dodanie pracowników</strong> — każdy otrzymuje własne konto i sam wpisuje swój czas pracy.',
+						'<strong>Ustawienie godzin pracy i świąt</strong> — dni wolne podpowiadają się w ewidencji automatycznie.',
+						'<strong>Pierwszy wpis</strong> — wystarczy kliknąć dzień w kalendarzu i zapisać godziny.',
 					]) +
-					paragraph('Przez 30 dni masz pełną aplikację za darmo, dla zespołu do 5 osób. Bez karty.') +
-					paragraph('Jeśli coś jest niejasne, po prostu odpisz na tego maila — odpowiadamy osobiście.') +
-					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+					paragraph('Przez 30 dni mają Państwo do dyspozycji pełną aplikację bezpłatnie, dla zespołu do 5 osób. Bez podawania karty.') +
+					paragraph('W razie pytań wystarczy odpowiedzieć na tę wiadomość — odpowiadamy osobiście.') +
+					paragraph('Z poważaniem,<br>Zespół Planopia'),
 				buttonText: 'Otwórz Planopię',
 				buttonLink: appUrl,
 			}
 		case 'add_team':
 			return {
-				subject: 'Planopia działa najlepiej z zespołem',
-				title: 'Na razie jesteś w zespole sam',
+				subject: 'Planopia działa najlepiej z całym zespołem',
+				title: 'W zespole jest na razie jedno konto',
 				content:
-					paragraph('Dzień dobry,') +
+					paragraph('Szanowni Państwo,') +
 					paragraph(
-						`w zespole <strong>${name}</strong> jest jedno konto — Twoje. Prawdziwa oszczędność czasu zaczyna się, gdy pracownicy wpisują swój czas sami, a Ty widzisz całość w kalendarzach.`
+						`w zespole <strong>${name}</strong> jest obecnie jedno konto — administratora. Największa oszczędność czasu zaczyna się, gdy pracownicy wpisują swój czas samodzielnie, a Państwo widzą całość w kalendarzach.`
 					) +
-					paragraph('Dodanie osoby to imię, nazwisko i e-mail. Pracownik dostaje link i ustawia własne hasło.') +
-					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+					paragraph('Dodanie osoby wymaga tylko imienia, nazwiska i adresu e-mail. Pracownik otrzymuje link i sam ustawia hasło.') +
+					paragraph('Z poważaniem,<br>Zespół Planopia'),
 				buttonText: 'Dodaj pracowników',
 				buttonLink: `${appUrl}/create-user`,
 			}
 		case 'leaves_tip':
 			return {
-				subject: 'Urlopy bez papierów — tak to działa w Planopii',
+				subject: 'Urlopy bez papierów — jak to działa w Planopii',
 				title: 'Wniosek, akceptacja, plan urlopów',
 				content:
-					paragraph('Dzień dobry,') +
-					paragraph('większość zespołów zaczyna od ewidencji, a zostaje dla urlopów. Jak to wygląda:') +
+					paragraph('Szanowni Państwo,') +
+					paragraph('większość zespołów zaczyna od ewidencji czasu pracy, a zostaje dla obsługi urlopów. Jak to wygląda w praktyce:') +
 					steps([
-						'Pracownik składa wniosek w aplikacji — z telefonu też.',
-						'Przełożony akceptuje jednym kliknięciem i dostaje powiadomienie.',
-						'Plan urlopów widzą wszyscy, a limity dni liczą się same.',
+						'Pracownik składa wniosek w aplikacji — również z telefonu.',
+						'Przełożony akceptuje go jednym kliknięciem i otrzymuje powiadomienie.',
+						'Plan urlopów widzi cały zespół, a pule dni rozliczają się automatycznie.',
 					]) +
-					paragraph('W okresie próbnym masz to już włączone — warto sprawdzić na jednym wniosku.') +
-					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+					paragraph('W okresie próbnym ta funkcja jest już włączona — warto sprawdzić ją na jednym wniosku.') +
+					paragraph('Z poważaniem,<br>Zespół Planopia'),
 				buttonText: 'Zobacz wnioski urlopowe',
 				buttonLink: `${appUrl}/leave-request`,
 			}
 		case 'trial_ending':
 			return {
 				subject: daysLeft <= 1 ? 'Jutro kończy się okres próbny' : `Za ${daysLeft} dni kończy się okres próbny`,
-				title: 'Co zostaje, a co wymaga pakietu',
+				title: 'Co pozostaje, a co wymaga pakietu',
 				content:
-					paragraph('Dzień dobry,') +
+					paragraph('Szanowni Państwo,') +
 					paragraph(`okres próbny zespołu <strong>${name}</strong> kończy się ${daysLeftText}. Nic nie znika z dnia na dzień:`) +
 					steps([
-						'<strong>Zostaje za darmo:</strong> ewidencja czasu pracy i kalendarze dla zespołu do 5 kont.',
-						'<strong>Wymaga pakietu:</strong> urlopy, grafiki, zadania, czat, asystent AI, a także zespół powyżej 5 osób.',
+						'<strong>Pozostaje bezpłatnie:</strong> ewidencja czasu pracy i kalendarze dla zespołu do 5 kont.',
+						'<strong>Wymaga pakietu:</strong> urlopy, grafiki, zadania, czat, asystent AI oraz zespół powyżej 5 osób.',
 					]) +
-					paragraph('Pakiety zaczynają się od 119 zł netto miesięcznie, a rozliczenie roczne to 10 miesięcy zamiast 12.') +
-					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+					paragraph('Pakiety zaczynają się od 119 zł netto miesięcznie, a przy rozliczeniu rocznym płacą Państwo za 10 miesięcy zamiast 12.') +
+					paragraph('Z poważaniem,<br>Zespół Planopia'),
 				buttonText: 'Zobacz pakiety',
 				buttonLink: `${appUrl}/packages`,
 			}
 		case 'trial_ended':
 			return {
 				subject: 'Okres próbny się zakończył — co dalej',
-				title: 'Ewidencja zostaje, reszta czeka na pakiet',
+				title: 'Ewidencja pozostaje, pozostałe moduły czekają na pakiet',
 				content:
-					paragraph('Dzień dobry,') +
+					paragraph('Szanowni Państwo,') +
 					paragraph(
-						`zespół <strong>${name}</strong> jest teraz na planie darmowym: ewidencja czasu pracy i kalendarze do 5 kont, bez ograniczenia w czasie.`
+						`zespół <strong>${name}</strong> korzysta teraz z planu darmowego: ewidencja czasu pracy i kalendarze do 5 kont, bez ograniczenia w czasie.`
 					) +
-					paragraph('Urlopy, grafiki, zadania, czat i asystent AI wracają w chwili wyboru pakietu — dane zespołu są na miejscu.') +
-					paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+					paragraph('Urlopy, grafiki, zadania, czat i asystent AI zostaną przywrócone z chwilą wyboru pakietu — wszystkie dane zespołu są zachowane.') +
+					paragraph('Z poważaniem,<br>Zespół Planopia'),
 				buttonText: 'Wybierz pakiet',
 				buttonLink: `${appUrl}/packages`,
 			}
 		case 'winback':
 			return {
-				subject: 'Czy Planopia się przydała?',
+				subject: 'Czy Planopia okazała się przydatna?',
 				title: 'Jedno pytanie',
 				content:
-					paragraph('Dzień dobry,') +
-					paragraph(`kilka tygodni temu założyliście zespół <strong>${name}</strong> w Planopii. Chciałbym wiedzieć, jak Wam poszło.`) +
-					paragraph('Czego zabrakło? Co było niejasne? Odpowiedź na tego maila trafia prosto do mnie — każdą czytam i odpisuję.') +
-					paragraph('Pozdrawiam,<br>Michał z Planopii'),
+					paragraph('Szanowni Państwo,') +
+					paragraph(`kilka tygodni temu założyli Państwo zespół <strong>${name}</strong> w Planopii. Chciałbym zapytać, jak się sprawdziła.`) +
+					paragraph('Czego zabrakło? Co było niejasne? Odpowiedź na tę wiadomość trafia bezpośrednio do mnie — każdą czytam i odpisuję.') +
+					paragraph('Z poważaniem,<br>Michał Lipka, Planopia'),
 			}
 		default:
 			throw new Error('Unknown lifecycle email kind: ' + kind)
@@ -182,22 +182,22 @@ const KSEF_LINE =
  * Pierwszy zakup i odnowienie mają inny ton, ale tę samą treść rzeczową.
  */
 function buildPaymentConfirmationEmail(team, { planKey, billingCycle, periodEnd, isFirst }) {
-	const name = escapeHtml(team.name || 'Twój zespół')
+	const name = escapeHtml(team.name || 'Państwa zespół')
 	const label = escapeHtml(planLabel(planKey))
 	const until = formatDatePl(periodEnd)
 	return {
 		subject: isFirst ? 'Potwierdzenie zakupu — Planopia' : 'Potwierdzenie odnowienia pakietu — Planopia',
-		title: isFirst ? 'Dziękujemy za wybór Planopii' : 'Pakiet odnowiony',
+		title: isFirst ? 'Dziękujemy za wybór Planopii' : 'Pakiet został odnowiony',
 		content:
-			paragraph('Dzień dobry,') +
+			paragraph('Szanowni Państwo,') +
 			paragraph(
 				isFirst
-					? `płatność za pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) dla zespołu <strong>${name}</strong> dotarła. Wszystkie funkcje pakietu są już aktywne — dostęp do <strong>${until}</strong>.`
-					: `pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) zespołu <strong>${name}</strong> został odnowiony. Dostęp do <strong>${until}</strong>.`
+					? `otrzymaliśmy płatność za pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) dla zespołu <strong>${name}</strong>. Wszystkie funkcje pakietu są już aktywne — dostęp obowiązuje do <strong>${until}</strong>.`
+					: `pakiet <strong>${label}</strong> (${cycleLabel(billingCycle)}) zespołu <strong>${name}</strong> został odnowiony. Dostęp obowiązuje do <strong>${until}</strong>.`
 			) +
 			paragraph(KSEF_LINE) +
-			paragraph('W razie pytań wystarczy odpisać na tego maila albo napisać w aplikacji w Centrum pomocy.') +
-			paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+			paragraph('W razie pytań prosimy o odpowiedź na tę wiadomość lub kontakt przez Centrum pomocy w aplikacji.') +
+			paragraph('Z poważaniem,<br>Zespół Planopia'),
 		buttonText: 'Otwórz Planopię',
 		buttonLink: appUrl,
 	}
@@ -205,7 +205,7 @@ function buildPaymentConfirmationEmail(team, { planKey, billingCycle, periodEnd,
 
 /** Maile wokół końca opłaconego okresu — rodzaje z lifecycleEmailPolicy.dueBillingKind. */
 function buildBillingEmail(kind, team, facts = {}) {
-	const name = escapeHtml(team.name || 'Twój zespół')
+	const name = escapeHtml(team.name || 'Państwa zespół')
 	const label = escapeHtml(planLabel(team.billingPlanKey))
 	const until = formatDatePl(team.billingPeriodEnd)
 	const base = kind.split(':')[0]
@@ -216,37 +216,37 @@ function buildBillingEmail(kind, team, facts = {}) {
 		const when = daysToEnd != null && daysToEnd <= 1 ? 'jutro' : `za ${daysToEnd} dni`
 		return {
 			subject: daysToEnd != null && daysToEnd <= 1 ? `Pakiet ${planLabel(team.billingPlanKey)} wygasa jutro` : `Pakiet ${planLabel(team.billingPlanKey)} wygasa ${when}`,
-			title: 'Przedłuż pakiet, żeby nic nie zniknęło',
+			title: 'Przedłużenie pakietu zachowa pełny dostęp',
 			content:
-				paragraph('Dzień dobry,') +
+				paragraph('Szanowni Państwo,') +
 				paragraph(
-					`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> jest opłacony do <strong>${until}</strong>. Płatność BLIK / przelewem jest jednorazowa i nie odnawia się sama.`
+					`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> jest opłacony do <strong>${until}</strong>. Płatność BLIK / przelewem jest jednorazowa i nie odnawia się automatycznie.`
 				) +
 				paragraph(
-					'Po tym dniu zespół przechodzi na plan darmowy: zostaje ewidencja czasu pracy do 5 kont, a urlopy, grafiki, zadania, czat i asystent AI czekają na przedłużenie. Dane nigdzie nie znikają.'
+					'Po tym dniu zespół przejdzie na plan darmowy: pozostanie ewidencja czasu pracy do 5 kont, a urlopy, grafiki, zadania, czat i asystent AI będą dostępne ponownie po przedłużeniu. Dane zespołu pozostają nienaruszone.'
 				) +
 				(manyAccounts
-					? paragraph('Zespół ma więcej niż 5 kont — bez przedłużenia z aplikacji będzie mógł korzystać tylko administrator, do czasu opłacenia pakietu lub zmniejszenia zespołu.')
+					? paragraph('Zespół ma więcej niż 5 kont — bez przedłużenia z aplikacji będą mogli korzystać wyłącznie administrator i HR, do czasu opłacenia pakietu lub zmniejszenia liczby kont.')
 					: '') +
-				paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+				paragraph('Z poważaniem,<br>Zespół Planopia'),
 			buttonText: 'Przedłuż pakiet',
 			buttonLink: `${appUrl}/packages`,
 		}
 	}
 	if (base === 'paid_lapsed') {
 		return {
-			subject: 'Pakiet wygasł — zespół jest na planie darmowym',
-			title: 'Dostęp ograniczony do ewidencji',
+			subject: 'Pakiet wygasł — zespół korzysta z planu darmowego',
+			title: 'Dostęp ograniczony do ewidencji czasu pracy',
 			content:
-				paragraph('Dzień dobry,') +
+				paragraph('Szanowni Państwo,') +
 				paragraph(`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> wygasł <strong>${until}</strong> i nie został przedłużony.`) +
 				paragraph(
-					'Dane zespołu są na miejscu. Urlopy, grafiki, zadania, czat i asystent AI wracają w chwili wyboru pakietu — bez ponownej konfiguracji.'
+					'Dane zespołu są zachowane. Urlopy, grafiki, zadania, czat i asystent AI zostaną przywrócone z chwilą wyboru pakietu — bez ponownej konfiguracji.'
 				) +
 				(manyAccounts
-					? paragraph('Zespół ma więcej niż 5 kont, więc do czasu przedłużenia z aplikacji korzysta tylko administrator.')
+					? paragraph('Zespół ma więcej niż 5 kont, dlatego do czasu przedłużenia z aplikacji korzystają wyłącznie administrator i HR.')
 					: '') +
-				paragraph('Pozdrawiamy,<br>Zespół Planopia'),
+				paragraph('Z poważaniem,<br>Zespół Planopia'),
 			buttonText: 'Wybierz pakiet',
 			buttonLink: `${appUrl}/packages`,
 		}
