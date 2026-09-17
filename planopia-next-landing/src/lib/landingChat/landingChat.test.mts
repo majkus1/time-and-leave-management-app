@@ -5,7 +5,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { trimLandingHistory } from './history.ts'
 import { extractCtaMarkers, hidePartialCtaMarker } from './cta.ts'
-import { isAllowedLandingOrigin, allowedLandingHosts } from './origin.ts'
+import { isAllowedLandingOrigin, allowedLandingOrigins } from './origin.ts'
+import { landingChatGlobalBudget, _resetLandingChatGlobalBudget } from './rateLimit.ts'
 
 const msg = (role: 'user' | 'assistant', content: string) => ({ role, content })
 
@@ -52,9 +53,25 @@ test('origin: Origin/Referer z planopia.pl i localhost w dev przechodzą, brak n
 	assert.equal(isAllowedLandingOrigin(h({ origin: 'https://planopia.pl.evil.example' }), prod), false)
 	assert.equal(isAllowedLandingOrigin(h({}), prod), false)
 	assert.equal(isAllowedLandingOrigin(h({ origin: 'http://localhost:3002' }), prod), false)
+	// Sam host to za mało — http://planopia.pl nie jest naszą stroną na produkcji
+	assert.equal(isAllowedLandingOrigin(h({ origin: 'http://planopia.pl' }), prod), false)
 
 	const dev = { NODE_ENV: 'development' } as NodeJS.ProcessEnv
 	assert.equal(isAllowedLandingOrigin(h({ origin: 'http://localhost:3002' }), dev), true)
 	const preview = { NODE_ENV: 'production', VERCEL_URL: 'planopia-abc123.vercel.app' } as NodeJS.ProcessEnv
-	assert.ok(allowedLandingHosts(preview).has('planopia-abc123.vercel.app'))
+	assert.ok(allowedLandingOrigins(preview).has('https://planopia-abc123.vercel.app'))
+})
+
+test('globalny budżet dobowy czatu: 503 po przekroczeniu, reset o północy UTC', () => {
+	_resetLandingChatGlobalBudget()
+	const env = { LANDING_CHAT_DAILY_GLOBAL_MAX: '3' } as NodeJS.ProcessEnv
+	const day1 = new Date('2026-09-17T10:00:00Z')
+	assert.equal(landingChatGlobalBudget(env, day1).ok, true)
+	assert.equal(landingChatGlobalBudget(env, day1).ok, true)
+	assert.equal(landingChatGlobalBudget(env, day1).ok, true)
+	const blocked = landingChatGlobalBudget(env, day1)
+	assert.equal(blocked.ok, false)
+	if (!blocked.ok) assert.ok(blocked.retryAfterSec >= 60 && blocked.retryAfterSec <= 14 * 3600)
+	assert.equal(landingChatGlobalBudget(env, new Date('2026-09-18T00:00:01Z')).ok, true)
+	_resetLandingChatGlobalBudget()
 })

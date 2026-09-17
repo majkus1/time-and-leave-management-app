@@ -89,7 +89,7 @@ Team insights chat uses OpenAI from the server. Set in `.env`:
 - `OPENAI_MODEL_DATA_CHAT`, `OPENAI_MODEL_HELP`, `OPENAI_MODEL_JSON` — optional per-path overrides (team-data chat, product help, JSON drafts/export intent)
 - `OPENAI_REASONING_EFFORT_DATA_CHAT|HELP|JSON_DRAFT|SCHEDULE_DRAFT|EXPORT_INTENT` — optional, only for reasoning models (gpt-5*, o*); defaults low/minimal/minimal/medium/minimal
 - Token usage and estimated cost per call are stored in `aiusagelogs` (see `server/constants/openaiPricing.js`)
-- `/api/ai-help` (“How Planopia works” mode): answers from the product knowledge only, no team data, does **not** consume the AI message quota, available on the free plan and on Core without the AI module; abuse limits per user `AI_HELP_PER_MINUTE` (default 6) and `AI_HELP_PER_DAY` (default 60)
+- `/api/ai-help` (“How Planopia works” mode): answers from the product knowledge only, no team data, does **not** consume the AI message quota, available on the free plan and on Core without the AI module; abuse limits per user `AI_HELP_PER_MINUTE` (default 6), `AI_HELP_PER_DAY` (default 60) and per team `AI_HELP_PER_DAY_TEAM` (default 150)
 
 ### Product knowledge (shared by the in-app assistant and the landing chat)
 

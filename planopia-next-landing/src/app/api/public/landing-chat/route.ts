@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildLandingChatSystemPrompt, type LandingChatLocale } from '@/lib/landingChat/knowledge'
 import { productKnowledgeModules } from '@/data/productKnowledge.generated'
-import { landingChatRateLimit } from '@/lib/landingChat/rateLimit'
+import { landingChatGlobalBudget, landingChatRateLimit } from '@/lib/landingChat/rateLimit'
 import { isAllowedLandingOrigin } from '@/lib/landingChat/origin'
 import { trimLandingHistory, type LandingChatMessage } from '@/lib/landingChat/history'
 import { extractCtaMarkers } from '@/lib/landingChat/cta'
@@ -144,6 +144,14 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json(
 			{ error: 'rate_limit', retryAfterSec: rl.retryAfterSec },
 			{ status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
+		)
+	}
+	const budget = landingChatGlobalBudget()
+	if (!budget.ok) {
+		console.warn('[landing-chat] dobowy budżet globalny wyczerpany — czat wstrzymany do północy UTC')
+		return NextResponse.json(
+			{ error: 'chat_paused', message: 'Chat is temporarily unavailable.' },
+			{ status: 503, headers: { 'Retry-After': String(budget.retryAfterSec) } },
 		)
 	}
 

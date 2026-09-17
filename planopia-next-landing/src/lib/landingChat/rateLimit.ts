@@ -52,6 +52,36 @@ export function landingChatRateLimit(ip: string): RateResult {
 	return hit(chatDayBuckets, ip, MAX_CHAT_REQUESTS_PER_DAY, DAY_MS)
 }
 
+/**
+ * Globalny bezpiecznik kosztów: limity per IP obchodzi rotacja adresów i podrobiony Origin, a liczniki żyją
+ * per instancja funkcji. Ten sufit (na instancję, na dobę UTC) zamienia ręczny kill-switch LANDING_CHAT_ENABLED
+ * w automat — po przekroczeniu czat odpowiada 503 do północy. Wartość z LANDING_CHAT_DAILY_GLOBAL_MAX.
+ */
+const DEFAULT_GLOBAL_DAILY_MAX = 1500
+let globalDay = ''
+let globalCount = 0
+
+export function landingChatGlobalBudget(env: NodeJS.ProcessEnv = process.env, now = new Date()): { ok: true } | { ok: false; retryAfterSec: number } {
+	const max = parseInt(String(env.LANDING_CHAT_DAILY_GLOBAL_MAX || ''), 10) || DEFAULT_GLOBAL_DAILY_MAX
+	const day = now.toISOString().slice(0, 10)
+	if (day !== globalDay) {
+		globalDay = day
+		globalCount = 0
+	}
+	if (globalCount >= max) {
+		const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
+		return { ok: false, retryAfterSec: Math.max(60, Math.ceil((midnight - now.getTime()) / 1000)) }
+	}
+	globalCount += 1
+	return { ok: true }
+}
+
+/** Tylko do testów. */
+export function _resetLandingChatGlobalBudget() {
+	globalDay = ''
+	globalCount = 0
+}
+
 export function landingChatMailRateLimit(ip: string): RateResult {
 	return hit(mailBuckets, ip, MAX_MAIL_REQUESTS)
 }

@@ -77,6 +77,7 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 	const modLabels = MODULE_LABELS[en ? 'en' : 'pl']
 
 	let state
+	// Blokada miejsc: freemiumApiGuard odrzuca /api/ai-help wcześniej, więc ta gałąź to zabezpieczenie na wypadek zmiany polityki.
 	if (seatBlocked) {
 		state = en
 			? 'free plan with MORE accounts than the free limit — the app is locked for everyone except Administrator/HR until the team is reduced or a plan is purchased'

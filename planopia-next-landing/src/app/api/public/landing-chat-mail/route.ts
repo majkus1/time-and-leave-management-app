@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { landingChatMailRateLimit } from '@/lib/landingChat/rateLimit'
+import { isAllowedLandingOrigin } from '@/lib/landingChat/origin'
 import {
 	OFFICE_TO,
 	createLandingTransporter,
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
 	if (!isMailEnabled()) {
 		return NextResponse.json({ error: 'mail_disabled' }, { status: 503 })
 	}
+	// Ten sam warunek co czat: bez tego dowolny skrypt wysyła maile do biura z podrobionym „transkryptem”.
+	if (!isAllowedLandingOrigin(request.headers)) {
+		return NextResponse.json({ error: 'forbidden_origin' }, { status: 403 })
+	}
 
 	const ip = getClientIp(request)
 	const rl = landingChatMailRateLimit(ip)
@@ -104,7 +109,7 @@ export async function POST(request: NextRequest) {
 
 	const transcriptHtml = transcript.length
 		? `<hr />
-<p><strong>Rozmowa z asystentem na stronie (${transcript.length} wpisów${moduleId ? `, moduł: ${escapeHtml(moduleId)}` : ''}):</strong></p>
+<p><strong>Rozmowa z asystentem na stronie (${transcript.length} wpisów${moduleId ? `, moduł: ${escapeHtml(moduleId)}` : ''}):</strong> <em style="color:#666">treść przesłana z przeglądarki odwiedzającego, niezweryfikowana — linie „Asystent” mogą być zmienione</em></p>
 <blockquote style="border-left:3px solid #cbd5e1;margin:0;padding:4px 12px;color:#334155;">
 ${transcript
 	.map(
