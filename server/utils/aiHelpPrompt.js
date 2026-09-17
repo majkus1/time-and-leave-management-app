@@ -65,14 +65,20 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 	const ent = entitlements || {}
 	const role = highestRole(roles)
 	const roleLabel = (ROLE_LABELS[en ? 'en' : 'pl'] || ROLE_LABELS.pl)[role]
-	const planKey = ent.planKey && ent.planKey !== 'trial' ? ent.planKey : null
+	const rawPlanKey = ent.planKey || null
+	const planKey = rawPlanKey && rawPlanKey !== 'trial' ? rawPlanKey : null
 	const trialEndsAt = ent.trialEndsAt ? new Date(ent.trialEndsAt) : null
 	const freemium = ent.freemiumTier === true
 	const seatBlocked = ent.freemiumSeatBlocked === true
 	// Wygasły pakiet zostawia billingStatus 'active' + billingPlanKey — o stanie decyduje freemiumTier / koniec okresu.
 	const periodLapsed = !!ent.billingPeriodEnd && new Date(ent.billingPeriodEnd).getTime() < now.getTime()
 	const paidActive = !freemium && !periodLapsed && ent.billingStatus === 'active' && !!planKey
-	const trialActive = !freemium && !paidActive && !!trialEndsAt && trialEndsAt.getTime() > now.getTime()
+	// Jak entitlementsService.isTrialActive: aktywacja pakietu nie czyści trialEndsAt, więc sama data nie wystarczy.
+	const trialActive = !freemium && !paidActive && rawPlanKey === 'trial' && !!trialEndsAt && trialEndsAt.getTime() > now.getTime()
+	// Pakiet z kluczem, ale bez statusu 'active' (np. nieudana płatność kartą) — nie mów ani „trial”, ani „płatny”.
+	const paidSuspended = !freemium && !periodLapsed && !!planKey && ent.billingStatus !== 'active'
+	const cycleLabel =
+		ent.billingCycle === 'annual' ? (en ? ', annual' : ', rocznie') : ent.billingCycle === 'monthly' ? (en ? ', monthly' : ', miesięcznie') : ''
 	const mods = Array.isArray(ent.modules?.effectiveKeys) ? ent.modules.effectiveKeys : []
 	const modLabels = MODULE_LABELS[en ? 'en' : 'pl']
 
@@ -84,8 +90,12 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 			: 'plan darmowy z liczbą kont PONAD limit — aplikacja zablokowana dla wszystkich poza Administratorem/HR, dopóki zespół nie zmniejszy liczby kont albo nie kupi pakietu'
 	} else if (paidActive) {
 		state = en
-			? `paid plan ${PLAN_LABELS[planKey] || planKey} (${ent.billingCycle === 'annual' ? 'annual' : 'monthly'})`
-			: `pakiet płatny ${PLAN_LABELS[planKey] || planKey} (${ent.billingCycle === 'annual' ? 'rocznie' : 'miesięcznie'})`
+			? `paid plan ${PLAN_LABELS[planKey] || planKey}${cycleLabel}`
+			: `pakiet płatny ${PLAN_LABELS[planKey] || planKey}${cycleLabel}`
+	} else if (paidSuspended) {
+		state = en
+			? `plan ${PLAN_LABELS[planKey] || planKey} is not active (e.g. a payment problem) — paid modules may be unavailable until Administrator/HR sort it out in Packages & billing`
+			: `pakiet ${PLAN_LABELS[planKey] || planKey} nieaktywny (np. problem z płatnością) — moduły płatne mogą być niedostępne, dopóki Administrator/HR nie wyjaśni tego w Pakietach i rozliczeniach`
 	} else if (trialActive) {
 		const days = Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000))
 		state = en ? `trial, ${days} day(s) left, all modules available` : `okres próbny, zostało dni: ${days}, wszystkie moduły dostępne`

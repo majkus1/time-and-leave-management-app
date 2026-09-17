@@ -50,7 +50,7 @@ Zespoły powyżej {{maxUsers.plan.business}} osób: wycena indywidualna — kont
 - Menu → Pakiety i rozliczenia (Administrator, HR): wybierasz cykl (miesięczny/roczny), plan i moduły.
 - Karta (Stripe): subskrypcja odnawiana automatycznie co miesiąc; kartą zarządzasz na tej samej stronie, subskrypcję można anulować (działa do końca opłaconego okresu).
 - BLIK / przelew (Przelewy24): płatność jednorazowa za wybrany okres (miesiąc lub rok), bez automatycznego odnowienia — przed końcem okresu aplikacja przypomina e-mailem.
-- Przed zakupem trzeba uzupełnić dane do faktury (firma, adres, NIP). Faktura jest wystawiana w KSeF i wysyłana e-mailem po płatności. Ceny są netto, VAT doliczany na fakturze.
+- Przed zakupem trzeba uzupełnić dane do faktury: firma — nazwa, adres i NIP; osoba fizyczna — imię i nazwisko oraz adres (bez NIP). Faktura jest wystawiana w KSeF i wysyłana e-mailem w ciągu kilku dni po płatności. Ceny są netto, VAT doliczany na fakturze.
 - Po zakupie dostęp włącza się od razu (webhook płatności), bez czekania.
 
 ### Koniec okresu
