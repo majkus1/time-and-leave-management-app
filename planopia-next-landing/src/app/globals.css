@@ -2864,10 +2864,10 @@ textarea {
 	outline-offset: 2px;
 }
 
-#planopia-welcome .landing-polished-proof {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 18px 34px;
+#planopia-welcome .landing-polished-proof {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 18px 34px;
 	margin-top: 22px;
 	color: #102f5e;
 	font-size: 14px;
@@ -3199,8 +3199,8 @@ textarea {
 		font-size: 17px;
 	}
 
-	#planopia-welcome .landing-polished-proof {
-		gap: 10px 18px;
+	#planopia-welcome .landing-polished-proof {
+		gap: 10px 18px;
 		margin-top: 14px;
 		font-size: 12px;
 	}
@@ -5833,7 +5833,7 @@ a.landing-polished-hero-cta:focus-visible,
 
 #planopia-welcome .landing-polished-hero-ask__lead,
 #planopia-welcome .landing-polished-hero-ask__question,
-#planopia-welcome .landing-polished-hero-ask__text,
+#planopia-welcome .landing-polished-hero-ask__text,
 #planopia-welcome .landing-polished-hero-ask__arrow {
 	color: #00733f !important;
 	-webkit-text-fill-color: #00733f !important;
@@ -5845,13 +5845,20 @@ a.landing-polished-hero-cta:focus-visible,
 	transition: transform 0.15s ease;
 }
 
-#planopia-welcome .landing-polished-hero-ask__link:hover .landing-polished-hero-ask__arrow {
-	transform: translateX(3px);
+#planopia-welcome .landing-polished-hero-ask__link:hover .landing-polished-hero-ask__arrow {
+	transform: translateX(3px);
 }
 
 @media (max-width: 640px) {
 	#planopia-welcome .landing-polished-hero-ask__question {
 		display: block;
+	}
+}
+
+/* Ten sam odstęp nad i pod linią „Bez karty / Gotowe w 2 minuty” — jej mobilna reguła (≤1023px) ma margin-top 14px */
+@media (max-width: 1023px) {
+	#planopia-welcome .landing-polished-hero-ask {
+		margin-top: 14px;
 	}
 }
 
