@@ -7564,3 +7564,15 @@
 [data-theme='dark'] .tutorial-modal-nav-btn--secondary:hover {
 	background-color: var(--po-surface-hover) !important;
 }
+
+/* Lista sesji — plakietki „QR: miejsce” i „ilość” mają jasne tło inline (#e3f2fd / #ecfdf5), a reguła
+   .work-session-list span { color: --po-text-secondary } dawała jasny tekst na jasnym tle. */
+[data-theme='dark'] .work-session-list .work-session-badge--qr {
+	background-color: rgba(59, 130, 246, 0.22) !important;
+	color: #93c5fd !important;
+}
+
+[data-theme='dark'] .work-session-list .work-session-badge--quantity {
+	background-color: rgba(16, 185, 129, 0.2) !important;
+	color: #6ee7b7 !important;
+}

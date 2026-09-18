@@ -91,7 +91,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 					</span>
 					{/* QR badge - always visible on desktop, only when expanded on mobile */}
 					{((!isMobile || isExpanded) && session.qrCode) && (
-						<span style={{
+						<span className="work-session-badge work-session-badge--qr" style={{
 							fontSize: '10px',
 							backgroundColor: '#e3f2fd',
 							color: '#1976d2',
@@ -103,7 +103,7 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 						</span>
 					)}
 					{((!isMobile || isExpanded) && hasQuantity) && (
-						<span style={{
+						<span className="work-session-badge work-session-badge--quantity" style={{
 							fontSize: '10px',
 							backgroundColor: '#ecfdf5',
 							color: '#047857',
