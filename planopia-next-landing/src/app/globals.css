@@ -2864,11 +2864,11 @@ textarea {
 	outline-offset: 2px;
 }
 
-#planopia-welcome .landing-polished-proof {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 18px 34px;
-	margin-top: 34px;
+#planopia-welcome .landing-polished-proof {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 18px 34px;
+	margin-top: 22px;
 	color: #102f5e;
 	font-size: 14px;
 	font-weight: 600;
@@ -3199,9 +3199,9 @@ textarea {
 		font-size: 17px;
 	}
 
-	#planopia-welcome .landing-polished-proof {
-		gap: 10px 18px;
-		margin-top: 20px;
+	#planopia-welcome .landing-polished-proof {
+		gap: 10px 18px;
+		margin-top: 14px;
 		font-size: 12px;
 	}
 }
@@ -5831,7 +5831,9 @@ a.landing-polished-hero-cta:focus-visible,
 	object-fit: contain;
 }
 
-#planopia-welcome .landing-polished-hero-ask__text,
+#planopia-welcome .landing-polished-hero-ask__lead,
+#planopia-welcome .landing-polished-hero-ask__question,
+#planopia-welcome .landing-polished-hero-ask__text,
 #planopia-welcome .landing-polished-hero-ask__arrow {
 	color: #00733f !important;
 	-webkit-text-fill-color: #00733f !important;
@@ -5843,8 +5845,14 @@ a.landing-polished-hero-cta:focus-visible,
 	transition: transform 0.15s ease;
 }
 
-#planopia-welcome .landing-polished-hero-ask__link:hover .landing-polished-hero-ask__arrow {
-	transform: translateX(3px);
+#planopia-welcome .landing-polished-hero-ask__link:hover .landing-polished-hero-ask__arrow {
+	transform: translateX(3px);
+}
+
+@media (max-width: 640px) {
+	#planopia-welcome .landing-polished-hero-ask__question {
+		display: block;
+	}
 }
 
 /* Widget: FAB znika, gdy sekcja czatu jest na ekranie (strona główna) */

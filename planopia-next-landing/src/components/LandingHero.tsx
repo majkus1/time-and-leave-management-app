@@ -46,7 +46,10 @@ export default function LandingHero({ locale }: { locale: Locale }) {
 								<span className="landing-polished-hero-ask__icon" aria-hidden>
 									<img src="/img/planio-czat.png" alt="" width={28} height={28} loading="lazy" decoding="async" />
 								</span>
-								<span className="landing-polished-hero-ask__text">{copy.askAssistant}</span>
+								<span className="landing-polished-hero-ask__text">
+									<span className="landing-polished-hero-ask__lead">{copy.askAssistantLead}</span>{' '}
+									<span className="landing-polished-hero-ask__question">{copy.askAssistant}</span>
+								</span>
 								<span className="landing-polished-hero-ask__arrow" aria-hidden>
 									→
 								</span>
