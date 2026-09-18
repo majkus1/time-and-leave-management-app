@@ -33,7 +33,7 @@ exports.chat = async (req, res) => {
 			durationMs: Date.now() - startedAt,
 			knowledgeVersion: result.meta.knowledgeVersion,
 		})
-		res.json({ reply: result.reply, model: result.model, meta: result.meta, usage: result.usage })
+		res.json({ reply: result.reply, links: result.links, model: result.model, meta: result.meta, usage: result.usage })
 	} catch (err) {
 		const handled = respondAiAssistantError(err, res)
 		if (handled) return handled
@@ -44,7 +44,7 @@ exports.chat = async (req, res) => {
 
 /**
  * POST /api/ai-help/chat/stream — SSE, eventy jak w /api/ai-assistant/chat/stream:
- * { type:'meta', meta }, { type:'delta', text }, { type:'end', model }, { type:'error', code?, message } — bez exportOffer.
+ * { type:'meta', meta }, { type:'delta', text }, { type:'links', links }, { type:'end', model }, { type:'error', code?, message } — bez exportOffer.
  */
 exports.chatStream = async (req, res) => {
 	const writeSse = obj => {

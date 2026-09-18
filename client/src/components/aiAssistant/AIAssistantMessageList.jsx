@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -6,7 +7,7 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize from 'rehype-sanitize'
 import { preprocessAssistantMarkdownForChat } from './preprocessAssistantMarkdown'
 
-function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onIntentExport, busy, exportExcelLabel, exportPdfLabel, exportHint }) {
+function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onIntentExport, busy, exportExcelLabel, exportPdfLabel, exportHint, appLinks, appLinksHint }) {
 	const isUser = role === 'user'
 	const [downloading, setDownloading] = useState(null)
 
@@ -37,6 +38,17 @@ function Bubble({ role, content, userLabel, assistantLabel, exportOffer, onInten
 					</div>
 				)}
 			</div>
+			{!isUser && Array.isArray(appLinks) && appLinks.length > 0 && (
+				<div className="ai-assistant-msg__links">
+					<span className="ai-assistant-msg__links-hint">{appLinksHint}</span>
+					{appLinks.map(l => (
+						<Link key={l.id} to={l.path} className="ai-assistant-msg__link-btn">
+							{l.label}
+							<span aria-hidden> →</span>
+						</Link>
+					))}
+				</div>
+			)}
 			{!isUser && exportOffer && onIntentExport && (
 				<div className="ai-assistant-msg__export">
 					<p className="ai-assistant-msg__export-hint">{exportHint}</p>
@@ -113,6 +125,8 @@ function AIAssistantMessageList({ messages, onIntentExport, busy, emptyHint }) {
 					userLabel={t('aiAssistant.roleUser')}
 					assistantLabel={t('aiAssistant.roleAssistant')}
 					exportOffer={m.exportOffer}
+					appLinks={m.appLinks}
+					appLinksHint={t('aiAssistant.help.linksHint')}
 					onIntentExport={onIntentExport}
 					busy={busy}
 					exportExcelLabel={t('aiAssistant.intentExportExcel')}

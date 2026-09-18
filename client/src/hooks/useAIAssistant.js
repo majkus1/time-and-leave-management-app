@@ -67,7 +67,7 @@ async function throwStreamHttpError(res) {
 	throw e
 }
 
-function dispatchSseEvent(data, { onMeta, onDelta, onEnd, onExportOffer }) {
+function dispatchSseEvent(data, { onMeta, onDelta, onEnd, onExportOffer, onLinks }) {
 	if (data.type === 'meta' && data.meta != null) {
 		onMeta?.(data.meta)
 	} else if (data.type === 'delta' && typeof data.text === 'string') {
@@ -76,6 +76,8 @@ function dispatchSseEvent(data, { onMeta, onDelta, onEnd, onExportOffer }) {
 		onEnd?.(data.model)
 	} else if (data.type === 'exportOffer' && data.offer) {
 		onExportOffer?.(data.offer)
+	} else if (data.type === 'links' && Array.isArray(data.links)) {
+		onLinks?.(data.links)
 	} else if (data.type === 'error') {
 		const e = new Error(data.message || 'Stream error')
 		if (data.code) e.code = data.code
@@ -86,7 +88,7 @@ function dispatchSseEvent(data, { onMeta, onDelta, onEnd, onExportOffer }) {
 /**
  * Wspólny parser SSE (`data: {...}` rozdzielane pustą linią) dla czatu z danymi i trybu pomocy.
  * @param {Response} res
- * @param {{ onMeta?, onDelta?, onEnd?, onExportOffer? }} handlers
+ * @param {{ onMeta?, onDelta?, onEnd?, onExportOffer?, onLinks? }} handlers
  */
 export async function readSseStream(res, handlers = {}) {
 	if (!res.body) {
@@ -130,7 +132,7 @@ export async function readSseStream(res, handlers = {}) {
 /**
  * Tryb „Jak działa Planopia” — SSE bez limitu wiadomości AI.
  * @param {{ messages: Array, locale?: string, module?: string|null }} body
- * @param {{ signal?: AbortSignal, onMeta?, onDelta?, onEnd? }} handlers
+ * @param {{ signal?: AbortSignal, onMeta?, onDelta?, onEnd?, onLinks? }} handlers — onLinks: przyciski „otwórz w aplikacji” do odpowiedzi
  */
 export async function streamAIHelpChat(body, handlers = {}) {
 	const { signal } = handlers

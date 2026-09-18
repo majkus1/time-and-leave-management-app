@@ -8321,3 +8321,15 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 .tutorial-modal-nav-btn--secondary:hover {
 	background-color: #e0e7ff;
 }
+
+/* Asystent — aktywny chip modułu: etykieta jest w <span>, a globalne span { color: #213555 !important } */
+/* nadpisywało biały tekst na fioletowym tle (w ciemnym motywie theme.css już to robi). */
+.ai-assistant-chip--active span {
+	color: #ffffff !important;
+}
+
+/* Kotwice sekcji Ustawień (przyciski z asystenta, lista pierwszych kroków): nagłówek strony jest fixed, */
+/* więc bez marginesu przewinięcia sekcja chowałaby się pod nim. */
+[id^="settings-"][id$="-section"] {
+	scroll-margin-top: 95px;
+}

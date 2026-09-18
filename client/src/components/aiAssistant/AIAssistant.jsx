@@ -224,6 +224,18 @@ function AIAssistant() {
 									return next
 								})
 							},
+							// Przyciski do miejsc w aplikacji (np. konkretna sekcja Ustawień) — z serwera, po roli
+							onLinks: links => {
+								setMessages(prev => {
+									const next = [...prev]
+									const lastIdx = next.length - 1
+									if (lastIdx >= 0 && next[lastIdx].role === 'assistant') {
+										next[lastIdx] = { ...next[lastIdx], appLinks: links }
+									}
+									messagesRef.current = next
+									return next
+								})
+							},
 						}
 					)
 				} else if (assistantMode === 'leave') {

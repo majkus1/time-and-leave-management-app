@@ -8,6 +8,11 @@
  */
 const { buildProductKnowledgeBlock, computeKnowledgeVersion } = require('./productKnowledgeRender')
 const { modules: KNOWLEDGE_MODULES } = require('../constants/productKnowledge')
+const APP_LINKS = require('../constants/productKnowledge/appLinks')
+
+/* Model pisze [[LINK:id]], ale bywa też [[id]] — oba usuwamy z tekstu; przyciskiem zostaje tylko znane id. */
+const LINK_MARKER_RE = /\[\[\s*(?:LINK\s*:\s*)?([a-z0-9-]+)\s*\]\]/gi
+const MAX_LINKS_PER_REPLY = 2
 
 const HELP_MAX_TURNS = 12
 const HELP_MAX_MESSAGE_LENGTH = 4000
@@ -179,12 +184,78 @@ function focusModuleLine(loc, moduleId) {
  * @param {string} [p.teamPlanContext] — wynik buildTeamPlanContext (może być pusty)
  * @returns {{ system: string, staticPrefix: string, moduleId: string|null, promptCacheKey: string, knowledgeVersion: string }}
  */
-function buildHelpSystemPrompt({ locale = 'pl', moduleId = null, teamPlanContext = '' } = {}) {
+/** Linki dostępne dla ról użytkownika — pracownik nie dostaje przycisku do Ustawień zespołu. */
+function appLinksForRoles(roles) {
+	const list = Array.isArray(roles) ? roles : []
+	return APP_LINKS.filter(l => !l.roles || l.roles.some(r => list.includes(r)))
+}
+
+/**
+ * Blok „MIEJSCA W APLIKACJI” (część dynamiczna promptu, po wiedzy): lista id → etykieta dla ról pytającego
+ * i reguła znaczników. Klient zamienia [[LINK:id]] na przycisk nawigujący (kotwice #settings-* przewijają do sekcji).
+ */
+function buildAppLinksBlock({ locale = 'pl', roles = [] } = {}) {
+	const loc = locale === 'en' ? 'en' : 'pl'
+	const links = appLinksForRoles(roles)
+	if (links.length === 0) return ''
+	const list = links.map(l => `- ${l.id}: ${l.label[loc] || l.label.pl}`).join('\n')
+	return [
+		loc === 'en' ? '--- PLACES IN THE APP (button markers) ---' : '--- MIEJSCA W APLIKACJI (znaczniki przycisków) ---',
+		loc === 'en'
+			? `When you tell the user where to click, end the reply with a separate line [[LINK:id]] for that place (at most ${MAX_LINKS_PER_REPLY}, only ids from this list, the most specific one — e.g. a Settings section rather than Settings). The UI turns it into a button. Rules: the marker only at the very end, never inside a sentence; never invent ids; if the place the user asks about is not on this list (e.g. team settings for an employee), add NO marker at all — do not substitute another place. Available for this user:`
+			: `Gdy wskazujesz, gdzie kliknąć, zakończ odpowiedź osobną linią [[LINK:id]] dla tego miejsca (najwyżej ${MAX_LINKS_PER_REPLY}, wyłącznie id z tej listy, jak najbardziej konkretne — np. sekcja Ustawień zamiast samych Ustawień). UI zamienia znacznik w przycisk. Zasady: znacznik tylko na samym końcu, nigdy w zdaniu; nie wymyślaj id; jeśli miejsca, o które pyta użytkownik, nie ma na tej liście (np. ustawienia zespołu dla pracownika) — nie dodawaj żadnego znacznika, nie podstawiaj innego miejsca. Dostępne dla tego użytkownika:`,
+		list,
+	].join('\n')
+}
+
+/**
+ * Usuwa znaczniki [[LINK:id]] z odpowiedzi i zwraca listę przycisków (tylko znane id, dozwolone dla ról, bez duplikatów).
+ */
+function extractAppLinkMarkers(text, { locale = 'pl', roles = [] } = {}) {
+	const loc = locale === 'en' ? 'en' : 'pl'
+	const allowed = new Map(appLinksForRoles(roles).map(l => [l.id, l]))
+	const links = []
+	const raw = String(text || '')
+	const withoutMarkers = raw.replace(LINK_MARKER_RE, '')
+	raw.replace(LINK_MARKER_RE, (_, id) => {
+		const l = allowed.get(String(id).toLowerCase())
+		if (!l || links.some(x => x.id === l.id) || links.length >= MAX_LINKS_PER_REPLY) return ''
+		// Przycisk tylko do miejsca, o którym odpowiedź naprawdę mówi (patrz appLinks.mention)
+		if (l.mention && !l.mention.test(withoutMarkers)) return ''
+		links.push({ id: l.id, path: l.path, label: l.label[loc] || l.label.pl })
+		return ''
+	})
+	const cleaned = withoutMarkers
+		.replace(/[ \t]+\n/g, '\n')
+		.replace(/\n{3,}/g, '\n\n')
+		.trimEnd()
+	return { text: cleaned, links }
+}
+
+/**
+ * Tekst bezpieczny do pokazania w trakcie streamingu: kompletne znaczniki usunięte, a fragment od ostatniego
+ * NIEZAMKNIĘTEGO „[[” wstrzymany (znacznik może przyjść w kilku kawałkach). Bez normalizacji białych znaków —
+ * wysłany prefiks nie może się później zmienić.
+ */
+function streamVisibleText(full) {
+	const open = full.lastIndexOf('[[')
+	const closed = open === -1 || full.indexOf(']]', open) !== -1
+	const upTo = closed ? full.length : open
+	return full.slice(0, upTo).replace(LINK_MARKER_RE, '')
+}
+
+/** @deprecated zostaje dla zgodności — patrz streamVisibleText */
+function safeVisibleLength(full) {
+	const open = full.lastIndexOf('[[')
+	return open === -1 ? full.length : open
+}
+
+function buildHelpSystemPrompt({ locale = 'pl', moduleId = null, teamPlanContext = '', roles = [] } = {}) {
 	const loc = locale === 'en' ? 'en' : 'pl'
 	const focus = isKnownHelpModule(moduleId) ? moduleId : null
 	const version = computeKnowledgeVersion()
 	const staticPrefix = helpStaticPrefix(loc)
-	const tail = [focusModuleLine(loc, focus), teamPlanContext].filter(Boolean)
+	const tail = [focusModuleLine(loc, focus), buildAppLinksBlock({ locale: loc, roles }), teamPlanContext].filter(Boolean)
 	const system = tail.length ? `${staticPrefix}\n\n${tail.join('\n\n')}` : staticPrefix
 	return {
 		system,
@@ -204,4 +275,9 @@ module.exports = {
 	highestRole,
 	buildTeamPlanContext,
 	buildHelpSystemPrompt,
+	buildAppLinksBlock,
+	extractAppLinkMarkers,
+	safeVisibleLength,
+	streamVisibleText,
+	appLinksForRoles,
 }

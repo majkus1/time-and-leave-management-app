@@ -117,7 +117,7 @@ function WorkActivitiesSettingsSection({ canEditSettings, embedded = false }) {
 					{t('settings.workActivitiesTitle')}
 				</h4>
 			) : (
-				<h3 style={sectionHeadingStyle}>{t('settings.workActivitiesTitle')}</h3>
+				<h3 id="settings-work-activities-section" style={sectionHeadingStyle}>{t('settings.workActivitiesTitle')}</h3>
 			)}
 			<p style={{ color: '#7f8c8d', marginBottom: '16px', lineHeight: 1.6 }}>
 				{t('settings.workActivitiesDescription')}

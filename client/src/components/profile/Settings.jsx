@@ -708,7 +708,7 @@ function Settings() {
 						// Sekcja preferencji osobistych — inny tryb zapisu niz ustawienia zespolu.
 						borderLeft: '4px solid #a5d6a7'
 					}}>
-						<h3 style={{ 
+						<h3 id="settings-push-notifications-section" style={{ 
 							color: '#2c3e50', 
 							marginBottom: '20px',
 							fontSize: '20px',
@@ -921,7 +921,7 @@ function Settings() {
 						// Sekcja preferencji osobistych — inny tryb zapisu niz ustawienia zespolu.
 						borderLeft: '4px solid #a5d6a7'
 					}}>
-						<h3 style={{ 
+						<h3 id="settings-email-notifications-section" style={{ 
 							color: '#2c3e50', 
 							marginBottom: '20px',
 							fontSize: '20px',
@@ -1083,7 +1083,7 @@ function Settings() {
 							marginBottom: '20px',
 						}}
 					>
-						<h3
+						<h3 id="settings-dashboard-section"
 							style={{
 								color: '#2c3e50',
 								marginBottom: '16px',
@@ -1188,7 +1188,7 @@ function Settings() {
 						padding: '20px',
 						marginBottom: '20px'
 					}}>
-						<h3 style={{ 
+						<h3 id="settings-timer-qr-section" style={{ 
 							color: '#2c3e50',
 							marginBottom: '20px',
 							fontSize: '20px',
@@ -1261,7 +1261,7 @@ function Settings() {
 						padding: '15px',
 						marginBottom: '30px'
 					}}>
-						<h3 style={{ 
+						<h3 id="settings-weekends-section" style={{ 
 							color: '#2c3e50',
 							marginBottom: '20px',
 							fontSize: '20px',
@@ -1772,7 +1772,7 @@ function Settings() {
 						{/* Sekcja konfiguracji godzin pracy — także freemium (ewidencja) */}
 						{canEditSettings && (
 							<>
-								<h3 style={{ 
+								<h3 id="settings-work-hours-section" style={{ 
 									color: '#2c3e50',
 									marginTop: '40px',
 									marginBottom: '20px',
@@ -2092,7 +2092,7 @@ function Settings() {
 						{/* Ewidencja czasu — zasady wpisów i czynności */}
 						{canEditSettings && (
 							<>
-								<h3 style={{
+								<h3 id="settings-workday-entries-section" style={{
 									color: '#2c3e50',
 									marginTop: '40px',
 									marginBottom: '20px',
@@ -2179,7 +2179,7 @@ function Settings() {
 								padding: '15px',
 								marginBottom: '30px'
 							}}>
-								<h3 style={{ 
+								<h3 id="settings-leave-calculation-section" style={{ 
 									color: '#2c3e50',
 									marginBottom: '20px',
 									fontSize: '20px',
@@ -2381,7 +2381,7 @@ function Settings() {
 						padding: '20px',
 						marginBottom: '30px'
 					}}>
-						<h3 style={{ 
+						<h3 id="settings-leave-types-section" style={{ 
 							color: '#2c3e50',
 							marginTop: 0,
 							marginBottom: '20px',
@@ -3160,7 +3160,7 @@ function Settings() {
 						{/* Pracownicy bez dostępu */}
 						{canEditSettings && (
 							<>
-								<h3 style={{
+								<h3 id="settings-no-access-users-section" style={{
 									color: '#2c3e50',
 									marginTop: '40px',
 									marginBottom: '20px',

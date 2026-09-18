@@ -13,6 +13,8 @@ const {
 	buildTeamPlanContext,
 	buildHelpSystemPrompt,
 	isKnownHelpModule,
+	extractAppLinkMarkers,
+	streamVisibleText,
 } = require('../utils/aiHelpPrompt')
 
 const HELP_MAX_OUTPUT_TOKENS = 900
@@ -64,12 +66,15 @@ async function prepareHelpTurn(input) {
 	const prompt = buildHelpSystemPrompt({
 		locale,
 		moduleId: input.moduleId || null,
+		roles: user.roles,
 		teamPlanContext: buildTeamPlanContext({ locale, roles: user.roles, entitlements }),
 	})
 
 	return {
 		openaiMessages: [{ role: 'system', content: prompt.system }, ...messages],
 		promptCacheKey: prompt.promptCacheKey,
+		locale,
+		roles: user.roles,
 		meta: { mode: 'help', module: prompt.moduleId, knowledgeVersion: prompt.knowledgeVersion },
 	}
 }
@@ -77,7 +82,7 @@ async function prepareHelpTurn(input) {
 exports.listHelpModules = listHelpModules
 
 exports.runHelpTurn = async function runHelpTurn(input) {
-	const { openaiMessages, promptCacheKey, meta } = await prepareHelpTurn(input)
+	const { openaiMessages, promptCacheKey, meta, locale, roles } = await prepareHelpTurn(input)
 	const { content, model, usage } = await createChatCompletion({
 		messages: openaiMessages,
 		path: 'help',
@@ -86,13 +91,19 @@ exports.runHelpTurn = async function runHelpTurn(input) {
 		verbosity: 'low',
 		promptCacheKey,
 	})
-	return { reply: content, model, usage, meta }
+	const { text, links } = extractAppLinkMarkers(content, { locale, roles })
+	return { reply: text, links, model, usage, meta }
 }
 
-/** Async generator: { type:'meta', meta } → { type:'delta', text }* → { type:'end', model, usage } */
+/**
+ * Async generator: { type:'meta', meta } → { type:'delta', text }* → { type:'links', links }? → { type:'end', model, usage }.
+ * Znaczniki [[LINK:id]] nie trafiają do użytkownika: tekst za ostatnim otwartym „[[” jest wstrzymywany do końca.
+ */
 exports.iterateHelpTurnStream = async function* iterateHelpTurnStream(input) {
-	const { openaiMessages, promptCacheKey, meta } = await prepareHelpTurn(input)
+	const { openaiMessages, promptCacheKey, meta, locale, roles } = await prepareHelpTurn(input)
 	yield { type: 'meta', meta }
+	let full = ''
+	let sent = 0
 	for await (const ev of createChatCompletionStream({
 		messages: openaiMessages,
 		path: 'help',
@@ -101,8 +112,20 @@ exports.iterateHelpTurnStream = async function* iterateHelpTurnStream(input) {
 		verbosity: 'low',
 		promptCacheKey,
 	})) {
-		if (ev.type === 'delta') yield { type: 'delta', text: ev.text }
-		else if (ev.type === 'done') yield { type: 'end', model: ev.model, usage: ev.usage || null }
+		if (ev.type === 'delta') {
+			full += ev.text
+			const visible = streamVisibleText(full)
+			if (visible.length > sent) {
+				yield { type: 'delta', text: visible.slice(sent) }
+				sent = visible.length
+			}
+		} else if (ev.type === 'done') {
+			const { text, links } = extractAppLinkMarkers(full, { locale, roles })
+			// Końcowy tekst różni się od wysłanego co najwyżej białymi znakami na końcu (trimEnd) — dosyłamy tylko nadwyżkę.
+			if (text.length > sent) yield { type: 'delta', text: text.slice(sent) }
+			if (links.length) yield { type: 'links', links }
+			yield { type: 'end', model: ev.model, usage: ev.usage || null }
+		}
 	}
 }
 

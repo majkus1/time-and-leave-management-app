@@ -120,3 +120,42 @@ test('normalizeHelpMessages: role, długość, liczba tur; highestRole wg hierar
 	assert.equal(highestRole(['Przełożony (Supervisor)']), 'Przełożony (Supervisor)')
 	assert.equal(highestRole(undefined), 'Pracownik (Worker)')
 })
+
+test('miejsca w aplikacji: blok per rola, znaczniki [[LINK:id]] / [[id]] → przyciski, pracownik bez ustawień zespołu', () => {
+	const { buildAppLinksBlock, extractAppLinkMarkers, streamVisibleText, appLinksForRoles } = require('../utils/aiHelpPrompt')
+	const adminIds = appLinksForRoles(['Admin']).map(l => l.id)
+	const workerIds = appLinksForRoles(['Pracownik (Worker)']).map(l => l.id)
+	assert.ok(adminIds.includes('settings-holidays') && adminIds.includes('team-management'))
+	assert.ok(!workerIds.includes('settings-holidays') && !workerIds.includes('packages'))
+	assert.ok(workerIds.includes('leave-request') && workerIds.includes('settings-push'))
+	assert.ok(buildAppLinksBlock({ locale: 'pl', roles: ['HR'] }).includes('- settings-leave-types:'))
+	assert.ok(!buildAppLinksBlock({ locale: 'pl', roles: ['HR'] }).includes('- team-management:'), 'HR nie zarządza zespołem')
+
+	const r = extractAppLinkMarkers('Kliknij tu.\n\n[[LINK:settings-holidays]]\n[[create-user]]\n[[LINK:packages]]\n[[LINK:nope]]', { locale: 'pl', roles: ['Admin'] })
+	assert.equal(r.text, 'Kliknij tu.')
+	assert.deepEqual(r.links.map(l => l.id), ['settings-holidays', 'create-user'], 'maks 2, nieznane pomijane')
+	assert.equal(r.links[0].path, '/settings#settings-holidays-section')
+	const w = extractAppLinkMarkers('Poproś admina. [[LINK:settings-holidays]]', { locale: 'en', roles: ['Pracownik (Worker)'] })
+	assert.deepEqual(w.links, [], 'link poza rolą nie staje się przyciskiem')
+	assert.equal(w.text, 'Poproś admina.')
+
+	// streaming: zamknięte znaczniki znikają od razu, niezamknięte „[[” wstrzymuje ogon
+	assert.equal(streamVisibleText('A [[LINK:x]] B [[LI'), 'A  B ')
+	assert.equal(streamVisibleText('bez znaczników'), 'bez znaczników')
+	// blok linków jest w części dynamicznej — prefiks statyczny bez zmian
+	const a = buildHelpSystemPrompt({ locale: 'pl', roles: ['Admin'] })
+	const b = buildHelpSystemPrompt({ locale: 'pl', roles: ['Pracownik (Worker)'] })
+	assert.equal(a.staticPrefix, b.staticPrefix)
+	assert.ok(a.system.includes('MIEJSCA W APLIKACJI') && a.system.includes('settings-holidays'))
+	assert.ok(!b.system.includes('- settings-holidays:'))
+})
+
+test('przycisk tylko do miejsca, o którym mówi odpowiedź (appLinks.mention)', () => {
+	const { extractAppLinkMarkers } = require('../utils/aiHelpPrompt')
+	const off = extractAppLinkMarkers('Święta ustawia Administrator w Ustawieniach.\n[[LINK:settings-push]]', { locale: 'pl', roles: ['Pracownik (Worker)'] })
+	assert.deepEqual(off.links, [], 'push bez wzmianki o powiadomieniach — bez przycisku')
+	const on = extractAppLinkMarkers('Powiadomienia push włączysz w Ustawieniach.\n[[LINK:settings-push]]', { locale: 'pl', roles: ['Pracownik (Worker)'] })
+	assert.deepEqual(on.links.map(l => l.id), ['settings-push'])
+	const noMention = extractAppLinkMarkers('Wejdź do ustawień.\n[[LINK:settings-holidays]]', { locale: 'pl', roles: ['Admin'] })
+	assert.deepEqual(noMention.links.map(l => l.id), ['settings-holidays'], 'linki bez `mention` zostają')
+})

@@ -236,6 +236,7 @@ i18n
 							modulesLoadError: 'Could not load help topics. You can still ask a question.',
 							noQuotaBadge: 'Does not use the AI limit',
 							askAboutModule: 'Ask the assistant about this',
+							linksHint: 'Open in the app:',
 							modules: {
 								general: 'Planopia overview',
 								timeTracking: 'Work time',
@@ -2420,6 +2421,7 @@ i18n
 							modulesLoadError: 'Nie udało się pobrać listy tematów. Nadal możesz zadać pytanie.',
 							noQuotaBadge: 'Nie zużywa limitu AI',
 							askAboutModule: 'Zapytaj asystenta o ten moduł',
+							linksHint: 'Otwórz w aplikacji:',
 							modules: {
 								general: 'Planopia ogólnie',
 								timeTracking: 'Czas pracy',
