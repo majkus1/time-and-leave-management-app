@@ -21,7 +21,7 @@ async function validateBillingPurchaseIntent(params) {
 	const { teamId, requestingUserId, kind, planKey, addonId, billingCycle, moduleKeys } = params
 
 	const team = await Team.findById(teamId).select(
-		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip'
+		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) {
 		const err = new Error('Team not found')

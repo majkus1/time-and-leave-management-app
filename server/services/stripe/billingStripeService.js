@@ -601,6 +601,12 @@ async function handleSubscriptionUpdated(event) {
 		if (sub.status && sub.status !== 'active' && sub.status !== 'trialing') {
 			team.billingStatus = 'inactive'
 		}
+		// Powrót z past_due/unpaid do active = Stripe pobrał zaległość. invoice.paid zwykle przychodzi obok, ale gdy
+		// się spóźni, Core miałby okno „ani aktywny, ani karencja” z 403 na modułach — przywracamy status od razu.
+		const prevStatus = event.data?.previous_attributes?.status
+		if (sub.status === 'active' && PAST_DUE_STATUSES.has(prevStatus)) {
+			team.billingStatus = 'active'
+		}
 		if (
 			(sub.status === 'active' || sub.status === 'trialing') &&
 			isCorePlanKey(normalizePaidPlanKey(team.billingPlanKey))
@@ -765,6 +771,13 @@ async function cancelStripeSubscriptionForTeam(teamId) {
 	}
 	if (!team.stripeSubscriptionId) {
 		const err = new Error('No active Stripe subscription to cancel')
+		err.code = 'VALIDATION'
+		throw err
+	}
+	// W karencji (past_due) current_period_end to koniec NIEOPŁACONEGO cyklu — anulowanie „na koniec okresu”
+	// wydłużyłoby darmowy dostęp. Flaga canCancelSubscription chroni tylko UI, więc sprawdzamy też tutaj.
+	if (team.billingStatus !== 'active') {
+		const err = new Error('Subscription is not active — update the payment method first')
 		err.code = 'VALIDATION'
 		throw err
 	}
