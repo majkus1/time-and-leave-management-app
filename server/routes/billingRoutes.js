@@ -13,6 +13,8 @@ router.patch('/team-invoice', authenticateToken, requireBillingStaffRole, billin
 router.get('/super/paid-plan-teams', authenticateToken, billingController.getSuperPaidPlanTeams)
 router.get('/super/stripe-paid-plan-teams', authenticateToken, billingController.getSuperStripePaidPlanTeams)
 router.post('/super/thank-purchase-email', authenticateToken, billingController.postSuperThankPurchaseEmail)
+router.post('/super/payment-reminder-email/preview', authenticateToken, billingController.postSuperPaymentReminderPreview)
+router.post('/super/payment-reminder-email', authenticateToken, billingController.postSuperPaymentReminderSend)
 router.get('/p24/status', authenticateToken, billingController.getP24Status)
 router.get('/stripe/status', authenticateToken, billingController.getStripeStatus)
 router.post(

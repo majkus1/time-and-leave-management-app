@@ -19,6 +19,7 @@ import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
 import SuperAdminActivityPanel from '../admin/SuperAdminActivityPanel'
+import SuperAdminPaymentReminderPanel from '../admin/SuperAdminPaymentReminderPanel'
 
 const PAID_PLAN_LABELS = {
 	starter: 'Starter',
@@ -3560,6 +3561,7 @@ function Logs() {
 				</section>
 			)}
 
+			{isSuperAdmin && <SuperAdminPaymentReminderPanel />}
 			{isSuperAdmin && <SuperAdminActivityPanel />}
 
 			</div> {/* logs-container */}
