@@ -141,7 +141,7 @@ async function resolveLeaveRequestSubmitTarget({ requestingUserId, targetUserId,
 
 	if (targetUser.appAccessEnabled === false) {
 		const team = await Team.findById(requestingUser.teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (entitlementsService.isFreemiumTierTeam(team)) {
 			return {

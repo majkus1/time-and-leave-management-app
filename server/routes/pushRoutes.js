@@ -118,7 +118,7 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 		const userId = req.user.userId
 		const { preferences } = req.body
 		const team = await Team.findById(req.user.teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt stripeSubscriptionId stripeSubscriptionStatus'
 		)
 
 		if (!preferences || typeof preferences !== 'object') {
@@ -157,7 +157,7 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 	try {
 		const userId = req.user.userId
 		const team = await Team.findById(req.user.teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt stripeSubscriptionId stripeSubscriptionStatus'
 		)
 
 		const subscription = await PushSubscription.findOne({ userId, enabled: true })

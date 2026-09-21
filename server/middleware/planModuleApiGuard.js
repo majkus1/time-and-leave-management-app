@@ -52,7 +52,7 @@ async function planModuleApiGuardAsync(req, res, next) {
 		}
 
 		const team = await Team.findById(decoded.teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (!team || team.isActive === false) return next()
 
@@ -64,12 +64,15 @@ async function planModuleApiGuardAsync(req, res, next) {
 
 		if (entitlementsService.isTrialActive(team)) return next()
 
-		if (!entitlementsService.isPaidSubscriptionActive(team)) return next()
-
+		// Pakiety (Pro/Business) mają wszystkie moduły — nie ma czego sprawdzać.
 		const nk = normalizePaidPlanKey(team.billingPlanKey)
 		if (!isCorePlanKey(nk)) return next()
 
-		const effectiveKeys = entitlementsService.effectiveBillingModuleKeys(team)
+		// Core: moduły tylko z aktywnej (lub w karencji) subskrypcji. Core bez aktywnej subskrypcji, który nie jest
+		// jeszcze freemium (stan przejściowy), nie dostaje modułów, za które nie płaci.
+		const effectiveKeys = entitlementsService.isPaidSubscriptionActive(team)
+			? entitlementsService.effectiveBillingModuleKeys(team)
+			: []
 		if (corePaidPathAllowed(path, effectiveKeys)) return next()
 
 		return res.status(403).json(moduleForbiddenPayload())

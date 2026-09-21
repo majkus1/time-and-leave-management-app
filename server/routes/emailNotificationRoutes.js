@@ -55,7 +55,7 @@ router.get('/preferences', authenticateToken, async (req, res) => {
 		const userId = req.user.userId
 		const teamId = req.user.teamId
 		const team = await Team.findById(teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt stripeSubscriptionId stripeSubscriptionStatus'
 		)
 
 		const doc = await EmailNotificationPreference.findOne({ userId, teamId }).lean()
@@ -74,7 +74,7 @@ router.put('/preferences', authenticateToken, async (req, res) => {
 		const teamId = req.user.teamId
 		const { preferences } = req.body || {}
 		const team = await Team.findById(teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt stripeSubscriptionId stripeSubscriptionStatus'
 		)
 
 		if (!preferences || typeof preferences !== 'object') {

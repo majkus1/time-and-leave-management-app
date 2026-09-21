@@ -499,7 +499,7 @@ io.use(async (socket, next) => {
 		}
 
 		const team = await TeamSocket.findById(user.teamId).select(
-			'name billingPlanKey billingStatus trialEndsAt billingHadPaidPlan maxUsers isActive'
+			'name billingPlanKey billingStatus trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (team && team.isActive !== false) {
 			if (entitlementsServiceSocket.requiresFullAppSubscriptionWall(team)) {

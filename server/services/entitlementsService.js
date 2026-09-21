@@ -116,8 +116,20 @@ function isTrialExpiredUnpaid(team, now = new Date()) {
 	return new Date(team.trialEndsAt) <= now && team.billingStatus !== 'active'
 }
 
+/**
+ * Karencja po nieudanym odnowieniu Stripe (past_due/unpaid): webhook ustawia billingStatus 'inactive', a billingPeriodEnd
+ * = koniec opłaconego okresu + kilka dni. Do tej daty zespół ma PEŁNY plan (moduły, AI, powiadomienia, strażnik modułów
+ * dla Core) — inaczej bramki byłyby niespójne (API przepuszcza, UI chowa). Po dacie: freemium (isPaidPlanPeriodLapsed).
+ */
+function isPaidGracePeriod(team, now = new Date()) {
+	if (!team?.stripeSubscriptionId) return false
+	if (team.stripeSubscriptionStatus !== 'past_due' && team.stripeSubscriptionStatus !== 'unpaid') return false
+	if (!team.billingPeriodEnd) return false
+	return new Date(team.billingPeriodEnd) >= now
+}
+
 function isPaidSubscriptionActive(team, now = new Date()) {
-	if (team.billingStatus !== 'active') return false
+	if (team.billingStatus !== 'active' && !isPaidGracePeriod(team, now)) return false
 	if (!team.billingPlanKey || team.billingPlanKey === 'trial') return false
 	const nk = normalizePaidPlanKey(team.billingPlanKey)
 	if (!PAID_PLANS[nk]) return false
@@ -158,7 +170,7 @@ function effectiveBillingModuleKeys(team, now = new Date()) {
 async function syncTimerEnabledSettingForTeam(teamId) {
 	if (!teamId) return
 	const team = await Team.findById(teamId).select(
-		'billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt'
+		'billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) return
 	const now = new Date()
@@ -176,7 +188,7 @@ async function syncTimerEnabledSettingForTeam(teamId) {
 async function syncDashboardEnabledSettingForTeam(teamId) {
 	if (!teamId) return
 	const team = await Team.findById(teamId).select(
-		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive'
+		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) return
 	if (!isFreemiumTierTeam(team, new Date())) return
@@ -596,6 +608,7 @@ module.exports = {
 	isTrialActive,
 	isTrialExpiredUnpaid,
 	isPaidPlanPeriodLapsed,
+	isPaidGracePeriod,
 	isPaidSubscriptionActive,
 	effectiveMaxUsers,
 	computeAiBuckets,

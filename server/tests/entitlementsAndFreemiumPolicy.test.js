@@ -156,6 +156,38 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isPaidPlanPeriodLapsed(team, T_PAID_OK), false)
 	})
 
+	it('karencja past_due (Stripe): do billingPeriodEnd pełny plan, moduły Core wg wykupionych, potem freemium', () => {
+		const team = {
+			name: 'NormalnyZespol',
+			isActive: true,
+			maxUsers: 15,
+			billingPlanKey: 'base_s',
+			billingStatus: 'inactive',
+			billingCycle: 'monthly',
+			billingModuleKeys: ['timer_qr'],
+			stripeCustomerId: 'cus_x',
+			stripeSubscriptionId: 'sub_x',
+			stripeSubscriptionStatus: 'past_due',
+			billingPeriodEnd: new Date('2026-06-22T00:00:00.000Z'), // koniec opłaconego okresu + 7 dni
+		}
+		const inGrace = new Date('2026-06-18T12:00:00.000Z')
+		const afterGrace = new Date('2026-06-23T12:00:00.000Z')
+		assert.equal(e.isPaidGracePeriod(team, inGrace), true)
+		assert.equal(e.isPaidSubscriptionActive(team, inGrace), true)
+		assert.equal(e.isFreemiumTierTeam(team, inGrace), false)
+		assert.deepEqual(e.effectiveBillingModuleKeys(team, inGrace), ['timer_qr'])
+		assert.equal(e.isPaidGracePeriod(team, afterGrace), false)
+		assert.equal(e.isPaidSubscriptionActive(team, afterGrace), false)
+		assert.equal(e.isFreemiumTierTeam(team, afterGrace), true)
+		// bez subskrypcji Stripe (np. P24) status past_due nie ma znaczenia
+		assert.equal(e.isPaidGracePeriod({ ...team, stripeSubscriptionId: null }, inGrace), false)
+		// baner/„Zmień kartę” — flagi klienta w karencji
+		const ent = e.buildClientEntitlements(team, { activeSeatCount: 10 })
+		assert.equal(ent.stripe.paymentPastDue, true)
+		assert.equal(ent.stripe.canManagePaymentMethod, true)
+		assert.equal(ent.stripe.canCancelSubscription, false)
+	})
+
 	it('starter — koniec okresu: wygasły plan → freemium', () => {
 		const team = {
 			name: 'NormalnyZespol',

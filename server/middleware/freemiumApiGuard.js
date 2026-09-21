@@ -59,7 +59,7 @@ async function freemiumApiGuardAsync(req, res, next) {
 		}
 
 		const team = await Team.findById(decoded.teamId).select(
-			'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd billingHadPaidPlan maxUsers isActive'
+			'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (!team || team.isActive === false) return next()
 

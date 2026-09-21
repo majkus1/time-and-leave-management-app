@@ -8,7 +8,7 @@ const entitlementsService = require('../services/entitlementsService')
 async function freemiumWorkdayTimerGuard(req, res, next) {
 	try {
 		const team = await Team.findById(req.user.teamId).select(
-			'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd maxUsers isActive'
+			'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (!team || team.isActive === false) return next()
 		if (!entitlementsService.isFreemiumTierTeam(team)) return next()
