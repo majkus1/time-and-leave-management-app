@@ -9,7 +9,7 @@ export const landingHeroCopy = {
 		askAssistantLead: 'Masz pytanie?',
 		askAssistant: 'Zapytaj asystenta, jak działa Planopia',
 		askAssistantHref: '#asystent',
-		proof: ['Bez karty płatniczej', 'Gotowe w 2 minuty'],
+		proof: ['Bez karty, bez limitu czasu', 'Gotowe w 2 minuty'],
 		imageAlt: 'biznesmen zaznaczający aplikację',
 	},
 	en: {
@@ -20,7 +20,7 @@ export const landingHeroCopy = {
 		askAssistantLead: 'Have a question?',
 		askAssistant: 'Ask the assistant how Planopia works',
 		askAssistantHref: '#assistant',
-		proof: ['No credit card', 'Ready in 2 minutes', 'Free tier after trial'],
+		proof: ['No card, no time limit', 'Ready in 2 minutes'],
 		imageAlt: 'businessman managing calendar in the app',
 	},
 } as const
