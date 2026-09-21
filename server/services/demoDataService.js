@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const moment = require('moment-timezone')
 const { firmDb } = require('../db/db')
 const Team = require('../models/Team')(firmDb)
 const User = require('../models/user')(firmDb)
@@ -46,10 +47,27 @@ function addDays(d, n) {
 	return x
 }
 
-function atTime(d, h, m = 0) {
-	const x = new Date(d)
-	x.setHours(h, m, 0, 0)
-	return x
+const WARSAW = 'Europe/Warsaw'
+
+/** Godzina w strefie Warszawy dla danego dnia — jak skan QR w Polsce, niezależnie od strefy serwera. */
+function atWarsaw(d, h, m = 0) {
+	return moment.tz(`${ymd(d)} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`, 'YYYY-MM-DD HH:mm', WARSAW).toDate()
+}
+
+/** „HH:MM-HH:MM” jak przy stopie licznika (workdayController: czas lokalny Warszawy). */
+function warsawRange(start, end) {
+	return `${moment(start).tz(WARSAW).format('HH:mm')}-${moment(end).tz(WARSAW).format('HH:mm')}`
+}
+
+/** Sesja licznika jak po zeskanowaniu QR (wejście/wyjście) — bez przerw i nadgodzin. */
+function timerSession(d, from, to, qrCodeId, workDescription) {
+	const startTime = atWarsaw(d, from[0], from[1])
+	const endTime = atWarsaw(d, to[0], to[1])
+	return {
+		entry: { startTime, endTime, isBreak: false, breakTime: 0, isOvertime: false, overtimeTime: 0, workDescription, qrCodeId },
+		hours: (endTime - startTime) / 3600000,
+		range: warsawRange(startTime, endTime),
+	}
 }
 
 function isWeekend(d) {
@@ -163,12 +181,38 @@ async function createDemoData({ teamId, userId, roles }) {
 		console.warn('[demoData] QR skipped:', e?.message || e)
 	}
 
-	// 3. Ewidencja za bieżący miesiąc do dziś (dni robocze); jeden dzień nadgodzin, jedna osoba z sesjami QR
+	// 3. Wnioski urlopowe — najpierw, bo w dniu zaakceptowanej nieobecności nie może być wpisu pracy
+	const nextMonday = addDays(mondayOf(today), 7)
+	const leaveSpecs = [
+		users[0] && { user: users[0], type: 'leaveform.option1', start: nextMonday, days: 3, status: 'status.accepted', info: 'Wyjazd rodzinny' },
+		users[1] && { user: users[1], type: 'leaveform.option1', start: addDays(nextMonday, 9), days: 2, status: 'status.pending', info: '' },
+		users[2] && { user: users[2], type: 'leaveform.option6', start: addDays(mondayOf(today), -7), days: 1, status: 'status.accepted', info: '' },
+	].filter(Boolean)
+	const leaveEnd = s => {
+		// koniec = start + dni robocze - 1 (weekend w środku nie liczy się do wniosku)
+		let end = new Date(s.start)
+		let left = s.days - 1
+		while (left > 0) {
+			end = addDays(end, 1)
+			if (!isWeekend(end)) left -= 1
+		}
+		return end
+	}
+	const absentDays = new Map() // userId → Set(ymd) dla zaakceptowanych nieobecności
+	for (const s of leaveSpecs) {
+		if (s.status !== 'status.accepted') continue
+		const set = absentDays.get(String(s.user._id)) || new Set()
+		for (let d = new Date(s.start), end = leaveEnd(s); d <= end; d = addDays(d, 1)) set.add(ymd(d))
+		absentDays.set(String(s.user._id), set)
+	}
+
+	// 4. Ewidencja za bieżący miesiąc do dziś (dni robocze); jeden dzień nadgodzin, jedna osoba z sesjami QR
 	const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
 	for (let ui = 0; ui < users.length; ui += 1) {
 		const u = users[ui]
 		for (let d = new Date(monthStart); d < today; d = addDays(d, 1)) {
 			if (isWeekend(d)) continue
+			if (absentDays.get(String(u._id))?.has(ymd(d))) continue
 			const dayNo = d.getDate()
 			const overtime = dayNo % 9 === 0 && ui === 0
 			const doc = {
@@ -181,32 +225,37 @@ async function createDemoData({ teamId, userId, roles }) {
 				lastChangedBy: admin._id,
 			}
 			if (ui === 1 && qrCodeId && dayNo % 5 === 0) {
-				// sesje z licznika uruchamiane kodem QR (wejście/wyjście)
-				doc.timeEntries = [
-					{ startTime: atTime(d, 8, 2), endTime: atTime(d, 12, 0), isBreak: false, workDescription: 'Zmiana poranna', qrCodeId },
-					{ startTime: atTime(d, 12, 30), endTime: atTime(d, 16, 32), isBreak: false, workDescription: 'Zmiana poranna', qrCodeId },
+				// Dzień z licznika: jak po dwóch skanach QR (wejście/wyjście) — godziny dnia i zakres wynikają z sesji,
+				// dokładnie tak, jak zapisuje je stop licznika w workdayController (nie ma osobnego wpisu ręcznego).
+				const sessions = [
+					timerSession(d, [8, 2], [12, 0], qrCodeId, 'Zmiana poranna'),
+					timerSession(d, [12, 30], [16, 32], qrCodeId, 'Zmiana poranna'),
 				]
+				doc.timeEntries = sessions.map(s => s.entry)
+				doc.hoursWorked = sessions.reduce((sum, s) => sum + s.hours, 0)
+				doc.additionalWorked = 0
+				doc.realTimeDayWorked = sessions.map(s => s.range).join(', ')
+				doc.notes = ''
+				// Rejestr skanów QR (wejście / wyjście) — to samo, co zapisuje strona /qr-scan
+				for (const s of sessions) {
+					await TimeEntry.create({
+						userId: u._id,
+						qrCodeId,
+						entryTime: s.entry.startTime,
+						exitTime: s.entry.endTime,
+						date: atWarsaw(d, 0, 0),
+						isOvertime: false,
+					})
+				}
 			}
 			const w = await Workday.create(doc)
 			ids.workdays.push(w._id)
 		}
 	}
 
-	// 4. Wnioski urlopowe: zaakceptowany (przyszły tydzień), oczekujący, L4 (auto-akceptacja)
-	const nextMonday = addDays(mondayOf(today), 7)
-	const leaveSpecs = [
-		users[0] && { user: users[0], type: 'leaveform.option1', start: nextMonday, days: 3, status: 'status.accepted', info: 'Wyjazd rodzinny' },
-		users[1] && { user: users[1], type: 'leaveform.option1', start: addDays(nextMonday, 9), days: 2, status: 'status.pending', info: '' },
-		users[2] && { user: users[2], type: 'leaveform.option6', start: addDays(mondayOf(today), -7), days: 1, status: 'status.accepted', info: '' },
-	].filter(Boolean)
+	// 5. Zapis wniosków urlopowych: zaakceptowany (przyszły tydzień), oczekujący, L4 (auto-akceptacja)
 	for (const s of leaveSpecs) {
-		// koniec = start + dni robocze - 1 (bez weekendu w środku dla krótkich wniosków)
-		let end = new Date(s.start)
-		let left = s.days - 1
-		while (left > 0) {
-			end = addDays(end, 1)
-			if (!isWeekend(end)) left -= 1
-		}
+		const end = leaveEnd(s)
 		const lr = await LeaveRequest.create({
 			userId: s.user._id,
 			type: s.type,
@@ -224,7 +273,7 @@ async function createDemoData({ teamId, userId, roles }) {
 		ids.leaveRequests.push(lr._id)
 	}
 
-	// 5. Grafik na bieżący i następny tydzień (opublikowany)
+	// 6. Grafik na bieżący i następny tydzień (opublikowany)
 	const shifts = [
 		['08:00', '16:00'],
 		['12:00', '20:00'],
@@ -238,7 +287,8 @@ async function createDemoData({ teamId, userId, roles }) {
 		days.push({
 			date: d,
 			availabilities: [],
-			entries: users.map((u, ui) => ({
+			// bez zmiany w dniu zaakceptowanej nieobecności — inaczej aplikacja zgłosi konflikt urlop/grafik
+			entries: users.filter(u => !absentDays.get(String(u._id))?.has(ymd(d))).map((u, ui) => ({
 				employeeId: u._id,
 				employeeName: fullName(u),
 				timeFrom: shifts[(ui + i) % shifts.length][0],
@@ -258,7 +308,7 @@ async function createDemoData({ teamId, userId, roles }) {
 	})
 	ids.schedules.push(schedule._id)
 
-	// 6. Tablica zadań z zadaniami w każdej kolumnie
+	// 7. Tablica zadań z zadaniami w każdej kolumnie
 	const board = await Board.create({
 		name: 'Demo — wdrożenie Planopii',
 		teamId,
@@ -294,7 +344,7 @@ async function createDemoData({ teamId, userId, roles }) {
 		ids.tasks.push(t._id)
 	}
 
-	// 7. Komunikat
+	// 8. Komunikat
 	const ann = await Announcement.create({
 		teamId,
 		createdBy: admin._id,

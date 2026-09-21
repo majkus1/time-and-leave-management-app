@@ -300,29 +300,6 @@
 	color: var(--po-text-secondary) !important;
 }
 
-.po-onboarding__foot {
-	position: static;
-	display: flex;
-	justify-content: flex-end;
-	margin-top: 14px;
-}
-
-.po-onboarding__done-btn {
-	padding: 9px 18px;
-	border-radius: 9px;
-	border: none;
-	background: var(--po-brand);
-	color: #fff !important;
-	font-size: 14px !important;
-	font-weight: 600;
-	cursor: pointer;
-	transition: background 0.15s ease;
-}
-
-.po-onboarding__done-btn:hover {
-	background: var(--po-brand-hover);
-}
-
 .po-onboarding--done {
 	border-color: var(--po-brand-soft);
 }

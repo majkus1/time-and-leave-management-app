@@ -1231,12 +1231,40 @@
 
 .ai-assistant-md ul,
 .ai-assistant-md ol {
-	margin: 0 0 0.5rem;
-	padding-left: 1.35rem;
+	margin: 0.15rem 0 0.6rem;
+	padding-left: 1.5rem;
+}
+
+/* Znaczniki jawnie — globalne style aplikacji zerują list-style i lista wyglądała jak wcięte akapity */
+.ai-assistant-md ul {
+	list-style: disc outside;
+}
+
+.ai-assistant-md ol {
+	list-style: decimal outside;
+}
+
+.ai-assistant-md ul ul {
+	list-style: circle outside;
+	margin: 0.15rem 0 0.25rem;
 }
 
 .ai-assistant-md li {
-	margin-bottom: 0.25rem;
+	margin-bottom: 0.3rem;
+	padding-left: 0.15rem;
+}
+
+.ai-assistant-md li::marker {
+	color: #4f46e5;
+	font-weight: 700;
+}
+
+.ai-assistant-md li > p {
+	margin: 0;
+}
+
+[data-theme='dark'] .ai-assistant-md li::marker {
+	color: #a5b4fc;
 }
 
 .ai-assistant-md strong {

@@ -5524,27 +5524,53 @@ a.landing-polished-hero-cta:focus-visible,
 	gap: 0.4rem;
 }
 
-.landing-chat-core--widget .landing-chat-chips {
-	flex-wrap: nowrap;
-	overflow-x: auto;
-	scrollbar-width: none;
-	padding-bottom: 2px;
+/*
+ * Przewijane w bok wiersze chipów i podpowiedzi: cienki, ale WIDOCZNY pasek — ukryty nikt nie wiedział,
+ * że tematów jest więcej. Jedna klasa pomocnicza, żeby widget i sekcja na telefonie wyglądały tak samo.
+ */
+/* Firefox: brak ::-webkit-scrollbar — cienki pasek przez właściwości standardowe (w Chrome wyłączyłyby stylowanie webkit) */
+@supports not selector(::-webkit-scrollbar) {
+	.landing-chat-core--widget .landing-chat-chips,
+	.landing-chat-core--widget .landing-chat-suggestions,
+	.landing-chat-core--section .landing-chat-chips,
+	.landing-chat-core--section .landing-chat-suggestions {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(0, 166, 62, 0.55) rgba(0, 0, 0, 0.06);
+	}
 }
 
-.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar {
-	display: none;
-}
-
-/* W widgecie podpowiedzi też w jednym przewijanym wierszu — panel ma 24rem szerokości */
+.landing-chat-core--widget .landing-chat-chips,
 .landing-chat-core--widget .landing-chat-suggestions {
 	flex-wrap: nowrap;
 	overflow-x: auto;
-	scrollbar-width: none;
-	padding-bottom: 2px;
+	padding-bottom: 8px;
 }
 
+.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar,
 .landing-chat-core--widget .landing-chat-suggestions::-webkit-scrollbar {
+	display: block;
+	height: 6px;
+}
+
+.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar-track,
+.landing-chat-core--widget .landing-chat-suggestions::-webkit-scrollbar-track {
+	background: rgba(0, 0, 0, 0.06);
+	border-radius: 999px;
+}
+
+.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar-button,
+.landing-chat-core--widget .landing-chat-suggestions::-webkit-scrollbar-button,
+.landing-chat-core--section .landing-chat-chips::-webkit-scrollbar-button,
+.landing-chat-core--section .landing-chat-suggestions::-webkit-scrollbar-button {
 	display: none;
+	width: 0;
+	height: 0;
+}
+
+.landing-chat-core--widget .landing-chat-chips::-webkit-scrollbar-thumb,
+.landing-chat-core--widget .landing-chat-suggestions::-webkit-scrollbar-thumb {
+	background: rgba(0, 166, 62, 0.55);
+	border-radius: 999px;
 }
 
 .landing-chat-core--widget .landing-chat-suggestion {
@@ -5918,14 +5944,26 @@ a.landing-polished-hero-cta:focus-visible,
 	.landing-chat-core--section .landing-chat-suggestions {
 		flex-wrap: nowrap;
 		overflow-x: auto;
-		scrollbar-width: none;
-		padding-bottom: 2px;
+		padding-bottom: 8px;
 		-webkit-overflow-scrolling: touch;
 	}
 
 	.landing-chat-core--section .landing-chat-chips::-webkit-scrollbar,
 	.landing-chat-core--section .landing-chat-suggestions::-webkit-scrollbar {
-		display: none;
+		display: block;
+		height: 6px;
+	}
+
+	.landing-chat-core--section .landing-chat-chips::-webkit-scrollbar-track,
+	.landing-chat-core--section .landing-chat-suggestions::-webkit-scrollbar-track {
+		background: rgba(0, 0, 0, 0.06);
+		border-radius: 999px;
+	}
+
+	.landing-chat-core--section .landing-chat-chips::-webkit-scrollbar-thumb,
+	.landing-chat-core--section .landing-chat-suggestions::-webkit-scrollbar-thumb {
+		background: rgba(0, 166, 62, 0.55);
+		border-radius: 999px;
 	}
 
 	.landing-chat-core--section .landing-chat-suggestion {

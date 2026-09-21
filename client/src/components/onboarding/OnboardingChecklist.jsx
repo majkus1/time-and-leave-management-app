@@ -187,13 +187,6 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 				<p className="po-onboarding__help">{demoPresent ? t('onboarding.demoPresentHint') : t('onboarding.demoHint')}</p>
 			)}
 
-			{data.allDone ? (
-				<div className="po-onboarding__foot">
-					<button type="button" className="po-onboarding__done-btn" onClick={() => dismiss.mutate()} disabled={dismiss.isPending}>
-						{t('onboarding.hideDone')}
-					</button>
-				</div>
-			) : null}
 		</section>
 	)
 }

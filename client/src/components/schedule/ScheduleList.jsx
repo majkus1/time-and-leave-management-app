@@ -124,7 +124,7 @@ function ScheduleList() {
 										color: 'inherit',
 										display: 'block'
 									}}>
-									<h3 style={{
+									<h3 className="schedule-card__title" style={{
 										margin: '0 0 10px 0',
 										color: '#2c3e50',
 										fontSize: '20px',

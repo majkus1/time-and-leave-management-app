@@ -8333,3 +8333,11 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 [id^="settings-"][id$="-section"] {
 	scroll-margin-top: 95px;
 }
+
+/* Karty tablic i grafików: ikony akcji są pozycjonowane absolutnie w prawym górnym rogu — tytuł musi zostawić im miejsce */
+.board-list-card__title,
+.schedule-card__title {
+	padding-right: 104px;
+	overflow-wrap: anywhere;
+	line-height: 1.25;
+}
