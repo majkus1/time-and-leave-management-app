@@ -235,10 +235,11 @@ export default function LandingChatPanel({ variant }: { variant: Variant }) {
 		if (box) box.scrollTop = box.scrollHeight
 	}, [lines, busy, escalation.step])
 
+	// Prośba o fokus pochodzi wyłącznie z otwarcia widgetu (FAB). Sekcja na stronie głównej nie może na nią reagować —
+	// fokus jej pola przewijał całą stronę w dół, gdy ktoś kliknął ikonę w rogu będąc na górze strony.
 	useEffect(() => {
-		if (focusRequest === 0) return
-		if (variant === 'widget' && !open) return
-		requestAnimationFrame(() => inputRef.current?.focus())
+		if (focusRequest === 0 || variant !== 'widget' || !open) return
+		requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }))
 	}, [focusRequest, variant, open])
 
 	const submit = useCallback(() => {
