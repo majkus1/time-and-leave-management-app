@@ -88,7 +88,6 @@ const TeamRegistration = () => {
 			devLog('[TeamRegistration] Response', response.data)
 
 			if (response.data && response.data.success) {
-				sessionStorage.setItem('showTeamSuccessModal', 'true')
 				await refreshUserData()
 				await trackRegistrationConversion()
 				navigate('/', { replace: true })

@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import React, { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import confetti from 'canvas-confetti'
 import Sidebar from './Sidebar'
 import Loader from '../Loader'
 import { useAuth } from '../../context/AuthContext'
@@ -12,72 +11,6 @@ import TeamInsightsPanel from './TeamInsightsPanel'
 import PersonalOverviewPanel from './PersonalOverviewPanel'
 import './Dashboard.css'
 import OnboardingChecklist from '../onboarding/OnboardingChecklist'
-
-function launchWelcomeConfetti() {
-	const canvas = document.createElement('canvas')
-	canvas.setAttribute('aria-hidden', 'true')
-	Object.assign(canvas.style, {
-		position: 'fixed',
-		inset: '0',
-		width: '100vw',
-		height: '100vh',
-		pointerEvents: 'none',
-		zIndex: '100000000',
-	})
-	document.body.appendChild(canvas)
-
-	const celebration = confetti.create(canvas, { resize: true })
-	const colors = ['#16a34a', '#22c55e', '#86efac', '#ffffff', '#facc15', '#38bdf8']
-	const timers = []
-	const fire = (delay, options) => {
-		timers.push(setTimeout(() => celebration({
-			colors,
-			ticks: 260,
-			scalar: 1.08,
-			...options,
-		}), delay))
-	}
-
-	fire(0, {
-		particleCount: 180,
-		spread: 110,
-		startVelocity: 55,
-		origin: { x: 0.5, y: 0.12 },
-	})
-	fire(280, {
-		particleCount: 110,
-		angle: 60,
-		spread: 70,
-		startVelocity: 52,
-		origin: { x: 0, y: 0.55 },
-	})
-	fire(280, {
-		particleCount: 110,
-		angle: 120,
-		spread: 70,
-		startVelocity: 52,
-		origin: { x: 1, y: 0.55 },
-	})
-	fire(720, {
-		particleCount: 140,
-		spread: 160,
-		startVelocity: 38,
-		gravity: 0.9,
-		origin: { x: 0.5, y: 0.32 },
-	})
-
-	const cleanupTimer = setTimeout(() => {
-		celebration.reset()
-		canvas.remove()
-	}, 5000)
-
-	return () => {
-		timers.forEach(clearTimeout)
-		clearTimeout(cleanupTimer)
-		celebration.reset()
-		canvas.remove()
-	}
-}
 
 const copy = {
 	pl: {
@@ -153,9 +86,6 @@ const copy = {
 		leavesOwnMetaNone: 'Brak zaplanowanego urlopu',
 		teamWorkTitle: 'Czas pracy zespołu',
 		fillWorkTimeCta: 'Uzupełnij czas pracy',
-		teamCreatedTitle: 'Zespół został utworzony pomyślnie!',
-		teamCreatedBody: 'Twój zespół został pomyślnie zarejestrowany. Możesz teraz rozpocząć korzystanie z aplikacji.',
-		getStarted: 'Rozpocznij',
 		weekendToday: 'Weekend — zespół nie pracuje',
 		weekendTodayShort: 'Weekend',
 		holidayToday: 'Święto',
@@ -237,9 +167,6 @@ const copy = {
 		leavesOwnMetaNone: 'No leave scheduled',
 		teamWorkTitle: 'Team work time',
 		fillWorkTimeCta: 'Log work time',
-		teamCreatedTitle: 'Team created successfully!',
-		teamCreatedBody: 'Your team has been successfully registered. You can now start using the application.',
-		getStarted: 'Get started',
 		weekendToday: 'Weekend — team does not work',
 		weekendTodayShort: 'Weekend',
 		holidayToday: 'Public holiday',
@@ -530,26 +457,7 @@ function DayPriorityCard({ text, signal }) {
 	)
 }
 
-function SuccessModal({ text, onClose }) {
-	return (
-		<div className="po-dashboard-success" onClick={(event) => event.target === event.currentTarget && onClose()}>
-			<div className="po-dashboard-success__panel" onClick={(event) => event.stopPropagation()}>
-				<div className="po-dashboard-success__mark">
-					<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-						<polyline points="20 6 9 17 4 12" />
-					</svg>
-				</div>
-				<h2>{text.teamCreatedTitle}</h2>
-				<p>{text.teamCreatedBody}</p>
-				<button type="button" onClick={onClose}>{text.getStarted}</button>
-			</div>
-		</div>
-	)
-}
-
 function Dashboard() {
-	const [showSuccessModal, setShowSuccessModal] = useState(false)
-	const location = useLocation()
 	const { t, i18n } = useTranslation()
 	const language = i18n.resolvedLanguage === 'pl' ? 'pl' : 'en'
 	const text = getText(language)
@@ -560,31 +468,6 @@ function Dashboard() {
 		return timer?.startTime ? { active: true, ...timer } : null
 	}, [summary?.work?.myToday?.activeTimer])
 	const timerMetrics = useTimerElapsed(activeTimer)
-
-	useEffect(() => {
-		const showModalFromStorage = sessionStorage.getItem('showTeamSuccessModal') === 'true'
-		const showModalFromState = location.state?.showTeamSuccessModal
-		let cleanupConfetti
-		let confettiTimer
-
-		if (showModalFromStorage || showModalFromState) {
-			setShowSuccessModal(true)
-			if (showModalFromStorage) sessionStorage.removeItem('showTeamSuccessModal')
-			window.history.replaceState({}, document.title)
-			confettiTimer = setTimeout(() => {
-				cleanupConfetti = launchWelcomeConfetti()
-			}, 250)
-		}
-
-		return () => {
-			clearTimeout(confettiTimer)
-			cleanupConfetti?.()
-		}
-	}, [location.state])
-
-	const handleCloseSuccessModal = () => {
-		setShowSuccessModal(false)
-	}
 
 	const todayContext = summary?.period?.todayContext
 	const todayState = useMemo(() => {
@@ -914,7 +797,6 @@ function Dashboard() {
 					</>
 				)}
 			</main>
-			{showSuccessModal && <SuccessModal text={text} onClose={handleCloseSuccessModal} />}
 		</>
 	)
 }
