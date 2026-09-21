@@ -171,18 +171,18 @@
 	flex: 0 0 auto;
 }
 
-/* „Ukryj” w rogu karty — od razu widoczne, bez szukania na dole listy. */
+/* „Ukryj” w rogu karty — kolorowe, żeby dało się znaleźć bez szukania (light i dark). */
 .po-onboarding__dismiss {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 	padding: 7px 12px;
 	border-radius: 9px;
-	border: 1px solid var(--po-border-strong);
-	background: var(--po-surface);
+	border: 1px solid #f59e0b;
+	background: #fff7ed;
 	font-size: 13px !important;
-	font-weight: 600;
-	color: var(--po-text-secondary) !important;
+	font-weight: 700;
+	color: #b45309 !important;
 	cursor: pointer;
 	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
@@ -193,9 +193,111 @@
 }
 
 .po-onboarding__dismiss:hover {
-	background: var(--po-surface-hover);
-	border-color: var(--po-text-muted);
-	color: var(--po-text) !important;
+	background: #f59e0b;
+	border-color: #d97706;
+	color: #fff !important;
+}
+
+[data-theme='dark'] .po-onboarding__dismiss {
+	background: rgba(245, 158, 11, 0.16);
+	border-color: rgba(251, 191, 36, 0.55);
+	color: #fcd34d !important;
+}
+
+[data-theme='dark'] .po-onboarding__dismiss:hover {
+	background: #d97706;
+	border-color: #f59e0b;
+	color: #fff !important;
+}
+
+/* Rząd akcji pod listą: asystent AI + dane demo */
+.po-onboarding__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-top: 16px;
+}
+
+.po-onboarding__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 16px;
+	border-radius: 9px;
+	border: 1px solid transparent;
+	font-size: 14px !important;
+	font-weight: 600;
+	text-decoration: none !important;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.po-onboarding__btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.po-onboarding__btn--ai {
+	background: linear-gradient(135deg, #667eea, #764ba2);
+	color: #fff !important;
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.po-onboarding__btn--ai span {
+	color: inherit !important;
+	font-size: 15px !important;
+}
+
+.po-onboarding__btn--ai:hover {
+	transform: translateY(-1px);
+	color: #fff !important;
+}
+
+.po-onboarding__btn--demo {
+	background: var(--po-surface);
+	border-color: var(--po-brand);
+	color: var(--po-brand-text) !important;
+}
+
+.po-onboarding__btn--demo:hover:not(:disabled) {
+	background: var(--po-brand-soft);
+}
+
+.po-onboarding__btn--danger {
+	background: var(--po-surface);
+	border-color: #ef4444;
+	color: #b91c1c !important;
+}
+
+.po-onboarding__btn--danger:hover:not(:disabled) {
+	background: #fef2f2;
+}
+
+[data-theme='dark'] .po-onboarding__btn--danger {
+	color: #fca5a5 !important;
+	border-color: rgba(248, 113, 113, 0.6);
+}
+
+[data-theme='dark'] .po-onboarding__btn--danger:hover:not(:disabled) {
+	background: rgba(239, 68, 68, 0.14);
+}
+
+/* Lista ukryta, dane demo zostały — wąski pasek zamiast całej karty */
+.po-onboarding--demo-only {
+	padding: 12px 16px;
+}
+
+.po-onboarding__demo-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.po-onboarding__demo-bar span {
+	font-size: 13px !important;
+	color: var(--po-text-secondary) !important;
 }
 
 .po-onboarding__foot {

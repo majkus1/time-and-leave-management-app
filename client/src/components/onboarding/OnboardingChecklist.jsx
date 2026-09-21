@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { useOnboardingStatus, useDismissOnboarding } from '../../hooks/useOnboarding'
+import { useOnboardingStatus, useDismissOnboarding, useCreateDemoData, useRemoveDemoData } from '../../hooks/useOnboarding'
+import { useAlert } from '../../context/AlertContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './OnboardingChecklist.css'
 
@@ -30,8 +31,58 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 	const staff = isAdmin(role) || isHR(role)
 	const { data, isLoading } = useOnboardingStatus({ enabled: !!loggedIn && staff })
 	const dismiss = useDismissOnboarding()
+	const createDemo = useCreateDemoData()
+	const removeDemo = useRemoveDemoData()
+	const { showAlert, showConfirm } = useAlert()
 
-	if (!staff || isLoading || !data?.visible) return null
+	if (!staff || isLoading) return null
+
+	const demoPresent = Boolean(data?.demo?.present)
+	const demoAvailable = Boolean(data?.demo?.available) // tylko okres próbny
+	const demoBusy = createDemo.isPending || removeDemo.isPending
+
+	const loadDemo = async () => {
+		try {
+			const result = await createDemo.mutateAsync()
+			void showAlert(t('onboarding.demoLoaded', { count: result?.employees ?? 0 }))
+		} catch (e) {
+			const code = e?.response?.data?.code
+			void showAlert(
+				code === 'DEMO_NO_SEATS'
+					? t('onboarding.demoNoSeats')
+					: code === 'DEMO_EXISTS'
+						? t('onboarding.demoExists')
+						: code === 'DEMO_NOT_TRIAL'
+							? t('onboarding.demoNotTrial')
+							: t('onboarding.demoError')
+			)
+		}
+	}
+
+	const clearDemo = async () => {
+		if (!(await showConfirm(t('onboarding.demoRemoveConfirm')))) return
+		try {
+			await removeDemo.mutateAsync()
+			void showAlert(t('onboarding.demoRemoved'))
+		} catch {
+			void showAlert(t('onboarding.demoError'))
+		}
+	}
+
+	// Lista ukryta, ale dane demo wciąż w zespole — zostaje sam pasek z przyciskiem usunięcia.
+	if (!data?.visible) {
+		if (!demoPresent) return null
+		return (
+			<section className={`po-onboarding po-onboarding--${variant} po-onboarding--demo-only`} aria-label={t('onboarding.demoBarTitle')}>
+				<div className="po-onboarding__demo-bar">
+					<span>{t('onboarding.demoBarBody')}</span>
+					<button type="button" className="po-onboarding__btn po-onboarding__btn--danger" onClick={clearDemo} disabled={demoBusy}>
+						{removeDemo.isPending ? t('onboarding.demoRemoving') : t('onboarding.demoRemove')}
+					</button>
+				</div>
+			</section>
+		)
+	}
 
 	const onWorkTime = location.pathname === '/work-time'
 	const steps = [
@@ -117,12 +168,24 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 				))}
 			</ol>
 
-			<p className="po-onboarding__help">
-				{t('onboarding.helpPrompt')}{' '}
-				<Link to="/ai-assistant?mode=help&module=general" className="po-onboarding__help-link">
-					{t('onboarding.helpLink')}
+			<div className="po-onboarding__actions">
+				<Link to="/ai-assistant?mode=help&module=general" className="po-onboarding__btn po-onboarding__btn--ai">
+					<span aria-hidden="true">✦</span>
+					{t('onboarding.askAssistant')}
 				</Link>
-			</p>
+				{demoPresent ? (
+					<button type="button" className="po-onboarding__btn po-onboarding__btn--danger" onClick={clearDemo} disabled={demoBusy}>
+						{removeDemo.isPending ? t('onboarding.demoRemoving') : t('onboarding.demoRemove')}
+					</button>
+				) : demoAvailable ? (
+					<button type="button" className="po-onboarding__btn po-onboarding__btn--demo" onClick={loadDemo} disabled={demoBusy}>
+						{createDemo.isPending ? t('onboarding.demoLoading') : t('onboarding.demoLoad')}
+					</button>
+				) : null}
+			</div>
+			{(demoPresent || demoAvailable) && (
+				<p className="po-onboarding__help">{demoPresent ? t('onboarding.demoPresentHint') : t('onboarding.demoHint')}</p>
+			)}
 
 			{data.allDone ? (
 				<div className="po-onboarding__foot">

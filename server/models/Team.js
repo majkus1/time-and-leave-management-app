@@ -179,6 +179,11 @@ const teamSchema = new mongoose.Schema({
 		type: Date,
 		default: null,
 	},
+	/** Dane demonstracyjne (services/demoDataService): { createdAt, users, workdays, … } — null gdy brak */
+	demoData: {
+		type: mongoose.Schema.Types.Mixed,
+		default: null,
+	},
 }, {
 	collection: 'teams',
 	timestamps: true

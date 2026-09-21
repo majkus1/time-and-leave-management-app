@@ -23,6 +23,33 @@ export function useOnboardingStatus(options = {}) {
 	})
 }
 
+/** Wczytanie / usunięcie danych demo — po zmianie odświeżamy wszystko, bo dotyka wielu modułów. */
+export function useCreateDemoData() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await axios.post(`${API_URL}/api/onboarding/demo-data`, {}, { withCredentials: true })
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries()
+		},
+	})
+}
+
+export function useRemoveDemoData() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async () => {
+			const { data } = await axios.delete(`${API_URL}/api/onboarding/demo-data`, { withCredentials: true })
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries()
+		},
+	})
+}
+
 export function useDismissOnboarding() {
 	const qc = useQueryClient()
 	return useMutation({
@@ -31,7 +58,8 @@ export function useDismissOnboarding() {
 			return data
 		},
 		onSuccess: () => {
-			qc.setQueryData(ONBOARDING_STATUS_QUERY_KEY, { visible: false })
+			// visible:false, ale info o danych demo zostaje — pasek „usuń dane demo” ma działać po ukryciu listy
+			qc.setQueryData(ONBOARDING_STATUS_QUERY_KEY, prev => ({ visible: false, demo: prev?.demo }))
 		},
 	})
 }

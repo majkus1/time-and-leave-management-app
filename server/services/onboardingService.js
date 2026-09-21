@@ -3,6 +3,8 @@ const Team = require('../models/Team')(firmDb)
 const User = require('../models/user')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const Workday = require('../models/Workday')(firmDb)
+const demoDataService = require('./demoDataService')
+const entitlementsService = require('./entitlementsService')
 
 /** Po tylu dniach od założenia zespołu lista pierwszych kroków znika sama, nawet niedokończona. */
 const ONBOARDING_WINDOW_DAYS = 60
@@ -19,14 +21,20 @@ function isAdminOrHr(roles) {
 async function getOnboardingStatus({ teamId, roles }) {
 	if (!isAdminOrHr(roles)) return { visible: false }
 
-	const team = await Team.findById(teamId).select('createdAt').lean()
+	const team = await Team.findById(teamId).select('createdAt demoData billingPlanKey trialEndsAt').lean()
 	if (!team) return { visible: false }
 
+	// Dane demo raportujemy także po ukryciu listy — przycisk „usuń” musi być dostępny, dopóki dane istnieją.
+	const demo = demoDataService.describeDemoState(team)
+
+	// Lista „pierwsze kroki” (z asystentem i danymi demo) tylko w okresie próbnym — po nim zespół ma już swoje dane albo plan darmowy.
+	if (!entitlementsService.isTrialActive(team)) return { visible: false, demo }
+
 	const settings = await Settings.getSettings(teamId)
-	if (settings.onboardingDismissedAt) return { visible: false }
+	if (settings.onboardingDismissedAt) return { visible: false, demo }
 
 	const ageDays = (Date.now() - new Date(team.createdAt).getTime()) / 86400000
-	if (ageDays > ONBOARDING_WINDOW_DAYS) return { visible: false }
+	if (ageDays > ONBOARDING_WINDOW_DAYS) return { visible: false, demo }
 
 	const activeUsers = await User.find({
 		teamId,
@@ -54,6 +62,7 @@ async function getOnboardingStatus({ teamId, roles }) {
 		doneCount,
 		total: 3,
 		allDone: doneCount === 3,
+		demo,
 	}
 }
 
@@ -71,4 +80,10 @@ async function dismissOnboarding({ teamId, roles }) {
 	return { ok: true }
 }
 
-module.exports = { getOnboardingStatus, dismissOnboarding, ONBOARDING_WINDOW_DAYS }
+module.exports = {
+	getOnboardingStatus,
+	dismissOnboarding,
+	createDemoData: demoDataService.createDemoData,
+	removeDemoData: demoDataService.removeDemoData,
+	ONBOARDING_WINDOW_DAYS,
+}
