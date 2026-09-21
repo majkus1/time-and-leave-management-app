@@ -559,6 +559,20 @@ async function handleSubscriptionUpdated(event) {
 	})
 	if (!marked) return { handled: true, eventType: event.type, duplicate: true }
 
+	// Stripe nie gwarantuje kolejności: spóźnione past_due po invoice.paid zdegradowałoby opłacony zespół.
+	// Przy past_due/unpaid sprawdzamy żywy stan subskrypcji i ignorujemy zdarzenie, jeśli jest już nieaktualne.
+	if (PAST_DUE_STATUSES.has(sub.status) && sub.id) {
+		try {
+			const live = await getStripeClient().subscriptions.retrieve(String(sub.id))
+			if (live?.status && !PAST_DUE_STATUSES.has(live.status)) {
+				console.info(`[stripe] subscription.updated ${sub.status} ignored: live status=${live.status} sub=${sub.id}`)
+				return { handled: true, eventType: event.type, stale: true }
+			}
+		} catch (e) {
+			console.warn('[stripe] subscription.updated live status check skipped:', e?.message || e)
+		}
+	}
+
 	const team = await Team.findById(teamId)
 	if (team) {
 		team.stripeSubscriptionId = sub.id ? String(sub.id) : team.stripeSubscriptionId
@@ -566,11 +580,20 @@ async function handleSubscriptionUpdated(event) {
 		team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
 		team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
 		if (PAST_DUE_STATUSES.has(sub.status)) {
-			// Nieudane odnowienie: dostęp do końca opłaconego okresu + karencja, nie do końca nieopłaconego cyklu
+			// Nieudane odnowienie: dostęp do końca opłaconego okresu + karencja, nie do końca nieopłaconego cyklu.
+			// Karencję przyznajemy tylko przy przejściu z opłaconego stanu (previous_attributes.status) — kolejny cykl
+			// nieopłaconej subskrypcji nie może dać kolejnych 7 dni; poza tym datę wolno tylko skracać (np. stare dane).
 			const accessEnd = resolvePastDueAccessEndSeconds(sub, getStripePriceDefinition, STRIPE_PAST_DUE_GRACE_DAYS)
 			const accessIso = periodEndIsoFromUnixSeconds(accessEnd)
-			if (accessIso) team.billingPeriodEnd = new Date(accessIso)
-			else console.warn(`[stripe] subscription.updated ${sub.status}: no period start for sub=${sub.id}, billingPeriodEnd left as is`)
+			if (accessIso) {
+				const graceEnd = new Date(accessIso)
+				const prevStatus = event.data?.previous_attributes?.status
+				const fromPaid = prevStatus === 'active' || prevStatus === 'trialing'
+				const current = team.billingPeriodEnd ? new Date(team.billingPeriodEnd) : null
+				if (fromPaid || !current || current > graceEnd) team.billingPeriodEnd = graceEnd
+			} else {
+				console.warn(`[stripe] subscription.updated ${sub.status}: no period start for sub=${sub.id}, billingPeriodEnd left as is`)
+			}
 		} else {
 			const endIso = periodEndIsoFromUnixSeconds(currentPeriodEnd)
 			if (endIso) team.billingPeriodEnd = new Date(endIso)
