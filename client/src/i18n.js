@@ -435,6 +435,8 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · paid through {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · manual billing (no renewal date here).',
 						currentPlanLapsed: '{{plan}} lapsed — order a plan below or email us.',
+						currentPlanPaymentPastDue:
+							'{{plan}} · the last card payment failed. Access continues through {{until}} — update the card to keep the plan.',
 						freemiumSeatBlockedAdmin:
 							'Your team has {{count}} active users; the free tier allows {{max}}. Remove extra accounts in Team management to unlock the app, or upgrade below.',
 						freemiumSeatBlockedWorker:
@@ -467,6 +469,12 @@ i18n
 						stripeChangeCard: 'Update card',
 						stripeChangeCardBusy: 'Opening…',
 						stripePortalError: 'Could not open card settings. Try again later or contact support.',
+						paymentFailedBannerAdmin:
+							'The bank declined the last subscription payment. Update the card or enable online/recurring payments for it — the payment will be retried automatically. Without payment by {{until}} the team switches to the free plan.',
+						paymentFailedBannerAdminUnpaid:
+							'The subscription payment failed and automatic retries have ended. Update the card and pay the outstanding invoice to keep the plan. Without payment by {{until}} the team switches to the free plan.',
+						paymentFailedBannerWorker:
+							'The last subscription payment failed. Please inform your administrator so the plan is not interrupted.',
 						paidSeatLimitBannerAdmin:
 							'Your team has {{count}} accounts; the {{plan}} plan includes up to {{max}}. Upgrade below or reduce users in Team management.',
 						paidSeatLimitBannerWorker:
@@ -2620,6 +2628,8 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · do {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · rozliczenia ręczne (bez daty odnowienia).',
 						currentPlanLapsed: '{{plan}} nieaktywny — zamów plan poniżej.',
+						currentPlanPaymentPastDue:
+							'{{plan}} · ostatnia płatność kartą nie powiodła się. Dostęp trwa do {{until}} — zmień kartę, aby zachować plan.',
 						freemiumSeatBlockedAdmin:
 							'W zespole jest {{count}} aktywnych użytkowników, a w trybie darmowym dozwolone jest {{max}}. Usuń nadmiarowe konta w Zarządzaniu zespołem, aby odblokować aplikację, lub wykup plan poniżej.',
 						freemiumSeatBlockedWorker:
@@ -2657,6 +2667,12 @@ i18n
 						stripeChangeCard: 'Zmień kartę',
 						stripeChangeCardBusy: 'Otwieranie…',
 						stripePortalError: 'Nie udało się otworzyć ustawień karty. Spróbuj ponownie lub napisz do nas.',
+						paymentFailedBannerAdmin:
+							'Bank odrzucił ostatnią płatność za subskrypcję. Zmień kartę lub włącz dla niej płatności internetowe/cykliczne — obciążenie zostanie ponowione automatycznie. Bez płatności do {{until}} zespół przejdzie na plan darmowy.',
+						paymentFailedBannerAdminUnpaid:
+							'Płatność za subskrypcję nie powiodła się, a automatyczne ponowienia zakończyły się. Zmień kartę i opłać zaległą fakturę, aby zachować plan. Bez płatności do {{until}} zespół przejdzie na plan darmowy.',
+						paymentFailedBannerWorker:
+							'Ostatnia płatność za subskrypcję nie powiodła się. Poinformuj administratora, aby plan nie został przerwany.',
 						paidSeatLimitBannerAdmin:
 							'W zespole jest {{count}} kont, a pakiet {{plan}} obejmuje do {{max}}. Wybierz wyższy pakiet poniżej albo zmniejsz liczbę kont w zarządzaniu zespołem.',
 						paidSeatLimitBannerWorker:

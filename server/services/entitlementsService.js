@@ -403,6 +403,14 @@ function buildClientEntitlements(team, options = {}) {
 
 	const modsEffective = effectiveBillingModuleKeys(team, now)
 
+	/**
+	 * Nieudane odnowienie subskrypcji Stripe: webhook ustawia billingStatus 'inactive', ale dostęp trwa do billingPeriodEnd.
+	 * Klient musi wtedy móc zmienić kartę — inaczej przycisk znika dokładnie wtedy, gdy jest potrzebny.
+	 */
+	const stripePaymentPastDue =
+		team.stripeSubscriptionId != null &&
+		(team.stripeSubscriptionStatus === 'past_due' || team.stripeSubscriptionStatus === 'unpaid')
+
 	return {
 		legacy: structuralLegacy,
 		legacyGrandfatheredActive,
@@ -424,16 +432,17 @@ function buildClientEntitlements(team, options = {}) {
 			subscriptionId: team.stripeSubscriptionId || null,
 			subscriptionStatus: team.stripeSubscriptionStatus || null,
 			cancelAtPeriodEnd: team.stripeCancelAtPeriodEnd === true,
+			paymentPastDue: stripePaymentPastDue,
 			canCancelSubscription:
 				team.stripeSubscriptionId != null &&
 				team.stripeCancelAtPeriodEnd !== true &&
 				team.billingStatus === 'active' &&
 				team.billingCycle === 'monthly',
-			/** Karta / portal Stripe — tylko przy miesięcznej subskrypcji powiązanej ze Stripe */
+			/** Karta / portal Stripe — miesięczna subskrypcja Stripe: aktywna albo z nieudaną płatnością (past_due) */
 			canManagePaymentMethod:
 				team.stripeCustomerId != null &&
 				team.stripeSubscriptionId != null &&
-				team.billingStatus === 'active' &&
+				(team.billingStatus === 'active' || stripePaymentPastDue) &&
 				team.billingCycle === 'monthly',
 		},
 		maxUsers,

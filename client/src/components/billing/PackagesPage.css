@@ -950,6 +950,44 @@
 	line-height: 1.5;
 }
 
+/* Nieudane odnowienie subskrypcji kartą (Stripe past_due) — czerwony, z przyciskiem do portalu */
+.packages-payment-failed-banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem 1rem;
+	background: #fef2f2;
+	border: 1px solid #fca5a5;
+	color: #991b1b;
+	padding: 0.75rem 1rem;
+	border-radius: 10px;
+	margin-bottom: 1rem;
+	font-size: 0.92rem;
+	line-height: 1.5;
+}
+
+.packages-payment-failed-banner__btn {
+	flex-shrink: 0;
+	padding: 0.45rem 0.95rem;
+	border-radius: 8px;
+	border: 1px solid #b91c1c;
+	background: #b91c1c;
+	color: #fff;
+	font-size: 0.88rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.packages-payment-failed-banner__btn:hover:not(:disabled) {
+	background: #991b1b;
+}
+
+.packages-payment-failed-banner__btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
 .packages-admin-only-banner {
 	background: #fffbeb;
 	border: 1px solid #fcd34d;

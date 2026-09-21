@@ -917,6 +917,10 @@ export default function PackagesPage() {
 			ent?.ai?.monthlyIncluded != null ||
 			(ent?.ai?.packBalance ?? 0) > 0)
 
+	// Podgląd wyglądu baneru na dev: /packages?previewPaymentFailed=1 (tylko UI, bez zmian w API)
+	const previewPaymentFailed =
+		import.meta.env.DEV && new URLSearchParams(window.location.search).get('previewPaymentFailed') === '1'
+	const stripePaymentPastDue = Boolean(ent?.stripe?.paymentPastDue) || previewPaymentFailed
 	let currentPlanBody = null
 	let stripeCancellationBody = null
 	if (ent) {
@@ -955,6 +959,18 @@ export default function PackagesPage() {
 		} else if (ent.planKey === 'trial' && ent.trialEndsAt) {
 			currentPlanBody = t('billingPackages.currentPlanTrialEnded')
 		} else if (
+			stripePaymentPastDue &&
+			ent.planKey &&
+			PAID_PLAN_IDS.includes(ent.planKey) &&
+			ent.billingPeriodEnd &&
+			new Date(ent.billingPeriodEnd) > new Date()
+		) {
+			// Nieudane odnowienie kartą — dostęp trwa do końca okresu, plan nie jest „nieaktywny”
+			currentPlanBody = t('billingPackages.currentPlanPaymentPastDue', {
+				plan: TIER_LABELS[ent.planKey] || ent.planKey,
+				until: formatPlanDate(ent.billingPeriodEnd, localeTag),
+			})
+		} else if (
 			ent.billingHadPaidPlan &&
 			ent.planKey &&
 			PAID_PLAN_IDS.includes(ent.planKey) &&
@@ -990,6 +1006,40 @@ export default function PackagesPage() {
 				)}
 
 				{justSent && <div className="packages-sent-banner">{t('billingPackages.sent')}</div>}
+
+				{stripePaymentPastDue && (
+					<div className="packages-payment-failed-banner" role="alert">
+						<span>
+							{!canSubmitPurchaseRequest
+								? t('billingPackages.paymentFailedBannerWorker')
+								: t(
+										ent?.stripe?.subscriptionStatus === 'unpaid'
+											? 'billingPackages.paymentFailedBannerAdminUnpaid'
+											: 'billingPackages.paymentFailedBannerAdmin',
+										{ until: ent?.billingPeriodEnd ? formatPlanDate(ent.billingPeriodEnd, localeTag) : '—' }
+									)}
+						</span>
+						{canSubmitPurchaseRequest && (ent?.stripe?.canManagePaymentMethod || previewPaymentFailed) && (
+							<button
+								type="button"
+								className="packages-payment-failed-banner__btn"
+								disabled={stripeBillingPortal.isPending}
+								onClick={async () => {
+									try {
+										const data = await stripeBillingPortal.mutateAsync()
+										if (data?.url) window.location.href = data.url
+									} catch (e) {
+										void showAlert(billingAxiosErrorMessage(e, t) || t('billingPackages.stripePortalError'))
+									}
+								}}
+							>
+								{stripeBillingPortal.isPending
+									? t('billingPackages.stripeChangeCardBusy')
+									: t('billingPackages.stripeChangeCard')}
+							</button>
+						)}
+					</div>
+				)}
 
 				{ent?.freemiumSeatBlocked && typeof ent?.freemiumMaxSeats === 'number' && teamSeats != null && (
 					<div className="packages-freemium-seat-banner" role="alert">

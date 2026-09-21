@@ -49,6 +49,7 @@ Zespoły powyżej {{maxUsers.plan.business}} osób: wycena indywidualna — kont
 ### Płatności i faktury
 - Menu → Pakiety i rozliczenia (Administrator, HR): wybierasz cykl (miesięczny/roczny), plan i moduły.
 - Karta (Stripe): subskrypcja odnawiana automatycznie co miesiąc; kartą zarządzasz na tej samej stronie, subskrypcję można anulować (działa do końca opłaconego okresu).
+- Gdy bank odrzuci odnowienie kartą: plan działa jeszcze 7 dni od końca opłaconego okresu (data widoczna w Pakietach i rozliczeniach), pojawia się tam czerwony komunikat z przyciskiem „Zmień kartę”, a obciążenie jest ponawiane automatycznie. Po 7 dniach bez płatności zespół przechodzi na plan darmowy (do {{trial.maxUsers}} osób); po opłaceniu pełny plan wraca od razu. Najczęstsza przyczyna to wyłączone płatności internetowe lub cykliczne na karcie — włącza się je w aplikacji banku. Jeśli płatność nie przejdzie do końca okresu, zespół przechodzi na plan darmowy (do {{trial.maxUsers}} osób).
 - BLIK / przelew (Przelewy24): płatność jednorazowa za wybrany okres (miesiąc lub rok), bez automatycznego odnowienia — przed końcem okresu aplikacja przypomina e-mailem.
 - Przed zakupem trzeba uzupełnić dane do faktury: firma — nazwa, adres i NIP; osoba fizyczna — imię i nazwisko oraz adres (bez NIP). Faktura jest wystawiana w KSeF i wysyłana e-mailem w ciągu kilku dni po płatności. Ceny są netto, VAT doliczany na fakturze.
 - Po zakupie dostęp włącza się od razu (webhook płatności), bez czekania.

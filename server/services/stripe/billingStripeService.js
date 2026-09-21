@@ -17,9 +17,17 @@ const {
 	resolveInvoiceSubscriptionId,
 	resolvePlanAndPeriodFromInvoice,
 	resolveSubscriptionPeriodEndSeconds,
+	resolvePastDueAccessEndSeconds,
 } = require('./stripeBillingPayloadCompatibility')
 const { isPaidPlanKey, normalizePaidPlanKey, isCorePlanKey, isModuleKey } = require('../../constants/planCatalog')
 const entitlementsService = require('../entitlementsService')
+
+/** Ile dni po końcu opłaconego okresu zespół zachowuje plan, gdy odnowienie kartą nie przeszło; potem freemium. */
+const STRIPE_PAST_DUE_GRACE_DAYS = (() => {
+	const n = Number(process.env.STRIPE_PAST_DUE_GRACE_DAYS)
+	return Number.isFinite(n) && n >= 0 ? n : 7
+})()
+const PAST_DUE_STATUSES = new Set(['past_due', 'unpaid'])
 
 let stripeClient = null
 let stripeClientKey = ''
@@ -557,8 +565,16 @@ async function handleSubscriptionUpdated(event) {
 		team.stripeCustomerId = sub.customer ? String(sub.customer) : team.stripeCustomerId
 		team.stripeSubscriptionStatus = sub.status || team.stripeSubscriptionStatus
 		team.stripeCancelAtPeriodEnd = sub.cancel_at_period_end === true
-		const endIso = periodEndIsoFromUnixSeconds(currentPeriodEnd)
-		if (endIso) team.billingPeriodEnd = new Date(endIso)
+		if (PAST_DUE_STATUSES.has(sub.status)) {
+			// Nieudane odnowienie: dostęp do końca opłaconego okresu + karencja, nie do końca nieopłaconego cyklu
+			const accessEnd = resolvePastDueAccessEndSeconds(sub, getStripePriceDefinition, STRIPE_PAST_DUE_GRACE_DAYS)
+			const accessIso = periodEndIsoFromUnixSeconds(accessEnd)
+			if (accessIso) team.billingPeriodEnd = new Date(accessIso)
+			else console.warn(`[stripe] subscription.updated ${sub.status}: no period start for sub=${sub.id}, billingPeriodEnd left as is`)
+		} else {
+			const endIso = periodEndIsoFromUnixSeconds(currentPeriodEnd)
+			if (endIso) team.billingPeriodEnd = new Date(endIso)
+		}
 		if (sub.status && sub.status !== 'active' && sub.status !== 'trialing') {
 			team.billingStatus = 'inactive'
 		}

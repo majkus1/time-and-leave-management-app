@@ -6971,6 +6971,22 @@
 	color: #fca5a5 !important;
 }
 
+[data-theme='dark'] .packages-payment-failed-banner {
+	background: rgba(239, 68, 68, 0.12) !important;
+	border-color: rgba(248, 113, 113, 0.4) !important;
+	color: #fecaca !important;
+}
+
+[data-theme='dark'] .packages-payment-failed-banner span {
+	color: #fecaca !important;
+}
+
+[data-theme='dark'] .packages-payment-failed-banner__btn {
+	background: #dc2626 !important;
+	border-color: #dc2626 !important;
+	color: #fff !important;
+}
+
 [data-theme='dark'] .packages-paid-plan-seat-banner {
 	background: var(--po-warning-soft) !important;
 	border-color: rgba(251, 191, 36, 0.35) !important;

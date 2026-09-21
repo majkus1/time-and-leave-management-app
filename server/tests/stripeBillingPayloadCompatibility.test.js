@@ -4,6 +4,8 @@ const {
 	resolveInvoiceSubscriptionId,
 	resolvePlanAndPeriodFromInvoice,
 	resolveSubscriptionPeriodEndSeconds,
+	resolveSubscriptionPeriodStartSeconds,
+	resolvePastDueAccessEndSeconds,
 } = require('../services/stripe/stripeBillingPayloadCompatibility')
 
 const PRICE_PRO_MONTHLY = 'price_pro_monthly'
@@ -210,4 +212,30 @@ test('rejects conflicting subscription ids, metadata and ambiguous periods', () 
 			}),
 		/Conflicting invoice line periods/
 	)
+})
+
+test('past_due: dostęp = początek nieopłaconego okresu + karencja, nie koniec cyklu', () => {
+	const START = 1_800_000_000 // koniec ostatnio opłaconego okresu
+	const END = START + 30 * 86400
+	const sub = {
+		current_period_start: START,
+		current_period_end: END,
+		items: { data: [{ price: PRICE_PRO_MONTHLY, current_period_start: START, current_period_end: END }] },
+	}
+	assert.equal(resolveSubscriptionPeriodStartSeconds(sub, priceDefinition), START)
+	assert.equal(resolvePastDueAccessEndSeconds(sub, priceDefinition, 7), START + 7 * 86400)
+	assert.equal(resolvePastDueAccessEndSeconds(sub, priceDefinition, 0), START)
+	assert.equal(resolvePastDueAccessEndSeconds({ items: { data: [] } }, priceDefinition, 7), null)
+})
+
+test('past_due: pozycja planu ma pierwszeństwo przed modułami przy początku okresu', () => {
+	const sub = {
+		items: {
+			data: [
+				{ price: PRICE_PRO_MONTHLY, current_period_start: 100, current_period_end: 200 },
+				{ price: 'price_module_unknown', current_period_start: 150, current_period_end: 250 },
+			],
+		},
+	}
+	assert.equal(resolveSubscriptionPeriodStartSeconds(sub, priceDefinition), 100)
 })

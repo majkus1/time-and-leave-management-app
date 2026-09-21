@@ -175,6 +175,43 @@ function resolveSubscriptionPeriodEndSeconds(subscription, getPriceDefinition) {
 	return itemPeriod || periodSeconds(subscription?.current_period_end)
 }
 
+/** Początek bieżącego okresu subskrypcji (= koniec ostatnio opłaconego) — lustrzane do resolveSubscriptionPeriodEndSeconds. */
+function resolveSubscriptionPeriodStartSeconds(subscription, getPriceDefinition) {
+	const items = subscription?.items?.data || []
+	const planPeriods = []
+	for (const item of items) {
+		const priceId = stripeId(item?.price)
+		if (!priceId || typeof getPriceDefinition !== 'function') continue
+		try {
+			const definition = getPriceDefinition(priceId)
+			if (definition?.kind === 'plan') planPeriods.push(item.current_period_start)
+		} catch (_) {
+			// Nieznane ceny obsługuje fallback po wszystkich pozycjach.
+		}
+	}
+	const planPeriod = consistentPeriod(planPeriods, 'plan subscription item period starts')
+	if (planPeriod) return planPeriod
+
+	const itemPeriod = consistentPeriod(
+		items.map(item => item?.current_period_start),
+		'subscription item period starts'
+	)
+	return itemPeriod || periodSeconds(subscription?.current_period_start)
+}
+
+/**
+ * Koniec dostępu przy nieudanym odnowieniu (past_due / unpaid): Stripe otwiera nowy okres zanim pobierze pieniądze,
+ * więc current_period_end to koniec NIEOPŁACONEGO miesiąca. Dostęp = koniec ostatnio opłaconego okresu
+ * (current_period_start) + karencja na ponowienia. Liczone od stałego punktu — kolejne ponowienia nie wydłużają.
+ */
+function resolvePastDueAccessEndSeconds(subscription, getPriceDefinition, graceDays) {
+	const start = resolveSubscriptionPeriodStartSeconds(subscription, getPriceDefinition)
+	if (!start) return null
+	const days = Number(graceDays)
+	if (!Number.isFinite(days) || days < 0) return start
+	return start + Math.round(days * 24 * 60 * 60)
+}
+
 function resolvePlanAndPeriodFromInvoice({
 	invoice,
 	subscription,
@@ -273,5 +310,7 @@ module.exports = {
 	collectPriceRefs,
 	resolveInvoicePeriodEndSeconds,
 	resolveSubscriptionPeriodEndSeconds,
+	resolveSubscriptionPeriodStartSeconds,
+	resolvePastDueAccessEndSeconds,
 	resolvePlanAndPeriodFromInvoice,
 }
