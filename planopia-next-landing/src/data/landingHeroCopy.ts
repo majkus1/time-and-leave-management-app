@@ -1,6 +1,6 @@
 export const landingHeroCopy = {
 	pl: {
-		eyebrow: 'Wszystko w jednym miejscu',
+		eyebrow: 'Zamiast Excela i maili',
 		cta: 'Załóż darmowy zespół',
 		// Druga sciezka: wieksze firmy zwykle chca porozmawiac, zanim zaloza konto.
 		secondaryCta: 'Umów rozmowę',
@@ -13,7 +13,7 @@ export const landingHeroCopy = {
 		imageAlt: 'biznesmen zaznaczający aplikację',
 	},
 	en: {
-		eyebrow: 'Everything in one place',
+		eyebrow: 'Instead of spreadsheets and emails',
 		cta: 'Create your free team',
 		secondaryCta: 'Book a call',
 		secondaryCtaHref: '/en#contact',

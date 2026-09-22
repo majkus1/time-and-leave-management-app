@@ -10,7 +10,7 @@ export const planOfferingCopy = {
 			'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela. 30 dni pełnej aplikacji za darmo, bez karty. Potem ewidencja do 5 osób lub pakiety z modułami i AI.',
 		jsonLdOfferDescription:
 			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
-		heroH1: 'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela',
+		heroH1: 'Ewidencja czasu pracy, urlopy i grafiki w jednym systemie',
 		// Dwa zdania = dwie linie w hero (LandingHero łamie po \n): plan darmowy jest bezterminowy, 30 dni pełnej wersji to bonus.
 		heroSub: 'Darmowy plan bez limitu czasu dla zespołów do 5 osób.\nNa start 30 dni pełnej wersji — z urlopami i grafikami.',
 		valueEyebrow: 'Dlaczego nie Excel?',
@@ -29,8 +29,8 @@ export const planOfferingCopy = {
 		],
 		// Sekcja #oaplikacji. Nazywa specjalizacje (czas pracy zespolu) zamiast szerokiej
 		// kategorii „zarzadzanie firma", ktorej produkt nie obejmuje.
-		aboutEyebrow: 'Jeden system zamiast arkuszy i maili',
-		aboutTitle: 'Wszystko wokół czasu pracy zespołu — w jednym systemie',
+		aboutEyebrow: 'Co znajdziesz w Planopii',
+		aboutTitle: 'Pięć modułów, jedno logowanie — od godzin po grafik',
 		aboutLead:
 			'Planopia porządkuje to, co dzieje się wokół czasu pracy: ewidencję godzin, urlopy i grafik. W tym samym miejscu masz zadania, czat i Asystenta AI, więc dane nie rozjeżdżają się po arkuszach, mailach i papierowych wnioskach.',
 		blogJsonLdExtra:
@@ -43,7 +43,7 @@ export const planOfferingCopy = {
 			'Free time tracking, leave, and schedules without spreadsheets. 30-day full trial, no card. Then free tier for 5 users or paid plans with full modules and AI.',
 		jsonLdOfferDescription:
 			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
-		heroH1: 'Free time tracking, leave, and schedules without spreadsheets',
+		heroH1: 'Time tracking, leave and schedules in one system',
 		heroSub: 'A free plan with no time limit for teams of up to 5.\nStart with 30 days of the full version — leave and schedules included.',
 		valueEyebrow: 'Why not spreadsheets?',
 		valueTitle: 'Spreadsheets do not manage the process. Planopia does.',
@@ -60,8 +60,8 @@ export const planOfferingCopy = {
 			},
 		],
 		// Blizniak sekcji #oaplikacji — musi mowic to samo co wersja PL.
-		aboutEyebrow: 'One system instead of spreadsheets and emails',
-		aboutTitle: "Everything around your team's working time — in one system",
+		aboutEyebrow: 'What you get in Planopia',
+		aboutTitle: 'Five modules, one login — from hours to schedules',
 		aboutLead:
 			'Planopia organizes what happens around working time: hours, leave, and schedules. In the same place you get tasks, chat, and the AI Assistant, so data stops drifting across spreadsheets, emails, and paper requests.',
 		blogJsonLdExtra:
