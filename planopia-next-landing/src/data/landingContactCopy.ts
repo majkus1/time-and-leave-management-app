@@ -20,7 +20,7 @@ export const landingContactCopy = {
 		teamSizeLabel: 'Wielkość zespołu (opcjonalnie)',
 		teamSizePlaceholder: 'np. 25 osób',
 		dateLabel: 'Termin rozmowy (opcjonalnie)',
-		dateHint: 'Dni robocze 16:00–21:00, rozmowa ok. 15 minut — te same terminy, co w aplikacji.',
+		dateHint: 'Dni robocze 16:00–21:00, rozmowa ok. 15 minut.',
 		slotPicker: {
 			pickDay: '1. Dzień',
 			pickTime: '2. Godzina',
@@ -58,7 +58,7 @@ export const landingContactCopy = {
 		teamSizeLabel: 'Team size (optional)',
 		teamSizePlaceholder: 'e.g. 25 people',
 		dateLabel: 'Call time (optional)',
-		dateHint: 'Weekdays 4–9 pm Polish time, about 15 minutes — the same slots as in the app.',
+		dateHint: 'Weekdays 4–9 pm Polish time, about 15 minutes.',
 		slotPicker: {
 			pickDay: '1. Day',
 			pickTime: '2. Time',

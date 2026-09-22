@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import Sidebar from '../dashboard/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
@@ -19,7 +19,6 @@ import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
 import SuperAdminActivityPanel from '../admin/SuperAdminActivityPanel'
-import SuperAdminPaymentReminderPanel from '../admin/SuperAdminPaymentReminderPanel'
 
 const PAID_PLAN_LABELS = {
 	starter: 'Starter',
@@ -72,6 +71,11 @@ function Logs() {
 
 	const isAdmin = role && role.includes('Admin')
 	const isSuperAdmin = username === 'michalipka1@gmail.com'
+	// Panel aktywności właściciela jest na samym dole długiej strony — przycisk jak w Ustawieniach (settings-save-scroll-fab)
+	const pageBottomRef = useRef(null)
+	const scrollToPageBottom = useCallback(() => {
+		pageBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+	}, [])
 	const isEnglish = i18n.language === 'en'
 
 	const { data: paidPlanTeams = [], isLoading: loadingPaidPlanTeams } = useBillingSuperPaidPlanTeams(isSuperAdmin)
@@ -3561,10 +3565,23 @@ function Logs() {
 				</section>
 			)}
 
-			{isSuperAdmin && <SuperAdminPaymentReminderPanel />}
 			{isSuperAdmin && <SuperAdminActivityPanel />}
+			{isSuperAdmin && <div ref={pageBottomRef} aria-hidden="true" />}
 
 			</div> {/* logs-container */}
+			{isSuperAdmin && (
+				<button
+					type="button"
+					className="settings-save-scroll-fab"
+					onClick={scrollToPageBottom}
+					aria-label={t('settings.scrollToBottom')}
+					title={t('settings.scrollToBottom')}
+				>
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+						<path d="M12 5v14M19 12l-7 7-7-7" />
+					</svg>
+				</button>
+			)}
 		</>
 	)
 }

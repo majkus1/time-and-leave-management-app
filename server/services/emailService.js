@@ -843,39 +843,9 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	await sendEmail(toEmail, null, subject, html)
 }
 
-/**
- * Przypomnienie o nieudanym odnowieniu kartą (past_due) — wysyłane ręcznie przez właściciela z panelu w Zarządzaniu
- * zespołem. Builder osobno, żeby podgląd w UI był identyczny z tym, co wychodzi.
- */
-function buildBillingPaymentReminderEmail({ teamName, planLabel, graceEnd, packagesUrl }) {
-	const team = escapeHtml(teamName || 'Państwa zespół')
-	const plan = escapeHtml(planLabel || 'Pro')
-	const grace = escapeHtml(graceEnd)
-	const subject = `Planopia — płatność za pakiet ${planLabel || 'Pro'} nadal nieopłacona`
-	const title = 'Płatność za pakiet nie powiodła się'
-	const p = 'margin:0 0 12px 0;'
-	const content = `
-		<p style="${p}">Szanowni Państwo,</p>
-		<p style="${p}">druga próba pobrania płatności za pakiet <strong>Planopia ${plan}</strong> (zespół <strong>${team}</strong>) również została odrzucona przez bank.</p>
-		<p style="${p}">Prosimy o opłacenie pakietu przyciskiem poniżej (<strong>Pakiety i rozliczenia → Zmień kartę</strong>). Można podać tę samą kartę — ale wpisaną bezpośrednio, nie przez Apple Pay; to zwykle rozwiązuje problem.</p>
-		<p style="${p}">Bez płatności <strong>do ${grace}</strong> pakiet ${plan} zostanie wyłączony.</p>
-		<p style="margin:0;">Z poważaniem,<br>Michał Lipka<br>Planopia</p>
-	`
-	const html = getEmailTemplate(title, content, 'Pakiety i rozliczenia', packagesUrl, null)
-	return { subject, html }
-}
-
-async function sendBillingPaymentReminderEmail(toEmail, facts) {
-	const { subject, html } = buildBillingPaymentReminderEmail(facts)
-	await sendEmail(toEmail, null, subject, html)
-	return { subject }
-}
-
 module.exports = {
 	sendEmail,
 	sendEmailToHR,
-	buildBillingPaymentReminderEmail,
-	sendBillingPaymentReminderEmail,
 	sendTaskNotification,
 	sendTaskCommentEmailNotification,
 	sendChatEmailNotification,

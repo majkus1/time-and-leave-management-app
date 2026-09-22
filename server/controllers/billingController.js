@@ -4,12 +4,7 @@ const Settings = require('../models/Settings')(firmDb)
 const BillingPaymentSession = require('../models/BillingPaymentSession')(firmDb)
 const BillingLedgerEntry = require('../models/BillingLedgerEntry')(firmDb)
 const entitlementsService = require('../services/entitlementsService')
-const {
-	sendBillingPurchaseThankYouEmail,
-	buildBillingPaymentReminderEmail,
-	sendBillingPaymentReminderEmail,
-} = require('../services/emailService')
-const { publicAppUrl } = require('../config')
+const { sendBillingPurchaseThankYouEmail } = require('../services/emailService')
 const { buildPublicCatalog } = require('../services/billingCatalogService')
 const billingRequestService = require('../services/billingRequestService')
 const billingActivationService = require('../services/billingActivationService')
@@ -477,51 +472,6 @@ exports.getSuperStripePaidPlanTeams = async (req, res) => {
 		res.json({ success: true, rows })
 	} catch (e) {
 		console.error('billingController.getSuperStripePaidPlanTeams:', e)
-		res.status(500).json({ success: false, message: 'Server error' })
-	}
-}
-
-/** Wspólna walidacja pól przypomnienia o płatności (panel właściciela). */
-function readPaymentReminderInput(body) {
-	const b = body || {}
-	const to = normInvoiceField(b.toEmail, 320)
-	if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { error: 'Invalid email' }
-	const facts = {
-		teamName: normInvoiceField(b.teamName, 200) || 'Państwa zespół',
-		planLabel: normInvoiceField(b.planLabel, 40) || 'Pro',
-		graceEnd: normInvoiceField(b.graceEnd, 120),
-		packagesUrl: `${publicAppUrl}/packages`,
-	}
-	if (!facts.graceEnd) return { error: 'graceEnd is required' }
-	return { to, facts }
-}
-
-exports.postSuperPaymentReminderPreview = async (req, res) => {
-	try {
-		if (req.user?.username !== BILLING_SUPER_ADMIN_EMAIL) {
-			return res.status(403).json({ success: false, message: 'Forbidden' })
-		}
-		const { error, facts } = readPaymentReminderInput(req.body)
-		if (error) return res.status(400).json({ success: false, message: error, code: 'VALIDATION' })
-		const { subject, html } = buildBillingPaymentReminderEmail(facts)
-		res.json({ success: true, subject, html, packagesUrl: facts.packagesUrl })
-	} catch (e) {
-		console.error('billingController.postSuperPaymentReminderPreview:', e)
-		res.status(500).json({ success: false, message: 'Server error' })
-	}
-}
-
-exports.postSuperPaymentReminderSend = async (req, res) => {
-	try {
-		if (req.user?.username !== BILLING_SUPER_ADMIN_EMAIL) {
-			return res.status(403).json({ success: false, message: 'Forbidden' })
-		}
-		const { error, to, facts } = readPaymentReminderInput(req.body)
-		if (error) return res.status(400).json({ success: false, message: error, code: 'VALIDATION' })
-		await sendBillingPaymentReminderEmail(to, facts)
-		res.json({ success: true, message: 'Sent' })
-	} catch (e) {
-		console.error('billingController.postSuperPaymentReminderSend:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }

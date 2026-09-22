@@ -206,28 +206,6 @@ export function useBillingSuperStripePaidPlanTeams(enabled) {
 	})
 }
 
-export function useBillingSuperPaymentReminderPreview() {
-	return useMutation({
-		mutationFn: async body => {
-			const { data } = await axios.post(`${API_URL}/api/billing/super/payment-reminder-email/preview`, body, {
-				withCredentials: true,
-			})
-			return data
-		},
-	})
-}
-
-export function useBillingSuperPaymentReminderSend() {
-	return useMutation({
-		mutationFn: async body => {
-			const { data } = await axios.post(`${API_URL}/api/billing/super/payment-reminder-email`, body, {
-				withCredentials: true,
-			})
-			return data
-		},
-	})
-}
-
 export function useBillingSuperThankPurchaseEmail() {
 	return useMutation({
 		mutationFn: async body => {
