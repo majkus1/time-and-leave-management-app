@@ -1,6 +1,6 @@
 export const landingHeroCopy = {
 	pl: {
-		eyebrow: 'Dla zespołów od 5 do 100 osób',
+		eyebrow: 'Aplikacja dla firm i zespołów',
 		cta: 'Załóż darmowy zespół',
 		// Druga sciezka: wieksze firmy zwykle chca porozmawiac, zanim zaloza konto.
 		secondaryCta: 'Umów rozmowę',
@@ -13,7 +13,7 @@ export const landingHeroCopy = {
 		imageAlt: 'biznesmen zaznaczający aplikację',
 	},
 	en: {
-		eyebrow: 'For teams of 5 to 100 people',
+		eyebrow: 'For companies and teams',
 		cta: 'Create your free team',
 		secondaryCta: 'Book a call',
 		secondaryCtaHref: '/en#contact',
