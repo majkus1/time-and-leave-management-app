@@ -1,6 +1,6 @@
 export const landingHeroCopy = {
 	pl: {
-		eyebrow: 'Zamiast Excela i maili',
+		eyebrow: 'Dla zespołów od 5 do 100 osób',
 		cta: 'Załóż darmowy zespół',
 		// Druga sciezka: wieksze firmy zwykle chca porozmawiac, zanim zaloza konto.
 		secondaryCta: 'Umów rozmowę',
@@ -13,7 +13,7 @@ export const landingHeroCopy = {
 		imageAlt: 'biznesmen zaznaczający aplikację',
 	},
 	en: {
-		eyebrow: 'Instead of spreadsheets and emails',
+		eyebrow: 'For teams of 5 to 100 people',
 		cta: 'Create your free team',
 		secondaryCta: 'Book a call',
 		secondaryCtaHref: '/en#contact',

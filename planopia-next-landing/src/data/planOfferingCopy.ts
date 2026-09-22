@@ -32,7 +32,7 @@ export const planOfferingCopy = {
 		aboutEyebrow: 'Co znajdziesz w Planopii',
 		aboutTitle: 'Wszystko wokół czasu pracy zespołu',
 		aboutLead:
-			'Planopia porządkuje to, co dzieje się wokół czasu pracy: ewidencję godzin, urlopy i grafik. W tym samym miejscu masz zadania, czat i Asystenta AI, więc dane nie rozjeżdżają się po arkuszach, mailach i papierowych wnioskach.',
+			'Planopia porządkuje to, co dzieje się wokół czasu pracy: ewidencję godzin, urlopy i grafik. W tym samym miejscu masz zadania, czat i Asystenta AI, więc wszystko jest w jednym miejscu i zawsze aktualne — a raporty eksportujesz do PDF lub Excela, kiedy potrzebujesz.',
 		blogJsonLdExtra:
 			' Artykuły o ewidencji czasu pracy i HR; w aplikacji trial 30 dni, potem darmowy plan ewidencji lub pakiety płatne.',
 	},
@@ -63,7 +63,7 @@ export const planOfferingCopy = {
 		aboutEyebrow: 'What you get in Planopia',
 		aboutTitle: "Everything around your team's working time",
 		aboutLead:
-			'Planopia organizes what happens around working time: hours, leave, and schedules. In the same place you get tasks, chat, and the AI Assistant, so data stops drifting across spreadsheets, emails, and paper requests.',
+			'Planopia organizes what happens around working time: hours, leave, and schedules. In the same place you get tasks, chat, and the AI Assistant, so everything stays in one place and up to date — and you export reports to PDF or Excel whenever you need them.',
 		blogJsonLdExtra:
 			' Articles on time tracking and HR workflows; in the app: 30-day trial, then a free time tracking tier or paid plans.',
 	},
