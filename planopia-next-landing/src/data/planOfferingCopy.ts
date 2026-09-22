@@ -30,7 +30,7 @@ export const planOfferingCopy = {
 		// Sekcja #oaplikacji. Nazywa specjalizacje (czas pracy zespolu) zamiast szerokiej
 		// kategorii „zarzadzanie firma", ktorej produkt nie obejmuje.
 		aboutEyebrow: 'Co znajdziesz w Planopii',
-		aboutTitle: 'Wszystko wokół czasu pracy zespołu — bez arkuszy i maili',
+		aboutTitle: 'Wszystko wokół czasu pracy zespołu',
 		aboutLead:
 			'Planopia porządkuje to, co dzieje się wokół czasu pracy: ewidencję godzin, urlopy i grafik. W tym samym miejscu masz zadania, czat i Asystenta AI, więc dane nie rozjeżdżają się po arkuszach, mailach i papierowych wnioskach.',
 		blogJsonLdExtra:
@@ -61,7 +61,7 @@ export const planOfferingCopy = {
 		],
 		// Blizniak sekcji #oaplikacji — musi mowic to samo co wersja PL.
 		aboutEyebrow: 'What you get in Planopia',
-		aboutTitle: "Everything around your team's working time — without spreadsheets and emails",
+		aboutTitle: "Everything around your team's working time",
 		aboutLead:
 			'Planopia organizes what happens around working time: hours, leave, and schedules. In the same place you get tasks, chat, and the AI Assistant, so data stops drifting across spreadsheets, emails, and paper requests.',
 		blogJsonLdExtra:
