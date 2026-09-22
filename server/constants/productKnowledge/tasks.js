@@ -26,6 +26,9 @@ module.exports = {
 ### Dostępność w planach
 Okres próbny: tak. Plan Core: moduł Zadania ({{price.module.tasks}} zł netto/mies.). Pakiety Pro/Business: w cenie. Plan darmowy: nie.
 
+### Kalendarz zadań — co pokazuje
+Kalendarz (w tablicy i „Kalendarz moich zadań” dla wszystkich tablic) pokazuje zadania z terminem lub okresem realizacji. Domyślnie tylko **przypisane do Ciebie** (i te „dla wszystkich członków”). Przełącznik „Pokaż:” nad kalendarzem: „+ utworzone przeze mnie” dodaje zadania, które sam(a) utworzyłeś/aś, a „Wszystkie zadania” (Administrator, HR, Przełożony) pokazuje komplet z dostępnych tablic. Wybór jest zapamiętany w przeglądarce. Jeśli nie widzisz zadania, które komuś przydzieliłeś — przełącz na „+ utworzone przeze mnie”.
+
 ### Czego NIE robi
 - Nie ma wykresu Gantta, zależności między zadaniami ani śledzenia budżetu projektu.
 - Nie integruje się z Jirą, Trello ani innymi narzędziami.

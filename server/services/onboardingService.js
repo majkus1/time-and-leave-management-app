@@ -5,6 +5,7 @@ const Settings = require('../models/Settings')(firmDb)
 const Workday = require('../models/Workday')(firmDb)
 const demoDataService = require('./demoDataService')
 const entitlementsService = require('./entitlementsService')
+const { founderCallForTeam } = require('./founderOutreachService')
 
 /** Po tylu dniach od założenia zespołu lista pierwszych kroków znika sama, nawet niedokończona. */
 const ONBOARDING_WINDOW_DAYS = 60
@@ -21,27 +22,37 @@ function isAdminOrHr(roles) {
 async function getOnboardingStatus({ teamId, roles }) {
 	if (!isAdminOrHr(roles)) return { visible: false }
 
-	const team = await Team.findById(teamId).select('createdAt demoData billingPlanKey trialEndsAt').lean()
+	const team = await Team.findById(teamId).select('createdAt demoData billingPlanKey trialEndsAt adminPhone').lean()
 	if (!team) return { visible: false }
 
 	// Dane demo raportujemy także po ukryciu listy — przycisk „usuń” musi być dostępny, dopóki dane istnieją.
 	const demo = demoDataService.describeDemoState(team)
+	// Baner „15 min wdrożenia z twórcą” — niezależny od listy (własne zamknięcie po stronie klienta), tylko w trialu.
+	const trial = entitlementsService.isTrialActive(team)
+	const founderCall = {
+		...(trial ? founderCallForTeam(team) : { active: false, url: null, until: null }),
+		phoneLeft: Boolean(String(team.adminPhone || '').trim()),
+	}
 
 	// Lista „pierwsze kroki” (z asystentem i danymi demo) tylko w okresie próbnym — po nim zespół ma już swoje dane albo plan darmowy.
-	if (!entitlementsService.isTrialActive(team)) return { visible: false, demo }
+	if (!trial) return { visible: false, demo, founderCall }
 
 	const settings = await Settings.getSettings(teamId)
-	if (settings.onboardingDismissedAt) return { visible: false, demo }
+	if (settings.onboardingDismissedAt) return { visible: false, demo, founderCall }
 
 	const ageDays = (Date.now() - new Date(team.createdAt).getTime()) / 86400000
-	if (ageDays > ONBOARDING_WINDOW_DAYS) return { visible: false, demo }
+	if (ageDays > ONBOARDING_WINDOW_DAYS) return { visible: false, demo, founderCall }
 
-	const activeUsers = await User.find({
-		teamId,
-		$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
-	})
-		.select('_id')
-		.lean()
+	// Pracownicy demo (team.demoData.users) i ich ewidencja nie zaliczają kroków — lista dotyczy własnych danych zespołu
+	const demoUserIds = (team.demoData?.users || []).map(String)
+	const activeUsers = (
+		await User.find({
+			teamId,
+			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
+		})
+			.select('_id')
+			.lean()
+	).filter(u => !demoUserIds.includes(String(u._id)))
 	const employeesCount = Math.max(0, activeUsers.length - 1) // bez konta zakładającego
 	const firstWorkday = activeUsers.length
 		? await Workday.findOne({ userId: { $in: activeUsers.map(u => u._id) } })
@@ -63,6 +74,7 @@ async function getOnboardingStatus({ teamId, roles }) {
 		total: 3,
 		allDone: doneCount === 3,
 		demo,
+		founderCall,
 	}
 }
 

@@ -186,7 +186,8 @@ async function createDemoData({ teamId, userId, roles }) {
 	const leaveSpecs = [
 		users[0] && { user: users[0], type: 'leaveform.option1', start: nextMonday, days: 3, status: 'status.accepted', info: 'Wyjazd rodzinny' },
 		users[1] && { user: users[1], type: 'leaveform.option1', start: addDays(nextMonday, 9), days: 2, status: 'status.pending', info: '' },
-		users[2] && { user: users[2], type: 'leaveform.option6', start: addDays(mondayOf(today), -7), days: 1, status: 'status.accepted', info: '' },
+		// L4 nie wymaga zatwierdzenia — w aplikacji zapisuje się jako „wysłany” (status.sent), bez zatwierdzającego
+		users[2] && { user: users[2], type: 'leaveform.option6', start: addDays(mondayOf(today), -7), days: 1, status: 'status.sent', info: '' },
 	].filter(Boolean)
 	const leaveEnd = s => {
 		// koniec = start + dni robocze - 1 (weekend w środku nie liczy się do wniosku)
@@ -200,7 +201,7 @@ async function createDemoData({ teamId, userId, roles }) {
 	}
 	const absentDays = new Map() // userId → Set(ymd) dla zaakceptowanych nieobecności
 	for (const s of leaveSpecs) {
-		if (s.status !== 'status.accepted') continue
+		if (s.status !== 'status.accepted' && s.status !== 'status.sent') continue
 		const set = absentDays.get(String(s.user._id)) || new Set()
 		for (let d = new Date(s.start), end = leaveEnd(s); d <= end; d = addDays(d, 1)) set.add(ymd(d))
 		absentDays.set(String(s.user._id), set)
@@ -268,7 +269,7 @@ async function createDemoData({ teamId, userId, roles }) {
 			status: s.status,
 			submittedBy: admin._id,
 			updatedBy: s.status === 'status.accepted' ? admin._id : undefined,
-			isProcessed: s.status !== 'status.pending',
+			isProcessed: s.status === 'status.accepted',
 		})
 		ids.leaveRequests.push(lr._id)
 	}
@@ -322,7 +323,8 @@ async function createDemoData({ teamId, userId, roles }) {
 	const taskSpecs = [
 		{ title: 'Przygotować listę pracowników do importu', status: 'todo', priority: 'medium', assignee: 0, due: 3 },
 		{ title: 'Wydrukować kod QR i powiesić przy wejściu', status: 'in-progress', priority: 'high', assignee: 1, due: 1 },
-		{ title: 'Sprawdzić grafik na przyszły tydzień', status: 'review', priority: 'low', assignee: 2, due: 5 },
+		{ title: 'Sprawdzić grafik na przyszły tydzień', status: 'review', priority: 'low', assignee: 2, due: 5, allMembers: true },
+		{ title: 'Inwentaryzacja magazynu', status: 'in-progress', priority: 'medium', assignee: 1, period: [2, 6] },
 		{ title: 'Ustawić święta i godziny pracy zespołu', status: 'done', priority: 'urgent', assignee: 0, due: -2 },
 	]
 	for (let i = 0; i < taskSpecs.length; i += 1) {
@@ -334,12 +336,17 @@ async function createDemoData({ teamId, userId, roles }) {
 			boardId: board._id,
 			status: s.status,
 			priority: s.priority,
-			assignedTo: assignee ? [assignee._id] : [],
-			assignedScope: 'specific',
+			// Kalendarz zadań pokazuje tylko zadania przypisane do oglądającego (lub „wszyscy”) — dopisujemy admina,
+			// inaczej dane demo nie pojawiłyby się w kalendarzu tablicy ani w „moich zadaniach”.
+			assignedTo: assignee ? [assignee._id, admin._id] : [admin._id],
+			assignedScope: s.allMembers ? 'all-members' : 'specific',
 			createdBy: admin._id,
 			order: i,
 			isActive: true,
-			dueDate: addDays(today, s.due),
+			dueDate: s.period ? null : addDays(today, s.due),
+			dueTime: s.period ? null : '15:00',
+			workPeriodStart: s.period ? addDays(today, s.period[0]) : null,
+			workPeriodEnd: s.period ? addDays(today, s.period[1]) : null,
 		})
 		ids.tasks.push(t._id)
 	}

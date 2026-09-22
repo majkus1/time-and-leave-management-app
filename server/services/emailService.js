@@ -847,25 +847,18 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
  * Przypomnienie o nieudanym odnowieniu kartą (past_due) — wysyłane ręcznie przez właściciela z panelu w Zarządzaniu
  * zespołem. Builder osobno, żeby podgląd w UI był identyczny z tym, co wychodzi.
  */
-function buildBillingPaymentReminderEmail({ teamName, planLabel, retryAt, graceEnd, packagesUrl }) {
+function buildBillingPaymentReminderEmail({ teamName, planLabel, graceEnd, packagesUrl }) {
 	const team = escapeHtml(teamName || 'Państwa zespół')
 	const plan = escapeHtml(planLabel || 'Pro')
-	const retry = escapeHtml(retryAt)
 	const grace = escapeHtml(graceEnd)
-	const subject = `Planopia — nieudana płatność za pakiet ${planLabel || 'Pro'}`
+	const subject = `Planopia — płatność za pakiet ${planLabel || 'Pro'} nadal nieopłacona`
 	const title = 'Płatność za pakiet nie powiodła się'
 	const p = 'margin:0 0 12px 0;'
 	const content = `
 		<p style="${p}">Szanowni Państwo,</p>
-		<p style="${p}">odnowienie pakietu <strong>Planopia ${plan}</strong> dla zespołu <strong>${team}</strong> nie powiodło się — bank odrzucił obciążenie karty (kod „transakcja niedozwolona”, bez podania przyczyny).</p>
-		<p style="${p}"><strong>Co dalej:</strong></p>
-		<ul style="margin:0 0 12px 0; padding-left:20px;">
-			<li style="margin:0 0 8px 0;"><strong>${retry}</strong> system automatycznie ponowi obciążenie tej samej karty. Aby się powiodło, prosimy sprawdzić w banku, czy karta ma włączone płatności internetowe i cykliczne.</li>
-			<li style="margin:0 0 8px 0;">Płatność można też wykonać od razu w aplikacji: <strong>Pakiety i rozliczenia → Zmień kartę</strong> (można podać inną kartę).</li>
-			<li style="margin:0;">Jeśli płatność nie zostanie zaksięgowana <strong>do ${grace}</strong>, zespół przejdzie na bezpłatny pakiet (ewidencja czasu pracy do 5 osób) i utraci dostęp do funkcji pakietu ${plan}. Dane zespołu zostaną zachowane.</li>
-		</ul>
-		<p style="${p}">Bezpośredni link: <a href="${packagesUrl}" style="color:#2563eb;">${packagesUrl}</a></p>
-		<p style="${p}">W razie pytań prosimy o odpowiedź na tę wiadomość.</p>
+		<p style="${p}">druga próba pobrania płatności za pakiet <strong>Planopia ${plan}</strong> (zespół <strong>${team}</strong>) również została odrzucona przez bank.</p>
+		<p style="${p}">Prosimy o opłacenie pakietu przyciskiem poniżej (<strong>Pakiety i rozliczenia → Zmień kartę</strong>). Można podać tę samą kartę — ale wpisaną bezpośrednio, nie przez Apple Pay; to zwykle rozwiązuje problem.</p>
+		<p style="${p}">Bez płatności <strong>do ${grace}</strong> pakiet ${plan} zostanie wyłączony.</p>
 		<p style="margin:0;">Z poważaniem,<br>Michał Lipka<br>Planopia</p>
 	`
 	const html = getEmailTemplate(title, content, 'Pakiety i rozliczenia', packagesUrl, null)

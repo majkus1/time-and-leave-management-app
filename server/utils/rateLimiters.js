@@ -145,3 +145,21 @@ exports.aiHelpTeamDailyLimiter = rateLimit({
 	skipSuccessfulRequests: false,
 	skipFailedRequests: true,
 })
+
+/** Rezerwacja / odwołanie rozmowy z założycielem — kilka prób na użytkownika, nie ma powodu na więcej. */
+exports.founderCallBookLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: envInt('FOUNDER_CALL_PER_HOUR', 10),
+	message: 'Too many booking requests. Please try again later.',
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+})
+
+/** Publiczna lista terminów dla landingu — per IP; odpowiedź i tak jest cache'owana 60 s. */
+exports.founderCallPublicLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: envInt('FOUNDER_CALL_PUBLIC_PER_15MIN', 60),
+	standardHeaders: true,
+	legacyHeaders: false,
+})

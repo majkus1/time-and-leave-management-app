@@ -27,6 +27,13 @@ const teamSchema = new mongoose.Schema({
 		required: true,
 		trim: true
 	},
+	/** Opcjonalny numer z rejestracji — wyłącznie do rozmowy wdrożeniowej z twórcą (founderOutreachService) */
+	adminPhone: {
+		type: String,
+		default: '',
+		trim: true,
+		maxlength: 32,
+	},
 	maxUsers: {
 		type: Number,
 		default: 4

@@ -253,6 +253,24 @@
 	color: #fff !important;
 }
 
+.po-onboarding__btn--call {
+	background: var(--po-surface);
+	border-color: var(--po-brand);
+	color: var(--po-brand-text) !important;
+}
+
+.po-onboarding__btn--call img {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.po-onboarding__btn--call:hover {
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text) !important;
+}
+
 .po-onboarding__btn--demo {
 	background: var(--po-surface);
 	border-color: var(--po-brand);
@@ -375,4 +393,125 @@
 	color: var(--po-brand-text) !important;
 	font-weight: 600;
 	text-decoration: underline;
+}
+
+/* „Umów 15 min wdrożenia z twórcą” — ciepłe zaproszenie, nie alert */
+.po-founder-call {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 16px;
+	padding: 14px 16px;
+	border-radius: 14px;
+	border: 1px solid var(--po-brand-soft);
+	background: linear-gradient(135deg, var(--po-brand-soft) 0%, var(--po-surface) 70%);
+}
+
+.po-founder-call__avatar {
+	flex: 0 0 auto;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 2px solid var(--po-surface);
+	box-shadow: 0 0 0 1px var(--po-brand-soft);
+}
+
+.po-founder-call__text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.po-founder-call__text strong {
+	display: block;
+	font-size: 15px !important;
+	color: var(--po-text) !important;
+}
+
+.po-founder-call__text p {
+	margin: 2px 0 0;
+	font-size: 13px !important;
+	color: var(--po-text-secondary) !important;
+	line-height: 1.45;
+}
+
+.po-founder-call__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.po-founder-call__cta {
+	white-space: nowrap;
+	padding: 9px 16px;
+	border-radius: 9px;
+	background: var(--po-brand);
+	color: #fff !important;
+	font-size: 14px !important;
+	font-weight: 600;
+	text-decoration: none !important;
+	transition: background 0.15s ease;
+}
+
+.po-founder-call__cta:hover {
+	background: var(--po-brand-hover);
+	color: #fff !important;
+}
+
+.po-founder-call__dismiss {
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	background: transparent;
+	color: var(--po-text-muted);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.po-founder-call__dismiss:hover {
+	background: var(--po-surface-hover);
+	color: var(--po-text);
+}
+
+[data-theme='dark'] .po-founder-call {
+	border-color: var(--po-border);
+	background: linear-gradient(135deg, rgba(0, 168, 70, 0.14) 0%, var(--po-surface) 70%);
+}
+
+@media (max-width: 640px) {
+	.po-founder-call {
+		flex-wrap: wrap;
+	}
+
+	.po-founder-call__actions {
+		width: 100%;
+		justify-content: flex-end;
+	}
+}
+
+/* Widoczna lista: większy oddech przed pierwszą sekcją strony; wąski pasek demo zostaje przy 20px */
+.po-onboarding:not(.po-onboarding--demo-only) {
+	margin-bottom: 32px;
+}
+
+/* Telefon: „Zamknij” w prawym górnym rogu boxu, nagłówek robi mu miejsce; pasek postępu na całą szerokość */
+@media (max-width: 640px) {
+	.po-onboarding__head > div:first-child {
+		padding-right: 104px;
+	}
+
+	.po-onboarding__dismiss {
+		position: absolute;
+		top: 14px;
+		right: 14px;
+		padding: 6px 10px;
+	}
+
+	.po-onboarding__progress {
+		width: 100%;
+	}
 }

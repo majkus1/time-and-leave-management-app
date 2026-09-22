@@ -124,6 +124,8 @@ const FREEMIUM_ACTIVE_EXTRA_PREFIXES = [
 	'/api/onboarding',
 	/** Asystent w trybie „jak działa Planopia” — wiedza o produkcie bez danych zespołu, także po trialu. */
 	'/api/ai-help',
+	/** Rozmowa wdrożeniowa z założycielem — link z maila działa także po trialu. */
+	'/api/founder-call',
 ]
 
 /** Prefiksy dostępne w freemium wyłącznie do odczytu. */

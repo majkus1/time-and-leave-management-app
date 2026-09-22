@@ -48,8 +48,11 @@ exports.registerTeam = async (req, res) => {
 			adminPassword,
 			adminFirstName,
 			adminLastName,
-			position
+			position,
+			adminPhone
 		} = req.body;
+		const founderOutreachService = require('../services/founderOutreachService')
+		const normalizedAdminPhone = founderOutreachService.normalizePhone(adminPhone)
 
 		
 		if (!teamName || !adminEmail || !adminPassword || !adminFirstName || !adminLastName) {
@@ -164,6 +167,7 @@ exports.registerTeam = async (req, res) => {
 			adminPassword: hashedPassword,
 			adminFirstName,
 			adminLastName,
+			adminPhone: normalizedAdminPhone,
 			currentUserCount: 1,
 			maxUsers: maxUsers,
 			...trialBilling,
@@ -199,6 +203,9 @@ exports.registerTeam = async (req, res) => {
 		} catch (err) {
 			console.error('[lifecycleEmails] welcome:', err.message)
 		}
+
+		// Osobisty mail od twórcy (własna skrzynka, czysty tekst) + sygnał „nowy zespół / zostawił numer”.
+		founderOutreachService.onTeamRegistered(newTeam)
 
 		// Record legal document acceptances (TERMS and PRIVACY) — wymagane wyżej
 		// Note: DPA is automatically accepted when first employee is added

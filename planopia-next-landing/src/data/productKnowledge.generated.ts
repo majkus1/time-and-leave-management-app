@@ -4,7 +4,7 @@
  * Odśwież: npm run knowledge:build (z katalogu głównego repo). CI: npm run knowledge:check
  */
 
-export const PRODUCT_KNOWLEDGE_VERSION = "ee87e0503136"
+export const PRODUCT_KNOWLEDGE_VERSION = "a92d40d946c2"
 
 export type ProductKnowledgeLocale = 'pl' | 'en'
 
@@ -91,7 +91,7 @@ export const productKnowledgeModules: ProductKnowledgeModule[] = [
 		keywords: { pl: ["zadan","tablic","kanban","projekt","kolumn","komentarz","przypisz","przypisa"], en: ["task","board","kanban","project","column","comment","assign"] },
 		requires: {"modules":["tasks"],"bundles":["pro","business"],"trial":true,"freemium":false},
 		suggestedQuestions: { pl: ["Jak działają tablice zadań?","Czy mogę przypisać godziny pracy do zadania?","Czy każdy dział ma własną tablicę?"], en: ["How do task boards work?","Can I link work hours to a task?","Does each department get its own board?"] },
-		body: { pl: "### Jak działa\n- Menu → „Tablice”: zadania w kolumnach (do zrobienia, w trakcie, zrobione — kolumny można dostosować). Zadanie ma tytuł, opis, osoby przypisane, termin, komentarze; powiadomienia e-mail/push o przypisaniu i komentarzach.\n- Każdy dział dostaje własną tablicę automatycznie; można tworzyć tablice niestandardowe. Kalendarz zadań pokazuje terminy w czasie.\n- Powiązanie z ewidencją: w „Czasie pracy” pracownik może przypisać godziny dnia do zadań z tablicy; raport zadań i czynności pokazuje wtedy, ile godzin poszło na które zadanie.\n\n### Dostępność w planach\nOkres próbny: tak. Plan Core: moduł Zadania (39 zł netto/mies.). Pakiety Pro/Business: w cenie. Plan darmowy: nie.\n\n### Czego NIE robi\n- Nie ma wykresu Gantta, zależności między zadaniami ani śledzenia budżetu projektu.\n- Nie integruje się z Jirą, Trello ani innymi narzędziami.\n\n### Gdzie w aplikacji / kto może\nMenu → Tablice (każdy, w zakresie swoich tablic). Tworzenie tablic: Administrator/HR.", en: null },
+		body: { pl: "### Jak działa\n- Menu → „Tablice”: zadania w kolumnach (do zrobienia, w trakcie, zrobione — kolumny można dostosować). Zadanie ma tytuł, opis, osoby przypisane, termin, komentarze; powiadomienia e-mail/push o przypisaniu i komentarzach.\n- Każdy dział dostaje własną tablicę automatycznie; można tworzyć tablice niestandardowe. Kalendarz zadań pokazuje terminy w czasie.\n- Powiązanie z ewidencją: w „Czasie pracy” pracownik może przypisać godziny dnia do zadań z tablicy; raport zadań i czynności pokazuje wtedy, ile godzin poszło na które zadanie.\n\n### Dostępność w planach\nOkres próbny: tak. Plan Core: moduł Zadania (39 zł netto/mies.). Pakiety Pro/Business: w cenie. Plan darmowy: nie.\n\n### Kalendarz zadań — co pokazuje\nKalendarz (w tablicy i „Kalendarz moich zadań” dla wszystkich tablic) pokazuje zadania z terminem lub okresem realizacji. Domyślnie tylko **przypisane do Ciebie** (i te „dla wszystkich członków”). Przełącznik „Pokaż:” nad kalendarzem: „+ utworzone przeze mnie” dodaje zadania, które sam(a) utworzyłeś/aś, a „Wszystkie zadania” (Administrator, HR, Przełożony) pokazuje komplet z dostępnych tablic. Wybór jest zapamiętany w przeglądarce. Jeśli nie widzisz zadania, które komuś przydzieliłeś — przełącz na „+ utworzone przeze mnie”.\n\n### Czego NIE robi\n- Nie ma wykresu Gantta, zależności między zadaniami ani śledzenia budżetu projektu.\n- Nie integruje się z Jirą, Trello ani innymi narzędziami.\n\n### Gdzie w aplikacji / kto może\nMenu → Tablice (każdy, w zakresie swoich tablic). Tworzenie tablic: Administrator/HR.", en: null },
 	},
 	{
 		id: "chat",

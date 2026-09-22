@@ -8,6 +8,8 @@ import './OnboardingChecklist.css'
 
 /** Kotwica sekcji świąt na stronie ustawień — Settings.jsx przewija do niej po wczytaniu. */
 export const SETTINGS_HOLIDAYS_ANCHOR = 'settings-holidays-section'
+/** Krok 2 listy prowadzi do „Konfiguracja pracy w weekendy” — pierwszej sekcji o godzinach i dniach wolnych. */
+export const SETTINGS_WORK_SETUP_ANCHOR = 'settings-weekends-section'
 
 function CheckIcon() {
 	return (
@@ -38,6 +40,9 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 	if (!staff || isLoading) return null
 
 	const demoPresent = Boolean(data?.demo?.present)
+	// Bez numeru w rejestracji nie zadzwonimy sami — dajemy kalendarz. Z numerem: rozmowa i tak jest umawiana telefonicznie.
+	const founderCall = data?.founderCall
+	const showCallButton = Boolean(founderCall?.active && founderCall.url && !founderCall.phoneLeft)
 	const demoAvailable = Boolean(data?.demo?.available) // tylko okres próbny
 	const demoBusy = createDemo.isPending || removeDemo.isPending
 
@@ -99,7 +104,7 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 			done: data.steps.settings.done,
 			title: t('onboarding.step2Title'),
 			body: t('onboarding.step2Body'),
-			to: `/settings#${SETTINGS_HOLIDAYS_ANCHOR}`,
+			to: `/settings#${SETTINGS_WORK_SETUP_ANCHOR}`,
 			cta: t('onboarding.step2Cta'),
 		},
 		{
@@ -128,14 +133,6 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 					</p>
 				</div>
 				<div className="po-onboarding__aside">
-					<div className="po-onboarding__progress" aria-hidden="true">
-						<span className="po-onboarding__progress-label">
-							{t('onboarding.progress', { done: data.doneCount, total: data.total })}
-						</span>
-						<span className="po-onboarding__progress-bar">
-							<span style={{ width: `${(data.doneCount / data.total) * 100}%` }} />
-						</span>
-					</div>
 					<button
 						type="button"
 						className="po-onboarding__dismiss"
@@ -148,6 +145,14 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 						</svg>
 						<span>{t('onboarding.hideShort')}</span>
 					</button>
+					<div className="po-onboarding__progress" aria-hidden="true">
+						<span className="po-onboarding__progress-label">
+							{t('onboarding.progress', { done: data.doneCount, total: data.total })}
+						</span>
+						<span className="po-onboarding__progress-bar">
+							<span style={{ width: `${(data.doneCount / data.total) * 100}%` }} />
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -173,6 +178,12 @@ export default function OnboardingChecklist({ variant = 'default' }) {
 					<span aria-hidden="true">✦</span>
 					{t('onboarding.askAssistant')}
 				</Link>
+				{showCallButton && (
+					<a href={founderCall.url} className="po-onboarding__btn po-onboarding__btn--call" target={founderCall.url.startsWith('http') && !founderCall.url.includes(window.location.host) ? '_blank' : undefined} rel="noopener noreferrer">
+						<img src="/img/1709827103942.webp" alt="" width="20" height="20" />
+						{t('onboarding.bookCall')}
+					</a>
+				)}
 				{demoPresent ? (
 					<button type="button" className="po-onboarding__btn po-onboarding__btn--danger" onClick={clearDemo} disabled={demoBusy}>
 						{removeDemo.isPending ? t('onboarding.demoRemoving') : t('onboarding.demoRemove')}

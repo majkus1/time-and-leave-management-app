@@ -12,6 +12,7 @@ import SetPassword from './components/profile/SetPassword'
 import ResetPassword from './components/profile/ResetPassword'
 import ProtectedRoute from './components/route/ProtectedRoute'
 import Logs from './components/profile/Logs'
+import FounderCallPage from './components/founderCall/FounderCallPage'
 import Settings from './components/profile/Settings'
 import AdminUserList from './components/listusers/AdminUserList'
 import UserCalendar from './components/workcalendars/UserCalendar'
@@ -166,6 +167,7 @@ function AppContent() {
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
 					<Route path="/dashboard" element={<FreemiumDashboardGuard><Dashboard /></FreemiumDashboardGuard>} />
 					<Route path="/work-time" element={<WorkTimePage />} />
+					<Route path="/umow-rozmowe" element={<FounderCallPage />} />
 					<Route path="/boards" element={<BoardList />} />
 					<Route path="/boards/:boardId" element={<Board />} />
 					<Route path="/schedule" element={<ScheduleList />} />

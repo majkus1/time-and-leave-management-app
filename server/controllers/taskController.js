@@ -1,6 +1,7 @@
 const { firmDb } = require('../db/db')
 const Task = require('../models/Task')(firmDb)
 const Board = require('../models/Board')(firmDb)
+const { resolveCalendarScope, calendarAssigneeMatch } = require('../utils/taskCalendarScope')
 const User = require('../models/user')(firmDb)
 const mongoose = require('mongoose')
 const path = require('path')
@@ -189,10 +190,11 @@ exports.getTask = async (req, res) => {
 	}
 }
 
-// Calendar: tasks with dates for current user (all boards or one board)
+// Calendar: tasks with dates for current user (all boards or one board); scope = assigned | mine | board (utils/taskCalendarScope)
 exports.getCalendarTasks = async (req, res) => {
 	try {
 		const userId = req.user.userId
+		const scope = resolveCalendarScope(req.query.scope, req.user.roles)
 		const year = parseInt(req.query.year, 10)
 		const month = parseInt(req.query.month, 10)
 		const boardIdFilter = req.query.boardId
@@ -232,14 +234,13 @@ exports.getCalendarTasks = async (req, res) => {
 			],
 		}
 
-		// Kalendarz pokazuje zadania przypisane do bieżącego użytkownika (jak widok „moje”)
+		// Domyślnie zadania przypisane do oglądającego (jak widok „moje”); „mine” dokłada utworzone przez niego,
+		// „board” (Admin / HR / Przełożony) pokazuje wszystkie zadania dostępnych tablic.
+		const assigneeMatch = calendarAssigneeMatch(scope, userId)
 		const query = {
 			boardId: { $in: boardIds },
 			isActive: true,
-			$and: [
-				{ $or: [{ assignedScope: 'all-members' }, { assignedTo: userId }] },
-				dateOverlap,
-			],
+			$and: [...(assigneeMatch ? [assigneeMatch] : []), dateOverlap],
 		}
 
 		const tasks = await Task.find(query)
@@ -270,7 +271,7 @@ exports.getCalendarTasks = async (req, res) => {
 			priority: t.priority,
 		}))
 
-		res.json({ tasks: out })
+		res.json({ tasks: out, scope })
 	} catch (error) {
 		console.error('Error getCalendarTasks:', error)
 		res.status(500).json({ message: 'Error loading calendar tasks' })

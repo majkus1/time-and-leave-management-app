@@ -6053,3 +6053,219 @@ a.landing-polished-hero-cta:focus-visible,
 	box-shadow: none;
 	background: #ffffff;
 }
+
+/* Formularz kontaktowy — wybór terminu rozmowy (te same sloty, co /umow-rozmowe) */
+.landing-slot-picker__hint,
+.landing-contact-section .landing-slot-picker__hint {
+	margin: -4px 0 10px !important;
+	font-size: 13px !important;
+	line-height: 1.45 !important;
+	color: #6b7280 !important;
+}
+
+.landing-slot-picker {
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.85);
+	padding: 14px;
+}
+
+.landing-slot-picker__step,
+.landing-contact-section .landing-slot-picker__step {
+	margin: 0 0 8px !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	color: #102f5e !important;
+	letter-spacing: 0.01em;
+}
+
+.landing-slot-picker__note-inline,
+.landing-contact-section .landing-slot-picker__note-inline {
+	font-weight: 500 !important;
+	color: #6b7280 !important;
+	font-size: 12px !important;
+}
+
+.landing-slot-picker__note,
+.landing-contact-section .landing-slot-picker__note {
+	margin: 0 !important;
+	padding: 12px 14px;
+	border: 1px dashed #cbd5e1;
+	border-radius: 12px;
+	font-size: 14px !important;
+	color: #6b7280 !important;
+}
+
+.landing-slot-picker__days {
+	display: flex;
+	gap: 8px;
+	overflow-x: auto;
+	padding-bottom: 8px;
+	margin-bottom: 12px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(0, 166, 62, 0.55) rgba(0, 0, 0, 0.06);
+}
+
+.landing-slot-picker__days::-webkit-scrollbar {
+	height: 6px;
+}
+
+.landing-slot-picker__days::-webkit-scrollbar-thumb {
+	background: rgba(0, 166, 62, 0.55);
+	border-radius: 999px;
+}
+
+.landing-slot-picker__day {
+	flex: 0 0 auto;
+	min-width: 84px;
+	padding: 8px 10px;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.landing-slot-picker__day:hover {
+	border-color: #00a63e;
+	transform: translateY(-1px);
+}
+
+.landing-slot-picker__day.is-active {
+	border-color: #00a63e;
+	background: #ecfdf5;
+	box-shadow: 0 0 0 3px rgba(0, 166, 62, 0.12);
+}
+
+.landing-slot-picker__day span,
+.landing-contact-section .landing-slot-picker__day span {
+	display: block;
+	line-height: 1.25 !important;
+}
+
+.landing-contact-section .landing-slot-picker__day-wd {
+	font-size: 11px !important;
+	text-transform: capitalize;
+	color: #6b7280 !important;
+}
+
+.landing-contact-section .landing-slot-picker__day-d {
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	color: #102f5e !important;
+}
+
+.landing-contact-section .landing-slot-picker__day-n {
+	margin-top: 2px;
+	font-size: 10.5px !important;
+	color: #0f7a3a !important;
+}
+
+.landing-slot-picker__slots {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+	gap: 8px;
+}
+
+.landing-slot-picker__slot {
+	padding: 9px 0;
+	border-radius: 10px;
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #102f5e !important;
+	font-size: 14px !important;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.landing-slot-picker__slot:hover {
+	border-color: #00a63e;
+	background: #ecfdf5;
+	transform: translateY(-1px);
+}
+
+/* Wybrany termin: jedna linia z „✓” i przyciskiem „Zmień” */
+.landing-slot-picker--selected {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	border-color: #00a63e;
+	background: #ecfdf5;
+}
+
+.landing-slot-picker__chosen {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.landing-slot-picker__chosen > span:last-child {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.landing-contact-section .landing-slot-picker__chosen-label {
+	font-size: 11px !important;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #0f7a3a !important;
+}
+
+.landing-contact-section .landing-slot-picker__chosen strong {
+	font-size: 15px !important;
+	color: #102f5e !important;
+}
+
+.landing-slot-picker__check {
+	flex: 0 0 auto;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #00a63e;
+	color: #fff !important;
+	font-weight: 700;
+}
+
+.landing-slot-picker__clear {
+	flex: 0 0 auto;
+	padding: 7px 12px;
+	border-radius: 999px;
+	border: 1px solid #00a63e;
+	background: #fff;
+	color: #0f7a3a !important;
+	font-size: 13px !important;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.landing-slot-picker__clear:hover {
+	background: #00a63e;
+	color: #fff !important;
+}
+
+@media (max-width: 640px) {
+	.landing-slot-picker {
+		padding: 12px;
+	}
+
+	.landing-slot-picker__slots {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.landing-slot-picker--selected {
+		flex-wrap: wrap;
+	}
+
+	.landing-slot-picker__clear {
+		width: 100%;
+		text-align: center;
+	}
+}

@@ -11,6 +11,7 @@ import TeamInsightsPanel from './TeamInsightsPanel'
 import PersonalOverviewPanel from './PersonalOverviewPanel'
 import './Dashboard.css'
 import OnboardingChecklist from '../onboarding/OnboardingChecklist'
+import FounderCallBanner from '../onboarding/FounderCallBanner'
 
 const copy = {
 	pl: {
@@ -563,6 +564,7 @@ function Dashboard() {
 							</div>
 						</header>
 
+						<FounderCallBanner />
 						<OnboardingChecklist />
 
 						<div className={`po-dashboard-command ${showTimer ? '' : 'po-dashboard-command--single'}`}>

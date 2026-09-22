@@ -46,12 +46,12 @@ export const useBoardTasks = (boardId) => {
 	})
 }
 
-/** Zadania z terminami na kalendarz (wszystkie dostępne tablice lub jedna). */
-export const useCalendarTasks = (year, month, boardId, { enabled = true } = {}) => {
+/** Zadania z terminami na kalendarz (wszystkie dostępne tablice lub jedna); scope: assigned | mine | board. */
+export const useCalendarTasks = (year, month, boardId, { enabled = true, scope = 'assigned' } = {}) => {
 	return useQuery({
-		queryKey: ['boardCalendarTasks', year, month, boardId ?? 'all'],
+		queryKey: ['boardCalendarTasks', year, month, boardId ?? 'all', scope],
 		queryFn: async () => {
-			const params = { year, month }
+			const params = { year, month, scope }
 			if (boardId) params.boardId = boardId
 			const response = await axios.get(`${API_URL}/api/boards/calendar/tasks`, {
 				withCredentials: true,

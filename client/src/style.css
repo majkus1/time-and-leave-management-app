@@ -8341,3 +8341,100 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	overflow-wrap: anywhere;
 	line-height: 1.25;
 }
+
+/* Rejestracja zespołu — telefon (opcjonalny) z osobistą notką twórcy */
+.auth-phone-note {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	margin-top: 8px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+}
+
+.auth-phone-note__avatar {
+	flex: 0 0 auto;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 1px #bbf7d0;
+}
+
+.auth-phone-note__quote {
+	margin: 0;
+	font-size: 13px !important;
+	line-height: 1.45;
+	color: #14532d !important;
+}
+
+.auth-phone-note__meta {
+	margin: 3px 0 0;
+	font-size: 12px !important;
+	color: #4b7a5a !important;
+}
+
+[data-theme='dark'] .auth-phone-note {
+	background: rgba(0, 168, 70, 0.12);
+	border-color: rgba(0, 168, 70, 0.35);
+}
+
+[data-theme='dark'] .auth-phone-note__quote {
+	color: #d1fae5 !important;
+}
+
+[data-theme='dark'] .auth-phone-note__meta {
+	color: #86efac !important;
+}
+
+/* Kalendarz zadań — przełącznik zakresu (przypisane / + utworzone / wszystkie) */
+.tasks-calendar-scope {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: -4px 0 12px;
+}
+
+.tasks-calendar-scope__label {
+	font-size: 13px !important;
+	color: #7f8c8d !important;
+}
+
+.tasks-calendar-scope__chip {
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid #d5dbe3;
+	background: #fff;
+	color: #2c3e50 !important;
+	font-size: 13px !important;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tasks-calendar-scope__chip:hover {
+	border-color: #27ae60;
+	color: #1e7e46 !important;
+}
+
+.tasks-calendar-scope__chip.is-active {
+	background: #27ae60;
+	border-color: #27ae60;
+	color: #fff !important;
+}
+
+[data-theme='dark'] .tasks-calendar-scope__chip {
+	background: var(--po-surface);
+	border-color: var(--po-border-strong);
+	color: var(--po-text) !important;
+}
+
+[data-theme='dark'] .tasks-calendar-scope__chip.is-active {
+	background: var(--po-brand);
+	border-color: var(--po-brand);
+	color: #fff !important;
+}

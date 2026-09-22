@@ -9,7 +9,7 @@ const {
 	buildBillingPaymentReminderEmail,
 	sendBillingPaymentReminderEmail,
 } = require('../services/emailService')
-const { appUrl } = require('../config')
+const { publicAppUrl } = require('../config')
 const { buildPublicCatalog } = require('../services/billingCatalogService')
 const billingRequestService = require('../services/billingRequestService')
 const billingActivationService = require('../services/billingActivationService')
@@ -489,11 +489,10 @@ function readPaymentReminderInput(body) {
 	const facts = {
 		teamName: normInvoiceField(b.teamName, 200) || 'Państwa zespół',
 		planLabel: normInvoiceField(b.planLabel, 40) || 'Pro',
-		retryAt: normInvoiceField(b.retryAt, 120),
 		graceEnd: normInvoiceField(b.graceEnd, 120),
-		packagesUrl: `${appUrl}/packages`,
+		packagesUrl: `${publicAppUrl}/packages`,
 	}
-	if (!facts.retryAt || !facts.graceEnd) return { error: 'retryAt and graceEnd are required' }
+	if (!facts.graceEnd) return { error: 'graceEnd is required' }
 	return { to, facts }
 }
 

@@ -1,0 +1,335 @@
+/* /umow-rozmowe — rezerwacja rozmowy z założycielem. Tokeny --po-* jak w reszcie aplikacji (dark mode bez osobnych reguł). */
+.po-call {
+	max-width: 760px;
+	margin: 0 auto;
+	padding: 8px 0 40px;
+}
+
+.po-call__head {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin-bottom: 20px;
+}
+
+.po-call__avatar {
+	flex: 0 0 auto;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 3px solid var(--po-surface);
+	box-shadow: 0 0 0 2px var(--po-brand-soft);
+}
+
+.po-call__eyebrow {
+	display: block;
+	font-size: 12px !important;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--po-brand-text) !important;
+}
+
+.po-call__title {
+	margin: 2px 0 4px;
+	font-size: 26px !important;
+	font-weight: 700;
+	color: var(--po-text) !important;
+}
+
+.po-call__lead {
+	margin: 0;
+	font-size: 15px !important;
+	color: var(--po-text-secondary) !important;
+	line-height: 1.5;
+}
+
+.po-call__card {
+	background: var(--po-surface);
+	border: 1px solid var(--po-border);
+	border-radius: 16px;
+	padding: 20px;
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+
+.po-call__step {
+	margin: 0 0 12px;
+	font-size: 16px !important;
+	font-weight: 700;
+	color: var(--po-text) !important;
+}
+
+.po-call__step + .po-call__step,
+.po-call__days + .po-call__step {
+	margin-top: 22px;
+}
+
+.po-call__muted {
+	font-size: 13px !important;
+	color: var(--po-text-muted) !important;
+	font-weight: 400;
+}
+
+.po-call__tz {
+	margin: -6px 0 10px;
+}
+
+/* Dni: przewijany rząd kart */
+.po-call__days {
+	display: flex;
+	gap: 8px;
+	overflow-x: auto;
+	padding-bottom: 6px;
+	scrollbar-width: thin;
+}
+
+.po-call__day {
+	flex: 0 0 auto;
+	min-width: 92px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	border: 1px solid var(--po-border);
+	background: var(--po-surface);
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.po-call__day:hover {
+	border-color: var(--po-brand);
+	transform: translateY(-1px);
+}
+
+.po-call__day.is-active {
+	border-color: var(--po-brand);
+	background: var(--po-brand-soft);
+}
+
+.po-call__day span {
+	display: block;
+}
+
+.po-call__day-wd {
+	font-size: 12px !important;
+	text-transform: capitalize;
+	color: var(--po-text-muted) !important;
+}
+
+.po-call__day-d {
+	font-size: 15px !important;
+	font-weight: 700;
+	color: var(--po-text) !important;
+}
+
+.po-call__day-n {
+	margin-top: 2px;
+	font-size: 11px !important;
+	color: var(--po-brand-text) !important;
+}
+
+/* Godziny: siatka przycisków */
+.po-call__slots {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+	gap: 8px;
+}
+
+.po-call__slot {
+	padding: 10px 0;
+	border-radius: 10px;
+	border: 1px solid var(--po-border-strong);
+	background: var(--po-surface);
+	color: var(--po-text) !important;
+	font-size: 15px !important;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.po-call__slot:hover {
+	border-color: var(--po-brand);
+	color: var(--po-brand-text) !important;
+}
+
+.po-call__slot.is-active {
+	background: var(--po-brand);
+	border-color: var(--po-brand);
+	color: #fff !important;
+}
+
+/* Potwierdzenie */
+.po-call__form {
+	margin-top: 22px;
+	padding-top: 18px;
+	border-top: 1px dashed var(--po-border);
+}
+
+.po-call__when {
+	margin: 0 0 14px;
+	font-size: 17px !important;
+	font-weight: 700;
+	color: var(--po-brand-text) !important;
+}
+
+.po-call__label {
+	display: block;
+	margin-bottom: 14px;
+	font-size: 13px !important;
+	font-weight: 600;
+	color: var(--po-text-secondary) !important;
+}
+
+.po-call__label input,
+.po-call__label textarea {
+	display: block;
+	width: 100%;
+	margin-top: 6px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px solid var(--po-border-strong);
+	background: var(--po-surface);
+	color: var(--po-text);
+	font-size: 15px !important;
+	font-weight: 400;
+}
+
+.po-call__label input:focus,
+.po-call__label textarea:focus {
+	outline: none;
+	border-color: var(--po-brand);
+	box-shadow: 0 0 0 3px var(--po-brand-soft);
+}
+
+.po-call__hint {
+	display: block;
+	margin-top: 4px;
+	font-size: 12px !important;
+	font-weight: 400;
+	color: var(--po-text-muted) !important;
+}
+
+.po-call__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+}
+
+.po-call__submit {
+	padding: 11px 20px;
+	border-radius: 10px;
+	border: none;
+	background: var(--po-brand);
+	color: #fff !important;
+	font-size: 15px !important;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.po-call__submit:hover:not(:disabled) {
+	background: var(--po-brand-hover);
+}
+
+.po-call__submit:disabled,
+.po-call__cancel:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.po-call__ghost {
+	padding: 11px 16px;
+	border-radius: 10px;
+	border: 1px solid var(--po-border-strong);
+	background: transparent;
+	color: var(--po-text-secondary) !important;
+	font-size: 14px !important;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* Stan „masz termin” */
+.po-call__card--done {
+	text-align: center;
+	border-color: var(--po-brand-soft);
+}
+
+.po-call__check {
+	width: 52px;
+	height: 52px;
+	margin: 4px auto 12px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text) !important;
+	font-size: 26px !important;
+	font-weight: 700;
+}
+
+.po-call__card--done h2 {
+	margin: 0 0 6px;
+	font-size: 20px !important;
+	color: var(--po-text) !important;
+}
+
+.po-call__cancel {
+	margin-top: 14px;
+	padding: 9px 16px;
+	border-radius: 10px;
+	border: 1px solid var(--po-border-strong);
+	background: transparent;
+	color: var(--po-text-secondary) !important;
+	font-size: 13px !important;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.po-call__cancel:hover:not(:disabled) {
+	border-color: #ef4444;
+	color: #b91c1c !important;
+}
+
+.po-call__error {
+	color: #b91c1c !important;
+}
+
+@media (max-width: 640px) {
+	.po-call__head {
+		align-items: flex-start;
+	}
+
+	.po-call__avatar {
+		width: 52px;
+		height: 52px;
+	}
+
+	.po-call__title {
+		font-size: 22px !important;
+	}
+
+	.po-call__card {
+		padding: 16px;
+		border-radius: 14px;
+	}
+
+	.po-call__slots {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.po-call__submit,
+	.po-call__ghost {
+		width: 100%;
+	}
+}
+
+/* Poniżej 1500px górny pasek jest fixed (jak .calendar-section: margin-top 95px), a .p-3 traci padding — dokładamy własny. */
+@media (max-width: 1500px) {
+	.po-call {
+		margin-top: 95px;
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+}

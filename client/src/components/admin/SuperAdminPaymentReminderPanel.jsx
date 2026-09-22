@@ -14,7 +14,6 @@ const DEFAULTS = {
 	toEmail: 'ag.ironsky@gmail.com',
 	teamName: 'IRONSKY',
 	planLabel: 'Pro',
-	retryAt: '22 września ok. godz. 2:00',
 	graceEnd: '26 września 2026',
 }
 
@@ -83,7 +82,6 @@ export default function SuperAdminPaymentReminderPanel() {
 				<Field label="Adres e-mail odbiorcy" value={form.toEmail} onChange={set('toEmail')} />
 				<Field label="Nazwa zespołu" value={form.teamName} onChange={set('teamName')} />
 				<Field label="Pakiet" value={form.planLabel} onChange={set('planLabel')} />
-				<Field label="Ponowienie obciążenia (tekst)" value={form.retryAt} onChange={set('retryAt')} />
 				<Field label="Ostatni dzień na płatność (tekst)" value={form.graceEnd} onChange={set('graceEnd')} />
 			</div>
 

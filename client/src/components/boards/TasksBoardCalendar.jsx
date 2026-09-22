@@ -7,6 +7,26 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { addDays } from 'date-fns'
 import { useCalendarTasks } from '../../hooks/useBoards'
+import { useAuth } from '../../context/AuthContext'
+import { isAdmin, isHR, isSupervisor } from '../../utils/roleHelpers'
+
+/*
+ * Zakres kalendarza: domyślnie „przypisane do mnie” (jak zawsze); „+ utworzone przeze mnie” dla rozdzielających
+ * zadania; „wszystkie zadania tablicy” tylko dla Admina / HR / Przełożonego. Wybór zapamiętany w tej przeglądarce
+ * per użytkownik — nikt nie dostaje cudzych zadań, dopóki sam nie przełączy.
+ */
+const CALENDAR_SCOPES = ['assigned', 'mine', 'board']
+function scopeStorageKey(username) {
+	return `po-task-calendar-scope:${username || 'user'}`
+}
+function readScope(username) {
+	try {
+		const v = localStorage.getItem(scopeStorageKey(username))
+		return CALENDAR_SCOPES.includes(v) ? v : 'assigned'
+	} catch {
+		return 'assigned'
+	}
+}
 import QuickCalendarTaskModal from './QuickCalendarTaskModal'
 import { calendarTaskSortMinutes, formatCalendarTimeDisplay } from '../../utils/taskScheduleTime'
 
@@ -50,9 +70,22 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 	const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth())
 	const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
 	const [quickOpen, setQuickOpen] = useState(false)
+	const { username, role } = useAuth()
+	const canSeeBoardScope = isAdmin(role) || isHR(role) || isSupervisor(role)
+	const [scope, setScopeState] = useState(() => readScope(username))
+	const effectiveScope = scope === 'board' && !canSeeBoardScope ? 'mine' : scope
+	const setScope = value => {
+		setScopeState(value)
+		try {
+			localStorage.setItem(scopeStorageKey(username), value)
+		} catch {
+			// brak localStorage — wybór tylko na tę sesję
+		}
+	}
 
 	const { data: tasks = [], isLoading } = useCalendarTasks(currentYear, currentMonth + 1, boardId, {
 		enabled: true,
+		scope: effectiveScope,
 	})
 
 	useEffect(() => {
@@ -210,6 +243,20 @@ function TasksBoardCalendar({ boardId = null, showBoardNameInTitle = false, titl
 				>
 					+ {t('boards.quickCalendarTask') || 'Szybkie zadanie'}
 				</button>
+			</div>
+			<div className="tasks-calendar-scope" role="group" aria-label={t('boards.calendarScopeLabel')}>
+				<span className="tasks-calendar-scope__label">{t('boards.calendarScopeLabel')}</span>
+				{['assigned', 'mine', ...(canSeeBoardScope ? ['board'] : [])].map(value => (
+					<button
+						key={value}
+						type="button"
+						className={`tasks-calendar-scope__chip${effectiveScope === value ? ' is-active' : ''}`}
+						aria-pressed={effectiveScope === value}
+						onClick={() => setScope(value)}
+					>
+						{t(`boards.calendarScope.${value}`)}
+					</button>
+				))}
 			</div>
 			<p style={{ color: '#7f8c8d', fontSize: '14px', marginTop: 0, marginBottom: '16px' }}>
 				{t('boards.calendarHint') || 'Kliknij zadanie, aby przejść do tablicy.'}

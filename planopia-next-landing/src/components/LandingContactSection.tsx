@@ -8,7 +8,7 @@ import { landingContactCopy } from '@/data/landingContactCopy'
 import { trackEvent } from '@/lib/analytics'
 import { FOOTER_UI, LANDING_SELLER } from '@/data/landingFooterData'
 
-const LandingContactDatePicker = dynamic(() => import('./LandingContactDatePicker'), {
+const LandingContactSlotPicker = dynamic(() => import('./LandingContactSlotPicker'), {
 	ssr: false,
 })
 
@@ -36,13 +36,10 @@ export default function LandingContactSection({
 	const [datetime, setDatetime] = useState<Date | null>(null)
 	const [userMessage, setUserMessage] = useState('')
 	const [msg2, setMsg2] = useState('')
-	const [datePickerActive, setDatePickerActive] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 
 	const dateInputClassName =
 		'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white/80 hover:bg-white'
-
-	const activateDatePicker = () => setDatePickerActive(true)
 
 	const handleSubmitMeeting = async (e: React.FormEvent) => {
 		e.preventDefault()
@@ -238,29 +235,10 @@ export default function LandingContactSection({
 									<label htmlFor="contact-date" className="block text-sm font-semibold text-gray-700 mb-2">
 										{t.dateLabel}
 									</label>
-									{datePickerActive ? (
-										<LandingContactDatePicker
-											id="contact-date"
-											locale={locale}
-											selected={datetime}
-											onChange={setDatetime}
-											placeholder={t.datePlaceholder}
-											timeCaption={t.timeCaption}
-											className={dateInputClassName}
-											autoOpen
-										/>
-									) : (
-										<input
-											id="contact-date"
-											type="text"
-											readOnly
-											placeholder={t.datePlaceholder}
-											onFocus={activateDatePicker}
-											onClick={activateDatePicker}
-											className={dateInputClassName}
-											aria-label={t.dateLabel}
-										/>
-									)}
+									<p className="landing-slot-picker__hint">{t.dateHint}</p>
+									<div id="contact-date">
+										<LandingContactSlotPicker locale={locale} selected={datetime} onChange={setDatetime} copy={t.slotPicker} />
+									</div>
 								</div>
 
 								<div>
