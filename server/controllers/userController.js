@@ -9,6 +9,7 @@ const Board = require('../models/Board')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
 const { resolveDeleteUserDecision } = require('../utils/deleteUserPolicy')
+const { buildDefaultSupervisorConfig } = require('../utils/supervisorScope')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
 const entitlementsService = require('../services/entitlementsService')
@@ -112,6 +113,18 @@ function normalizeOptionalPosition(position) {
 function hasAnyRole(userOrReqUser, roleNames) {
 	const roles = Array.isArray(userOrReqUser?.roles) ? userOrReqUser.roles : []
 	return roleNames.some(role => roles.includes(role))
+}
+
+/** Konfiguracja przełożonego tworzona przy nadaniu roli (domyślna: wszystkie uprawnienia dla swojego działu). */
+async function ensureSupervisorConfig(user) {
+	try {
+		const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
+		const exists = await SupervisorConfig.exists({ supervisorId: user._id })
+		if (!exists) await SupervisorConfig.create(buildDefaultSupervisorConfig(user))
+	} catch (error) {
+		// Wyścig (unikalny indeks) albo błąd zapisu nie może psuć zapisu użytkownika; brak dokumentu i tak = konfiguracja domyślna
+		if (error?.code !== 11000) console.error('ensureSupervisorConfig:', error)
+	}
 }
 
 function buildManagedUsername(teamId) {
@@ -320,6 +333,9 @@ exports.register = async (req, res) => {
 		})
 
 		await newUser.save()
+		if (Array.isArray(newUser.roles) && newUser.roles.includes('Przełożony (Supervisor)')) {
+			await ensureSupervisorConfig(newUser)
+		}
 		if (wantsManagedOnly) {
 			await addCreatedManagedEmployeeToSupervisorScope(requestingUser, newUser._id)
 		}
@@ -1198,6 +1214,11 @@ exports.updateUserRoles = async (req, res) => {
 					console.error(`Error checking/deactivating board for department "${deptName}":`, error);
 				}
 			}
+		}
+
+		// Nowy przełożony od razu dostaje konfigurację domyślną (zakres „mój dział”) — widoczną i edytowalną w ekranie uprawnień
+		if (user.roles.includes('Przełożony (Supervisor)')) {
+			await ensureSupervisorConfig(user)
 		}
 
 		await createLog(req.user.userId, 'UPDATE_ROLES', `Updated roles for user ${user.username}`, req.user.userId);

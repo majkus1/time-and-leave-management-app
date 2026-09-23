@@ -7,6 +7,8 @@ const {
 	sendSupervisorAccessError,
 } = require('../utils/supervisorAccess')
 
+const { supervisorHasNoScope } = require('../utils/supervisorScope')
+
 const ACTIVE_USER_FILTER = {
 	$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
 }
@@ -54,7 +56,8 @@ exports.getSupervisorConfig = async (req, res) => {
 			await config.save()
 		}
 
-		res.json(config)
+		// noScope: bez działu i bez wybranych pracowników przełożony nie ma nikogo pod sobą — ekran uprawnień to pokazuje
+		res.json({ ...config.toObject(), noScope: supervisorHasNoScope(config, supervisor) })
 	} catch (error) {
 		console.error('Error getting supervisor config:', error)
 		res.status(500).json({ message: 'Error getting supervisor config' })

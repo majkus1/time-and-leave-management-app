@@ -131,6 +131,11 @@ function SupervisorConfigModal({ isOpen, onClose, supervisorId }) {
 				</div>
 			) : (
 				<form onSubmit={handleSubmit}>
+					{config?.noScope && (
+						<div className="supervisor-noscope-warning" role="alert">
+							{t('logs.supervisorNoScope')}
+						</div>
+					)}
 					<div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 						{/* Może zatwierdzać urlopy */}
 						<label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '15px', border: '1px solid #e9ecef', borderRadius: '8px' }}>

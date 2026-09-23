@@ -8438,3 +8438,21 @@ body:has(.tutorial-info-bar) .mobile-navbar {
 	border-color: var(--po-brand);
 	color: #fff !important;
 }
+
+/* Konfiguracja przełożonego — ostrzeżenie „brak zakresu” */
+.supervisor-noscope-warning {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	color: #92400e !important;
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+[data-theme='dark'] .supervisor-noscope-warning {
+	background: rgba(245, 158, 11, 0.14);
+	border-color: rgba(251, 191, 36, 0.45);
+	color: #fde68a !important;
+}
