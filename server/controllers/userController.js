@@ -8,6 +8,7 @@ const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const Board = require('../models/Board')(firmDb)
 const { sendEmail, escapeHtml, getEmailTemplate } = require('../services/emailService')
 const { createLog } = require('../services/logService')
+const { resolveDeleteUserDecision } = require('../utils/deleteUserPolicy')
 const bcrypt = require('bcryptjs')
 const { updateSpecialTeamLimit } = require('./teamController')
 const entitlementsService = require('../services/entitlementsService')
@@ -1211,12 +1212,39 @@ exports.updateUserRoles = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
 	const { userId } = req.params
-	const isSelfDeletion = req.user.userId === userId
 
 	try {
 		const user = await User.findById(userId)
 		if (!user) {
 			return res.status(404).json({ message: 'Użytkownik nie znaleziony' })
+		}
+
+		// Najpierw wszystkie odmowy (utils/deleteUserPolicy) — dopiero potem jakiekolwiek zapisy
+		const decision = resolveDeleteUserDecision({
+			requesterId: req.user.userId,
+			requesterTeamId: req.user.teamId,
+			requesterRoles: req.user.roles,
+			targetId: userId,
+			targetTeamId: user.teamId,
+		})
+		if (!decision.allowed) {
+			return res.status(decision.status).json({ message: decision.message })
+		}
+
+		// Sprawdź czy nie usuwasz ostatniego admina w zespole (nie licząc założyciela) - tylko aktywnych
+		if (user.roles && user.roles.includes('Admin')) {
+			const teamAdmins = await User.find({ 
+				teamId: user.teamId, 
+				roles: { $in: ['Admin'] },
+				isTeamAdmin: false,
+				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
+			})
+			
+			if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
+				return res.status(400).json({ 
+					message: 'Nie można usunąć ostatniego administratora w zespole. Najpierw dodaj innego administratora.' 
+				})
+			}
 		}
 
 		// Jeśli usuwasz założyciela zespołu - przekaż administrację innemu adminowi
@@ -1252,40 +1280,6 @@ exports.deleteUser = async (req, res) => {
 			
 			// Log transferu administracji
 			await createLog(req.user.userId, 'TRANSFER_TEAM_ADMIN', `Przekazano administrację zespołu użytkownikowi ${newTeamAdmin.username}`, req.user.userId)
-		}
-
-		// Sprawdź czy użytkownik jest w tym samym zespole (jeśli nie usuwasz siebie)
-		if (!isSelfDeletion && user.teamId.toString() !== req.user.teamId.toString()) {
-			return res.status(403).json({ message: 'Nie można usunąć użytkownika z innego zespołu' })
-		}
-
-		// Self-deletion jest zablokowane - użytkownik nie może usunąć własnego konta
-		if (isSelfDeletion) {
-			return res.status(403).json({ 
-				message: 'Nie można usunąć własnego konta. Skontaktuj się z administratorem zespołu.' 
-			})
-		} else {
-			// Jeśli usuwasz innego użytkownika - tylko Admin może
-			const allowedRoles = ['Admin']
-			if (!allowedRoles.some(role => req.user.roles.includes(role))) {
-				return res.status(403).json({ message: 'Brak uprawnień - tylko administrator może usuwać innych użytkowników' })
-			}
-
-			// Sprawdź czy nie usuwasz ostatniego admina w zespole (nie licząc założyciela) - tylko aktywnych
-			if (user.roles && user.roles.includes('Admin')) {
-				const teamAdmins = await User.find({ 
-					teamId: user.teamId, 
-					roles: { $in: ['Admin'] },
-					isTeamAdmin: false,
-					$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
-				})
-				
-				if (teamAdmins.length === 1 && teamAdmins[0]._id.toString() === userId) {
-					return res.status(400).json({ 
-						message: 'Nie można usunąć ostatniego administratora w zespole. Najpierw dodaj innego administratora.' 
-					})
-				}
-			}
 		}
 
 		// Soft delete użytkownika (tylko admin może usuwać użytkowników)

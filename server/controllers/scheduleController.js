@@ -15,29 +15,8 @@ const { sendSchedulePublishedEmailNotification } = require('../services/emailSer
 const { getClientSafeMessage } = require('../utils/clientSafeErrors')
 const { assertScheduleEntryAllowedForEmployee } = require('../services/leaveScheduleConflictService')
 
-const normalizeDepartments = (departmentValue) =>
-	Array.isArray(departmentValue) ? departmentValue : (departmentValue ? [departmentValue] : [])
-
-const canAccessSchedule = (schedule, user) => {
-	if (!schedule || !user || !user.teamId) return false
-	if (user.teamId.toString() !== schedule.teamId.toString()) return false
-
-	const roles = Array.isArray(user.roles) ? user.roles : (user.roles ? [user.roles] : [])
-	const isAdmin = roles.includes('Admin')
-	const isHR = roles.includes('HR')
-	if (isAdmin || isHR) return true
-
-	if (schedule.type === 'team') return true
-	if (schedule.type === 'department') {
-		const userDepartments = normalizeDepartments(user.department)
-		return userDepartments.includes(schedule.departmentName)
-	}
-	if (schedule.type === 'custom') {
-		return schedule.members && schedule.members.some(memberId => memberId.toString() === user._id.toString())
-	}
-
-	return false
-}
+// Dostęp i zawężenie do zespołu — utils/scheduleAccess (czyste funkcje z testami)
+const { canAccessSchedule, teamScheduleFilter, normalizeDepartments } = require('../utils/scheduleAccess')
 
 const parseDateInput = (value) => {
 	if (!value) return null
@@ -252,7 +231,7 @@ exports.getSchedule = async (req, res) => {
 		const { scheduleId } = req.params
 		const userId = req.user.userId
 
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
 		}
@@ -307,7 +286,7 @@ exports.getScheduleEntries = async (req, res) => {
 		const { scheduleId } = req.params
 		const { month, year } = req.query
 		
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
 		}
@@ -377,7 +356,7 @@ exports.upsertAvailability = async (req, res) => {
 		}
 
 		const [schedule, user] = await Promise.all([
-			Schedule.findById(scheduleId),
+			Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId)),
 			User.findById(userId).select('_id teamId firstName lastName username roles department')
 		])
 
@@ -487,7 +466,7 @@ exports.deleteAvailability = async (req, res) => {
 		targetDate.setHours(0, 0, 0, 0)
 
 		const [schedule, user] = await Promise.all([
-			Schedule.findById(scheduleId),
+			Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId)),
 			User.findById(userId).select('_id teamId roles department')
 		])
 
@@ -565,7 +544,7 @@ exports.upsertScheduleEntry = async (req, res) => {
 		// Check permissions
 		const isAdmin = user.roles && user.roles.includes('Admin')
 		const isHR = user.roles && user.roles.includes('HR')
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
@@ -766,7 +745,7 @@ exports.autoGenerateMonthEntries = async (req, res) => {
 		const userId = req.user.userId
 		const [user, schedule] = await Promise.all([
 			User.findById(userId),
-			Schedule.findById(scheduleId)
+			Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		])
 
 		if (!user) {
@@ -851,7 +830,7 @@ exports.publishMonthDraftEntries = async (req, res) => {
 		const userId = req.user.userId
 		const [user, schedule] = await Promise.all([
 			User.findById(userId),
-			Schedule.findById(scheduleId)
+			Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		])
 
 		if (!user) {
@@ -952,7 +931,7 @@ exports.clearMonthEntries = async (req, res) => {
 		const userId = req.user.userId
 		const [user, schedule] = await Promise.all([
 			User.findById(userId),
-			Schedule.findById(scheduleId)
+			Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		])
 
 		if (!user) {
@@ -1047,7 +1026,7 @@ exports.deleteScheduleEntry = async (req, res) => {
 		// Check permissions
 		const isAdmin = user.roles && user.roles.includes('Admin')
 		const isHR = user.roles && user.roles.includes('HR')
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
@@ -1132,7 +1111,7 @@ exports.getScheduleUsers = async (req, res) => {
 		const { scheduleId } = req.params
 		const userId = req.user.userId
 
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
 		}
@@ -1197,9 +1176,13 @@ exports.getScheduleUsers = async (req, res) => {
 			
 			return res.json(filteredUsers)
 		} else if (schedule.type === 'custom') {
-			// For custom schedules, get users from members array
+			// Grafik niestandardowy: listę członków widzą tylko jego członkowie oraz Admin/HR
+			if (!canAccessSchedule(schedule, user)) {
+				return res.status(403).json({ message: 'Access denied' })
+			}
 			const memberUsers = await User.find({
 				_id: { $in: schedule.members || [] },
+				teamId: schedule.teamId,
 				$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }]
 			})
 				.select('firstName lastName username position')
@@ -1284,7 +1267,7 @@ exports.updateSchedule = async (req, res) => {
 		const { name, memberIds } = req.body
 		const userId = req.user.userId
 
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
 		}
@@ -1341,7 +1324,7 @@ exports.deleteSchedule = async (req, res) => {
 		const { scheduleId } = req.params
 		const userId = req.user.userId
 
-		const schedule = await Schedule.findById(scheduleId)
+		const schedule = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId))
 		if (!schedule) {
 			return res.status(404).json({ message: 'Schedule not found' })
 		}
@@ -1389,7 +1372,7 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 		})
 		await entitlementsService.consumeAiMessageForUser(req.user.userId)
 		require('../services/aiUsageLogService').recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'schedule_draft', mode: 'schedule', model: result.model, usage: result.usage, durationMs: Date.now() - aiStartedAt })
-		const schedDoc = await Schedule.findById(scheduleId).select('name').lean()
+		const schedDoc = await Schedule.findOne(teamScheduleFilter(scheduleId, req.user.teamId)).select('name').lean()
 		const schedLabel = schedDoc?.name || String(scheduleId)
 		const who = req.user?.username || '—'
 		await createLog(
