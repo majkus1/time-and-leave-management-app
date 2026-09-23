@@ -7,6 +7,7 @@ const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const SupervisorConfig = require('../models/SupervisorConfig')(firmDb)
 const { canSupervisorViewTimesheets, canSupervisorApproveLeaves } = require('./roleService')
+const { splitSupervisorAiScopes } = require('../utils/aiDataScope')
 
 /**
  * @param {import('mongoose').Types.ObjectId} teamId
@@ -21,8 +22,10 @@ async function getActiveTeamUserIds(teamId) {
 }
 
 /**
+ * detailedUserIds = zakres EWIDENCJI (godziny, licznik, zadania, lista osób w kontekście);
+ * leaveUserIds = zakres URLOPÓW (eksport wniosków). Dla przełożonego to różne zbiory (utils/aiDataScope).
  * @param {import('mongoose').Document} requestingUser - full User document
- * @returns {Promise<{ scope: 'team'|'supervised'|'self', detailedUserIds: import('mongoose').Types.ObjectId[] }>}
+ * @returns {Promise<{ scope: 'team'|'supervised'|'self', detailedUserIds: import('mongoose').Types.ObjectId[], leaveUserIds: import('mongoose').Types.ObjectId[] }>}
  */
 exports.resolveDetailedDataScope = async function resolveDetailedDataScope(requestingUser) {
 	const teamId = requestingUser.teamId
@@ -34,7 +37,7 @@ exports.resolveDetailedDataScope = async function resolveDetailedDataScope(reque
 
 	if (isAdmin || isHR) {
 		const ids = await getActiveTeamUserIds(teamId)
-		return { scope: 'team', detailedUserIds: ids }
+		return { scope: 'team', detailedUserIds: ids, leaveUserIds: ids }
 	}
 
 	if (isSupervisor) {
@@ -43,24 +46,21 @@ exports.resolveDetailedDataScope = async function resolveDetailedDataScope(reque
 			$or: [{ isActive: { $ne: false } }, { isActive: { $exists: false } }],
 		}).select('_id firstName lastName department')
 
-		const allowed = []
+		const entries = []
 		for (const u of teamUsers) {
 			// eslint-disable-next-line no-await-in-loop
-			const okTs = await canSupervisorViewTimesheets(requestingUser, u)
+			const timesheet = await canSupervisorViewTimesheets(requestingUser, u)
 			// eslint-disable-next-line no-await-in-loop
-			const okLeave = await canSupervisorApproveLeaves(requestingUser, u)
-			if (okTs || okLeave) allowed.push(u._id)
+			const leave = await canSupervisorApproveLeaves(requestingUser, u)
+			entries.push({ id: u._id, timesheet, leave })
 		}
-		// Zawsze uwzględnij własne konto przełożonego w AI (raport „ja + podlegli”).
-		const selfStr = selfId.toString()
-		if (!allowed.some(id => id.toString() === selfStr)) {
-			allowed.push(selfId)
-		}
-		return { scope: 'supervised', detailedUserIds: allowed }
+		// Dwa osobne zbiory (nie suma); własne konto zawsze w obu („ja + podlegli”).
+		const { timesheetUserIds, leaveUserIds } = splitSupervisorAiScopes(entries, selfId)
+		return { scope: 'supervised', detailedUserIds: timesheetUserIds, leaveUserIds }
 	}
 
 	// Worker (or any other role): only own detailed records
-	return { scope: 'self', detailedUserIds: [selfId] }
+	return { scope: 'self', detailedUserIds: [selfId], leaveUserIds: [selfId] }
 }
 
 /**

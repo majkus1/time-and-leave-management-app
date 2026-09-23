@@ -259,7 +259,9 @@ function leaveExportUnit(request, settings, L) {
 }
 
 async function fetchLeaves(ctx) {
-	const { range, allowedUserIds, leaveStatuses, requestingUser } = ctx
+	const { range, leaveStatuses, requestingUser } = ctx
+	// Zakres urlopów przełożonego jest inny niż zakres ewidencji (reguła 3) — stary kontekst bez pola: jak dotąd
+	const allowedUserIds = ctx.allowedLeaveUserIds || ctx.allowedUserIds
 	let settings = null
 	if (requestingUser?.teamId) {
 		settings = await Settings.findOne({ teamId: requestingUser.teamId })

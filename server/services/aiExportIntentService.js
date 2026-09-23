@@ -299,7 +299,9 @@ exports.resolveExportExecutionContext = async function resolveExportExecutionCon
 	let dept = typeof departmentHint === 'string' ? departmentHint.trim().slice(0, 120) : ''
 	if (st !== 'department') dept = ''
 
-	const allowedIds = await resolveAllowedUserIdsForExport(requestingUser, dataScope, st, dept)
+	const allowedIds = await resolveAllowedUserIdsForExport(requestingUser, dataScope.detailedUserIds, st, dept)
+	// Wnioski urlopowe — osobny zakres (przełożony: kogo może zatwierdzać), nie zakres ewidencji
+	const allowedLeaveIds = await resolveAllowedUserIdsForExport(requestingUser, dataScope.leaveUserIds || dataScope.detailedUserIds, st, dept)
 
 	return {
 		requestingUser,
@@ -310,6 +312,7 @@ exports.resolveExportExecutionContext = async function resolveExportExecutionCon
 		scopeTarget: st,
 		departmentHint: dept || null,
 		allowedUserIds: allowedIds,
+		allowedLeaveUserIds: allowedLeaveIds,
 		dataScope,
 	}
 }
@@ -318,10 +321,10 @@ exports.prefilterExportQuestion = prefilterExportQuestion
 
 /**
  * @param {import('mongoose').Document} requestingUser
- * @param {{ scope: string, detailedUserIds: import('mongoose').Types.ObjectId[] }} dataScope
+ * @param {import('mongoose').Types.ObjectId[]} scopeIds — zakres ewidencji albo urlopów (resolveDetailedDataScope)
  */
-async function resolveAllowedUserIdsForExport(requestingUser, dataScope, scopeTarget, departmentHint) {
-	const ids = dataScope.detailedUserIds
+async function resolveAllowedUserIdsForExport(requestingUser, scopeIds, scopeTarget, departmentHint) {
+	const ids = scopeIds || []
 	const selfId = requestingUser._id
 
 	if (scopeTarget === 'self') {
