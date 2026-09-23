@@ -199,6 +199,33 @@ const TeamRegistration = () => {
         </div>
       </div>
 
+      <div className="auth-phone-field">
+        <label htmlFor="adminPhone" className="block text-sm font-medium text-gray-700">
+          {t('newteam.phone')} <span className="text-gray-500 text-xs">({t('newteam.optional')})</span>
+        </label>
+        <div className="mt-1">
+          <input
+            id="adminPhone"
+            name="adminPhone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={formData.adminPhone}
+            onChange={handleChange}
+            className="auth-input"
+            placeholder={t('newteam.phonePlaceholder')}
+            maxLength={32}
+          />
+        </div>
+        <div className="auth-phone-note" role="note">
+          <img className="auth-phone-note__avatar" src="/img/1709827103942.webp" alt="" width="30" height="30" loading="lazy" />
+          <div>
+            <p className="auth-phone-note__quote">{t('newteam.phoneHint')}</p>
+            <p className="auth-phone-note__meta">{t('newteam.phoneHintAuthor')} · {t('newteam.phonePrivacy')}</p>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label htmlFor="adminPassword" className="block text-sm font-medium text-gray-700">
           {t('newteam.adminPassword')}
@@ -292,33 +319,6 @@ const TeamRegistration = () => {
             className="auth-input"
             placeholder={t('newteam.positionPlaceholder')}
           />
-        </div>
-      </div>
-
-      <div className="auth-phone-field">
-        <label htmlFor="adminPhone" className="block text-sm font-medium text-gray-700">
-          {t('newteam.phone')} <span className="text-gray-500 text-xs">({t('newteam.optional')})</span>
-        </label>
-        <div className="mt-1">
-          <input
-            id="adminPhone"
-            name="adminPhone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={formData.adminPhone}
-            onChange={handleChange}
-            className="auth-input"
-            placeholder={t('newteam.phonePlaceholder')}
-            maxLength={32}
-          />
-        </div>
-        <div className="auth-phone-note" role="note">
-          <img className="auth-phone-note__avatar" src="/img/1709827103942.webp" alt="" width="30" height="30" loading="lazy" />
-          <div>
-            <p className="auth-phone-note__quote">{t('newteam.phoneHint')}</p>
-            <p className="auth-phone-note__meta">{t('newteam.phoneHintAuthor')} · {t('newteam.phonePrivacy')}</p>
-          </div>
         </div>
       </div>
 
