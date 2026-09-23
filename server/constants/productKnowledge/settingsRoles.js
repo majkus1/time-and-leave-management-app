@@ -23,7 +23,7 @@ module.exports = {
 - **Administrator** — pełny dostęp: użytkownicy, role, działy, ustawienia, pakiety, dokumenty prawne, centrum pomocy. Zawsze może wszystko, niezależnie od konfiguracji.
 - **HR** — wnioski urlopowe i ewidencja całego zespołu, grafiki, pakiety i rozliczenia, dodawanie użytkowników.
 - **Przełożony** — zakres ustawia Administrator w trzech uprawnieniach: zatwierdzanie urlopów, podgląd i edycja ewidencji, zarządzanie grafikiem — każde dla swojego działu i/lub wybranych pracowników (także spoza działu; osoby z działu można też odznaczyć). Nowy przełożony dostaje od razu wszystkie trzy uprawnienia, ale tylko dla swojego działu — dodatkowe osoby Administrator wybiera w „Podwładni”. Przełożony bez działu i bez wybranych pracowników nie odpowiada za nikogo (ekran uprawnień to pokazuje). Grafik całego zespołu edytują tylko Administrator i HR.
-- **Pracownik** — własna ewidencja, własne wnioski, tablice i czat, do których należy.
+- **Pracownik** — własna ewidencja, własne wnioski, tablice i czat, do których należy. Widzi też nieobecności kolegów z zespołu (urlopy, L4) w kalendarzach i planach urlopowych — żeby wiedzieć, kogo nie ma w pracy; nie zatwierdza cudzych wniosków i nie widzi cudzej ewidencji.
 - Jedna osoba może mieć kilka ról; hierarchia Administrator > HR > Przełożony > Pracownik.
 
 ### Dodawanie i usuwanie użytkowników
