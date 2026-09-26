@@ -24,6 +24,28 @@ const qrCodeSchema = new mongoose.Schema({
 		type: Boolean,
 		default: true
 	},
+	/**
+	 * Tryb skanu (utils/qrScreenToken): 'print' — stały wydruk (jak dotąd, domyślnie);
+	 * 'screen' — tylko rotujący kod z ekranu (tablet); 'screen_or_print' — ekran, a wydruk awaryjnie z oznaczeniem.
+	 */
+	mode: {
+		type: String,
+		enum: ['print', 'screen', 'screen_or_print'],
+		default: 'print'
+	},
+	/** Sekret HMAC tokenu ekranu — nigdy w listach dla klienta (select: false); zmiana unieważnia wyświetlacze */
+	screenSecret: {
+		type: String,
+		default: null,
+		select: false
+	},
+	/** Token linku wyświetlacza /qr-display/<token> (bez logowania) — Admin może go unieważnić */
+	displayToken: {
+		type: String,
+		default: null,
+		index: true,
+		sparse: true
+	},
 	createdBy: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',

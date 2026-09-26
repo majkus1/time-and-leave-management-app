@@ -52,16 +52,46 @@ export const useDeleteQRCode = () => {
 	})
 }
 
-// Verify QR code (public)
-export const useVerifyQRCode = (code) => {
+// Verify QR code (public); t = token z ekranu, p = przepustka po logowaniu (tryb ekranu)
+export const useVerifyQRCode = (code, { t, p } = {}) => {
 	return useQuery({
-		queryKey: ['qrCode', 'verify', code],
+		queryKey: ['qrCode', 'verify', code, t || '', p || ''],
 		queryFn: async () => {
-			const response = await axios.get(`${API_URL}/api/qr/verify/${code}`)
+			const params = {}
+			if (t) params.t = t
+			if (p) params.p = p
+			const response = await axios.get(`${API_URL}/api/qr/verify/${code}`, { params })
 			return response.data
 		},
 		enabled: !!code,
 		retry: false,
+		// token z ekranu wygasa po ~minucie — nie używamy starej odpowiedzi z cache
+		staleTime: 0,
+		gcTime: 0,
+	})
+}
+
+// Tryb kodu: print | screen | screen_or_print (Admin/HR)
+export const useSetQRCodeMode = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, mode }) => {
+			const response = await axios.patch(`${API_URL}/api/qr/${id}/mode`, { mode }, { withCredentials: true })
+			return response.data
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
+	})
+}
+
+// Nowy link wyświetlacza — unieważnia poprzedni
+export const useRotateQRDisplayLink = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async id => {
+			const response = await axios.post(`${API_URL}/api/qr/${id}/display-link`, {}, { withCredentials: true })
+			return response.data
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
 	})
 }
 
@@ -70,10 +100,12 @@ export const useRegisterTimeEntry = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async (code) => {
+		// payload: kod (string, jak dawniej) albo { code, t, p } dla trybu ekranu
+		mutationFn: async (payload) => {
+			const body = typeof payload === 'string' ? { code: payload } : payload
 			const response = await axios.post(
 				`${API_URL}/api/time-entry/register`,
-				{ code },
+				body,
 				{ withCredentials: true }
 			)
 			return response.data

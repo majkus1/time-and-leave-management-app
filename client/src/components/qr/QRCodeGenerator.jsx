@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
-import { useTeamQRCodes, useGenerateQRCode, useDeleteQRCode } from '../../hooks/useQRCode'
+import { useTeamQRCodes, useGenerateQRCode, useDeleteQRCode, useSetQRCodeMode, useRotateQRDisplayLink } from '../../hooks/useQRCode'
 import Loader from '../Loader'
 import './QRCode.css'
 
@@ -12,6 +12,38 @@ function QRCodeGenerator() {
 	const { data: qrCodes = [], isLoading } = useTeamQRCodes()
 	const generateQRCode = useGenerateQRCode()
 	const deleteQRCode = useDeleteQRCode()
+	const setQRCodeMode = useSetQRCodeMode()
+	const rotateDisplayLink = useRotateQRDisplayLink()
+
+	const displayUrl = token => `${window.location.origin}/qr-display/${token}`
+
+	const handleModeChange = async (id, mode) => {
+		try {
+			await setQRCodeMode.mutateAsync({ id, mode })
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('settings.qrModeError'))
+		}
+	}
+
+	const handleCopyDisplayLink = async token => {
+		try {
+			await navigator.clipboard.writeText(displayUrl(token))
+			await showAlert(t('settings.qrDisplayLinkCopied'))
+		} catch {
+			await showAlert(displayUrl(token))
+		}
+	}
+
+	const handleRotateDisplayLink = async (id, name) => {
+		const confirmed = await showConfirm(t('settings.qrDisplayRotateConfirm', { name }), t('settings.qrDisplayRotateTitle'))
+		if (!confirmed) return
+		try {
+			await rotateDisplayLink.mutateAsync(id)
+			await showAlert(t('settings.qrDisplayRotated'))
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('settings.qrModeError'))
+		}
+	}
 	const [newQRName, setNewQRName] = useState('')
 	const [generating, setGenerating] = useState(false)
 
@@ -107,12 +139,45 @@ function QRCodeGenerator() {
 				<div className="qr-code-generator__grid">
 					{qrCodes.map((qr) => {
 						const qrUrl = getQRUrl(qr.code)
+						const mode = qr.mode || 'print'
+						const screenOnly = mode === 'screen'
 						return (
 							<div key={qr._id} className="qr-code-generator__card">
 								<h4 className="qr-code-generator__card-title">
 									{qr.name}
 								</h4>
 
+								<label className="qr-code-generator__mode">
+									<span>{t('settings.qrModeLabel')}</span>
+									<select
+										value={mode}
+										onChange={e => handleModeChange(qr._id, e.target.value)}
+										disabled={setQRCodeMode.isPending}
+									>
+										<option value="print">{t('settings.qrModePrint')}</option>
+										<option value="screen">{t('settings.qrModeScreen')}</option>
+										<option value="screen_or_print">{t('settings.qrModeScreenOrPrint')}</option>
+									</select>
+								</label>
+								<p className="qr-code-generator__mode-hint">{t(`settings.qrModeHint_${mode}`)}</p>
+
+								{mode !== 'print' && qr.displayToken && (
+									<div className="qr-code-generator__display">
+										<a className="qr-code-generator__btn qr-code-generator__btn--display" href={displayUrl(qr.displayToken)} target="_blank" rel="noopener noreferrer">
+											{t('settings.qrOpenDisplay')}
+										</a>
+										<div className="qr-code-generator__display-row">
+											<button type="button" className="qr-code-generator__link-btn" onClick={() => handleCopyDisplayLink(qr.displayToken)}>
+												{t('settings.qrCopyDisplayLink')}
+											</button>
+											<button type="button" className="qr-code-generator__link-btn" onClick={() => handleRotateDisplayLink(qr._id, qr.name)}>
+												{t('settings.qrRotateDisplayLink')}
+											</button>
+										</div>
+									</div>
+								)}
+
+								{!screenOnly && (
 								<div className="qr-code-generator__qr-wrap">
 									<QRCodeSVG
 										value={qrUrl}
@@ -121,12 +186,14 @@ function QRCodeGenerator() {
 										includeMargin={true}
 									/>
 								</div>
+								)}
 
 								<div className="qr-code-generator__code">
 									{qr.code}
 								</div>
 
 								<div className="qr-code-generator__actions">
+									{!screenOnly && (
 									<button
 										type="button"
 										className="qr-code-generator__btn qr-code-generator__btn--download"
@@ -134,6 +201,7 @@ function QRCodeGenerator() {
 									>
 										{t('settings.download') || 'Pobierz'}
 									</button>
+									)}
 									<button
 										type="button"
 										className="qr-code-generator__btn qr-code-generator__btn--delete"

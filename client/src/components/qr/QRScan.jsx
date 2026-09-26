@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
@@ -32,11 +32,21 @@ function QRScanShell({ panelClassName = '', children }) {
 
 function QRScan() {
 	const { code } = useParams()
+	const [searchParams] = useSearchParams()
+	// Tryb ekranu: t = token z tabletu (ważny ~minutę), p = przepustka wydana przy skanie (przetrwa logowanie)
+	const screenToken = searchParams.get('t') || ''
+	const passFromUrl = searchParams.get('p') || ''
 	const navigate = useNavigate()
 	const { t } = useTranslation()
 	const { loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
-	const { data: qrData, isLoading: verifying } = useVerifyQRCode(code)
+	const { data: qrData, isLoading: verifying } = useVerifyQRCode(code, { t: screenToken, p: passFromUrl })
+	const scanPass = qrData?.pass || passFromUrl
+	// Logowanie wraca tutaj (Login czyta location.state.from) — z przepustką zamiast wygasającego tokenu
+	const goToLogin = () =>
+		navigate('/login', {
+			state: { from: { pathname: `/qr-scan/${code}`, search: scanPass ? `?p=${encodeURIComponent(scanPass)}` : '' } },
+		})
 	const registerTimeEntry = useRegisterTimeEntry()
 	const { data: settings } = useSettings()
 	const [registering, setRegistering] = useState(false)
@@ -49,7 +59,8 @@ function QRScan() {
 			return
 		}
 
-		if (isCheckingAuth) {
+		// loggedIn === null: stan sesji jeszcze nieznany (np. przerwane sprawdzenie) — nie odsyłaj do logowania
+		if (isCheckingAuth || loggedIn === null) {
 			return
 		}
 
@@ -59,8 +70,12 @@ function QRScan() {
 			return
 		}
 
+		if (qrData && qrData.valid && qrData.scanAllowed === false) {
+			return
+		}
+
 		if (!loggedIn && qrData && qrData.valid) {
-			navigate(`/login?redirect=/qr-scan/${code}`)
+			goToLogin()
 			return
 		}
 
@@ -81,13 +96,13 @@ function QRScan() {
 		}
 
 		if (!loggedIn) {
-			navigate(`/login?redirect=/qr-scan/${code}`)
+			goToLogin()
 			return
 		}
 
 		setRegistering(true)
 		try {
-			const result = await registerTimeEntry.mutateAsync(code)
+			const result = await registerTimeEntry.mutateAsync({ code, t: screenToken || undefined, p: scanPass || undefined })
 			setRegistered(true)
 			setEntryType(result.type)
 
@@ -143,6 +158,30 @@ function QRScan() {
 				</h2>
 				<p className="po-qr-scan__text po-qr-scan__text--spaced">
 					{t('qrScan.invalidCodeDescription') || 'Kod QR jest nieprawidłowy lub został usunięty.'}
+				</p>
+				<button type="button" onClick={() => navigate('/dashboard')} className="po-qr-scan__btn">
+					{t('qrScan.backToDashboard') || 'Powrót do panelu'}
+				</button>
+			</QRScanShell>
+		)
+	}
+
+	// Kod działa tylko z ekranu (tablet), a skan był z wydruku albo token z ekranu wygasł
+	if (qrData.scanAllowed === false) {
+		const expired = qrData.scanReason === 'SCREEN_EXPIRED'
+		return (
+			<QRScanShell>
+				<div className="po-qr-scan__icon po-qr-scan__icon--error">
+					<QRIcon />
+				</div>
+				<h2 className="po-qr-scan__title">
+					{expired ? t('qrScan.screenExpiredTitle') : t('qrScan.screenRequiredTitle')}
+				</h2>
+				<p className="po-qr-scan__text po-qr-scan__text--spaced">
+					{expired ? t('qrScan.screenExpiredBody') : t('qrScan.screenRequiredBody')}
+				</p>
+				<p className="po-qr-scan__text">
+					{t('qrScan.location') || 'Miejsce:'} <span className="po-qr-scan__location-highlight">{qrData.name}</span>
 				</p>
 				<button type="button" onClick={() => navigate('/dashboard')} className="po-qr-scan__btn">
 					{t('qrScan.backToDashboard') || 'Powrót do panelu'}

@@ -2,6 +2,16 @@ const { firmDb } = require('../db/db')
 const QRCode = require('../models/QRCode')(firmDb)
 const User = require('../models/user')(firmDb)
 const crypto = require('crypto')
+const {
+	normalizeQrMode,
+	generateSecret,
+	generateDisplayToken,
+	verifyScreenToken,
+	verifyScanPass,
+	issueScanPass,
+	resolveScanDecision,
+	WINDOW_SEC,
+} = require('../utils/qrScreenToken')
 
 /**
  * Check if user has permission to manage QR codes (Admin or HR)
@@ -94,6 +104,7 @@ exports.generateQRCode = async (teamId, name, createdBy) => {
  */
 exports.getTeamQRCodes = async (teamId) => {
 	try {
+		// screenSecret ma select:false — do listy trafia tylko token linku wyświetlacza (lista jest dla Admin/HR)
 		const qrCodes = await QRCode.find({ teamId, isActive: true })
 			.populate('createdBy', 'firstName lastName')
 			.sort({ createdAt: -1 })
@@ -133,9 +144,10 @@ exports.deleteQRCode = async (qrCodeId, teamId) => {
  * @param {string} code - QR code string
  * @returns {Promise<Object>} QR code verification result
  */
-exports.verifyQRCode = async (code) => {
+exports.verifyQRCode = async (code, { t, p } = {}) => {
 	try {
 		const qrCode = await QRCode.findOne({ code, isActive: true })
+			.select('+screenSecret')
 			.populate('teamId', 'name')
 
 		if (!qrCode) {
@@ -145,15 +157,78 @@ exports.verifyQRCode = async (code) => {
 			}
 		}
 
+		// Tryb ekranu: sprawdzamy token z ekranu teraz (przed logowaniem) i wydajemy przepustkę na czas logowania
+		const scan = exports.evaluateScan(qrCode, { t, p })
 		return {
 			valid: true,
 			code: qrCode.code,
 			name: qrCode.name,
 			teamId: qrCode.teamId._id,
-			teamName: qrCode.teamId.name
+			teamName: qrCode.teamId.name,
+			mode: normalizeQrMode(qrCode.mode),
+			scanAllowed: scan.allowed,
+			scanMethod: scan.method,
+			scanReason: scan.reason || null,
+			pass: scan.allowed && scan.method === 'screen' && qrCode.screenSecret ? issueScanPass(qrCode.screenSecret, qrCode.code) : null,
 		}
 	} catch (error) {
 		console.error('Error verifying QR code:', error)
 		throw new Error('Błąd podczas weryfikacji kodu QR')
+	}
+}
+
+/**
+ * Ocena skanu dla dokumentu kodu (musi mieć screenSecret, jeśli tryb ekranu): token z ekranu albo przepustka.
+ * @returns {{ allowed: boolean, method: 'screen'|'print'|null, reason?: string }}
+ */
+exports.evaluateScan = (qrCode, { t, p } = {}) => {
+	const mode = normalizeQrMode(qrCode?.mode)
+	const secret = qrCode?.screenSecret
+	const hasToken = typeof t === 'string' && t.length > 0
+	const tokenOk = Boolean(secret && hasToken && verifyScreenToken(secret, qrCode.code, t))
+	const passOk = Boolean(secret && typeof p === 'string' && verifyScanPass(secret, qrCode.code, p))
+	return resolveScanDecision({ mode, hasToken, tokenOk, passOk })
+}
+
+/** Ustawienie trybu kodu (Admin/HR, tylko własny zespół). Tryb ekranu dostaje sekret i link wyświetlacza przy pierwszym włączeniu. */
+exports.setQRCodeMode = async (qrCodeId, teamId, mode) => {
+	const nextMode = normalizeQrMode(mode)
+	const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId, isActive: true }).select('+screenSecret')
+	if (!qrCode) throw new Error('Kod QR nie znaleziony')
+	qrCode.mode = nextMode
+	if (nextMode !== 'print') {
+		if (!qrCode.screenSecret) qrCode.screenSecret = generateSecret()
+		if (!qrCode.displayToken) qrCode.displayToken = generateDisplayToken()
+	}
+	await qrCode.save()
+	return { _id: qrCode._id, mode: qrCode.mode, displayToken: qrCode.displayToken }
+}
+
+/** Nowy link wyświetlacza i nowy sekret — stare wyświetlacze i zrobione wcześniej zdjęcia przestają działać. */
+exports.rotateDisplayLink = async (qrCodeId, teamId) => {
+	const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId, isActive: true }).select('+screenSecret')
+	if (!qrCode) throw new Error('Kod QR nie znaleziony')
+	qrCode.screenSecret = generateSecret()
+	qrCode.displayToken = generateDisplayToken()
+	await qrCode.save()
+	return { _id: qrCode._id, mode: qrCode.mode, displayToken: qrCode.displayToken }
+}
+
+/**
+ * Dane dla wyświetlacza (publiczne, bez logowania — dostęp wyznacza token linku). Zwraca sekret, bo tablet liczy
+ * token lokalnie (działa przy chwilowym braku sieci); kto ma link, ten i tak „stoi przed ekranem”. Link da się unieważnić.
+ */
+exports.getDisplayData = async displayToken => {
+	if (!displayToken || typeof displayToken !== 'string' || displayToken.length < 16) return null
+	const qrCode = await QRCode.findOne({ displayToken, isActive: true }).select('+screenSecret').populate('teamId', 'name isActive')
+	if (!qrCode || qrCode.teamId?.isActive === false) return null
+	if (normalizeQrMode(qrCode.mode) === 'print' || !qrCode.screenSecret) return null
+	return {
+		name: qrCode.name,
+		code: qrCode.code,
+		teamName: qrCode.teamId?.name || '',
+		secret: qrCode.screenSecret,
+		windowSec: WINDOW_SEC,
+		serverTime: Date.now(),
 	}
 }

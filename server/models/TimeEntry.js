@@ -16,6 +16,17 @@ const timeEntrySchema = new mongoose.Schema({
 		type: Date,
 		required: true
 	},
+	/** Skąd skan wejścia/wyjścia: 'screen' (rotujący kod z ekranu) albo 'print' (wydruk); null = sprzed tej funkcji */
+	entryScanMethod: {
+		type: String,
+		enum: ['screen', 'print', null],
+		default: null
+	},
+	exitScanMethod: {
+		type: String,
+		enum: ['screen', 'print', null],
+		default: null
+	},
 	exitTime: {
 		type: Date,
 		default: null

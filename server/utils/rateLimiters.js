@@ -163,3 +163,11 @@ exports.founderCallPublicLimiter = rateLimit({
 	standardHeaders: true,
 	legacyHeaders: false,
 })
+
+/** Publiczny wyświetlacz rotującego kodu QR — tablet odpytuje raz przy starcie i co kilka minut; limit per IP. */
+exports.qrDisplayPublicLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: envInt('QR_DISPLAY_PER_15MIN', 120),
+	standardHeaders: true,
+	legacyHeaders: false,
+})

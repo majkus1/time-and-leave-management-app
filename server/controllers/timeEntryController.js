@@ -77,7 +77,7 @@ async function canStartTimerOnDate(userId, date) {
 // Register time entry (entry or exit)
 exports.registerTimeEntry = async (req, res) => {
 	try {
-		const { code } = req.body
+		const { code, t, p } = req.body
 		const userId = req.user.userId
 
 		if (!code) {
@@ -85,9 +85,20 @@ exports.registerTimeEntry = async (req, res) => {
 		}
 
 		// Verify QR code
-		const qrCode = await QRCode.findOne({ code, isActive: true })
+		const qrCode = await QRCode.findOne({ code, isActive: true }).select('+screenSecret')
 		if (!qrCode) {
 			return res.status(404).json({ message: 'Nieprawidłowy kod QR' })
+		}
+
+		// Tryb ekranu: token z ekranu albo przepustka wydana przy skanie (utils/qrScreenToken)
+		const scan = require('../services/qrService').evaluateScan(qrCode, { t, p })
+		if (!scan.allowed) {
+			return res.status(403).json({
+				message: scan.reason === 'SCREEN_EXPIRED'
+					? 'Kod z ekranu wygasł. Zeskanuj go ponownie z ekranu przy wejściu.'
+					: 'Ten kod działa tylko z ekranu przy wejściu. Zeskanuj kod wyświetlany na tablecie.',
+				code: scan.reason,
+			})
 		}
 
 		// Check if user belongs to the same team
@@ -118,6 +129,7 @@ exports.registerTimeEntry = async (req, res) => {
 		if (lastEntry && !lastEntry.exitTime) {
 			// Last entry was an entry, so this is an exit
 			lastEntry.exitTime = now
+			lastEntry.exitScanMethod = scan.method
 			await lastEntry.save()
 
 			// If there's an active timer with this QR code, stop it
@@ -238,6 +250,7 @@ exports.registerTimeEntry = async (req, res) => {
 				userId,
 				qrCodeId: qrCode._id,
 				entryTime: now,
+				entryScanMethod: scan.method,
 				date: today,
 				exitTime: null
 			})

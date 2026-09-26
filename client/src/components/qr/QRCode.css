@@ -164,3 +164,65 @@
 	background: #ffffff;
 	border-color: var(--po-border);
 }
+
+/* Tryb kodu (wydruk / ekran) i link wyświetlacza */
+.qr-code-generator__mode {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--po-text-secondary, #334155);
+	text-align: left;
+}
+
+.qr-code-generator__mode select {
+	padding: 7px 10px;
+	border-radius: 8px;
+	border: 1px solid var(--po-border-strong, #cbd5e1);
+	background: var(--po-surface, #fff);
+	color: var(--po-text, #102f5e);
+	font-size: 14px;
+}
+
+.qr-code-generator__mode-hint {
+	margin: 0 0 10px;
+	font-size: 13px !important;
+	padding: 0;
+	line-height: 1.4;
+	color: var(--po-text-muted, #64748b);
+	text-align: left;
+}
+
+.qr-code-generator__display {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0 0 12px;
+}
+
+.qr-code-generator__btn--display {
+	display: block;
+	text-align: center;
+	text-decoration: none !important;
+	background: #00a846;
+	color: #fff !important;
+}
+
+.qr-code-generator__display-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.qr-code-generator__link-btn {
+	border: none;
+	background: none;
+	padding: 2px 0;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--po-brand-text, #2e7d32);
+	cursor: pointer;
+	text-decoration: underline;
+}

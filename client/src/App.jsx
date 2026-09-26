@@ -51,6 +51,7 @@ import Loader from './components/Loader'
 import Legal from './components/legal/Legal'
 import PWANavigationBar from './components/PWANavigationBar'
 import QRScan from './components/qr/QRScan'
+import QRDisplay from './components/qr/QRDisplay'
 import AIAssistant from './components/aiAssistant/AIAssistant'
 import PackagesPage from './components/billing/PackagesPage'
 import { isPlatformSuperAdmin } from './utils/platformSuperAdmin'
@@ -164,6 +165,7 @@ function AppContent() {
 					<Route path="/reset-password" element={<ResetPassword />} />
 					<Route path="/new-password/:token" element={<NewPassword />} />
 					<Route path="/qr-scan/:code" element={<QRScan />} />
+					<Route path="/qr-display/:displayToken" element={<QRDisplay />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
 					<Route path="/dashboard" element={<FreemiumDashboardGuard><Dashboard /></FreemiumDashboardGuard>} />
 					<Route path="/work-time" element={<WorkTimePage />} />

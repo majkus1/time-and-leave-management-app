@@ -80,13 +80,60 @@ exports.deleteQRCode = async (req, res) => {
 	}
 }
 
+async function requireQrManager(req, res) {
+	const { hasPermission, user } = await qrService.checkQRCodePermission(req.user.userId)
+	if (!hasPermission) {
+		res.status(user ? 403 : 404).json({ message: user ? 'Brak uprawnień' : 'Użytkownik nie znaleziony' })
+		return false
+	}
+	return true
+}
+
+// Tryb kodu: wydruk / ekran / ekran + wydruk awaryjnie (Admin/HR)
+exports.setQRCodeMode = async (req, res) => {
+	try {
+		if (!(await requireQrManager(req, res))) return
+		const result = await qrService.setQRCodeMode(req.params.id, req.user.teamId, req.body?.mode)
+		res.json(result)
+	} catch (error) {
+		console.error('Error setting QR mode:', error)
+		const { status, body } = mapQrServiceError(error, 'Błąd podczas zmiany trybu kodu QR')
+		res.status(status).json(body)
+	}
+}
+
+// Nowy link wyświetlacza (unieważnia poprzedni i wcześniejsze tokeny) — Admin/HR
+exports.rotateDisplayLink = async (req, res) => {
+	try {
+		if (!(await requireQrManager(req, res))) return
+		res.json(await qrService.rotateDisplayLink(req.params.id, req.user.teamId))
+	} catch (error) {
+		console.error('Error rotating QR display link:', error)
+		const { status, body } = mapQrServiceError(error, 'Błąd podczas tworzenia nowego linku')
+		res.status(status).json(body)
+	}
+}
+
+// Wyświetlacz (publiczny, bez logowania): dane do liczenia rotującego kodu
+exports.getDisplayData = async (req, res) => {
+	try {
+		const data = await qrService.getDisplayData(req.params.displayToken)
+		if (!data) return res.status(404).json({ message: 'Link wyświetlacza jest nieaktualny' })
+		res.set('Cache-Control', 'no-store')
+		res.json(data)
+	} catch (error) {
+		console.error('Error getting QR display data:', error)
+		res.status(500).json({ message: 'Błąd wyświetlacza' })
+	}
+}
+
 // Verify QR code (public endpoint - no auth required)
 exports.verifyQRCode = async (req, res) => {
 	try {
 		const { code } = req.params
 
-		// Verify QR code (business logic in service)
-		const result = await qrService.verifyQRCode(code)
+		// Verify QR code (business logic in service); t = token z ekranu, p = przepustka po logowaniu
+		const result = await qrService.verifyQRCode(code, { t: req.query.t, p: req.query.p })
 
 		if (!result.valid) {
 			return res.status(404).json({ message: result.message || 'Nieprawidłowy kod QR' })

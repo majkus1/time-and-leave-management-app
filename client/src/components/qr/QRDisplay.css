@@ -1,0 +1,167 @@
+/* Wyświetlacz rotującego kodu QR (tablet przy wejściu) — jasny, czytelny z odległości, niezależny od motywu aplikacji */
+.po-qr-display {
+	min-height: 100vh;
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	background: #f7faf8;
+	color: #102f5e;
+	padding: 24px 32px;
+	box-sizing: border-box;
+	font-family: inherit;
+}
+
+.po-qr-display--message {
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	gap: 8px;
+}
+
+.po-qr-display--message h1 {
+	font-size: 28px !important;
+	color: #102f5e !important;
+}
+
+.po-qr-display--message p {
+	font-size: 18px !important;
+	color: #475569 !important;
+	max-width: 520px;
+}
+
+.po-qr-display__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.po-qr-display__team {
+	margin: 0;
+	font-size: 16px !important;
+	font-weight: 600;
+	color: #0f7a3a !important;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.po-qr-display__place {
+	margin: 4px 0 0;
+	font-size: 36px !important;
+	font-weight: 800;
+	color: #102f5e !important;
+	line-height: 1.15;
+}
+
+.po-qr-display__clock {
+	font-size: 40px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: #102f5e;
+}
+
+.po-qr-display__main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 12px 0;
+}
+
+.po-qr-display__qr {
+	background: #fff;
+	padding: 24px;
+	border-radius: 24px;
+	box-shadow: 0 16px 48px rgba(16, 47, 94, 0.12);
+	line-height: 0;
+}
+
+.po-qr-display__qr svg {
+	display: block;
+	/* Budżet wysokości: nagłówek, pasek, podpowiedź i stopka muszą zmieścić się bez przewijania */
+	width: min(calc(100dvh - 340px), 78vw, 680px);
+	min-width: 200px;
+	height: auto;
+}
+
+.po-qr-display__timer {
+	width: min(calc(100dvh - 292px), calc(78vw + 48px), 728px);
+	text-align: center;
+}
+
+.po-qr-display__bar {
+	height: 8px;
+	border-radius: 999px;
+	background: #dfe7e2;
+	overflow: hidden;
+}
+
+.po-qr-display__bar span {
+	display: block;
+	height: 100%;
+	background: #00a63e;
+	transform-origin: left center;
+	transition: transform 0.9s linear;
+}
+
+.po-qr-display__timer p {
+	margin: 8px 0 0;
+	font-size: 16px !important;
+	color: #475569 !important;
+}
+
+.po-qr-display__hint {
+	margin: 0;
+	font-size: 22px !important;
+	font-weight: 600;
+	color: #102f5e !important;
+	text-align: center;
+}
+
+.po-qr-display__warn {
+	margin: 0;
+	padding: 8px 14px;
+	border-radius: 10px;
+	background: #fff7ed;
+	border: 1px solid #f59e0b;
+	color: #b45309 !important;
+	font-size: 15px !important;
+}
+
+.po-qr-display__foot {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	color: #94a3b8;
+	font-weight: 700;
+}
+
+.po-qr-display__fullscreen {
+	padding: 8px 14px;
+	border-radius: 10px;
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #475569;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+@media (max-width: 700px) {
+	.po-qr-display {
+		padding: 16px;
+	}
+
+	.po-qr-display__place {
+		font-size: 26px !important;
+	}
+
+	.po-qr-display__clock {
+		font-size: 28px;
+	}
+
+	.po-qr-display__hint {
+		font-size: 18px !important;
+	}
+}

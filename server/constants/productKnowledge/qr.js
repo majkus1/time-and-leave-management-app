@@ -28,14 +28,22 @@ module.exports = {
 - Godziny z sesji liczą się do wpisu dnia jak przy ręcznym liczniku (nadgodziny i przerwy w szczegółach sesji).
 - Wymaga włączonego licznika w Ustawieniach zespołu (Administrator/HR).
 
+### Kod na ekranie (tablet przy wejściu) — ochrona przed zdjęciem kodu
+Każdy kod ma w Ustawieniach → Licznik i QR wybór „Sposób użycia kodu”:
+- **Wydruk (stały kod)** — domyślnie, jak dotąd. Prosto, ale zdjęcie wydruku działa z każdego miejsca.
+- **Tylko ekran** — kod wyświetla tablet (lub dowolne urządzenie z przeglądarką) przy wejściu i **zmienia się co 30 sekund**. Zdjęcie zrobione wcześniej nie zadziała, wydruk nie jest przyjmowany. Administrator klika „Otwórz wyświetlacz” (albo kopiuje link) i otwiera go na tablecie — **tablet nie loguje się** kontem pracownika; link można w każdej chwili unieważnić przyciskiem „Nowy link”. Wyświetlacz ma pełny ekran i nie pozwala ekranowi zgasnąć (jeśli przeglądarka to wspiera); przy chwilowym braku internetu kod nadal się zmienia.
+- **Ekran, wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); takie skany są oznaczane jako „wydruk”.
+- Pracownik skanuje kod z ekranu tak samo, aparatem telefonu. Jeśli musi się zalogować, ma na to 10 minut od skanu — nie trzeba skanować ponownie.
+- To utrudnia oszukiwanie „ze zdjęcia z domu”, ale nie zapobiega zmowie (ktoś na miejscu przesyła zdjęcie ekranu od razu).
+
 ### Ograniczenia, o których warto wiedzieć
 - Wyjście trzeba zeskanować tym samym kodem, którym było wejście; skan innego kodu przy otwartej sesji nie zamyka jej.
 - Skan nie zadziała, gdy zespół nie pracuje w weekendy (a to weekend), w święto albo w dniu zaakceptowanego urlopu pracownika.
 - Rejestracja jest zawsze na koncie zalogowanej osoby — każdy pracownik skanuje własnym telefonem (ma własne konto).
 
 ### Czego NIE robi
-- **Nie sprawdza lokalizacji GPS** ani tego, gdzie fizycznie znajduje się telefon — kod można zeskanować z dowolnego miejsca, jeśli ktoś ma jego obrazek. Kontrolą jest fizyczne umieszczenie wydruku na obiekcie.
-- Nie ma trybu kiosku (wspólny tablet przy wejściu, na którym pracownicy kolejno się „odbijają”) ani kart RFID/NFC.
+- **Nie sprawdza lokalizacji GPS** ani tego, gdzie fizycznie znajduje się telefon. Przy **wydruku** kod można zeskanować z dowolnego miejsca, jeśli ktoś ma jego zdjęcie; przed tym chroni tryb **kodu na ekranie** (zmienia się co 30 s).
+- Tablet w trybie ekranu tylko wyświetla kod — pracownicy nadal skanują własnymi telefonami. Nie ma trybu kiosku, w którym tablet sam skanuje pracowników, ani kart RFID/NFC.
 - Nie działa w planie darmowym.
 
 ### Dostępność w planach
