@@ -19,7 +19,7 @@ const {
 	isPaidPlanKey,
 	normalizePaidPlanKey,
 	effectiveAiMessagesPerMonth,
-	isModuleKey,
+	capabilitiesForModuleKeys,
 } = require('../constants/planCatalog')
 
 /** Ukryty miesięczny bezpiecznik AI na zespół (planCatalog.AI_FAIR_USE, nadpisywalny zmienną środowiskową; 0 wyłącza AI) */
@@ -172,7 +172,8 @@ function isPaidPlanPeriodLapsed(team, now = new Date()) {
 }
 
 /**
- * Zestaw modułów z perspektywy uprawnień: bundle = z katalogu; CORE = zespół.billingModuleKeys (po walidacji).
+ * Funkcje zespołu z perspektywy uprawnień (API, menu, ekrany): pakiet = wszystkie z katalogu;
+ * Core = funkcje w cenie (asystent AI) + moduły zespołu rozwinięte na funkcje („Zadania i czat” → zadania, czat).
  */
 function effectiveBillingModuleKeys(team, now = new Date()) {
 	if (!isPaidSubscriptionActive(team, now)) return []
@@ -180,9 +181,8 @@ function effectiveBillingModuleKeys(team, now = new Date()) {
 	const plan = PAID_PLANS[nk]
 	if (!plan) return []
 	if (plan.tierType === 'bundle') return [...(plan.includedModules || [])]
-	const raw = team.billingModuleKeys
-	if (!Array.isArray(raw)) return []
-	return raw.filter(k => isModuleKey(k))
+	const raw = Array.isArray(team.billingModuleKeys) ? team.billingModuleKeys : []
+	return capabilitiesForModuleKeys([...(plan.includedModules || []), ...raw])
 }
 
 /**

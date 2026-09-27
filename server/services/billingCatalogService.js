@@ -7,12 +7,18 @@ const {
 	MODULE_MONTHLY_NET_PRICES_PLN,
 	listPaidPlanKeys,
 	listAddonIds,
-	listModuleKeys,
+	listSaleModuleKeys,
+	listSalePlanKeys,
+	PLAN_LABELS,
+	MODULE_LABELS,
+	MODULE_CAPABILITIES,
 } = require('../constants/planCatalog')
 
 function buildPublicCatalog() {
 	const allIds = listPaidPlanKeys()
-	const coreTiers = allIds
+	// W sprzedaży: progi Core i pakiety bez Enterprise (wycena indywidualna); lista tiers zostaje pełna dla etykiet
+	const saleIds = listSalePlanKeys()
+	const coreTiers = saleIds
 		.filter(id => PAID_PLANS[id].tierType === 'core')
 		.map(id => ({
 			id,
@@ -21,7 +27,7 @@ function buildPublicCatalog() {
 			tierType: 'core',
 		}))
 
-	const bundles = allIds
+	const bundles = saleIds
 		.filter(id => PAID_PLANS[id].tierType === 'bundle')
 		.map(id => ({
 			id,
@@ -31,9 +37,12 @@ function buildPublicCatalog() {
 			tierType: 'bundle',
 		}))
 
-	const modules = listModuleKeys().map(id => ({
+	// Moduły w sprzedaży i funkcje, które włączają (np. „Zadania i czat” → zadania + czat)
+	const modules = listSaleModuleKeys().map(id => ({
 		id,
 		monthlyNetPln: MODULE_MONTHLY_NET_PRICES_PLN[id] ?? null,
+		capabilities: [...(MODULE_CAPABILITIES[id] || [])],
+		label: MODULE_LABELS[id],
 	}))
 
 	// Pakiety AI wycofane ze sprzedaży (AI bez limitu) — klient nie pokazuje sekcji, gdy lista jest pusta
@@ -49,6 +58,7 @@ function buildPublicCatalog() {
 		maxUsers: PAID_PLANS[id].maxUsers,
 		aiMessagesPerMonth: PAID_PLANS[id].aiMessagesPerMonth,
 		tierType: PAID_PLANS[id].tierType,
+		label: PLAN_LABELS[id],
 	}))
 
 	return {

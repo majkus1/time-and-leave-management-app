@@ -32,7 +32,7 @@ module.exports = {
 Administrator i HR — wszystkie grafiki. Przełożony — grafik swojego działu lub wybranych osób, jeśli Administrator dał mu uprawnienie „zarządzanie grafikiem”. Twórca grafiku niestandardowego może go edytować. Pracownik widzi grafiki, do których jest przypisany.
 
 ### Dostępność w planach
-Okres próbny: tak. Plan Core: moduł Grafiki + AI ({{price.module.schedules_ai}} zł netto/mies.). Pakiety Pro/Business: w cenie. Plan darmowy: nie.
+Okres próbny: tak. Plan Core: moduł Grafiki ({{price.module.schedules_ai}} zł netto/mies., z układaniem grafiku przez AI). Pakiety PRO/Business: w cenie. Plan darmowy: nie.
 
 ### Czego NIE robi
 - Nie pilnuje automatycznie norm Kodeksu pracy (odpoczynek dobowy 11 h, tygodniowy 35 h, doba pracownicza) — to odpowiedzialność planującego; system pokazuje kolizje z urlopami i świętami.

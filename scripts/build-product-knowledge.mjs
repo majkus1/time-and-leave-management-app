@@ -90,8 +90,9 @@ function buildKnowledgeTs() {
 
 function buildPricingTs() {
 	const c = planCatalog
-	const core = ['base_s', 'base_m', 'base_l']
-	const bundles = ['pro', 'business']
+	// Tylko plany i moduły w sprzedaży (katalog) — dawne osobne moduły i Enterprise nie trafiają na landing
+	const core = c.SALE_PLAN_KEYS.filter(k => c.PAID_PLANS[k].tierType === 'core')
+	const bundles = c.SALE_PLAN_KEYS.filter(k => c.PAID_PLANS[k].tierType === 'bundle')
 	const lines = [
 		HEADER,
 		`export const LANDING_ANNUAL_MONTHS_CHARGED = ${c.ANNUAL_NET_MONTHS_CHARGED}`,
@@ -116,7 +117,7 @@ function buildPricingTs() {
 		']',
 		'',
 		'export const landingModules = [',
-		...c.MODULE_KEYS.map(k => `\t{ id: ${j(k)} as const, monthlyNetPln: ${c.MODULE_MONTHLY_NET_PRICES_PLN[k]} },`),
+		...c.SALE_MODULE_KEYS.map(k => `\t{ id: ${j(k)} as const, monthlyNetPln: ${c.MODULE_MONTHLY_NET_PRICES_PLN[k]} },`),
 		']',
 		'',
 		'export const landingAddons = [',

@@ -1,5 +1,4 @@
-/** Zgodnie z server/constants/planCatalog — pakiety bundle mają pełny zestaw w effectiveKeys. */
-const BUNDLE_PLAN_KEYS = new Set(['pro', 'business', 'enterprise'])
+/** Serwer zwraca w effectiveKeys funkcje zespołu (pakiety — wszystkie, Core — w cenie i z modułów), więc bez listy planów. */
 
 /**
  * Czy pokazać link w sidebarze dla danego modułu (Core = dokupione klucze; bundle = wszystkie).
@@ -14,8 +13,6 @@ export function canShowBillingModuleNav(entitlements, moduleKey, entitlementsLoa
 	if (entitlements.legacy === true) return true
 	if (entitlements.freemiumTier === true) return true
 	if (entitlements.planKey === 'trial') return true
-	const pk = entitlements.planKey
-	if (pk && BUNDLE_PLAN_KEYS.has(pk)) return true
 	const keys = entitlements.modules?.effectiveKeys
 	if (!Array.isArray(keys)) return false
 	return keys.includes(moduleKey)

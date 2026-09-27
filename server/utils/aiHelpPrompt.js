@@ -17,19 +17,8 @@ const MAX_LINKS_PER_REPLY = 2
 const HELP_MAX_TURNS = 12
 const HELP_MAX_MESSAGE_LENGTH = 4000
 
-const PLAN_LABELS = {
-	base_s: 'Core S',
-	base_m: 'Core M',
-	base_l: 'Core L',
-	pro: 'Pro',
-	business: 'Business',
-	enterprise: 'Enterprise',
-}
-
-const MODULE_LABELS = {
-	pl: { timer_qr: 'Licznik + QR', schedules_ai: 'Grafiki + AI', tasks: 'Zadania', chat: 'Czat', ai_assistant: 'Asystent AI' },
-	en: { timer_qr: 'Timer + QR', schedules_ai: 'Schedules + AI', tasks: 'Tasks', chat: 'Chat', ai_assistant: 'AI assistant' },
-}
+// Nazwy planów i funkcji z katalogu — te same, które widzi klient w aplikacji i na landingu
+const { planLabel, moduleLabel } = require('../constants/planCatalog')
 
 const ROLE_ORDER = ['Admin', 'HR', 'Przełożony (Supervisor)', 'Pracownik (Worker)']
 const ROLE_LABELS = {
@@ -85,7 +74,6 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 	const cycleLabel =
 		ent.billingCycle === 'annual' ? (en ? ', annual' : ', rocznie') : ent.billingCycle === 'monthly' ? (en ? ', monthly' : ', miesięcznie') : ''
 	const mods = Array.isArray(ent.modules?.effectiveKeys) ? ent.modules.effectiveKeys : []
-	const modLabels = MODULE_LABELS[en ? 'en' : 'pl']
 
 	let state
 	// Blokada miejsc: freemiumApiGuard odrzuca /api/ai-help wcześniej, więc ta gałąź to zabezpieczenie na wypadek zmiany polityki.
@@ -95,12 +83,12 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 			: 'plan darmowy z liczbą kont PONAD limit — aplikacja zablokowana dla wszystkich poza Administratorem/HR, dopóki zespół nie zmniejszy liczby kont albo nie kupi pakietu'
 	} else if (paidActive) {
 		state = en
-			? `paid plan ${PLAN_LABELS[planKey] || planKey}${cycleLabel}`
-			: `pakiet płatny ${PLAN_LABELS[planKey] || planKey}${cycleLabel}`
+			? `paid plan ${planLabel(planKey, 'en')}${cycleLabel}`
+			: `pakiet płatny ${planLabel(planKey, 'pl')}${cycleLabel}`
 	} else if (paidSuspended) {
 		state = en
-			? `plan ${PLAN_LABELS[planKey] || planKey} is not active (e.g. a payment problem) — paid modules may be unavailable until Administrator/HR sort it out in Packages & billing`
-			: `pakiet ${PLAN_LABELS[planKey] || planKey} nieaktywny (np. problem z płatnością) — moduły płatne mogą być niedostępne, dopóki Administrator/HR nie wyjaśni tego w Pakietach i rozliczeniach`
+			? `plan ${planLabel(planKey, 'en')} is not active (e.g. a payment problem) — paid modules may be unavailable until Administrator/HR sort it out in Packages & billing`
+			: `pakiet ${planLabel(planKey, 'pl')} nieaktywny (np. problem z płatnością) — moduły płatne mogą być niedostępne, dopóki Administrator/HR nie wyjaśni tego w Pakietach i rozliczeniach`
 	} else if (trialActive) {
 		const days = Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000))
 		state = en ? `trial, ${days} day(s) left, all modules available` : `okres próbny, zostało dni: ${days}, wszystkie moduły dostępne`
@@ -114,7 +102,7 @@ function buildTeamPlanContext({ locale = 'pl', roles = [], entitlements = null, 
 
 	const modulesLine = paidActive
 		? mods.length
-			? mods.map(k => modLabels[k] || k).join(', ')
+			? mods.map(k => moduleLabel(k, en ? 'en' : 'pl')).join(', ')
 			: en ? 'none (time tracking + leave only)' : 'brak (tylko ewidencja + urlopy)'
 		: null
 
@@ -269,7 +257,6 @@ function buildHelpSystemPrompt({ locale = 'pl', moduleId = null, teamPlanContext
 module.exports = {
 	HELP_MAX_TURNS,
 	HELP_MAX_MESSAGE_LENGTH,
-	PLAN_LABELS,
 	isKnownHelpModule,
 	normalizeHelpMessages,
 	highestRole,

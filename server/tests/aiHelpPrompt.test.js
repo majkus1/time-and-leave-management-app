@@ -80,24 +80,24 @@ test('TEAM PLAN CONTEXT: plan darmowy, blokada miejsc, trial, pakiet z modułami
 		entitlements: entitlements({ planKey: 'base_m', billingStatus: 'active', billingCycle: 'annual', modules: { effectiveKeys: ['timer_qr', 'chat'] } }),
 		now: NOW,
 	})
-	assert.ok(pro.includes('pakiet płatny Core M, rocznie'))
+	assert.ok(pro.includes('pakiet płatny Core · do 30 osób, rocznie'))
 	// Brak cyklu (rozliczenie ręczne) — bez zgadywania „miesięcznie”
 	const manual = buildTeamPlanContext({ locale: 'pl', roles: ['Admin'], entitlements: entitlements({ planKey: 'pro', billingStatus: 'active' }), now: NOW })
-	assert.ok(manual.includes('pakiet płatny Pro\n'), manual)
+	assert.ok(manual.includes('pakiet płatny PRO · do 30 osób\n'), manual)
 	// Pakiet kupiony w trakcie triala, potem past_due: trialEndsAt w przyszłości nie może dać „okres próbny”
 	const pastDue = buildTeamPlanContext({ locale: 'pl', roles: ['Admin'], entitlements: entitlements({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: '2026-10-10T00:00:00Z', trialEndsAt: '2026-09-25T00:00:00Z' }), now: NOW })
-	assert.ok(pastDue.includes('pakiet Pro nieaktywny'), pastDue)
+	assert.ok(pastDue.includes('pakiet PRO · do 30 osób nieaktywny'), pastDue)
 	assert.ok(!pastDue.includes('okres próbny'))
 	// Sama data triala bez planKey 'trial' (np. legacy) → stan nieznany
 	const dateOnly = buildTeamPlanContext({ locale: 'pl', roles: [], entitlements: entitlements({ trialEndsAt: '2026-09-27T10:00:00Z' }), now: NOW })
 	assert.ok(dateOnly.includes('nieznany'))
-	assert.ok(pro.includes('Aktywne moduły: Licznik + QR, Czat'))
+	assert.ok(pro.includes('Aktywne moduły: Timer i QR, Czat'))
 	assert.ok(pro.includes('Rola pytającego: Przełożony'))
 
-	// Wygasły pakiet: billingStatus 'active' + planKey zostają, ale freemiumTier/koniec okresu decydują → plan darmowy, nie „Core S”
+	// Wygasły pakiet: billingStatus 'active' + planKey zostają, ale freemiumTier/koniec okresu decydują → plan darmowy, nie „Core · do 15 osób”
 	const lapsed = buildTeamPlanContext({ locale: 'pl', roles: ['Admin'], entitlements: entitlements({ planKey: 'base_s', billingStatus: 'active', billingPeriodEnd: '2026-08-01T00:00:00Z', freemiumTier: true }), now: NOW })
 	assert.ok(lapsed.includes('plan darmowy'), lapsed)
-	assert.ok(!lapsed.includes('Core S'))
+	assert.ok(!lapsed.includes('Core · do 15 osób'))
 	const lapsedNoFlag = buildTeamPlanContext({ locale: 'pl', roles: ['Admin'], entitlements: entitlements({ planKey: 'base_s', billingStatus: 'active', billingPeriodEnd: '2026-08-01T00:00:00Z' }), now: NOW })
 	assert.ok(!lapsedNoFlag.includes('pakiet płatny'))
 	const trialKey = buildTeamPlanContext({ locale: 'pl', roles: [], entitlements: entitlements({ planKey: 'trial', trialEndsAt: '2026-09-27T10:00:00Z' }), now: NOW })

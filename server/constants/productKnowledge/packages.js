@@ -6,8 +6,8 @@ module.exports = {
 	order: 8,
 	title: { pl: 'Pakiety, ceny i płatności', en: 'Plans, pricing and payments' },
 	summary: {
-		pl: 'Okres próbny, plan darmowy, Core S/M/L z modułami, pakiety Pro i Business, AI bez limitu, rozliczenie roczne, płatności i faktury.',
-		en: 'Trial, free plan, Core S/M/L with modules, Pro and Business bundles, unlimited AI, annual billing, payments and invoices.',
+		pl: 'Okres próbny, plan darmowy, Core w pięciu progach z modułami, pakiety PRO i Business, asystent AI bez limitu, rozliczenie roczne, płatności i faktury.',
+		en: 'Trial, free plan, Core in five sizes with modules, PRO and Business bundles, unlimited AI assistant, annual billing, payments and invoices.',
 	},
 	keywords: {
 		pl: ['cena', 'ceny', 'cenn', 'koszt', 'ile kosztuje', 'ile płac', 'ile za ', 'pakiet', 'abonament', 'subskrypc', 'core', ' pro ', 'business', 'moduł', 'płatnoś', 'zapłac', 'faktur', ' vat', 'netto', 'blik', 'przelew', 'karta', 'kartą', 'stripe', 'roczn', 'miesięczn', 'rezygn', 'anulow', 'zwrot', 'ksef', 'darmow', 'bezpłatn', 'freemium', 'trial', 'próbn', 'użytkowników', 'pracowników', 'osób', 'wygaś', 'przedłuż', 'enterprise', 'dokup'],
@@ -15,36 +15,43 @@ module.exports = {
 	},
 	requires: { modules: [], bundles: [], trial: true, freemium: true },
 	suggestedQuestions: {
-		pl: ['Ile kosztuje Planopia dla 20 osób?', 'Czym różni się Core od Pro?', 'Jak zapłacić i czy dostanę fakturę?', 'Co się stanie, gdy nie przedłużę pakietu?'],
-		en: ['How much does Planopia cost for 20 people?', 'What is the difference between Core and Pro?', 'How do I pay and will I get an invoice?', 'What happens if I do not renew?'],
+		pl: ['Ile kosztuje Planopia dla 20 osób?', 'Czym różni się Core od PRO?', 'Jak zapłacić i czy dostanę fakturę?', 'Co się stanie, gdy nie przedłużę pakietu?'],
+		en: ['How much does Planopia cost for 20 people?', 'What is the difference between Core and PRO?', 'How do I pay and will I get an invoice?', 'What happens if I do not renew?'],
 	},
 	body: {
 		pl: `### Etapy
 1. Okres próbny: {{trial.days}} dni pełnej aplikacji, do {{trial.maxUsers}} osób, z asystentem AI bez limitu wiadomości. Bez karty.
-2. Plan darmowy (bezterminowo, po trialu): ewidencja czasu pracy do {{trial.maxUsers}} aktywnych kont, bez urlopów, licznika/QR, grafików, zadań, czatu i AI.
-3. Pakiet płatny — dwie drogi:
+2. Plan darmowy (bezterminowo, po okresie próbnym): do {{trial.maxUsers}} aktywnych kont — ewidencja czasu pracy (kalendarz, nadgodziny, czynności i wydajność) oraz wydruk ewidencji każdej osoby (PDF, Excel). Bez urlopów, asystenta AI z danymi zespołu, licznika i QR, grafików, zadań i czatu.
+3. Plan płatny — Core (z modułami do wyboru) albo pakiet PRO / Business, w którym wszystko jest w cenie.
 
-### Core — ewidencja i urlopy w cenie, moduły do wyboru
-| plan | osób | cena netto/mies. |
+### Core — ewidencja, urlopy, raporty, powiadomienia i asystent AI
+| Core | cena netto/mies. |
+|---|---|
+| do {{maxUsers.plan.base_5}} osób | {{price.plan.base_5}} zł |
+| do {{maxUsers.plan.base_s}} osób | {{price.plan.base_s}} zł |
+| do {{maxUsers.plan.base_m}} osób | {{price.plan.base_m}} zł |
+| do {{maxUsers.plan.base_50}} osób | {{price.plan.base_50}} zł |
+| do {{maxUsers.plan.base_l}} osób | {{price.plan.base_l}} zł |
+
+W każdym Core jest asystent AI bez limitu wiadomości (rozsądne użycie). Moduły do Core (netto/mies., cena ta sama przy każdej wielkości zespołu): Timer i QR {{price.module.timer_qr}} zł, Grafiki (z układaniem grafiku przez AI) {{price.module.schedules_ai}} zł, Zadania i czat {{price.module.tasks_chat}} zł.
+
+### PRO i Business — wszystko w cenie
+| pakiet | osób | cena netto/mies. |
 |---|---|---|
-| Core S | do {{maxUsers.plan.base_s}} | {{price.plan.base_s}} zł |
-| Core M | do {{maxUsers.plan.base_m}} | {{price.plan.base_m}} zł |
-| Core L | do {{maxUsers.plan.base_l}} | {{price.plan.base_l}} zł |
-
-Moduły dokupywane do Core (netto/mies.): Licznik + QR {{price.module.timer_qr}} zł, Grafiki + AI w grafiku {{price.module.schedules_ai}} zł, Zadania (tablice) {{price.module.tasks}} zł, Czat {{price.module.chat}} zł, Asystent AI {{price.module.ai_assistant}} zł. Z modułem Asystent AI lub Grafiki + AI zespół ma asystenta AI bez limitu wiadomości.
-
-### Pakiety — wszystkie moduły w cenie
-| pakiet | osób | asystent AI | cena netto/mies. |
-|---|---|---|---|
-| Pro | do {{maxUsers.plan.pro}} | bez limitu wiadomości | {{price.plan.pro}} zł |
-| Business | do {{maxUsers.plan.business}} | bez limitu wiadomości, priorytetowe wsparcie | {{price.plan.business}} zł |
+| PRO | do {{maxUsers.plan.pro_15}} | {{price.plan.pro_15}} zł |
+| PRO | do {{maxUsers.plan.pro}} | {{price.plan.pro}} zł |
+| PRO | do {{maxUsers.plan.pro_50}} | {{price.plan.pro_50}} zł |
+| Business | do {{maxUsers.plan.business}} | {{price.plan.business}} zł, priorytetowe wsparcie |
 
 Zespoły powyżej {{maxUsers.plan.business}} osób: wycena indywidualna — kontakt przez Centrum pomocy lub biuro@planopia.pl. Nie ma gotowego większego pakietu w cenniku.
 
 ### Jak dobrać
-- Liczba osób = aktywne konta (w tym pracownicy bez dostępu). Do 15 osób z samą ewidencją i urlopami: Core S. Potrzebne 2–3 moduły przy 16–30 osobach: porównaj Core M + moduły z Pro ({{price.plan.pro}} zł) — Pro często wychodzi taniej. Powyżej 30 osób z modułami: Business.
+- Liczba osób = aktywne konta (w tym pracownicy bez dostępu); wybierasz najmniejszy próg, który je mieści.
+- Sama ewidencja z urlopami i asystentem: Core. Z jednym modułem Core zwykle wychodzi taniej; przy dwóch lub trzech modułach PRO często wychodzi taniej niż Core z modułami. Kalkulator na stronie cennika i w Pakietach i rozliczeniach sam wskazuje tańszą opcję.
+- Od 51 do 100 osób ze wszystkimi funkcjami: Business.
 - Rozliczenie roczne: płacisz za {{annual.monthsCharged}} miesięcy zamiast 12 (plan i moduły).
-- Asystent AI w planach z AI nie ma limitu wiadomości (tylko rozsądne użycie), więc pakietów wiadomości AI nie ma już w sprzedaży.
+- Pakietów wiadomości AI nie ma — asystent w planach płatnych nie ma limitu wiadomości.
+- Obecni klienci zachowują swoje plany i ceny (dawne Core S/M/L to te same progi do 15/30/100 osób, teraz z asystentem AI w cenie). Dawne osobne moduły Zadania, Czat i Asystent AI działają u zespołów, które je mają, ale nie są już w sprzedaży.
 
 ### Płatności i faktury
 - Menu → Pakiety i rozliczenia (Administrator, HR): wybierasz cykl (miesięczny/roczny), plan i moduły.

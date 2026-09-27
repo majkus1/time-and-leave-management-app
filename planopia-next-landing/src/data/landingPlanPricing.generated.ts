@@ -13,27 +13,29 @@ export const landingTrial = {
 	aiTrialOneOffTotal: 10,
 }
 
-export const landingCoreMinMonthlyNetPln = 119
+export const landingCoreMinMonthlyNetPln = 69
 
 export const landingCoreAiPoolPerMonth = 50
 
 export const landingCoreTiers = [
+	{ id: "base_5" as const, maxUsers: 5, monthlyNetPln: 69 },
 	{ id: "base_s" as const, maxUsers: 15, monthlyNetPln: 119 },
 	{ id: "base_m" as const, maxUsers: 30, monthlyNetPln: 199 },
+	{ id: "base_50" as const, maxUsers: 50, monthlyNetPln: 269 },
 	{ id: "base_l" as const, maxUsers: 100, monthlyNetPln: 349 },
 ]
 
 export const landingBundles = [
+	{ id: "pro_15" as const, maxUsers: 15, monthlyNetPln: 189, aiMessagesPerMonth: 50 },
 	{ id: "pro" as const, maxUsers: 30, monthlyNetPln: 239, aiMessagesPerMonth: 50 },
+	{ id: "pro_50" as const, maxUsers: 50, monthlyNetPln: 329, aiMessagesPerMonth: 50 },
 	{ id: "business" as const, maxUsers: 100, monthlyNetPln: 479, aiMessagesPerMonth: 300 },
 ]
 
 export const landingModules = [
 	{ id: "timer_qr" as const, monthlyNetPln: 39 },
 	{ id: "schedules_ai" as const, monthlyNetPln: 59 },
-	{ id: "tasks" as const, monthlyNetPln: 39 },
-	{ id: "chat" as const, monthlyNetPln: 29 },
-	{ id: "ai_assistant" as const, monthlyNetPln: 29 },
+	{ id: "tasks_chat" as const, monthlyNetPln: 59 },
 ]
 
 export const landingAddons = [

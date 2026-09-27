@@ -30,7 +30,7 @@ module.exports = {
 - Panel licznika jest na stronie „Czas pracy”, gdy Administrator włączył go w Ustawieniach (Licznik i QR).
 - Start ręcznie albo skanem kodu QR (patrz moduł QR). Przy starcie można wybrać czynność, zadanie z tablicy lub opis pracy.
 - Stop kończy sesję; czas trafia do wpisu dnia, sesje są widoczne pod kalendarzem, nadgodziny i przerwy liczone osobno w szczegółach sesji.
-- Licznik i QR wymagają modułu Timer + QR ({{price.module.timer_qr}} zł netto/mies. do planu Core) albo pakietu Pro/Business; w okresie próbnym są dostępne, w planie darmowym nie.
+- Licznik i QR wymagają modułu Timer i QR ({{price.module.timer_qr}} zł netto/mies. do planu Core) albo pakietu PRO/Business; w okresie próbnym są dostępne, w planie darmowym nie.
 
 ### Podgląd i potwierdzanie (Administrator, HR, przełożony)
 - „Ewidencja czasu pracy” w menu: kalendarze pracowników — Administrator i HR widzą cały zespół, przełożony swój dział lub wybrane osoby (wg uprawnień). Filtr miesiąca, działu, osoby.

@@ -5,6 +5,7 @@ const {
 	isPaidPlanKey,
 	isAddonId,
 	isModuleKey,
+	isSaleModuleKey,
 	normalizePaidPlanKey,
 	isBundlePlanKey,
 	isCorePlanKey,
@@ -13,6 +14,15 @@ const {
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
+
+/**
+ * Moduły w sprzedaży albo dawny moduł, który zespół już ma (odnowienie) — np. osobny „Czat” sprzed „Zadania i czat”.
+ */
+function moduleAllowedForPurchase(team, moduleKey) {
+	if (isSaleModuleKey(moduleKey)) return true
+	const owned = Array.isArray(team?.billingModuleKeys) ? team.billingModuleKeys : []
+	return owned.includes(moduleKey)
+}
 
 /**
  * Shared rules for email purchase requests and Przelewy24 checkout.
@@ -30,7 +40,7 @@ async function validateBillingPurchaseIntent(params) {
 	}
 
 	const team = await Team.findById(teamId).select(
-		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus'
+		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingModuleKeys billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) {
 		const err = new Error('Team not found')
@@ -88,6 +98,11 @@ async function validateBillingPurchaseIntent(params) {
 			for (const mk of rawMods) {
 				if (!isModuleKey(mk)) {
 					const err = new Error('Nieprawidłowy klucz modułu.')
+					err.code = 'VALIDATION'
+					throw err
+				}
+				if (!moduleAllowedForPurchase(team, mk)) {
+					const err = new Error('Ten moduł nie jest już w sprzedaży — wybierz moduły z aktualnego cennika.')
 					err.code = 'VALIDATION'
 					throw err
 				}
@@ -165,6 +180,11 @@ async function validateStripeSubscriptionCheckout(params) {
 	for (const m of moduleDefs) {
 		if (!isModuleKey(m.moduleKey)) {
 			const err = new Error('Nieznany klucz modułu w mapie Stripe.')
+			err.code = 'VALIDATION'
+			throw err
+		}
+		if (!moduleAllowedForPurchase(team, m.moduleKey)) {
+			const err = new Error('Ten moduł nie jest już w sprzedaży — wybierz moduły z aktualnego cennika.')
 			err.code = 'VALIDATION'
 			throw err
 		}

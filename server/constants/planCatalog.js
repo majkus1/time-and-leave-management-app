@@ -1,10 +1,11 @@
 /**
- * Cennik Planopia — single source of truth (apka, aktywacja, webhooks).
+ * Cennik Planopia — single source of truth (apka, aktywacja, webhooks, landing przez generator).
  *
- * Produkt „Core”: jedna linia produktowa z trzema rozmiarami zespołu + moduły opcjonalne.
- * Identyfikatory techniczne w kodzie / Stripe / Mongo: `base_s` (≤15), `base_m` (≤30), `base_l` (≤100).
- * Pakiety PRO / BUSINESS / ENTERPRISE: wszystkie moduły w cenie (`pro`, `business`, `enterprise`).
- * Klucz `starter` w Mongo = alias legacy → normalizuj do `base_s`.
+ * Core (ewidencja, urlopy, przegląd i raporty zespołu, asystent AI) w progach: `base_5` (≤5), `base_s` (≤15),
+ * `base_m` (≤30), `base_50` (≤50), `base_l` (≤100) + moduły: Timer i QR, Grafiki, Zadania i czat.
+ * PRO / BUSINESS / ENTERPRISE — wszystko w cenie: `pro_15`, `pro` (≤30), `pro_50`, `business`, `enterprise` (poza sprzedażą).
+ * Istniejące klucze (base_s/m/l, pro, business) zachowują ceny i limity — płacą z nich obecni klienci
+ * i stare ceny Stripe; nowe progi to nowe klucze. Klucz `starter` w Mongo = alias legacy → `base_s`.
  */
 
 const TRIAL = {
@@ -30,15 +31,41 @@ const AI_ADDONS_ON_SALE = false
 const LEGACY_PRE_BILLING_GRACE_UNTIL = new Date('2026-08-02T00:00:00+02:00')
 const LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL = 10
 
-/** Moduły dokupywane do CORE (także w mapowaniu Stripe kind: module) */
-const MODULE_KEYS = ['timer_qr', 'schedules_ai', 'tasks', 'chat', 'ai_assistant']
-
-/** Zestaw domyślny dla pakietów — wszystko włączone */
-const BUNDLE_MODULE_KEYS = [...MODULE_KEYS]
+/**
+ * Funkcje sprawdzane przez API, menu i ekrany — każda osobno (effectiveBillingModuleKeys zwraca tę listę).
+ * Moduły sprzedażowe rozwijają się na funkcje w MODULE_CAPABILITIES, więc bramki nie zależą od sposobu sprzedaży.
+ */
+const CAPABILITY_KEYS = ['timer_qr', 'schedules_ai', 'tasks', 'chat', 'ai_assistant']
 
 /**
- * Prefiksy API chronione per moduł (poza freemium — patrz planModuleAccessPolicy).
- * timer_qr: timer + QR; schedules_ai: grafiki + AI w grafiku; tasks: tablice/kanban; chat; ai_assistant: asystent.
+ * Wszystkie znane klucze modułów zapisywane w Team.billingModuleKeys / Stripe → funkcje, które włączają.
+ * `tasks_chat` („Zadania i czat”) sprzedawany od 10.2026; osobne `tasks`, `chat`, `ai_assistant` działają u zespołów,
+ * które je mają, ale nie są już w sprzedaży (asystent AI jest w Core).
+ */
+const MODULE_CAPABILITIES = {
+	timer_qr: ['timer_qr'],
+	schedules_ai: ['schedules_ai'],
+	tasks_chat: ['tasks', 'chat'],
+	tasks: ['tasks'],
+	chat: ['chat'],
+	ai_assistant: ['ai_assistant'],
+}
+
+/** Klucze modułów uznawane w danych (walidacja billingModuleKeys, Stripe, P24) */
+const MODULE_KEYS = Object.keys(MODULE_CAPABILITIES)
+
+/** Moduły w sprzedaży do Core — konfigurator, kalkulator, nowe zakupy */
+const SALE_MODULE_KEYS = ['timer_qr', 'schedules_ai', 'tasks_chat']
+
+/** Zestaw dla pakietów — wszystkie funkcje */
+const BUNDLE_MODULE_KEYS = [...CAPABILITY_KEYS]
+
+/** Core zawiera asystenta AI (od 10.2026 — także obecne Core S/M/L, w tej samej cenie) */
+const CORE_INCLUDED_CAPABILITIES = ['ai_assistant']
+
+/**
+ * Prefiksy API chronione per funkcja (poza freemium — patrz planModuleAccessPolicy).
+ * timer_qr: timer + QR; schedules_ai: grafiki + AI w grafiku; tasks: tablice zadań; chat; ai_assistant: asystent.
  */
 const MODULE_API_PREFIXES = {
 	timer_qr: ['/api/workdays/timer', '/api/qr'],
@@ -58,26 +85,50 @@ const AI_ASSISTANT_MODULE_MONTHLY_MESSAGES = 50
  * tierType: `core` = moduły z billingModuleKeys; `bundle` = wszystkie moduły z PAID_PLANS.includedModules
  */
 const PAID_PLANS = {
+	base_5: {
+		maxUsers: 5,
+		aiMessagesPerMonth: 0,
+		includedModules: CORE_INCLUDED_CAPABILITIES,
+		tierType: 'core',
+	},
 	base_s: {
 		maxUsers: 15,
 		aiMessagesPerMonth: 0,
-		includedModules: [],
+		includedModules: CORE_INCLUDED_CAPABILITIES,
 		tierType: 'core',
 	},
 	base_m: {
 		maxUsers: 30,
 		aiMessagesPerMonth: 0,
-		includedModules: [],
+		includedModules: CORE_INCLUDED_CAPABILITIES,
+		tierType: 'core',
+	},
+	base_50: {
+		maxUsers: 50,
+		aiMessagesPerMonth: 0,
+		includedModules: CORE_INCLUDED_CAPABILITIES,
 		tierType: 'core',
 	},
 	base_l: {
 		maxUsers: 100,
 		aiMessagesPerMonth: 0,
-		includedModules: [],
+		includedModules: CORE_INCLUDED_CAPABILITIES,
 		tierType: 'core',
+	},
+	pro_15: {
+		maxUsers: 15,
+		aiMessagesPerMonth: 50,
+		includedModules: BUNDLE_MODULE_KEYS,
+		tierType: 'bundle',
 	},
 	pro: {
 		maxUsers: 30,
+		aiMessagesPerMonth: 50,
+		includedModules: BUNDLE_MODULE_KEYS,
+		tierType: 'bundle',
+	},
+	pro_50: {
+		maxUsers: 50,
 		aiMessagesPerMonth: 50,
 		includedModules: BUNDLE_MODULE_KEYS,
 		tierType: 'bundle',
@@ -111,21 +162,53 @@ const CANONICAL_PAID_PLAN_KEYS = Object.keys(PAID_PLANS)
 
 /** Ceny mies. netto PLN — CORE + pakiety (zgodnie z cennikiem marketingowym) */
 const MONTHLY_NET_PRICES_PLN = {
+	base_5: 69,
 	base_s: 119,
 	base_m: 199,
+	base_50: 269,
 	base_l: 349,
+	pro_15: 189,
 	pro: 239,
+	pro_50: 329,
 	business: 479,
 	enterprise: 949,
 }
 
-/** Moduły dokupywane miesięcznie (referencyjnie — faktyczna kwota = Stripe / P24) */
+/** Moduły dokupywane miesięcznie (referencyjnie — faktyczna kwota = Stripe / P24). tasks/chat/ai_assistant — dawne, poza sprzedażą */
 const MODULE_MONTHLY_NET_PRICES_PLN = {
 	timer_qr: 39,
 	schedules_ai: 59,
+	tasks_chat: 59,
 	tasks: 39,
 	chat: 29,
 	ai_assistant: 29,
+}
+
+/** Plany w sprzedaży (kalkulator, konfigurator, landing). enterprise — tylko indywidualnie. */
+const SALE_PLAN_KEYS = ['base_5', 'base_s', 'base_m', 'base_50', 'base_l', 'pro_15', 'pro', 'pro_50', 'business']
+
+/** Nazwy planów i modułów dla ludzi — jedno źródło dla maili, P24, asystenta i aplikacji */
+const PLAN_LABELS = {
+	base_5: { pl: 'Core · do 5 osób', en: 'Core · up to 5 people' },
+	base_s: { pl: 'Core · do 15 osób', en: 'Core · up to 15 people' },
+	base_m: { pl: 'Core · do 30 osób', en: 'Core · up to 30 people' },
+	base_50: { pl: 'Core · do 50 osób', en: 'Core · up to 50 people' },
+	base_l: { pl: 'Core · do 100 osób', en: 'Core · up to 100 people' },
+	pro_15: { pl: 'PRO · do 15 osób', en: 'PRO · up to 15 people' },
+	pro: { pl: 'PRO · do 30 osób', en: 'PRO · up to 30 people' },
+	pro_50: { pl: 'PRO · do 50 osób', en: 'PRO · up to 50 people' },
+	business: { pl: 'Business · do 100 osób', en: 'Business · up to 100 people' },
+	enterprise: { pl: 'Enterprise', en: 'Enterprise' },
+	trial: { pl: 'Okres próbny', en: 'Trial' },
+}
+
+const MODULE_LABELS = {
+	timer_qr: { pl: 'Timer i QR', en: 'Timer and QR' },
+	schedules_ai: { pl: 'Grafiki', en: 'Schedules' },
+	tasks_chat: { pl: 'Zadania i czat', en: 'Tasks and chat' },
+	tasks: { pl: 'Zadania', en: 'Tasks' },
+	chat: { pl: 'Czat', en: 'Chat' },
+	ai_assistant: { pl: 'Asystent AI', en: 'AI assistant' },
 }
 
 const ANNUAL_NET_MONTHS_CHARGED = 10
@@ -160,6 +243,38 @@ function isModuleKey(key) {
 
 function listModuleKeys() {
 	return [...MODULE_KEYS]
+}
+
+function isSaleModuleKey(key) {
+	return SALE_MODULE_KEYS.includes(key)
+}
+
+function listSaleModuleKeys() {
+	return [...SALE_MODULE_KEYS]
+}
+
+function listSalePlanKeys() {
+	return [...SALE_PLAN_KEYS]
+}
+
+/** Klucze modułów (także funkcji, np. z includedModules) → unikalna lista funkcji; nieznane klucze pomijane */
+function capabilitiesForModuleKeys(keys = []) {
+	const out = new Set()
+	for (const key of Array.isArray(keys) ? keys : []) {
+		for (const capability of MODULE_CAPABILITIES[key] || []) out.add(capability)
+	}
+	return CAPABILITY_KEYS.filter(k => out.has(k))
+}
+
+function planLabel(planKey, locale = 'pl') {
+	const k = normalizePaidPlanKey(planKey)
+	const label = PLAN_LABELS[k]
+	return label ? label[locale === 'en' ? 'en' : 'pl'] : String(planKey || '')
+}
+
+function moduleLabel(moduleKey, locale = 'pl') {
+	const label = MODULE_LABELS[moduleKey]
+	return label ? label[locale === 'en' ? 'en' : 'pl'] : String(moduleKey || '')
 }
 
 function isBundlePlanKey(key) {
@@ -282,6 +397,13 @@ module.exports = {
 	AI_ADDON_PACKS,
 	PLAN_KEY_ALIASES,
 	MODULE_KEYS,
+	CAPABILITY_KEYS,
+	MODULE_CAPABILITIES,
+	SALE_MODULE_KEYS,
+	SALE_PLAN_KEYS,
+	CORE_INCLUDED_CAPABILITIES,
+	PLAN_LABELS,
+	MODULE_LABELS,
 	MODULE_API_PREFIXES,
 	BUNDLE_MODULE_KEYS,
 	AI_ASSISTANT_MODULE_MONTHLY_MESSAGES,
@@ -293,6 +415,12 @@ module.exports = {
 	listPaidPlanKeys,
 	listAddonIds,
 	listModuleKeys,
+	isSaleModuleKey,
+	listSaleModuleKeys,
+	listSalePlanKeys,
+	capabilitiesForModuleKeys,
+	planLabel,
+	moduleLabel,
 	isPaidPlanKey,
 	isAddonId,
 	isModuleKey,

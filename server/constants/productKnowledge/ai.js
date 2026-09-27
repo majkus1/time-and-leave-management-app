@@ -12,7 +12,7 @@ module.exports = {
 		pl: ['asystent', ' ai ', 'sztuczn', 'chatgpt', 'openai', ' gpt', 'wiadomości ai', 'limit ai', 'podsumow', 'szkic', 'prywatn'],
 		en: ['assistant', ' ai ', 'artificial', 'chatgpt', 'openai', ' gpt', 'ai messages', 'ai limit', 'summary', 'draft', 'privacy'],
 	},
-	requires: { modules: ['ai_assistant'], bundles: ['pro', 'business'], trial: true, freemium: false },
+	requires: { modules: [], bundles: ['pro', 'business'], trial: true, freemium: false },
 	suggestedQuestions: {
 		pl: ['Co potrafi asystent AI w Planopii?', 'Czy asystent AI ma limit wiadomości?', 'Czy moje dane trafiają do AI?'],
 		en: ['What can the AI assistant do in Planopia?', 'Is there a limit on AI messages?', 'Does my data go to the AI?'],
@@ -24,7 +24,7 @@ module.exports = {
 - Szkice: w asystencie tryb „Wniosek urlopowy (AI)” i „Wpis ewidencji (AI)” — opisujesz słowami, asystent przygotowuje szkic do potwierdzenia; nic nie wysyła bez Twojej zgody. W grafiku osobny panel AI szkicu miesiąca.
 
 ### Bez limitu wiadomości (czat z danymi, szkice, AI grafiku)
-Kto ma AI w planie, korzysta bez limitu wiadomości i bez liczników: okres próbny, pakiety Pro i Business oraz Core z modułem Asystent AI lub Grafiki + AI. Obowiązuje tylko rozsądne użycie — ukryty miesięczny bezpiecznik chroni przed nadużyciem (np. automatycznym skryptem), nie przed normalną pracą; gdyby zespół go osiągnął, asystent wraca pierwszego dnia miesiąca, a przy większych potrzebach wystarczy napisać przez Centrum pomocy. Pakietów wiadomości AI nie trzeba już dokupować — nie są w sprzedaży. Core bez modułu AI i plan darmowy nie mają czatu z danymi zespołu (tryb „jak działa Planopia” działa zawsze).
+Asystent AI jest w każdym płatnym planie (Core, PRO, Business) i w okresie próbnym — bez limitu wiadomości i bez liczników. Obowiązuje tylko rozsądne użycie — ukryty miesięczny bezpiecznik chroni przed nadużyciem (np. automatycznym skryptem), nie przed normalną pracą; gdyby zespół go osiągnął, asystent wraca pierwszego dnia miesiąca, a przy większych potrzebach wystarczy napisać przez Centrum pomocy. Pakietów wiadomości AI nie trzeba już dokupować — nie są w sprzedaży. Plan darmowy nie ma czatu z danymi zespołu (tryb „jak działa Planopia” działa zawsze).
 
 ### Prywatność
 Do modelu (OpenAI, USA) trafia treść pytania i wyłącznie te dane zespołu, do których pytający ma dostęp w aplikacji, tylko na potrzeby odpowiedzi; nie są używane do trenowania modelu. Szczegóły w Polityce prywatności.
@@ -35,7 +35,7 @@ Do modelu (OpenAI, USA) trafia treść pytania i wyłącznie te dane zespołu, d
 - Nie ma dostępu do internetu ani do danych innych zespołów.
 
 ### Gdzie w aplikacji / kto może
-Menu → Asystent AI (każdy w zakresie roli; czat z danymi wymaga modułu AI albo pakietu; „jak działa Planopia” — każdy, także w planie darmowym). AI grafiku: strona grafiku (kto może edytować grafik).`,
+Menu → Asystent AI (każdy w zakresie roli; czat z danymi — w każdym płatnym planie i w okresie próbnym; „jak działa Planopia” — każdy, także w planie darmowym). AI grafiku: strona grafiku (kto może edytować grafik).`,
 		en: null,
 	},
 }

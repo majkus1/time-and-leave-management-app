@@ -45,8 +45,9 @@ test('treść renderuje się w obu locale bez nieznanych placeholderów', () => 
 test('cennik w bazie wiedzy pochodzi wyłącznie z planCatalog (brak liczb wpisanych ręcznie, brak Enterprise)', () => {
 	const packages = render.compileKnowledgeSections('pl').find(s => s.id === 'packages').text
 	const expected = [
-		...['base_s', 'base_m', 'base_l', 'pro', 'business'].map(k => `${planCatalog.MONTHLY_NET_PRICES_PLN[k]} zł`),
-		...Object.values(planCatalog.MODULE_MONTHLY_NET_PRICES_PLN).map(v => `${v} zł`),
+		// Tylko plany i moduły w sprzedaży — ceny jako osobne słowa (np. „29 zł” nie może zaliczyć się z „329 zł”)
+		...planCatalog.SALE_PLAN_KEYS.map(k => ` ${planCatalog.MONTHLY_NET_PRICES_PLN[k]} zł`),
+		...planCatalog.SALE_MODULE_KEYS.map(k => ` ${planCatalog.MODULE_MONTHLY_NET_PRICES_PLN[k]} zł`),
 		`do ${planCatalog.PAID_PLANS.pro.maxUsers}`,
 		`do ${planCatalog.PAID_PLANS.business.maxUsers}`,
 		'bez limitu wiadomości',

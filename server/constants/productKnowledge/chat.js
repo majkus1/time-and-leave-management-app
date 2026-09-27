@@ -12,7 +12,7 @@ module.exports = {
 		pl: ['czat', 'wiadomoś', 'kanał', 'komunikat', 'ogłoszen', 'powiadom', 'push', 'mail', 'prywatn', 'sms', 'slack', 'teams', 'whatsapp', 'dzwonek'],
 		en: ['chat', 'message', 'channel', 'announcement', 'notification', 'push', 'mail', 'private', 'sms', 'slack', 'teams', 'whatsapp'],
 	},
-	requires: { modules: ['chat'], bundles: ['pro', 'business'], trial: true, freemium: false },
+	requires: { modules: ['tasks_chat'], bundles: ['pro', 'business'], trial: true, freemium: false },
 	suggestedQuestions: {
 		pl: ['Jak działa czat zespołowy?', 'Czym różnią się komunikaty od czatu?', 'Jakie powiadomienia dostają pracownicy i czy można je wyłączyć?'],
 		en: ['How does the team chat work?', 'How do announcements differ from chat?', 'What notifications do employees get and can they turn them off?'],
@@ -20,7 +20,7 @@ module.exports = {
 	body: {
 		pl: `### Czat
 - Menu → „Czat”: kanał ogólny całego zespołu tworzy się automatycznie, każdy dział dostaje własny kanał, można tworzyć kanały z dowolnymi osobami i rozmowy prywatne. Wiadomości w czasie rzeczywistym, historia zapisana, licznik nieprzeczytanych w menu, powiadomienia o nowych wiadomościach (przeglądarka/push i e-mail).
-- Plan: moduł Czat ({{price.module.chat}} zł netto/mies. do Core) albo Pro/Business; w okresie próbnym dostępny; w planie darmowym nie.
+- Plan: moduł Zadania i czat ({{price.module.tasks_chat}} zł netto/mies. do Core) albo PRO/Business; w okresie próbnym dostępny; w planie darmowym nie.
 
 ### Komunikaty
 - Menu → „Komunikaty”: ogłoszenia od Administratora/HR do całego zespołu, działu albo wybranych osób, z tytułem, treścią i załącznikami. Odbiorcy dostają e-mail i push; w menu widać nieprzeczytane. Dostępne w planach płatnych i w okresie próbnym.

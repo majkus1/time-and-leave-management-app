@@ -56,7 +56,6 @@ function Settings() {
 		if (!billingEnt) return false
 		if (billingEnt.planKey === 'trial') return true
 		if (billingEnt.legacy === true || billingEnt.ai?.unrestricted === true) return true
-		if (billingEnt.planKey === 'pro' || billingEnt.planKey === 'business' || billingEnt.planKey === 'enterprise') return true
 		const keys = Array.isArray(billingEnt.modules?.effectiveKeys) ? billingEnt.modules.effectiveKeys : []
 		return keys.includes(moduleKey)
 	}, [billingEntLoading, billingEnt])

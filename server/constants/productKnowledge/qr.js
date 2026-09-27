@@ -74,7 +74,7 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie�
 - Nie działa w planie darmowym.
 
 ### Dostępność w planach
-W okresie próbnym: tak. Plan Core: wymaga modułu Timer + QR ({{price.module.timer_qr}} zł netto/mies.). Pakiety Pro i Business: w cenie. Plan darmowy: nie.
+W okresie próbnym: tak. Plan Core: wymaga modułu Timer i QR ({{price.module.timer_qr}} zł netto/mies.). Pakiety PRO i Business: w cenie. Plan darmowy: nie.
 
 ### Gdzie w aplikacji / kto może
 Tworzenie i wydruk kodów: menu → Ustawienia → Licznik i QR (Administrator, HR). Skanowanie: aparat telefonu → strona /qr-scan (każdy zalogowany pracownik). Sesje: menu → Czas pracy, lista pod kalendarzem.`,

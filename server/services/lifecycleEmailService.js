@@ -7,7 +7,7 @@ const { sendEmail, getEmailTemplate, escapeHtml } = require('./emailService')
 const { appUrl } = require('../config')
 const { dueLifecycleKind, dueBillingKind, ownerLeadDue } = require('../utils/lifecycleEmailPolicy')
 const entitlementsService = require('./entitlementsService')
-const { normalizePaidPlanKey } = require('../constants/planCatalog')
+const { planLabel: catalogPlanLabel } = require('../constants/planCatalog')
 const {
 	SPECIAL_ELEVATED_SEAT_TEAM_NAMES,
 	SPECIAL_MANUAL_BILLING_TEAM_NAMES,
@@ -151,18 +151,9 @@ function buildLifecycleEmail(kind, team, facts = {}) {
 	}
 }
 
-const PLAN_LABELS = {
-	base_s: 'Core (do 15 osób)',
-	base_m: 'Core (do 30 osób)',
-	base_l: 'Core (do 100 osób)',
-	pro: 'PRO',
-	business: 'Business',
-	enterprise: 'Enterprise',
-}
-
+// Nazwy planów z katalogu (jedno źródło dla maili, P24, asystenta i aplikacji)
 function planLabel(planKey) {
-	const nk = normalizePaidPlanKey(planKey)
-	return PLAN_LABELS[nk] || String(planKey || 'pakiet')
+	return planKey ? catalogPlanLabel(planKey, 'pl') : 'pakiet'
 }
 
 function formatDatePl(value) {

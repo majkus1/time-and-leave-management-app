@@ -29,7 +29,7 @@ module.exports = {
 ### Dodawanie i usuwanie użytkowników
 - Menu → „Utwórz użytkownika” (Administrator, HR; przełożony — tylko pracowników bez dostępu, jeśli włączone): imię, nazwisko, e-mail, role, działy, stanowisko, opcjonalnie pula urlopowa. Nowa osoba dostaje e-mail z linkiem do ustawienia własnego hasła.
 - Menu → „Zarządzanie zespołem” (Administrator): zmiana ról i działów, uprawnienia przełożonych, dezaktywacja i przywracanie kont, ponowne wysłanie linku do hasła, logi aktywności, działy (dodanie działu tworzy automatycznie jego kanał czatu, tablicę i grafik), usunięcie zespołu.
-- Liczba aktywnych kont liczy się do limitu planu (okres próbny i plan darmowy: {{trial.maxUsers}}; Core S/M/L: {{maxUsers.plan.base_s}}/{{maxUsers.plan.base_m}}/{{maxUsers.plan.base_l}}; Pro: {{maxUsers.plan.pro}}; Business: {{maxUsers.plan.business}}). Dezaktywowane konto nie zajmuje miejsca.
+- Liczba aktywnych kont liczy się do limitu planu (okres próbny i plan darmowy: {{trial.maxUsers}}; Core: {{maxUsers.plan.base_5}}/{{maxUsers.plan.base_s}}/{{maxUsers.plan.base_m}}/{{maxUsers.plan.base_50}}/{{maxUsers.plan.base_l}} zależnie od progu; PRO: {{maxUsers.plan.pro_15}}/{{maxUsers.plan.pro}}/{{maxUsers.plan.pro_50}}; Business: {{maxUsers.plan.business}}). Dezaktywowane konto nie zajmuje miejsca.
 
 ### Pracownicy bez dostępu do aplikacji
 Opcja w Ustawieniach (domyślnie wyłączona): osoby, które nie logują się i nie mają hasła, ale są w zespole (liczą się do limitu kont). Uprawnieni użytkownicy prowadzą za nie ewidencję (jeśli włączono „wpisy ewidencji za pracownika”) i składają wnioski urlopowe (jeśli włączono, w planie płatnym), potwierdzają ich miesiąc i zatwierdzają dni. Przydatne dla pracowników fizycznych bez telefonu służbowego.

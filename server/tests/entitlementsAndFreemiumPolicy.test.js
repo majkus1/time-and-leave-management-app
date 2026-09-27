@@ -175,7 +175,8 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isPaidGracePeriod(team, inGrace), true)
 		assert.equal(e.isPaidSubscriptionActive(team, inGrace), true)
 		assert.equal(e.isFreemiumTierTeam(team, inGrace), false)
-		assert.deepEqual(e.effectiveBillingModuleKeys(team, inGrace), ['timer_qr'])
+		// Core: wykupiony moduł + asystent AI w cenie Core (od 10.2026)
+		assert.deepEqual(e.effectiveBillingModuleKeys(team, inGrace), ['timer_qr', 'ai_assistant'])
 		assert.equal(e.isPaidGracePeriod(team, afterGrace), false)
 		assert.equal(e.isPaidSubscriptionActive(team, afterGrace), false)
 		assert.equal(e.isFreemiumTierTeam(team, afterGrace), true)
@@ -453,7 +454,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.computeAiBuckets(capped).denyReason, 'fair_use')
 	})
 
-	it('AI bez limitu: pakiet Pro i Core z modułem AI — bezpiecznik płatny; Core bez modułu AI — bez AI', () => {
+	it('AI bez limitu: pakiet Pro i każdy Core — bezpiecznik płatny (asystent AI w cenie Core)', () => {
 		const base = {
 			name: 'Firma',
 			isActive: true,
@@ -471,10 +472,9 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		const coreAi = e.computeAiBuckets({ ...base, billingPlanKey: 'base_s', billingModuleKeys: ['schedules_ai'] })
 		assert.equal(coreAi.hasAiAccess, true)
 		assert.equal(coreAi.fairUse, true)
-		const coreNoAi = e.computeAiBuckets({ ...base, billingPlanKey: 'base_s', billingModuleKeys: ['timer_qr'] })
-		assert.equal(coreNoAi.hasAiAccess, false)
-		assert.equal(coreNoAi.metered, true)
-		assert.equal(coreNoAi.denyReason, 'quota')
+		const coreTimerOnly = e.computeAiBuckets({ ...base, billingPlanKey: 'base_s', billingModuleKeys: ['timer_qr'] })
+		assert.equal(coreTimerOnly.hasAiAccess, true)
+		assert.equal(coreTimerOnly.fairUse, true)
 		const proCapped = e.computeAiBuckets({ ...base, billingPlanKey: 'pro', aiMessagesUsedInMonth: AI_FAIR_USE.paidMonthlyMessages })
 		assert.equal(proCapped.hasAiAccess, false)
 		assert.equal(proCapped.denyReason, 'fair_use')
@@ -556,6 +556,33 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		} finally {
 			if (prev === undefined) delete process.env.AI_FAIR_USE_MONTHLY
 			else process.env.AI_FAIR_USE_MONTHLY = prev
+		}
+	})
+
+	it('nowy cennik — kto co widzi: obecnym zespołom nic nie znika, Core dostaje asystenta AI', () => {
+		const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+		const past = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+		const paid = { isActive: true, billingStatus: 'active', billingPeriodEnd: future, billingHadPaidPlan: true }
+		const all = ['timer_qr', 'schedules_ai', 'tasks', 'chat', 'ai_assistant']
+		const cases = [
+			// [opis, zespół, funkcje przed zmianą, funkcje po zmianie]
+			['BZ: Core do 15 bez modułów', { name: 'BZ', ...paid, billingPlanKey: 'base_s', billingModuleKeys: [] }, [], ['ai_assistant']],
+			['Halo: starter, ręczne rozliczenie bez końca okresu', { name: 'Halo Rental System', isActive: true, billingStatus: 'active', billingPlanKey: 'starter', billingModuleKeys: [] }, [], ['ai_assistant']],
+			['Core z Timer i QR', { name: 'X', ...paid, billingPlanKey: 'base_m', billingModuleKeys: ['timer_qr'] }, ['timer_qr'], ['timer_qr', 'ai_assistant']],
+			['Core z dawnym osobnym czatem', { name: 'X', ...paid, billingPlanKey: 'base_l', billingModuleKeys: ['chat'] }, ['chat'], ['chat', 'ai_assistant']],
+			['Core z dawnym modułem Asystent AI', { name: 'X', ...paid, billingPlanKey: 'base_s', billingModuleKeys: ['ai_assistant'] }, ['ai_assistant'], ['ai_assistant']],
+			['nowy Core do 5 z „Zadania i czat”', { name: 'X', ...paid, billingPlanKey: 'base_5', billingModuleKeys: ['tasks_chat'] }, null, ['tasks', 'chat', 'ai_assistant']],
+			['IRONSKY / Smart Cube: PRO do 30', { name: 'X', ...paid, billingPlanKey: 'pro', billingModuleKeys: all }, all, all],
+			['nowy PRO do 15', { name: 'X', ...paid, billingPlanKey: 'pro_15' }, null, all],
+			['Business', { name: 'X', ...paid, billingPlanKey: 'business' }, all, all],
+			['wygasły Core (plan darmowy)', { name: 'X', ...paid, billingPeriodEnd: past, billingPlanKey: 'base_s', billingModuleKeys: ['timer_qr'] }, [], []],
+			['okres próbny (inne bramki: wszystko)', { name: 'X', isActive: true, billingPlanKey: 'trial', trialEndsAt: future }, [], []],
+		]
+		for (const [label, team, before, after] of cases) {
+			const got = e.effectiveBillingModuleKeys(team)
+			assert.deepEqual(got, after, label)
+			// Nic, co zespół miał przed zmianą, nie znika
+			if (before) for (const key of before) assert.ok(got.includes(key), label + ': zniknęło ' + key)
 		}
 	})
 })

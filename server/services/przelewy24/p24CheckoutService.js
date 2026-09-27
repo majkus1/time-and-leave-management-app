@@ -6,20 +6,13 @@ const {
 	p24CheckoutAmountGroszeForPlan,
 	checkoutAmountGroszeForAddon,
 	isModuleKey,
+	planLabel,
+	moduleLabel,
 } = require('../../constants/planCatalog')
 const { getP24Config } = require('./p24Config')
 const { signRegister } = require('./p24Sign')
 const { p24Request, assertP24Ok } = require('./p24HttpClient')
 
-const PLAN_LABELS = {
-	starter: 'Core (do 15 osób)',
-	base_s: 'Core (do 15 osób)',
-	base_m: 'Core (do 30 osób)',
-	base_l: 'Core (do 100 osób)',
-	pro: 'PRO',
-	business: 'Business',
-	enterprise: 'Enterprise',
-}
 
 function truncate(str, max) {
 	if (!str || str.length <= max) return str
@@ -89,10 +82,10 @@ async function createCheckoutSessionAndRegister(params) {
 			params.billingCycle,
 			planModuleKeysClean
 		)
-		const label = PLAN_LABELS[params.planKey] || params.planKey
+		const label = planLabel(params.planKey, 'pl')
 		const cycle = params.billingCycle === 'annual' ? 'roczny' : 'miesięczny'
 		const modSuffix =
-			planModuleKeysClean.length > 0 ? ` + moduły: ${planModuleKeysClean.join(', ')}` : ''
+			planModuleKeysClean.length > 0 ? ` + moduły: ${planModuleKeysClean.map(k => moduleLabel(k, 'pl')).join(', ')}` : ''
 		description = truncate(`Planopia ${label} (${cycle})${modSuffix} — ${team.name}`, 1024)
 	} else {
 		amountGrosze = checkoutAmountGroszeForAddon(params.addonId)

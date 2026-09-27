@@ -7,7 +7,7 @@ const {
 } = require('../utils/leaveSettlement')
 const { resolveLeaveLimitView, sumAutoDeductedAmount } = require('../utils/leaveLimitView')
 
-const BUNDLE_PLAN_KEYS = new Set(['pro', 'business', 'enterprise'])
+const { isBundlePlanKey } = require('../constants/planCatalog')
 
 function hasModule(entitlements, moduleKey) {
 	if (!moduleKey) return true
@@ -16,7 +16,7 @@ function hasModule(entitlements, moduleKey) {
 	if (entitlements.ai?.unrestricted === true) return true
 	if (entitlements.legacy === true || entitlements.legacyGrandfatheredActive === true) return true
 	if (entitlements.planKey === 'trial') return true
-	if (BUNDLE_PLAN_KEYS.has(entitlements.planKey)) return true
+	if (isBundlePlanKey(entitlements.planKey)) return true
 	return Array.isArray(entitlements.modules?.effectiveKeys)
 		? entitlements.modules.effectiveKeys.includes(moduleKey)
 		: false

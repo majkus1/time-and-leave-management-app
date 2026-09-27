@@ -73,7 +73,7 @@
 		"question": "Czy kody QR działają w darmowym planie?",
 		"mustMatch": [
 			"\\bnie\\b",
-			"pakiet|moduł|Timer|Licznik|Pro|Business"
+			"pakiet|moduł|Timer|PRO|Pro|Business"
 		]
 	},
 	{
@@ -85,15 +85,14 @@
 		],
 		"question": "Ile kosztuje Planopia dla 20 osób?",
 		"mustMatch": [
-			"Core M",
 			"199",
-			"Pro",
+			"PRO|Pro",
 			"239"
 		],
 		"mustNotMatch": [
 			"949",
 			"Enterprise",
-			"Core S[^.]{0,40}(polec|wystarcz)"
+			"do 15 osób[^.]{0,40}(polec|wystarcz)"
 		]
 	},
 	{
@@ -133,10 +132,11 @@
 		],
 		"question": "Which plan should I choose for 45 people?",
 		"mustMatch": [
-			"Core L|Business"
+			"269|329",
+			"up to 50|50 people"
 		],
 		"mustNotMatch": [
-			"Core M[^.]{0,40}(recommend|enough|fits)",
+			"up to 30[^.]{0,40}(recommend|enough|fits)",
 			"949",
 			"Enterprise"
 		]

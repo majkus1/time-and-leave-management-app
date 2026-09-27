@@ -13,8 +13,6 @@ const TRIAL_DAYS = 30
 const LOCALES = ['pl', 'en']
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g
 
-/** Publiczne plany — enterprise świadomie pominięty (nie jest w ofercie publicznej). */
-const PUBLIC_PLAN_KEYS = ['base_s', 'base_m', 'base_l', 'pro', 'business']
 
 function buildCatalogValues(catalog = planCatalog) {
 	const values = {
@@ -25,7 +23,8 @@ function buildCatalogValues(catalog = planCatalog) {
 		'ai.coreModulePool': catalog.AI_ASSISTANT_MODULE_MONTHLY_MESSAGES,
 		'annual.monthsCharged': catalog.ANNUAL_NET_MONTHS_CHARGED,
 	}
-	for (const key of PUBLIC_PLAN_KEYS) {
+	// Plany w sprzedaży (katalog) — enterprise świadomie pominięty (nie jest w ofercie publicznej)
+	for (const key of catalog.SALE_PLAN_KEYS) {
 		const plan = catalog.PAID_PLANS[key]
 		if (!plan) throw new Error(`productKnowledge: brak planu ${key} w planCatalog`)
 		values[`price.plan.${key}`] = catalog.MONTHLY_NET_PRICES_PLN[key]
@@ -229,7 +228,7 @@ module.exports = {
 	APP_PUBLIC_URL,
 	TRIAL_DAYS,
 	LOCALES,
-	PUBLIC_PLAN_KEYS,
+	PUBLIC_PLAN_KEYS: planCatalog.SALE_PLAN_KEYS,
 	buildCatalogValues,
 	renderKnowledgeBody,
 	foldDiacritics,

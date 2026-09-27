@@ -12,7 +12,7 @@ module.exports = {
 		pl: ['zadan', 'tablic', 'kanban', 'projekt', 'kolumn', 'komentarz', 'przypisz', 'przypisa'],
 		en: ['task', 'board', 'kanban', 'project', 'column', 'comment', 'assign'],
 	},
-	requires: { modules: ['tasks'], bundles: ['pro', 'business'], trial: true, freemium: false },
+	requires: { modules: ['tasks_chat'], bundles: ['pro', 'business'], trial: true, freemium: false },
 	suggestedQuestions: {
 		pl: ['Jak działają tablice zadań?', 'Czy mogę przypisać godziny pracy do zadania?', 'Czy każdy dział ma własną tablicę?'],
 		en: ['How do task boards work?', 'Can I link work hours to a task?', 'Does each department get its own board?'],
@@ -24,7 +24,7 @@ module.exports = {
 - Powiązanie z ewidencją: w „Czasie pracy” pracownik może przypisać godziny dnia do zadań z tablicy; raport zadań i czynności pokazuje wtedy, ile godzin poszło na które zadanie.
 
 ### Dostępność w planach
-Okres próbny: tak. Plan Core: moduł Zadania ({{price.module.tasks}} zł netto/mies.). Pakiety Pro/Business: w cenie. Plan darmowy: nie.
+Okres próbny: tak. Plan Core: moduł Zadania i czat ({{price.module.tasks_chat}} zł netto/mies., zadania razem z czatem). Pakiety PRO/Business: w cenie. Plan darmowy: nie.
 
 ### Kalendarz zadań — co pokazuje
 Kalendarz (w tablicy i „Kalendarz moich zadań” dla wszystkich tablic) pokazuje zadania z terminem lub okresem realizacji. Domyślnie tylko **przypisane do Ciebie** (i te „dla wszystkich członków”). Przełącznik „Pokaż:” nad kalendarzem: „+ utworzone przeze mnie” dodaje zadania, które sam(a) utworzyłeś/aś, a „Wszystkie zadania” (Administrator, HR, Przełożony) pokazuje komplet z dostępnych tablic. Wybór jest zapamiętany w przeglądarce. Jeśli nie widzisz zadania, które komuś przydzieliłeś — przełącz na „+ utworzone przeze mnie”.

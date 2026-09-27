@@ -34,11 +34,9 @@ function formatMoney(locale: Locale, amount: number, decimals: number) {
 }
 
 const MODULE_LABELS: Record<ModuleId, { pl: string; en: string }> = {
-	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
-	schedules_ai: { pl: 'Grafiki + AI', en: 'Schedules + AI' },
-	tasks: { pl: 'Zadania i Projekty', en: 'Tasks and Projects' },
-	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
-	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
+	timer_qr: { pl: 'Timer i QR', en: 'Timer and QR' },
+	schedules_ai: { pl: 'Grafiki', en: 'Schedules' },
+	tasks_chat: { pl: 'Zadania i czat', en: 'Tasks and chat' },
 }
 
 function PricingIcon({ name, locale }: { name: PricingIconName; locale: Locale }) {
