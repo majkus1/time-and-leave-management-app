@@ -8,6 +8,9 @@
  */
 
 const GEO_POLICIES = ['off', 'record', 'flag', 'block']
+/** Statusy zapisywane w TimeEntry/Workday (enum w modelach) i metody skanu */
+const GEO_STATUSES = ['inside', 'outside', 'denied', 'unavailable', 'missing', 'not_configured']
+const SCAN_METHODS = ['screen', 'print']
 const RADIUS_MIN_M = 30
 const RADIUS_MAX_M = 2000
 const RADIUS_DEFAULT_M = 150
@@ -113,6 +116,26 @@ function requiresQrExitScan(qr) {
 	return mode !== 'print' || normalizeGeoPolicy(qr.geo?.policy) !== 'off'
 }
 
+/**
+ * Weryfikacja do zapisania przy sesji dnia (Workday.timeEntries[].qrVerify) z wpisu TimeEntry.
+ * Metoda skanu tylko dla kodów w trybie ekranu — przy zwykłym wydruku „wydruk” to norma, nie sygnał.
+ * @returns {null | { entryMethod, exitMethod, entryGeo, exitGeo }}
+ */
+function usableGeo(geo) {
+	return geo && geo.status && geo.status !== 'not_configured' ? geo : null
+}
+
+function buildSessionQrVerify({ mode, entryMethod, exitMethod, entryGeo, exitGeo }) {
+	const screenMode = mode === 'screen' || mode === 'screen_or_print'
+	const out = {
+		entryMethod: screenMode ? entryMethod || null : null,
+		exitMethod: screenMode ? exitMethod || null : null,
+		entryGeo: usableGeo(entryGeo),
+		exitGeo: usableGeo(exitGeo),
+	}
+	return out.entryMethod || out.exitMethod || out.entryGeo || out.exitGeo ? out : null
+}
+
 /** Wpis do TimeEntry (entryGeo/exitGeo) — bez współrzędnych pracownika */
 function toStoredGeo(result, policy) {
 	if (!result?.check) return null
@@ -127,6 +150,8 @@ function toStoredGeo(result, policy) {
 
 module.exports = {
 	GEO_POLICIES,
+	GEO_STATUSES,
+	SCAN_METHODS,
 	RADIUS_MIN_M,
 	RADIUS_MAX_M,
 	RADIUS_DEFAULT_M,
@@ -140,4 +165,5 @@ module.exports = {
 	evaluateGeo,
 	toStoredGeo,
 	requiresQrExitScan,
+	buildSessionQrVerify,
 }

@@ -7592,3 +7592,89 @@
 	background-color: rgba(16, 185, 129, 0.2) !important;
 	color: #6ee7b7 !important;
 }
+
+/* Weryfikacja skanu QR w liście sesji (ekran/wydruk, lokalizacja) — globalne span { font-size/color !important } wymusza !important */
+.work-session-list .work-session-badge--verify {
+	font-size: 10px !important;
+	font-weight: 600;
+	padding: 2px 6px;
+	border-radius: 10px;
+	white-space: nowrap;
+}
+
+.work-session-list .work-session-badge--verify-ok {
+	background-color: #ecfdf5;
+	color: #047857 !important;
+}
+
+.work-session-list .work-session-badge--verify-warn {
+	background-color: #fef2f2;
+	color: #b91c1c !important;
+}
+
+.work-session-list .work-session-badge--verify-info {
+	background-color: #f1f5f9;
+	color: #475569 !important;
+}
+
+.work-session-list .work-session-item__verify-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.work-session-list .work-session-item__verify {
+	font-size: 12px;
+	color: #4b5563;
+}
+
+.work-session-list .work-session-list__qr-filter {
+	padding: 8px 12px;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	font-size: 14px;
+	background-color: #fff;
+	max-width: 240px;
+}
+
+.work-session-list .work-session-list__unusual-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	cursor: pointer;
+	margin: 0;
+}
+
+.work-session-list .work-session-list__empty-filter {
+	color: #95a5a6 !important;
+	text-align: center;
+	padding: 12px;
+	font-size: 14px !important;
+}
+
+[data-theme='dark'] .work-session-list .work-session-badge--verify-ok {
+	background-color: rgba(16, 185, 129, 0.2) !important;
+	color: #6ee7b7 !important;
+}
+
+[data-theme='dark'] .work-session-list .work-session-badge--verify-warn {
+	background-color: rgba(239, 68, 68, 0.2) !important;
+	color: #fca5a5 !important;
+}
+
+[data-theme='dark'] .work-session-list .work-session-badge--verify-info {
+	background-color: rgba(148, 163, 184, 0.2) !important;
+	color: #cbd5e1 !important;
+}
+
+[data-theme='dark'] .work-session-list .work-session-item__verify {
+	color: var(--po-text-secondary);
+}
+
+[data-theme='dark'] .work-session-list .work-session-list__qr-filter {
+	background-color: var(--po-surface);
+	color: var(--po-text);
+	border-color: var(--po-border-strong);
+}
+

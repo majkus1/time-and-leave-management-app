@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useTodaySessions, useDeleteSession } from '../../hooks/useTimer'
+import { useTodaySessions, useDeleteSession, userTimerSessionsQuery } from '../../hooks/useTimer'
 import { useAlert } from '../../context/AlertContext'
-import axios from 'axios'
-import { API_URL } from '../../config'
 import { useQuery } from '@tanstack/react-query'
 import { getTimerSessionDisplayName } from '../../utils/timerSessionSelect'
 import { filterGroupedSessionsByActivities } from '../../utils/workActivityAggregation'
@@ -12,6 +10,8 @@ import {
 	formatMinutesAsClock,
 	getDurationMinutes,
 } from '../../utils/formatWorkDuration'
+import { summarizeQrVerify } from '../../utils/qrSessionVerify'
+import { qrVerifyBadges, qrVerifySideText } from '../../utils/qrVerifyLabels'
 
 // Session item component with mobile expand/collapse
 function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateDuration, formatBreakTime, formatOvertimeTime, onDelete, deleteSession, t, i18n }) {
@@ -19,6 +19,12 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 	const sessionDate = session.date || session.startTime
 	const duration = session.endTime ? calculateDuration(session.startTime, session.endTime) : null
 	const hasQuantity = Number(session.quantity) > 0 && session.unit
+	// Weryfikacja skanu QR (ekran/wydruk, lokalizacja) — plakietki i opis wejścia/wyjścia
+	const qrSummary = summarizeQrVerify(session.qrVerify)
+	const verifyBadges = qrVerifyBadges(t, i18n, qrSummary)
+	const verifyDetails = qrSummary
+		? `${t('sessions.qrVerify.entry')}: ${qrVerifySideText(t, i18n, qrSummary.entry)} · ${t('sessions.qrVerify.exit')}: ${qrVerifySideText(t, i18n, qrSummary.exit)}`
+		: ''
 	
 	// Check if mobile (screen width < 768px)
 	const [isMobile, setIsMobile] = useState(() => {
@@ -102,6 +108,15 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							{session.qrCode?.name ? `${t('sessions.fromQR') || 'QR'}: ${session.qrCode.name}` : (t('sessions.fromQR') || 'QR')}
 						</span>
 					)}
+					{!isMobile && verifyBadges.map(badge => (
+						<span
+							key={badge.key}
+							className={`work-session-badge work-session-badge--verify work-session-badge--verify-${badge.tone}`}
+							title={verifyDetails}
+						>
+							{badge.text}
+						</span>
+					))}
 					{((!isMobile || isExpanded) && hasQuantity) && (
 						<span className="work-session-badge work-session-badge--quantity" style={{
 							fontSize: '10px',
@@ -253,6 +268,19 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 							</span>
 						</div>
 					)}
+					{/* Na telefonie plakietki tutaj — w wierszu brakuje miejsca */}
+					{verifyBadges.length > 0 && (
+						<div className="work-session-item__verify-badges">
+							{verifyBadges.map(badge => (
+								<span key={badge.key} className={`work-session-badge work-session-badge--verify work-session-badge--verify-${badge.tone}`}>
+									{badge.text}
+								</span>
+							))}
+						</div>
+					)}
+					{verifyDetails && (
+						<div className="work-session-item__verify">{verifyDetails}</div>
+					)}
 					{duration && (
 						<div style={{
 							color: session.isOvertime ? '#e74c3c' : '#27ae60',
@@ -310,28 +338,16 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 	// Use different endpoint if userId is provided
 	const { data: sessionsData, isLoading } = userId 
 		? useQuery({
-			queryKey: ['timer', 'sessions', 'user', userId, month, year],
-			queryFn: async () => {
-				const params = {}
-				if (month !== undefined && month !== null) {
-					params.month = month
-				}
-				if (year !== undefined && year !== null) {
-					params.year = year
-				}
-				const response = await axios.get(`${API_URL}/api/workdays/timer/sessions/user/${userId}`, {
-					params,
-					withCredentials: true,
-				})
-				return response.data
-			},
+			...userTimerSessionsQuery(userId, month, year),
 			enabled: timerQueriesEnabled && month !== undefined && year !== undefined && userId !== undefined,
-			staleTime: 30 * 1000,
 		})
 		: useTodaySessions(month, year, { enabled: timerQueriesEnabled })
 	
 	const deleteSession = useDeleteSession()
 	const [selectedDate, setSelectedDate] = useState(null)
+	// Filtry QR: miejsce (qrCodeId) i „tylko nietypowe skany” (poza miejscem, bez lokalizacji, z wydruku zamiast ekranu)
+	const [qrPlaceId, setQrPlaceId] = useState('')
+	const [unusualOnly, setUnusualOnly] = useState(false)
 
 	// Extract grouped sessions and totals from response
 	const groupedSessions = sessionsData?.grouped || []
@@ -356,6 +372,22 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 	const filteredTotalMinutes = useMemo(() => {
 		return filteredGroups.reduce((sum, group) => sum + (group.totalMinutes || 0), 0)
 	}, [filteredGroups])
+
+	// Miejsca QR występujące w sesjach miesiąca + czy są w ogóle dane weryfikacji (inaczej filtr nietypowych jest zbędny)
+	const { qrPlaces, hasQrVerify } = useMemo(() => {
+		const places = new Map()
+		let verify = false
+		groupedSessions.forEach(group => {
+			group.sessions.forEach(session => {
+				if (session.qrCodeId && session.qrCode?.name) places.set(String(session.qrCodeId), session.qrCode.name)
+				if (summarizeQrVerify(session.qrVerify)) verify = true
+			})
+		})
+		return {
+			qrPlaces: [...places.entries()].sort((a, b) => a[1].localeCompare(b[1], i18n.resolvedLanguage)),
+			hasQrVerify: verify,
+		}
+	}, [groupedSessions, i18n.resolvedLanguage])
 
 	// Helper function to normalize date to YYYY-MM-DD format without timezone issues
 	const normalizeDate = (dateInput) => {
@@ -387,9 +419,18 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 		return Array.from(dates).sort().reverse() // Most recent first
 	}, [filteredGroups])
 
-	// Filter sessions by selected date and recalculate percentages
+	const activePlaceId = qrPlaces.some(([id]) => id === qrPlaceId) ? qrPlaceId : ''
+	const activeUnusualOnly = unusualOnly && hasQrVerify
+
+	// Filter sessions by selected date / QR place / unusual scans and recalculate percentages
 	const filteredData = useMemo(() => {
-		if (!selectedDate) {
+		const matchesSession = session => {
+			if (selectedDate && (!session.date || normalizeDate(session.date) !== selectedDate)) return false
+			if (activePlaceId && String(session.qrCodeId || '') !== activePlaceId) return false
+			if (activeUnusualOnly && !summarizeQrVerify(session.qrVerify)?.unusual) return false
+			return true
+		}
+		if (!selectedDate && !activePlaceId && !activeUnusualOnly) {
 			const groupsWithPercentages = filteredGroups.map(group => ({
 				...group,
 				percentage: filteredTotalMinutes > 0
@@ -402,13 +443,9 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			}
 		}
 
-		// Filter sessions by date
+		// Filter sessions (date, QR place, unusual scans)
 		const filteredGroupsByDate = filteredGroups.map(group => {
-			const filteredSessions = group.sessions.filter(session => {
-				if (!session.date) return false
-				const sessionDateStr = normalizeDate(session.date)
-				return sessionDateStr === selectedDate
-			})
+			const filteredSessions = group.sessions.filter(matchesSession)
 
 			if (filteredSessions.length === 0) return null
 
@@ -455,7 +492,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			grouped: groupsWithPercentages,
 			totalMinutes: dayTotalMinutes
 		}
-	}, [selectedDate, filteredGroups, filteredTotalMinutes])
+	}, [selectedDate, activePlaceId, activeUnusualOnly, filteredGroups, filteredTotalMinutes])
 
 	const calculateDuration = (startTime, endTime) =>
 		formatMinutesAsClock(getDurationMinutes(startTime, endTime))
@@ -664,9 +701,32 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 							</option>
 						))}
 					</select>
-					{selectedDate && (
+					{qrPlaces.length > 0 && (
+						<select
+							className="work-session-list__qr-filter"
+							value={activePlaceId}
+							onChange={e => setQrPlaceId(e.target.value)}
+							aria-label={t('sessions.qrVerify.placeFilter')}
+						>
+							<option value="">{t('sessions.qrVerify.allPlaces')}</option>
+							{qrPlaces.map(([id, name]) => (
+								<option key={id} value={id}>{t('sessions.fromQR')}: {name}</option>
+							))}
+						</select>
+					)}
+					{hasQrVerify && (
+						<label className="work-session-list__unusual-filter">
+							<input type="checkbox" checked={activeUnusualOnly} onChange={e => setUnusualOnly(e.target.checked)} />
+							{t('sessions.qrVerify.unusualOnly')}
+						</label>
+					)}
+					{(selectedDate || activePlaceId || activeUnusualOnly) && (
 						<button
-							onClick={() => setSelectedDate(null)}
+							onClick={() => {
+								setSelectedDate(null)
+								setQrPlaceId('')
+								setUnusualOnly(false)
+							}}
 							style={{
 								padding: '8px 12px',
 								border: 'none',
@@ -695,6 +755,10 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 				}}>
 					{t('sessions.filteredByDate') || 'Filtrowane według daty'}: <strong>{formatDate(selectedDate)}</strong>
 				</div>
+			)}
+
+			{displayData.length === 0 && (
+				<p className="work-session-list__empty-filter">{t('sessions.qrVerify.noMatches')}</p>
 			)}
 
 			<div style={{

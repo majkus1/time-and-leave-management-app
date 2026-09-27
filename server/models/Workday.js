@@ -1,4 +1,25 @@
 const mongoose = require('mongoose')
+const { GEO_POLICIES, GEO_STATUSES, SCAN_METHODS } = require('../utils/qrGeoCheck')
+
+/** Wynik lokalizacji przy skanie QR (jak TimeEntry.entryGeo) — bez współrzędnych pracownika */
+const sessionGeoSchema = new mongoose.Schema({
+	policy: { type: String, enum: GEO_POLICIES.filter(p => p !== 'off') },
+	status: { type: String, enum: GEO_STATUSES },
+	distanceM: { type: Number, default: null },
+	accuracyM: { type: Number, default: null },
+	flagged: { type: Boolean, default: false }
+}, { _id: false })
+
+/**
+ * Weryfikacja sesji zamkniętej skanem QR (utils/qrGeoCheck.buildSessionQrVerify): skąd był skan wejścia/wyjścia
+ * (tylko dla kodów w trybie ekranu) i wynik lokalizacji. null = sesja bez skanu albo kod bez weryfikacji.
+ */
+const sessionQrVerifySchema = new mongoose.Schema({
+	entryMethod: { type: String, enum: [...SCAN_METHODS, null], default: null },
+	exitMethod: { type: String, enum: [...SCAN_METHODS, null], default: null },
+	entryGeo: { type: sessionGeoSchema, default: null },
+	exitGeo: { type: sessionGeoSchema, default: null }
+}, { _id: false })
 
 const workdaySchema = new mongoose.Schema({
 	userId: {
@@ -147,6 +168,10 @@ const workdaySchema = new mongoose.Schema({
 		qrCodeId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'QRCode',
+			default: null
+		},
+		qrVerify: {
+			type: sessionQrVerifySchema,
 			default: null
 		},
 		activityId: {

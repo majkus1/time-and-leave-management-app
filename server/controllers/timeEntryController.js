@@ -9,7 +9,7 @@ const { isHoliday } = require('../utils/holidays')
 const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
 const qrService = require('../services/qrService')
 const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
-const { toStoredGeo } = require('../utils/qrGeoCheck')
+const { toStoredGeo, buildSessionQrVerify } = require('../utils/qrGeoCheck')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -221,7 +221,15 @@ exports.registerTimeEntry = async (req, res) => {
 					workDescription: workday.activeTimer.workDescription,
 					taskId: workday.activeTimer.taskId,
 					activityId: workday.activeTimer.activityId || null,
-					qrCodeId: workday.activeTimer.qrCodeId
+					qrCodeId: workday.activeTimer.qrCodeId,
+					// Widoczne w sesjach i raporcie: ekran/wydruk i lokalizacja wejścia i wyjścia
+					qrVerify: buildSessionQrVerify({
+						mode: qrCode.mode,
+						entryMethod: lastEntry.entryScanMethod,
+						exitMethod: lastEntry.exitScanMethod,
+						entryGeo: lastEntry.entryGeo?.toObject?.() || lastEntry.entryGeo || null,
+						exitGeo: lastEntry.exitGeo?.toObject?.() || lastEntry.exitGeo || null,
+					}),
 				}
 
 				if (!sessionWorkday.timeEntries) {

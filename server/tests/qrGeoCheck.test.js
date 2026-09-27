@@ -92,3 +92,18 @@ test('clampRadius', () => {
 	assert.equal(clampRadius('abc'), 150)
 	assert.equal(clampRadius(200.4), 200)
 })
+
+test('buildSessionQrVerify: metoda tylko dla trybu ekranu, null gdy nic do pokazania', () => {
+	const { buildSessionQrVerify } = require('../utils/qrGeoCheck')
+	assert.equal(buildSessionQrVerify({ mode: 'print', entryMethod: 'print', exitMethod: 'print' }), null)
+	const screen = buildSessionQrVerify({ mode: 'screen_or_print', entryMethod: 'screen', exitMethod: 'print' })
+	assert.equal(screen.entryMethod, 'screen')
+	assert.equal(screen.exitMethod, 'print')
+	const geo = { policy: 'flag', status: 'outside', distanceM: 1200, accuracyM: 20, flagged: true }
+	const printGeo = buildSessionQrVerify({ mode: 'print', entryMethod: 'print', entryGeo: geo, exitGeo: null })
+	assert.equal(printGeo.entryMethod, null)
+	assert.deepEqual(printGeo.entryGeo, geo)
+	assert.equal(printGeo.exitGeo, null)
+	// Kod z polityką, ale bez pozycji miejsca — nic do pokazania
+	assert.equal(buildSessionQrVerify({ mode: 'print', entryGeo: { policy: 'flag', status: 'not_configured' } }), null)
+})

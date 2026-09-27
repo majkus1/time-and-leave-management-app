@@ -4,6 +4,7 @@
 // freemiumApiPolicyService (/api/qr zablokowane w planie darmowym), planCatalog.MODULE_API_PREFIXES.timer_qr.
 // Lokalizacja: utils/qrGeoCheck.js (polityki, tolerancja, zapis bez współrzędnych), QRCodeGeoSettings.jsx, QRScan.jsx.
 // Stop licznika z kodu chronionego: workdayController.stopTimer (QR_EXIT_REQUIRED).
+// Widok weryfikacji: Workday.timeEntries[].qrVerify, WorkSessionList.jsx (plakietki, filtry), UserCalendar.jsx (raport PDF/Excel).
 module.exports = {
 	id: 'qr',
 	order: 2,
@@ -33,7 +34,7 @@ module.exports = {
 Każdy kod ma w Ustawieniach → Licznik i QR wybór „Sposób użycia kodu”:
 - **Wydruk (stały kod)** — domyślnie, jak dotąd. Prosto, ale zdjęcie wydruku działa z każdego miejsca.
 - **Tylko ekran** — kod wyświetla tablet (lub dowolne urządzenie z przeglądarką) przy wejściu i **zmienia się co 30 sekund**. Zdjęcie zrobione wcześniej nie zadziała, wydruk nie jest przyjmowany. Administrator klika „Otwórz wyświetlacz” (albo kopiuje link) i otwiera go na tablecie — **tablet nie loguje się** kontem pracownika; link można w każdej chwili unieważnić przyciskiem „Nowy link”. Wyświetlacz ma pełny ekran i nie pozwala ekranowi zgasnąć (jeśli przeglądarka to wspiera); przy chwilowym braku internetu kod nadal się zmienia.
-- **Ekran, wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); przy wpisie zapisujemy, że skan był z wydruku.
+- **Ekran, wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); taka sesja ma plakietkę „Skan z wydruku”.
 - Pracownik skanuje kod z ekranu tak samo, aparatem telefonu. Jeśli musi się zalogować, ma na to 10 minut od skanu — nie trzeba skanować ponownie. Ten jeden skan wystarcza na jedno zdarzenie (wejście albo wyjście), nie na oba.
 - To utrudnia oszukiwanie „ze zdjęcia z domu”, ale nie zapobiega zmowie (ktoś na miejscu przesyła zdjęcie ekranu od razu).
 
@@ -47,6 +48,12 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie�
 - Przed pytaniem przeglądarki o zgodę pracownik widzi krótką informację, że lokalizacja jest zapisywana jednorazowo, bez śledzenia. **Nie zapisujemy współrzędnych pracownika** — tylko wynik i odległość.
 - Gdy licznik został włączony kodem z ekranem albo z lokalizacją, zakończyć go można tylko skanem przy wyjściu (nie przyciskiem Stop ani podziałem sesji).
 - Lokalizację podaje telefon lub przeglądarka pracownika, więc da się ją sfałszować (aplikacją na telefonie albo narzędziami przeglądarki na komputerze). Przy kodzie z wydruku to utrudnienie, nie dowód; najmocniejsze jest połączenie z **kodem na ekranie**, bo wtedy trzeba też mieć świeży kod z tabletu.
+
+### Gdzie widać wynik weryfikacji
+- **Lista sesji** (Czas pracy pod kalendarzem; u Administratora/HR/przełożonego w kalendarzu pracownika): obok „QR: miejsce” plakietki „W miejscu”, „Poza miejscem · 1,2 km”, „Bez zgody na lokalizację”, „Brak lokalizacji”, „Kod z ekranu” / „Skan z wydruku” (z dopiskiem, czy dotyczy wejścia czy wyjścia); po najechaniu lub rozwinięciu — szczegóły wejścia i wyjścia. Pracownik widzi to samo przy swoich sesjach.
+- **Filtry listy sesji**: „Miejsce QR” (sesje z jednego kodu) i „Tylko nietypowe skany” (poza miejscem, bez lokalizacji, z wydruku zamiast ekranu).
+- **Raport pracownika PDF i Excel** (kalendarz pracownika → eksport): sekcja / arkusz „Skany QR — weryfikacja” z datą, godzinami, miejscem, wejściem, wyjściem i kolumną „Nietypowe”.
+- Weryfikacja trafia do sesji w chwili wyjścia skanem; sesje sprzed włączenia funkcji nie mają plakietek.
 
 ### Ograniczenia, o których warto wiedzieć
 - Wyjście trzeba zeskanować tym samym kodem, którym było wejście; skan innego kodu przy otwartej sesji nie zamyka jej.

@@ -32,7 +32,7 @@ const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
 const { validateAndSanitizeWorkdayCreate, applyWorkdayUpdateFields } = require('../services/workdayPayloadService')
 const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
 const { resolveTimerActivityId, getTimerActivitySnapshot, groupTimerSessions } = require('../utils/timerWorkActivity')
-const { requiresQrExitScan } = require('../utils/qrGeoCheck')
+const { requiresQrExitScan, buildSessionQrVerify } = require('../utils/qrGeoCheck')
 
 const CONFIRMED_MONTH_TIMER_MESSAGE = 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
 
@@ -817,11 +817,22 @@ exports.stopTimer = async (req, res) => {
 		}
 
 		// Kod z ekranem albo lokalizacją: wyjście tylko skanem (inaczej stop z domu omija weryfikację wyjścia)
+		let stopQrVerify = null
 		if (workday.activeTimer.qrCodeId) {
 			const QRCode = require('../models/QRCode')(firmDb)
 			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId, isActive: true }).select('mode geo')
 			if (requiresQrExitScan(qr)) {
 				return res.status(403).json({ message: 'Zakończ pracę skanem kodu QR przy wyjściu.', code: 'QR_EXIT_REQUIRED' })
+			}
+			// Stop bez skanu (kod bez ochrony albo ochronę wyłączono w trakcie) — zachowaj weryfikację wejścia w sesji
+			const TimeEntry = require('../models/TimeEntry')(firmDb)
+			const openEntry = await TimeEntry.findOne({ userId, qrCodeId: workday.activeTimer.qrCodeId, exitTime: null }).sort({ entryTime: -1 })
+			if (openEntry) {
+				stopQrVerify = buildSessionQrVerify({
+					mode: qr?.mode,
+					entryMethod: openEntry.entryScanMethod,
+					entryGeo: openEntry.entryGeo?.toObject?.() || openEntry.entryGeo || null,
+				})
 			}
 		}
 
@@ -877,7 +888,8 @@ exports.stopTimer = async (req, res) => {
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			activityId: workday.activeTimer.activityId || null,
-			qrCodeId: workday.activeTimer.qrCodeId || null
+			qrCodeId: workday.activeTimer.qrCodeId || null,
+			qrVerify: stopQrVerify
 		}
 		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, quantity)
 		if (activitySnapshot.error === 'INVALID_QUANTITY') {
@@ -1516,7 +1528,8 @@ exports.getUserSessions = async (req, res) => {
 		}
 
 		for (const workday of workdays) {
-			const workdayDate = new Date(workday.date).toISOString().split('T')[0]
+			// Data dnia w strefie Warszawy — toISOString() (UTC) cofał lokalną północ na poprzedni dzień
+			const workdayDate = toWarsawYmd(workday.date)
 			availableDatesSet.add(workdayDate)
 
 			if (workday.timeEntries && workday.timeEntries.length > 0) {

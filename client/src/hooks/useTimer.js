@@ -177,3 +177,24 @@ export const useDeleteSession = () => {
 		},
 	})
 }
+
+// Sesje licznika wybranego pracownika — jedna definicja dla listy (WorkSessionList) i eksportu raportu
+export const userTimerSessionsQuery = (userId, month, year) => ({
+	queryKey: ['timer', 'sessions', 'user', userId, month, year],
+	queryFn: async () => {
+		const params = {}
+		if (month !== undefined && month !== null) params.month = month
+		if (year !== undefined && year !== null) params.year = year
+		const response = await axios.get(`${API_URL}/api/workdays/timer/sessions/user/${userId}`, {
+			params,
+			withCredentials: true,
+		})
+		return response.data
+	},
+	staleTime: 30 * 1000,
+})
+
+export const useFetchUserTimerSessions = () => {
+	const queryClient = useQueryClient()
+	return (userId, month, year) => queryClient.fetchQuery(userTimerSessionsQuery(userId, month, year))
+}

@@ -17,7 +17,8 @@ import { useBulkFillWorkdays, useClearWorkdaysForMonth, useCreateWorkdayForUser,
 import { useCalendarConfirmation, useCalendarConfirmationDetails, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
-import { useActiveTimer } from '../../hooks/useTimer'
+import { useActiveTimer, useFetchUserTimerSessions } from '../../hooks/useTimer'
+import { qrVerifyReportRows } from '../../utils/qrVerifyLabels'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import { isHourlyLeaveRequest } from '../../utils/leaveSettlement'
@@ -115,6 +116,7 @@ const calculateHoursFromRange = (timeFrom, timeTo) => {
 
 function UserCalendar() {
 	const { userId } = useParams()
+	const fetchUserTimerSessions = useFetchUserTimerSessions()
 	const [totalHours, setTotalHours] = useState(0)
 	const [totalLeaveDays, setTotalLeaveDays] = useState(0)
 	const [totalLeaveHours, setTotalLeaveHours] = useState(0)
@@ -1418,7 +1420,27 @@ function UserCalendar() {
 		}
 	}
 
-	const pdfSummaryTables = () => {
+	// Raport: sesje zamknięte skanem QR z weryfikacją (ekran/wydruk, lokalizacja). Brak danych albo błąd → bez sekcji.
+	const loadQrVerifyRows = async () => {
+		if (settings?.timerEnabled === false || !allowTimerLeaveApis) return []
+		try {
+			const data = await fetchUserTimerSessions(userId, currentMonth, currentYear)
+			return qrVerifyReportRows(t, i18n, data?.grouped)
+		} catch {
+			return []
+		}
+	}
+
+	const qrVerifyHeader = () => [
+		t('sessions.qrVerify.reportDate'),
+		t('sessions.qrVerify.reportTime'),
+		t('sessions.qrVerify.reportPlace'),
+		t('sessions.qrVerify.entry'),
+		t('sessions.qrVerify.exit'),
+		t('sessions.qrVerify.reportUnusual'),
+	]
+
+	const pdfSummaryTables = (qrRows = []) => {
 		const sections = []
 		if (showActivitySummary) {
 			sections.push(
@@ -1478,6 +1500,27 @@ function UserCalendar() {
 				}
 			)
 		}
+		if (qrRows.length > 0) {
+			sections.push(
+				pdfSectionTitle(t('sessions.qrVerify.reportTitle'), t('sessions.qrVerify.reportSubtitle')),
+				{
+					table: {
+						headerRows: 1,
+						widths: [52, 52, '*', '*', '*', 44],
+						body: [
+							qrVerifyHeader().map(text => ({ text, bold: true, color: '#ffffff' })),
+							...qrRows.map(row => row.map((cell, i) => (i === 5 && cell ? { text: cell, bold: true, color: pdfTheme.red } : cell))),
+						],
+					},
+					layout: {
+						fillColor: rowIndex => rowIndex === 0 ? pdfTheme.navy : (rowIndex % 2 === 0 ? pdfTheme.softRow : null),
+						hLineColor: () => pdfTheme.line,
+						vLineColor: () => pdfTheme.line,
+					},
+					fontSize: 8,
+				}
+			)
+		}
 		return sections
 	}
 
@@ -1486,7 +1529,7 @@ function UserCalendar() {
 		setIsExportingExcel(true)
 		try {
 			const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim()
-			const summarySections = pdfSummaryTables()
+			const summarySections = pdfSummaryTables(await loadQrVerifyRows())
 			const content = [
 				{
 					table: {
@@ -1782,6 +1825,16 @@ function UserCalendar() {
 					colWidths: [30, 20],
 				},
 			]
+
+			const qrRows = await loadQrVerifyRows()
+			if (qrRows.length > 0) {
+				sheets.push({
+					name: t('sessions.qrVerify.sheetName'),
+					rows: [qrVerifyHeader(), ...qrRows],
+					colWidths: [12, 13, 24, 30, 30, 11],
+					dataStartRow: 2,
+				})
+			}
 
 			if (monthActivityRows.length > 0) {
 				sheets.push({

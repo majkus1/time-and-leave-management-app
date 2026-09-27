@@ -1,8 +1,9 @@
 const mongoose = require('mongoose')
+const { GEO_POLICIES, GEO_STATUSES, SCAN_METHODS } = require('../utils/qrGeoCheck')
 
 const timeEntryGeoSchema = new mongoose.Schema({
-	policy: { type: String, enum: ['record', 'flag', 'block'] },
-	status: { type: String, enum: ['inside', 'outside', 'denied', 'unavailable', 'missing', 'not_configured'] },
+	policy: { type: String, enum: GEO_POLICIES.filter(p => p !== 'off') },
+	status: { type: String, enum: GEO_STATUSES },
 	distanceM: { type: Number, default: null },
 	accuracyM: { type: Number, default: null },
 	flagged: { type: Boolean, default: false }
@@ -27,12 +28,12 @@ const timeEntrySchema = new mongoose.Schema({
 	/** Skąd skan wejścia/wyjścia: 'screen' (rotujący kod z ekranu) albo 'print' (wydruk); null = sprzed tej funkcji */
 	entryScanMethod: {
 		type: String,
-		enum: ['screen', 'print', null],
+		enum: [...SCAN_METHODS, null],
 		default: null
 	},
 	exitScanMethod: {
 		type: String,
-		enum: ['screen', 'print', null],
+		enum: [...SCAN_METHODS, null],
 		default: null
 	},
 	/** Wynik lokalizacji przy skanie (utils/qrGeoCheck.toStoredGeo) — bez współrzędnych pracownika; null = nie sprawdzano */
