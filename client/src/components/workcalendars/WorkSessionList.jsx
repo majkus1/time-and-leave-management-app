@@ -331,7 +331,9 @@ function SessionItem({ session, sessionIndex, formatDate, formatTime, calculateD
 	)
 }
 
-function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, selectedActivityIds = [], selectedTaskIds = [] }) {
+// qrPlaceIds: filtr miejsc QR sterowany z kalendarza (kalendarz, podsumowanie i raport liczą się z tych samych miejsc);
+// bez niego lista ma własny wybór miejsca.
+function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, selectedActivityIds = [], selectedTaskIds = [], qrPlaceIds }) {
 	const { t, i18n } = useTranslation()
 	const { showAlert, showConfirm } = useAlert()
 	
@@ -419,18 +421,22 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 		return Array.from(dates).sort().reverse() // Most recent first
 	}, [filteredGroups])
 
-	const activePlaceId = qrPlaces.some(([id]) => id === qrPlaceId) ? qrPlaceId : ''
+	const placeControlled = Array.isArray(qrPlaceIds)
+	const activePlaceIds = placeControlled
+		? qrPlaceIds
+		: qrPlaces.some(([id]) => id === qrPlaceId) ? [qrPlaceId] : []
+	const activePlaceKey = activePlaceIds.join(',')
 	const activeUnusualOnly = unusualOnly && hasQrVerify
 
 	// Filter sessions by selected date / QR place / unusual scans and recalculate percentages
 	const filteredData = useMemo(() => {
 		const matchesSession = session => {
 			if (selectedDate && (!session.date || normalizeDate(session.date) !== selectedDate)) return false
-			if (activePlaceId && String(session.qrCodeId || '') !== activePlaceId) return false
+			if (activePlaceIds.length && !activePlaceIds.includes(String(session.qrCodeId || ''))) return false
 			if (activeUnusualOnly && !summarizeQrVerify(session.qrVerify)?.unusual) return false
 			return true
 		}
-		if (!selectedDate && !activePlaceId && !activeUnusualOnly) {
+		if (!selectedDate && !activePlaceIds.length && !activeUnusualOnly) {
 			const groupsWithPercentages = filteredGroups.map(group => ({
 				...group,
 				percentage: filteredTotalMinutes > 0
@@ -492,7 +498,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			grouped: groupsWithPercentages,
 			totalMinutes: dayTotalMinutes
 		}
-	}, [selectedDate, activePlaceId, activeUnusualOnly, filteredGroups, filteredTotalMinutes])
+	}, [selectedDate, activePlaceKey, activeUnusualOnly, filteredGroups, filteredTotalMinutes])
 
 	const calculateDuration = (startTime, endTime) =>
 		formatMinutesAsClock(getDurationMinutes(startTime, endTime))
@@ -701,10 +707,10 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 							</option>
 						))}
 					</select>
-					{qrPlaces.length > 0 && (
+					{!placeControlled && qrPlaces.length > 0 && (
 						<select
 							className="work-session-list__qr-filter"
-							value={activePlaceId}
+							value={activePlaceIds[0] || ''}
 							onChange={e => setQrPlaceId(e.target.value)}
 							aria-label={t('sessions.qrVerify.placeFilter')}
 						>
@@ -720,7 +726,7 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 							{t('sessions.qrVerify.unusualOnly')}
 						</label>
 					)}
-					{(selectedDate || activePlaceId || activeUnusualOnly) && (
+					{(selectedDate || (!placeControlled && activePlaceIds.length > 0) || activeUnusualOnly) && (
 						<button
 							onClick={() => {
 								setSelectedDate(null)

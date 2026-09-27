@@ -17,7 +17,9 @@ import { useBulkFillWorkdays, useClearWorkdaysForMonth, useCreateWorkdayForUser,
 import { useCalendarConfirmation, useCalendarConfirmationDetails, useToggleCalendarConfirmation } from '../../hooks/useCalendar'
 import { useUserAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
-import { useActiveTimer, useFetchUserTimerSessions } from '../../hooks/useTimer'
+import { useQuery } from '@tanstack/react-query'
+import { useActiveTimer, useFetchUserTimerSessions, userTimerSessionsQuery } from '../../hooks/useTimer'
+import { restrictWorkdaysToQrPlaces, collectQrPlacesFromGrouped, workdayQrPlaceLabel } from '../../utils/workQrPlaceFilter'
 import { qrVerifyReportRows } from '../../utils/qrVerifyLabels'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -28,6 +30,7 @@ import { useAlert } from '../../context/AlertContext'
 import BulkFillWorkdaysModal from './BulkFillWorkdaysModal'
 import ActivityFilterBar from './ActivityFilterBar'
 import TaskFilterBar from './TaskFilterBar'
+import QrPlaceFilterBar from './QrPlaceFilterBar'
 import WorkdayHoursWithActivities from './WorkdayHoursWithActivities'
 import { useWorkActivities } from '../../hooks/useWorkActivities'
 import { teamHasWorkActivities, getEnabledWorkActivities } from '../../utils/workActivities'
@@ -146,6 +149,7 @@ function UserCalendar() {
 	const [splitByTask, setSplitByTask] = useState(false)
 	const [taskBlocks, setTaskBlocks] = useState([createDefaultTaskBlock()])
 	const [selectedTaskIds, setSelectedTaskIds] = useState([])
+	const [selectedQrPlaceIds, setSelectedQrPlaceIds] = useState([])
 	const pdfRef = useRef()
 	const calendarRef = useRef(null)
 	const { t, i18n } = useTranslation()
@@ -254,6 +258,22 @@ function UserCalendar() {
 	// TanStack Query hooks
 	const { data: user, isPending: userPending } = useUser(userId)
 	const { data: workdays = [], isPending: workdaysPending } = useUserWorkdays(userId)
+	// Miejsca QR z sesji miesiąca (nazwy dostępne też dla przełożonego) i dni zawężone do wybranych miejsc.
+	// Zawężone dni zasilają kalendarz, podsumowanie i eksport; edycja dnia zawsze działa na pełnym wpisie (workdays).
+	const { data: monthSessions } = useQuery({
+		...userTimerSessionsQuery(userId, currentMonth, currentYear),
+		enabled: Boolean(userId) && allowTimerLeaveApis,
+	})
+	const qrPlaces = React.useMemo(
+		() => collectQrPlacesFromGrouped(monthSessions?.grouped, i18n.resolvedLanguage),
+		[monthSessions, i18n.resolvedLanguage]
+	)
+	const qrPlaceNamesById = React.useMemo(() => new Map(qrPlaces), [qrPlaces])
+	const activeQrPlaceKey = selectedQrPlaceIds.filter(id => qrPlaceNamesById.has(id)).join(',')
+	const activeQrPlaceIds = React.useMemo(() => (activeQrPlaceKey ? activeQrPlaceKey.split(',') : []), [activeQrPlaceKey])
+	const qrFilterActive = activeQrPlaceIds.length > 0
+	const qrPlaceFilterLabel = activeQrPlaceIds.map(id => qrPlaceNamesById.get(id)).join(', ')
+	const viewWorkdays = React.useMemo(() => restrictWorkdaysToQrPlaces(workdays, activeQrPlaceIds), [workdays, activeQrPlaceIds])
 	const { data: isConfirmed = false, isPending: confirmationPending } = useCalendarConfirmation(
 		currentMonth,
 		currentYear,
@@ -507,13 +527,13 @@ function UserCalendar() {
 
 	const activityFilterIds = selectedActivityIds
 	const filteredWorkdaysForView = React.useMemo(
-		() => filterWorkdaysByActivities(workdays, activityFilterIds),
-		[workdays, selectedActivityIds]
+		() => filterWorkdaysByActivities(viewWorkdays, activityFilterIds),
+		[viewWorkdays, selectedActivityIds]
 	)
 
 	useEffect(() => {
-		calculateTotals(workdays, acceptedLeaveRequests, currentMonth, currentYear, selectedActivityIds, selectedTaskIds)
-	}, [workdays, acceptedLeaveRequests, currentMonth, currentYear, settings, selectedActivityIds, selectedTaskIds])
+		calculateTotals(viewWorkdays, qrFilterActive ? [] : acceptedLeaveRequests, currentMonth, currentYear, selectedActivityIds, selectedTaskIds)
+	}, [viewWorkdays, qrFilterActive, acceptedLeaveRequests, currentMonth, currentYear, settings, selectedActivityIds, selectedTaskIds])
 
 	const calculateTotals = (workdaysSource, acceptedLeaveRequests, month, year, activityFilterIds = [], taskFilterIds = []) => {
 		if (!settings) return // Czekaj na załadowanie ustawień
@@ -742,7 +762,7 @@ function UserCalendar() {
 
 	const calendarEvents = React.useMemo(() => {
 		const filterActive = isCalendarFilterActive(selectedActivityIds, selectedTaskIds)
-		const workdayEvents = workdays
+		const workdayEvents = viewWorkdays
 			.map(day => {
 				let title = ''
 				const hasAbsenceType = day.absenceType && typeof day.absenceType === 'string' && day.absenceType.trim() !== '' && day.absenceType !== 'null' && day.absenceType.toLowerCase() !== 'null'
@@ -819,14 +839,16 @@ function UserCalendar() {
 			})
 			.filter(event => event !== null)
 
-		const realTimeEvents = workdays
+		const realTimeEvents = viewWorkdays
 			.map(day => {
 				const timeLabel = filterActive
 					? buildFilteredRealTimeForCalendar(day, selectedActivityIds, selectedTaskIds)
 					: day.realTimeDayWorked
 				if (!timeLabel) return null
+				// Miejsce z sesji QR (np. „Budowa A”), ⚠ przy nietypowym skanie — bez dopisywania do uwag dnia
+				const placeLabel = workdayQrPlaceLabel(day, qrPlaceNamesById)
 				return {
-					title: `${t('workcalendar.worktime')} ${timeLabel}`,
+					title: `${t('workcalendar.worktime')} ${timeLabel}${placeLabel ? ` · ${placeLabel}` : ''}`,
 					start: day.date,
 					backgroundColor: 'yellow',
 					textColor: 'black',
@@ -836,7 +858,7 @@ function UserCalendar() {
 			})
 			.filter(Boolean)
 
-		const leaveEvents = acceptedLeaveRequests
+		const leaveEvents = (qrFilterActive ? [] : acceptedLeaveRequests)
 			.filter(request => request.startDate && request.endDate)
 			.flatMap(request => {
 				const dates = generateDateRangeForCalendar(request.startDate, request.endDate)
@@ -871,7 +893,9 @@ function UserCalendar() {
 		return [...reviewedWorkdayBackgroundEvents, ...workdayEvents, ...realTimeEvents, ...leaveEvents, ...holidayEvents]
 	}, [
 		reviewedWorkdayBackgroundEvents,
-		workdays,
+		viewWorkdays,
+		qrFilterActive,
+		qrPlaceNamesById,
 		selectedActivityIds,
 		selectedTaskIds,
 		taskTitlesById,
@@ -885,7 +909,7 @@ function UserCalendar() {
 	])
 
 	const monthActivityRows = React.useMemo(() => {
-		const monthWorkdays = workdays.filter(day => {
+		const monthWorkdays = viewWorkdays.filter(day => {
 			const eventDate = new Date(day.date)
 			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
 		})
@@ -898,7 +922,7 @@ function UserCalendar() {
 			activityFilterIds,
 			{ deletedActivityLabel: t('workcalendar.activities.deletedLabel') }
 		)
-	}, [workdays, currentMonth, currentYear, activityFilterIds, workActivities, userId, user, i18n.language, t])
+	}, [viewWorkdays, currentMonth, currentYear, activityFilterIds, workActivities, userId, user, i18n.language, t])
 
 	const activitySummaryRows = React.useMemo(
 		() => aggregateActivityHours(monthActivityRows, { groupByUser: false }),
@@ -907,7 +931,7 @@ function UserCalendar() {
 
 	const monthTaskRows = React.useMemo(() => {
 		if (!tasksModuleEnabled) return []
-		const monthWorkdays = workdays.filter(day => {
+		const monthWorkdays = viewWorkdays.filter(day => {
 			const eventDate = new Date(day.date)
 			return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
 		})
@@ -919,7 +943,7 @@ function UserCalendar() {
 			selectedTaskIds,
 			{ deletedTaskLabel: t('workcalendar.tasks.deletedLabel') }
 		)
-	}, [workdays, currentMonth, currentYear, selectedTaskIds, taskTitleLookup, tasksModuleEnabled, userId, user, t])
+	}, [viewWorkdays, currentMonth, currentYear, selectedTaskIds, taskTitleLookup, tasksModuleEnabled, userId, user, t])
 
 	const taskSummaryRows = React.useMemo(
 		() => aggregateTaskHours(monthTaskRows, { groupByUser: false }),
@@ -1352,7 +1376,8 @@ function UserCalendar() {
 					: event.extendedProps?.isNotes || event.classNames?.includes?.('event-notes')
 						? 'note'
 						: 'work'
-			map.get(dateKey).push({ title: String(event.title), type })
+			// Czcionka PDF nie ma znaku ⚠ (drukuje się jako kwadrat) — nietypowy skan oznaczamy „(!)”
+			map.get(dateKey).push({ title: String(event.title).replace(/⚠\s?/g, '(!) '), type })
 		})
 		return map
 	}
@@ -1425,7 +1450,10 @@ function UserCalendar() {
 		if (settings?.timerEnabled === false || !allowTimerLeaveApis) return []
 		try {
 			const data = await fetchUserTimerSessions(userId, currentMonth, currentYear)
-			return qrVerifyReportRows(t, i18n, data?.grouped)
+			const grouped = qrFilterActive
+				? (data?.grouped || []).map(group => ({ ...group, sessions: (group.sessions || []).filter(s => activeQrPlaceIds.includes(String(s.qrCodeId || ''))) }))
+				: data?.grouped
+			return qrVerifyReportRows(t, i18n, grouped)
 		} catch {
 			return []
 		}
@@ -1540,6 +1568,7 @@ function UserCalendar() {
 									{ text: 'EWIDENCJA CZASU PRACY', fontSize: 8, bold: true, color: pdfTheme.headerEyebrow, characterSpacing: 1 },
 									{ text: userName || 'Pracownik', fontSize: 17, bold: true, color: '#ffffff', margin: [0, 4, 0, 0] },
 									user?.position ? { text: user.position, fontSize: 8, color: pdfTheme.headerEyebrow, margin: [0, 2, 0, 0] } : null,
+									qrFilterActive ? { text: `${t('workcalendar.qrPlaces.reportLabel')}: ${qrPlaceFilterLabel}`, fontSize: 9, bold: true, color: '#ffffff', margin: [0, 4, 0, 0] } : null,
 								].filter(Boolean),
 								border: [false, false, false, false],
 								margin: [14, 9, 10, 9],
@@ -1631,8 +1660,8 @@ function UserCalendar() {
 			const monthEnd = new Date(currentYear, currentMonth + 1, 0)
 			const daysInMonth = monthEnd.getDate()
 
-			// Filter workdays for current month
-			const filteredWorkdays = workdays.filter(day => {
+			// Filter workdays for current month (przy filtrze miejsca QR — tylko sesje z tych miejsc)
+			const filteredWorkdays = viewWorkdays.filter(day => {
 				const eventDate = new Date(day.date)
 				return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear
 			})
@@ -1648,7 +1677,7 @@ function UserCalendar() {
 			})
 
 			// Filter accepted leave requests for current month
-			const filteredLeaveRequests = Array.isArray(acceptedLeaveRequests) ? acceptedLeaveRequests.filter(request => {
+			const filteredLeaveRequests = Array.isArray(acceptedLeaveRequests) && !qrFilterActive ? acceptedLeaveRequests.filter(request => {
 				if (!request.startDate || !request.endDate) return false
 				const startDate = new Date(request.startDate)
 				const endDate = new Date(request.endDate)
@@ -1689,7 +1718,8 @@ function UserCalendar() {
 			detailedData.push([
 				`${user.firstName} ${user.lastName}${user.position ? ` (${user.position})` : ''}`
 			])
-			detailedData.push([]) // Empty row for spacing
+			// Przy filtrze miejsca QR: wiersz z miejscem (zamiast odstępu — nagłówek tabeli zostaje w tym samym wierszu)
+			detailedData.push(qrFilterActive ? [`${t('workcalendar.qrPlaces.reportLabel')}: ${qrPlaceFilterLabel}`] : [])
 			
 			// Add header row
 			detailedData.push([
@@ -1748,11 +1778,13 @@ function UserCalendar() {
 					}
 				}
 
+				// Miejsce QR z sesji dnia (jak w kalendarzu); w Excelu „(!)” zamiast ⚠
+				const placeLabel = workdaysForDate.map(w => workdayQrPlaceLabel(w, qrPlaceNamesById)).filter(Boolean).join(', ').replace(/⚠\s?/g, '(!) ')
 				const row = [
 					dateWithHoliday,
 					hoursWorked,
 					additionalWorked,
-					realTimeDayWorked,
+					realTimeDayWorked && placeLabel ? `${realTimeDayWorked} · ${placeLabel}` : realTimeDayWorked,
 					absenceType,
 					leaveRequests.length > 0 ? leaveRequests.map(r => t(r.type)).join(', ') : '',
 					allNotes.length > 0 ? allNotes.join(' | ') : ''
@@ -2202,6 +2234,7 @@ function UserCalendar() {
 										timerQueriesEnabled={allowTimerLeaveApis}
 										selectedActivityIds={selectedActivityIds}
 										selectedTaskIds={selectedTaskIds}
+										qrPlaceIds={activeQrPlaceIds}
 									/>
 								)}
 							</div>
@@ -2225,6 +2258,15 @@ function UserCalendar() {
 						onChange={setSelectedTaskIds}
 						compact
 					/>
+				)}
+				<QrPlaceFilterBar
+					places={qrPlaces}
+					selectedIds={activeQrPlaceIds}
+					onChange={setSelectedQrPlaceIds}
+					compact
+				/>
+				{qrFilterActive && (
+					<div className="workcalendar-filter-bar__hint">{t('workcalendar.qrPlaces.activeHint')}</div>
 				)}
 				{renderManagedMonthConfirmation()}
 				<p>

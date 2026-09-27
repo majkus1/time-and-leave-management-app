@@ -7678,3 +7678,6 @@
 	border-color: var(--po-border-strong);
 }
 
+[data-theme='dark'] .workcalendar-filter-bar__hint {
+	color: var(--po-text-secondary) !important;
+}

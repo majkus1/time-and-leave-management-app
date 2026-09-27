@@ -5,6 +5,7 @@
 // Lokalizacja: utils/qrGeoCheck.js (polityki, tolerancja, zapis bez współrzędnych), QRCodeGeoSettings.jsx, QRScan.jsx.
 // Stop licznika z kodu chronionego: workdayController.stopTimer (QR_EXIT_REQUIRED).
 // Wyjście tylko przy działającym liczniku z tego kodu: utils/qrTimeEntry.isQrExit (bez podwójnego liczenia godzin).
+// Filtr miejsca QR: client utils/workQrPlaceFilter (restrictWorkdaysToQrPlaces), QrPlaceFilterBar, UserCalendar/MonthlyCalendar.
 // Widok weryfikacji: Workday.timeEntries[].qrVerify, WorkSessionList.jsx (plakietki, filtry), UserCalendar.jsx (raport PDF/Excel).
 module.exports = {
 	id: 'qr',
@@ -52,7 +53,9 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie�
 
 ### Gdzie widać wynik weryfikacji
 - **Lista sesji** (Czas pracy pod kalendarzem; u Administratora/HR/przełożonego w kalendarzu pracownika): obok „QR: miejsce” plakietki „W miejscu”, „Poza miejscem · 1,2 km”, „Bez zgody na lokalizację”, „Brak lokalizacji”, „Kod z ekranu” / „Skan z wydruku” (z dopiskiem, czy dotyczy wejścia czy wyjścia); po najechaniu lub rozwinięciu — szczegóły wejścia i wyjścia. Pracownik widzi to samo przy swoich sesjach.
-- **Filtry listy sesji**: „Miejsce QR” (sesje z jednego kodu) i „Tylko nietypowe skany” (poza miejscem, bez lokalizacji, z wydruku zamiast ekranu).
+- **Filtr miejsca QR** (panel podsumowania obok filtrów czynności i zadań — w kalendarzu pracownika u Administratora/HR/przełożonego i w „Czas pracy” pracownika): po wybraniu np. „Budowa A” kalendarz, podsumowanie miesiąca (godziny, dni, nadgodziny), lista sesji i raport PDF/Excel liczą się tylko z sesji ze skanów tego miejsca. Wpisy ręczne i urlopy nie są wtedy liczone. Raport z jednej budowy: wybierz miejsce i wyeksportuj; dla drugiej — zmień filtr i wyeksportuj ponownie. Nagłówek raportu pokazuje wybrane miejsce.
+- **W kalendarzu** przy „Czas pracy: 08:00–16:00” widać miejsce (np. „· Budowa A”), a ⚠ przy nietypowym skanie. Miejsce nie jest dopisywane do uwag dnia.
+- **Filtr listy sesji** „Tylko nietypowe skany” (poza miejscem, bez lokalizacji, z wydruku zamiast ekranu).
 - **Raport pracownika PDF i Excel** (kalendarz pracownika → eksport): sekcja / arkusz „Skany QR — weryfikacja” z datą, godzinami, miejscem, wejściem, wyjściem i kolumną „Nietypowe”.
 - Weryfikacja trafia do sesji w chwili wyjścia skanem; sesje sprzed włączenia funkcji nie mają plakietek.
 

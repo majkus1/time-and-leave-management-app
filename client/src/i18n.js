@@ -1122,6 +1122,12 @@ i18n
 								confirmedMonths: 'confirmed months',
 							},
 						},
+						qrPlaces: {
+							filterLabel: 'Filter by QR place',
+							filterAll: 'All places',
+							activeHint: 'Only QR scan sessions from this place — no manual entries or leave.',
+							reportLabel: 'QR place',
+						},
 						activities: {
 							splitTitle: 'Split by activity',
 							splitHint: 'Hours sum for the day.',
@@ -3483,6 +3489,12 @@ i18n
 								existing: 'istniejące wpisy',
 								confirmedMonths: 'potwierdzone miesiące',
 							},
+						},
+						qrPlaces: {
+							filterLabel: 'Filtr miejsca QR',
+							filterAll: 'Wszystkie miejsca',
+							activeHint: 'Tylko sesje ze skanów QR z tego miejsca — bez wpisów ręcznych i urlopów.',
+							reportLabel: 'Miejsce QR',
 						},
 						activities: {
 							splitTitle: 'Czynności',

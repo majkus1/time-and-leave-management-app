@@ -23,7 +23,7 @@ module.exports = {
 - Nieobecności i zaakceptowane urlopy wpisują się do kalendarza same.
 - Czynności: gdy Administrator/HR dodali w Ustawieniach listę czynności (np. montaż, biuro, transport), wpis dnia można rozbić na czynności z godzinami. Dla czynności z włączonym „Mierz wykonanie” podajesz też ilość w jednostce (szt., m², kg…) — raporty pokazują wtedy wydajność (ilość na godzinę).
 - Godziny do zadań: jeśli zespół ma moduł zadań, godziny dnia można przypisać do konkretnych zadań z tablicy.
-- Podsumowanie miesiąca pod kalendarzem; filtry czynności i zadań zawężają widok i liczone godziny.
+- Podsumowanie miesiąca pod kalendarzem; filtry czynności, zadań i miejsca QR zawężają widok i liczone godziny (miejsce QR — tylko sesje ze skanów, np. raport z jednej budowy).
 - Opcja „wpisy tylko dziś” (Ustawienia): pracownicy mogą dodawać i edytować wpisy wyłącznie na bieżący dzień.
 
 ### Licznik czasu pracy

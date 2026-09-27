@@ -1203,6 +1203,14 @@ td {
 	overflow: hidden;
 }
 
+/* Filtr miejsca QR — krótka informacja, co obejmuje widok */
+.workcalendar-filter-bar__hint {
+	margin: -4px 0 10px;
+	font-size: 12px !important;
+	line-height: 1.4;
+	color: #64748b !important;
+}
+
 .workcalendar-filter-bar__chips {
 	display: flex;
 	flex-wrap: wrap;
