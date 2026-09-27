@@ -661,7 +661,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Co, jeśli pracownik zapomni zeskanować kod?',
-					a: 'Administrator, HR lub przełożony może uzupełnić wpis ręcznie w ewidencji. QR przyspiesza rejestrację, ale nie jest jedyną drogą wprowadzenia godzin.',
+					a: 'Może sam dopisać lub poprawić godziny w kalendarzu ewidencji — QR przyspiesza rejestrację, ale nie jest jedyną drogą wprowadzenia godzin. Za pracowników bez dostępu do aplikacji wpisy uzupełnia Administrator, HR lub przełożony (po włączeniu tej opcji w ustawieniach).',
 				},
 				{
 					q: 'Czy rejestracja przez QR jest w planie darmowym?',
@@ -798,7 +798,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'What if someone forgets to scan?',
-					a: 'An admin, HR, or a supervisor can add the entry manually. QR speeds recording up, but it is not the only way hours get in.',
+					a: 'They can add or correct the hours themselves in the time records calendar — QR speeds recording up, but it is not the only way hours get in. For employees without app access, an admin, HR, or a supervisor fills in entries (once that option is turned on in settings).',
 				},
 				{
 					q: 'Is QR clocking available on the free tier?',
