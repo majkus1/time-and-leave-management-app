@@ -21,7 +21,7 @@ module.exports = {
 		pl: `### Jak działa ewidencja
 - Strona „Czas pracy” to kalendarz miesięczny. Klikasz dzień i dodajesz wpis: godziny od–do albo sama liczba godzin, plus ewentualne nadgodziny i notatka. Administrator/HR mogą ustawić standardowe godziny pracy (np. 8:00–16:00) jako szybkie wybory w formularzu.
 - Nieobecności i zaakceptowane urlopy wpisują się do kalendarza same.
-- Czynności: gdy Administrator/HR dodali w Ustawieniach listę czynności (np. montaż, biuro, transport), wpis dnia można rozbić na czynności z godzinami. Dla czynności z włączonym „Mierz wykonanie” podajesz też ilość w jednostce (szt., m², kg…) — raporty pokazują wtedy wydajność (ilość na godzinę).
+- Czynności: gdy Administrator/HR dodali w Ustawieniach listę czynności (np. montaż, biuro, transport), wpis dnia można rozbić na czynności z godzinami. Dla czynności z włączonym „Mierz wykonanie” podajesz też ilość w jednostce (szt., m², kg…) — raporty pokazują wtedy wydajność (ilość na godzinę). Wydajność liczy się tylko z godzin, dla których podano ilość — sesje bez ilości jej nie zaniżają (lista sesji pokazuje wtedy dopisek „ilość z X h”). W liczniku ilość wpisuje się przy zakończeniu sesji; przy liczniku z QR — w trakcie (zapisuje się od razu). Zadanie w liczniku można wybrać tylko z tablic, do których pracownik ma dostęp.
 - Godziny do zadań: jeśli zespół ma moduł zadań, godziny dnia można przypisać do konkretnych zadań z tablicy.
 - Podsumowanie miesiąca pod kalendarzem; filtry czynności, zadań i miejsca QR zawężają widok i liczone godziny (miejsce QR — tylko sesje ze skanów, np. raport z jednej budowy).
 - Opcja „wpisy tylko dziś” (Ustawienia): pracownicy mogą dodawać i edytować wpisy wyłącznie na bieżący dzień.

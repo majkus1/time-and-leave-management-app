@@ -69,6 +69,8 @@ function groupTimerSessions(allSessions, settings, calculateMinutes) {
 				activityName: session.activityName || activity?.name || '',
 				activityNameEn: session.activityNameEn || activity?.nameEn || '',
 				quantity: 0,
+				measuredMinutes: 0,
+				measuredHours: 0,
 				unit: session.unit || activity?.unit || '',
 				efficiency: null,
 				sessions: [],
@@ -82,18 +84,22 @@ function groupTimerSessions(allSessions, settings, calculateMinutes) {
 			const minutes = calculateMinutes(session.startTime, session.endTime)
 			groupedSessions[groupKey].sessions.push(session)
 			groupedSessions[groupKey].totalMinutes += minutes
-			if (Number.isFinite(Number(session.quantity))) {
+			// null/brak = ilości nie podano (np. sesja bez pomiaru) — nie liczy się do godzin wydajności
+			if (session.quantity !== null && session.quantity !== undefined && session.quantity !== '' && Number.isFinite(Number(session.quantity))) {
 				groupedSessions[groupKey].quantity += Number(session.quantity)
+				groupedSessions[groupKey].measuredMinutes += minutes
 				if (!groupedSessions[groupKey].unit && session.unit) groupedSessions[groupKey].unit = session.unit
 			}
 		}
 	}
 
+	// Wydajność = ilość / godziny sesji z podaną ilością (sesje bez ilości jej nie zaniżają)
 	Object.values(groupedSessions).forEach(group => {
-		const hours = group.totalMinutes / 60
+		const measuredHours = group.measuredMinutes / 60
 		group.quantity = Math.round(group.quantity * 100) / 100
-		group.efficiency = group.quantity > 0 && hours > 0
-			? Math.round((group.quantity / hours) * 100) / 100
+		group.measuredHours = Math.round(measuredHours * 100) / 100
+		group.efficiency = group.quantity > 0 && measuredHours > 0
+			? Math.round((group.quantity / measuredHours) * 100) / 100
 			: null
 	})
 

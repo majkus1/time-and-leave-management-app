@@ -238,8 +238,24 @@ function TimerPanel() {
 			: null
 	)
 
+	// Licznik z QR kończy skan (bez przycisku Stop), więc ilość zapisujemy na serwerze od razu po wpisaniu —
+	// trafi do sesji przy wyjściu skanem albo przy „Zapisz sesję i kontynuuj”
+	const saveQrQuantity = async () => {
+		if (!activeTimer?.qrCodeId || !activeMeasuredActivity) return
+		const saved = activeTimer.pendingQuantity ?? null
+		const next = closingSessionQuantity === '' ? null : Number(closingSessionQuantity)
+		if (next === saved) return
+		if (!(await validateClosingQuantity())) return
+		try {
+			await updateTimer.mutateAsync({ quantity: next })
+		} catch (error) {
+			await showAlert(error.response?.data?.message || t('timer.updateError'))
+		}
+	}
+
 	const renderClosingQuantityField = () => {
-		if (!activeMeasuredActivity || activeTimer?.qrCodeId) return null
+		if (!activeMeasuredActivity) return null
+		const isQrTimer = Boolean(activeTimer?.qrCodeId)
 		return (
 			<div className="timer-quantity-card">
 				<label>
@@ -250,10 +266,15 @@ function TimerPanel() {
 						step="0.01"
 						value={closingSessionQuantity}
 						onChange={(event) => setClosingSessionQuantity(event.target.value)}
+						onBlur={isQrTimer ? saveQrQuantity : undefined}
 						placeholder="0"
 					/>
 				</label>
-				<small>{t('timer.quantityHint') || 'Uzupełnij po zakończeniu tej sesji, jeśli chcesz liczyć wydajność.'}</small>
+				<small>
+					{isQrTimer
+						? t('timer.quantityQrHint')
+						: (t('timer.quantityHint') || 'Uzupełnij po zakończeniu tej sesji, jeśli chcesz liczyć wydajność.')}
+				</small>
 			</div>
 		)
 	}
@@ -280,9 +301,11 @@ function TimerPanel() {
 		}
 	}, [activeTimer])
 
+	// Ilość zapisana w trakcie (licznik z QR) wraca po odświeżeniu; nowa sesja lub czynność — pusto
 	useEffect(() => {
-		setClosingSessionQuantity('')
-	}, [activeTimer?.activityId, activeTimer?.startTime])
+		const saved = activeTimer?.pendingQuantity
+		setClosingSessionQuantity(saved !== null && saved !== undefined ? String(saved) : '')
+	}, [activeTimer?.activityId, activeTimer?.startTime, activeTimer?.pendingQuantity])
 
 	const formatTime = formatTimerClock
 

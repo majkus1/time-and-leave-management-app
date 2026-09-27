@@ -93,10 +93,11 @@ export const useUpdateActiveTimer = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: async ({ workDescription, taskId, activityId, isOvertime }) => {
+		// quantity: ilość wykonania wpisana w trakcie (licznik z QR kończy skan, więc zapisujemy ją wcześniej)
+		mutationFn: async ({ workDescription, taskId, activityId, isOvertime, quantity }) => {
 			const response = await axios.put(
 				`${API_URL}/api/workdays/timer/update`,
-				{ workDescription, taskId, activityId, isOvertime },
+				{ workDescription, taskId, activityId, isOvertime, quantity },
 				{ withCredentials: true }
 			)
 			return response.data

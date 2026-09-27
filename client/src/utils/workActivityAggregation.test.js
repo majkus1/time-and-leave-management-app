@@ -128,4 +128,20 @@ describe('workActivityAggregation', () => {
 
 		expect(buildFilteredRealTimeFromEntries(workday, ['activity-ttt'])).toBe('08:00-12:30')
 	})
+	it('wydajność liczy tylko godziny z podaną ilością (sesja z QR bez ilości jej nie zaniża)', () => {
+		const workdays = [{
+			userId: { _id: 'user-1', firstName: 'Jan', lastName: 'Kowalski' },
+			date: '2026-09-15T00:00:00.000Z',
+			timeEntries: [
+				{ activityId: 'mont', activityName: 'Montaż', unit: 'szt', quantity: 20, startTime: '2026-09-15T06:00:00.000Z', endTime: '2026-09-15T08:00:00.000Z' },
+				{ activityId: 'mont', activityName: '', unit: '', quantity: null, qrCodeId: 'qr1', startTime: '2026-09-15T09:00:00.000Z', endTime: '2026-09-15T10:00:00.000Z' },
+			],
+		}]
+		const activities = [{ id: 'mont', name: 'Montaż', trackQuantity: true, unit: 'szt' }]
+		const rows = flattenWorkdayActivityRows(workdays, activities, null, 'pl')
+		// Brak ilości zostaje brakiem, a nie „0”
+		expect(rows.map(r => r.quantity)).toEqual([20, null])
+		const [summary] = aggregateActivityHours(rows)
+		expect(summary).toEqual(expect.objectContaining({ hours: 3, quantity: 20, measuredHours: 2, efficiency: 10 }))
+	})
 })

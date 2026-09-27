@@ -246,6 +246,12 @@ const workdaySchema = new mongoose.Schema({
 		activityId: {
 			type: String,
 			default: null
+		},
+		/** Ilość wykonania wpisana w trakcie — trafia do sesji przy Stop, podziale albo wyjściu skanem QR */
+		pendingQuantity: {
+			type: Number,
+			default: null,
+			min: 0
 		}
 	}
 }, { timestamps: true })

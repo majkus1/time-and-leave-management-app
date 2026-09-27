@@ -458,13 +458,15 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 			// Recalculate total minutes for this group on selected date
 			let groupMinutes = 0
 			let groupQuantity = 0
+			let measuredMinutes = 0
 			let groupUnit = group.unit || ''
 			filteredSessions.forEach(session => {
-				if (session.startTime && session.endTime) {
-					groupMinutes += getDurationMinutes(session.startTime, session.endTime)
-				}
-				if (Number(session.quantity) > 0) {
+				const minutes = session.startTime && session.endTime ? getDurationMinutes(session.startTime, session.endTime) : 0
+				groupMinutes += minutes
+				// Wydajność tylko z sesji z podaną ilością (jak na serwerze w groupTimerSessions)
+				if (session.quantity !== null && session.quantity !== undefined && session.quantity !== '' && Number.isFinite(Number(session.quantity))) {
 					groupQuantity += Number(session.quantity)
+					measuredMinutes += minutes
 					if (!groupUnit && session.unit) groupUnit = session.unit
 				}
 			})
@@ -475,9 +477,10 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 				totalMinutes: groupMinutes,
 				totalHours: (groupMinutes / 60).toFixed(2),
 				quantity: Math.round(groupQuantity * 100) / 100,
+				measuredMinutes,
 				unit: groupUnit,
-				efficiency: groupQuantity > 0 && groupMinutes > 0
-					? Math.round((groupQuantity / (groupMinutes / 60)) * 100) / 100
+				efficiency: groupQuantity > 0 && measuredMinutes > 0
+					? Math.round((groupQuantity / (measuredMinutes / 60)) * 100) / 100
 					: null,
 			}
 		}).filter(Boolean)
@@ -861,6 +864,10 @@ function WorkSessionList({ month, year, userId, timerQueriesEnabled = true, sele
 										}}>
 											{group.quantity} {group.unit}
 											{group.efficiency ? ` · ${group.efficiency} ${group.unit}/h` : ''}
+											{/* Część sesji bez ilości — widać, z ilu godzin liczona jest wydajność */}
+											{group.efficiency && group.measuredMinutes > 0 && group.measuredMinutes < (group.totalMinutes || 0) - 1
+												? ` (${t('workcalendar.activities.measuredFrom', { hours: formatMinutesAsClock(group.measuredMinutes) })})`
+												: ''}
 										</div>
 									)}
 								</div>

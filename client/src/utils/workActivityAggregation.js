@@ -1,6 +1,13 @@
 import { findWorkActivityById, getWorkActivityName } from './workActivities'
 import { roundHours, getDurationMinutes, hoursFromDurationMinutes, formatBreakdownHours } from './formatWorkDuration'
 
+// Ilość podana (także 0) → liczba; brak (null/undefined/'') → null. Number(null) daje 0, więc „nie podano” udawało „0”.
+function quantityOrNull(value) {
+	if (value === null || value === undefined || value === '') return null
+	const n = Number(value)
+	return Number.isFinite(n) ? n : null
+}
+
 function formatEntryTimeLocal(dateValue) {
 	if (!dateValue) return ''
 	const date = new Date(dateValue)
@@ -265,7 +272,7 @@ export function flattenWorkdayActivityRows(
 				hours: block.hours,
 				timeFrom: block.timeFrom || '',
 				timeTo: block.timeTo || '',
-				quantity: Number.isFinite(Number(block.quantity)) ? Number(block.quantity) : null,
+				quantity: quantityOrNull(block.quantity),
 				unit: block.unit || activity?.unit || '',
 			})
 		}
@@ -275,7 +282,7 @@ export function flattenWorkdayActivityRows(
 			if (!entry?.activityId || entry.isBreak) continue
 			if (selectedActivityIds?.length && !selectedActivityIds.includes(entry.activityId)) continue
 			const hours = getSessionHours(entry)
-			const quantity = Number.isFinite(Number(entry.quantity)) ? Number(entry.quantity) : null
+			const quantity = quantityOrNull(entry.quantity)
 			if (!hours && !(quantity > 0)) continue
 			const activity = findWorkActivityById(activities, entry.activityId)
 			const formatTime = (value) => {
@@ -318,20 +325,25 @@ export function aggregateActivityHours(rows, { groupByUser = false } = {}) {
 				userName: groupByUser ? row.userName : null,
 				hours: 0,
 				quantity: 0,
+				measuredHours: 0,
 				unit: row.unit || '',
 			})
 		}
 		const entry = map.get(key)
 		entry.hours = roundHours(entry.hours + row.hours)
-		if (Number.isFinite(Number(row.quantity))) {
-			entry.quantity = Math.round((entry.quantity + Number(row.quantity)) * 100) / 100
+		const quantity = quantityOrNull(row.quantity)
+		if (quantity !== null) {
+			entry.quantity = Math.round((entry.quantity + quantity) * 100) / 100
+			entry.measuredHours = roundHours(entry.measuredHours + row.hours)
 			if (!entry.unit && row.unit) entry.unit = row.unit
 		}
 	}
+	// Wydajność = ilość / godziny z podaną ilością — godziny bez pomiaru (np. sesja bez ilości) jej nie zaniżają.
+	// BLIŹNIAK: server/utils/timerWorkActivity.groupTimerSessions (lista sesji).
 	return [...map.values()].map(row => ({
 		...row,
-		efficiency: row.quantity > 0 && row.hours > 0
-			? Math.round((row.quantity / row.hours) * 100) / 100
+		efficiency: row.quantity > 0 && row.measuredHours > 0
+			? Math.round((row.quantity / row.measuredHours) * 100) / 100
 			: null,
 	})).sort((a, b) => {
 		if (b.hours !== a.hours) return b.hours - a.hours

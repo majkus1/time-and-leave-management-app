@@ -2305,7 +2305,7 @@ function UserCalendar() {
 							<p key={row.activityId} style={{ margin: '0 0 6px', fontSize: '13px' }}>
 								{row.activityName}: <strong>{formatBreakdownRow(row.hours)} h</strong>
 								{row.quantity > 0 && row.unit ? (
-									<span> · {row.quantity} {row.unit}{row.efficiency ? ` · ${row.efficiency} ${row.unit}/h` : ''}</span>
+									<span> · {row.quantity} {row.unit}{row.efficiency ? ` · ${row.efficiency} ${row.unit}/h` : ''}{row.efficiency && row.measuredHours > 0 && row.measuredHours < row.hours ? ` (${t('workcalendar.activities.measuredFrom', { hours: formatWorkDuration(row.measuredHours, { preferClockUnderHour: true }) })})` : ''}</span>
 								) : null}
 							</p>
 						))}

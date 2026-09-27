@@ -48,7 +48,8 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie�
 - **Blokuj poza miejscem** — przyjmowany jest tylko skan w obrębie miejsca; bez zgody na lokalizację skan jest odrzucany z informacją, co zrobić.
 - Pozycję miejsca Administrator/HR ustawia przyciskiem „Użyj mojej pozycji”, stojąc na miejscu (z potwierdzeniem), albo wkleja współrzędne z mapy (np. z Google Maps). Promień do wyboru: od 50 m do 2 km (domyślnie 150 m). Słaby sygnał jest uwzględniany z tolerancją.
 - Przed pytaniem przeglądarki o zgodę pracownik widzi krótką informację, że lokalizacja jest zapisywana jednorazowo, bez śledzenia. **Nie zapisujemy współrzędnych pracownika** — tylko wynik i odległość.
-- Gdy licznik został włączony kodem z ekranem albo z lokalizacją, zakończyć go można tylko skanem przy wyjściu (nie przyciskiem Stop ani podziałem sesji).
+- Gdy licznik został włączony kodem z ekranem albo z lokalizacją, zakończyć go można tylko skanem przy wyjściu (nie przyciskiem Stop). „Zapisz sesję i kontynuuj” (np. zmiana czynności) działa, ale sesji z takiego kodu pracownik nie usunie sam — korektę robi przełożony lub administrator.
+- Czynność z pomiarem wykonania przy liczniku z QR: czynność i ilość (np. 8 szt.) ustawia się w panelu licznika w trakcie pracy — ilość zapisuje się od razu i trafia do sesji przy wyjściu skanem.
 - Lokalizację podaje telefon lub przeglądarka pracownika, więc da się ją sfałszować (aplikacją na telefonie albo narzędziami przeglądarki na komputerze). Przy kodzie z wydruku to utrudnienie, nie dowód; najmocniejsze jest połączenie z **kodem na ekranie**, bo wtedy trzeba też mieć świeży kod z tabletu.
 
 ### Gdzie widać wynik weryfikacji

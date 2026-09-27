@@ -36,6 +36,23 @@ const { requiresQrExitScan, buildSessionQrVerify } = require('../utils/qrGeoChec
 
 const CONFIRMED_MONTH_TIMER_MESSAGE = 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
 
+// Zadanie w liczniku — tylko z tablic dostępnych dla pracownika (jak we wpisach ręcznych ewidencji)
+async function isTimerTaskAllowed(userId, taskId) {
+	if (!taskId) return true
+	const user = await User.findById(userId).select('_id teamId roles department')
+	if (!user) return false
+	const allowed = await loadAllowedTasksMapForUser(user)
+	return allowed.has(String(taskId))
+}
+
+const TASK_NOT_ALLOWED = { message: 'Nie masz dostępu do tego zadania.', code: 'TASK_NOT_ALLOWED' }
+
+// Tytuły zadań w sesjach tylko z tablic tego zespołu (Task nie ma teamId — zespół wynika z tablicy)
+async function loadTeamBoardIds(teamId) {
+	const Board = require('../models/Board')(firmDb)
+	return Board.find({ teamId }).distinct('_id')
+}
+
 async function loadAllowedTasksMapForUser(targetUser) {
 	if (!targetUser?._id || !targetUser?.teamId) return new Map()
 	const tasks = await fetchTimesheetTasksForUser(targetUser._id, targetUser.teamId, targetUser)
@@ -688,6 +705,9 @@ exports.startTimer = async (req, res) => {
 		const { workDescription, taskId, activityId, isOvertime } = req.body
 		const userId = req.user.userId
 		const resolvedActivityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId ?? null)
+		if (!(await isTimerTaskAllowed(userId, taskId))) {
+			return res.status(400).json(TASK_NOT_ALLOWED)
+		}
 
 		const today = warsawDayStart()
 
@@ -889,7 +909,8 @@ exports.stopTimer = async (req, res) => {
 			qrCodeId: workday.activeTimer.qrCodeId || null,
 			qrVerify: stopQrVerify
 		}
-		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, quantity)
+		const closingQuantity = quantity !== undefined ? quantity : workday.activeTimer.pendingQuantity
+		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, closingQuantity)
 		if (activitySnapshot.error === 'INVALID_QUANTITY') {
 			return res.status(400).json({ message: 'Ilość wykonania musi być równa 0 lub większa.' })
 		}
@@ -973,7 +994,9 @@ exports.getActiveTimer = async (req, res) => {
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			qrCodeId: workday.activeTimer.qrCodeId || null,
-			activityId: workday.activeTimer.activityId || null
+			activityId: workday.activeTimer.activityId || null,
+			// Ilość wpisana w trakcie — panel licznika pokazuje ją po odświeżeniu
+			pendingQuantity: workday.activeTimer.pendingQuantity ?? null
 		})
 	} catch (error) {
 		console.error('Error getting active timer:', error)
@@ -984,7 +1007,7 @@ exports.getActiveTimer = async (req, res) => {
 // Update active timer description
 exports.updateActiveTimer = async (req, res) => {
 	try {
-		const { workDescription, taskId, activityId, isOvertime } = req.body
+		const { workDescription, taskId, activityId, isOvertime, quantity } = req.body
 		const userId = req.user.userId
 
 		const workday = await exports.findActiveTimerWorkday(userId)
@@ -998,6 +1021,12 @@ exports.updateActiveTimer = async (req, res) => {
 			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
 		}
 
+		// Nowe zadanie — tylko z dostępnych; to samo co dotąd przechodzi (np. zadanie oznaczone w międzyczasie jako zrobione)
+		const taskChanged = taskId !== undefined && String(taskId || '') !== String(workday.activeTimer.taskId || '')
+		if (taskChanged && !(await isTimerTaskAllowed(userId, taskId))) {
+			return res.status(400).json(TASK_NOT_ALLOWED)
+		}
+
 		// Update work description and/or taskId
 		if (workDescription !== undefined) {
 			workday.activeTimer.workDescription = workDescription || ''
@@ -1006,7 +1035,22 @@ exports.updateActiveTimer = async (req, res) => {
 			workday.activeTimer.taskId = taskId || null
 		}
 		if (activityId !== undefined) {
-			workday.activeTimer.activityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId)
+			const nextActivityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId)
+			// Inna czynność — ilość wpisana dla poprzedniej przestaje pasować
+			if (nextActivityId !== (workday.activeTimer.activityId || null)) workday.activeTimer.pendingQuantity = null
+			workday.activeTimer.activityId = nextActivityId
+		}
+		// Ilość wykonania wpisana w trakcie (np. licznik z QR, który kończy skan) — trafi do sesji przy jej zakończeniu
+		if (quantity !== undefined) {
+			if (quantity === null || quantity === '') {
+				workday.activeTimer.pendingQuantity = null
+			} else {
+				const parsed = Number(quantity)
+				if (!Number.isFinite(parsed) || parsed < 0) {
+					return res.status(400).json({ message: 'Ilość wykonania musi być równa 0 lub większa.' })
+				}
+				workday.activeTimer.pendingQuantity = parsed
+			}
 		}
 		
 		// Handle overtime toggle - track overtime time separately
@@ -1046,7 +1090,8 @@ exports.updateActiveTimer = async (req, res) => {
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			activityId: workday.activeTimer.activityId || null,
-			isOvertime: workday.activeTimer.isOvertime
+			isOvertime: workday.activeTimer.isOvertime,
+			pendingQuantity: workday.activeTimer.pendingQuantity ?? null
 		})
 	} catch (error) {
 		console.error('Error updating active timer:', error)
@@ -1063,6 +1108,10 @@ exports.splitSession = async (req, res) => {
 			? await resolveTimerActivityId(Settings, req.user.teamId, activityId)
 			: undefined
 
+		if (taskId !== undefined && !(await isTimerTaskAllowed(userId, taskId))) {
+			return res.status(400).json(TASK_NOT_ALLOWED)
+		}
+
 		const workday = await exports.findActiveTimerWorkday(userId)
 
 		if (!workday || !workday.activeTimer || !workday.activeTimer.startTime) {
@@ -1074,12 +1123,20 @@ exports.splitSession = async (req, res) => {
 			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
 		}
 
-		// Jak przy Stop: podział zapisałby sesję „z QR” zakończoną bez skanu wyjścia
+		// Podział licznika z QR jest dozwolony (np. zmiana czynności z ilością) — licznik biegnie dalej i kończy go
+		// skan. Przed dopisaniem godzin „z domu” chroni zakaz usuwania takich sesji przez pracownika (deleteSession).
+		let splitQrVerify = null
 		if (workday.activeTimer.qrCodeId) {
 			const QRCode = require('../models/QRCode')(firmDb)
-			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId, isActive: true }).select('mode geo')
-			if (requiresQrExitScan(qr)) {
-				return res.status(403).json({ message: 'Ten licznik zakończysz tylko skanem kodu QR przy wyjściu.', code: 'QR_EXIT_REQUIRED' })
+			const TimeEntry = require('../models/TimeEntry')(firmDb)
+			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId }).select('mode')
+			const openEntry = await TimeEntry.findOne({ userId, qrCodeId: workday.activeTimer.qrCodeId, exitTime: null }).sort({ entryTime: -1 })
+			if (openEntry) {
+				splitQrVerify = buildSessionQrVerify({
+					mode: qr?.mode,
+					entryMethod: openEntry.entryScanMethod,
+					entryGeo: openEntry.entryGeo?.toObject?.() || openEntry.entryGeo || null,
+				})
 			}
 		}
 
@@ -1126,9 +1183,11 @@ exports.splitSession = async (req, res) => {
 			workDescription: workday.activeTimer.workDescription,
 			taskId: workday.activeTimer.taskId,
 			activityId: workday.activeTimer.activityId || null,
-			qrCodeId: workday.activeTimer.qrCodeId || null
+			qrCodeId: workday.activeTimer.qrCodeId || null,
+			qrVerify: splitQrVerify
 		}
-		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, quantity)
+		const closingQuantity = quantity !== undefined ? quantity : workday.activeTimer.pendingQuantity
+		const activitySnapshot = await getTimerActivitySnapshot(Settings, req.user.teamId, timeEntry.activityId, closingQuantity)
 		if (activitySnapshot.error === 'INVALID_QUANTITY') {
 			return res.status(400).json({ message: 'Ilość wykonania musi być równa 0 lub większa.' })
 		}
@@ -1274,6 +1333,19 @@ exports.deleteSession = async (req, res) => {
 			return res.status(404).json({ message: 'Sesja nie znaleziona' })
 		}
 
+		// Sesja z kodu chronionego (ekran/lokalizacja) — bez samodzielnego usuwania; inaczej podział licznika
+		// „z domu” + usunięcie końcówki dawało sesję z QR zakończoną bez skanu wyjścia
+		if (session.qrCodeId) {
+			const QRCode = require('../models/QRCode')(firmDb)
+			const qr = await QRCode.findOne({ _id: session.qrCodeId, teamId: req.user.teamId }).select('mode geo')
+			if (requiresQrExitScan(qr)) {
+				return res.status(403).json({
+					message: 'Sesji ze skanu QR nie usuniesz samodzielnie. Poproś przełożonego o korektę.',
+					code: 'QR_SESSION_LOCKED',
+				})
+			}
+		}
+
 		// Calculate hours to subtract
 		let hoursToSubtract = 0
 		if (session.startTime && session.endTime && !session.isBreak) {
@@ -1390,6 +1462,7 @@ exports.getTodaySessions = async (req, res) => {
 
 		// Collect all time entries from all workdays in the month
 		const Task = require('../models/Task')(firmDb)
+		const teamBoardIds = await loadTeamBoardIds(req.user.teamId)
 		const teamSettings = await Settings.getSettings(req.user.teamId)
 		const allSessions = []
 		let totalMinutes = 0
@@ -1410,7 +1483,7 @@ exports.getTodaySessions = async (req, res) => {
 
 					let task = null
 					if (entry.taskId) {
-						task = await Task.findById(entry.taskId).select('title')
+						task = await Task.findOne({ _id: entry.taskId, boardId: { $in: teamBoardIds } }).select('title')
 					}
 					
 					let qrCode = null
@@ -1511,6 +1584,7 @@ exports.getUserSessions = async (req, res) => {
 		}
 
 		const Task = require('../models/Task')(firmDb)
+		const teamBoardIds = await loadTeamBoardIds(req.user.teamId)
 		const teamSettings = await Settings.getSettings(req.user.teamId)
 		const allSessions = []
 		let totalMinutes = 0
@@ -1534,7 +1608,7 @@ exports.getUserSessions = async (req, res) => {
 
 					let task = null
 					if (entry.taskId) {
-						task = await Task.findById(entry.taskId).select('title')
+						task = await Task.findOne({ _id: entry.taskId, boardId: { $in: teamBoardIds } }).select('title')
 					}
 
 					let qrCode = null

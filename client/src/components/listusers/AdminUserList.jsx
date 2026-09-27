@@ -1126,7 +1126,8 @@ function AdminUserList() {
 			if (quantity <= 0 || !row.unit) return
 			const current = quantitiesByUnit.get(row.unit) || 0
 			quantitiesByUnit.set(row.unit, current + quantity)
-			measuredHours += safeNumber(row.hours)
+			// Tylko godziny z podaną ilością (aggregateActivityHours.measuredHours), nie wszystkie godziny czynności
+			measuredHours += safeNumber(row.measuredHours ?? row.hours)
 		})
 		const parts = [...quantitiesByUnit.entries()].map(([unit, quantity]) => `${formatHours(quantity)} ${unit}`)
 		const single = quantitiesByUnit.size === 1 ? [...quantitiesByUnit.entries()][0] : null

@@ -3,6 +3,8 @@ const TimeEntry = require('../models/TimeEntry')(firmDb)
 const QRCode = require('../models/QRCode')(firmDb)
 const Workday = require('../models/Workday')(firmDb)
 const User = require('../models/user')(firmDb)
+const Settings = require('../models/Settings')(firmDb)
+const { getTimerActivitySnapshot } = require('../utils/timerWorkActivity')
 const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const qrService = require('../services/qrService')
 const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
@@ -168,6 +170,11 @@ exports.registerTimeEntry = async (req, res) => {
 						exitGeo: lastEntry.exitGeo?.toObject?.() || lastEntry.exitGeo || null,
 					}),
 				}
+
+				// Nazwa i jednostka czynności oraz ilość wpisana w trakcie (pendingQuantity) — wcześniej wyjście skanem
+				// zapisywało sesję bez nich i wydajność pracy rozpoczętej skanem nie była mierzona
+				const activitySnapshot = await getTimerActivitySnapshot(Settings, qrCode.teamId, timeEntry.activityId, workday.activeTimer.pendingQuantity)
+				if (!activitySnapshot.error) Object.assign(timeEntry, activitySnapshot)
 
 				if (!sessionWorkday.timeEntries) {
 					sessionWorkday.timeEntries = []
