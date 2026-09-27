@@ -1,6 +1,6 @@
 # Privacy Policy for Planopia.pl
 
-**Version 1.2 - effective from May 15, 2026**
+**Version 1.3 - effective from September 27, 2026**
 
 ## 1. Data Controller
 
@@ -32,6 +32,7 @@ Contact: biuro@planopia.pl
    - Job position
    - Working time data
    - Leave data
+   - Result of the location check at QR code scan — only when the Client enables this feature (section 3.5)
 
 3.3. Technical data:
    - IP address
@@ -42,6 +43,11 @@ Contact: biuro@planopia.pl
    - User questions and selected, aggregated Account data (e.g. working-time and leave summaries for a chosen period — within the User’s permissions) are sent to **OpenAI** (OpenAI, L.L.C., USA) solely to generate a response.
    - **Chat history** in the AI Assistant UI is stored in the User’s **browser** (localStorage) on their device — we **do not** store it permanently in our database. Users can remove it by clearing site data in the browser.
    - We store usage counters (plan limits) and technical log entries (e.g. that the feature was used), not the full chat transcript on our servers.
+
+3.5. **Location at QR code scan** (optional — enabled by the Client for a selected code):
+   - The employee's phone location is read **once, at the moment of scanning** the code at entry or exit, and only with consent given in the browser.
+   - We store only the result (at the workplace / outside it / no consent / no signal), the distance from the place and the reading accuracy. **We do not store the employee's coordinates** and do not track their location during work.
+   - The result is part of working time data and is retained on the same terms.
 
 ## 4. Data Recipients
 
@@ -126,5 +132,5 @@ Contact: biuro@planopia.pl
 
 9.2. Users will be notified of significant changes.
 
-**Last updated: May 15, 2026**
+**Last updated: September 27, 2026**
 

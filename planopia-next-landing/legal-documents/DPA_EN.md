@@ -1,6 +1,6 @@
 # Data Processing Agreement (DPA)
 
-**Version 1.1 - effective from May 15, 2026**
+**Version 1.2 - effective from September 27, 2026**
 
 ## 1. Parties to the Agreement
 
@@ -12,9 +12,11 @@
 
 2.1. The Controller entrusts, and the Processor accepts, the processing of personal data to the extent necessary for providing services through the Planopia.pl platform.
 
-2.2. Processing includes, among other things: time tracking, leave and absence management, work schedules, task boards (Kanban), team communication, and — when enabled on the plan — OpenAI API-based features (e.g. AI Assistant, schedule AI support), as set out in section 2.3.
+2.2. Processing includes, among other things: time tracking (including clock-in and clock-out with QR codes, optionally with a location check at scan — as set out in section 2.4), leave and absence management, work schedules, task boards (Kanban), team communication, and — when enabled on the plan — OpenAI API-based features (e.g. AI Assistant, schedule AI support), as set out in section 2.3.
 
 2.3. **AI features:** The Processor sends User queries and selected, aggregated Controller Account data to OpenAI (OpenAI, L.L.C., USA) solely to generate a response. AI Assistant chat history is not stored permanently in the Processor’s database — it is saved in the User’s browser (localStorage). The Processor stores usage counters for AI limits, among other things. The Controller should not include in queries more personal data than necessary to use the Service.
+
+2.4. **Location at QR code scan:** the feature is off by default; the Controller enables it for a selected code. The employee's device location is read once, at the moment of scanning, with consent given in the browser. The Processor stores only the result of the check (at the workplace / outside it / no consent / no signal), the distance from the place and the reading accuracy — without the employee's coordinates and without tracking their location. The Controller is responsible for informing employees about this feature and for the legal basis of its use.
 
 ## 3. Categories of Data and Data Subjects
 
@@ -24,6 +26,7 @@
    - Job position
    - Working time data
    - Leave and absence data
+   - Result of the location check at QR code scan (at the workplace / distance) — if the Controller enables this feature; without coordinates
 
 3.2. Processing concerns Controller's employees using the platform.
 
@@ -115,5 +118,5 @@
 - Staff training on GDPR
 - Security incident management procedures
 
-**Last updated: May 15, 2026**
+**Last updated: September 27, 2026**
 

@@ -1,6 +1,6 @@
 # Polityka prywatności Planopia.pl
 
-**Wersja 1.2 - obowiązuje od 15.05.2026r.**
+**Wersja 1.3 - obowiązuje od 27.09.2026r.**
 
 ## 1. Administrator danych
 
@@ -32,6 +32,7 @@ Kontakt: biuro@planopia.pl
    - Stanowisko
    - Dane dotyczące czasu pracy
    - Dane dotyczące urlopów
+   - Wynik weryfikacji lokalizacji przy skanie kodu QR — tylko gdy Klient włączy tę funkcję (pkt 3.5)
 
 3.3. Dane techniczne:
    - Adres IP
@@ -42,6 +43,11 @@ Kontakt: biuro@planopia.pl
    - Treść pytań Użytkownika oraz wybrane, zagregowane dane z Konta (np. podsumowania czasu pracy, urlopów w wybranym okresie — w granicach uprawnień Użytkownika) są przekazywane do **OpenAI** (OpenAI, L.L.C., USA) wyłącznie w celu wygenerowania odpowiedzi.
    - **Historia rozmowy** w interfejsie Asystenta AI jest zapisywana w **pamięci przeglądarki** Użytkownika (localStorage) na jego urządzeniu — **nie** przechowujemy jej trwale w naszej bazie danych. Użytkownik może ją usunąć, czyszcząc dane witryny w przeglądarce.
    - W systemie przechowujemy m.in. **liczniki** wykorzystania wiadomości AI (limity planu) oraz wpisy w logach technicznych (np. fakt skorzystania z funkcji), bez treści pełnej historii czatu.
+
+3.5. **Lokalizacja przy skanie kodu QR** (opcjonalna — włącza ją Klient dla wybranego kodu):
+   - Lokalizacja telefonu pracownika jest odczytywana **jednorazowo, w chwili skanu** kodu przy wejściu lub wyjściu, i tylko za zgodą udzieloną w przeglądarce.
+   - Zapisujemy wyłącznie wynik (w miejscu pracy / poza nim / brak zgody / brak sygnału), odległość od miejsca i dokładność odczytu. **Nie zapisujemy współrzędnych pracownika** i nie śledzimy jego położenia w czasie pracy.
+   - Wynik jest częścią danych o czasie pracy i przechowujemy go na tych samych zasadach.
 
 ## 4. Odbiorcy danych
 
@@ -126,5 +132,5 @@ Kontakt: biuro@planopia.pl
 
 9.2. O istotnych zmianach poinformujemy użytkowników.
 
-**Data ostatniej aktualizacji: 15.05.2026r.**
+**Data ostatniej aktualizacji: 27.09.2026r.**
 

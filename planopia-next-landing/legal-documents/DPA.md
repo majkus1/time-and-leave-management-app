@@ -1,6 +1,6 @@
 # Umowa powierzenia przetwarzania danych osobowych (DPA)
 
-**Wersja 1.1 - obowiązuje od 15.05.2026r.**
+**Wersja 1.2 - obowiązuje od 27.09.2026r.**
 
 ## 1. Strony umowy
 
@@ -12,9 +12,11 @@
 
 2.1. Administrator powierza, a Procesor przyjmuje przetwarzanie danych osobowych w zakresie niezbędnym do świadczenia usług przez platformę Planopia.pl.
 
-2.2. Przetwarzanie obejmuje m.in.: ewidencję czasu pracy, zarządzanie urlopami i nieobecnościami, grafiki pracy, tablice zadań (Kanban), komunikację zespołową oraz — jeśli włączone w ramach planu — funkcje oparte o API OpenAI (np. Asystent AI, wsparcie AI w grafiku), zgodnie z ust. 2.3.
+2.2. Przetwarzanie obejmuje m.in.: ewidencję czasu pracy (w tym rejestrację wejść i wyjść kodami QR, opcjonalnie z weryfikacją lokalizacji przy skanie — zgodnie z ust. 2.4), zarządzanie urlopami i nieobecnościami, grafiki pracy, tablice zadań (Kanban), komunikację zespołową oraz — jeśli włączone w ramach planu — funkcje oparte o API OpenAI (np. Asystent AI, wsparcie AI w grafiku), zgodnie z ust. 2.3.
 
 2.3. **Funkcje AI:** Procesor przekazuje do OpenAI (OpenAI, L.L.C., USA) treść zapytań Użytkownika oraz wybrane, zagregowane dane z Konta Administratora wyłącznie w celu wygenerowania odpowiedzi. Historia rozmowy w Asystencie AI nie jest trwale przechowywana w bazie Procesora — jest zapisywana w przeglądarce Użytkownika (localStorage). Procesor przechowuje m.in. liczniki wykorzystania limitów AI. Administrator powinien nie umieszczać w zapytaniach danych wykraczających poza to, co jest potrzebne do korzystania z Usługi.
+
+2.4. **Lokalizacja przy skanie kodu QR:** funkcja jest domyślnie wyłączona; włącza ją Administrator dla wybranego kodu. Lokalizacja urządzenia pracownika jest odczytywana jednorazowo w chwili skanu, za zgodą udzieloną w przeglądarce. Procesor zapisuje wyłącznie wynik weryfikacji (w miejscu pracy / poza nim / brak zgody / brak sygnału), odległość od miejsca i dokładność odczytu — bez współrzędnych pracownika i bez śledzenia jego położenia. Administrator odpowiada za poinformowanie pracowników o tej funkcji i za podstawę prawną jej stosowania.
 
 ## 3. Kategorie danych i osób
 
@@ -24,6 +26,7 @@
    - Stanowisko
    - Dane dotyczące czasu pracy
    - Dane dotyczące urlopów i nieobecności
+   - Wynik weryfikacji lokalizacji przy skanie kodu QR (w miejscu pracy / odległość) — jeśli Administrator włączy tę funkcję; bez współrzędnych
 
 3.2. Przetwarzanie dotyczy pracowników Administratora korzystających z platformy.
 
@@ -115,5 +118,5 @@
 - Szkolenia personelu w zakresie RODO
 - Procedury zarządzania incydentami bezpieczeństwa
 
-**Data ostatniej aktualizacji: 15.05.2026r.**
+**Data ostatniej aktualizacji: 27.09.2026r.**
 

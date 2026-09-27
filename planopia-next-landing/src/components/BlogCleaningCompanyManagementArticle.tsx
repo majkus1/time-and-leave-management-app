@@ -22,7 +22,7 @@ const faqs = [
 	},
 	{
 		q: 'Czy Planopia monitoruje lokalizację pracowników?',
-		a: 'Nie. Planopia nie śledzi GPS ani nie wykorzystuje NFC. Łączy grafik, ewidencję czasu, urlopy, zadania i komunikację, pomagając koordynować pracę bez ciągłego monitorowania położenia zespołu.',
+		a: 'Nie w trakcie pracy. Planopia nie śledzi położenia pracowników i nie korzysta z NFC. Przy kodzie QR firma może włączyć jednorazowe sprawdzenie lokalizacji w chwili skanu wejścia lub wyjścia — zapisywany jest tylko wynik (na miejscu czy nie), bez współrzędnych.',
 	},
 ] as const
 

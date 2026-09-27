@@ -57,7 +57,7 @@ export const industryCleaningCopy = {
 		},
 		{
 			q: 'Czy Planopia ma GPS, NFC i śledzenie lokalizacji?',
-			a: 'Nie. Planopia nie śledzi lokalizacji GPS i nie korzysta z tagów NFC. Pomaga prowadzić grafik, ewidencję czasu, urlopy, zadania i komunikację bez ciągłego monitorowania położenia pracownika.',
+			a: 'Planopia nie śledzi lokalizacji w trakcie pracy i nie korzysta z tagów NFC. Przy kodzie QR można włączyć jednorazowe sprawdzenie lokalizacji w chwili skanu wejścia lub wyjścia — zapisywany jest tylko wynik (na miejscu czy nie), bez współrzędnych.',
 		},
 		{
 			q: 'Czy system automatycznie gwarantuje zgodność ewidencji z prawem pracy?',
