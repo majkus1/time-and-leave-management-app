@@ -4,6 +4,7 @@
 // freemiumApiPolicyService (/api/qr zablokowane w planie darmowym), planCatalog.MODULE_API_PREFIXES.timer_qr.
 // Lokalizacja: utils/qrGeoCheck.js (polityki, tolerancja, zapis bez współrzędnych), QRCodeGeoSettings.jsx, QRScan.jsx.
 // Stop licznika z kodu chronionego: workdayController.stopTimer (QR_EXIT_REQUIRED).
+// Wyjście tylko przy działającym liczniku z tego kodu: utils/qrTimeEntry.isQrExit (bez podwójnego liczenia godzin).
 // Widok weryfikacji: Workday.timeEntries[].qrVerify, WorkSessionList.jsx (plakietki, filtry), UserCalendar.jsx (raport PDF/Excel).
 module.exports = {
 	id: 'qr',
@@ -57,6 +58,8 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie�
 
 ### Ograniczenia, o których warto wiedzieć
 - Wyjście trzeba zeskanować tym samym kodem, którym było wejście; skan innego kodu przy otwartej sesji nie zamyka jej.
+- Gdy działa licznik uruchomiony ręcznie (przyciskiem Start), skan wejścia jest odrzucany z komunikatem „Licznik już działa” — najpierw trzeba zakończyć licznik.
+- Godziny liczy sesja licznika. Jeśli licznik z kodu QR zatrzymano przyciskiem Stop (dotyczy zwykłego wydruku bez lokalizacji), kolejny skan tego kodu jest nowym wejściem — czas nie liczy się podwójnie.
 - Skan nie zadziała, gdy zespół nie pracuje w weekendy (a to weekend), w święto albo w dniu zaakceptowanego urlopu pracownika.
 - Rejestracja jest zawsze na koncie zalogowanej osoby — każdy pracownik skanuje własnym telefonem (ma własne konto).
 

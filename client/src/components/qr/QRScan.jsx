@@ -9,7 +9,14 @@ import { getScanPosition, formatDistance } from '../../utils/scanGeolocation'
 import './QRScan.css'
 
 // Kody odmowy z serwera (timeEntryController.registerTimeEntry), dla których jest własny widok i tłumaczenie
-const KNOWN_SCAN_ERRORS = ['SCREEN_REQUIRED', 'SCREEN_EXPIRED', 'GEO_OUTSIDE', 'GEO_DENIED', 'GEO_UNAVAILABLE', 'GEO_MISSING']
+const KNOWN_SCAN_ERRORS = ['SCREEN_REQUIRED', 'SCREEN_EXPIRED', 'GEO_OUTSIDE', 'GEO_DENIED', 'GEO_UNAVAILABLE', 'GEO_MISSING', 'TIMER_RUNNING']
+
+const ClockIcon = ({ className = '' }) => (
+	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+		<circle cx="12" cy="12" r="9" strokeWidth={2} />
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 7v5l3 2" />
+	</svg>
+)
 
 const ScreenIcon = ({ className = '' }) => (
 	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -33,6 +40,8 @@ function scanErrorCopy(t, i18n, { code, distanceM }) {
 			return { title: t('qrScan.screenExpiredTitle'), body: t('qrScan.screenExpiredBody') }
 		case 'SCREEN_REQUIRED':
 			return { title: t('qrScan.screenRequiredTitle'), body: t('qrScan.screenRequiredBody') }
+		case 'TIMER_RUNNING':
+			return { title: t('qrScan.timerRunningTitle'), body: t('qrScan.timerRunningBody'), timer: true }
 		case 'GEO_OUTSIDE':
 			return {
 				title: t('qrScan.geoOutsideTitle'),
@@ -232,7 +241,7 @@ function QRScan() {
 		return (
 			<QRScanShell>
 				<div className="po-qr-scan__icon po-qr-scan__icon--error">
-					{copy.geo ? <PinIcon /> : <ScreenIcon />}
+					{copy.geo ? <PinIcon /> : copy.timer ? <ClockIcon /> : <ScreenIcon />}
 				</div>
 				<h2 className="po-qr-scan__title">{copy.title}</h2>
 				<p className="po-qr-scan__text po-qr-scan__text--spaced">{copy.body}</p>

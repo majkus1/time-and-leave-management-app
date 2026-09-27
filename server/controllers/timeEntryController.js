@@ -11,6 +11,7 @@ const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const qrService = require('../services/qrService')
 const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
 const { toStoredGeo, buildSessionQrVerify } = require('../utils/qrGeoCheck')
+const { isQrExit, staleEntryExitTime } = require('../utils/qrTimeEntry')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -161,11 +162,18 @@ exports.registerTimeEntry = async (req, res) => {
 		const hasActiveTimer = workday && workday.activeTimer && workday.activeTimer.startTime && 
 			workday.activeTimer.qrCodeId && workday.activeTimer.qrCodeId.toString() === qrCode._id.toString()
 
-		// Wyjście zamyka otwarte wejście tym kodem; z wczoraj tylko, gdy licznik z tego kodu nadal działa (inaczej porzucony wpis)
+		// Otwarte wejście tym kodem (od wczoraj — nocna zmiana)
 		const openEntry = lastEntry && !lastEntry.exitTime
 			? lastEntry
 			: await TimeEntry.findOne({ userId, qrCodeId: qrCode._id, date: { $gte: yesterday }, exitTime: null }).sort({ entryTime: -1 })
-		const isExit = Boolean(openEntry && (openEntry.date >= today || hasActiveTimer))
+		// Godziny liczy tylko sesja licznika: wyjście wyłącznie przy działającym liczniku z tego kodu (utils/qrTimeEntry).
+		// Otwarte wejście bez niego (Stop przyciskiem, skan przy ręcznym liczniku) zamykamy bez godzin — skan to nowe wejście.
+		const isExit = isQrExit({ openEntry, hasActiveTimerFromThisCode: Boolean(hasActiveTimer) })
+		if (openEntry && !isExit) {
+			const entryDay = await Workday.findOne({ userId, date: warsawDayStart(openEntry.entryTime) }).select('timeEntries.startTime timeEntries.endTime')
+			openEntry.exitTime = staleEntryExitTime(openEntry.entryTime, entryDay?.timeEntries || [])
+			await openEntry.save()
+		}
 
 		if (isExit) {
 			// Last entry was an entry, so this is an exit
@@ -275,9 +283,6 @@ exports.registerTimeEntry = async (req, res) => {
 					await sessionWorkday.save()
 				}
 
-			} else {
-				// Update workday from TimeEntry (old method)
-				await updateWorkdayFromTimeEntry(userId, lastEntry)
 			}
 
 			res.json({
@@ -296,6 +301,12 @@ exports.registerTimeEntry = async (req, res) => {
 				return res.status(400).json({ message: reason })
 			}
 
+			// Działający licznik (ręczny albo z innego kodu) — odmowa, zanim cokolwiek zapiszemy
+			const existingActiveTimer = await workdayController.findActiveTimerWorkday(userId)
+			if (existingActiveTimer && existingActiveTimer.activeTimer && existingActiveTimer.activeTimer.startTime) {
+				return res.status(400).json({ message: 'Licznik już działa. Zakończ go, zanim zeskanujesz wejście.', code: 'TIMER_RUNNING' })
+			}
+
 			const newEntry = new TimeEntry({
 				userId,
 				qrCodeId: qrCode._id,
@@ -307,12 +318,6 @@ exports.registerTimeEntry = async (req, res) => {
 			})
 
 			await newEntry.save()
-
-			// Check if timer is already running (today or yesterday for overnight shifts)
-			const existingActiveTimer = await workdayController.findActiveTimerWorkday(userId)
-			if (existingActiveTimer && existingActiveTimer.activeTimer && existingActiveTimer.activeTimer.startTime) {
-				return res.status(400).json({ message: 'Timer już działa' })
-			}
 
 			// Start timer with QR code
 			let workday = await Workday.findOne({ userId, date: today })
@@ -379,58 +384,3 @@ exports.getTodayTimeEntries = async (req, res) => {
 	}
 }
 
-// Helper function to update Workday from TimeEntry
-async function updateWorkdayFromTimeEntry(userId, timeEntry) {
-	try {
-		const entryDate = warsawDayStart(timeEntry.entryTime)
-
-		// Calculate hours worked
-		const entryTime = new Date(timeEntry.entryTime)
-		const exitTime = new Date(timeEntry.exitTime)
-		const hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60) // Convert to hours
-
-		// Format time range
-		const formatTime = (date) => {
-			// Convert UTC date to local time string (Europe/Warsaw timezone)
-			// This ensures the time displayed matches the user's local time
-			const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'Europe/Warsaw' }))
-			const hours = localDate.getHours().toString().padStart(2, '0')
-			const minutes = localDate.getMinutes().toString().padStart(2, '0')
-			return `${hours}:${minutes}`
-		}
-		const timeRange = `${formatTime(entryTime)}-${formatTime(exitTime)}`
-
-		// Find or create workday
-		let workday = await Workday.findOne({ userId, date: entryDate })
-
-		if (!workday) {
-			workday = new Workday({
-				userId,
-				date: entryDate,
-				hoursWorked: 0,
-				realTimeDayWorked: ''
-			})
-		}
-
-		// Update hours
-		if (!workday.hoursWorked) workday.hoursWorked = 0
-		workday.hoursWorked += hoursWorked
-
-		// Update time range (append or replace)
-		if (workday.realTimeDayWorked) {
-			workday.realTimeDayWorked += `, ${timeRange}`
-		} else {
-			workday.realTimeDayWorked = timeRange
-		}
-
-		// Handle overtime if needed
-		if (timeEntry.isOvertime) {
-			if (!workday.additionalWorked) workday.additionalWorked = 0
-			workday.additionalWorked += hoursWorked
-		}
-
-		await workday.save()
-	} catch (error) {
-		console.error('Error updating workday from time entry:', error)
-	}
-}
