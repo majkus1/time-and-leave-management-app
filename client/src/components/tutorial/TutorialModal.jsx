@@ -126,15 +126,15 @@ function TutorialModal({ isOpen, onClose }) {
 	const baseSections = [
 		{
 			id: 'start-dashboard',
-			title: i18n.resolvedLanguage === 'pl' ? 'Start' : 'Home dashboard',
+			title: i18n.resolvedLanguage === 'pl' ? 'Przegląd zespołu' : 'Team overview',
 			icon: '/img/home.png',
 			description: i18n.resolvedLanguage === 'pl'
 				? 'Najważniejsze sprawy zespołu i Twojej pracy w jednym miejscu'
 				: 'Your work and the team’s priorities in one place',
 			path: '/dashboard',
 			content: i18n.resolvedLanguage === 'pl'
-				? 'Strona „Start” daje szybki obraz dnia: czas pracy, zadania, wnioski urlopowe, grafiki, komunikację i sprawy wymagające uwagi. Zakres informacji jest dopasowany do roli użytkownika oraz modułów planu, dzięki czemu każdy widzi przede wszystkim to, co pomaga mu działać.\n\nJeśli „Start” nie jest widoczny w menu, Administrator lub HR może włączyć go dla całego zespołu w Ustawieniach → Strona Start (pulpit główny).'
-				: 'The Home dashboard gives you a quick view of the day: work time, tasks, leave requests, schedules, communication, and items that need attention. Information is matched to the user’s role and the plan modules, so everyone sees what helps them act.\n\nIf Home is not visible in the sidebar, an Admin or HR user can enable it for the whole team under Settings → Home dashboard.',
+				? 'Przegląd zespołu daje szybki obraz dnia: czas pracy, zadania, wnioski urlopowe, grafiki, komunikację i sprawy wymagające uwagi. Zakres informacji jest dopasowany do roli użytkownika oraz modułów planu, dzięki czemu każdy widzi przede wszystkim to, co pomaga mu działać.\n\nJeśli „Przegląd zespołu” nie jest widoczny w menu, Administrator lub HR może włączyć go dla całego zespołu w Ustawieniach → Przegląd zespołu (strona główna). Przegląd zespołu działa w okresie próbnym i w każdym planie płatnym.'
+				: 'Team overview gives you a quick view of the day: work time, tasks, leave requests, schedules, communication, and items that need attention. Information is matched to the user’s role and the plan modules, so everyone sees what helps them act.\n\nIf Team overview is not visible in the sidebar, an Admin or HR user can enable it for the whole team under Settings → Team overview (home page). Team overview is available in the trial and on every paid plan.',
 		},
 		{
 			id: 'login-session',
@@ -378,13 +378,13 @@ function TutorialModal({ isOpen, onClose }) {
 						icon: '/img/wallet.png',
 						description:
 							i18n.resolvedLanguage === 'pl'
-								? 'Core, Pro, Business, Asystent AI i dokumenty prawne'
-								: 'Core, Pro, Business, AI Assistant and legal documents',
+								? 'Kalkulator planu, Core, PRO, Business i dokumenty prawne'
+								: 'Plan calculator, Core, PRO, Business and legal documents',
 						path: '/packages',
 						content:
 							i18n.resolvedLanguage === 'pl'
-								? '– Menu boczne → „Pakiety i rozliczenia” (ikona portfela).\n– U góry: aktualny plan zespołu i Asystent AI — w planach z AI bez limitu wiadomości (czat, grafik, szkice).\n– Plany: Core (konfiguracja — wielkość zespołu i moduły), gotowe pakiety Pro i Business.\n– Przełącz rozliczenie miesięczne/roczne, potem wybierz plan.\n– Płatność online: cykliczna subskrypcja kartą (Stripe) lub BLIK/przelew (Przelewy24) — w zależności od planu i dostępności; przy Stripe możesz też zarządzać kartą na tej stronie.\n– Gdy płatność online nie jest dostępna — formularz zgłoszenia mailem.\n– Na dole: dokumenty prawne (regulamin, polityka prywatności, DPA); przy nowej wersji — ostrzeżenie i akceptacja jednym przyciskiem.'
-								: '– Sidebar → “Packages & billing” (wallet icon).\n– At the top: current team plan and the AI Assistant — no message limit on plans with AI (chat, schedule, drafts).\n– Plans: Core (configure team size and modules), ready-made Pro and Business bundles.\n– Switch monthly/yearly billing, then pick a plan.\n– Online payment: recurring card subscription (Stripe) or BLIK/bank transfer (Przelewy24) — depending on the plan and what is enabled; with Stripe you can manage your card on this page.\n– If online payment is unavailable — email request form.\n– At the bottom: legal documents (terms, privacy, DPA); when a new version is required — warning and accept all in one step.',
+								? '– Menu boczne → „Pakiety i rozliczenia” (ikona portfela).\n– U góry: aktualny plan zespołu i Asystent AI — w każdym planie płatnym bez limitu wiadomości (czat, grafik, szkice).\n– Kalkulator: podajesz liczbę osób i zaznaczasz, czego potrzebujecie (urlopy, raporty zespołu, asystent AI, moduły Timer i QR, Grafiki, Zadania i czat) — aplikacja poleca jeden plan. Obecny plan i jego cena się nie zmieniają.\n– Pod kalkulatorem: wszystkie plany — Core (próg według liczby osób, moduły osobno), PRO i Business (wszystko w cenie).\n– Przełącz rozliczenie miesięczne/roczne, potem wybierz plan.\n– Płatność online: cykliczna subskrypcja kartą (Stripe) lub BLIK/przelew (Przelewy24) — w zależności od planu i dostępności; przy Stripe możesz też zarządzać kartą na tej stronie.\n– Gdy płatność online nie jest dostępna — formularz zgłoszenia mailem.\n– Moduły poza planem Administrator i HR widzą też w menu, w sekcji „Rozszerz plan”, z ceną.\n– Na dole: dokumenty prawne (regulamin, polityka prywatności, DPA); przy nowej wersji — ostrzeżenie i akceptacja jednym przyciskiem.'
+								: '– Sidebar → “Packages & billing” (wallet icon).\n– At the top: current team plan and the AI Assistant — no message limit on every paid plan (chat, schedule, drafts).\n– Calculator: enter your team size and tick what you need (leave, team reports, AI assistant, the Timer and QR, Schedules, Tasks and chat modules) — the app recommends one plan. Your current plan and price stay the same.\n– Below the calculator: all plans — Core (sized by team, modules added separately), PRO and Business (everything included).\n– Switch monthly/yearly billing, then pick a plan.\n– Online payment: recurring card subscription (Stripe) or BLIK/bank transfer (Przelewy24) — depending on the plan and what is enabled; with Stripe you can manage your card on this page.\n– If online payment is unavailable — email request form.\n– Admin and HR also see modules outside the plan in the sidebar, under “Upgrade your plan”, with the price.\n– At the bottom: legal documents (terms, privacy, DPA); when a new version is required — warning and accept all in one step.',
 					},
 				]
 			: []),
@@ -400,8 +400,8 @@ function TutorialModal({ isOpen, onClose }) {
 						path: '/calendars-list',
 						hideNavigateButton: true,
 						content: i18n.resolvedLanguage === 'pl'
-							? 'Raporty nie mają osobnej strony — pobierasz je przyciskami w aplikacji.\n\nEwidencja czasu pracy (menu boczne):\n– Przewiń na dół listy kalendarzy.\n– Excel / PDF — raport zespołu (godziny, nadgodziny, urlopy w okresie).\n– Excel / PDF wg osób — zestawienie per pracownik.\n– Raport zadań i czynności — gdy są dane i filtry czynności lub zadań (godziny, ilości, wydajność).\n– Kalendarz jednej osoby → u góry PDF z podsumowaniem miesiąca. Przy skanach QR dochodzi sekcja „Skany QR — weryfikacja”; z wybranym filtrem „Miejsce QR” raport obejmuje tylko to miejsce.\n\nWnioski urlopowe (Admin, HR, przełożony z uprawnieniem):\n– Przewiń na dół strony.\n– Excel / PDF — raport urlopów zespołu (statusy, typy, podsumowania).\n– Przycisk „Statystyki” obok filtra roku — szybki podgląd; stamtąd też Excel/PDF.\n\nW planie darmowym: eksporty ewidencji działają; pełne wnioski urlopowe i ich raporty — po rozszerzeniu planu.'
-							: 'Reports have no separate page — download them with buttons in the app.\n\nWork time records (sidebar):\n– Scroll to the bottom of the calendar list.\n– Excel / PDF — team report (hours, overtime, leave in the period).\n– Excel / PDF by person — per employee.\n– Tasks and activities report — when data and activity/task filters exist (hours, quantities, efficiency).\n– One person’s calendar → PDF at the top with monthly summary. With QR scans it adds a “QR scans — verification” section; with the “QR place” filter set, the report covers only that place.\n\nLeave requests (Admin, HR, approving supervisor):\n– Scroll to the bottom.\n– Excel / PDF — team leave report (statuses, types, summaries).\n– “Statistics” next to the year filter — quick view; Excel/PDF from there too.\n\nOn the free plan: timesheet exports work; full leave requests and their reports — after upgrading.',
+							? 'Raporty nie mają osobnej strony — pobierasz je przyciskami w aplikacji.\n\nEwidencja czasu pracy (menu boczne):\n– Przewiń na dół listy kalendarzy.\n– Excel / PDF — raport zespołu (godziny, nadgodziny, urlopy w okresie).\n– Excel / PDF wg osób — zestawienie per pracownik.\n– Raport zadań i czynności — gdy są dane i filtry czynności lub zadań (godziny, ilości, wydajność).\n– Kalendarz jednej osoby → u góry PDF z podsumowaniem miesiąca. Przy skanach QR dochodzi sekcja „Skany QR — weryfikacja”; z wybranym filtrem „Miejsce QR” raport obejmuje tylko to miejsce.\n\nWnioski urlopowe (Admin, HR, przełożony z uprawnieniem):\n– Przewiń na dół strony.\n– Excel / PDF — raport urlopów zespołu (statusy, typy, podsumowania).\n– Przycisk „Statystyki” obok filtra roku — szybki podgląd; stamtąd też Excel/PDF.\n\nW planie darmowym: wydruk ewidencji każdej osoby działa (kalendarz osoby i własny miesiąc); raporty zespołu z listy kalendarzy, wnioski urlopowe i ich raporty — w planie Core.'
+							: 'Reports have no separate page — download them with buttons in the app.\n\nWork time records (sidebar):\n– Scroll to the bottom of the calendar list.\n– Excel / PDF — team report (hours, overtime, leave in the period).\n– Excel / PDF by person — per employee.\n– Tasks and activities report — when data and activity/task filters exist (hours, quantities, efficiency).\n– One person’s calendar → PDF at the top with monthly summary. With QR scans it adds a “QR scans — verification” section; with the “QR place” filter set, the report covers only that place.\n\nLeave requests (Admin, HR, approving supervisor):\n– Scroll to the bottom.\n– Excel / PDF — team leave report (statuses, types, summaries).\n– “Statistics” next to the year filter — quick view; Excel/PDF from there too.\n\nOn the free plan: each person’s timesheet printout works (a person’s calendar and your own month); team reports from the calendar list, leave requests and their reports — on the Core plan.',
 					},
 				]
 			: []),
@@ -471,23 +471,23 @@ function TutorialModal({ isOpen, onClose }) {
 			content: pl
 				? [
 						'Twój zespół korzysta z planu darmowego (freemium).',
-						'W menu jest węższy zestaw funkcji niż w pełnej subskrypcji — m.in. ewidencja czasu pracy („Czas pracy”, wpisy ręczne) oraz edycja profilu.',
+						'W menu jest węższy zestaw funkcji niż w pełnej subskrypcji — m.in. ewidencja czasu pracy („Czas pracy”, wpisy ręczne), wydruk ewidencji każdej osoby oraz edycja profilu.',
 						'Dla Administratora i HR są dodatkowo: lista kalendarzy ewidencji, ustawienia świąt i weekendów, zarządzanie zespołem oraz „Pakiety i rozliczenia”.',
 						freemiumSeatBlocked
 							? 'Gdy przekroczony zostanie limit liczby kont, część ekranów może być ograniczona do czasu dopasowania zespołu do limitu lub wykupienia planu — zgodnie z komunikatami w aplikacji.'
 							: null,
-						'Moduły takie jak grafiki, wnioski urlopowe, tablice, czat, asystent AI czy komunikaty oraz szersze ustawienia zespołu są dostępne po rozszerzeniu planu (Administrator lub HR → Pakiety i rozliczenia).',
+						'Raporty zespołu, Przegląd zespołu, wnioski urlopowe, grafiki, tablice zadań, czat, asystent AI czy komunikaty oraz szersze ustawienia zespołu są dostępne po rozszerzeniu planu (Administrator lub HR → Pakiety i rozliczenia; moduły poza planem widać też w menu, z ceną).',
 				  ]
 						.filter(Boolean)
 						.join('\n\n')
 				: [
 						'Your team is on the free (freemium) plan.',
-						'The menu shows a smaller feature set than the full subscription — including the timesheet (“Timesheet”, manual entries) and profile editing.',
+						'The menu shows a smaller feature set than the full subscription — including the timesheet (“Timesheet”, manual entries), each person’s timesheet printout, and profile editing.',
 						'Admin and HR also have: team calendars, holiday & weekend settings, team management, and “Packages & billing”.',
 						freemiumSeatBlocked
 							? 'If active accounts exceed the free limit, some screens may stay limited until the team is adjusted or you upgrade — follow the in-app notices.'
 							: null,
-						'Schedules, leave requests, boards, chat, AI assistant, announcements, and broader team settings unlock after upgrading (Admin or HR → Packages & billing).',
+						'Team reports, Team overview, leave requests, schedules, task boards, chat, AI assistant, announcements, and broader team settings unlock after upgrading (Admin or HR → Packages & billing; modules outside the plan also appear in the sidebar with their price).',
 				  ]
 						.filter(Boolean)
 						.join('\n\n'),

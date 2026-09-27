@@ -23,6 +23,11 @@ import {
 	BILLING_STRIPE_CARD_QUERY_KEY,
 } from '../../hooks/useBilling'
 import LegalDocumentsSection from '../legal/LegalDocumentsSection'
+import PackagesPlanPicker from './PackagesPlanPicker'
+import { pricingFromCatalog, recommendPlan } from '../../utils/pricingCalculator'
+import { ANNUAL_MONTHS_CHARGED, formatPlanMoney, isEnglishLang } from '../../utils/planPriceFormat'
+import { ownedSaleModules, usedSaleModules } from '../../utils/planModules'
+import { clearPricingIntent, readPricingIntent } from '../../utils/pricingIntent'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './PackagesPage.css'
@@ -43,30 +48,23 @@ function isInvoiceCompleteFromEnt(bi) {
 	return name.length >= 2 && addrOk && nipDigits.length === 10
 }
 
-const TIER_LABELS = {
-	starter: 'Core — do 15 użytkowników',
-	base_s: 'Core — do 15 użytkowników',
-	base_m: 'Core — do 30 użytkowników',
-	base_l: 'Core — do 100 użytkowników',
-	pro: 'PRO',
-	business: 'Business',
-	enterprise: 'Enterprise',
+/** Etykieta planu z katalogu API (PL/EN); stary klucz `starter` to Core do 15 osób */
+function planLabelFromCatalog(catalog, planKey, resolvedLang) {
+	const key = planKey === 'starter' ? 'base_s' : planKey
+	const label = catalog?.tiers?.find(t => t.id === key)?.label
+	if (!label) return planKey || '—'
+	return isEnglishLang(resolvedLang) ? label.en : label.pl
 }
 
-const PAID_PLAN_IDS = ['base_s', 'base_m', 'base_l', 'pro', 'business', 'enterprise']
-
-const MODULE_LABELS = {
-	timer_qr: { pl: 'Timer + QR', en: 'Timer + QR' },
-	schedules_ai: { pl: 'Grafiki + AI', en: 'Schedules + AI' },
-	tasks: { pl: 'Zadania i Projekty', en: 'Tasks and Projects' },
-	chat: { pl: 'Czat zespołowy', en: 'Team chat' },
-	ai_assistant: { pl: 'Asystent AI', en: 'AI Assistant' },
+/** Płatne plany z katalogu (także nowe progi base_5, pro_15…) — bez listy wpisanej na sztywno */
+function paidPlanIdsFromCatalog(catalog) {
+	return new Set([...(catalog?.tiers || []).map(t => t.id), 'starter'])
 }
 
-function moduleDisplayLabel(moduleId, resolvedLang) {
-	const row = MODULE_LABELS[moduleId]
-	if (!row) return moduleId
-	return isEnglishResolved(resolvedLang) ? row.en : row.pl
+function moduleDisplayLabel(catalog, moduleId, resolvedLang) {
+	const label = catalog?.modules?.find(m => m.id === moduleId)?.label
+	if (!label) return moduleId
+	return isEnglishLang(resolvedLang) ? label.en : label.pl
 }
 
 function collectPriceIdsForStripeCheckout(stripeStatus, planKey, billingCycle, moduleKeys) {
@@ -110,9 +108,9 @@ function billingAxiosErrorMessage(error, t) {
 	return d?.message || error?.message || null
 }
 
-function paidSubscriptionActive(ent) {
+function paidSubscriptionActive(ent, paidPlanIds) {
 	if (!ent?.planKey || ent.billingStatus !== 'active') return false
-	if (!PAID_PLAN_IDS.includes(ent.planKey)) return false
+	if (!paidPlanIds.has(ent.planKey)) return false
 	if (ent.billingPeriodEnd && new Date(ent.billingPeriodEnd) < new Date()) return false
 	return true
 }
@@ -142,28 +140,7 @@ function formatLegacyGraceLastInclusiveDay(iso, localeTag) {
 	}
 }
 
-/** Zgodnie z planopia-next-landing (LandingPricing). */
-const PLN_PER_USD = 3.69
-
-function plnToUsd(pln) {
-	return pln / PLN_PER_USD
-}
-
-function formatMoneyUsd(amount) {
-	return amount.toLocaleString('en-US', {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	})
-}
-
-function isEnglishResolved(resolved) {
-	return typeof resolved === 'string' && resolved.toLowerCase().startsWith('en')
-}
-
-function formatCatalogPln(n) {
-	if (n == null) return '—'
-	return `${n} PLN`
-}
+const isEnglishResolved = isEnglishLang
 
 function formatStripeBrandLabel(brand, t) {
 	const b = String(brand || '').trim().toLowerCase()
@@ -171,11 +148,9 @@ function formatStripeBrandLabel(brand, t) {
 	return b.charAt(0).toUpperCase() + b.slice(1)
 }
 
-/** Cena katalogowa (np. pakiet AI): PLN lub USD w zależności od języka. */
+/** Cena katalogowa (moduł, pakiet AI): złote albo orientacyjnie USD w zależności od języka. */
 function formatCatalogPrice(n, resolvedLang) {
-	if (n == null) return '—'
-	if (isEnglishResolved(resolvedLang)) return `$${formatMoneyUsd(plnToUsd(n))}`
-	return formatCatalogPln(n)
+	return formatPlanMoney(n, resolvedLang)
 }
 
 function p24BusyKeyForBody(body) {
@@ -225,30 +200,13 @@ function corePlanCheckoutAvailableFromUrl(stripeStatus, p24Status, planKey, bill
 }
 
 function priceBlock(monthlyNet, billing, t, resolvedLang) {
-	if (isEnglishResolved(resolvedLang)) {
-		if (billing === 'monthly') {
-			return {
-				main: `$${formatMoneyUsd(plnToUsd(monthlyNet))}`,
-				sub: t('billingPackages.netPerMonthShort'),
-			}
-		}
-		const annualTotalPln = monthlyNet * 10
-		const eqPln = annualTotalPln / 12
-		return {
-			main: `$${formatMoneyUsd(plnToUsd(eqPln))}`,
-			sub: t('billingPackages.annualSummary', {
-				total: `$${formatMoneyUsd(plnToUsd(annualTotalPln))}`,
-			}),
-		}
-	}
 	if (billing === 'monthly') {
-		return { main: formatCatalogPln(monthlyNet), sub: t('billingPackages.netPerMonthShort') }
+		return { main: formatPlanMoney(monthlyNet, resolvedLang), sub: t('billingPackages.netPerMonthShort') }
 	}
-	const annualTotal = monthlyNet * 10
-	const eq = annualTotal / 12
+	const annualTotal = monthlyNet * ANNUAL_MONTHS_CHARGED
 	return {
-		main: `${eq.toFixed(2)} PLN`,
-		sub: t('billingPackages.annualSummary', { total: annualTotal }),
+		main: formatPlanMoney(annualTotal / 12, resolvedLang),
+		sub: t('billingPackages.annualSummary', { total: formatPlanMoney(annualTotal, resolvedLang) }),
 	}
 }
 
@@ -306,20 +264,16 @@ export default function PackagesPage() {
 	const teamSeats = typeof ent?.teamMemberCount === 'number' ? ent.teamMemberCount : null
 	const onlineStatusLoading = p24StatusLoading || stripeStatusLoading
 	const isPl = i18n.resolvedLanguage === 'pl'
+	const paidPlanIds = useMemo(() => paidPlanIdsFromCatalog(catalog), [catalog])
+	const planLabel = useCallback(
+		key => planLabelFromCatalog(catalog, key, i18n.resolvedLanguage),
+		[catalog, i18n.resolvedLanguage]
+	)
 
 	const coreTierList = useMemo(() => {
 		if (!catalog?.tiers) return []
 		return catalog.tiers.filter(t => t.tierType === 'core')
 	}, [catalog])
-
-	const proTier = useMemo(() => catalog?.tiers?.find(t => t.id === 'pro'), [catalog])
-	const businessTier = useMemo(() => catalog?.tiers?.find(t => t.id === 'business'), [catalog])
-
-	const coreMonthlyMinPln = useMemo(() => {
-		if (!coreTierList.length) return null
-		const nums = coreTierList.map(t => t.monthlyNetPln).filter(n => n != null && Number.isFinite(n))
-		return nums.length ? Math.min(...nums) : null
-	}, [coreTierList])
 
 	const coreEstimatedMonthlyPln = useMemo(() => {
 		if (!catalog?.tiers) return 0
@@ -332,17 +286,53 @@ export default function PackagesPage() {
 		return base + mods
 	}, [catalog, coreConfiguratorPlanKey, coreConfiguratorMods])
 
-	const coreUpsellVsPro = useMemo(() => {
-		const proPln = proTier?.monthlyNetPln
-		const proMax = proTier?.maxUsers
-		if (proPln == null || !Number.isFinite(proPln)) return false
-		if (typeof proMax === 'number' && proMax > 0) {
-			const selectedCore = catalog?.tiers?.find(t => t.id === coreConfiguratorPlanKey)
-			if (selectedCore?.maxUsers != null && selectedCore.maxUsers > proMax) return false
-			if (teamSeats != null && teamSeats > proMax) return false
+	const pickerPricing = useMemo(() => pricingFromCatalog(catalog), [catalog])
+
+	/** Pakiet z tą samą liczbą miejsc, gdy wychodzi taniej albo niewiele drożej niż Core z modułami (reguła kalkulatora) */
+	const coreUpsellBundle = useMemo(() => {
+		if (!coreConfiguratorMods.length) return null
+		const selectedCore = catalog?.tiers?.find(x => x.id === coreConfiguratorPlanKey)
+		if (!selectedCore) return null
+		const rec = recommendPlan(selectedCore.maxUsers, { leave: true, modules: coreConfiguratorMods }, pickerPricing)
+		if (rec.kind !== 'bundle') return null
+		if (teamSeats != null && teamSeats > rec.bundle.maxUsers) return null
+		return rec.bundle
+	}, [catalog, coreConfiguratorPlanKey, coreConfiguratorMods, pickerPricing, teamSeats])
+
+	const pricingIntent = useMemo(() => readPricingIntent(), [])
+
+	/** Podpowiedź kalkulatora: link (plan / moduły / add), wybór z landingu przy rejestracji, obecny plan zespołu */
+	const pickerPrefill = useMemo(() => {
+		if (!catalog) return null
+		const saleIds = pickerPricing.modules.map(m => m.id)
+		const needsForPlan = (planKey, mods) => {
+			const tier = catalog.tiers?.find(x => x.id === planKey)
+			if (tier?.tierType === 'bundle') return { leave: true, modules: [...saleIds] }
+			return { leave: true, modules: (mods || []).filter(m => saleIds.includes(m)) }
 		}
-		return coreEstimatedMonthlyPln > proPln
-	}, [coreEstimatedMonthlyPln, proTier, catalog, coreConfiguratorPlanKey, teamSeats])
+		const paidNow = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
+		const urlPlan = searchParams.get('plan')
+		const urlUsers = Math.floor(Number(searchParams.get('users')))
+		let wantedUsers = Number.isFinite(urlUsers) && urlUsers >= 1 ? urlUsers : null
+		let needs
+		if (urlPlan && catalog.tiers?.some(x => x.id === urlPlan)) {
+			needs = needsForPlan(urlPlan, parseModulesFromSearchParams(searchParams, catalog))
+		} else if (!paidNow && pricingIntent) {
+			needs = pricingIntent.plan
+				? needsForPlan(pricingIntent.plan, pricingIntent.modules)
+				: { leave: false, modules: pricingIntent.modules.filter(m => saleIds.includes(m)) }
+			wantedUsers = wantedUsers ?? pricingIntent.users
+		} else if (paidNow) {
+			needs = needsForPlan(ent.planKey, usedSaleModules(catalog.modules, ent.modules?.effectiveKeys))
+		} else {
+			needs = { leave: true, modules: [] }
+		}
+		const add = searchParams.get('add')
+		if (add && saleIds.includes(add) && !needs.modules.includes(add)) {
+			needs = { ...needs, leave: true, modules: [...needs.modules, add] }
+		}
+		return { users: Math.max(teamSeats ?? 1, wantedUsers ?? 1), needs }
+	}, [catalog, pickerPricing, ent, paidPlanIds, searchParams, pricingIntent, teamSeats])
 
 	const coreConfiguratorPriceDisplay = useMemo(
 		() => priceBlock(coreEstimatedMonthlyPln, billing, t, i18n.resolvedLanguage),
@@ -655,6 +645,42 @@ export default function PackagesPage() {
 		]
 	)
 
+	/** Core z kalkulatora albo „Wszystkich planów” — płatność przez konfigurator (karta / BLIK / przelew) */
+	const chooseCore = useCallback(
+		(planKey, mods) => {
+			if (!canSubmitPurchaseRequest) return
+			setJustSent(false)
+			setNote('')
+			setCoreConfiguratorPlanKey(planKey)
+			setCoreConfiguratorMods(Array.isArray(mods) ? mods : [])
+			setCoreConfiguratorOpen(true)
+		},
+		[canSubmitPurchaseRequest]
+	)
+
+	/** Pakiet (PRO / Business) — ta sama ścieżka co dawne karty pakietów */
+	const chooseBundle = useCallback(
+		async planKey => {
+			if (!canSubmitPurchaseRequest || !catalog) return
+			const tier = catalog.tiers.find(x => x.id === planKey)
+			if (!tier) return
+			if (teamSeats != null && teamSeats > tier.maxUsers) {
+				await showAlert(t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers }))
+				return
+			}
+			setJustSent(false)
+			setNote('')
+			const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+			const body = { kind: 'plan', planKey, billingCycle: cycle }
+			if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
+				requestPlanOnlineCheckout(body)
+			} else {
+				setModal({ kind: 'plan', planKey, billingCycle: cycle })
+			}
+		},
+		[canSubmitPurchaseRequest, catalog, teamSeats, billing, p24Status, stripeStatus, requestPlanOnlineCheckout, showAlert, t]
+	)
+
 	const coreConfiguratorPayDisabled = useMemo(() => {
 		const planKey = coreConfiguratorPlanKey
 		const mods = coreConfiguratorMods
@@ -769,8 +795,8 @@ export default function PackagesPage() {
 			}
 			return
 		}
-		if (plan && ['base_s', 'base_m', 'base_l'].includes(plan)) {
-			if (ent && paidSubscriptionActive(ent) && ent.planKey === plan) {
+		if (plan && catalog.tiers?.find(x => x.id === plan)?.tierType === 'core') {
+			if (ent && paidSubscriptionActive(ent, paidPlanIds) && ent.planKey === plan) {
 				appliedQueryRef.current = true
 				return
 			}
@@ -805,7 +831,7 @@ export default function PackagesPage() {
 			return
 		}
 		if (plan && catalog.tiers?.some(t => t.id === plan)) {
-			if (ent && paidSubscriptionActive(ent) && ent.planKey === plan) {
+			if (ent && paidSubscriptionActive(ent, paidPlanIds) && ent.planKey === plan) {
 				appliedQueryRef.current = true
 				return
 			}
@@ -838,6 +864,7 @@ export default function PackagesPage() {
 		onlineStatusLoading,
 		requestPlanOnlineCheckout,
 		startOnlineCheckout,
+		paidPlanIds,
 	])
 
 	useEffect(() => {
@@ -848,6 +875,20 @@ export default function PackagesPage() {
 		}, 150)
 		return () => window.clearTimeout(timer)
 	}, [loading, catalog, location.hash])
+
+	// Po zakupie podpowiedź z landingu nie jest już potrzebna
+	useEffect(() => {
+		if (ent && paidSubscriptionActive(ent, paidPlanIds)) clearPricingIntent()
+	}, [ent, paidPlanIds])
+
+	// Link z menu (moduł z kłódką) — od razu do kalkulatora
+	useEffect(() => {
+		if (loading || !searchParams.get('add')) return
+		const timer = window.setTimeout(() => {
+			document.getElementById('packages-plan-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		}, 150)
+		return () => window.clearTimeout(timer)
+	}, [loading, searchParams])
 
 	const modalLabels = useMemo(
 		() => ({
@@ -905,7 +946,17 @@ export default function PackagesPage() {
 	}
 
 	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
-	const activePaid = ent ? paidSubscriptionActive(ent) : false
+	const activePaid = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
+	const currentPlanForPicker =
+		activePaid && ent
+			? {
+					planKey: ent.planKey,
+					label: planLabel(ent.planKey),
+					modules: ownedSaleModules(catalog.modules, ent.modules?.effectiveKeys),
+				}
+			: null
+	const coreIncludedRaw = t('billingPackages.coreIncludedItems', { returnObjects: true })
+	const coreIncludedItems = Array.isArray(coreIncludedRaw) ? coreIncludedRaw : []
 	const activeTrial = ent ? trialSubscriptionActive(ent) : false
 	const legacyGraceLastDay =
 		ent?.legacy && ent.legacyGrandfatheredActive && ent.legacyGrandfatheredAccessEndsAt
@@ -941,12 +992,12 @@ export default function PackagesPage() {
 		} else if (activePaid) {
 			if (ent.hideBillingPeriodEnd) {
 				currentPlanBody = t('billingPackages.currentPlanPaidNoEnd', {
-					plan: TIER_LABELS[ent.planKey] || ent.planKey,
+					plan: planLabel(ent.planKey),
 					cycle: cycleShort,
 				})
 			} else {
 				currentPlanBody = t('billingPackages.currentPlanPaid', {
-					plan: TIER_LABELS[ent.planKey] || ent.planKey,
+					plan: planLabel(ent.planKey),
 					cycle: cycleShort,
 					until: formatPlanDate(ent.billingPeriodEnd, localeTag),
 				})
@@ -961,23 +1012,23 @@ export default function PackagesPage() {
 		} else if (
 			stripePaymentPastDue &&
 			ent.planKey &&
-			PAID_PLAN_IDS.includes(ent.planKey) &&
+			paidPlanIds.has(ent.planKey) &&
 			ent.billingPeriodEnd &&
 			new Date(ent.billingPeriodEnd) > new Date()
 		) {
 			// Nieudane odnowienie kartą — dostęp trwa do końca okresu, plan nie jest „nieaktywny”
 			currentPlanBody = t('billingPackages.currentPlanPaymentPastDue', {
-				plan: TIER_LABELS[ent.planKey] || ent.planKey,
+				plan: planLabel(ent.planKey),
 				until: formatPlanDate(ent.billingPeriodEnd, localeTag),
 			})
 		} else if (
 			ent.billingHadPaidPlan &&
 			ent.planKey &&
-			PAID_PLAN_IDS.includes(ent.planKey) &&
+			paidPlanIds.has(ent.planKey) &&
 			!activePaid
 		) {
 			currentPlanBody = t('billingPackages.currentPlanLapsed', {
-				plan: TIER_LABELS[ent.planKey] || ent.planKey,
+				plan: planLabel(ent.planKey),
 			})
 		} else {
 			currentPlanBody = t('billingPackages.currentPlanNoSubscription')
@@ -1061,12 +1112,12 @@ export default function PackagesPage() {
 								? t('billingPackages.paidSeatLimitBannerAdmin', {
 										count: teamSeats,
 										max: ent.maxUsers,
-										plan: TIER_LABELS[ent.planKey] || ent.planKey,
+										plan: planLabel(ent.planKey),
 									})
 								: t('billingPackages.paidSeatLimitBannerWorker', {
 										count: teamSeats,
 										max: ent.maxUsers,
-										plan: TIER_LABELS[ent.planKey] || ent.planKey,
+										plan: planLabel(ent.planKey),
 									})}
 						</div>
 					)}
@@ -1237,308 +1288,40 @@ export default function PackagesPage() {
 					</div>
 				)}
 
-				<div className="packages-billing-block">
-					<div className="packages-billing-toggle">
-						<span className="packages-billing-toggle__label">{t('billingPackages.billingToggle')}:</span>
-						<div className="packages-billing-toggle__buttons">
-							<button type="button" className={billing === 'monthly' ? 'is-on' : ''} onClick={() => setBilling('monthly')}>
-								{t('billingPackages.billingMonthly')}
-							</button>
-							<button type="button" className={billing === 'annual' ? 'is-on' : ''} onClick={() => setBilling('annual')}>
-								{t('billingPackages.billingAnnual')}
-							</button>
-						</div>
+				<PackagesPlanPicker
+					catalog={catalog}
+					billing={billing}
+					onBillingChange={setBilling}
+					teamSeats={teamSeats}
+					currentPlan={currentPlanForPicker}
+					prefill={pickerPrefill}
+					canBuy={canSubmitPurchaseRequest}
+					canContact={isAdmin(role)}
+					busy={onlineStatusLoading || p24BusyKey !== null}
+					busyPlanKey={p24BusyKey?.startsWith('plan:') ? p24BusyKey.slice(5) : null}
+					planLabel={planLabel}
+					onChooseCore={chooseCore}
+					onChooseBundle={chooseBundle}
+					onContact={() => navigate('/helpcenter')}
+				/>
+
+				<section className="packages-enterprise-strip" aria-labelledby="packages-enterprise-heading">
+					<div className="packages-enterprise-strip__main">
+						<h3 id="packages-enterprise-heading">{t('billingPackages.enterpriseStripTitle')}</h3>
+						<p className="packages-enterprise-strip__body">{t('billingPackages.enterpriseStripBody')}</p>
 					</div>
-					{billing === 'annual' && (
-						<div className="packages-billing-annual-note" role="status">
-							<span className="packages-billing-annual-badge">{t('billingPackages.billingYearlyBadge')}</span>
-							<p className="packages-billing-annual-hint">{t('billingPackages.billingYearlyHint')}</p>
-						</div>
-					)}
-				</div>
-
-				{(() => {
-					const cycle = billing === 'monthly' ? 'monthly' : 'annual'
-					const bundleModules = t('billingPackages.bundleModules', { returnObjects: true })
-					const bundleModuleLines = Array.isArray(bundleModules) ? bundleModules : []
-					const isCorePlanActive =
-						activePaid && ent && ['base_s', 'base_m', 'base_l'].includes(ent.planKey)
-					const corePb =
-						coreMonthlyMinPln != null
-							? priceBlock(coreMonthlyMinPln, billing, t, i18n.resolvedLanguage)
-							: { main: '—', sub: '' }
-
-					const renderBundleCard = tier => {
-						if (!tier) return null
-						const isPro = tier.id === 'pro'
-						const isCurrentPlan = Boolean(ent && activePaid && ent.planKey === tier.id)
-						const planSeatsBlocked = teamSeats != null && teamSeats > tier.maxUsers
-						const { main, sub } = priceBlock(tier.monthlyNetPln, billing, t, i18n.resolvedLanguage)
-						const planBody = { kind: 'plan', planKey: tier.id, billingCycle: cycle }
-						const stripePlanReady = hasStripeMappingForBody(stripeStatus, planBody)
-						const iconSrc = tier.id === 'business' ? '/img/business.png' : '/img/startup.png'
-						return (
-							<div
-								key={tier.id}
-								className={`packages-tier ${isPro ? 'packages-tier--highlight' : ''}${isCurrentPlan ? ' packages-tier--current' : ''}`}
+					<div className="packages-enterprise-strip__cta">
+						{isAdmin(role) && (
+							<button
+								type="button"
+								className="packages-enterprise-strip__btn"
+								onClick={() => navigate('/helpcenter')}
 							>
-								{isCurrentPlan && (
-									<span className="packages-tier__badge packages-tier__badge--current">
-										{t('billingPackages.planCurrentBadge')}
-									</span>
-								)}
-								{isPro && !isCurrentPlan && (
-									<span className="packages-tier__badge">{t('billingPackages.recommended')}</span>
-								)}
-								<span className="packages-tier__icon" aria-hidden>
-									<img src={iconSrc} alt="" />
-								</span>
-								<h3>{TIER_LABELS[tier.id] || tier.id}</h3>
-								<div className="packages-tier__price">{main}</div>
-								<div className="packages-tier__price-sub">{sub}</div>
-								{tier.id === 'pro' && (
-									<p className="packages-tier__lead">{t('billingPackages.heroProLead')}</p>
-								)}
-								{tier.id === 'business' && (
-									<p className="packages-tier__lead">{t('billingPackages.heroBusinessLead')}</p>
-								)}
-								<ul className="packages-tier__features">
-									{tier.id === 'pro' ? (
-										<>
-											{bundleModuleLines.map(module => (
-												<li key={module} className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{module}</span>
-												</li>
-											))}
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">{t('billingPackages.proBulletAi')}</span>
-											</li>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">{t('billingPackages.proBulletUsers')}</span>
-											</li>
-										</>
-									) : tier.id === 'business' ? (
-										<>
-											{bundleModuleLines.map(module => (
-												<li key={module} className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{module}</span>
-												</li>
-											))}
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">{t('billingPackages.businessBulletAi')}</span>
-											</li>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">{t('billingPackages.businessBulletUsers')}</span>
-											</li>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">
-													<strong>{t('billingPackages.businessBulletPriority')}</strong>
-												</span>
-											</li>
-											<li className="packages-tier__feature">
-												<span className="packages-tier__feature-check" aria-hidden>
-													✓
-												</span>
-												<span className="packages-tier__feature-text">
-													<strong>{t('billingPackages.businessBulletIntegrations')}</strong>
-												</span>
-											</li>
-										</>
-									) : (
-										(() => {
-											const feats = t(`billingPackages.tierFeatures.${tier.id}`, { returnObjects: true })
-											const lines =
-												Array.isArray(feats) && feats.length
-													? feats
-													: [
-															t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
-															tier.aiMessagesPerMonth > 0 ? t('billingPackages.planAiUnlimited') : null,
-														]
-											return lines.filter(Boolean).map((line, i) => (
-												<li key={i} className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{line}</span>
-												</li>
-											))
-										})()
-									)}
-								</ul>
-								<button
-									type="button"
-									disabled={
-										isCurrentPlan ||
-										!canSubmitPurchaseRequest ||
-										planSeatsBlocked ||
-										onlineStatusLoading ||
-										p24BusyKey !== null
-									}
-									title={
-										isCurrentPlan
-											? t('billingPackages.planOrderDisabledOwn')
-											: planSeatsBlocked
-												? t('billingPackages.planSeatsExceededHint', {
-														used: teamSeats,
-														maxUsers: tier.maxUsers,
-													})
-												: !canSubmitPurchaseRequest
-													? t('billingPackages.orderEmailAdminOnlyHint')
-													: undefined
-									}
-									onClick={() => {
-										if (isCurrentPlan || !canSubmitPurchaseRequest || planSeatsBlocked) return
-										setJustSent(false)
-										setNote('')
-										const body = { kind: 'plan', planKey: tier.id, billingCycle: cycle }
-										if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
-											requestPlanOnlineCheckout(body)
-										} else {
-											setModal({ kind: 'plan', planKey: tier.id, billingCycle: cycle })
-										}
-									}}
-								>
-									{p24BusyKey === `plan:${tier.id}` ? (
-										<span className="packages-modal__submit-pending">
-											<span
-												className="spinner-border spinner-border-sm packages-modal__spinner"
-												role="status"
-												aria-hidden="true"
-											/>
-											{t('billingPackages.p24Redirecting')}
-										</span>
-									) : isCurrentPlan ? (
-										t('billingPackages.planAlreadyActive')
-									) : planSeatsBlocked ? (
-										t('billingPackages.planSeatsExceededShort')
-									) : !canSubmitPurchaseRequest ? (
-										t('billingPackages.orderEmailAdminOnlyShort')
-									) : onlineStatusLoading ? (
-										t('billingPackages.checkingPaymentOptions')
-									) : p24Status?.ready || stripePlanReady ? (
-										t('billingPackages.payOnlineCta')
-									) : (
-										t('billingPackages.orderEmail')
-									)}
-								</button>
-							</div>
-						)
-					}
-
-					return (
-						<>
-							<div className="packages-grid packages-grid--hero">
-								<div
-									className={`packages-tier packages-tier--core-summary${
-										isCorePlanActive ? ' packages-tier--current' : ''
-									}`}
-								>
-									{isCorePlanActive && (
-										<span className="packages-tier__badge packages-tier__badge--current">
-											{t('billingPackages.planCurrentBadge')}
-										</span>
-									)}
-									<span className="packages-tier__icon" aria-hidden>
-										<img src="/img/core.png" alt="" />
-									</span>
-									<h3>{t('billingPackages.heroCoreTitle')}</h3>
-									<div className="packages-tier__price">
-										{t('billingPackages.fromWord')} {corePb.main}
-									</div>
-									<div className="packages-tier__price-sub">{corePb.sub}</div>
-									<p className="packages-tier__lead">{t('billingPackages.heroCoreLead')}</p>
-									<ul className="packages-tier__features">
-										<li className="packages-tier__feature">
-											<span className="packages-tier__feature-check" aria-hidden>
-												✓
-											</span>
-											<span className="packages-tier__feature-text">
-												<strong>{t('billingPackages.heroCoreFeat1')}</strong>
-											</span>
-										</li>
-										<li className="packages-tier__feature">
-											<span className="packages-tier__feature-check" aria-hidden>
-												✓
-											</span>
-											<span className="packages-tier__feature-text">
-												<strong>{t('billingPackages.heroCoreFeat2')}</strong>
-											</span>
-										</li>
-										<li className="packages-tier__feature">
-											<span className="packages-tier__feature-check" aria-hidden>
-												✓
-											</span>
-											<span className="packages-tier__feature-text">
-												<strong>{t('billingPackages.heroCoreFeatReports')}</strong>
-											</span>
-										</li>
-										<li className="packages-tier__feature">
-											<span className="packages-tier__feature-check" aria-hidden>
-												✓
-											</span>
-											<span className="packages-tier__feature-text">{t('billingPackages.heroCoreFeat3')}</span>
-										</li>
-									</ul>
-									<p className="packages-tier__hint">{t('billingPackages.heroCoreTeamHint')}</p>
-									<button
-										type="button"
-										className="packages-tier__cta"
-										disabled={!canSubmitPurchaseRequest || onlineStatusLoading}
-										onClick={() => {
-											setCoreConfiguratorPlanKey('base_s')
-											setCoreConfiguratorMods([])
-											setCoreConfiguratorOpen(true)
-										}}
-									>
-										{t('billingPackages.heroCoreCta')}
-									</button>
-								</div>
-
-								{renderBundleCard(proTier)}
-								{renderBundleCard(businessTier)}
-							</div>
-
-							<section className="packages-enterprise-strip" aria-labelledby="packages-enterprise-heading">
-								<div className="packages-enterprise-strip__main">
-									<h3 id="packages-enterprise-heading">{t('billingPackages.enterpriseStripTitle')}</h3>
-									<p className="packages-enterprise-strip__body">{t('billingPackages.enterpriseStripBody')}</p>
-								</div>
-								<div className="packages-enterprise-strip__cta">
-									{isAdmin(role) && (
-										<button
-											type="button"
-											className="packages-enterprise-strip__btn"
-											onClick={() => navigate('/helpcenter')}
-										>
-											{t('billingPackages.enterpriseCta')}
-										</button>
-									)}
-								</div>
-							</section>
-						</>
-					)
-				})()}
+								{t('billingPackages.enterpriseCta')}
+							</button>
+						)}
+					</div>
+				</section>
 
 				{catalog.addons?.length > 0 && (
 				<div className="packages-addons">
@@ -1854,27 +1637,15 @@ export default function PackagesPage() {
 									<p className="packages-core-modules-group-label">
 										{t('billingPackages.coreConfiguratorIncludedLabel')}
 									</p>
-									<label className="packages-core-check packages-core-check--included">
-										<input type="checkbox" checked disabled readOnly />
-										<span>{t('billingPackages.heroCoreFeat1')}</span>
-										<span className="packages-core-included-badge">
-											{t('billingPackages.coreConfiguratorIncludedBadge')}
-										</span>
-									</label>
-									<label className="packages-core-check packages-core-check--included">
-										<input type="checkbox" checked disabled readOnly />
-										<span>{t('billingPackages.heroCoreFeat2')}</span>
-										<span className="packages-core-included-badge">
-											{t('billingPackages.coreConfiguratorIncludedBadge')}
-										</span>
-									</label>
-									<label className="packages-core-check packages-core-check--included">
-										<input type="checkbox" checked disabled readOnly />
-										<span>{t('billingPackages.heroCoreFeatReports')}</span>
-										<span className="packages-core-included-badge">
-											{t('billingPackages.coreConfiguratorIncludedBadge')}
-										</span>
-									</label>
+									{coreIncludedItems.map(item => (
+										<label key={item} className="packages-core-check packages-core-check--included">
+											<input type="checkbox" checked disabled readOnly />
+											<span>{item}</span>
+											<span className="packages-core-included-badge">
+												{t('billingPackages.coreConfiguratorIncludedBadge')}
+											</span>
+										</label>
+									))}
 									<p className="packages-core-modules-group-label packages-core-modules-group-label--optional">
 										{t('billingPackages.coreConfiguratorOptionalLabel')}
 									</p>
@@ -1890,7 +1661,7 @@ export default function PackagesPage() {
 												}}
 											/>
 											<span>
-												{moduleDisplayLabel(m.id, i18n.resolvedLanguage)}
+												{moduleDisplayLabel(catalog, m.id, i18n.resolvedLanguage)}
 												{m.monthlyNetPln != null
 													? ` (+${formatCatalogPrice(m.monthlyNetPln, i18n.resolvedLanguage)})`
 													: ''}
@@ -1927,9 +1698,12 @@ export default function PackagesPage() {
 									<p className="packages-core-total-annual-note">{coreConfiguratorPriceDisplay.sub}</p>
 								)}
 							</div>
-							{coreUpsellVsPro && (
+							{coreUpsellBundle && (
 								<div className="packages-core-upsell" role="status">
-									{t('billingPackages.coreUpsellPro', { proPrice: proTier?.monthlyNetPln ?? 239 })}
+									{t('billingPackages.coreUpsellBundle', {
+										plan: planLabel(coreUpsellBundle.planKey),
+										price: priceBlock(coreUpsellBundle.monthlyNetPln, billing, t, i18n.resolvedLanguage).main,
+									})}
 								</div>
 							)}
 						</div>
@@ -1956,24 +1730,16 @@ export default function PackagesPage() {
 							<p className="packages-pay-note" role="note">
 								{t('billingPackages.p24OneTimeHint')}
 							</p>
-							{coreUpsellVsPro && proTier && (
+							{coreUpsellBundle && (
 								<button
 									type="button"
 									className="packages-pay-btn packages-pay-btn--upsell"
 									onClick={() => {
 										setCoreConfiguratorOpen(false)
-										setJustSent(false)
-										setNote('')
-										const billCycle = billing === 'monthly' ? 'monthly' : 'annual'
-										const body = { kind: 'plan', planKey: 'pro', billingCycle: billCycle }
-										if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
-											requestPlanOnlineCheckout(body)
-										} else {
-											setModal({ kind: 'plan', planKey: 'pro', billingCycle: billCycle })
-										}
+										void chooseBundle(coreUpsellBundle.planKey)
 									}}
 								>
-									{t('billingPackages.coreUpsellProCta')}
+									{t('billingPackages.coreUpsellBundleCta', { plan: planLabel(coreUpsellBundle.planKey) })}
 								</button>
 							)}
 							<button
@@ -1998,7 +1764,7 @@ export default function PackagesPage() {
 					<div className="packages-modal" onClick={e => e.stopPropagation()}>
 						<h4>
 							{modal.kind === 'plan'
-								? `${TIER_LABELS[modal.planKey] || modal.planKey} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
+								? `${planLabel(modal.planKey)} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
 								: `AI +${catalog.addons.find(x => x.id === modal.addonId)?.messages ?? modal.addonId}`}
 						</h4>
 						<p className="packages-modal__fallback-intro" style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.75rem' }}>

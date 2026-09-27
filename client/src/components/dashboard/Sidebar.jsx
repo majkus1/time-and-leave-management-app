@@ -13,6 +13,9 @@ import { useDashboardAccess } from '../../hooks/useDashboardAccess'
 import { useSettings } from '../../hooks/useSettings'
 import { useTutorial } from '../../context/TutorialContext'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
+import { useBillingCatalog } from '../../hooks/useBilling'
+import { saleModuleForCapability } from '../../utils/planModules'
+import { formatPlanMoney } from '../../utils/planPriceFormat'
 import NotificationBell from '../NotificationBell'
 import SidebarThemeButton from '../shared/SidebarThemeButton'
 import { useTheme } from '../../context/ThemeContext'
@@ -115,6 +118,62 @@ function Sidebar() {
 		showPremiumModules &&
 		(isAdminRole || isHRRole || (isSupervisorRole && canApproveLeaves))
 
+	/**
+	 * Moduły poza planem zespołu: Admin / HR widzą je z ceną zamiast pustego miejsca w menu.
+	 * Tylko plan płatny Core i plan darmowy — okres próbny i pakiety mają wszystko, blokada miejsc ma własne, krótkie menu.
+	 */
+	// Po okresie próbnym planKey zostaje „trial” — plan darmowy rozpoznajemy po freemiumTier
+	const trialActive = billingEnt?.planKey === 'trial' && billingEnt?.freemiumTier !== true
+	const canSeeLockedModules =
+		(isAdminRole || isHRRole) &&
+		!compactFreemiumNav &&
+		!billingEntLoading &&
+		Boolean(billingEnt) &&
+		!trialActive &&
+		billingEnt.legacy !== true &&
+		billingEnt.ai?.unrestricted !== true
+	const { data: billingCatalog } = useBillingCatalog({ enabled: canSeeLockedModules })
+	const lockedModuleItems = []
+	if (canSeeLockedModules && billingCatalog) {
+		const money = pln => formatPlanMoney(pln, i18n.resolvedLanguage)
+		if (narrowFreemiumNav) {
+			const coreFrom = billingCatalog.coreTiers?.[0]?.monthlyNetPln
+			if (coreFrom != null) {
+				lockedModuleItems.push({
+					key: 'leave',
+					label: t('sidebar.btn3'),
+					icon: '/img/sunbed.png',
+					price: t('sidebar.lockedInCore', { price: money(coreFrom) }),
+					to: '/packages',
+				})
+			}
+		}
+		const hasFeature = capability => {
+			if (narrowFreemiumNav) return false
+			return canShowBillingModuleNav(billingEnt, capability, billingEntLoading)
+		}
+		const seen = new Set()
+		for (const [capability, label, icon] of [
+			['timer_qr', null, '/img/timer.png'],
+			['schedules_ai', t('sidebar.btnSchedule'), '/img/project.png'],
+			['tasks', null, '/img/task-list.png'],
+			['chat', null, '/img/task-list.png'],
+		]) {
+			if (hasFeature(capability)) continue
+			const mod = saleModuleForCapability(billingCatalog.modules, capability)
+			if (!mod || seen.has(mod.id) || mod.monthlyNetPln == null) continue
+			seen.add(mod.id)
+			const modLabel = mod.label?.[i18n.resolvedLanguage === 'en' ? 'en' : 'pl'] || mod.id
+			lockedModuleItems.push({
+				key: mod.id,
+				label: label || modLabel,
+				icon,
+				price: t('sidebar.lockedModule', { price: money(mod.monthlyNetPln) }),
+				to: `/packages?add=${mod.id}`,
+			})
+		}
+	}
+
 	const lngs = {
 		en: { nativeName: '', flag: '/img/united-kingdom.png' },
 		pl: { nativeName: '', flag: '/img/poland.png' },
@@ -130,8 +189,8 @@ function Sidebar() {
 
 	const isLeavePlans = location.pathname === '/all-leave-plans' || location.pathname.startsWith('/leave-plans')
 	const isAnnouncementsActive = location.pathname.startsWith('/announcements')
-	const startLabel = i18n.resolvedLanguage === 'pl' ? 'Start' : 'Home'
-	const workTimeLabel = i18n.resolvedLanguage === 'pl' ? 'Czas pracy' : 'Work time'
+	const startLabel = t('sidebar.btnTeamOverview')
+	const workTimeLabel = t('sidebar.btnWorkTime')
 
 	useEffect(() => {
 		const mq = window.matchMedia('(min-width: 1501px)')
@@ -513,6 +572,26 @@ function Sidebar() {
 						</div>
 						<span className="nav-text">{t('sidebar.btnAssistant')}</span>
 					</NavLink>
+					)}
+
+					{lockedModuleItems.length > 0 && (
+						<div className="sidebar-locked">
+							<div className="sidebar-locked__title">{t('sidebar.lockedTitle')}</div>
+							{lockedModuleItems.map(item => (
+								<Link
+									key={item.key}
+									to={item.to}
+									className="nav-link nav-link--locked"
+									aria-label={t('sidebar.lockedAria', { name: item.label, price: item.price })}
+								>
+									<div className="nav-icon">
+										<img src={item.icon} alt="" aria-hidden />
+									</div>
+									<span className="nav-text">{item.label}</span>
+									<span className="nav-lock-price">{item.price}</span>
+								</Link>
+							))}
+						</div>
 					)}
 
 					{/* Admin Links - calendars-list i leave-list w jednym div */}

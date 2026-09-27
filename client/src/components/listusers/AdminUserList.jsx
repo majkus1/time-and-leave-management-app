@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import Sidebar from '../dashboard/Sidebar'
@@ -52,7 +52,8 @@ import {
 } from '../../utils/workTaskAggregation'
 import ActivityFilterBar from '../workcalendars/ActivityFilterBar'
 import TaskFilterBar from '../workcalendars/TaskFilterBar'
-import { useBillingEntitlements } from '../../hooks/useBilling'
+import { useBillingCatalog, useBillingEntitlements } from '../../hooks/useBilling'
+import { formatPlanMoney } from '../../utils/planPriceFormat'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 
 function workdayUserIdString(day) {
@@ -88,6 +89,25 @@ function AdminUserList() {
 	const [selectedTaskIds, setSelectedTaskIds] = useState([])
 	const { data: entitlements, isPending: entitlementsLoading } = useBillingEntitlements()
 	const tasksModuleEnabled = canShowBillingModuleNav(entitlements, 'tasks', entitlementsLoading)
+	// Raporty zespołu (PDF, Excel) są w planie Core — w planie darmowym zostaje wydruk ewidencji każdej osoby
+	const teamReportsLocked = entitlements?.freemiumTier === true
+	// Plan kupuje Admin lub HR — Przełożony (też widzi tę listę) dostaje informację bez ceny i linku do Pakietów
+	const canChangePlan = isAdmin(role) || isHR(role)
+	const { data: billingCatalog } = useBillingCatalog({ enabled: teamReportsLocked && canChangePlan })
+	const coreFromPrice = billingCatalog?.coreTiers?.[0]?.monthlyNetPln
+	const teamReportsLock = canChangePlan ? (
+		<Link to="/packages" className="team-reports-lock">
+			<span aria-hidden="true">🔒</span>
+			{coreFromPrice != null
+				? t('planslist.teamReportsLocked', { price: formatPlanMoney(coreFromPrice, i18n.resolvedLanguage) })
+				: t('planslist.teamReportsLockedShort')}
+		</Link>
+	) : (
+		<span className="team-reports-lock">
+			<span aria-hidden="true">🔒</span>
+			{t('planslist.teamReportsLockedAskAdmin')}
+		</span>
+	)
 	
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
@@ -2207,14 +2227,18 @@ function AdminUserList() {
 							<h4 style={{ color: '#2c3e50', fontSize: '18px', fontWeight: 600, margin: 0 }}>
 								{t('planslist.teamSummaryTitle')}
 							</h4>
-							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-								<button type="button" onClick={handleExportSummaryExcel} style={exportExcelButtonStyle}>
-									{t('planslist.exportExcel')}
-								</button>
-								<button type="button" onClick={handleExportSummaryPdf} style={exportPdfButtonStyle}>
-									{t('planslist.exportPdf')}
-								</button>
-							</div>
+							{teamReportsLocked ? (
+								teamReportsLock
+							) : (
+								<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+									<button type="button" onClick={handleExportSummaryExcel} style={exportExcelButtonStyle}>
+										{t('planslist.exportExcel')}
+									</button>
+									<button type="button" onClick={handleExportSummaryPdf} style={exportPdfButtonStyle}>
+										{t('planslist.exportPdf')}
+									</button>
+								</div>
+							)}
 						</div>
 						<p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#6c757d' }}>
 							{t('planslist.exportPeriod')}: <strong>{exportPeriodLabel}</strong>
@@ -2337,14 +2361,18 @@ function AdminUserList() {
 											{t('planslist.teamPerUserSubtitle')}
 										</p>
 									</div>
-									<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-										<button type="button" onClick={handleExportPerUserExcel} style={exportExcelButtonStyle}>
-											{t('planslist.exportExcelPerUser')}
-										</button>
-										<button type="button" onClick={handleExportPerUserPdf} style={exportPdfButtonStyle}>
-											{t('planslist.exportPdfPerUser')}
-										</button>
-									</div>
+									{teamReportsLocked ? (
+										teamReportsLock
+									) : (
+										<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+											<button type="button" onClick={handleExportPerUserExcel} style={exportExcelButtonStyle}>
+												{t('planslist.exportExcelPerUser')}
+											</button>
+											<button type="button" onClick={handleExportPerUserPdf} style={exportPdfButtonStyle}>
+												{t('planslist.exportPdfPerUser')}
+											</button>
+										</div>
+									)}
 								</div>
 								<div
 									className="evidence-team-table-wrap"
@@ -2459,14 +2487,18 @@ function AdminUserList() {
 										Eksportuje poniższe dane dla okresu: <strong>{exportPeriodLabel}</strong>.
 									</p>
 								</div>
-								<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-									<button type="button" onClick={handleExportOperationalExcel} style={exportExcelButtonStyle}>
-										Eksport do Excel
-									</button>
-									<button type="button" onClick={handleExportOperationalPdf} style={exportPdfButtonStyle}>
-										Eksport do PDF
-									</button>
-								</div>
+								{teamReportsLocked ? (
+									teamReportsLock
+								) : (
+									<div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+										<button type="button" onClick={handleExportOperationalExcel} style={exportExcelButtonStyle}>
+											{t('planslist.exportExcel')}
+										</button>
+										<button type="button" onClick={handleExportOperationalPdf} style={exportPdfButtonStyle}>
+											{t('planslist.exportPdf')}
+										</button>
+									</div>
+								)}
 							</div>
 						)}
 						{(teamHasWorkActivities({ workActivities }) || (tasksModuleEnabled && filterableTasks.length > 0)) && (

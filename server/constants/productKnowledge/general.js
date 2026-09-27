@@ -9,7 +9,7 @@ module.exports = {
 		en: 'What it is, who it is for, how to start: sign-up, trial, free plan, mobile, roles.',
 	},
 	keywords: {
-		pl: ['co to jest', 'czym jest', 'dla kogo', 'jak zacząć', 'od czego zacząć', 'pierwsze kroki', 'rejestr', 'załóż', 'założy', 'konto', 'trial', 'próbn', 'darmow', 'bezpłatn', 'freemium', 'telefon', 'komórk', 'pwa', 'zainstal', 'instalac', 'app store', 'google play', 'sklep', 'logow', 'hasło', 'hasła', 'sesj', 'profil', 'język', 'angiel', 'rodo', 'gdpr', 'dane osobowe', 'serwer', 'bezpiecz', 'pulpit', ' start ', 'dashboard', 'przeglądar'],
+		pl: ['co to jest', 'czym jest', 'dla kogo', 'jak zacząć', 'od czego zacząć', 'pierwsze kroki', 'rejestr', 'załóż', 'założy', 'konto', 'trial', 'próbn', 'darmow', 'bezpłatn', 'freemium', 'telefon', 'komórk', 'pwa', 'zainstal', 'instalac', 'app store', 'google play', 'sklep', 'logow', 'hasło', 'hasła', 'sesj', 'profil', 'język', 'angiel', 'rodo', 'gdpr', 'dane osobowe', 'serwer', 'bezpiecz', 'pulpit', ' start ', 'dashboard', 'przegląd zespołu', 'przeglad zespolu', 'przeglądar'],
 		en: ['what is', 'who is it for', 'get started', 'first steps', 'sign up', 'register', 'account', 'trial', 'free', 'freemium', 'phone', 'mobile', 'pwa', 'install', 'app store', 'google play', 'login', 'log in', 'password', 'profile', 'language', 'gdpr', 'personal data', 'server', 'security', 'dashboard', 'browser'],
 	},
 	requires: { modules: [], bundles: [], trial: true, freemium: true },
@@ -25,17 +25,17 @@ Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopo
 - Rejestracja zespołu: {{app.url}}/team-registration — podajesz nazwę firmy (zespołu), imię, nazwisko i e-mail. Osoba zakładająca zostaje Administratorem. Bez karty płatniczej.
 - Okres próbny: {{trial.days}} dni pełnej aplikacji (wszystkie moduły) dla zespołu do {{trial.maxUsers}} osób, z asystentem AI bez limitu wiadomości.
 - Pierwsze kroki po założeniu zespołu (lista widoczna nad ewidencją): dodaj pracowników, ustaw godziny pracy i święta, wpisz pierwszy dzień pracy.
-- Nowy zespół startuje od strony „Czas pracy” (ewidencja). Strona „Start” (pulpit) jest w nowych zespołach domyślnie wyłączona — włącza ją Administrator w Ustawieniach (patrz niżej).
+- Nowy zespół startuje od strony „Czas pracy” (ewidencja). Przegląd zespołu (strona główna z podsumowaniem, dawniej „Start”) jest w nowych zespołach domyślnie wyłączony — włącza go Administrator w Ustawieniach (patrz niżej).
 
 ### Plan darmowy (po okresie próbnym)
 Po {{trial.days}} dniach, jeśli zespół nie wybierze pakietu, zostaje na bezpłatnym planie bezterminowo:
-- działa: ewidencja czasu pracy (kalendarz miesięczny, wpisy ręczne, czynności, eksport PDF/Excel), edycja profilu; dla Administratora/HR: listy ewidencji zespołu, zarządzanie zespołem, ustawienia (weekendy, święta, godziny pracy, czynności, pracownicy bez dostępu), pakiety i rozliczenia;
+- działa: ewidencja czasu pracy (kalendarz miesięczny, wpisy ręczne, czynności) i wydruk ewidencji każdej osoby (PDF/Excel), edycja profilu; dla Administratora/HR: listy ewidencji zespołu, zarządzanie zespołem, ustawienia (weekendy, święta, godziny pracy, czynności, pracownicy bez dostępu), pakiety i rozliczenia;
 - limit: {{trial.maxUsers}} aktywnych kont;
-- nie działa: licznik czasu i kody QR, składanie wniosków urlopowych, grafiki, zadania, czat, komunikaty, asystent AI z danymi zespołu, strona Start.
+- nie działa: raporty zespołu (zbiorcze eksporty PDF/Excel z listy ewidencji — w ich miejscu jest informacja o planie Core), licznik czasu i kody QR, składanie wniosków urlopowych, grafiki, zadania, czat, komunikaty, asystent AI z danymi zespołu, Przegląd zespołu. Administrator i HR widzą w menu sekcję „Rozszerz plan” z modułami poza planem i ich ceną.
 - Jeśli zespół ma więcej niż {{trial.maxUsers}} kont, aplikacja jest zablokowana dla wszystkich poza Administratorem i HR, którzy widzą tylko zarządzanie zespołem i pakiety — trzeba zmniejszyć zespół do {{trial.maxUsers}} kont albo wykupić pakiet. Dane nie znikają.
 
-### Strona Start (pulpit)
-Źródło: dashboardSummaryService. Domyślnie wyłączona w nowych zespołach; Administrator włącza ją w Ustawieniach → „Strona Start”. Dostępna w okresie próbnym i planach płatnych, nie w planie darmowym. Po włączeniu jest pierwszą stroną po zalogowaniu i pokazuje (zawsze w granicach roli i uprawnień):
+### Przegląd zespołu (dawniej „Start”)
+Źródło: dashboardSummaryService. Domyślnie wyłączony w nowych zespołach; Administrator włącza go w Ustawieniach → „Przegląd zespołu”. Dostępny w okresie próbnym i planach płatnych (od Core), nie w planie darmowym. Jeśli był włączony w okresie próbnym, po wykupieniu planu wraca sam. Po włączeniu jest pierwszą stroną po zalogowaniu i pokazuje (zawsze w granicach roli i uprawnień):
 - **Dziś**: własny wpis dnia (godziny, nadgodziny, nieobecność, notatka, stan zatwierdzenia) i uruchomiony licznik (od kiedy, czy przerwa/nadgodziny, opis pracy).
 - **Mój miesiąc**: suma godzin i nadgodzin, liczba dni z wpisami, dni zatwierdzone i odrzucone.
 - **Zespół w tym miesiącu** (Administrator, HR, przełożony w swoim zakresie): sumy godzin i nadgodzin, ile osób ma wpis, aktywne liczniki oraz **kto dziś nie ma jeszcze wpisu** (bez osób na urlopie i w dni wolne).
@@ -44,7 +44,7 @@ Po {{trial.days}} dniach, jeśli zespół nie wybierze pakietu, zostaje na bezp�
 - **Grafik** (gdy moduł włączony): dzisiejsze zmiany w zasięgu użytkownika, własne najbliższe zmiany, liczba wpisów roboczych (szkic).
 - **Komunikacja**: nieprzeczytane powiadomienia, komunikaty i wiadomości na czacie.
 - **Szybkie akcje**: „Uzupełnij czas pracy”, „Zgłoś urlop” / „Sprawdź wnioski”, zadania, grafiki, asystent AI, a dla Administratora/HR „Pakiety i rozliczenia”.
-Pulpit tylko pokazuje dane — wpisy, wnioski i zadania dodaje się na właściwych stronach (skróty prowadzą prosto tam).
+Przegląd zespołu tylko pokazuje dane — wpisy, wnioski i zadania dodaje się na właściwych stronach (skróty prowadzą prosto tam).
 
 ### Telefon i instalacja
 Na telefonie: otwórz stronę aplikacji w przeglądarce i wybierz „Dodaj do ekranu głównego”; na komputerze „Zainstaluj aplikację”. Zainstalowana wersja otwiera się szybciej i lepiej obsługuje powiadomienia push. Nie ma osobnej aplikacji w App Store / Google Play — PWA zastępuje ją.

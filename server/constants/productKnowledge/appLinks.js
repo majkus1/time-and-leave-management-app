@@ -35,7 +35,7 @@ module.exports = [
 	{ id: 'settings-leave-types', path: '/settings#settings-leave-types-section', label: { pl: 'Ustawienia → Typy urlopów', en: 'Settings → Leave types' }, roles: ADMIN_HR },
 	{ id: 'settings-leave-calculation', path: '/settings#settings-leave-calculation-section', label: { pl: 'Ustawienia → Rozliczanie urlopów i pula dni', en: 'Settings → Leave settlement & balance' }, roles: ADMIN_HR },
 	{ id: 'settings-timer-qr', path: '/settings#settings-timer-qr-section', label: { pl: 'Ustawienia → Licznik i kody QR', en: 'Settings → Timer & QR codes' }, roles: ADMIN_HR, mention: /qr|licznik|timer/i },
-	{ id: 'settings-dashboard', path: '/settings#settings-dashboard-section', label: { pl: 'Ustawienia → Strona Start', en: 'Settings → Start page' }, roles: ADMIN_HR, mention: /start|pulpit|dashboard/i },
+	{ id: 'settings-dashboard', path: '/settings#settings-dashboard-section', label: { pl: 'Ustawienia → Przegląd zespołu', en: 'Settings → Team overview' }, roles: ADMIN_HR, mention: /start|pulpit|dashboard|przegl[aą]d zespo|team overview/i },
 	{ id: 'settings-no-access-users', path: '/settings#settings-no-access-users-section', label: { pl: 'Ustawienia → Pracownicy bez dostępu', en: 'Settings → Employees without app access' }, roles: ADMIN_HR },
 	// Ustawienia osobiste (każdy)
 	{ id: 'settings-push', path: '/settings#settings-push-notifications-section', label: { pl: 'Ustawienia → Powiadomienia push', en: 'Settings → Push notifications' }, roles: null, mention: /push|powiadomien|notification/i },

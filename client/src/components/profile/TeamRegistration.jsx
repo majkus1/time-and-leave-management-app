@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState, useRef, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import AuthPageTopBar from '../shared/AuthPageTopBar'
 import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
 import { trackRegistrationConversion } from '../../utils/marketingAnalytics.js'
+import { parsePricingIntent, savePricingIntent } from '../../utils/pricingIntent'
 
 const TeamRegistration = () => {
 	const [formData, setFormData] = useState({
@@ -28,6 +29,13 @@ const TeamRegistration = () => {
 	const [showRetentionModal, setShowRetentionModal] = useState(false)
 	const [retentionInfo, setRetentionInfo] = useState(null)
 	const [showPassword, setShowPassword] = useState(false)
+	const [searchParams] = useSearchParams()
+
+	// Plan z kalkulatora na landingu (?plan=…&modules=…&users=…) — Pakiety podpowiedzą go po założeniu zespołu
+	useEffect(() => {
+		const intent = parsePricingIntent(searchParams)
+		if (intent) savePricingIntent(intent)
+	}, [searchParams])
 	const navigate = useNavigate()
 	const { setLoggedIn, setRole, setUsername, setTeamId, refreshUserData, loggedIn, isCheckingAuth } = useAuth()
 	const { t, i18n } = useTranslation()

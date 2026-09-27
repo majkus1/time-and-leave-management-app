@@ -6,9 +6,11 @@ import { API_URL } from '../config.js'
 export const BILLING_ENTITLEMENTS_QUERY_KEY = ['billing-entitlements']
 export const BILLING_STRIPE_CARD_QUERY_KEY = ['billing-stripe-card-summary']
 
-export function useBillingCatalog() {
+export function useBillingCatalog(options = {}) {
+	const { enabled = true } = options
 	return useQuery({
 		queryKey: ['billing-catalog'],
+		enabled,
 		queryFn: async () => {
 			const { data } = await axios.get(`${API_URL}/api/billing/catalog`, { withCredentials: true })
 			return data.catalog

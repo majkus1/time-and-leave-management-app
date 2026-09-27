@@ -11,6 +11,7 @@ import { useUserLogs, useAllLogs } from '../../hooks/useLogs'
 import { useDeleteTeam, usePermanentlyDeleteTeam, useTeamInfo } from '../../hooks/useTeam'
 import { useFreemiumAccess } from '../../hooks/useFreemiumAccess'
 import {
+	useBillingCatalog,
 	useBillingSuperPaidPlanTeams,
 	useBillingSuperStripePaidPlanTeams,
 	useBillingSuperThankPurchaseEmail,
@@ -19,13 +20,6 @@ import UsersInfoModal from '../shared/UsersInfoModal'
 import SupervisorConfigModal from './SupervisorConfigModal'
 import SubordinatesModal from './SubordinatesModal'
 import SuperAdminActivityPanel from '../admin/SuperAdminActivityPanel'
-
-const PAID_PLAN_LABELS = {
-	starter: 'Starter',
-	pro: 'Pro',
-	business: 'Business',
-	enterprise: 'Enterprise',
-}
 
 const WORKER_ROLE = 'Pracownik (Worker)'
 const isManagedNoAccessUser = user =>
@@ -77,6 +71,13 @@ function Logs() {
 		pageBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
 	}, [])
 	const isEnglish = i18n.language === 'en'
+	// Nazwy planów z katalogu (także nowe progi) — stary klucz starter to Core do 15 osób
+	const { data: billingCatalog } = useBillingCatalog({ enabled: isSuperAdmin })
+	const paidPlanLabel = planKey => {
+		const key = planKey === 'starter' ? 'base_s' : planKey
+		const label = billingCatalog?.tiers?.find(t => t.id === key)?.label
+		return label ? (isEnglish ? label.en : label.pl) : planKey || '—'
+	}
 
 	const { data: paidPlanTeams = [], isLoading: loadingPaidPlanTeams } = useBillingSuperPaidPlanTeams(isSuperAdmin)
 	const { data: stripePaidPlanTeams = [], isLoading: loadingStripePaidPlanTeams } =
@@ -3341,7 +3342,7 @@ function Logs() {
 								</thead>
 								<tbody>
 									{paidPlanTeams.map(row => {
-										const planLabel = PAID_PLAN_LABELS[row.planKey] || row.planKey || '—'
+										const planLabel = paidPlanLabel(row.planKey)
 										const cycle =
 											row.billingCycle === 'annual'
 												? ' — ' + (isEnglish ? 'annual' : 'rocznie')
@@ -3487,7 +3488,7 @@ function Logs() {
 								</thead>
 								<tbody>
 									{stripePaidPlanTeams.map(row => {
-										const planLabel = PAID_PLAN_LABELS[row.planKey] || row.planKey || '—'
+										const planLabel = paidPlanLabel(row.planKey)
 										const cycle =
 											row.billingCycle === 'annual'
 												? ' — ' + (isEnglish ? 'annual' : 'rocznie')

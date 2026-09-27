@@ -289,6 +289,21 @@
 	color: var(--po-sidebar-text) !important;
 }
 
+[data-theme='dark'] .nav-link.nav-link--locked {
+	background: transparent !important;
+	border: 1px dashed var(--po-sidebar-border) !important;
+}
+
+[data-theme='dark'] .nav-link.nav-link--locked .nav-text,
+[data-theme='dark'] .sidebar-locked__title {
+	color: var(--po-sidebar-muted) !important;
+}
+
+[data-theme='dark'] .nav-lock-price {
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text) !important;
+}
+
 [data-theme='dark'] .nav-link.nav-link--ai {
 	background-image: none !important;
 	background: rgba(99, 102, 241, 0.14) !important;

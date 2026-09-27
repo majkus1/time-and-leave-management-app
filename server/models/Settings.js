@@ -128,11 +128,16 @@ const settingsSchema = new mongoose.Schema({
 		default: false, // Domyślnie wyłączone (dla nowych zespołów)
 		required: true
 	},
-	// Włącz/wyłącz pulpit (Start) z KPI i skrótami
+	// Włącz/wyłącz Przegląd zespołu (dawniej „Start”) z KPI i skrótami
 	dashboardEnabled: {
 		type: Boolean,
 		default: false,
 		required: true
+	},
+	// Przegląd zespołu był włączony, gdy zespół spadł do planu darmowego — wraca sam po wykupieniu planu
+	dashboardRestoreAfterFreemium: {
+		type: Boolean,
+		default: false
 	},
 	// Lista „pierwsze kroki” po założeniu zespołu: kiedy ukryta i kiedy Admin pierwszy raz zapisał ustawienia
 	onboardingDismissedAt: {

@@ -1,0 +1,598 @@
+/* Kalkulator planu w Pakietach — kolory z theme.css (--po-*), więc działa w jasnym i ciemnym motywie */
+
+.ppk {
+	margin: 0 0 1.75rem;
+}
+
+.ppk__head {
+	margin-bottom: 1rem;
+}
+
+.ppk__title {
+	margin: 0 0 0.35rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--po-text);
+}
+
+.ppk__subtitle {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--po-text-muted);
+}
+
+.ppk__current-note {
+	margin: 0.75rem 0 0;
+	padding: 0.65rem 0.85rem;
+	border: 1px solid var(--po-border);
+	border-left: 4px solid var(--po-brand);
+	border-radius: 10px;
+	background: var(--po-brand-soft);
+	font-size: 0.9rem;
+	line-height: 1.45;
+	color: var(--po-text);
+}
+
+.ppk__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1rem;
+}
+
+@media (min-width: 1100px) {
+	.ppk__grid {
+		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+		align-items: start;
+	}
+}
+
+.ppk__card {
+	padding: 1.1rem;
+	border: 1px solid var(--po-border);
+	border-radius: 14px;
+	background: var(--po-surface);
+	box-shadow: 0 10px 26px var(--po-shadow);
+	color: var(--po-text);
+}
+
+@media (min-width: 640px) {
+	.ppk__card {
+		padding: 1.4rem;
+	}
+}
+
+.ppk__step + .ppk__step {
+	margin-top: 1.25rem;
+}
+
+.ppk__fieldset {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ppk__step-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.25rem 1rem;
+	margin-bottom: 0.55rem;
+}
+
+.ppk__label {
+	display: block;
+	margin: 0 0 0.55rem;
+	padding: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--po-text);
+}
+
+.ppk__step-head .ppk__label {
+	margin: 0;
+}
+
+.ppk__users-value {
+	font-weight: 700;
+	color: var(--po-brand-text);
+}
+
+.ppk__users {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.ppk__users input[type='range'] {
+	flex: 1;
+	min-width: 0;
+	height: 8px;
+	margin: 10px 0;
+	-webkit-appearance: none;
+	appearance: none;
+	border-radius: 999px;
+	background: linear-gradient(
+		to right,
+		var(--po-brand) 0,
+		var(--po-brand) var(--ppk-fill, 0%),
+		var(--po-border-strong) var(--ppk-fill, 0%),
+		var(--po-border-strong) 100%
+	);
+	cursor: pointer;
+}
+
+.ppk__users input[type='range']::-webkit-slider-thumb {
+	width: 22px;
+	height: 22px;
+	-webkit-appearance: none;
+	appearance: none;
+	border: 3px solid var(--po-brand);
+	border-radius: 50%;
+	background: var(--po-surface);
+	box-shadow: 0 2px 6px var(--po-shadow-strong);
+}
+
+.ppk__users input[type='range']::-moz-range-thumb {
+	width: 16px;
+	height: 16px;
+	border: 3px solid var(--po-brand);
+	border-radius: 50%;
+	background: var(--po-surface);
+}
+
+.ppk__users input[type='range']::-moz-range-track {
+	height: 8px;
+	border-radius: 999px;
+	background: transparent;
+}
+
+.ppk__users-number {
+	flex: none;
+	width: 5rem;
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--po-input-border);
+	border-radius: 10px;
+	background: var(--po-input-bg);
+	color: var(--po-input-text);
+	font: inherit;
+	font-weight: 700;
+	text-align: center;
+}
+
+.ppk__hint {
+	margin: 0.35rem 0 0;
+	font-size: 0.82rem;
+	color: var(--po-text-muted);
+}
+
+.ppk__always {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ppk__always-item {
+	padding: 0.3rem 0.75rem;
+	border: 1px solid var(--po-border);
+	border-radius: 999px;
+	background: var(--po-brand-soft);
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--po-brand-text);
+}
+
+.ppk__needs {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+	.ppk__needs {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.ppk__need {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	min-height: 3.1rem;
+	margin: 0;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--po-border-strong);
+	border-radius: 12px;
+	background: var(--po-surface);
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ppk__need:hover {
+	border-color: var(--po-brand);
+}
+
+.ppk__need--on {
+	border-color: var(--po-brand);
+	background: var(--po-brand-soft);
+	box-shadow: inset 0 0 0 1px var(--po-brand);
+}
+
+.ppk__need input {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	accent-color: var(--po-brand);
+	cursor: pointer;
+}
+
+.ppk__need-body {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.ppk__need-text {
+	font-size: 0.92rem;
+	font-weight: 700;
+	line-height: 1.3;
+	color: var(--po-text);
+}
+
+.ppk__need-hint {
+	font-size: 0.76rem;
+	line-height: 1.3;
+	color: var(--po-text-muted);
+}
+
+.ppk__billing {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.25rem;
+	padding: 0.25rem;
+	border: 1px solid var(--po-border);
+	border-radius: 12px;
+	background: var(--po-surface-muted);
+}
+
+.ppk__billing-btn {
+	padding: 0.55rem 0.5rem;
+	border: 0;
+	border-radius: 9px;
+	background: transparent;
+	font: inherit;
+	font-size: 0.88rem;
+	font-weight: 700;
+	line-height: 1.25;
+	color: var(--po-text-secondary);
+	cursor: pointer;
+}
+
+.ppk__billing-btn--on {
+	background: var(--po-surface);
+	color: var(--po-text);
+	box-shadow: 0 2px 8px var(--po-shadow-strong);
+}
+
+.ppk__billing-save {
+	display: block;
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--po-brand-text);
+}
+
+.ppk__result {
+	border: 2px solid var(--po-brand);
+}
+
+@media (min-width: 1100px) {
+	.ppk__result {
+		position: sticky;
+		top: 1rem;
+	}
+}
+
+.ppk__badge {
+	display: inline-block;
+	margin-bottom: 0.6rem;
+	padding: 0.2rem 0.65rem;
+	border-radius: 999px;
+	background: var(--po-brand);
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #ffffff;
+}
+
+.ppk__result-name {
+	margin: 0;
+	font-size: 1.2rem;
+	font-weight: 700;
+	line-height: 1.3;
+	color: var(--po-text);
+}
+
+.ppk__result-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.15rem 0.5rem;
+	margin: 0.3rem 0 0;
+	font-size: 2rem;
+	font-weight: 800;
+	line-height: 1.1;
+	color: var(--po-text);
+}
+
+.ppk__result-period {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--po-text-muted);
+}
+
+.ppk__result-equiv {
+	margin: 0.2rem 0 0;
+	font-size: 0.85rem;
+	color: var(--po-text-muted);
+}
+
+.ppk__result-why {
+	margin: 0.75rem 0 0;
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.45;
+	color: var(--po-brand-text);
+}
+
+.ppk__result-includes {
+	margin: 0.45rem 0 0;
+	font-size: 0.88rem;
+	line-height: 1.5;
+	color: var(--po-text-secondary);
+}
+
+.ppk__cta {
+	display: block;
+	width: 100%;
+	margin-top: 1rem;
+	padding: 0.8rem 1rem;
+	border: 0;
+	border-radius: 12px;
+	background: var(--po-brand);
+	font: inherit;
+	font-size: 1rem;
+	font-weight: 700;
+	color: #ffffff;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.ppk__cta:hover:not(:disabled) {
+	background: var(--po-brand-hover);
+}
+
+.ppk__cta:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.ppk__result-note,
+.ppk__result-current {
+	margin: 1rem 0 0;
+	padding: 0.6rem 0.8rem;
+	border-radius: 10px;
+	background: var(--po-surface-muted);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--po-text-secondary);
+}
+
+.ppk__result-current {
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text);
+}
+
+.ppk__result-warn {
+	margin: 1rem 0 0;
+	padding: 0.6rem 0.8rem;
+	border-radius: 10px;
+	background: var(--po-warning-soft);
+	font-size: 0.85rem;
+	color: var(--po-text);
+}
+
+.ppk__result-alt {
+	margin: 1rem 0 0;
+	padding-top: 0.75rem;
+	border-top: 1px dashed var(--po-border-strong);
+	font-size: 0.86rem;
+	line-height: 1.45;
+	color: var(--po-text-secondary);
+}
+
+.ppk__link-btn {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	font-weight: 700;
+	color: var(--po-brand-text);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+
+.ppk__link-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.ppk__plans {
+	margin-top: 1.5rem;
+}
+
+.ppk__plans-title {
+	margin: 0 0 0.75rem;
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: var(--po-text);
+}
+
+.ppk__plans-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.75rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@media (min-width: 768px) {
+	.ppk__plans-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.ppk__plan {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	padding: 1rem;
+	border: 1px solid var(--po-border);
+	border-radius: 12px;
+	background: var(--po-surface);
+	color: var(--po-text);
+}
+
+.ppk__plan--current {
+	border-color: var(--po-brand);
+	box-shadow: inset 0 0 0 1px var(--po-brand);
+}
+
+.ppk__plan-badge {
+	align-self: flex-start;
+	padding: 0.15rem 0.55rem;
+	border-radius: 999px;
+	background: var(--po-brand-soft);
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--po-brand-text);
+}
+
+.ppk__plan-name {
+	margin: 0;
+	font-weight: 700;
+}
+
+.ppk__plan-price {
+	margin: 0;
+	font-size: 1.3rem;
+	font-weight: 800;
+}
+
+.ppk__plan-desc {
+	margin: 0;
+	font-size: 0.86rem;
+	line-height: 1.45;
+	color: var(--po-text-secondary);
+}
+
+.ppk__plan-tiers {
+	margin: 0;
+	font-size: 0.8rem;
+	line-height: 1.5;
+	color: var(--po-text-muted);
+}
+
+.ppk__plan-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: auto;
+	padding-top: 0.35rem;
+}
+
+.ppk__plan-option,
+.ppk__plan-btn {
+	padding: 0.45rem 0.7rem;
+	border: 1px solid var(--po-brand);
+	border-radius: 10px;
+	background: var(--po-surface);
+	font: inherit;
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--po-brand-text);
+	cursor: pointer;
+}
+
+.ppk__plan-btn {
+	align-self: flex-start;
+	margin-top: auto;
+}
+
+.ppk__plan-option:hover:not(:disabled),
+.ppk__plan-btn:hover:not(:disabled) {
+	background: var(--po-brand-soft);
+}
+
+.ppk__plan-option:disabled,
+.ppk__plan-btn:disabled {
+	border-color: var(--po-border-strong);
+	color: var(--po-text-muted);
+	cursor: not-allowed;
+}
+
+.ppk__modules-line {
+	margin: 0.85rem 0 0;
+	font-size: 0.88rem;
+	color: var(--po-text-secondary);
+}
+
+.ppk__notes {
+	margin: 0.4rem 0 0;
+	font-size: 0.8rem;
+	color: var(--po-text-muted);
+}
+
+.ppk button:focus-visible,
+.ppk input:focus-visible {
+	outline: 2px solid var(--po-brand);
+	outline-offset: 2px;
+}
+
+/* style.css narzuca span (i p) rozmiar 16px i kolor z !important — elementy span kalkulatora nadpisują to klasą */
+.ppk span.ppk__need-body {
+	font-size: inherit !important;
+}
+
+.ppk span.ppk__need-text {
+	font-size: 0.92rem !important;
+	color: var(--po-text) !important;
+}
+
+.ppk span.ppk__need-hint {
+	font-size: 0.76rem !important;
+	color: var(--po-text-muted) !important;
+}
+
+.ppk span.ppk__badge {
+	font-size: 0.72rem !important;
+	color: #ffffff !important;
+}
+
+.ppk span.ppk__plan-badge {
+	font-size: 0.72rem !important;
+	color: var(--po-brand-text) !important;
+}
+
+.ppk .ppk__always-item span {
+	font-size: inherit !important;
+	color: inherit !important;
+}

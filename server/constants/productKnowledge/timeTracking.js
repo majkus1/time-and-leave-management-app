@@ -38,10 +38,10 @@ module.exports = {
 - Pracownicy bez dostępu do aplikacji: po włączeniu w Ustawieniach uprawnieni użytkownicy prowadzą ewidencję za osoby, które same nie logują się (patrz „Ustawienia i role”).
 
 ### Raporty i eksporty
-- Ewidencja zespołu: na dole listy kalendarzy — Excel/PDF raport zespołu (godziny, nadgodziny, urlopy w okresie), Excel/PDF wg osób, raport zadań i czynności (godziny, ilości, wydajność), gdy są dane.
+- Raporty zespołu (plan Core i wyżej, okres próbny): na dole listy kalendarzy — Excel/PDF raport zespołu (godziny, nadgodziny, urlopy w okresie), Excel/PDF wg osób, raport zadań i czynności (godziny, ilości, wydajność), gdy są dane.
 - Kalendarz jednej osoby: u góry PDF z podsumowaniem miesiąca.
 - Własna ewidencja: pracownik pobiera PDF/Excel swojego miesiąca ze strony „Czas pracy”.
-- Eksporty ewidencji działają także w planie darmowym.
+- W planie darmowym działa wydruk ewidencji każdej osoby (PDF/Excel z jej kalendarza i własny miesiąc na stronie „Czas pracy”); zamiast raportów zespołu jest informacja o planie Core.
 
 ### Czego NIE robi
 - Nie śledzi lokalizacji GPS ani aktywności na komputerze (nie ma zrzutów ekranu, monitoringu aplikacji). Wyjątek: przy kodzie QR można włączyć jednorazowy odczyt lokalizacji w chwili skanu (moduł QR).

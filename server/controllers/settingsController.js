@@ -242,7 +242,7 @@ exports.updateSettings = async (req, res) => {
 				if (!entitlementsService.mayEnableDashboardByBilling(team, new Date())) {
 					return res.status(400).json({
 						success: false,
-						message: 'Pulpit (Start) nie jest dostępny w planie darmowym.',
+						message: 'Przegląd zespołu nie jest dostępny w planie darmowym.',
 					})
 				}
 			}

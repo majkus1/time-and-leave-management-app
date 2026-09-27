@@ -54,7 +54,8 @@ Zespoły powyżej {{maxUsers.plan.business}} osób: wycena indywidualna — kont
 - Obecni klienci zachowują swoje plany i ceny (dawne Core S/M/L to te same progi do 15/30/100 osób, teraz z asystentem AI w cenie). Dawne osobne moduły Zadania, Czat i Asystent AI działają u zespołów, które je mają, ale nie są już w sprzedaży.
 
 ### Płatności i faktury
-- Menu → Pakiety i rozliczenia (Administrator, HR): wybierasz cykl (miesięczny/roczny), plan i moduły.
+- Menu → Pakiety i rozliczenia (Administrator, HR): kalkulator z liczbą osób i potrzebnymi funkcjami poleca jeden plan (ta sama logika co na stronie cennika), obok są wszystkie plany; wybierasz cykl (miesięczny/roczny), plan i moduły. Moduły poza planem zespołu Administrator i HR widzą też w menu, w sekcji „Rozszerz plan”, z ceną.
+- Obecni klienci zostają przy swoim planie i cenie — kalkulator przydaje się, gdy zmienia się liczba osób albo potrzebny jest nowy moduł.
 - Karta (Stripe): subskrypcja odnawiana automatycznie co miesiąc; kartą zarządzasz na tej samej stronie, subskrypcję można anulować (działa do końca opłaconego okresu).
 - Gdy bank odrzuci odnowienie kartą: plan działa jeszcze 7 dni od końca opłaconego okresu (data widoczna w Pakietach i rozliczeniach), pojawia się tam czerwony komunikat z przyciskiem „Zmień kartę”, a obciążenie jest ponawiane automatycznie. Po 7 dniach bez płatności zespół przechodzi na plan darmowy (do {{trial.maxUsers}} osób); po opłaceniu pełny plan wraca od razu. Najczęstsza przyczyna to wyłączone płatności internetowe lub cykliczne na karcie — włącza się je w aplikacji banku. Jeśli płatność nie przejdzie do końca okresu, zespół przechodzi na plan darmowy (do {{trial.maxUsers}} osób).
 - BLIK / przelew (Przelewy24): płatność jednorazowa za wybrany okres (miesiąc lub rok), bez automatycznego odnowienia — przed końcem okresu aplikacja przypomina e-mailem.

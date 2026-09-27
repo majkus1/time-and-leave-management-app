@@ -206,17 +206,28 @@ async function syncTimerEnabledSettingForTeam(teamId) {
 	}
 }
 
-/** Freemium nie ma pulpitu — wymuś wyłączenie w ustawieniach zespołu. */
+/**
+ * Plan darmowy nie ma Przeglądu zespołu — wymuś wyłączenie w ustawieniach zespołu, ale zapamiętaj,
+ * że był włączony: po wykupieniu planu wraca sam, bez ponownego włączania przez Administratora.
+ */
 async function syncDashboardEnabledSettingForTeam(teamId) {
 	if (!teamId) return
 	const team = await Team.findById(teamId).select(
 		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) return
-	if (!isFreemiumTierTeam(team, new Date())) return
+	if (!isFreemiumTierTeam(team, new Date())) {
+		// Warunkowy zapis bez odczytu — w zwykłym przypadku (nic do przywrócenia) filtr nic nie znajduje
+		await Settings.updateOne(
+			{ teamId, dashboardRestoreAfterFreemium: true },
+			{ $set: { dashboardEnabled: true, dashboardRestoreAfterFreemium: false } }
+		)
+		return
+	}
 	const settings = await Settings.findOne({ teamId })
 	if (settings?.dashboardEnabled) {
 		settings.dashboardEnabled = false
+		settings.dashboardRestoreAfterFreemium = true
 		await settings.save()
 	}
 }
