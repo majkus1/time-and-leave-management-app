@@ -23,7 +23,7 @@ Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopo
 
 ### Jak zacząć
 - Rejestracja zespołu: {{app.url}}/team-registration — podajesz nazwę firmy (zespołu), imię, nazwisko i e-mail. Osoba zakładająca zostaje Administratorem. Bez karty płatniczej.
-- Okres próbny: {{trial.days}} dni pełnej aplikacji (wszystkie moduły) dla zespołu do {{trial.maxUsers}} osób, z pulą {{trial.aiMessages}} wiadomości asystenta AI.
+- Okres próbny: {{trial.days}} dni pełnej aplikacji (wszystkie moduły) dla zespołu do {{trial.maxUsers}} osób, z asystentem AI bez limitu wiadomości.
 - Pierwsze kroki po założeniu zespołu (lista widoczna nad ewidencją): dodaj pracowników, ustaw godziny pracy i święta, wpisz pierwszy dzień pracy.
 - Nowy zespół startuje od strony „Czas pracy” (ewidencja). Strona „Start” (pulpit) jest w nowych zespołach domyślnie wyłączona — włącza ją Administrator w Ustawieniach (patrz niżej).
 

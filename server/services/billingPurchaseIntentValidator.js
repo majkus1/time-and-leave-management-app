@@ -8,6 +8,7 @@ const {
 	normalizePaidPlanKey,
 	isBundlePlanKey,
 	isCorePlanKey,
+	AI_ADDONS_ON_SALE,
 } = require('../constants/planCatalog')
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
@@ -19,6 +20,14 @@ const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
  */
 async function validateBillingPurchaseIntent(params) {
 	const { teamId, requestingUserId, kind, planKey, addonId, billingCycle, moduleKeys } = params
+
+	// AI jest bez limitu wiadomości — pakiety wycofane. Przed danymi do faktury, żeby odmowa mówiła właściwy powód;
+	// odmowa tutaj zamyka Stripe, P24 i zgłoszenie mailem naraz
+	if (kind === 'addon' && !AI_ADDONS_ON_SALE) {
+		const err = new Error('Asystent AI jest teraz bez limitu wiadomości — dokupowanie pakietów nie jest już potrzebne.')
+		err.code = 'ADDONS_DISCONTINUED'
+		throw err
+	}
 
 	const team = await Team.findById(teamId).select(
 		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus'

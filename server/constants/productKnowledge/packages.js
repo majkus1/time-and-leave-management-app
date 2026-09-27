@@ -6,8 +6,8 @@ module.exports = {
 	order: 8,
 	title: { pl: 'Pakiety, ceny i płatności', en: 'Plans, pricing and payments' },
 	summary: {
-		pl: 'Okres próbny, plan darmowy, Core S/M/L z modułami, pakiety Pro i Business, dokupy AI, rozliczenie roczne, płatności i faktury.',
-		en: 'Trial, free plan, Core S/M/L with modules, Pro and Business bundles, AI top-ups, annual billing, payments and invoices.',
+		pl: 'Okres próbny, plan darmowy, Core S/M/L z modułami, pakiety Pro i Business, AI bez limitu, rozliczenie roczne, płatności i faktury.',
+		en: 'Trial, free plan, Core S/M/L with modules, Pro and Business bundles, unlimited AI, annual billing, payments and invoices.',
 	},
 	keywords: {
 		pl: ['cena', 'ceny', 'cenn', 'koszt', 'ile kosztuje', 'ile płac', 'ile za ', 'pakiet', 'abonament', 'subskrypc', 'core', ' pro ', 'business', 'moduł', 'płatnoś', 'zapłac', 'faktur', ' vat', 'netto', 'blik', 'przelew', 'karta', 'kartą', 'stripe', 'roczn', 'miesięczn', 'rezygn', 'anulow', 'zwrot', 'ksef', 'darmow', 'bezpłatn', 'freemium', 'trial', 'próbn', 'użytkowników', 'pracowników', 'osób', 'wygaś', 'przedłuż', 'enterprise', 'dokup'],
@@ -20,7 +20,7 @@ module.exports = {
 	},
 	body: {
 		pl: `### Etapy
-1. Okres próbny: {{trial.days}} dni pełnej aplikacji, do {{trial.maxUsers}} osób, {{trial.aiMessages}} wiadomości AI. Bez karty.
+1. Okres próbny: {{trial.days}} dni pełnej aplikacji, do {{trial.maxUsers}} osób, z asystentem AI bez limitu wiadomości. Bez karty.
 2. Plan darmowy (bezterminowo, po trialu): ewidencja czasu pracy do {{trial.maxUsers}} aktywnych kont, bez urlopów, licznika/QR, grafików, zadań, czatu i AI.
 3. Pakiet płatny — dwie drogi:
 
@@ -31,20 +31,20 @@ module.exports = {
 | Core M | do {{maxUsers.plan.base_m}} | {{price.plan.base_m}} zł |
 | Core L | do {{maxUsers.plan.base_l}} | {{price.plan.base_l}} zł |
 
-Moduły dokupywane do Core (netto/mies.): Licznik + QR {{price.module.timer_qr}} zł, Grafiki + AI w grafiku {{price.module.schedules_ai}} zł, Zadania (tablice) {{price.module.tasks}} zł, Czat {{price.module.chat}} zł, Asystent AI {{price.module.ai_assistant}} zł. Z modułem Asystent AI lub Grafiki + AI zespół ma wspólną pulę {{ai.coreModulePool}} wiadomości AI miesięcznie.
+Moduły dokupywane do Core (netto/mies.): Licznik + QR {{price.module.timer_qr}} zł, Grafiki + AI w grafiku {{price.module.schedules_ai}} zł, Zadania (tablice) {{price.module.tasks}} zł, Czat {{price.module.chat}} zł, Asystent AI {{price.module.ai_assistant}} zł. Z modułem Asystent AI lub Grafiki + AI zespół ma asystenta AI bez limitu wiadomości.
 
 ### Pakiety — wszystkie moduły w cenie
-| pakiet | osób | AI/mies. | cena netto/mies. |
+| pakiet | osób | asystent AI | cena netto/mies. |
 |---|---|---|---|
-| Pro | do {{maxUsers.plan.pro}} | {{ai.plan.pro}} | {{price.plan.pro}} zł |
-| Business | do {{maxUsers.plan.business}} | {{ai.plan.business}} | {{price.plan.business}} zł |
+| Pro | do {{maxUsers.plan.pro}} | bez limitu wiadomości | {{price.plan.pro}} zł |
+| Business | do {{maxUsers.plan.business}} | bez limitu wiadomości, priorytetowe wsparcie | {{price.plan.business}} zł |
 
 Zespoły powyżej {{maxUsers.plan.business}} osób: wycena indywidualna — kontakt przez Centrum pomocy lub biuro@planopia.pl. Nie ma gotowego większego pakietu w cenniku.
 
 ### Jak dobrać
 - Liczba osób = aktywne konta (w tym pracownicy bez dostępu). Do 15 osób z samą ewidencją i urlopami: Core S. Potrzebne 2–3 moduły przy 16–30 osobach: porównaj Core M + moduły z Pro ({{price.plan.pro}} zł) — Pro często wychodzi taniej. Powyżej 30 osób z modułami: Business.
 - Rozliczenie roczne: płacisz za {{annual.monthsCharged}} miesięcy zamiast 12 (plan i moduły).
-- Dokupy wiadomości AI (jednorazowe, po aktywnym pakiecie płatnym): {{addon.ai50.messages}} za {{addon.ai50.price}} zł, {{addon.ai200.messages}} za {{addon.ai200.price}} zł, {{addon.ai500.messages}} za {{addon.ai500.price}} zł netto.
+- Asystent AI w planach z AI nie ma limitu wiadomości (tylko rozsądne użycie), więc pakietów wiadomości AI nie ma już w sprzedaży.
 
 ### Płatności i faktury
 - Menu → Pakiety i rozliczenia (Administrator, HR): wybierasz cykl (miesięczny/roczny), plan i moduły.

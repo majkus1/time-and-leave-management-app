@@ -378,13 +378,13 @@ function TutorialModal({ isOpen, onClose }) {
 						icon: '/img/wallet.png',
 						description:
 							i18n.resolvedLanguage === 'pl'
-								? 'Core, Pro, Business, limity AI i dokumenty prawne'
-								: 'Core, Pro, Business, AI limits and legal documents',
+								? 'Core, Pro, Business, Asystent AI i dokumenty prawne'
+								: 'Core, Pro, Business, AI Assistant and legal documents',
 						path: '/packages',
 						content:
 							i18n.resolvedLanguage === 'pl'
-								? '– Menu boczne → „Pakiety i rozliczenia” (ikona portfela).\n– U góry: aktualny plan zespołu i wykorzystanie limitu Asystenta AI (czat, grafik, drafty).\n– Plany: Core (konfiguracja — wielkość zespołu i moduły), gotowe pakiety Pro i Business.\n– Przełącz rozliczenie miesięczne/roczne, potem wybierz plan lub dokup wiadomości AI.\n– Płatność online: cykliczna subskrypcja kartą (Stripe) lub BLIK/przelew (Przelewy24) — w zależności od planu i dostępności; przy Stripe możesz też zarządzać kartą na tej stronie.\n– Gdy płatność online nie jest dostępna — formularz zgłoszenia mailem.\n– Dokupy wiadomości AI — przy aktywnej płatnej subskrypcji.\n– Na dole: dokumenty prawne (regulamin, polityka prywatności, DPA); przy nowej wersji — ostrzeżenie i akceptacja jednym przyciskiem.'
-								: '– Sidebar → “Packages & billing” (wallet icon).\n– At the top: current team plan and shared AI Assistant usage (chat, schedule, drafts).\n– Plans: Core (configure team size and modules), ready-made Pro and Business bundles.\n– Switch monthly/yearly billing, then pick a plan or buy extra AI messages.\n– Online payment: recurring card subscription (Stripe) or BLIK/bank transfer (Przelewy24) — depending on the plan and what is enabled; with Stripe you can manage your card on this page.\n– If online payment is unavailable — email request form.\n– Extra AI message packs — with an active paid subscription.\n– At the bottom: legal documents (terms, privacy, DPA); when a new version is required — warning and accept all in one step.',
+								? '– Menu boczne → „Pakiety i rozliczenia” (ikona portfela).\n– U góry: aktualny plan zespołu i Asystent AI — w planach z AI bez limitu wiadomości (czat, grafik, szkice).\n– Plany: Core (konfiguracja — wielkość zespołu i moduły), gotowe pakiety Pro i Business.\n– Przełącz rozliczenie miesięczne/roczne, potem wybierz plan.\n– Płatność online: cykliczna subskrypcja kartą (Stripe) lub BLIK/przelew (Przelewy24) — w zależności od planu i dostępności; przy Stripe możesz też zarządzać kartą na tej stronie.\n– Gdy płatność online nie jest dostępna — formularz zgłoszenia mailem.\n– Na dole: dokumenty prawne (regulamin, polityka prywatności, DPA); przy nowej wersji — ostrzeżenie i akceptacja jednym przyciskiem.'
+								: '– Sidebar → “Packages & billing” (wallet icon).\n– At the top: current team plan and the AI Assistant — no message limit on plans with AI (chat, schedule, drafts).\n– Plans: Core (configure team size and modules), ready-made Pro and Business bundles.\n– Switch monthly/yearly billing, then pick a plan.\n– Online payment: recurring card subscription (Stripe) or BLIK/bank transfer (Przelewy24) — depending on the plan and what is enabled; with Stripe you can manage your card on this page.\n– If online payment is unavailable — email request form.\n– At the bottom: legal documents (terms, privacy, DPA); when a new version is required — warning and accept all in one step.',
 					},
 				]
 			: []),

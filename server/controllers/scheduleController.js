@@ -1389,7 +1389,7 @@ exports.aiScheduleAutoDraft = async (req, res) => {
 			usage: result.usage,
 		})
 	} catch (err) {
-		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
+		if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION' || err.code === 'AI_FAIR_USE_LIMIT') {
 			return res.status(403).json({ message: err.message, code: err.code })
 		}
 		if (err.code === 'OPENAI_NOT_CONFIGURED') {

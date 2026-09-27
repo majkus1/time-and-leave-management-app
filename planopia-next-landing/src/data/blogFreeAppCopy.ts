@@ -18,7 +18,7 @@ export const blogFreeAppCopy = {
 		faqs: [
 			{
 				q: 'Czy jest okres próbny?',
-				a: 'Tak. Przez 30 dni masz pełne funkcje za darmo w zespole do 5 użytkowników (limit wiadomości Asystenta AI w tym czasie). Bez karty płatniczej i bez zobowiązania.',
+				a: 'Tak. Przez 30 dni masz pełne funkcje za darmo w zespole do 5 użytkowników, z Asystentem AI bez limitu wiadomości. Bez karty płatniczej i bez zobowiązania.',
 			},
 			{
 				q: 'Jak długo trwa darmowy okres?',
@@ -51,7 +51,7 @@ export const blogFreeAppCopy = {
 		faqs: [
 			{
 				q: 'Is there a free trial?',
-				a: 'Yes. For 30 days you get full features for free in a team of up to 5 users (AI Assistant message limit during trial). No credit card and no commitment required.',
+				a: 'Yes. For 30 days you get full features for free in a team of up to 5 users, including the AI Assistant with no message limit. No credit card and no commitment required.',
 			},
 			{
 				q: 'How long does the free period last?',

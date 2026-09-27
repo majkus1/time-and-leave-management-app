@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react'
 import { PAYMENT_BASE_URL, paymentHref } from '@/lib/paymentLinks'
 import {
 	LANDING_ANNUAL_MONTHS_CHARGED,
-	landingAddons,
 	landingBundles,
 	landingCoreMinMonthlyNetPln,
 	landingCoreTiers,
@@ -252,9 +251,9 @@ const copy = {
 			'Zadania i Projekty',
 			'Czat zespołowy',
 		],
-		proBulletAi: 'Asystent AI — 50 wiadomości miesięcznie na zespół',
+		proBulletAi: 'Asystent AI bez limitu wiadomości',
 		proBulletUsers: 'Do 30 użytkowników',
-		businessBulletAi: 'Asystent AI — 300 wiadomości miesięcznie na zespół',
+		businessBulletAi: 'Asystent AI bez limitu wiadomości',
 		businessBulletUsers: 'Do 100 użytkowników',
 		businessBulletPriority: 'Priorytetowe wsparcie',
 		businessBulletIntegrations: 'Dodatkowe funkcje i integracje na życzenie pod Twój biznes',
@@ -262,8 +261,9 @@ const copy = {
 		enterpriseStripTitle: 'Indywidualna wycena i podejście',
 		enterpriseStripBody: 'Gdy gotowe pakiety to za mało — napisz w formularzu, wrócimy z propozycją.',
 		enterpriseCta: 'Formularz — opisz potrzebę',
-		addonTitle: 'Pakiety AI (opcjonalne)',
-		addonSubtitle: 'Dokup wiadomości Asystenta przy aktywnej płatnej subskrypcji — jak w aplikacji.',
+		addonTitle: 'Asystent AI bez limitu wiadomości',
+		addonSubtitle:
+			'W okresie próbnym, w pakietach Pro i Business oraz z modułem Grafiki + AI lub Asystent AI. Bez liczników i bez dokupywania pakietów — obowiązuje tylko rozsądne użycie.',
 		addonOpenPackages: 'Otwórz Pakiety',
 		tiersFootnote:
 			'* Płatny pakiet możesz anulować w dowolnym momencie. Przyciski prowadzą do sekcji „Pakiety i rozliczenia” w aplikacji — dokończ zakup po zalogowaniu.',
@@ -276,7 +276,7 @@ const copy = {
 		coreIncludedBadge: 'W cenie',
 		coreStep3: 'Podsumowanie',
 		coreSeatShort: 'do {{max}} użytkowników',
-		coreAiFootnote: '* AI: 50 wiadomości / miesięcznie na zespół.',
+		coreAiFootnote: '* Asystent AI bez limitu wiadomości (w rozsądnym użyciu).',
 		coreTotalLabel: 'Razem',
 		coreUpsellPro:
 			'Przy tej konfiguracji pakiet PRO (239 zł / miesięcznie) może być korzystniejszy — rozważ przejście na PRO.',
@@ -327,9 +327,9 @@ const copy = {
 			'Tasks and Projects',
 			'Team chat',
 		],
-		proBulletAi: 'AI Assistant — 50 messages per month, per team',
+		proBulletAi: 'AI Assistant with no message limit',
 		proBulletUsers: 'Up to 30 users',
-		businessBulletAi: 'AI Assistant — 300 messages per month, per team',
+		businessBulletAi: 'AI Assistant with no message limit',
 		businessBulletUsers: 'Up to 100 users',
 		businessBulletPriority: 'Priority support',
 		businessBulletIntegrations: 'Extra features and integrations tailored to your business',
@@ -338,8 +338,9 @@ const copy = {
 		enterpriseStripBody:
 			'When off-the-shelf plans are not enough — tell us in the form; we’ll reply with a proposal.',
 		enterpriseCta: 'Open form — describe your needs',
-		addonTitle: 'AI add-ons (optional)',
-		addonSubtitle: 'Top up AI Assistant messages on an active paid subscription — same as in the app.',
+		addonTitle: 'AI Assistant with no message limit',
+		addonSubtitle:
+			'During the trial, on Pro and Business, and with the Schedules + AI or AI Assistant module. No counters and no top-up packs — fair use applies.',
 		addonOpenPackages: 'Open Packages',
 		tiersFootnote:
 			'* You can cancel a paid plan at any time. Buttons take you to Packages & billing in the app — complete your purchase after signing in.',
@@ -352,7 +353,7 @@ const copy = {
 		coreIncludedBadge: 'Included',
 		coreStep3: 'Summary',
 		coreSeatShort: 'Up to {{max}} users',
-		coreAiFootnote: '* AI: 50 messages / month, team.',
+		coreAiFootnote: '* AI Assistant with no message limit (fair use).',
 		coreTotalLabel: 'Total',
 		coreUpsellPro:
 			'At this configuration, the PRO bundle (239 PLN / month) may be better value — consider upgrading to PRO.',
@@ -374,18 +375,17 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 
 	const trialLines = useMemo(() => {
 		const maxU = landingTrial.maxUsers
-		const ai = landingTrial.aiTrialOneOffTotal
 		if (locale === 'en') {
 			return [
-				'All features: time tracking, leave, schedules, chat, boards, AI Assistant (trial limits)',
-				`AI Assistant: ${ai} messages one-off during the trial`,
+				'All features: time tracking, leave, schedules, chat, boards, AI Assistant',
+				'AI Assistant with no message limit',
 				`Up to ${maxU} users in the team`,
 				'No credit card and no commitment',
 			]
 		}
 		return [
-			'Wszystkie funkcje: ewidencja, urlopy, grafiki, czat, tablice, Asystent AI (w limitach próby)',
-			`Asystent AI: ${ai} wiadomości jednorazowo w okresie próbnym`,
+			'Wszystkie funkcje: ewidencja, urlopy, grafiki, czat, tablice, Asystent AI',
+			'Asystent AI bez limitu wiadomości',
 			`Do ${maxU} użytkowników w zespole`,
 			'Bez karty płatniczej i bez zobowiązania',
 		]
@@ -808,30 +808,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 							<PricingIcon name="ai" locale={locale} />
 							<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
 						</div>
-						<p className="text-sm text-gray-600 mt-1 mb-6">{t.addonSubtitle}</p>
-						<div className="grid sm:grid-cols-3 gap-4">
-							{landingAddons.map(a => (
-								<div
-									key={a.id}
-									className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-white/90 border border-white/80 p-4 shadow-sm"
-								>
-									<div>
-										<p className="font-semibold text-gray-900">
-											{locale === 'pl' ? `+${a.messages} wiadomości` : `+${a.messages} messages`}
-										</p>
-										<p className="pricing-addon-price font-bold">
-											{locale === 'pl' ? `${a.pricePlnNet} zł` : `$${formatMoney('en', plnToUsd(a.pricePlnNet), 2)}`}
-										</p>
-									</div>
-									<Link
-										href={paymentHref('addon', { addon: a.id, billing: billingCycleParam })}
-										className="text-center text-sm font-semibold py-2.5 px-4 rounded-lg bg-white border transition shrink-0"
-									>
-										{t.addonOpenPackages}
-									</Link>
-								</div>
-							))}
-						</div>
+						<p className="text-sm text-gray-600 mt-1">{t.addonSubtitle}</p>
 					</div>
 				</div>
 

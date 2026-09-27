@@ -2,6 +2,7 @@ const {
 	TRIAL,
 	PAID_PLANS,
 	AI_ADDON_PACKS,
+	AI_ADDONS_ON_SALE,
 	MONTHLY_NET_PRICES_PLN,
 	MODULE_MONTHLY_NET_PRICES_PLN,
 	listPaidPlanKeys,
@@ -35,7 +36,8 @@ function buildPublicCatalog() {
 		monthlyNetPln: MODULE_MONTHLY_NET_PRICES_PLN[id] ?? null,
 	}))
 
-	const addons = listAddonIds().map(id => ({
+	// Pakiety AI wycofane ze sprzedaży (AI bez limitu) — klient nie pokazuje sekcji, gdy lista jest pusta
+	const addons = (AI_ADDONS_ON_SALE ? listAddonIds() : []).map(id => ({
 		id,
 		messages: AI_ADDON_PACKS[id].messages,
 		pricePlnNet: AI_ADDON_PACKS[id].pricePlnNet,

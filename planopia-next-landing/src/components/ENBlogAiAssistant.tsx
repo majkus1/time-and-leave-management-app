@@ -27,8 +27,8 @@ const faqItems = [
 		a: 'When time tracking, leave, tasks, and schedules live in one system, the model can rely on consistent information instead of scattered spreadsheets and email threads. That reduces low-quality answers and improves usefulness.',
 	},
 	{
-		q: 'Are there usage limits for the AI Assistant?',
-		a: 'Yes — limits depend on your plan and stage (for example trial vs. active paid plan). See the pricing section on the homepage for current rules.',
+		q: 'Is there a message limit for the AI Assistant?',
+		a: 'No. During the trial, on Pro and Business, and with the Schedules + AI or AI Assistant module, you use it with no counters and no top-up packs. Only fair use applies, to prevent abuse. See the pricing section on the homepage for what each plan includes.',
 	},
 	{
 		q: 'Does Planopia automate the entire leave request workflow?',
@@ -154,7 +154,7 @@ function ENBlogAiAssistant() {
 						</h1>
 						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
 							Planopia is not just time tracking — it is one ecosystem: working time, leave requests and calendar, task boards, schedules, and team communication.
-							<strong className="font-semibold text-gray-800"> The AI Assistant</strong> works where the data already lives: it summarizes, explains, and speeds up orientation — within plan limits. Trial and plans:{' '}
+							<strong className="font-semibold text-gray-800"> The AI Assistant</strong> works where the data already lives: it summarizes, explains, and speeds up orientation — with no message limit on plans with AI. Trial and plans:{' '}
 							<Link href="/en#prices" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
 								pricing
 							</Link>
@@ -242,9 +242,9 @@ function ENBlogAiAssistant() {
 					</section>
 
 					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Security, roles, and limits</h2>
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">Security and roles</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Access is split by roles and permissions — the AI Assistant does not bypass visibility rules you set in the app. <strong>AI Assistant limits</strong> depend on your plan and subscription stage; see{' '}
+							Access is split by roles and permissions — the AI Assistant does not bypass visibility rules you set in the app. Plans with AI include the <strong>AI Assistant with no message limit</strong> (fair use applies); see{' '}
 							<Link href="/en#prices" className="text-blue-600 font-medium hover:underline">
 								pricing
 							</Link>{' '}

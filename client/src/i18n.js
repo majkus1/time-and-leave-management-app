@@ -68,7 +68,7 @@ i18n
 						hide: 'Close this list (it will not come back)',
 						hideDone: 'Hide',
 						helpPrompt: 'Not sure how something works?',
-						helpLink: 'Ask the assistant — it does not use the AI limit',
+						helpLink: 'Ask the assistant how Planopia works',
 						hideShort: 'Close',
 						askAssistant: 'Ask the AI assistant how Planopia works',
 						bookCall: 'Book a 15-minute call with the creator',
@@ -282,7 +282,7 @@ i18n
 							hint_chat: 'Questions about your team’s data for the selected period.',
 							hint_leave: 'Describe your leave — you’ll see a summary before it’s sent.',
 							hint_workday: 'Describe your workday — you’ll see a summary before it’s saved.',
-							hint_help: 'How Planopia works — no team data. Doesn’t use AI quota.',
+							hint_help: 'How Planopia works — no team data. Works on every plan.',
 							hint_helpOnly: 'How Planopia works. Chat with team data comes with the AI module.',
 						},
 						header: {
@@ -294,7 +294,7 @@ i18n
 							modeOn: 'How Planopia works?',
 							modeOff: 'Back to team data chat',
 							banner:
-								'Help mode: answers about how Planopia works — features, settings, plans — without your team’s data. Does not use the AI message limit.',
+								'Help mode: answers about how Planopia works — features, settings, plans — without your team’s data. Works on every plan, including the free one.',
 							bannerHelpOnly:
 								'Help mode: answers about how Planopia works. Chat with your team’s data (hours, leave, reports) is available in a plan with the AI Assistant module — see Packages & billing.',
 							placeholder: 'Ask how something works, e.g. “How do I set up QR codes for two sites?”',
@@ -303,7 +303,7 @@ i18n
 							moduleAll: 'General',
 							suggestionsLabel: 'Sample questions',
 							modulesLoadError: 'Could not load help topics. You can still ask a question.',
-							noQuotaBadge: 'Does not use the AI limit',
+							noQuotaBadge: 'Works on every plan',
 							askAboutModule: 'Ask the assistant about this',
 							linksHint: 'Open in the app:',
 							modules: {
@@ -320,13 +320,13 @@ i18n
 							},
 						},
 						quotaExceeded:
-							'Your team has used all AI assistant messages for this period. You can buy a message pack or change plan in Packages & billing (sidebar).',
+							'The AI assistant with team data isn’t in your current plan. Choose a plan with AI in Packages & billing (sidebar).',
 						quotaLink: 'Open Packages & billing',
 						aiQuota: {
 							needPlan:
 								'AI assistant is available after you activate a paid plan. Open Packages & billing to choose a plan.',
 							remaining: 'About {{n}} AI messages left this period (shared: chat, schedule AI, drafts).',
-							depleted: 'No AI messages left for this period.',
+							depleted: 'The AI assistant isn’t in your current plan.',
 							sharedHint: 'The same pool applies to AI Assistant, schedule auto-fill AI, and AI drafts in this app.',
 						},
 						promoFab: {
@@ -399,7 +399,7 @@ i18n
 						coreConfiguratorIncludedLabel: 'Included in the plan',
 						coreConfiguratorOptionalLabel: 'Optional add-on modules',
 						coreConfiguratorIncludedBadge: 'Included',
-						coreConfiguratorAiModuleFootnote: '* AI: 50 messages / month, team.',
+						coreConfiguratorAiModuleFootnote: '* AI assistant with no message limit (fair use).',
 						coreConfiguratorStep3Title: 'Summary',
 						coreConfiguratorSeatShort: 'Up to {{maxUsers}} users',
 						coreConfiguratorSeats: 'User limit',
@@ -449,12 +449,12 @@ i18n
 							],
 							pro: [
 								'All modules',
-								'AI (50 messages / month, team)',
+								'AI assistant with no message limit',
 								'Up to 30 users',
 							],
 							business: [
 								'All modules',
-								'AI (300 messages / month, team)',
+								'AI assistant with no message limit',
 								'Up to 100 users',
 								'Priority support',
 								'Extra features and integrations tailored to your business',
@@ -462,7 +462,7 @@ i18n
 							enterprise: [
 								'100+ users (from 949 PLN net — custom)',
 								'All modules, dedicated support (SLA), custom integrations',
-								'AI: 1000+ messages / month (or as agreed)',
+								'AI assistant with no message limit',
 							],
 						},
 						payOnlineCta: 'Pay online',
@@ -486,6 +486,10 @@ i18n
 							'Message packs can be ordered only while your team has an active paid subscription (not after the plan has lapsed).',
 						planMaxUsers: 'Up to {{n}} users',
 						planAi: '{{n}} AI messages / month (team)',
+						planAiUnlimited: 'AI assistant with no message limit',
+						aiUnlimitedUsage: 'AI assistant with no message limit — chat, schedule AI, and drafts. Used this month: {{n}}.',
+						aiFairUseReached: 'Your team hit this month’s fair-use limit for the AI assistant. It comes back on the 1st — need more? Write to us.',
+						aiNotInPlan: 'The AI assistant with team data comes with Pro and Business, and with the AI Assistant or Schedules + AI modules. “How Planopia works” help mode works on every plan.',
 						recommended: 'Recommended',
 						billingToggle: 'Billing',
 						netPerMonthShort: 'net / month',
@@ -2450,7 +2454,7 @@ i18n
 						hide: 'Zamknij tę listę (nie wróci)',
 						hideDone: 'Ukryj',
 						helpPrompt: 'Nie wiesz, jak coś działa?',
-						helpLink: 'Zapytaj asystenta — nie zużywa limitu AI',
+						helpLink: 'Zapytaj asystenta, jak działa Planopia',
 						hideShort: 'Zamknij',
 						askAssistant: 'Zapytaj asystenta AI, jak działa Planopia',
 						bookCall: 'Umów 15 min rozmowy z twórcą',
@@ -2666,7 +2670,7 @@ i18n
 							hint_chat: 'Pytania o dane Twojego zespołu z wybranego okresu.',
 							hint_leave: 'Opisz urlop — przed wysłaniem zobaczysz podsumowanie.',
 							hint_workday: 'Opisz dzień pracy — przed zapisem zobaczysz podsumowanie.',
-							hint_help: 'Jak działa Planopia — bez danych zespołu. Nie zużywa limitu AI.',
+							hint_help: 'Jak działa Planopia — bez danych zespołu. Działa w każdym planie.',
 							hint_helpOnly: 'Jak działa Planopia. Czat z danymi zespołu jest w planie z modułem AI.',
 						},
 						header: {
@@ -2678,7 +2682,7 @@ i18n
 							modeOn: 'Jak działa Planopia?',
 							modeOff: 'Wróć do czatu z danymi',
 							banner:
-								'Tryb pomocy: odpowiedzi o działaniu Planopii — funkcje, ustawienia, pakiety — bez danych Twojego zespołu. Nie zużywa limitu wiadomości AI.',
+								'Tryb pomocy: odpowiedzi o działaniu Planopii — funkcje, ustawienia, pakiety — bez danych Twojego zespołu. Działa w każdym planie, także darmowym.',
 							bannerHelpOnly:
 								'Tryb pomocy: odpowiedzi o działaniu Planopii. Czat z danymi zespołu (godziny, urlopy, raporty) jest w planie z modułem Asystent AI — patrz Pakiety i rozliczenia.',
 							placeholder: 'Zapytaj, jak coś działa, np. „Jak ustawić kody QR na dwie budowy?”',
@@ -2687,7 +2691,7 @@ i18n
 							moduleAll: 'Ogólne',
 							suggestionsLabel: 'Przykładowe pytania',
 							modulesLoadError: 'Nie udało się pobrać listy tematów. Nadal możesz zadać pytanie.',
-							noQuotaBadge: 'Nie zużywa limitu AI',
+							noQuotaBadge: 'Działa w każdym planie',
 							askAboutModule: 'Zapytaj asystenta o ten moduł',
 							linksHint: 'Otwórz w aplikacji:',
 							modules: {
@@ -2704,14 +2708,14 @@ i18n
 							},
 						},
 						quotaExceeded:
-							'Zespół wykorzystał limit wiadomości Asystenta AI w tym okresie. Możesz dokupić pakiet wiadomości lub zmienić plan w Pakiety i rozliczenia (menu boczne).',
+							'Asystent AI z danymi zespołu nie jest w Waszym obecnym planie. Wybierz plan z AI w Pakietach i rozliczeniach (menu boczne).',
 						quotaLink: 'Otwórz Pakiety i rozliczenia',
 						aiQuota: {
 							needPlan:
 								'Asystent AI jest dostępny po aktywacji płatnego planu. Otwórz Pakiety i rozliczenia, aby wybrać pakiet.',
 							remaining:
 								'Pozostało ok. {{n}} wiadomości AI w tym okresie (wspólny limit: czat, AI grafiku, drafty).',
-							depleted: 'Brak dostępnych wiadomości AI w tym okresie.',
+							depleted: 'Asystent AI nie jest w Waszym obecnym planie.',
 							sharedHint:
 								'Ten sam limit obejmuje AI Asystenta, auto-uzupełnianie grafiku AI oraz drafty AI w aplikacji.',
 						},
@@ -2779,7 +2783,7 @@ i18n
 						coreConfiguratorIncludedLabel: 'W cenie pakietu',
 						coreConfiguratorOptionalLabel: 'Moduły dodatkowe (opcjonalnie)',
 						coreConfiguratorIncludedBadge: 'W cenie',
-						coreConfiguratorAiModuleFootnote: '* AI: 50 wiadomości / mies. na zespół.',
+						coreConfiguratorAiModuleFootnote: '* Asystent AI bez limitu wiadomości (w rozsądnym użyciu).',
 						coreConfiguratorStep3Title: 'Podsumowanie',
 						coreConfiguratorSeatShort: 'do {{maxUsers}} użytkowników',
 						coreConfiguratorSeats: 'Limit użytkowników',
@@ -2829,12 +2833,12 @@ i18n
 							],
 							pro: [
 								'Wszystkie moduły',
-								'AI (50 wiadomości / mies. na zespół)',
+								'Asystent AI bez limitu wiadomości',
 								'Do 30 użytkowników',
 							],
 							business: [
 								'Wszystkie moduły',
-								'AI (300 wiadomości / mies., zespół)',
+								'Asystent AI bez limitu wiadomości',
 								'Do 100 użytkowników',
 								'Priorytetowe wsparcie',
 								'Dodatkowe funkcje i integracje na życzenie pod Twój biznes',
@@ -2842,7 +2846,7 @@ i18n
 							enterprise: [
 								'100+ użytkowników (od 949 PLN netto — indywidualnie)',
 								'Pełny pakiet, dedykowane wsparcie (SLA), integracje na zamówienie',
-								'AI: 1000+ wiadomości / miesiąc (wg umowy)',
+								'Asystent AI bez limitu wiadomości',
 							],
 						},
 						payOnlineCta: 'Zapłać online',
@@ -2872,6 +2876,10 @@ i18n
 						legacyTransitionAiPool: 'Pula AI na okres przejściowy (zespół)',
 						planMaxUsers: 'Do {{n}} użytkowników',
 						planAi: '{{n}} wiadomości AI / miesiąc (zespół)',
+						planAiUnlimited: 'Asystent AI bez limitu wiadomości',
+						aiUnlimitedUsage: 'Asystent AI bez limitu wiadomości — czat, AI w grafiku i szkice. W tym miesiącu: {{n}}.',
+						aiFairUseReached: 'Zespół osiągnął miesięczny limit bezpiecznego użycia Asystenta AI. Wróci pierwszego dnia miesiąca — potrzebujecie więcej? Napiszcie do nas.',
+						aiNotInPlan: 'Asystent AI z danymi zespołu jest w pakietach Pro i Business oraz w modułach Asystent AI i Grafiki + AI. Tryb „Jak działa Planopia” działa w każdym planie.',
 						recommended: 'Polecany',
 						billingToggle: 'Rozliczenie',
 						netPerMonthShort: 'netto / miesiąc',

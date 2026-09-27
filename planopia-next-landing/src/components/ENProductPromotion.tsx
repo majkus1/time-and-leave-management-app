@@ -214,7 +214,7 @@ function ENProductPromotion() {
 						<p className="landing-about-heading-eyebrow landing-section-eyebrow">One app, many possibilities</p>
 						<h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">Who is Planopia for?</h2>
 						<p className="landing-about-intro mt-4 text-lg text-gray-600">
-							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant within your plan limits.
+							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant and no message limit on plans with AI.
 						</p>
 					</div>
 

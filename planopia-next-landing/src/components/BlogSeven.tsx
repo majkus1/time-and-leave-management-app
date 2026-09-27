@@ -67,7 +67,7 @@ function BlogSeven() {
 								"name": "Jak działa okres próbny w Planopii?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje, do 5 użytkowników, z limitem wiadomości Asystenta AI w tym okresie. Po zakończeniu próby możesz zostać na bezpłatnym planie ewidencji czasu pracy (do 5 aktywnych kont) albo wykupić pakiet z pełnymi modułami."
+									"text": "Planopia oferuje 30 dni (pierwszy miesiąc) za darmo: pełne funkcje, do 5 użytkowników, z Asystentem AI bez limitu wiadomości. Po zakończeniu próby możesz zostać na bezpłatnym planie ewidencji czasu pracy (do 5 aktywnych kont) albo wykupić pakiet z pełnymi modułami."
 								}
 							},
 							{
@@ -338,7 +338,7 @@ function BlogSeven() {
 							<div>
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">Jak działa okres próbny?</h3>
 								<p className="text-gray-700">
-									Przez 30 dni (pierwszy miesiąc) korzystasz z pełnych funkcji za darmo w zespole do 5 użytkowników, z limitem wiadomości Asystenta AI w tym czasie.
+									Przez 30 dni (pierwszy miesiąc) korzystasz z pełnych funkcji za darmo w zespole do 5 użytkowników, z Asystentem AI bez limitu wiadomości.
 									Potem darmowy plan ewidencji lub pakiet płatny — szczegóły w{' '}
 									<Link href="/#cennik" className="text-blue-600 hover:underline">cenniku</Link>.
 								</p>

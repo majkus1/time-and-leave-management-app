@@ -67,7 +67,7 @@ function ENBlogSeven() {
 								"name": "How does the Planopia trial work?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, with AI Assistant message limits during the trial. After the trial, you can stay on a free time tracking plan (up to 5 active accounts) or upgrade to a paid plan with every module."
+									"text": "Planopia offers a 30-day trial with full product access for teams up to 5 users, including the AI Assistant with no message limit. After the trial, you can stay on a free time tracking plan (up to 5 active accounts) or upgrade to a paid plan with every module."
 								}
 							},
 							{
@@ -341,7 +341,7 @@ function ENBlogSeven() {
 							<div>
 								<h3 className="text-xl font-semibold text-gray-900 mb-2">How does the trial work?</h3>
 								<p className="text-gray-700">
-									You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant limits apply).
+									You get <strong>30 days</strong> with full features for up to <strong>5 users</strong> (AI Assistant included, no message limit).
 									No credit card required. After the trial, use free time tracking or choose a paid plan — see{' '}
 									<Link href="/en#prices" className="text-blue-600 hover:underline">pricing</Link>.
 								</p>

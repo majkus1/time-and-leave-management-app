@@ -1156,6 +1156,12 @@ export default function PackagesPage() {
 						<h3>{t('billingPackages.usageTitle')}</h3>
 						{ent.ai?.unrestricted ? (
 							<p className="packages-usage__text">{t('billingPackages.internalUnlimitedAi')}</p>
+						) : ent.ai?.fairUse ? (
+							<p className="packages-usage__text">
+								{ent.ai.hasAccess
+									? t('billingPackages.aiUnlimitedUsage', { n: ent.ai.usedInMonth || 0 })
+									: t('billingPackages.aiFairUseReached')}
+							</p>
 						) : ent.legacy && ent.legacyGrandfatheredActive ? (
 							legacyGrandfatheredUsageStats ? (
 								<>
@@ -1198,6 +1204,8 @@ export default function PackagesPage() {
 							)
 						) : ent.legacy && !ent.legacyGrandfatheredActive ? (
 							<p className="packages-usage__text">{t('billingPackages.legacyGraceEndedUsage')}</p>
+						) : !((ent.ai?.packBalance ?? 0) > 0) ? (
+							<p className="packages-usage__text">{t('billingPackages.aiNotInPlan')}</p>
 						) : (
 							<dl>
 								<dt>{t('billingPackages.remaining')}</dt>
@@ -1365,9 +1373,9 @@ export default function PackagesPage() {
 													? feats
 													: [
 															t('billingPackages.planMaxUsers', { n: tier.maxUsers }),
-															t('billingPackages.planAi', { n: tier.aiMessagesPerMonth }),
+															tier.aiMessagesPerMonth > 0 ? t('billingPackages.planAiUnlimited') : null,
 														]
-											return lines.map((line, i) => (
+											return lines.filter(Boolean).map((line, i) => (
 												<li key={i} className="packages-tier__feature">
 													<span className="packages-tier__feature-check" aria-hidden>
 														✓
@@ -1532,6 +1540,7 @@ export default function PackagesPage() {
 					)
 				})()}
 
+				{catalog.addons?.length > 0 && (
 				<div className="packages-addons">
 					<h3>
 						<span className="packages-addons__icon" aria-hidden="true" />
@@ -1596,6 +1605,7 @@ export default function PackagesPage() {
 						)
 					})}
 				</div>
+				)}
 
 				{canSubmitPurchaseRequest && (
 					<section

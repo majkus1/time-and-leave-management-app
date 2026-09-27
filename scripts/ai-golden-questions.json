@@ -109,15 +109,19 @@
 		]
 	},
 	{
-		"id": "business-ai-messages",
+		"id": "ai-no-message-limit",
 		"locale": "pl",
 		"targets": [
 			"landing",
 			"app-help"
 		],
-		"question": "Ile wiadomości AI ma pakiet Business?",
+		"question": "Ile wiadomości AI ma pakiet Business? Czy jest limit?",
 		"mustMatch": [
-			"300"
+			"bez limitu|nie ma limitu|nielimitowan"
+		],
+		"mustNotMatch": [
+			"300 wiadomości",
+			"dokup"
 		]
 	},
 	{

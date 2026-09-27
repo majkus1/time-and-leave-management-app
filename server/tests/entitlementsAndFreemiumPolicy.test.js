@@ -11,7 +11,7 @@ const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('path')
 
-const { LEGACY_PRE_BILLING_GRACE_UNTIL, TRIAL } = require('../constants/planCatalog')
+const { LEGACY_PRE_BILLING_GRACE_UNTIL, TRIAL, AI_FAIR_USE } = require('../constants/planCatalog')
 
 // --- Część 1: zero zależności od bazy ---
 const policy = require('../services/freemiumApiPolicyService')
@@ -213,20 +213,23 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isFreemiumTierTeam(team, T_2026), false)
 	})
 
-	it('pre-billing legacy: 10 wiadomości AI jednorazowo na okres (bez resetu miesięcznego)', () => {
+	it('pre-billing legacy: AI bez widocznego limitu, ukryty bezpiecznik jak w okresie próbnym', () => {
 		const team = {
 			name: 'FirmaZMongoLegacy',
 			isActive: true,
 			maxUsers: 50,
-			legacyOneOffAiMessagesUsed: 0,
+			legacyOneOffAiMessagesUsed: 10,
+			aiUsageMonthKey: e.currentMonthKey(),
+			aiMessagesUsedInMonth: 0,
 		}
 		const b = e.computeAiBuckets(team, T_2026)
 		assert.equal(b.hasAiAccess, true)
-		assert.equal(b.totalRemaining, 10)
-		const teamUsed = { ...team, legacyOneOffAiMessagesUsed: 10 }
+		assert.equal(b.metered, false)
+		assert.equal(b.fairUse, true)
+		const teamUsed = { ...team, aiMessagesUsedInMonth: AI_FAIR_USE.trialMonthlyMessages }
 		const b2 = e.computeAiBuckets(teamUsed, T_2026)
 		assert.equal(b2.hasAiAccess, false)
-		assert.equal(b2.denyReason, 'quota')
+		assert.equal(b2.denyReason, 'fair_use')
 	})
 
 	it('pre-billing legacy: po dacie grace — freemium (legacy grace expired)', () => {
@@ -306,21 +309,17 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isFreemiumTierTeam(team, T_LIP420_AFTER_GRACE), true)
 	})
 
-	it('lip420: 10 wiadomości AI na cały okres legacy (wspólna pula)', () => {
-		const teamFresh = {
+	it('lip420: stara pula 10 wiadomości legacy już nie blokuje — AI w rozsądnym użyciu', () => {
+		const teamUsedOldPool = {
 			name: 'lip420',
 			isActive: true,
 			maxUsers: 10,
-			legacyOneOffAiMessagesUsed: 0,
+			legacyOneOffAiMessagesUsed: 10,
 		}
-		const b1 = e.computeAiBuckets(teamFresh, T_LIP420_INSIDE)
-		assert.equal(b1.hasAiAccess, true)
-		assert.equal(b1.totalRemaining, 10)
-
-		const teamUsed = { ...teamFresh, legacyOneOffAiMessagesUsed: 10 }
-		const b2 = e.computeAiBuckets(teamUsed, T_LIP420_INSIDE)
-		assert.equal(b2.hasAiAccess, false)
-		assert.equal(b2.denyReason, 'quota')
+		const b = e.computeAiBuckets(teamUsedOldPool, T_LIP420_INSIDE)
+		assert.equal(b.hasAiAccess, true)
+		assert.equal(b.fairUse, true)
+		assert.equal(b.denyReason, undefined)
 	})
 
 	it('lip420 ze Starterem aktywnym: nie legacy — limity jak pakiet', () => {
@@ -338,7 +337,9 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.isStructuralLegacyPreBillingTeam(team, T_LIP420_INSIDE), false)
 		const b = e.computeAiBuckets(team, T_LIP420_INSIDE)
 		assert.equal(b.hasAiAccess, true)
-		assert.equal(b.monthlyRemaining, 50)
+		assert.equal(b.metered, false)
+		assert.equal(b.fairUse, true)
+		assert.equal(b.monthlyRemaining, AI_FAIR_USE.paidMonthlyMessages)
 	})
 
 	it('OficjalnyAdminowy (special): nigdy freemium tier w tym module', () => {
@@ -415,7 +416,7 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(ent.ai.canPurchaseAddon, false)
 	})
 
-	it('buildClientEntitlements: aktywny starter — dokup AI dozwolony', () => {
+	it('buildClientEntitlements: aktywny starter — pakiety AI wycofane (canPurchaseAddon false)', () => {
 		const billingPeriodEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 		const team = {
 			name: 'X',
@@ -427,7 +428,134 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 			billingHadPaidPlan: true,
 		}
 		const ent = e.buildClientEntitlements(team, {})
-		assert.equal(ent.ai.canPurchaseAddon, true)
+		assert.equal(ent.ai.canPurchaseAddon, false)
 		assert.equal(ent.freemiumTier, false)
+	})
+
+	it('AI bez limitu: okres próbny — bez licznika w UI, stara pula 10 nie blokuje, bezpiecznik miesięczny', () => {
+		const team = {
+			name: 'Nowy zespół',
+			isActive: true,
+			maxUsers: 5,
+			billingPlanKey: 'trial',
+			trialEndsAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+			trialAiMessagesUsed: 10,
+			aiUsageMonthKey: e.currentMonthKey(),
+			aiMessagesUsedInMonth: 0,
+		}
+		const ent = e.buildClientEntitlements(team, {})
+		assert.equal(ent.ai.hasAccess, true)
+		assert.equal(ent.ai.metered, false)
+		assert.equal(ent.ai.fairUse, true)
+		assert.equal(ent.ai.remainingApprox, null)
+		assert.equal(ent.ai.trialCap, null)
+		const capped = { ...team, aiMessagesUsedInMonth: AI_FAIR_USE.trialMonthlyMessages }
+		assert.equal(e.computeAiBuckets(capped).denyReason, 'fair_use')
+	})
+
+	it('AI bez limitu: pakiet Pro i Core z modułem AI — bezpiecznik płatny; Core bez modułu AI — bez AI', () => {
+		const base = {
+			name: 'Firma',
+			isActive: true,
+			maxUsers: 30,
+			billingStatus: 'active',
+			billingPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+			billingHadPaidPlan: true,
+			aiUsageMonthKey: e.currentMonthKey(),
+			aiMessagesUsedInMonth: 400,
+		}
+		const pro = e.computeAiBuckets({ ...base, billingPlanKey: 'pro' })
+		assert.equal(pro.hasAiAccess, true)
+		assert.equal(pro.fairUse, true)
+		assert.equal(pro.monthlyRemaining, AI_FAIR_USE.paidMonthlyMessages - 400)
+		const coreAi = e.computeAiBuckets({ ...base, billingPlanKey: 'base_s', billingModuleKeys: ['schedules_ai'] })
+		assert.equal(coreAi.hasAiAccess, true)
+		assert.equal(coreAi.fairUse, true)
+		const coreNoAi = e.computeAiBuckets({ ...base, billingPlanKey: 'base_s', billingModuleKeys: ['timer_qr'] })
+		assert.equal(coreNoAi.hasAiAccess, false)
+		assert.equal(coreNoAi.metered, true)
+		assert.equal(coreNoAi.denyReason, 'quota')
+		const proCapped = e.computeAiBuckets({ ...base, billingPlanKey: 'pro', aiMessagesUsedInMonth: AI_FAIR_USE.paidMonthlyMessages })
+		assert.equal(proCapped.hasAiAccess, false)
+		assert.equal(proCapped.denyReason, 'fair_use')
+	})
+
+	it('AI bez limitu: bezpiecznik nadpisywalny zmienną środowiskową', () => {
+		const prev = process.env.AI_FAIR_USE_MONTHLY
+		process.env.AI_FAIR_USE_MONTHLY = '5'
+		try {
+			const team = {
+				name: 'Firma',
+				isActive: true,
+				billingPlanKey: 'pro',
+				billingStatus: 'active',
+				billingPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+				aiUsageMonthKey: e.currentMonthKey(),
+				aiMessagesUsedInMonth: 5,
+			}
+			assert.equal(e.computeAiBuckets(team).denyReason, 'fair_use')
+		} finally {
+			if (prev === undefined) delete process.env.AI_FAIR_USE_MONTHLY
+			else process.env.AI_FAIR_USE_MONTHLY = prev
+		}
+	})
+
+	it('AI bez limitu: bez AI — wygasły okres próbny, wygasły plan, zespół wymuszony w tryb darmowy', () => {
+		const monthKey = e.currentMonthKey()
+		const expiredTrial = {
+			name: 'Po próbie',
+			isActive: true,
+			billingPlanKey: 'trial',
+			trialEndsAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+			aiUsageMonthKey: monthKey,
+			aiMessagesUsedInMonth: 0,
+		}
+		const lapsedPlan = {
+			name: 'Wygasły Pro',
+			isActive: true,
+			billingPlanKey: 'pro',
+			billingStatus: 'active',
+			billingPeriodEnd: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+			billingHadPaidPlan: true,
+			aiUsageMonthKey: monthKey,
+			aiMessagesUsedInMonth: 0,
+		}
+		// testleeegacy jest w FORCE_FREEMIUM_TEST_TEAM_NAMES — zapisany trial nie może dać AI
+		const forcedFree = {
+			name: 'testleeegacy',
+			isActive: true,
+			billingPlanKey: 'trial',
+			trialEndsAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+			aiUsageMonthKey: monthKey,
+			aiMessagesUsedInMonth: 0,
+		}
+		for (const team of [expiredTrial, lapsedPlan, forcedFree]) {
+			const b = e.computeAiBuckets(team)
+			assert.equal(b.hasAiAccess, false, team.name)
+			assert.equal(b.fairUse, undefined, team.name)
+			assert.equal(e.buildClientEntitlements(team, {}).ai.fairUse, false, team.name)
+		}
+	})
+
+	it('AI bez limitu: AI_FAIR_USE_MONTHLY=0 awaryjnie wyłącza AI w planach płatnych', () => {
+		const prev = process.env.AI_FAIR_USE_MONTHLY
+		process.env.AI_FAIR_USE_MONTHLY = '0'
+		try {
+			const team = {
+				name: 'Firma',
+				isActive: true,
+				billingPlanKey: 'pro',
+				billingStatus: 'active',
+				billingPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+				aiUsageMonthKey: e.currentMonthKey(),
+				aiMessagesUsedInMonth: 0,
+			}
+			const b = e.computeAiBuckets(team)
+			assert.equal(b.hasAiAccess, false)
+			assert.equal(b.denyReason, 'fair_use')
+		} finally {
+			if (prev === undefined) delete process.env.AI_FAIR_USE_MONTHLY
+			else process.env.AI_FAIR_USE_MONTHLY = prev
+		}
 	})
 })

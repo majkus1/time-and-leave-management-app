@@ -28,8 +28,8 @@ const faqItems = [
 		a: 'Gdy ewidencja czasu, urlopy, zadania i grafik żyją w jednym systemie, model może odnieść się do spójnych informacji zamiast do rozproszonych arkuszy i wątków mailowych. To ogranicza „halucynacje” i poprawia użyteczność podpowiedzi.',
 	},
 	{
-		q: 'Czy są limity korzystania z Asystenta AI?',
-		a: 'Tak — limity zależą od pakietu i etapu (np. okres próbny vs. aktywny plan płatny). Aktualne zasady znajdziesz w sekcji cennika na stronie głównej.',
+		q: 'Czy Asystent AI ma limit wiadomości?',
+		a: 'Nie. W okresie próbnym, w pakietach Pro i Business oraz z modułem Grafiki + AI lub Asystent AI korzystasz bez liczników i bez dokupywania pakietów. Obowiązuje tylko rozsądne użycie, które chroni przed nadużyciami. Co obejmuje który plan, znajdziesz w cenniku na stronie głównej.',
 	},
 	{
 		q: 'Czy Planopia automatyzuje całą ścieżkę wniosku urlopowego?',
@@ -155,7 +155,7 @@ function BlogAiAssistant() {
 						</h1>
 						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
 							Planopia to nie tylko ewidencja — to spójny ekosystem: czas pracy, wnioski urlopowe i kalendarz, tablice zadań, grafik i komunikacja.
-							<strong className="font-semibold text-gray-800"> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w ramach limitów pakietu. Okres próbny i plany:{' '}
+							<strong className="font-semibold text-gray-800"> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w planach z AI bez limitu wiadomości. Okres próbny i plany:{' '}
 							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
 								cennik
 							</Link>
@@ -245,9 +245,9 @@ function BlogAiAssistant() {
 					</section>
 
 					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Bezpieczeństwo, role i limity</h2>
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">Bezpieczeństwo i role</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. <strong>Limity Asystenta AI</strong> zależą od wybranego planu i etapu subskrypcji; dokładne warunki znajdziesz w{' '}
+							Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. W planach z AI <strong>Asystent AI nie ma limitu wiadomości</strong> (obowiązuje rozsądne użycie); co obejmuje który plan, znajdziesz w{' '}
 							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline">
 								cenniku
 							</Link>

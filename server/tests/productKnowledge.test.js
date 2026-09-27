@@ -47,10 +47,9 @@ test('cennik w bazie wiedzy pochodzi wyłącznie z planCatalog (brak liczb wpisa
 	const expected = [
 		...['base_s', 'base_m', 'base_l', 'pro', 'business'].map(k => `${planCatalog.MONTHLY_NET_PRICES_PLN[k]} zł`),
 		...Object.values(planCatalog.MODULE_MONTHLY_NET_PRICES_PLN).map(v => `${v} zł`),
-		...Object.values(planCatalog.AI_ADDON_PACKS).map(p => `${p.pricePlnNet} zł`),
 		`do ${planCatalog.PAID_PLANS.pro.maxUsers}`,
 		`do ${planCatalog.PAID_PLANS.business.maxUsers}`,
-		`${planCatalog.PAID_PLANS.business.aiMessagesPerMonth}`,
+		'bez limitu wiadomości',
 		`${planCatalog.ANNUAL_NET_MONTHS_CHARGED} miesięcy`,
 	]
 	for (const e of expected) assert.ok(packages.includes(e), `packages: brak „${e}”`)

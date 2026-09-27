@@ -14,11 +14,33 @@ const {
 	TRIAL,
 	PAID_PLANS,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
+	AI_FAIR_USE,
+	AI_ADDONS_ON_SALE,
 	isPaidPlanKey,
 	normalizePaidPlanKey,
 	effectiveAiMessagesPerMonth,
 	isModuleKey,
 } = require('../constants/planCatalog')
+
+/** Ukryty miesięczny bezpiecznik AI na zespół (planCatalog.AI_FAIR_USE, nadpisywalny zmienną środowiskową; 0 wyłącza AI) */
+function aiFairUseMonthlyCap(kind) {
+	const fromEnv = Number.parseInt(process.env[kind === 'trial' ? 'AI_FAIR_USE_TRIAL_MONTHLY' : 'AI_FAIR_USE_MONTHLY'], 10)
+	if (Number.isFinite(fromEnv) && fromEnv >= 0) return fromEnv
+	return kind === 'trial' ? AI_FAIR_USE.trialMonthlyMessages : AI_FAIR_USE.paidMonthlyMessages
+}
+
+/** Kontekst AI zespołu: 'trial' | 'paid' (AI w planie, bez widocznego limitu) albo null (AI nie ma w planie) */
+function aiFairUseKind(team, now = new Date()) {
+	// Plan darmowy (też wymuszony dla zespołów testowych FORCE_*) nie ma czatu z danymi — nawet przy zapisanym trialu
+	if (isFreemiumTierTeam(team, now)) return null
+	if (isLegacyPreBillingTeam(team, now)) return legacyGraceOneOffAiTotalForTeam(team) != null ? 'trial' : null
+	if (isTrialActive(team, now)) return 'trial'
+	if (isPaidSubscriptionActive(team, now)) {
+		const nk = normalizePaidPlanKey(team.billingPlanKey)
+		return effectiveAiMessagesPerMonth(nk, effectiveBillingModuleKeys(team, now)) > 0 ? 'paid' : null
+	}
+	return null
+}
 
 function effectiveLegacyGraceUntil(team) {
 	return legacyGraceUntilForTeam(team, LEGACY_PRE_BILLING_GRACE_UNTIL)
@@ -240,7 +262,9 @@ function effectiveMaxUsers(team, now = new Date()) {
 }
 
 /**
- * @returns {{ totalRemaining: number, trialRemaining: number, monthlyRemaining: number, packRemaining: number, hasAiAccess: boolean, metered: boolean, denyReason?: 'no_subscription'|'quota' }}
+ * AI w planie (okres próbny, pakiet, Core z modułem AI): bez widocznego limitu — metered: false, a jedyną granicą
+ * jest ukryty miesięczny bezpiecznik (denyReason 'fair_use'). Bez AI w planie: jak dotąd, tylko saldo starych pakietów.
+ * @returns {{ totalRemaining: number, trialRemaining: number, monthlyRemaining: number, packRemaining: number, hasAiAccess: boolean, metered: boolean, fairUse?: boolean, denyReason?: 'no_subscription'|'quota'|'fair_use' }}
  */
 function computeAiBuckets(team, now = new Date()) {
 	if (hasUnrestrictedAi(team)) {
@@ -254,25 +278,7 @@ function computeAiBuckets(team, now = new Date()) {
 		}
 	}
 
-	if (isLegacyPreBillingTeam(team, now)) {
-		const oneOffCap = legacyGraceOneOffAiTotalForTeam(team)
-		if (oneOffCap != null) {
-			ensureMonthRolloverInMemory(team)
-			const packBal = team.aiPackBalance || 0
-			const packOk = canSpendPackBalance(team) && packBal > 0
-			const used = team.legacyOneOffAiMessagesUsed || 0
-			const legacyRemaining = Math.max(0, oneOffCap - used)
-			const total = legacyRemaining + (packOk ? packBal : 0)
-			return {
-				totalRemaining: total,
-				trialRemaining: legacyRemaining,
-				monthlyRemaining: 0,
-				packRemaining: packBal,
-				hasAiAccess: total > 0,
-				metered: true,
-				denyReason: total > 0 ? undefined : 'quota',
-			}
-		}
+	if (isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) == null) {
 		return {
 			totalRemaining: 0,
 			trialRemaining: 0,
@@ -289,44 +295,9 @@ function computeAiBuckets(team, now = new Date()) {
 	const packBal = team.aiPackBalance || 0
 	const packOk = canSpendPackBalance(team) && packBal > 0
 
-	if (
-		isTrialExpiredUnpaid(team, now) ||
-		isPaidPlanPeriodLapsed(team, now) ||
-		isLegacyPreBillingGraceExpired(team, now)
-	) {
-		return {
-			totalRemaining: packOk ? packBal : 0,
-			trialRemaining: 0,
-			monthlyRemaining: 0,
-			packRemaining: packBal,
-			hasAiAccess: packOk,
-			metered: true,
-			denyReason: packOk ? undefined : 'quota',
-		}
-	}
-
-	if (isTrialActive(team, now)) {
-		const cap = TRIAL.aiTrialOneOffTotal
-		const used = team.trialAiMessagesUsed || 0
-		const trialRemaining = Math.max(0, cap - used)
-		const total = trialRemaining + (packOk ? packBal : 0)
-		return {
-			totalRemaining: total,
-			trialRemaining,
-			monthlyRemaining: 0,
-			packRemaining: packBal,
-			hasAiAccess: total > 0,
-			metered: true,
-			denyReason: total > 0 ? undefined : 'quota',
-		}
-	}
-
-	if (isPaidSubscriptionActive(team, now)) {
-		const nk = normalizePaidPlanKey(team.billingPlanKey)
-		const mods = effectiveBillingModuleKeys(team, now)
-		const included = effectiveAiMessagesPerMonth(nk, mods)
-		const usedMonth = team.aiMessagesUsedInMonth || 0
-		const monthlyRemaining = Math.max(0, included - usedMonth)
+	const fairUseKind = aiFairUseKind(team, now)
+	if (fairUseKind) {
+		const monthlyRemaining = Math.max(0, aiFairUseMonthlyCap(fairUseKind) - (team.aiMessagesUsedInMonth || 0))
 		const total = monthlyRemaining + (packOk ? packBal : 0)
 		return {
 			totalRemaining: total,
@@ -334,12 +305,13 @@ function computeAiBuckets(team, now = new Date()) {
 			monthlyRemaining,
 			packRemaining: packBal,
 			hasAiAccess: total > 0,
-			metered: true,
-			denyReason: total > 0 ? undefined : 'quota',
+			metered: false,
+			fairUse: true,
+			denyReason: total > 0 ? undefined : 'fair_use',
 		}
 	}
 
-	// np. wygasła subskrypcja — zostaje tylko saldo z pakietów (jeśli był wcześniej płatny plan)
+	// AI nie ma w planie (Core bez modułu AI, wygasły plan lub okres próbny) — zostaje tylko saldo z dawnych pakietów
 	const totalLeft = packOk ? packBal : 0
 	return {
 		totalRemaining: totalLeft,
@@ -354,37 +326,13 @@ function computeAiBuckets(team, now = new Date()) {
 
 function pickConsumeBucket(team, now = new Date()) {
 	if (hasUnrestrictedAi(team)) return null
-	if (isLegacyPreBillingTeam(team, now)) {
-		const cap = legacyGraceOneOffAiTotalForTeam(team)
-		if (cap != null) {
-			ensureMonthRolloverInMemory(team)
-			const used = team.legacyOneOffAiMessagesUsed || 0
-			if (used < cap) return 'legacy_one_off'
-			if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
-			return null
-		}
-		return null
-	}
+	if (isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) == null) return null
 
 	ensureMonthRolloverInMemory(team)
 
-	if (isTrialActive(team, now)) {
-		const cap = TRIAL.aiTrialOneOffTotal
-		const used = team.trialAiMessagesUsed || 0
-		if (used < cap) return 'trial'
-		if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
-		return null
-	}
-
-	if (isPaidSubscriptionActive(team, now)) {
-		const nk = normalizePaidPlanKey(team.billingPlanKey)
-		const mods = effectiveBillingModuleKeys(team, now)
-		const cap = effectiveAiMessagesPerMonth(nk, mods)
-		const usedMonth = team.aiMessagesUsedInMonth || 0
-		if (usedMonth < cap) return 'monthly'
-		if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
-		return null
-	}
+	// AI w planie: jeden miesięczny licznik (okres próbny też) — pod ukryty bezpiecznik, bez widocznych pul
+	const fairUseKind = aiFairUseKind(team, now)
+	if (fairUseKind && (team.aiMessagesUsedInMonth || 0) < aiFairUseMonthlyCap(fairUseKind)) return 'monthly'
 
 	if (canSpendPackBalance(team) && (team.aiPackBalance || 0) > 0) return 'pack'
 	return null
@@ -475,26 +423,19 @@ function buildClientEntitlements(team, options = {}) {
 			/** Wspólny licznik: czat AI + AI grafiku + drafty w asystencie */
 			sharedPoolAppliesTo: ['ai_assistant', 'schedules_ai'],
 			metered: buckets.metered,
+			/** AI w planie bez widocznego limitu (ukryty bezpiecznik miesięczny) */
+			fairUse: buckets.fairUse === true,
 			hasAccess: buckets.hasAiAccess,
 			/** false gdy legacy ma realny limit AI (pula promocyjna / pakiet) — UI nie pokazuje „wybierz plan” */
 			needsSubscription: structuralLegacy && !buckets.hasAiAccess,
 			remainingApprox: buckets.metered ? buckets.totalRemaining : null,
 			denyReason: buckets.denyReason || null,
-			canPurchaseAddon: isPaidSubscriptionActive(team, now),
-			trialUsed:
-				isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) != null
-					? team.legacyOneOffAiMessagesUsed || 0
-					: team.trialAiMessagesUsed || 0,
-			trialCap:
-				isLegacyPreBillingTeam(team, now) && legacyGraceOneOffAiTotalForTeam(team) != null
-					? legacyGraceOneOffAiTotalForTeam(team)
-					: isTrialActive(team, now)
-						? TRIAL.aiTrialOneOffTotal
-						: null,
+			canPurchaseAddon: AI_ADDONS_ON_SALE && isPaidSubscriptionActive(team, now),
+			trialUsed: team.trialAiMessagesUsed || 0,
+			/** Pule okresu próbnego i miesięczne nie ograniczają już AI — pola zostają dla zgodności klienta */
+			trialCap: null,
 			usedInMonth: team.aiMessagesUsedInMonth || 0,
-			monthlyIncluded: isPaidSubscriptionActive(team, now)
-				? effectiveAiMessagesPerMonth(paidPlanNorm, modsEffective)
-				: null,
+			monthlyIncluded: null,
 			packBalance: team.aiPackBalance || 0,
 			usageMonthKey: team.aiUsageMonthKey || currentMonthKey(now),
 		},
@@ -510,15 +451,27 @@ async function assertAiMessageAllowed(teamId) {
 	}
 	const buckets = computeAiBuckets(team)
 	if (!buckets.hasAiAccess || buckets.totalRemaining <= 0) {
-		const noSub = buckets.denyReason === 'no_subscription'
-		const err = new Error(
-			noSub
-				? 'Asystent AI jest dostępny po wykupieniu planu. Wybierz pakiet w sekcji Pakiety i rozliczenia.'
-				: 'Limit wiadomości Asystenta AI został wykorzany (łącznie z AI w grafiku). Możesz dokupić pakiet lub zmienić plan w zakładce Pakiety.'
-		)
-		err.code = noSub ? 'AI_DISABLED_NO_SUBSCRIPTION' : 'AI_QUOTA_EXCEEDED'
-		throw err
+		throw aiDeniedError(buckets.denyReason)
 	}
+}
+
+const AI_FAIR_USE_LIMIT_MESSAGE =
+	'Zespół osiągnął miesięczny limit bezpiecznego użycia Asystenta AI. Asystent wróci pierwszego dnia miesiąca — jeśli potrzebujecie więcej, napiszcie do nas przez Centrum pomocy.'
+
+function aiDeniedError(denyReason) {
+	if (denyReason === 'fair_use') {
+		const err = new Error(AI_FAIR_USE_LIMIT_MESSAGE)
+		err.code = 'AI_FAIR_USE_LIMIT'
+		return err
+	}
+	const noSub = denyReason === 'no_subscription'
+	const err = new Error(
+		noSub
+			? 'Asystent AI jest dostępny po wykupieniu planu. Wybierz pakiet w sekcji Pakiety i rozliczenia.'
+			: 'Asystent AI nie jest w Waszym obecnym planie. Jest w pakietach Pro i Business oraz w modułach Asystent AI i Grafiki + AI — w sekcji Pakiety i rozliczenia.'
+	)
+	err.code = noSub ? 'AI_DISABLED_NO_SUBSCRIPTION' : 'AI_QUOTA_EXCEEDED'
+	return err
 }
 
 async function consumeAiMessage(teamId) {
@@ -535,9 +488,7 @@ async function consumeAiMessage(teamId) {
 		ensureMonthRolloverInMemory(team)
 		const bucket = pickConsumeBucket(team, now)
 		if (!bucket) {
-			const err = new Error('AI quota exceeded')
-			err.code = 'AI_QUOTA_EXCEEDED'
-			throw err
+			throw aiDeniedError(computeAiBuckets(team, now).denyReason)
 		}
 
 		const prevVersion = team.aiBillingLockVersion || 0
@@ -555,8 +506,10 @@ async function consumeAiMessage(teamId) {
 		else if (bucket === 'monthly') setDoc.aiMessagesUsedInMonth = setDoc.aiMessagesUsedInMonth + 1
 		else setDoc.aiPackBalance = Math.max(0, setDoc.aiPackBalance - 1)
 
+		// Starsze zespoły nie mają pola w bazie (Mongoose podstawia 0 tylko w pamięci) — filtr { pole: 0 } by ich nie trafił
+		// i licznik (a z nim bezpiecznik AI) nigdy by się nie zapisał
 		const res = await Team.updateOne(
-			{ _id: teamId, aiBillingLockVersion: prevVersion },
+			{ _id: teamId, aiBillingLockVersion: prevVersion === 0 ? { $in: [0, null] } : prevVersion },
 			{ $set: setDoc }
 		)
 		if (res.modifiedCount === 1) return

@@ -20,7 +20,7 @@ const strings = {
 			'Urlopy i ewidencja — pomoc przy wnioskach oraz wpisach czasu pracy',
 			'Decyzje biznesowe — mniej zgadywania, więcej danych w jednym miejscu',
 		],
-		cta: 'Pakiety i limity Asystenta AI',
+		cta: 'Cennik — Asystent AI bez limitu',
 		ctaHref: '#cennik-pakiety-platne',
 	},
 	en: {
@@ -34,7 +34,7 @@ const strings = {
 			'Leave and timesheets — support for requests and time-log entries',
 			'Business decisions — less guessing, more data in one place',
 		],
-		cta: 'Plans and AI Assistant limits',
+		cta: 'Pricing — AI Assistant with no message limit',
 		ctaHref: '#prices-paid-plans',
 	},
 } as const

@@ -47,6 +47,9 @@ const copy = {
 		plan: 'Plan',
 		teamSeats: 'Miejsca w zespole',
 		aiLeft: 'AI pozostało',
+		aiAssistant: 'Asystent AI',
+		aiUnlimited: 'bez limitu',
+		aiUsedThisMonth: 'W tym miesiącu:',
 		noData: 'Brak pozycji',
 		noWorkToday: 'Nie ma jeszcze wpisu czasu pracy na dziś.',
 		noWorkTodayShort: 'Brak wpisu',
@@ -128,6 +131,9 @@ const copy = {
 		plan: 'Plan',
 		teamSeats: 'Team seats',
 		aiLeft: 'AI remaining',
+		aiAssistant: 'AI assistant',
+		aiUnlimited: 'no limit',
+		aiUsedThisMonth: 'This month:',
 		noData: 'No items',
 		noWorkToday: 'No work time entry for today yet.',
 		noWorkTodayShort: 'No entry',
@@ -786,13 +792,20 @@ function Dashboard() {
 										</strong>
 										<small>{text.teamSeats}</small>
 									</div>
-									{modules.ai && (
+									{modules.ai && (summary.entitlements?.ai?.fairUse ? (
+										// AI w planie bez licznika — pokazujemy wykorzystanie, nie „pozostało”
+										<div>
+											<span>{text.aiAssistant}</span>
+											<strong>{text.aiUnlimited}</strong>
+											<small>{text.aiUsedThisMonth} {formatNumber(summary.entitlements.ai.usedInMonth || 0, language)}</small>
+										</div>
+									) : (
 										<div>
 											<span>{text.aiLeft}</span>
 											<strong>{summary.entitlements?.ai?.remainingApprox ?? '-'}</strong>
 											<small>{summary.entitlements?.ai?.usageMonthKey || ''}</small>
 										</div>
-									)}
+									))}
 								</div>
 							</Section>
 						</div>

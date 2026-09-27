@@ -100,10 +100,11 @@ exports.chatStream = async (req, res) => {
 				recordAiUsage({ teamId: req.user.teamId, userId: req.user.userId, path: 'data_chat', mode: 'chat', model: streamEnd.model, usage: streamEnd.usage, durationMs: Date.now() - startedAt })
 			}
 		} catch (consumeErr) {
+			// Spread gubił message (nieenumerowalne w Error). Treść tylko dla bezpiecznika AI — inne błędy zapisu jako ogólny
 			writeSse(
 				aiAssistantSseErrorPayload({
-					...consumeErr,
 					code: consumeErr.code || 'AI_CONSUME_FAILED',
+					message: consumeErr.code === 'AI_FAIR_USE_LIMIT' ? consumeErr.message : undefined,
 				})
 			)
 		}

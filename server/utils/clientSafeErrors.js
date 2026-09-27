@@ -59,7 +59,7 @@ function billingGatewayErrorPayload(err) {
  * Zwraca odpowiedź Express dla typowych błędów AI lub null, jeśli obsługa nieznana.
  */
 function respondAiAssistantError(err, res) {
-	if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION') {
+	if (err.code === 'AI_QUOTA_EXCEEDED' || err.code === 'AI_DISABLED_NO_SUBSCRIPTION' || err.code === 'AI_FAIR_USE_LIMIT') {
 		return res.status(403).json({ error: err.message, code: err.code })
 	}
 	if (err.code === 'OPENAI_NOT_CONFIGURED') {

@@ -232,7 +232,7 @@ function ProductPromotion() {
       <p className="landing-about-heading-eyebrow landing-section-eyebrow">Jedna aplikacja, wiele możliwości</p>
       <h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">Dla kogo jest Planopia?</h2>
       <p className="landing-about-intro mt-4 text-lg text-gray-600">
-        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję czasu pracy, urlopy, grafiki i raporty, z Asystentem AI w ramach limitów wybranego pakietu.
+        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję czasu pracy, urlopy, grafiki i raporty, z Asystentem AI bez limitu wiadomości w planach z AI.
       </p>
     </div>
 

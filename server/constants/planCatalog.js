@@ -9,8 +9,23 @@
 
 const TRIAL = {
 	maxUsers: 5,
+	/** Historyczna pula AI okresu próbnego — od 09.2026 nie ogranicza (AI_FAIR_USE); zostaje dla zgodności API. */
 	aiTrialOneOffTotal: 10,
 }
+
+/**
+ * AI bez limitu wiadomości (od 09.2026): kto ma AI w planie (okres próbny, pakiety, Core z modułem Asystent AI
+ * lub Grafiki + AI), nie widzi licznika. Zostaje ukryty miesięczny bezpiecznik na zespół — przed nadużyciem
+ * (np. skryptem), nie przed normalną pracą. Na serwerze nadpisywalny: AI_FAIR_USE_MONTHLY, AI_FAIR_USE_TRIAL_MONTHLY
+ * (0 = awaryjne wyłączenie AI). Okres próbny niżej: zakłada się go bez weryfikacji maila, a realnie zużywa 1–6 wiadomości.
+ */
+const AI_FAIR_USE = {
+	paidMonthlyMessages: 1000,
+	trialMonthlyMessages: 50,
+}
+
+/** Pakiety wiadomości AI wycofane ze sprzedaży razem z limitami — definicje zostają dla starych cen Stripe i historii. */
+const AI_ADDONS_ON_SALE = false
 
 const LEGACY_PRE_BILLING_GRACE_UNTIL = new Date('2026-08-02T00:00:00+02:00')
 const LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL = 10
@@ -33,7 +48,10 @@ const MODULE_API_PREFIXES = {
 	ai_assistant: ['/api/ai-assistant'],
 }
 
-/** Wiadomości AI / mies. gdy wykupiony moduł ai_assistant na CORE (nie dotyczy pakietów — tam limit z PAID_PLANS) */
+/**
+ * Wiadomości AI / mies. przy module ai_assistant lub schedules_ai na CORE. Od 09.2026 liczba > 0 oznacza tylko
+ * „AI w planie” — limit wyznacza AI_FAIR_USE (tak samo aiMessagesPerMonth w PAID_PLANS).
+ */
 const AI_ASSISTANT_MODULE_MONTHLY_MESSAGES = 50
 
 /**
@@ -256,6 +274,8 @@ function p24CheckoutAmountGroszeForPlan(planKey, billingCycle, moduleKeys = []) 
 
 module.exports = {
 	TRIAL,
+	AI_FAIR_USE,
+	AI_ADDONS_ON_SALE,
 	LEGACY_PRE_BILLING_GRACE_UNTIL,
 	LEGACY_PRE_BILLING_GRACE_ONE_OFF_AI_TOTAL,
 	PAID_PLANS,

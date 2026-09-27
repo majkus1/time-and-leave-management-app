@@ -84,6 +84,7 @@ exports.postPurchaseRequest = async (req, res) => {
 			e.code === 'VALIDATION' ||
 			e.code === 'NOT_FOUND' ||
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
+			e.code === 'ADDONS_DISCONTINUED' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
 			e.code === 'INVOICE_INCOMPLETE'
 		) {
@@ -206,6 +207,7 @@ exports.postP24Checkout = async (req, res) => {
 			e.code === 'VALIDATION' ||
 			e.code === 'NOT_FOUND' ||
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
+			e.code === 'ADDONS_DISCONTINUED' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
 			e.code === 'P24_NOT_CONFIGURED' ||
 			e.code === 'INVOICE_INCOMPLETE'
@@ -258,6 +260,7 @@ exports.postStripeCheckout = async (req, res) => {
 			e.code === 'VALIDATION' ||
 			e.code === 'NOT_FOUND' ||
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
+			e.code === 'ADDONS_DISCONTINUED' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
 			e.code === 'INVOICE_INCOMPLETE' ||
 			e.code === 'STRIPE_CONFIG'
