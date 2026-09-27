@@ -1612,3 +1612,275 @@
 	border-color: var(--po-border) !important;
 	color: var(--po-brand-text) !important;
 }
+
+/* =============================================================================
+   Uporządkowany układ: akcje w nagłówku, zakładki trybów, jedno zdanie opisu,
+   na telefonie przewijane rzędy zamiast zawijanych (rozmowa zaczyna się wyżej)
+   ============================================================================= */
+
+.ai-assistant-header__actions {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.ai-assistant-header__icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.1rem;
+	height: 2.1rem;
+	padding: 0;
+	border-radius: 10px;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	background: #fff;
+	color: #475569;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ai-assistant-header__icon-btn:hover:not(:disabled) {
+	background: #f1f5f9;
+	color: #4338ca;
+}
+
+.ai-assistant-header__icon-btn:disabled {
+	opacity: 0.35;
+	cursor: not-allowed;
+}
+
+.ai-assistant-header__icon-btn--active {
+	background: #eef2ff;
+	border-color: rgba(102, 126, 234, 0.5);
+	color: #4338ca;
+}
+
+.ai-assistant-header__intro-panel--standalone {
+	margin-top: 0.75rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+/* Zakładki trybów — segmentowany przełącznik */
+.ai-assistant-modes {
+	display: flex;
+	gap: 0.25rem;
+	margin-top: 0.9rem;
+	padding: 0.25rem;
+	border-radius: 12px;
+	background: #f1f5f9;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+
+.ai-assistant-modes::-webkit-scrollbar {
+	display: none;
+}
+
+.ai-assistant-modes__tab {
+	flex: 1 1 0;
+	min-width: max-content;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	padding: 0.5rem 0.7rem;
+	border: none;
+	border-radius: 9px;
+	background: transparent;
+	color: #475569;
+	font-size: 0.9rem;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ai-assistant-modes__tab:hover:not(:disabled):not(.ai-assistant-modes__tab--active) {
+	color: #0f172a;
+	background: rgba(255, 255, 255, 0.6);
+}
+
+.ai-assistant-modes__tab:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.ai-assistant-modes__tab--active {
+	background: #fff;
+	color: #4338ca;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.ai-assistant-modes__icon {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+	flex: 0 0 auto;
+}
+
+.ai-assistant-modes__label {
+	font-size: inherit !important;
+	color: inherit !important;
+	font-weight: inherit;
+}
+
+/* Jedno zdanie o bieżącym trybie (zamiast banerów) */
+.ai-assistant-mode-hint {
+	margin: 0.5rem 0.15rem 0 !important;
+	font-size: 0.85rem !important;
+	line-height: 1.45;
+	color: #64748b !important;
+}
+
+@media (max-width: 640px) {
+	.ai-assistant-header__title {
+		font-size: 1.7rem;
+	}
+
+	.ai-assistant-header__logo {
+		width: 2.1rem;
+		height: 2.1rem;
+	}
+
+	.ai-assistant-modes__tab {
+		flex: 1 0 auto;
+		padding: 0.45rem 0.55rem;
+		font-size: 0.82rem;
+		gap: 0.3rem;
+	}
+
+	.ai-assistant-modes__icon {
+		width: 16px;
+		height: 16px;
+	}
+
+	.ai-assistant-mode-hint {
+		font-size: 0.8rem !important;
+	}
+
+	/* Limit AI: na telefonie tylko główne zdanie */
+	.ai-assistant-quota-bar__hint {
+		display: none;
+	}
+
+	/* Tematy pomocy: jeden przewijany rząd zamiast pięciu */
+	.ai-assistant-help {
+		gap: 0.5rem;
+	}
+
+	.ai-assistant-help__row:not(.ai-assistant-help__row--suggestions) .ai-assistant-help__label {
+		display: none;
+	}
+
+	.ai-assistant-help__chips {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		margin: 0 -0.65rem;
+		padding: 0 0.65rem 0.1rem;
+	}
+
+	.ai-assistant-help__chips::-webkit-scrollbar {
+		display: none;
+	}
+
+	.ai-assistant-help__chip {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+
+	/* Okres danych: etykieta obok, chipy w jednym przewijanym rzędzie */
+	.ai-assistant-period {
+		margin-top: 0.75rem;
+		padding: 0.6rem 0.65rem;
+	}
+
+	.ai-assistant-period__label {
+		margin-bottom: 0.35rem;
+	}
+
+	.ai-assistant-period__chips {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.ai-assistant-period__chips::-webkit-scrollbar {
+		display: none;
+	}
+
+	.ai-assistant-period__chips .ai-assistant-chip {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+
+	/* Szybkie pytania czatu: przewijany rząd, opis „Podsumuj miesiąc” w podpowiedzi przycisku */
+	.ai-assistant-monthly-killer__hint {
+		display: none;
+	}
+
+	.ai-assistant-monthly-killer {
+		padding: 0.5rem;
+	}
+
+	.ai-assistant-quick {
+		flex-direction: row;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: none;
+		gap: 0.4rem;
+	}
+
+	.ai-assistant-quick::-webkit-scrollbar {
+		display: none;
+	}
+
+	.ai-assistant-quick__btn {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+}
+
+[data-theme='dark'] .ai-assistant-header__icon-btn {
+	background: var(--po-surface) !important;
+	border-color: var(--po-border) !important;
+	color: var(--po-text-secondary) !important;
+}
+
+[data-theme='dark'] .ai-assistant-header__icon-btn:hover:not(:disabled),
+[data-theme='dark'] .ai-assistant-header__icon-btn--active {
+	background: var(--po-surface-hover) !important;
+	color: var(--po-brand-text) !important;
+}
+
+[data-theme='dark'] .ai-assistant-header__intro-panel--standalone {
+	background: var(--po-surface-muted);
+	border-color: var(--po-border);
+}
+
+[data-theme='dark'] .ai-assistant-modes {
+	background: var(--po-surface-muted);
+}
+
+[data-theme='dark'] .ai-assistant-modes__tab {
+	color: var(--po-text-secondary);
+}
+
+[data-theme='dark'] .ai-assistant-modes__tab:hover:not(:disabled):not(.ai-assistant-modes__tab--active) {
+	color: var(--po-text);
+	background: var(--po-surface-hover);
+}
+
+[data-theme='dark'] .ai-assistant-modes__tab--active {
+	background: var(--po-surface);
+	color: var(--po-brand-text);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .ai-assistant-mode-hint {
+	color: var(--po-text-muted) !important;
+}

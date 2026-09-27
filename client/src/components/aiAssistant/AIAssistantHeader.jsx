@@ -1,17 +1,48 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../../context/ThemeContext'
 
+const InfoIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+		<circle cx="12" cy="12" r="9" />
+		<path d="M12 11v5M12 8h.01" />
+	</svg>
+)
+
+const DownloadIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+		<path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+	</svg>
+)
+
+const TrashIcon = () => (
+	<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+		<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+	</svg>
+)
+
 /**
- * Short intro above the chat (presentational).
+ * Nagłówek asystenta: tytuł, status i małe akcje (informacje, pobierz rozmowę, wyczyść) w jednym wierszu —
+ * zamiast osobnego wiersza „Informacje” i przycisków nad czatem.
  * @param {object} [props.aiEntitlements] — z /api/ai-assistant/status (pole ai z buildClientEntitlements)
  * @param {boolean} [props.statusPending] — pierwsze pobranie statusu (nie pokazuj „wyłączony” zanim przyjdzie odpowiedź)
  * @param {boolean} [props.statusError] — błąd pobrania statusu
  */
-function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError, helpMode = false }) {
+function AIAssistantHeader({
+	enabled,
+	aiEntitlements,
+	statusPending,
+	statusError,
+	helpMode = false,
+	onClear,
+	onExport,
+	canClear = false,
+	canExport = false,
+}) {
 	const { t } = useTranslation()
 	const { isDark } = useTheme()
+	const [infoOpen, setInfoOpen] = useState(false)
 	const planioLogoSrc = isDark ? '/img/star.png' : '/img/planio.png'
 	const introBullets = t('aiAssistant.introBullets', { returnObjects: true })
 	const introList = Array.isArray(introBullets) ? introBullets : []
@@ -37,27 +68,59 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 					draggable={false}
 				/>
 				<h1 className="ai-assistant-header__title">{t('aiAssistant.title')}</h1>
-				{statusPending && (
+				{!helpMode && statusPending && (
 					<span className="ai-assistant-header__badge ai-assistant-header__badge--pending" aria-live="polite">
 						<span className="ai-assistant-header__badge-dot" aria-hidden />
 						{t('aiAssistant.statusChecking')}
 					</span>
 				)}
-				{!statusPending && statusError && (
+				{!helpMode && !statusPending && statusError && (
 					<span className="ai-assistant-header__badge ai-assistant-header__badge--warn" role="status">
 						{t('aiAssistant.statusLoadError')}
 					</span>
 				)}
-				{!statusPending && !statusError && !enabled && (
+				{!helpMode && !statusPending && !statusError && !enabled && (
 					<span className="ai-assistant-header__badge ai-assistant-header__badge--off">
 						{t('aiAssistant.disabledBadge')}
 					</span>
 				)}
-				{helpMode && (
-					<span className="ai-assistant-header__badge ai-assistant-header__badge--help" role="status">
-						{t('aiAssistant.help.noQuotaBadge')}
-					</span>
-				)}
+				<div className="ai-assistant-header__actions">
+					<button
+						type="button"
+						className={`ai-assistant-header__icon-btn${infoOpen ? ' ai-assistant-header__icon-btn--active' : ''}`}
+						onClick={() => setInfoOpen(o => !o)}
+						aria-expanded={infoOpen}
+						aria-controls="ai-assistant-intro-panel"
+						title={t('aiAssistant.header.info')}
+						aria-label={t('aiAssistant.header.info')}
+					>
+						<InfoIcon />
+					</button>
+					{onExport && (
+						<button
+							type="button"
+							className="ai-assistant-header__icon-btn"
+							onClick={onExport}
+							disabled={!canExport}
+							title={t('aiAssistant.header.export')}
+							aria-label={t('aiAssistant.header.export')}
+						>
+							<DownloadIcon />
+						</button>
+					)}
+					{onClear && (
+						<button
+							type="button"
+							className="ai-assistant-header__icon-btn"
+							onClick={onClear}
+							disabled={!canClear}
+							title={t('aiAssistant.header.clear')}
+							aria-label={t('aiAssistant.header.clear')}
+						>
+							<TrashIcon />
+						</button>
+					)}
+				</div>
 			</div>
 
 			{showQuota && (
@@ -95,9 +158,8 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 				</div>
 			)}
 
-			<details className="ai-assistant-header__intro-details">
-				<summary className="ai-assistant-header__intro-summary">{t('aiAssistant.introToggle')}</summary>
-				<div className="ai-assistant-header__intro-panel">
+			{infoOpen && (
+				<div id="ai-assistant-intro-panel" className="ai-assistant-header__intro-panel ai-assistant-header__intro-panel--standalone">
 					{introList.length > 0 && (
 						<ul className="ai-assistant-header__intro-list">
 							{introList.map((line, idx) => (
@@ -113,7 +175,7 @@ function AIAssistantHeader({ enabled, aiEntitlements, statusPending, statusError
 					</div>
 					<p className="ai-assistant-header__intro-legal">{t('aiAssistant.introLegalNote')}</p>
 				</div>
-			</details>
+			)}
 		</div>
 	)
 }

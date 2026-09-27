@@ -10,6 +10,7 @@ import AIAssistantSessionSidebar from './AIAssistantSessionSidebar'
 import AIAssistantMessageList from './AIAssistantMessageList'
 import AIAssistantComposer from './AIAssistantComposer'
 import AIAssistantHelpModules from './AIAssistantHelpModules'
+import AIAssistantModeTabs from './AIAssistantModeTabs'
 import {
 	useAIAssistantStatus,
 	useAIHelpModules,
@@ -159,13 +160,27 @@ function AIAssistant() {
 
 	const switchMode = useCallback(
 		next => {
-			setAssistantMode(assistantMode === next ? 'chat' : next)
+			setAssistantMode(next)
 			setPendingLeaveDraft(null)
 			setPendingWorkdayDraft(null)
 			setLastMeta(null)
 		},
-		[assistantMode, setAssistantMode, setLastMeta]
+		[setAssistantMode, setLastMeta]
 	)
+
+	// Przykładowe pytania pomocy: przy pustej rozmowie albo zaraz po zmianie tematu — potem chowamy, żeby nie zabierały miejsca
+	const [helpSuggestionsOpen, setHelpSuggestionsOpen] = useState(false)
+	const selectHelpModule = useCallback(
+		id => {
+			setHelpModule(id)
+			setHelpSuggestionsOpen(true)
+		},
+		[setHelpModule]
+	)
+	// Po wysłaniu pytania (także wpisanego ręcznie) albo zmianie rozmowy chowamy podpowiedzi
+	useEffect(() => {
+		setHelpSuggestionsOpen(false)
+	}, [messages.length, activeId])
 
 	const sendUserMessage = useCallback(
 		async (text, opts = {}) => {
@@ -481,7 +496,30 @@ function AIAssistant() {
 							statusPending={isHelpMode ? false : statusPending}
 							statusError={isHelpMode ? false : statusError}
 							helpMode={isHelpMode}
+							onClear={clearChat}
+							onExport={exportTxt}
+							canClear={!busy && messages.length > 0}
+							canExport={messages.length > 0}
 						/>
+						{!helpOnly && (
+							<AIAssistantModeTabs
+								mode={assistantMode}
+								onChange={switchMode}
+								dataDisabled={dataChatDisabled}
+								busy={busy}
+							/>
+						)}
+						<p className="ai-assistant-mode-hint" role="status">
+							{helpOnly ? t('aiAssistant.modes.hint_helpOnly') : t(`aiAssistant.modes.hint_${assistantMode}`)}
+							{helpOnly && (isAdmin(role) || isHR(role)) && (
+								<>
+									{' '}
+									<Link to="/packages" className="ai-assistant-banner__link">
+										{t('aiAssistant.quotaLink')}
+									</Link>
+								</>
+							)}
+						</p>
 						{!isHelpMode && !statusPending && !statusError && !enabled && (
 							<div className="ai-assistant-banner" role="status">
 								{t('aiAssistant.configHint')}
@@ -497,29 +535,6 @@ function AIAssistant() {
 								)}
 							</div>
 						)}
-						{assistantMode === 'leave' && enabled && (
-							<div className="ai-assistant-banner ai-assistant-banner--leave" role="status">
-								{t('aiAssistant.leave.banner')}
-							</div>
-						)}
-						{assistantMode === 'workday' && enabled && (
-							<div className="ai-assistant-banner ai-assistant-banner--workday" role="status">
-								{t('aiAssistant.workday.banner')}
-							</div>
-						)}
-						{isHelpMode && (
-							<div className="ai-assistant-banner ai-assistant-banner--help" role="status">
-								{helpOnly ? t('aiAssistant.help.bannerHelpOnly') : t('aiAssistant.help.banner')}
-								{helpOnly && (isAdmin(role) || isHR(role)) && (
-									<>
-										{' '}
-										<Link to="/packages" className="ai-assistant-banner__link">
-											{t('aiAssistant.quotaLink')}
-										</Link>
-									</>
-								)}
-							</div>
-						)}
 						{assistantMode === 'chat' && (
 							<AIAssistantPeriodBar
 								preset={periodPreset}
@@ -531,48 +546,16 @@ function AIAssistant() {
 								disabled={disabled || busy}
 							/>
 						)}
-						<div className="ai-assistant-toolbar">
-							<button type="button" className="ai-assistant-toolbar__btn" onClick={clearChat} disabled={busy || messages.length === 0}>
-								{t('aiAssistant.clear')}
-							</button>
-							<button type="button" className="ai-assistant-toolbar__btn" onClick={exportTxt} disabled={messages.length === 0}>
-								{t('aiAssistant.exportTxt')}
-							</button>
-							{!helpOnly && (
-								<>
-									<button
-										type="button"
-										className={`ai-assistant-toolbar__btn${assistantMode === 'leave' ? ' ai-assistant-toolbar__btn--active' : ''}`}
-										onClick={() => switchMode('leave')}
-										disabled={dataChatDisabled || busy}
-									>
-										{assistantMode === 'leave' ? t('aiAssistant.leave.modeOff') : t('aiAssistant.leave.modeOn')}
-									</button>
-									<button
-										type="button"
-										className={`ai-assistant-toolbar__btn${assistantMode === 'workday' ? ' ai-assistant-toolbar__btn--active' : ''}`}
-										onClick={() => switchMode('workday')}
-										disabled={dataChatDisabled || busy}
-									>
-										{assistantMode === 'workday' ? t('aiAssistant.workday.modeOff') : t('aiAssistant.workday.modeOn')}
-									</button>
-									<button
-										type="button"
-										className={`ai-assistant-toolbar__btn ai-assistant-toolbar__btn--help${isHelpMode ? ' ai-assistant-toolbar__btn--active' : ''}`}
-										onClick={() => switchMode('help')}
-										disabled={busy}
-									>
-										{isHelpMode ? t('aiAssistant.help.modeOff') : t('aiAssistant.help.modeOn')}
-									</button>
-								</>
-							)}
-						</div>
 						{isHelpMode && (
 							<AIAssistantHelpModules
 								modules={helpModules}
 								activeModule={helpModule}
-								onSelectModule={setHelpModule}
-								onAsk={q => sendUserMessage(q)}
+								onSelectModule={selectHelpModule}
+								onAsk={q => {
+									setHelpSuggestionsOpen(false)
+									sendUserMessage(q)
+								}}
+								showSuggestions={messages.length === 0 || helpSuggestionsOpen}
 								disabled={disabled || busy}
 								loadError={helpModulesError}
 							/>

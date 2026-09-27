@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /** Ikony jak w sidebarze — ten sam zestaw z /img. */
@@ -26,10 +26,16 @@ const MODULE_ICONS = {
  * @param {(question: string) => void} props.onAsk — klik podpowiedzi wysyła pytanie
  * @param {boolean} [props.disabled]
  * @param {boolean} [props.loadError]
+ * @param {boolean} [props.showSuggestions] — przykładowe pytania tylko przy pustej rozmowie / po zmianie tematu
  */
-function AIAssistantHelpModules({ modules, activeModule, onSelectModule, onAsk, disabled, loadError }) {
+function AIAssistantHelpModules({ modules, activeModule, onSelectModule, onAsk, disabled, loadError, showSuggestions = true }) {
 	const { t } = useTranslation()
+	const activeChipRef = useRef(null)
 	const list = Array.isArray(modules) ? modules : []
+	// Na telefonie tematy są w przewijanym rzędzie — wybrany temat ma być widoczny
+	useEffect(() => {
+		activeChipRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+	}, [activeModule])
 	const active = list.find(m => m.id === activeModule) || null
 	const suggestions = (active || list.find(m => m.id === 'general'))?.suggestedQuestions || []
 
@@ -49,6 +55,7 @@ function AIAssistantHelpModules({ modules, activeModule, onSelectModule, onAsk, 
 						return (
 							<button
 								key={m.id}
+								ref={isActive ? activeChipRef : undefined}
 								type="button"
 								className={`ai-assistant-chip ai-assistant-help__chip${isActive ? ' ai-assistant-chip--active' : ''}`}
 								aria-pressed={isActive}
@@ -70,7 +77,7 @@ function AIAssistantHelpModules({ modules, activeModule, onSelectModule, onAsk, 
 					{t('aiAssistant.help.modulesLoadError')}
 				</p>
 			)}
-			{suggestions.length > 0 && (
+			{showSuggestions && suggestions.length > 0 && (
 				<div className="ai-assistant-help__row ai-assistant-help__row--suggestions">
 					<span className="ai-assistant-help__label">{t('aiAssistant.help.suggestionsLabel')}</span>
 					<div className="ai-assistant-help__suggestions">

@@ -58,4 +58,9 @@ describe('AIAssistantHelpModules', () => {
 		expect(screen.getByRole('button', { name: 'Kody QR' }).disabled).toBe(true)
 		expect(screen.getByRole('status').textContent).toContain('Nie udało się pobrać')
 	})
+	it('showSuggestions=false chowa przykładowe pytania, tematy zostają', () => {
+		render(<AIAssistantHelpModules modules={modules} activeModule="qr" onSelectModule={() => {}} onAsk={() => {}} showSuggestions={false} />)
+		expect(screen.getByRole('button', { name: 'Kody QR' })).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Czy QR skanuje się telefonem?' })).toBeNull()
+	})
 })
