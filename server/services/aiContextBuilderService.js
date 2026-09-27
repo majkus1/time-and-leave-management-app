@@ -19,6 +19,7 @@ const {
 } = require('./aiAssistantScopeService')
 const { buildVerifiedStatsForAi } = require('./aiVerifiedStatsService')
 const { roundWorkHoursForDisplay } = require('../utils/workHoursDisplay')
+const { warsawDayStart } = require('../utils/workdayEntryValidation')
 
 const MS_PER_DAY = 86400000
 /** "Upcoming" leave rows after periodTo: hide starts later than this (stops July rows in an April report). */
@@ -663,8 +664,8 @@ exports.buildTeamDataContext = async function buildTeamDataContext({
 	const upcomingCapped = upcoming.filter(lr => new Date(lr.startDate).getTime() <= upcomingCapTs)
 	const rowUp = upcomingCapped.map(formatLeaveRow)
 	const rowRest = rest.map(formatLeaveRow)
-	const startOfToday = new Date()
-	startOfToday.setHours(0, 0, 0, 0)
+	// Dziś wg kalendarza PL (produkcja w UTC) — inaczej po północy PL okres „do dziś” uznawany był za zakończony
+	const startOfToday = warsawDayStart()
 	// For periods that already ended (e.g. full March when today is April), omit "upcoming" rows so
 	// period summaries do not mix next month's leaves with the selected window.
 	const omitUpcomingLeaves = end.getTime() < startOfToday.getTime()

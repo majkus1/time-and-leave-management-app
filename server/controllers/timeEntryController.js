@@ -3,81 +3,11 @@ const TimeEntry = require('../models/TimeEntry')(firmDb)
 const QRCode = require('../models/QRCode')(firmDb)
 const Workday = require('../models/Workday')(firmDb)
 const User = require('../models/user')(firmDb)
-const Settings = require('../models/Settings')(firmDb)
-const LeaveRequest = require('../models/LeaveRequest')(firmDb)
-const { isHoliday } = require('../utils/holidays')
-const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
 const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const qrService = require('../services/qrService')
 const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
 const { toStoredGeo, buildSessionQrVerify } = require('../utils/qrGeoCheck')
 const { isQrExit, staleEntryExitTime } = require('../utils/qrTimeEntry')
-
-// Helper function to check if day is weekend
-function isWeekend(date) {
-	const day = new Date(date).getDay()
-	return day === 0 || day === 6 // 0 = niedziela, 6 = sobota
-}
-
-// Helper function to check if timer can be started on a given date
-async function canStartTimerOnDate(userId, date) {
-	try {
-		const user = await User.findById(userId)
-		if (!user || !user.teamId) {
-			return { canStart: false, reason: 'Użytkownik nie znaleziony lub brak zespołu' }
-		}
-
-		// Get team settings
-		const settings = await Settings.getSettings(user.teamId)
-		if (!settings) {
-			return { canStart: false, reason: 'Brak ustawień zespołu' }
-		}
-
-		const dateStr = date.toISOString().split('T')[0]
-		const checkDate = new Date(date)
-		checkDate.setHours(0, 0, 0, 0)
-
-		// Check if it's a weekend and team doesn't work on weekends
-		const workOnWeekends = settings.workOnWeekends !== false // Domyślnie true
-		const isWeekendDay = isWeekend(checkDate)
-		
-		if (!workOnWeekends && isWeekendDay) {
-			return { canStart: false, reason: 'Nie można uruchomić timera w weekend (zespół nie pracuje w weekendy)' }
-		}
-
-		// Check if it's a holiday
-		const holidayInfo = isHoliday(checkDate, settings)
-		if (holidayInfo) {
-			return { canStart: false, reason: `Nie można uruchomić timera w święto: ${holidayInfo.name}` }
-		}
-
-		// Check if user has accepted leave request for this date.
-		// Wnioski godzinowe pomijamy — zajmują tylko część dnia (patrz workdayController).
-		const acceptedLeaveRequests = await LeaveRequest.find({
-			userId: userId,
-			status: { $in: ['status.accepted', 'status.sent'] },
-			...NON_HOURLY_LEAVE_QUERY
-		})
-
-		for (const request of acceptedLeaveRequests) {
-			if (request.startDate && request.endDate) {
-				const startDate = new Date(request.startDate)
-				startDate.setHours(0, 0, 0, 0)
-				const endDate = new Date(request.endDate)
-				endDate.setHours(23, 59, 59, 999)
-
-				if (checkDate >= startDate && checkDate <= endDate) {
-					return { canStart: false, reason: 'Nie można uruchomić timera w dniu z zaakceptowanym wnioskiem urlopowym/nieobecnością' }
-				}
-			}
-		}
-
-		return { canStart: true }
-	} catch (error) {
-		console.error('Error checking if timer can start:', error)
-		return { canStart: false, reason: 'Błąd podczas sprawdzania możliwości uruchomienia timera' }
-	}
-}
 
 // Register time entry (entry or exit)
 function screenErrorMessage(reason) {

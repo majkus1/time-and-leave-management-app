@@ -6,6 +6,8 @@ const path = require('path')
 const { firmDb } = require('../db/db')
 const User = require('../models/user')(firmDb)
 const { buildTeamDataContext } = require('./aiContextBuilderService')
+const { resolveAssistantPresetRange } = require('../utils/aiDateRange')
+const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const { createChatCompletion, createChatCompletionStream, isOpenAIConfigured } = require('./openaiService')
 const {
 	formatPolishHolidaysForAssistant,
@@ -82,7 +84,7 @@ function monthLabelKey(year, monthIndex) {
  * use that full calendar month for DATA CONTEXT (overrides UI period chip).
  * @returns {null | { range: {start:Date,end:Date}, label: string, captionPl: string, captionEn: string }}
  */
-function tryCalendarMonthOverrideFromMessage(lastUserText, now = new Date()) {
+function tryCalendarMonthOverrideFromMessage(lastUserText, now = warsawDayStart()) {
 	if (!lastUserText || typeof lastUserText !== 'string' || !isAssistantRangeIntentText(lastUserText)) {
 		return null
 	}
@@ -235,7 +237,7 @@ function resolveAssistantRangeWithMessage({ periodPreset, dateFrom, dateTo, last
 			monthFromMessageCaptionEn: null,
 		}
 	}
-	const monthRes = tryCalendarMonthOverrideFromMessage(text, new Date())
+	const monthRes = tryCalendarMonthOverrideFromMessage(text, warsawDayStart())
 	if (monthRes) {
 		return {
 			range: monthRes.range,
@@ -319,51 +321,9 @@ function loadDataContextRules() {
 	return dataRulesCache
 }
 
+// Zakres presetu z UI — dzień i miesiąc wg kalendarza PL (utils/aiDateRange; produkcja działa w UTC)
 function resolveDateRange(preset, dateFrom, dateTo) {
-	const now = new Date()
-	const end = new Date(now)
-	end.setHours(23, 59, 59, 999)
-
-	let start
-	switch (preset) {
-		case 'all': {
-			start = new Date(2000, 0, 1)
-			start.setHours(0, 0, 0, 0)
-			break
-		}
-		case 'week': {
-			start = new Date(now)
-			start.setDate(start.getDate() - 7)
-			start.setHours(0, 0, 0, 0)
-			break
-		}
-		case 'month': {
-			start = new Date(now.getFullYear(), now.getMonth(), 1)
-			start.setHours(0, 0, 0, 0)
-			const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
-			return { start, end: monthEnd }
-		}
-		case 'year': {
-			start = new Date(now.getFullYear(), 0, 1)
-			start.setHours(0, 0, 0, 0)
-			break
-		}
-		case 'custom': {
-			if (dateFrom && dateTo) {
-				start = new Date(dateFrom)
-				const e = new Date(dateTo)
-				e.setHours(23, 59, 59, 999)
-				return { start, end: e }
-			}
-			// fallthrough
-		}
-		default: {
-			start = new Date(now)
-			start.setDate(start.getDate() - 30)
-			start.setHours(0, 0, 0, 0)
-		}
-	}
-	return { start, end }
+	return resolveAssistantPresetRange(preset, dateFrom, dateTo)
 }
 
 function normalizeMessages(messages) {
@@ -450,8 +410,9 @@ async function prepareAssistantTurn(input) {
 	let polishCalendarBlock = ''
 	if (shouldAttachPolishCalendarHint(lastUserText)) {
 		const yearSet = new Set()
-		yearSet.add(new Date().getFullYear())
-		yearSet.add(new Date().getFullYear() + 1)
+		const currentYear = warsawDayStart().getFullYear()
+		yearSet.add(currentYear)
+		yearSet.add(currentYear + 1)
 		yearSet.add(range.start.getFullYear())
 		yearSet.add(range.end.getFullYear())
 		for (const y of extractYearsFromText(lastUserText)) yearSet.add(y)
