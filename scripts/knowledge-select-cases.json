@@ -2,6 +2,8 @@
 	{ "text": "Czy kod QR skanuje się zwykłym telefonem i czy mogę mieć osobne kody na różne budowy?", "first": "qr" },
 	{ "text": "Czy QR sprawdza GPS?", "first": "qr" },
 	{ "text": "Czy wyjdę innym kodem niż wszedłem?", "first": "qr" },
+	{ "text": "Czy pracownik odbije się ze zdjęcia kodu, będąc w domu?", "first": "qr" },
+	{ "text": "Czy zrobię raport godzin tylko z jednej budowy?", "first": "timeTracking", "includes": ["qr"] },
 	{ "text": "czy QR działa w darmowym planie", "first": "qr", "includes": ["packages"] },
 	{ "text": "ile kosztuje dla 20 osob", "first": "packages" },
 	{ "text": "Which plan for 45 people?", "first": "packages" },

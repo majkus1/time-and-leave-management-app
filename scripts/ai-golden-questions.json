@@ -34,6 +34,23 @@
 		]
 	},
 	{
+		"id": "qr-photo-fraud",
+		"locale": "pl",
+		"targets": [
+			"landing",
+			"app-help"
+		],
+		"question": "Czy pracownik może odbić się ze zdjęcia kodu QR, będąc w domu?",
+		"mustMatch": [
+			"tablet|ekran",
+			"30 sekund|co 30",
+			"lokalizac"
+		],
+		"mustNotMatch": [
+			"nie (da się|można) (nic|temu)"
+		]
+	},
+	{
 		"id": "qr-same-code-exit",
 		"locale": "pl",
 		"targets": [

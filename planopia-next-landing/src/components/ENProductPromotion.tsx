@@ -105,6 +105,9 @@ function ENProductPromotion() {
 									<div>
 										<p className="font-semibold text-gray-900">Automatic time registration</p>
 										<p className="text-sm text-gray-600">Work timer, QR check-in/out, tasks, and monthly time statistics.</p>
+										<Link href="/en/qr-time-clocking#photo-proof-clocking" className="about-new-feature">
+											<b>New</b> Tablet QR code every 30 s and location at scan
+										</Link>
 									</div>
 								</div>
 								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">

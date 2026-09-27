@@ -109,6 +109,9 @@ function ProductPromotion() {
             <div>
               <p className="font-semibold text-gray-900">Automatyczna rejestracja czasu</p>
               <p className="text-sm text-gray-600">Timer pracy, QR wejścia/wyjścia, zadania i miesięczne statystyki czasu.</p>
+              <Link href="/rejestracja-czasu-pracy-qr#ochrona-przed-zdjeciem" className="about-new-feature">
+                <b>Nowość</b> Kod QR na tablecie co 30 s i lokalizacja przy skanie
+              </Link>
             </div>
           </div>
           {/* 2 */}

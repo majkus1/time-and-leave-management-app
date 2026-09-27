@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
+import CommercialHighlight from './CommercialHighlight'
 import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
 import {
 	CANONICAL,
@@ -99,6 +100,12 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 						<div className="max-w-7xl mx-auto">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
 								<header id="commercial-hero-heading" className="order-2 md:order-1 min-w-0 text-left">
+									{c.heroBadge ? (
+										<a href={c.heroBadge.href} className="commercial-hero-badge">
+											{c.heroBadge.label}
+											<b aria-hidden>→</b>
+										</a>
+									) : null}
 									<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">{c.eyebrow}</p>
 									<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">{c.heroH1}</h1>
 									<p className="text-lg text-gray-600 max-w-3xl">{c.heroSub}</p>
@@ -131,6 +138,8 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 							</div>
 						</div>
 					</section>
+
+					{c.highlight ? <CommercialHighlight highlight={c.highlight} /> : null}
 
 					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
 						<section aria-labelledby="problems-heading">

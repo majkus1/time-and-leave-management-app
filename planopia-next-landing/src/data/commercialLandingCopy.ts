@@ -9,6 +9,24 @@ export type Variant = 'leave' | 'time' | 'schedule' | 'attendance' | 'overtime'
 
 export type RelatedLink = { href: string; label: string }
 
+export type HighlightIcon = 'screen' | 'pin' | 'badge' | 'site'
+
+/** Wyróżniona sekcja tuż pod hero — dziś tylko strona QR (ochrona przed skanem ze zdjęcia kodu). */
+export type Highlight = {
+	id: string
+	eyebrow: string
+	title: string
+	lead: string
+	items: { icon: HighlightIcon; title: string; text: string }[]
+	note: string
+	mock: {
+		place: string
+		refreshLabel: string
+		badgesLabel: string
+		badges: { tone: 'ok' | 'warn'; label: string }[]
+	}
+}
+
 export type Copy = {
 	eyebrow: string
 	heroH1: string
@@ -44,6 +62,9 @@ export type Copy = {
 	 */
 	offerPrice: string
 	offerDescription: string
+	/** Pigułka nad nagłówkiem hero, prowadzi do sekcji `highlight`. */
+	heroBadge?: { label: string; href: string }
+	highlight?: Highlight
 }
 
 export const REGISTER_HREF = 'https://app.planopia.pl/team-registration'
@@ -587,16 +608,18 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			features: [
 				'Kody QR z nazwą — osobny kod na każdy obiekt, budowę lub wejście; kod można w każdej chwili dezaktywować.',
 				'Wejście i wyjście jednym skanem z telefonu — bez czytnika i bez dodatkowego sprzętu.',
+				'Kod z wydruku albo na tablecie przy wejściu, zmieniający się co 30 sekund — wybierasz osobno dla każdego miejsca.',
+				'Opcjonalne sprawdzenie lokalizacji przy skanie — wynik i odległość od miejsca, bez śledzenia pracownika.',
 				'Licznik czasu pracy z przerwami — alternatywa dla QR, gdy praca odbywa się przy biurku.',
-				'Opis wykonanej pracy i powiązanie z zadaniem przy wpisie — przydatne przy rozliczaniu klienta.',
-				'Zarejestrowane godziny trafiają do tej samej ewidencji, z której robisz raporty PDF i Excel.',
+				'Czynność, zadanie i wykonana ilość (np. szt., m²) przy sesji — wydajność bez osobnego arkusza.',
+				'Zarejestrowane godziny trafiają do tej samej ewidencji, z której robisz raporty PDF i Excel — także osobno dla jednej budowy.',
 				'Podgląd dla Admina, HR i przełożonego — kto pracuje teraz, bez dzwonienia po ekipach.',
 			],
 			galleryTitle: 'Rejestracja czasu w Planopii — zrzuty z aplikacji',
 			stepsTitle: 'Jak zacząć — 3 kroki',
 			steps: [
 				'Załóż darmowy zespół (30 dni pełnej aplikacji, do 5 osób).',
-				'Wygeneruj kod QR dla obiektu lub wejścia i wydrukuj go.',
+				'Wygeneruj kod QR dla obiektu lub wejścia — wydrukuj go albo wyświetl na tablecie.',
 				'Pracownicy skanują kod telefonem, a godziny same trafiają do ewidencji.',
 			],
 			pricingTitle: 'Ile kosztuje rejestracja czasu pracy przez QR?',
@@ -618,11 +641,23 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy potrzebny jest czytnik kodów albo dodatkowy sprzęt?',
-					a: 'Nie. Wystarczy telefon pracownika i wydrukowany kod. Planopia działa w przeglądarce jako aplikacja PWA, więc nie trzeba nic instalować ze sklepu.',
+					a: 'Nie. Wystarczy telefon pracownika i wydrukowany kod. Planopia działa w przeglądarce jako aplikacja PWA, więc nie trzeba nic instalować ze sklepu. Kod zmieniający się co 30 sekund wyświetli dowolny tablet lub telefon z przeglądarką.',
+				},
+				{
+					q: 'Czy pracownik może odbić się ze zdjęcia kodu, będąc w domu?',
+					a: 'Przy zwykłym wydruku — tak, jeśli ma jego zdjęcie. Dlatego kod może wyświetlać tablet przy wejściu: zmienia się co 30 sekund, więc wcześniejsze zdjęcie nie zadziała. Możesz też włączyć sprawdzenie lokalizacji przy skanie — skan poza miejscem zostanie oznaczony albo zablokowany.',
+				},
+				{
+					q: 'Czy Planopia śledzi lokalizację pracowników?',
+					a: 'Nie. Jeśli włączysz lokalizację przy kodzie, telefon podaje ją tylko raz — w chwili skanu. Zapisujemy wynik i odległość od miejsca, a nie współrzędne pracownika. Pracownik widzi tę informację, zanim przeglądarka zapyta o zgodę.',
 				},
 				{
 					q: 'Czy mogę mieć osobny kod dla każdego obiektu?',
 					a: 'Tak. Kody generujesz z nazwą — na przykład osobny dla każdej budowy, lokalu albo wejścia. Każdy wpis zapisuje się przy konkretnym kodzie, a nieużywany kod możesz dezaktywować.',
+				},
+				{
+					q: 'Czy zrobię raport godzin tylko z jednej budowy?',
+					a: 'Tak. W kalendarzu pracownika wybierasz miejsce QR, a kalendarz, podsumowanie miesiąca, lista sesji i raport PDF lub Excel liczą się tylko z sesji z tego miejsca. Dla kolejnej budowy zmieniasz filtr i eksportujesz ponownie.',
 				},
 				{
 					q: 'Co, jeśli pracownik zapomni zeskanować kod?',
@@ -650,6 +685,45 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			offerPrice: '158',
 			offerDescription:
 				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (119 zł netto/mies.) z modułem Timer + QR (39 zł netto/mies.), razem 158 zł, albo pakiet PRO od 239 zł.',
+			heroBadge: { label: 'Nowość: ochrona przed skanem ze zdjęcia', href: '#ochrona-przed-zdjeciem' },
+			highlight: {
+				id: 'ochrona-przed-zdjeciem',
+				eyebrow: 'Nowość',
+				title: 'Koniec z odbijaniem się „ze zdjęcia kodu”',
+				lead: 'Wydrukowany kod da się sfotografować i zeskanować z domu. W Planopii kod może wyświetlać tablet przy wejściu — nowy co 30 sekund — a przy skanie sprawdzisz, czy pracownik jest na miejscu. Włączasz to osobno dla każdego kodu.',
+				items: [
+					{
+						icon: 'screen',
+						title: 'Kod na tablecie, nowy co 30 s',
+						text: 'Zdjęcie zrobione wcześniej nie zadziała. Tablet nie loguje się kontem pracownika — wystarczy link i przeglądarka.',
+					},
+					{
+						icon: 'pin',
+						title: 'Lokalizacja w chwili skanu',
+						text: 'Widzisz, czy wejście było na miejscu, czy 1,2 km dalej. Możesz tylko zapisywać, oznaczać nietypowe albo blokować.',
+					},
+					{
+						icon: 'badge',
+						title: 'Nietypowe skany od razu widać',
+						text: 'Plakietki przy sesjach, filtr „Tylko nietypowe” i osobna sekcja w raporcie PDF i Excel.',
+					},
+					{
+						icon: 'site',
+						title: 'Raport z jednej budowy',
+						text: 'Filtr miejsca QR przelicza kalendarz, podsumowanie i PDF tylko z wybranej lokalizacji.',
+					},
+				],
+				note: 'Bez śledzenia: lokalizacja jest odczytywana tylko w chwili skanu, a współrzędnych pracownika nie zapisujemy.',
+				mock: {
+					place: 'Wejście — Budowa A',
+					refreshLabel: 'nowy kod co 30 s',
+					badgesLabel: 'Sesje w ewidencji',
+					badges: [
+						{ tone: 'ok', label: 'W miejscu · kod z ekranu' },
+						{ tone: 'warn', label: 'Poza miejscem · 1,2 km' },
+					],
+				},
+			},
 		},
 		en: {
 			eyebrow: 'Time clocking and attendance',
@@ -671,16 +745,18 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			features: [
 				'Named QR codes — one per site, project, or entrance; any code can be deactivated at any time.',
 				'Clock in and out with a single phone scan — no reader and no extra hardware.',
+				'A printed code or one shown on a tablet at the entrance that changes every 30 seconds — chosen per location.',
+				'Optional location check at scan time — the result and distance from the site, without tracking anyone.',
 				'A work timer with breaks — an alternative to QR for desk-based work.',
-				'A work description and an optional task link on each entry — useful when billing a client.',
-				'Recorded hours feed the same time records you export to PDF and Excel.',
+				'Activity, task, and quantity done (e.g. pcs, m²) on each session — productivity without a separate spreadsheet.',
+				'Recorded hours feed the same time records you export to PDF and Excel — also for a single site.',
 				'A live view for admins, HR, and supervisors — who is working right now, without phoning around.',
 			],
 			galleryTitle: 'Time clocking in Planopia — app screenshots',
 			stepsTitle: 'How to start — 3 steps',
 			steps: [
 				'Create your free team (30 days of the full app, up to 5 users).',
-				'Generate a QR code for a site or entrance and print it.',
+				'Generate a QR code for a site or entrance — print it or show it on a tablet.',
 				'People scan with their phone, and the hours flow into your records.',
 			],
 			pricingTitle: 'How much does QR time clocking cost?',
@@ -702,11 +778,23 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Do I need a scanner or extra hardware?',
-					a: 'No. A phone and a printed code are enough. Planopia runs in the browser as a PWA, so there is nothing to install from an app store.',
+					a: 'No. A phone and a printed code are enough. Planopia runs in the browser as a PWA, so there is nothing to install from an app store. Any tablet or phone with a browser can show the code that changes every 30 seconds.',
+				},
+				{
+					q: 'Can someone clock in from home using a photo of the code?',
+					a: 'With a plain printout — yes, if they have a photo of it. That is why the code can be shown on a tablet at the entrance: it changes every 30 seconds, so an earlier photo will not work. You can also turn on a location check at scan time — scans away from the site are flagged or blocked.',
+				},
+				{
+					q: 'Does Planopia track employee location?',
+					a: 'No. If you turn location on for a code, the phone shares it once — at the moment of the scan. We store the result and the distance from the site, not the employee’s coordinates. Employees see this before the browser asks for permission.',
 				},
 				{
 					q: 'Can I have a separate code for each site?',
 					a: 'Yes. Codes are created with a name — one per building site, venue, or entrance. Each entry is saved against a specific code, and unused codes can be deactivated.',
+				},
+				{
+					q: 'Can I get an hours report for a single site?',
+					a: 'Yes. In an employee’s calendar, pick a QR location, and the calendar, monthly summary, session list, and PDF or Excel report count only sessions from that location. For the next site, change the filter and export again.',
 				},
 				{
 					q: 'What if someone forgets to scan?',
@@ -732,6 +820,45 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			offerPrice: '158',
 			offerDescription:
 				'30-day full trial free; the cheapest route is a CORE plan (119 PLN net/month) plus the Timer + QR module (39 PLN net/month), 158 PLN together, or a PRO package from 239 PLN.',
+			heroBadge: { label: 'New: no more clock-ins from a photo', href: '#photo-proof-clocking' },
+			highlight: {
+				id: 'photo-proof-clocking',
+				eyebrow: 'New',
+				title: 'No more clocking in “from a photo of the code”',
+				lead: 'A printed code can be photographed and scanned from home. In Planopia the code can be shown on a tablet at the entrance — a new one every 30 seconds — and each scan can check that the employee is on site. You turn this on for each code separately.',
+				items: [
+					{
+						icon: 'screen',
+						title: 'Tablet code, new every 30 s',
+						text: 'A photo taken earlier will not work. The tablet does not sign in as an employee — a link and a browser are enough.',
+					},
+					{
+						icon: 'pin',
+						title: 'Location at the moment of the scan',
+						text: 'See whether a clock-in happened on site or 1.2 km away. Just record it, flag unusual scans, or block them.',
+					},
+					{
+						icon: 'badge',
+						title: 'Unusual scans stand out',
+						text: 'Badges on sessions, an “Unusual scans only” filter, and a dedicated section in the PDF and Excel report.',
+					},
+					{
+						icon: 'site',
+						title: 'A report for one site',
+						text: 'The QR location filter recalculates the calendar, summary, and PDF for the chosen site only.',
+					},
+				],
+				note: 'No tracking: location is read only at the moment of the scan, and employee coordinates are never stored.',
+				mock: {
+					place: 'Entrance — Site A',
+					refreshLabel: 'new code every 30 s',
+					badgesLabel: 'Sessions in time records',
+					badges: [
+						{ tone: 'ok', label: 'On site · screen code' },
+						{ tone: 'warn', label: 'Off site · 1.2 km' },
+					],
+				},
+			},
 		},
 	},
 	overtime: {

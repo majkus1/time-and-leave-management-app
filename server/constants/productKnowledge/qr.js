@@ -21,8 +21,8 @@ module.exports = {
 	},
 	requires: { modules: ['timer_qr'], bundles: ['pro', 'business'], trial: true, freemium: false },
 	suggestedQuestions: {
-		pl: ['Czy kod QR skanuje się zwykłym telefonem?', 'Czy mogę mieć osobne kody na każdą budowę lub oddział?', 'Czy QR sprawdza lokalizację GPS?', 'Co się dzieje po zeskanowaniu kodu?'],
-		en: ['Can the QR code be scanned with a regular phone?', 'Can I have separate codes for each site or branch?', 'Does QR check GPS location?', 'What happens after scanning a code?'],
+		pl: ['Czy kod QR skanuje się zwykłym telefonem?', 'Czy pracownik odbije się ze zdjęcia kodu, będąc w domu?', 'Czy mogę mieć osobne kody na każdą budowę lub oddział?', 'Czy QR sprawdza lokalizację GPS?'],
+		en: ['Can the QR code be scanned with a regular phone?', 'Can someone clock in from home using a photo of the code?', 'Can I have separate codes for each site or branch?', 'Does QR check GPS location?'],
 	},
 	body: {
 		pl: `### Jak działa

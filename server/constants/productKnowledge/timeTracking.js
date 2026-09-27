@@ -44,7 +44,7 @@ module.exports = {
 - Eksporty ewidencji działają także w planie darmowym.
 
 ### Czego NIE robi
-- Nie śledzi lokalizacji GPS ani aktywności na komputerze (nie ma zrzutów ekranu, monitoringu aplikacji).
+- Nie śledzi lokalizacji GPS ani aktywności na komputerze (nie ma zrzutów ekranu, monitoringu aplikacji). Wyjątek: przy kodzie QR można włączyć jednorazowy odczyt lokalizacji w chwili skanu (moduł QR).
 - Nie ma osobnego modułu przerw poza tymi liczonymi w sesji licznika.
 - Nie liczy wynagrodzeń z godzin — daje dane do rozliczenia (godziny, nadgodziny), nie kwoty.
 - Nie importuje danych z innych systemów ani z plików.
