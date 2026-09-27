@@ -94,10 +94,13 @@ exports.registerTimeEntry = async (req, res) => {
 		const hasActiveTimer = workday && workday.activeTimer && workday.activeTimer.startTime && 
 			workday.activeTimer.qrCodeId && workday.activeTimer.qrCodeId.toString() === qrCode._id.toString()
 
-		// Otwarte wejście tym kodem (od wczoraj — nocna zmiana)
+		// Otwarte wejście tym kodem (od wczoraj — nocna zmiana). Przy działającym liczniku z tego kodu szukamy bez
+		// okna dat: „Zapisz sesję i kontynuuj” po północy przenosi licznik na nowy dzień, a wejście zostaje starsze —
+		// bez tego skan wyjścia dawał „Licznik już działa”, a Stop jest dla kodu chronionego zablokowany.
 		const openEntry = lastEntry && !lastEntry.exitTime
 			? lastEntry
 			: await TimeEntry.findOne({ userId, qrCodeId: qrCode._id, date: { $gte: yesterday }, exitTime: null }).sort({ entryTime: -1 })
+				|| (hasActiveTimer ? await TimeEntry.findOne({ userId, qrCodeId: qrCode._id, exitTime: null }).sort({ entryTime: -1 }) : null)
 		// Godziny liczy tylko sesja licznika: wyjście wyłącznie przy działającym liczniku z tego kodu (utils/qrTimeEntry).
 		// Otwarte wejście bez niego (Stop przyciskiem, skan przy ręcznym liczniku) zamykamy bez godzin — skan to nowe wejście.
 		const isExit = isQrExit({ openEntry, hasActiveTimerFromThisCode: Boolean(hasActiveTimer) })

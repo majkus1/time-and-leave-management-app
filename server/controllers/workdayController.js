@@ -32,7 +32,7 @@ const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
 const { validateAndSanitizeWorkdayCreate, applyWorkdayUpdateFields } = require('../services/workdayPayloadService')
 const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
 const { resolveTimerActivityId, getTimerActivitySnapshot, groupTimerSessions } = require('../utils/timerWorkActivity')
-const { requiresQrExitScan, buildSessionQrVerify } = require('../utils/qrGeoCheck')
+const { requiresQrExitScan, buildSessionQrVerify, qrCodeIdsOfWorkdays, workdaysQrDeleteLock } = require('../utils/qrGeoCheck')
 
 const CONFIRMED_MONTH_TIMER_MESSAGE = 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
 
@@ -51,6 +51,22 @@ const TASK_NOT_ALLOWED = { message: 'Nie masz dostępu do tego zadania.', code: 
 async function loadTeamBoardIds(teamId) {
 	const Board = require('../models/Board')(firmDb)
 	return Board.find({ teamId }).distinct('_id')
+}
+
+const QR_DELETE_LOCK_BODIES = {
+	QR_EXIT_REQUIRED: { message: 'Licznik z kodu QR działa — zakończ go skanem przy wyjściu.', code: 'QR_EXIT_REQUIRED' },
+	QR_SESSION_LOCKED: { message: 'Są tu sesje ze skanu QR — zostają jako ślad skanu i nie da się ich usunąć. Godziny dnia możesz poprawić w kalendarzu.', code: 'QR_SESSION_LOCKED' },
+}
+
+// Samodzielne usuwanie dni: bez dni z licznikiem lub sesjami z kodu chronionego (utils/qrGeoCheck.workdaysQrDeleteLock)
+async function qrDeleteLockBody(workdays, teamId) {
+	const ids = qrCodeIdsOfWorkdays(workdays)
+	if (!ids.length) return null
+	const QRCode = require('../models/QRCode')(firmDb)
+	const codes = await QRCode.find({ _id: { $in: ids }, teamId }).select('mode geo')
+	const protectedIds = new Set(codes.filter(requiresQrExitScan).map(code => String(code._id)))
+	const reason = workdaysQrDeleteLock(workdays, protectedIds)
+	return reason ? QR_DELETE_LOCK_BODIES[reason] : null
 }
 
 async function loadAllowedTasksMapForUser(targetUser) {
@@ -434,6 +450,8 @@ exports.deleteWorkday = async (req, res) => {
 				code: 'ONLY_TODAY_ALLOWED',
 			})
 		}
+		const qrLock = await qrDeleteLockBody([workday], req.user.teamId)
+		if (qrLock) return res.status(403).json(qrLock)
 		const result = await Workday.deleteOne({ _id: req.params.id, userId: req.user.userId })
 		if (result.deletedCount === 0) return res.status(404).send('Workday not found or unauthorized')
 		emitWorkdaysUpdated(req, req.user.userId, workday.date)
@@ -467,6 +485,13 @@ exports.clearWorkdaysForMonth = async (req, res) => {
 
 		const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0))
 		const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999))
+
+		const monthWorkdays = await Workday.find({
+			userId: req.user.userId,
+			date: { $gte: startDate, $lte: endDate },
+		}).select('activeTimer timeEntries.qrCodeId')
+		const qrLock = await qrDeleteLockBody(monthWorkdays, user.teamId)
+		if (qrLock) return res.status(403).json(qrLock)
 
 		const result = await Workday.deleteMany({
 			userId: req.user.userId,
@@ -1340,7 +1365,7 @@ exports.deleteSession = async (req, res) => {
 			const qr = await QRCode.findOne({ _id: session.qrCodeId, teamId: req.user.teamId }).select('mode geo')
 			if (requiresQrExitScan(qr)) {
 				return res.status(403).json({
-					message: 'Sesji ze skanu QR nie usuniesz samodzielnie. Poproś przełożonego o korektę.',
+					message: 'Sesja ze skanu QR zostaje jako ślad skanu i nie da się jej usunąć. Godziny dnia możesz poprawić w kalendarzu.',
 					code: 'QR_SESSION_LOCKED',
 				})
 			}
@@ -1352,12 +1377,18 @@ exports.deleteSession = async (req, res) => {
 			hoursToSubtract = (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60 * 60)
 		}
 
-		// Remove from hoursWorked or additionalWorked
+		// Odwrotność zapisu sesji (Stop, podział, wyjście skanem): cały czas jest w hoursWorked, a część
+		// nadgodzinowa (overtimeTime) dodatkowo w additionalWorked. Sesje ze stycznia 2026 (przed overtimeTime)
+		// miały nadgodziny wyłącznie w additionalWorked — dla nich zostaje stare odejmowanie.
 		if (!session.isBreak) {
-			if (session.isOvertime) {
+			const overtimeSeconds = Number(session.overtimeTime) || 0
+			if (session.isOvertime && overtimeSeconds <= 0) {
 				workday.additionalWorked = Math.max(0, (workday.additionalWorked || 0) - hoursToSubtract)
 			} else {
 				workday.hoursWorked = Math.max(0, (workday.hoursWorked || 0) - hoursToSubtract)
+				if (overtimeSeconds > 0) {
+					workday.additionalWorked = Math.max(0, (workday.additionalWorked || 0) - overtimeSeconds / 3600)
+				}
 			}
 		}
 

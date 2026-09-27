@@ -19,10 +19,9 @@ function isWorkSession(entry) {
 	return new Date(entry.endTime) > new Date(entry.startTime)
 }
 
-const hhmm = value => {
-	const d = new Date(value)
-	return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
+// Jak tekst z serwera (realTimeDayWorked liczony w Europe/Warsaw) — niezależnie od strefy przeglądarki
+const warsawTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+const hhmm = value => warsawTime.format(new Date(value))
 
 export function sessionMatchesQrPlaces(entry, placeIds = []) {
 	return placeIds.includes(idOf(entry?.qrCodeId))

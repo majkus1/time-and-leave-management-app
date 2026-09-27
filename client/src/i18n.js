@@ -1236,6 +1236,7 @@ i18n
 							'Are you sure you want to delete all entries from the visible month? This action cannot be undone. If you want to remove a single entry, click a day in the calendar.',
 						clearMonthSuccess: 'Deleted entries: {{count}}.',
 						clearMonthError: 'Could not clear month entries.',
+						deleteError: 'Could not delete the entry.',
 						clearingShort: '...',
 						dayReview: {
 							title: 'Day review',
@@ -3623,6 +3624,7 @@ i18n
 							'Czy na pewno chcesz usunąć wszystkie wpisy z widocznego miesiąca? Tej operacji nie da się cofnąć. Jeśli chcesz usunąć pojedynczy wpis, kliknij dzień w kalendarzu.',
 						clearMonthSuccess: 'Usunięto wpisy: {{count}}.',
 						clearMonthError: 'Nie udało się wyczyścić wpisów z miesiąca.',
+						deleteError: 'Nie udało się usunąć wpisu.',
 						clearingShort: '...',
 						dayReview: {
 							title: 'Zatwierdzanie dni',

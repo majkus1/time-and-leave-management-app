@@ -107,3 +107,20 @@ test('buildSessionQrVerify: metoda tylko dla trybu ekranu, null gdy nic do pokaz
 	// Kod z polityką, ale bez pozycji miejsca — nic do pokazania
 	assert.equal(buildSessionQrVerify({ mode: 'print', entryGeo: { policy: 'flag', status: 'not_configured' } }), null)
 })
+
+test('workdaysQrDeleteLock: pracownik nie usunie dnia z licznikiem lub sesjami z kodu chronionego', () => {
+	const { workdaysQrDeleteLock, qrCodeIdsOfWorkdays } = require('../utils/qrGeoCheck')
+	const protectedIds = new Set(['ekran'])
+	const timerDay = { activeTimer: { startTime: new Date(), qrCodeId: 'ekran' }, timeEntries: [] }
+	const sessionDay = { activeTimer: null, timeEntries: [{ qrCodeId: 'wydruk' }, { qrCodeId: { toString: () => 'ekran' } }] }
+	const printDay = { activeTimer: { startTime: new Date(), qrCodeId: 'wydruk' }, timeEntries: [{ qrCodeId: 'wydruk' }, { qrCodeId: null }] }
+	assert.deepEqual(qrCodeIdsOfWorkdays([timerDay, sessionDay, printDay]).sort(), ['ekran', 'wydruk'])
+	// Licznik po „Zapisz sesję i kontynuuj” po północy — nowy dzień ma sam licznik, bez sesji
+	assert.equal(workdaysQrDeleteLock([timerDay], protectedIds), 'QR_EXIT_REQUIRED')
+	assert.equal(workdaysQrDeleteLock([sessionDay], protectedIds), 'QR_SESSION_LOCKED')
+	assert.equal(workdaysQrDeleteLock([printDay, sessionDay, timerDay], protectedIds), 'QR_EXIT_REQUIRED')
+	assert.equal(workdaysQrDeleteLock([printDay], protectedIds), null)
+	// Zatrzymany licznik (startTime null) nie blokuje
+	assert.equal(workdaysQrDeleteLock([{ activeTimer: { startTime: null, qrCodeId: 'ekran' } }], protectedIds), null)
+	assert.equal(workdaysQrDeleteLock([], protectedIds), null)
+})

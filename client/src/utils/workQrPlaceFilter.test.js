@@ -6,7 +6,8 @@ import {
 	workdayQrPlaceLabel,
 } from './workQrPlaceFilter'
 
-const at = (h, m = 0) => new Date(2026, 8, 15, h, m).toISOString()
+// Godzina czasu polskiego 15.09.2026 (CEST, UTC+2) — test nie zależy od strefy maszyny
+const at = (h, m = 0) => new Date(Date.UTC(2026, 8, 15, h - 2, m)).toISOString()
 const day = {
 	_id: 'd1',
 	date: '2026-09-15T00:00:00.000Z',
@@ -28,6 +29,14 @@ describe('restrictWorkdayToQrPlaces', () => {
 	it('bez filtra zwraca dzień bez zmian', () => {
 		expect(restrictWorkdayToQrPlaces(day, [])).toBe(day)
 		expect(restrictWorkdaysToQrPlaces([day], [])).toEqual([day])
+	})
+
+	it('godziny „od–do” w czasie polskim, także zimą (CET)', () => {
+		const winter = {
+			...day,
+			timeEntries: [{ startTime: '2026-01-15T06:00:00.000Z', endTime: '2026-01-15T14:30:00.000Z', qrCodeId: 'budowaA', overtimeTime: 0 }],
+		}
+		expect(restrictWorkdayToQrPlaces(winter, ['budowaA']).realTimeDayWorked).toBe('07:00-15:30')
 	})
 
 	it('liczy tylko sesje z wybranego miejsca, bez wpisów ręcznych i uwag', () => {

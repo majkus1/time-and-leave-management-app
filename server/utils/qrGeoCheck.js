@@ -116,6 +116,32 @@ function requiresQrExitScan(qr) {
 	return mode !== 'print' || normalizeGeoPolicy(qr.geo?.policy) !== 'off'
 }
 
+/** Kody QR użyte w dniach: działający licznik i sesje (do sprawdzenia, które są chronione) */
+function qrCodeIdsOfWorkdays(workdays = []) {
+	const ids = new Set()
+	for (const day of workdays) {
+		if (day?.activeTimer?.startTime && day.activeTimer.qrCodeId) ids.add(String(day.activeTimer.qrCodeId))
+		for (const entry of day?.timeEntries || []) {
+			if (entry?.qrCodeId) ids.add(String(entry.qrCodeId))
+		}
+	}
+	return [...ids]
+}
+
+/**
+ * Czy pracownik może sam usunąć te dni (usunięcie dnia, czyszczenie miesiąca). Blokuje działający licznik z kodu
+ * chronionego i sesje z takiego kodu — inaczej „Zapisz sesję i kontynuuj” po północy + usunięcie nowego dnia
+ * kończyło licznik bez skanu wyjścia, a usunięcie dnia zdejmowało sesję oznaczoną „Poza miejscem”.
+ * @param {Set<string>} protectedCodeIds — kody, dla których requiresQrExitScan
+ * @returns {null | 'QR_EXIT_REQUIRED' | 'QR_SESSION_LOCKED'}
+ */
+function workdaysQrDeleteLock(workdays = [], protectedCodeIds = new Set()) {
+	const isProtected = id => Boolean(id) && protectedCodeIds.has(String(id))
+	if (workdays.some(day => day?.activeTimer?.startTime && isProtected(day.activeTimer.qrCodeId))) return 'QR_EXIT_REQUIRED'
+	if (workdays.some(day => (day?.timeEntries || []).some(entry => isProtected(entry?.qrCodeId)))) return 'QR_SESSION_LOCKED'
+	return null
+}
+
 /**
  * Weryfikacja do zapisania przy sesji dnia (Workday.timeEntries[].qrVerify) z wpisu TimeEntry.
  * Metoda skanu tylko dla kodów w trybie ekranu — przy zwykłym wydruku „wydruk” to norma, nie sygnał.
@@ -165,5 +191,7 @@ module.exports = {
 	evaluateGeo,
 	toStoredGeo,
 	requiresQrExitScan,
+	qrCodeIdsOfWorkdays,
+	workdaysQrDeleteLock,
 	buildSessionQrVerify,
 }

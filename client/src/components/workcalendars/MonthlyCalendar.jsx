@@ -1299,6 +1299,8 @@ function MonthlyCalendar() {
 			// Optimistic update już zaktualizował UI, invalidateQueries w onSuccess zadba o synchronizację z serwerem
 		} catch (error) {
 			console.error('Failed to delete workday:', error)
+			// Np. dzień z sesjami ze skanu QR albo „tylko dziś” — serwer mówi, dlaczego
+			await showAlert(error.response?.data?.message || t('workcalendar.deleteError'))
 		}
 	}
 
