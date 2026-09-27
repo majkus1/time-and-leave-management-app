@@ -38,6 +38,11 @@ const categories: { value: BlogCategory; label: string }[] = [
 	{ value: 'product', label: 'Planopia i instrukcje' },
 ]
 
+/** Kotwice z okruszków w artykułach (np. /blog#urlopy) — wejście pod taki adres od razu pokazuje ten temat */
+const categoryAnchors: Partial<Record<string, BlogCategory>> = {
+	urlopy: 'leave',
+}
+
 const categoryLabels: Record<Exclude<BlogCategory, 'all'>, string> = {
 	time: 'Ewidencja czasu',
 	leave: 'Urlopy i planowanie',
@@ -238,6 +243,17 @@ function Blog() {
 		: articles.filter(article => article.category === selectedCategory)
 	const selectedCategoryLabel = categories.find(category => category.value === selectedCategory)?.label ?? categories[0].label
 
+	// Hash z okruszka (np. #urlopy) wybiera temat; hashchange obsługuje przejście na kotwicę bez przeładowania
+	useEffect(() => {
+		const applyHash = () => {
+			const category = categoryAnchors[window.location.hash.slice(1)]
+			if (category) setSelectedCategory(category)
+		}
+		applyHash()
+		window.addEventListener('hashchange', applyHash)
+		return () => window.removeEventListener('hashchange', applyHash)
+	}, [])
+
 	useEffect(() => {
 		if (!filterOpen) return
 
@@ -323,6 +339,10 @@ function Blog() {
 				</section>
 
 				<section className="px-4 py-10 md:py-14" aria-labelledby="articles-heading">
+					{/* Cel kotwic z okruszków; scroll-mt, żeby nagłówek listy nie chował się pod stałym headerem */}
+					{Object.keys(categoryAnchors).map(anchor => (
+						<span key={anchor} id={anchor} className="block scroll-mt-24" aria-hidden="true" />
+					))}
 					<div className="mx-auto max-w-7xl">
 						<div className="mb-8 flex flex-col gap-5 border-b border-slate-200 pb-7 sm:flex-row sm:items-end sm:justify-between">
 							<div>
