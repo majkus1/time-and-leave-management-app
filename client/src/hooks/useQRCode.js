@@ -83,6 +83,18 @@ export const useSetQRCodeMode = () => {
 	})
 }
 
+// Lokalizacja przy skanie: { policy?, lat?, lng?, accuracy?, radiusM? } (Admin/HR)
+export const useSetQRCodeGeo = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ id, ...body }) => {
+			const response = await axios.patch(`${API_URL}/api/qr/${id}/geo`, body, { withCredentials: true })
+			return response.data
+		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
+	})
+}
+
 // Nowy link wyświetlacza — unieważnia poprzedni
 export const useRotateQRDisplayLink = () => {
 	const queryClient = useQueryClient()

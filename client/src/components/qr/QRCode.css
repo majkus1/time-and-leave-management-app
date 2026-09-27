@@ -226,3 +226,73 @@
 	cursor: pointer;
 	text-decoration: underline;
 }
+
+/* Lokalizacja przy skanie (QRCodeGeoSettings) */
+.qr-code-generator__geo {
+	border-top: 1px dashed var(--po-border, #e2e8f0);
+	margin-top: 4px;
+	padding-top: 10px;
+}
+
+.qr-code-generator__geo-site {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	margin-bottom: 10px;
+	text-align: left;
+}
+
+.qr-code-generator__geo-line {
+	margin: 0;
+	padding: 0;
+	font-size: 13px !important;
+	line-height: 1.4;
+}
+
+.qr-code-generator__geo-line a {
+	color: var(--po-brand, #00a63e);
+	font-variant-numeric: tabular-nums;
+}
+
+.qr-code-generator__geo-line--warn {
+	color: #b45309 !important;
+}
+
+.qr-code-generator__geo-coords {
+	display: flex;
+	gap: 8px;
+	width: 100%;
+	align-items: center;
+}
+
+.qr-code-generator__geo-coords input {
+	flex: 1;
+	min-width: 0;
+	padding: 6px 8px;
+	border-radius: 8px;
+	border: 1px solid var(--po-border-strong, #cbd5e1);
+	background: var(--po-surface, #fff);
+	color: var(--po-text, #102f5e);
+	font-size: 13px;
+}
+
+.qr-code-generator__geo-radius {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.qr-code-generator__geo-radius select {
+	padding: 5px 8px;
+	border-radius: 8px;
+	border: 1px solid var(--po-border-strong, #cbd5e1);
+	background: var(--po-surface, #fff);
+	color: var(--po-text, #102f5e);
+}
+
+[data-theme='dark'] .qr-code-generator__geo-line--warn {
+	color: #fbbf24 !important;
+}

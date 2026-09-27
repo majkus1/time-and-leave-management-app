@@ -27,7 +27,7 @@ const modules = [
 
 /** Wspólny dla obu czatów blok „czego Planopia nie ma” — żeby model nie zmyślał funkcji. */
 const NOT_AVAILABLE_PL = `### Czego Planopia nie ma (wspólne dla wszystkich modułów)
-- lokalizacji GPS, geofencingu ani śledzenia telefonu — także przy kodach QR,
+- śledzenia lokalizacji w tle ani geofencingu (przy kodach QR jest tylko opcjonalny, jednorazowy odczyt lokalizacji w chwili skanu),
 - kadr i płac (wynagrodzenia, ZUS, PIT) ani integracji z programami kadrowo-płacowymi,
 - natywnej aplikacji w App Store / Google Play (jest PWA instalowana z przeglądarki),
 - logowania kontem Google/Microsoft, importu pracowników z pliku, kart RFID/NFC, trybu kiosku,

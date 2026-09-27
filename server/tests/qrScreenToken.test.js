@@ -8,6 +8,8 @@ const {
 	verifyScanPass,
 	resolveScanDecision,
 	normalizeQrMode,
+	evaluateScan,
+	passForScan,
 } = require('../utils/qrScreenToken')
 
 const SECRET = 'a'.repeat(64)
@@ -59,4 +61,27 @@ test('decyzja skanu per tryb', () => {
 	assert.deepEqual(resolveScanDecision({ mode: 'screen_or_print', hasToken: false }), { allowed: true, method: 'print' })
 	assert.deepEqual(resolveScanDecision({ mode: 'screen_or_print', hasToken: true, tokenOk: true }), { allowed: true, method: 'screen' })
 	assert.equal(normalizeQrMode('hack'), 'print')
+})
+
+test('przepustki nie da się przedłużać samą przepustką (bez ekranu)', () => {
+	const qr = { mode: 'screen', code: CODE, screenSecret: SECRET }
+	const byToken = evaluateScan(qr, { t: generateScreenToken(SECRET, CODE, T0) }, T0)
+	assert.equal(byToken.via, 'token')
+	const pass = passForScan(qr, byToken, {}, T0)
+	assert.ok(verifyScanPass(SECRET, CODE, pass, T0))
+	// 9 minut później: /verify z samą przepustką oddaje TĘ SAMĄ przepustkę, nie nową z późniejszym exp
+	const later = T0 + 9 * 60 * 1000
+	const byPass = evaluateScan(qr, { p: pass }, later)
+	assert.equal(byPass.allowed, true)
+	assert.equal(byPass.via, 'pass')
+	assert.equal(passForScan(qr, byPass, { p: pass }, later), pass)
+	assert.equal(evaluateScan(qr, { p: pass }, T0 + 11 * 60 * 1000).allowed, false)
+})
+
+test('evaluateScan: tablica w query i brak sekretu', () => {
+	const qr = { mode: 'screen', code: CODE, screenSecret: SECRET }
+	const t = generateScreenToken(SECRET, CODE, T0)
+	assert.equal(evaluateScan(qr, { t: [t, 'x'] }, T0).allowed, true)
+	assert.equal(evaluateScan({ mode: 'screen', code: CODE }, { t }, T0).allowed, false)
+	assert.equal(evaluateScan({ mode: 'print', code: CODE }, {}, T0).via, null)
 })

@@ -2,7 +2,8 @@
 // client QRCodeGenerator.jsx (placeholder „Nazwa miejsca”), QRScan.jsx (login redirect, auto-register),
 // timeEntryController.registerTimeEntry (ostatni wpis per qrCodeId → wyjście tym samym kodem; canStartTimerOnDate),
 // freemiumApiPolicyService (/api/qr zablokowane w planie darmowym), planCatalog.MODULE_API_PREFIXES.timer_qr.
-// Grep po „geolocation|latitude|GPS” w client i server: 0 wyników.
+// Lokalizacja: utils/qrGeoCheck.js (polityki, tolerancja, zapis bez współrzędnych), QRCodeGeoSettings.jsx, QRScan.jsx.
+// Stop licznika z kodu chronionego: workdayController.stopTimer (QR_EXIT_REQUIRED).
 module.exports = {
 	id: 'qr',
 	order: 2,
@@ -32,9 +33,20 @@ module.exports = {
 Każdy kod ma w Ustawieniach → Licznik i QR wybór „Sposób użycia kodu”:
 - **Wydruk (stały kod)** — domyślnie, jak dotąd. Prosto, ale zdjęcie wydruku działa z każdego miejsca.
 - **Tylko ekran** — kod wyświetla tablet (lub dowolne urządzenie z przeglądarką) przy wejściu i **zmienia się co 30 sekund**. Zdjęcie zrobione wcześniej nie zadziała, wydruk nie jest przyjmowany. Administrator klika „Otwórz wyświetlacz” (albo kopiuje link) i otwiera go na tablecie — **tablet nie loguje się** kontem pracownika; link można w każdej chwili unieważnić przyciskiem „Nowy link”. Wyświetlacz ma pełny ekran i nie pozwala ekranowi zgasnąć (jeśli przeglądarka to wspiera); przy chwilowym braku internetu kod nadal się zmienia.
-- **Ekran, wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); takie skany są oznaczane jako „wydruk”.
-- Pracownik skanuje kod z ekranu tak samo, aparatem telefonu. Jeśli musi się zalogować, ma na to 10 minut od skanu — nie trzeba skanować ponownie.
+- **Ekran, wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); przy wpisie zapisujemy, że skan był z wydruku.
+- Pracownik skanuje kod z ekranu tak samo, aparatem telefonu. Jeśli musi się zalogować, ma na to 10 minut od skanu — nie trzeba skanować ponownie. Ten jeden skan wystarcza na jedno zdarzenie (wejście albo wyjście), nie na oba.
 - To utrudnia oszukiwanie „ze zdjęcia z domu”, ale nie zapobiega zmowie (ktoś na miejscu przesyła zdjęcie ekranu od razu).
+
+### Lokalizacja przy skanie (opcjonalnie, per kod)
+Każdy kod ma w Ustawieniach → Licznik i QR wybór „Lokalizacja przy skanie”. Działa z wydrukiem i z ekranem:
+- **Wyłączona** — domyślnie, jak dotąd.
+- **Tylko zapisuj** — telefon pracownika podaje lokalizację **raz, w chwili skanu**; zapisujemy wynik (w miejscu / ile metrów od miejsca / brak zgody / brak sygnału). Nic nie jest blokowane.
+- **Oznaczaj nietypowe** — skan przechodzi, ale skan poza miejscem, bez zgody na lokalizację albo bez sygnału jest oznaczony.
+- **Blokuj poza miejscem** — przyjmowany jest tylko skan w obrębie miejsca; bez zgody na lokalizację skan jest odrzucany z informacją, co zrobić.
+- Pozycję miejsca Administrator/HR ustawia przyciskiem „Użyj mojej pozycji”, stojąc na miejscu (z potwierdzeniem), albo wkleja współrzędne z mapy (np. z Google Maps). Promień do wyboru: od 50 m do 2 km (domyślnie 150 m). Słaby sygnał jest uwzględniany z tolerancją.
+- Przed pytaniem przeglądarki o zgodę pracownik widzi krótką informację, że lokalizacja jest zapisywana jednorazowo, bez śledzenia. **Nie zapisujemy współrzędnych pracownika** — tylko wynik i odległość.
+- Gdy licznik został włączony kodem z ekranem albo z lokalizacją, zakończyć go można tylko skanem przy wyjściu (nie przyciskiem Stop ani podziałem sesji).
+- Lokalizację podaje telefon lub przeglądarka pracownika, więc da się ją sfałszować (aplikacją na telefonie albo narzędziami przeglądarki na komputerze). Przy kodzie z wydruku to utrudnienie, nie dowód; najmocniejsze jest połączenie z **kodem na ekranie**, bo wtedy trzeba też mieć świeży kod z tabletu.
 
 ### Ograniczenia, o których warto wiedzieć
 - Wyjście trzeba zeskanować tym samym kodem, którym było wejście; skan innego kodu przy otwartej sesji nie zamyka jej.
@@ -42,7 +54,8 @@ Każdy kod ma w Ustawieniach → Licznik i QR wybór „Sposób użycia kodu”:
 - Rejestracja jest zawsze na koncie zalogowanej osoby — każdy pracownik skanuje własnym telefonem (ma własne konto).
 
 ### Czego NIE robi
-- **Nie sprawdza lokalizacji GPS** ani tego, gdzie fizycznie znajduje się telefon. Przy **wydruku** kod można zeskanować z dowolnego miejsca, jeśli ktoś ma jego zdjęcie; przed tym chroni tryb **kodu na ekranie** (zmienia się co 30 s).
+- **Nie śledzi pracowników** — lokalizacja (jeśli włączona przy kodzie) jest odczytywana tylko w chwili skanu, nie w trakcie pracy. Bez włączonej lokalizacji kod z **wydruku** można zeskanować z dowolnego miejsca, jeśli ktoś ma jego zdjęcie; chronią przed tym **kod na ekranie** i **lokalizacja przy skanie**.
+- Nie ma geofencingu w tle, map przejazdów ani lokalizacji przy ręcznym liczniku start/stop (tylko przy skanie QR).
 - Tablet w trybie ekranu tylko wyświetla kod — pracownicy nadal skanują własnymi telefonami. Nie ma trybu kiosku, w którym tablet sam skanuje pracowników, ani kart RFID/NFC.
 - Nie działa w planie darmowym.
 

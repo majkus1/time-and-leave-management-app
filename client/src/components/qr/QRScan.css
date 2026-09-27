@@ -151,6 +151,14 @@
 	margin-top: 24px;
 }
 
+/* Drugi przycisk pod „Spróbuj ponownie” — mniej wyrazisty */
+.po-qr-scan__btn--secondary {
+	margin-top: 10px;
+	background: transparent;
+	border: 1px solid var(--po-border-strong, #cbd5e1);
+	color: var(--po-text, #213555) !important;
+}
+
 .po-qr-scan__btn:hover:not(:disabled) {
 	filter: brightness(1.05);
 	transform: translateY(-1px);

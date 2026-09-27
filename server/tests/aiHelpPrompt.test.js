@@ -47,7 +47,7 @@ test('prompt pomocy nie zawiera DATA CONTEXT, zawiera wszystkie moduły i „cze
 	}
 	assert.ok(staticPrefix.includes('### Czego Planopia nie ma'))
 	assert.ok(!staticPrefix.includes('{{'))
-	assert.ok(staticPrefix.includes('Nie sprawdza lokalizacji GPS'))
+	assert.ok(staticPrefix.includes('Nie śledzi pracowników'))
 })
 
 test('wybrany moduł i kontekst planu trafiają na koniec, po statycznym prefiksie', () => {

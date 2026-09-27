@@ -13,7 +13,7 @@
 			"nazw"
 		],
 		"mustNotMatch": [
-			"GPS[^.]{0,40}(tak|dostępn|sprawdza lokalizację)"
+			"śledzi[^.]{0,30}(stale|w tle|na bieżąco)"
 		]
 	},
 	{
@@ -25,7 +25,9 @@
 		],
 		"question": "Czy QR sprawdza lokalizację GPS pracownika?",
 		"mustMatch": [
-			"\\bnie\\b"
+			"opcjonaln|można włączyć|przy kodzie",
+			"skan",
+			"nie śledzi|jednorazow|w chwili skanu"
 		],
 		"mustNotMatch": [
 			"geofenc[^.]{0,30}(tak|dostępn)"

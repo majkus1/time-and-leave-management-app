@@ -164,6 +164,16 @@ exports.founderCallPublicLimiter = rateLimit({
 	legacyHeaders: false,
 })
 
+/** Rejestracja skanu QR — limit per użytkownik; zwykły ruch to kilka skanów dziennie, próby „zgadywania” pozycji odpadają. */
+exports.timeEntryRegisterLimiter = rateLimit({
+	windowMs: 60 * 1000,
+	max: envInt('QR_REGISTER_PER_MIN', 20),
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+	message: { message: 'Zbyt wiele prób skanowania. Spróbuj ponownie za minutę.' },
+})
+
 /** Publiczny wyświetlacz rotującego kodu QR — tablet odpytuje raz przy starcie i co kilka minut; limit per IP. */
 exports.qrDisplayPublicLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,

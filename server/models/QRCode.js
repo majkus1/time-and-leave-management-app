@@ -46,6 +46,21 @@ const qrCodeSchema = new mongoose.Schema({
 		index: true,
 		sparse: true
 	},
+	/**
+	 * Lokalizacja przy skanie (utils/qrGeoCheck): polityka + pozycja miejsca i promień. Pozycję ustawia Admin/HR
+	 * przyciskiem „Użyj mojej pozycji” na miejscu. Brak pola = 'off' (kody sprzed tej funkcji).
+	 */
+	geo: {
+		type: new mongoose.Schema({
+			policy: { type: String, enum: ['off', 'record', 'flag', 'block'], default: 'off' },
+			lat: { type: Number, default: null },
+			lng: { type: Number, default: null },
+			radiusM: { type: Number, default: 150 },
+			siteAccuracyM: { type: Number, default: null },
+			siteSetAt: { type: Date, default: null }
+		}, { _id: false }),
+		default: () => ({})
+	},
 	createdBy: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',

@@ -61,6 +61,12 @@ function verifyScanPass(secret, code, pass, nowMs = Date.now()) {
 	return safeEqual(hmacHex(secret, `pass:${code}:${exp}`).slice(0, 24), sig)
 }
 
+/** Chwila wydania przepustki (z podpisanego exp) — do sprawdzenia, czy przepustka nie została już zużyta */
+function scanPassIssuedAtMs(pass) {
+	const exp = Number(firstString(pass).split('.')[0])
+	return Number.isFinite(exp) && exp > 0 ? (exp - PASS_TTL_SEC) * 1000 : null
+}
+
 function normalizeQrMode(mode) {
 	return QR_MODES.includes(mode) ? mode : 'print'
 }
@@ -78,6 +84,37 @@ function resolveScanDecision({ mode, hasToken, tokenOk, passOk }) {
 	if (tokenOk || passOk) return { allowed: true, method: 'screen' }
 	if (m === 'screen_or_print') return { allowed: true, method: 'print' }
 	return { allowed: false, method: null, reason: hasToken ? 'SCREEN_EXPIRED' : 'SCREEN_REQUIRED' }
+}
+
+// ?t=a&t=b daje tablicę — bierzemy pierwszą wartość zamiast udawać, że tokenu nie było
+function firstString(value) {
+	const v = Array.isArray(value) ? value[0] : value
+	return typeof v === 'string' ? v : ''
+}
+
+/**
+ * Ocena skanu dla kodu ({ mode, code, screenSecret } — sekret wymagany w trybie ekranu).
+ * `via` mówi, czym skan przeszedł: 'token' (świeży kod z ekranu) albo 'pass' (przepustka z wcześniejszego skanu).
+ */
+function evaluateScan(qr, { t, p } = {}, nowMs = Date.now()) {
+	const secret = qr?.screenSecret
+	const token = firstString(t)
+	const pass = firstString(p)
+	const hasToken = token.length > 0
+	const tokenOk = Boolean(secret && hasToken && verifyScreenToken(secret, qr.code, token, nowMs))
+	const passOk = Boolean(secret && pass && verifyScanPass(secret, qr.code, pass, nowMs))
+	const decision = resolveScanDecision({ mode: qr?.mode, hasToken, tokenOk, passOk })
+	return { ...decision, via: decision.method === 'screen' ? (tokenOk ? 'token' : 'pass') : null }
+}
+
+/**
+ * Przepustka zwracana przy weryfikacji: nowa tylko za świeży token z ekranu. Skan samą przepustką oddaje ją bez zmian —
+ * inaczej publiczne /verify pozwalałoby przedłużać przepustkę bez końca, bez stania przed ekranem.
+ */
+function passForScan(qr, scan, { p } = {}, nowMs = Date.now()) {
+	if (!scan?.allowed || scan.method !== 'screen' || !qr?.screenSecret) return null
+	if (scan.via === 'token') return issueScanPass(qr.screenSecret, qr.code, nowMs)
+	return firstString(p) || null
 }
 
 function generateSecret() {
@@ -99,6 +136,9 @@ module.exports = {
 	verifyScanPass,
 	normalizeQrMode,
 	resolveScanDecision,
+	evaluateScan,
+	passForScan,
+	scanPassIssuedAtMs,
 	generateSecret,
 	generateDisplayToken,
 }

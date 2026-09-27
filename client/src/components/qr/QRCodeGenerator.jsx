@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useTeamQRCodes, useGenerateQRCode, useDeleteQRCode, useSetQRCodeMode, useRotateQRDisplayLink } from '../../hooks/useQRCode'
 import Loader from '../Loader'
+import QRCodeGeoSettings from './QRCodeGeoSettings'
 import './QRCode.css'
 
 function QRCodeGenerator() {
@@ -176,6 +177,8 @@ function QRCodeGenerator() {
 										</div>
 									</div>
 								)}
+
+								<QRCodeGeoSettings qr={qr} />
 
 								{!screenOnly && (
 								<div className="qr-code-generator__qr-wrap">

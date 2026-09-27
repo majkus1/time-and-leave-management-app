@@ -110,7 +110,7 @@ test('blok wiedzy do promptu: indeks + wybrane moduły + alwaysInclude + „czeg
 	assert.ok(moduleIds.includes('ai'))
 	assert.ok(text.includes('- packages: '), 'indeks zawiera wszystkie moduły')
 	assert.ok(text.includes('## Kody QR'), 'pełna treść wybranego modułu')
-	assert.ok(text.includes('Nie sprawdza lokalizacji GPS'))
+	assert.ok(text.includes('Nie śledzi pracowników'))
 	assert.ok(text.includes('### Czego Planopia nie ma'))
 	assert.ok(!text.includes('{{'))
 
@@ -129,7 +129,7 @@ test('wersja wiedzy jest stabilna i zmienia się z treścią', () => {
 	assert.equal(render.computeKnowledgeVersion(), v1)
 	const altered = modules.map(m => (m.id === 'qr' ? { ...m, body: { ...m.body, pl: m.body.pl + '\nzmiana' } } : m))
 	assert.notEqual(render.computeKnowledgeVersion({ modules: altered }), v1)
-	assert.ok(NOT_AVAILABLE_PL.includes('GPS'))
+	assert.ok(NOT_AVAILABLE_PL.includes('geofencingu'))
 })
 
 test('wygenerowany plik landingu jest aktualny (npm run knowledge:build)', () => {

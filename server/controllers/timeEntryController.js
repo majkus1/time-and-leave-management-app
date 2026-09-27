@@ -7,6 +7,9 @@ const Settings = require('../models/Settings')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
+const qrService = require('../services/qrService')
+const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
+const { toStoredGeo } = require('../utils/qrGeoCheck')
 
 // Helper function to check if day is weekend
 function isWeekend(date) {
@@ -75,9 +78,24 @@ async function canStartTimerOnDate(userId, date) {
 }
 
 // Register time entry (entry or exit)
+function screenErrorMessage(reason) {
+	return reason === 'SCREEN_EXPIRED'
+		? 'Kod z ekranu wygasł. Zeskanuj go ponownie z ekranu przy wejściu.'
+		: 'Ten kod działa tylko z ekranu przy wejściu. Zeskanuj kod wyświetlany na tablecie.'
+}
+
+function geoErrorMessage({ reason, distanceM }) {
+	if (reason === 'GEO_OUTSIDE') {
+		const km = distanceM >= 1000 ? `${(distanceM / 1000).toFixed(1)} km` : `${distanceM} m`
+		return `Jesteś poza miejscem pracy (ok. ${km}). Zeskanuj kod na miejscu.`
+	}
+	if (reason === 'GEO_DENIED') return 'Ten kod wymaga zgody na lokalizację przy skanie. Zezwól na lokalizację i spróbuj ponownie.'
+	return 'Nie udało się ustalić lokalizacji. Włącz lokalizację w telefonie i spróbuj ponownie.'
+}
+
 exports.registerTimeEntry = async (req, res) => {
 	try {
-		const { code, t, p } = req.body
+		const { code, t, p, geo } = req.body
 		const userId = req.user.userId
 
 		if (!code) {
@@ -90,35 +108,52 @@ exports.registerTimeEntry = async (req, res) => {
 			return res.status(404).json({ message: 'Nieprawidłowy kod QR' })
 		}
 
-		// Tryb ekranu: token z ekranu albo przepustka wydana przy skanie (utils/qrScreenToken)
-		const scan = require('../services/qrService').evaluateScan(qrCode, { t, p })
-		if (!scan.allowed) {
-			return res.status(403).json({
-				message: scan.reason === 'SCREEN_EXPIRED'
-					? 'Kod z ekranu wygasł. Zeskanuj go ponownie z ekranu przy wejściu.'
-					: 'Ten kod działa tylko z ekranu przy wejściu. Zeskanuj kod wyświetlany na tablecie.',
-				code: scan.reason,
-			})
-		}
-
-		// Check if user belongs to the same team
+		// Najpierw zespół — obcy kod nie zdradza trybu ani ustawień lokalizacji
 		const user = await User.findById(userId)
 		if (!user || user.teamId.toString() !== qrCode.teamId.toString()) {
 			return res.status(403).json({ message: 'Kod QR nie należy do Twojego zespołu' })
+		}
+
+		// Tryb ekranu: token z ekranu albo przepustka wydana przy skanie (utils/qrScreenToken)
+		const scan = qrService.evaluateScan(qrCode, { t, p })
+		if (!scan.allowed) {
+			return res.status(403).json({ message: screenErrorMessage(scan.reason), code: scan.reason })
 		}
 
 		// Get today's date (start of day)
 		const today = new Date()
 		today.setHours(0, 0, 0, 0)
 
-		// Find last entry for today
+		// Ostatni wpis od wczoraj — nocna zmiana: wejście przed północą musi dać się zamknąć skanem po północy
+		const yesterday = new Date(today)
+		yesterday.setDate(yesterday.getDate() - 1)
 		const lastEntry = await TimeEntry.findOne({
 			userId,
-			date: { $gte: today },
+			date: { $gte: yesterday },
 			qrCodeId: qrCode._id
 		}).sort({ entryTime: -1 })
 
 		const now = new Date()
+
+		// Przepustka działa na jedno zdarzenie: po wejściu nią nie da się nią samą (np. z domu) zarejestrować wyjścia
+		if (scan.via === 'pass' && lastEntry) {
+			const issuedAt = scanPassIssuedAtMs(p)
+			const lastEventAt = Math.max(lastEntry.entryTime?.getTime() || 0, lastEntry.exitTime?.getTime() || 0)
+			if (issuedAt === null || lastEventAt >= issuedAt) {
+				return res.status(403).json({ message: screenErrorMessage('SCREEN_EXPIRED'), code: 'SCREEN_EXPIRED' })
+			}
+		}
+
+		// Lokalizacja przy skanie (utils/qrGeoCheck) — jeden odczyt, zapisujemy wynik bez współrzędnych
+		const geoResult = qrService.evaluateScanGeo(qrCode, geo)
+		if (!geoResult.allowed) {
+			return res.status(403).json({
+				message: geoErrorMessage(geoResult),
+				code: geoResult.reason,
+				distanceM: geoResult.distanceM,
+			})
+		}
+		const storedGeo = toStoredGeo(geoResult, qrCode.geo?.policy)
 
 		// Check if there's an active timer with this QR code (check today and yesterday for overnight shifts)
 		const workdayController = require('./workdayController')
@@ -126,10 +161,18 @@ exports.registerTimeEntry = async (req, res) => {
 		const hasActiveTimer = workday && workday.activeTimer && workday.activeTimer.startTime && 
 			workday.activeTimer.qrCodeId && workday.activeTimer.qrCodeId.toString() === qrCode._id.toString()
 
-		if (lastEntry && !lastEntry.exitTime) {
+		// Wyjście zamyka otwarte wejście tym kodem; z wczoraj tylko, gdy licznik z tego kodu nadal działa (inaczej porzucony wpis)
+		const openEntry = lastEntry && !lastEntry.exitTime
+			? lastEntry
+			: await TimeEntry.findOne({ userId, qrCodeId: qrCode._id, date: { $gte: yesterday }, exitTime: null }).sort({ entryTime: -1 })
+		const isExit = Boolean(openEntry && (openEntry.date >= today || hasActiveTimer))
+
+		if (isExit) {
 			// Last entry was an entry, so this is an exit
+			const lastEntry = openEntry
 			lastEntry.exitTime = now
 			lastEntry.exitScanMethod = scan.method
+			lastEntry.exitGeo = storedGeo
 			await lastEntry.save()
 
 			// If there's an active timer with this QR code, stop it
@@ -251,6 +294,7 @@ exports.registerTimeEntry = async (req, res) => {
 				qrCodeId: qrCode._id,
 				entryTime: now,
 				entryScanMethod: scan.method,
+				entryGeo: storedGeo,
 				date: today,
 				exitTime: null
 			})

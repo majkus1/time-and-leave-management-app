@@ -14,6 +14,7 @@ router.post('/generate', authenticateToken, qrController.generateQRCode)
 router.get('/team-codes', authenticateToken, qrController.getTeamQRCodes)
 router.delete('/:id', authenticateToken, qrController.deleteQRCode)
 router.patch('/:id/mode', authenticateToken, qrController.setQRCodeMode)
+router.patch('/:id/geo', authenticateToken, qrController.setQRCodeGeo)
 router.post('/:id/display-link', authenticateToken, qrController.rotateDisplayLink)
 
 module.exports = router

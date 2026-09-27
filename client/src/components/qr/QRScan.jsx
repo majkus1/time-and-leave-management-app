@@ -1,11 +1,43 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useAlert } from '../../context/AlertContext'
 import { useVerifyQRCode, useRegisterTimeEntry } from '../../hooks/useQRCode'
 import { useSettings } from '../../hooks/useSettings'
+import { getScanPosition, formatDistance } from '../../utils/scanGeolocation'
 import './QRScan.css'
+
+// Kody odmowy z serwera (timeEntryController.registerTimeEntry), dla których jest własny widok i tłumaczenie
+const KNOWN_SCAN_ERRORS = ['SCREEN_REQUIRED', 'SCREEN_EXPIRED', 'GEO_OUTSIDE', 'GEO_DENIED', 'GEO_UNAVAILABLE', 'GEO_MISSING']
+
+const PinIcon = ({ className = '' }) => (
+	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+		<circle cx="12" cy="9.5" r="2.5" strokeWidth={2} />
+	</svg>
+)
+
+/** Tytuł i treść widoku odmowy per kod (klucze i18n qrScan.*) */
+function scanErrorCopy(t, i18n, { code, distanceM }) {
+	switch (code) {
+		case 'SCREEN_EXPIRED':
+			return { title: t('qrScan.screenExpiredTitle'), body: t('qrScan.screenExpiredBody') }
+		case 'SCREEN_REQUIRED':
+			return { title: t('qrScan.screenRequiredTitle'), body: t('qrScan.screenRequiredBody') }
+		case 'GEO_OUTSIDE':
+			return {
+				title: t('qrScan.geoOutsideTitle'),
+				body: t('qrScan.geoOutsideBody', { distance: formatDistance(distanceM, i18n.resolvedLanguage) }),
+				retry: true,
+				geo: true,
+			}
+		case 'GEO_DENIED':
+			return { title: t('qrScan.geoDeniedTitle'), body: t('qrScan.geoDeniedBody'), retry: true, geo: true }
+		default:
+			return { title: t('qrScan.geoUnavailableTitle'), body: t('qrScan.geoUnavailableBody'), retry: true, geo: true }
+	}
+}
 
 const QRIcon = ({ className = '' }) => (
 	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -37,7 +69,7 @@ function QRScan() {
 	const screenToken = searchParams.get('t') || ''
 	const passFromUrl = searchParams.get('p') || ''
 	const navigate = useNavigate()
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const { loggedIn, isCheckingAuth } = useAuth()
 	const { showAlert } = useAlert()
 	const { data: qrData, isLoading: verifying } = useVerifyQRCode(code, { t: screenToken, p: passFromUrl })
@@ -52,6 +84,12 @@ function QRScan() {
 	const [registering, setRegistering] = useState(false)
 	const [registered, setRegistered] = useState(false)
 	const [entryType, setEntryType] = useState(null)
+	const [locating, setLocating] = useState(false)
+	// Odmowa z serwera z rozpoznanym kodem (ekran/lokalizacja) — własny widok zamiast alertu
+	const [scanError, setScanError] = useState(null)
+	// Automatyczna rejestracja tylko raz; po błędzie ponowienie wyłącznie przyciskiem (bez pętli żądań)
+	const autoTriedRef = useRef(false)
+	const needsGeo = Boolean(qrData?.geoPolicy && qrData.geoPolicy !== 'off')
 
 	useEffect(() => {
 		if (!code) {
@@ -79,7 +117,8 @@ function QRScan() {
 			return
 		}
 
-		if (loggedIn && qrData && qrData.valid && !registered && !registering) {
+		if (loggedIn && qrData && qrData.valid && !registered && !registering && !autoTriedRef.current) {
+			autoTriedRef.current = true
 			handleRegister()
 		}
 	}, [code, loggedIn, isCheckingAuth, qrData, registered, registering, settings, showAlert, t, navigate])
@@ -101,8 +140,15 @@ function QRScan() {
 		}
 
 		setRegistering(true)
+		setScanError(null)
 		try {
-			const result = await registerTimeEntry.mutateAsync({ code, t: screenToken || undefined, p: scanPass || undefined })
+			let geo
+			if (needsGeo) {
+				setLocating(true)
+				geo = await getScanPosition()
+				setLocating(false)
+			}
+			const result = await registerTimeEntry.mutateAsync({ code, t: screenToken || undefined, p: scanPass || undefined, geo })
 			setRegistered(true)
 			setEntryType(result.type)
 
@@ -117,6 +163,13 @@ function QRScan() {
 				window.location.reload()
 			}, 2000)
 		} catch (error) {
+			setLocating(false)
+			const errorCode = error.response?.data?.code
+			if (KNOWN_SCAN_ERRORS.includes(errorCode)) {
+				setScanError({ code: errorCode, distanceM: error.response?.data?.distanceM ?? null })
+				setRegistering(false)
+				return
+			}
 			console.error('Error registering time entry:', error)
 			await showAlert(
 				error.response?.data?.message ||
@@ -166,26 +219,50 @@ function QRScan() {
 		)
 	}
 
-	// Kod działa tylko z ekranu (tablet), a skan był z wydruku albo token z ekranu wygasł
-	if (qrData.scanAllowed === false) {
-		const expired = qrData.scanReason === 'SCREEN_EXPIRED'
+	// Odmowa: kod tylko z ekranu (wydruk / wygasły token) albo lokalizacja poza miejscem / bez zgody
+	const blocked = qrData.scanAllowed === false
+		? { code: qrData.scanReason === 'SCREEN_EXPIRED' ? 'SCREEN_EXPIRED' : 'SCREEN_REQUIRED' }
+		: scanError
+	if (blocked && !registering) {
+		const copy = scanErrorCopy(t, i18n, blocked)
 		return (
 			<QRScanShell>
 				<div className="po-qr-scan__icon po-qr-scan__icon--error">
-					<QRIcon />
+					{copy.geo ? <PinIcon /> : <QRIcon />}
 				</div>
-				<h2 className="po-qr-scan__title">
-					{expired ? t('qrScan.screenExpiredTitle') : t('qrScan.screenRequiredTitle')}
-				</h2>
-				<p className="po-qr-scan__text po-qr-scan__text--spaced">
-					{expired ? t('qrScan.screenExpiredBody') : t('qrScan.screenRequiredBody')}
-				</p>
+				<h2 className="po-qr-scan__title">{copy.title}</h2>
+				<p className="po-qr-scan__text po-qr-scan__text--spaced">{copy.body}</p>
 				<p className="po-qr-scan__text">
-					{t('qrScan.location') || 'Miejsce:'} <span className="po-qr-scan__location-highlight">{qrData.name}</span>
+					{t('qrScan.location')} <span className="po-qr-scan__location-highlight">{qrData.name}</span>
 				</p>
-				<button type="button" onClick={() => navigate('/dashboard')} className="po-qr-scan__btn">
-					{t('qrScan.backToDashboard') || 'Powrót do panelu'}
+				{copy.retry && (
+					<button type="button" onClick={handleRegister} className="po-qr-scan__btn po-qr-scan__btn--spaced">
+						{t('qrScan.geoRetry')}
+					</button>
+				)}
+				<button
+					type="button"
+					onClick={() => navigate('/dashboard')}
+					className={copy.retry ? 'po-qr-scan__btn po-qr-scan__btn--secondary' : 'po-qr-scan__btn'}
+				>
+					{t('qrScan.backToDashboard')}
 				</button>
+			</QRScanShell>
+		)
+	}
+
+	// Pytanie przeglądarki o lokalizację — krótko, po co i że bez śledzenia
+	if (locating) {
+		return (
+			<QRScanShell>
+				<div className="po-qr-scan__icon po-qr-scan__icon--info is-pulse">
+					<PinIcon />
+				</div>
+				<h2 className="po-qr-scan__title">{t('qrScan.geoLocatingTitle')}</h2>
+				<p className="po-qr-scan__text po-qr-scan__text--spaced">{t('qrScan.geoNotice')}</p>
+				<p className="po-qr-scan__text">
+					{t('qrScan.location')} <span className="po-qr-scan__location-highlight">{qrData.name}</span>
+				</p>
 			</QRScanShell>
 		)
 	}

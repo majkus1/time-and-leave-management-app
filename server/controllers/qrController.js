@@ -96,8 +96,23 @@ exports.setQRCodeMode = async (req, res) => {
 		const result = await qrService.setQRCodeMode(req.params.id, req.user.teamId, req.body?.mode)
 		res.json(result)
 	} catch (error) {
+		if (error.status === 400) return res.status(400).json({ message: error.message })
 		console.error('Error setting QR mode:', error)
 		const { status, body } = mapQrServiceError(error, 'Błąd podczas zmiany trybu kodu QR')
+		res.status(status).json(body)
+	}
+}
+
+// Lokalizacja przy skanie: polityka, pozycja miejsca, promień — Admin/HR
+exports.setQRCodeGeo = async (req, res) => {
+	try {
+		if (!(await requireQrManager(req, res))) return
+		const { policy, lat, lng, accuracy, radiusM } = req.body || {}
+		res.json(await qrService.setQRCodeGeo(req.params.id, req.user.teamId, { policy, lat, lng, accuracy, radiusM }))
+	} catch (error) {
+		if (error.status === 400) return res.status(400).json({ message: error.message, code: error.code || null })
+		console.error('Error setting QR geo:', error)
+		const { status, body } = mapQrServiceError(error, 'Błąd podczas zmiany ustawień lokalizacji')
 		res.status(status).json(body)
 	}
 }

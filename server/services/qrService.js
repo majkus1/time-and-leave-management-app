@@ -6,12 +6,19 @@ const {
 	normalizeQrMode,
 	generateSecret,
 	generateDisplayToken,
-	verifyScreenToken,
-	verifyScanPass,
-	issueScanPass,
-	resolveScanDecision,
+	evaluateScan,
+	passForScan,
 	WINDOW_SEC,
+	QR_MODES,
 } = require('../utils/qrScreenToken')
+const {
+	normalizeGeoPolicy,
+	isValidLatLng,
+	clampRadius,
+	hasSite,
+	parseGeoReading,
+	evaluateGeo,
+} = require('../utils/qrGeoCheck')
 
 /**
  * Check if user has permission to manage QR codes (Admin or HR)
@@ -159,6 +166,7 @@ exports.verifyQRCode = async (code, { t, p } = {}) => {
 
 		// Tryb ekranu: sprawdzamy token z ekranu teraz (przed logowaniem) i wydajemy przepustkę na czas logowania
 		const scan = exports.evaluateScan(qrCode, { t, p })
+		const geoPolicy = normalizeGeoPolicy(qrCode.geo?.policy)
 		return {
 			valid: true,
 			code: qrCode.code,
@@ -169,7 +177,9 @@ exports.verifyQRCode = async (code, { t, p } = {}) => {
 			scanAllowed: scan.allowed,
 			scanMethod: scan.method,
 			scanReason: scan.reason || null,
-			pass: scan.allowed && scan.method === 'screen' && qrCode.screenSecret ? issueScanPass(qrCode.screenSecret, qrCode.code) : null,
+			pass: passForScan(qrCode, scan, { p }),
+			// Klient pyta o lokalizację tylko, gdy kod jej wymaga (pozycji miejsca nie ujawniamy)
+			geoPolicy: geoPolicy !== 'off' && hasSite(qrCode.geo) ? geoPolicy : 'off',
 		}
 	} catch (error) {
 		console.error('Error verifying QR code:', error)
@@ -178,20 +188,58 @@ exports.verifyQRCode = async (code, { t, p } = {}) => {
 }
 
 /**
- * Ocena skanu dla dokumentu kodu (musi mieć screenSecret, jeśli tryb ekranu): token z ekranu albo przepustka.
- * @returns {{ allowed: boolean, method: 'screen'|'print'|null, reason?: string }}
+ * Ocena skanu dla dokumentu kodu (musi mieć screenSecret, jeśli tryb ekranu) — logika w utils/qrScreenToken.
+ * @returns {{ allowed: boolean, method: 'screen'|'print'|null, via: 'token'|'pass'|null, reason?: string }}
  */
-exports.evaluateScan = (qrCode, { t, p } = {}) => {
-	const mode = normalizeQrMode(qrCode?.mode)
-	const secret = qrCode?.screenSecret
-	const hasToken = typeof t === 'string' && t.length > 0
-	const tokenOk = Boolean(secret && hasToken && verifyScreenToken(secret, qrCode.code, t))
-	const passOk = Boolean(secret && typeof p === 'string' && verifyScanPass(secret, qrCode.code, p))
-	return resolveScanDecision({ mode, hasToken, tokenOk, passOk })
+exports.evaluateScan = (qrCode, { t, p } = {}) => evaluateScan(qrCode, { t, p })
+
+/** Ocena lokalizacji przy skanie (utils/qrGeoCheck); `geo` z żądania: { lat, lng, accuracy } albo { error } */
+exports.evaluateScanGeo = (qrCode, geo) =>
+	evaluateGeo({ policy: qrCode?.geo?.policy, site: qrCode?.geo, reading: parseGeoReading(geo) })
+
+/**
+ * Lokalizacja przy skanie (Admin/HR, tylko własny zespół). Pozycja miejsca z przycisku „Użyj mojej pozycji”;
+ * polityka inna niż 'off' wymaga ustawionej pozycji — inaczej sprawdzanie byłoby pozorne.
+ */
+exports.setQRCodeGeo = async (qrCodeId, teamId, { policy, lat, lng, accuracy, radiusM } = {}) => {
+	const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId, isActive: true })
+	if (!qrCode) throw new Error('Kod QR nie znaleziony')
+	const geo = qrCode.geo ? qrCode.geo.toObject() : {}
+	if (lat !== undefined || lng !== undefined) {
+		const toCoord = v => (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '') ? Number(v) : NaN)
+		const la = toCoord(lat)
+		const ln = toCoord(lng)
+		if (!isValidLatLng(la, ln)) {
+			const err = new Error('Nieprawidłowa pozycja miejsca')
+			err.status = 400
+			throw err
+		}
+		const acc = Number(accuracy)
+		geo.lat = la
+		geo.lng = ln
+		geo.siteAccuracyM = Number.isFinite(acc) && acc > 0 ? Math.round(acc) : null
+		geo.siteSetAt = new Date()
+	}
+	if (radiusM !== undefined) geo.radiusM = clampRadius(radiusM)
+	if (policy !== undefined) geo.policy = normalizeGeoPolicy(policy)
+	if (normalizeGeoPolicy(geo.policy) !== 'off' && !hasSite(geo)) {
+		const err = new Error('Najpierw ustaw pozycję miejsca')
+		err.status = 400
+		err.code = 'GEO_SITE_REQUIRED'
+		throw err
+	}
+	qrCode.geo = geo
+	await qrCode.save()
+	return { _id: qrCode._id, geo: qrCode.geo }
 }
 
 /** Ustawienie trybu kodu (Admin/HR, tylko własny zespół). Tryb ekranu dostaje sekret i link wyświetlacza przy pierwszym włączeniu. */
 exports.setQRCodeMode = async (qrCodeId, teamId, mode) => {
+	if (!QR_MODES.includes(mode)) {
+		const err = new Error('Nieprawidłowy tryb kodu QR')
+		err.status = 400
+		throw err
+	}
 	const nextMode = normalizeQrMode(mode)
 	const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId, isActive: true }).select('+screenSecret')
 	if (!qrCode) throw new Error('Kod QR nie znaleziony')
@@ -221,7 +269,8 @@ exports.rotateDisplayLink = async (qrCodeId, teamId) => {
 exports.getDisplayData = async displayToken => {
 	if (!displayToken || typeof displayToken !== 'string' || displayToken.length < 16) return null
 	const qrCode = await QRCode.findOne({ displayToken, isActive: true }).select('+screenSecret').populate('teamId', 'name isActive')
-	if (!qrCode || qrCode.teamId?.isActive === false) return null
+	// Zespół wyłączony albo trwale usunięty (populate → null) — wyświetlacz przestaje działać
+	if (!qrCode || !qrCode.teamId || qrCode.teamId.isActive === false) return null
 	if (normalizeQrMode(qrCode.mode) === 'print' || !qrCode.screenSecret) return null
 	return {
 		name: qrCode.name,

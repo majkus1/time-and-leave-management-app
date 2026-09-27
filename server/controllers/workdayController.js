@@ -32,6 +32,7 @@ const { bulkFillWorkdays } = require('../services/workdayBulkFillService')
 const { validateAndSanitizeWorkdayCreate, applyWorkdayUpdateFields } = require('../services/workdayPayloadService')
 const { fetchTimesheetTasksForUser, tasksToAllowedMap } = require('../utils/timesheetTaskAccess')
 const { resolveTimerActivityId, getTimerActivitySnapshot, groupTimerSessions } = require('../utils/timerWorkActivity')
+const { requiresQrExitScan } = require('../utils/qrGeoCheck')
 
 const CONFIRMED_MONTH_TIMER_MESSAGE = 'Miesiąc jest potwierdzony. Cofnij potwierdzenie, aby uzupełnić wpisy.'
 
@@ -681,7 +682,9 @@ exports.getAllTeamWorkdays = async (req, res) => {
 // Start timer
 exports.startTimer = async (req, res) => {
 	try {
-		const { workDescription, taskId, activityId, isOvertime, qrCodeId } = req.body
+		// qrCodeId z body celowo pomijamy: licznik „z QR” startuje wyłącznie skan (timeEntryController.registerTimeEntry),
+		// inaczej dało się podpiąć dowolny kod bez skanu i udawać wejście przez QR
+		const { workDescription, taskId, activityId, isOvertime } = req.body
 		const userId = req.user.userId
 		const resolvedActivityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId ?? null)
 
@@ -727,7 +730,7 @@ exports.startTimer = async (req, res) => {
 			workDescription: workDescription || '',
 			taskId: taskId || null,
 			activityId: resolvedActivityId,
-			qrCodeId: qrCodeId || null
+			qrCodeId: null
 		}
 
 		await workday.save()
@@ -811,6 +814,15 @@ exports.stopTimer = async (req, res) => {
 		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
 		if (!monthLock.ok) {
 			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
+		}
+
+		// Kod z ekranem albo lokalizacją: wyjście tylko skanem (inaczej stop z domu omija weryfikację wyjścia)
+		if (workday.activeTimer.qrCodeId) {
+			const QRCode = require('../models/QRCode')(firmDb)
+			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId, isActive: true }).select('mode geo')
+			if (requiresQrExitScan(qr)) {
+				return res.status(403).json({ message: 'Zakończ pracę skanem kodu QR przy wyjściu.', code: 'QR_EXIT_REQUIRED' })
+			}
 		}
 
 		const endTime = new Date()
@@ -1050,6 +1062,15 @@ exports.splitSession = async (req, res) => {
 		const monthLock = await ensureTimerMonthCanBeChanged(userId, workday.activeTimer.startTime)
 		if (!monthLock.ok) {
 			return res.status(monthLock.status).json({ message: monthLock.message, code: monthLock.code })
+		}
+
+		// Jak przy Stop: podział zapisałby sesję „z QR” zakończoną bez skanu wyjścia
+		if (workday.activeTimer.qrCodeId) {
+			const QRCode = require('../models/QRCode')(firmDb)
+			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId, isActive: true }).select('mode geo')
+			if (requiresQrExitScan(qr)) {
+				return res.status(403).json({ message: 'Licznik uruchomiony tym kodem QR kończy tylko skan przy wyjściu — nie można go podzielić.', code: 'QR_EXIT_REQUIRED' })
+			}
 		}
 
 		const endTime = new Date()
@@ -1388,7 +1409,7 @@ exports.getTodaySessions = async (req, res) => {
 					let qrCode = null
 					if (entry.qrCodeId) {
 						const QRCode = require('../models/QRCode')(firmDb)
-						qrCode = await QRCode.findById(entry.qrCodeId).select('name code')
+						qrCode = await QRCode.findOne({ _id: entry.qrCodeId, teamId: req.user.teamId }).select('name code')
 					}
 					
 					allSessions.push({
@@ -1512,7 +1533,7 @@ exports.getUserSessions = async (req, res) => {
 					let qrCode = null
 					if (entry.qrCodeId) {
 						const QRCode = require('../models/QRCode')(firmDb)
-						qrCode = await QRCode.findById(entry.qrCodeId).select('name code')
+						qrCode = await QRCode.findOne({ _id: entry.qrCodeId, teamId: req.user.teamId }).select('name code')
 					}
 
 					allSessions.push({

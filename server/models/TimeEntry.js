@@ -1,5 +1,13 @@
 const mongoose = require('mongoose')
 
+const timeEntryGeoSchema = new mongoose.Schema({
+	policy: { type: String, enum: ['record', 'flag', 'block'] },
+	status: { type: String, enum: ['inside', 'outside', 'denied', 'unavailable', 'missing', 'not_configured'] },
+	distanceM: { type: Number, default: null },
+	accuracyM: { type: Number, default: null },
+	flagged: { type: Boolean, default: false }
+}, { _id: false })
+
 const timeEntrySchema = new mongoose.Schema({
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +35,9 @@ const timeEntrySchema = new mongoose.Schema({
 		enum: ['screen', 'print', null],
 		default: null
 	},
+	/** Wynik lokalizacji przy skanie (utils/qrGeoCheck.toStoredGeo) — bez współrzędnych pracownika; null = nie sprawdzano */
+	entryGeo: { type: timeEntryGeoSchema, default: null },
+	exitGeo: { type: timeEntryGeoSchema, default: null },
 	exitTime: {
 		type: Date,
 		default: null
