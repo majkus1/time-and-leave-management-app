@@ -30,6 +30,7 @@ export default function PackagesPlanPicker({
 	prefill,
 	canBuy,
 	canContact,
+	changeByRequest,
 	busy,
 	busyPlanKey,
 	planLabel,
@@ -162,8 +163,14 @@ export default function PackagesPlanPicker({
 		if (action.kind === 'bundle') onChooseBundle(action.planKey)
 		if (action.kind === 'contact') onContact()
 	}
+	// Opłacony plan: zamiast zakupu prośba o zmianę (PackagesPage otwiera zgłoszenie mailem, bez płatności)
 	const buyLabel = action =>
-		busyPlanKey && action?.planKey === busyPlanKey ? t('billingPackages.p24Redirecting') : t('billingPackages.picker.choose')
+		busyPlanKey && action?.planKey === busyPlanKey
+			? t('billingPackages.p24Redirecting')
+			: changeByRequest
+				? t('billingPackages.picker.requestChange')
+				: t('billingPackages.picker.choose')
+	const altLabel = changeByRequest ? t('billingPackages.picker.requestChangeAlt') : t('billingPackages.picker.chooseAlt')
 
 	const mainAction = card.action
 	const mainIsCurrent = isCurrent(mainAction)
@@ -338,6 +345,9 @@ export default function PackagesPlanPicker({
 							>
 								{mainAction.kind === 'contact' ? t('billingPackages.picker.contact') : buyLabel(mainAction)}
 							</button>
+							{changeByRequest && mainAction.kind !== 'contact' ? (
+								<div className="ppk__result-hint">{t('billingPackages.picker.changeByRequestNote')}</div>
+							) : null}
 						</>
 					)}
 
@@ -346,7 +356,7 @@ export default function PackagesPlanPicker({
 							{card.alt}{' '}
 							{card.altAction && canBuy && !isCurrent(card.altAction) && !seatsBlocked(card.altAction) ? (
 								<button type="button" className="ppk__link-btn" disabled={busy} onClick={() => run(card.altAction)}>
-									{t('billingPackages.picker.chooseAlt')}
+									{altLabel}
 								</button>
 							) : null}
 						</div>
@@ -378,7 +388,7 @@ export default function PackagesPlanPicker({
 									onChooseCore(currentIsCore ? currentPlan.planKey : coreForSeats.id, currentIsCore ? currentPlan.modules : [])
 								}
 							>
-								{t('billingPackages.picker.configureCore')}
+								{changeByRequest ? t('billingPackages.picker.requestChangeAlt') : t('billingPackages.picker.configureCore')}
 							</button>
 						) : null}
 					</li>
@@ -428,7 +438,7 @@ export default function PackagesPlanPicker({
 									disabled={busy || currentPlan?.planKey === business.id || (teamSeats != null && teamSeats > business.maxUsers)}
 									onClick={() => onChooseBundle(business.id)}
 								>
-									{t('billingPackages.picker.chooseAlt')}
+									{altLabel}
 								</button>
 							) : null}
 						</li>

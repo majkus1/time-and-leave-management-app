@@ -596,3 +596,10 @@
 	font-size: inherit !important;
 	color: inherit !important;
 }
+
+.ppk__result-hint {
+	margin: 0.55rem 0 0;
+	font-size: 0.82rem;
+	line-height: 1.45;
+	color: var(--po-text-muted);
+}

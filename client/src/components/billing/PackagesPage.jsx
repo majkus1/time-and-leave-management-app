@@ -28,6 +28,7 @@ import { pricingFromCatalog, recommendPlan } from '../../utils/pricingCalculator
 import { ANNUAL_MONTHS_CHARGED, formatPlanMoney, isEnglishLang } from '../../utils/planPriceFormat'
 import { ownedSaleModules, usedSaleModules } from '../../utils/planModules'
 import { clearPricingIntent, readPricingIntent } from '../../utils/pricingIntent'
+import { paidPlanIdsFromCatalog, paidSubscriptionActive, planChangeByRequest } from '../../utils/billingPlanState'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './PackagesPage.css'
@@ -54,11 +55,6 @@ function planLabelFromCatalog(catalog, planKey, resolvedLang) {
 	const label = catalog?.tiers?.find(t => t.id === key)?.label
 	if (!label) return planKey || '—'
 	return isEnglishLang(resolvedLang) ? label.en : label.pl
-}
-
-/** Płatne plany z katalogu (także nowe progi base_5, pro_15…) — bez listy wpisanej na sztywno */
-function paidPlanIdsFromCatalog(catalog) {
-	return new Set([...(catalog?.tiers || []).map(t => t.id), 'starter'])
 }
 
 function moduleDisplayLabel(catalog, moduleId, resolvedLang) {
@@ -106,13 +102,6 @@ function billingAxiosErrorMessage(error, t) {
 		return t(`billingPackages.${d.meta.i18nKey}`)
 	}
 	return d?.message || error?.message || null
-}
-
-function paidSubscriptionActive(ent, paidPlanIds) {
-	if (!ent?.planKey || ent.billingStatus !== 'active') return false
-	if (!paidPlanIds.has(ent.planKey)) return false
-	if (ent.billingPeriodEnd && new Date(ent.billingPeriodEnd) < new Date()) return false
-	return true
 }
 
 function trialSubscriptionActive(ent) {
@@ -183,20 +172,6 @@ function parseModulesFromSearchParams(searchParams, catalog) {
 		.split(',')
 		.map(s => s.trim())
 		.filter(id => allowed.has(id))
-}
-
-function corePlanCheckoutAvailableFromUrl(stripeStatus, p24Status, planKey, billingCycle, moduleKeys) {
-	if (billingCycle === 'annual') {
-		return p24Status?.ready === true
-	}
-	if (!moduleKeys?.length) {
-		const body = { kind: 'plan', planKey, billingCycle }
-		return p24Status?.ready === true || hasStripeMappingForBody(stripeStatus, body)
-	}
-	const compositeIds = collectPriceIdsForStripeCheckout(stripeStatus, planKey, billingCycle, moduleKeys)
-	const compositeOk =
-		compositeIds && stripeStatus?.ready === true && stripeMapsAllPriceIds(stripeStatus, compositeIds)
-	return p24Status?.ready === true || compositeOk === true
 }
 
 function priceBlock(monthlyNet, billing, t, resolvedLang) {
@@ -310,19 +285,19 @@ export default function PackagesPage() {
 			if (tier?.tierType === 'bundle') return { leave: true, modules: [...saleIds] }
 			return { leave: true, modules: (mods || []).filter(m => saleIds.includes(m)) }
 		}
-		const paidNow = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
+		const payingNow = ent ? planChangeByRequest(ent, paidPlanIds) : false
 		const urlPlan = searchParams.get('plan')
 		const urlUsers = Math.floor(Number(searchParams.get('users')))
 		let wantedUsers = Number.isFinite(urlUsers) && urlUsers >= 1 ? urlUsers : null
 		let needs
 		if (urlPlan && catalog.tiers?.some(x => x.id === urlPlan)) {
 			needs = needsForPlan(urlPlan, parseModulesFromSearchParams(searchParams, catalog))
-		} else if (!paidNow && pricingIntent) {
+		} else if (!payingNow && pricingIntent) {
 			needs = pricingIntent.plan
 				? needsForPlan(pricingIntent.plan, pricingIntent.modules)
 				: { leave: false, modules: pricingIntent.modules.filter(m => saleIds.includes(m)) }
 			wantedUsers = wantedUsers ?? pricingIntent.users
-		} else if (paidNow) {
+		} else if (payingNow) {
 			needs = needsForPlan(ent.planKey, usedSaleModules(catalog.modules, ent.modules?.effectiveKeys))
 		} else {
 			needs = { leave: true, modules: [] }
@@ -331,7 +306,9 @@ export default function PackagesPage() {
 		if (add && saleIds.includes(add) && !needs.modules.includes(add)) {
 			needs = { ...needs, leave: true, modules: [...needs.modules, add] }
 		}
-		return { users: Math.max(teamSeats ?? 1, wantedUsers ?? 1), needs }
+		// Płacący: próg co najmniej jak obecny plan — kalkulator nie podsuwa tańszego progu wbrew „cena się nie zmienia”
+		const currentCapacity = payingNow ? catalog.tiers?.find(x => x.id === ent.planKey)?.maxUsers ?? 1 : 1
+		return { users: Math.max(teamSeats ?? 1, wantedUsers ?? 1, currentCapacity), needs }
 	}, [catalog, pickerPricing, ent, paidPlanIds, searchParams, pricingIntent, teamSeats])
 
 	const coreConfiguratorPriceDisplay = useMemo(
@@ -645,17 +622,41 @@ export default function PackagesPage() {
 		]
 	)
 
+	/**
+	 * Zespół z opłaconym planem (albo działającą subskrypcją kartą): zamiast płatności prośba mailem — drugi plan online
+	 * naliczyłby się obok starego. Opłacony okres przenosimy ręcznie; serwer i tak odmówi płatności (PLAN_CHANGE_REQUIRES_REQUEST).
+	 */
+	const openPlanChangeRequest = useCallback(
+		(planKey, mods) => {
+			if (!canSubmitPurchaseRequest) return
+			const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+			const modules = Array.isArray(mods) ? mods : []
+			const lang = i18n.resolvedLanguage
+			const from = [planLabel(ent?.planKey), ...usedSaleModules(catalog?.modules, ent?.modules?.effectiveKeys).map(m => moduleDisplayLabel(catalog, m, lang))].join(' + ')
+			const to = [planLabel(planKey), ...modules.map(m => moduleDisplayLabel(catalog, m, lang))].join(' + ')
+			setJustSent(false)
+			setCoreConfiguratorOpen(false)
+			setNote(t('billingPackages.changeRequestNote', { from, to }))
+			setModal({ kind: 'plan', planKey, billingCycle: cycle, moduleKeys: modules, change: true })
+		},
+		[canSubmitPurchaseRequest, billing, i18n.resolvedLanguage, planLabel, ent, catalog, t]
+	)
+
 	/** Core z kalkulatora albo „Wszystkich planów” — płatność przez konfigurator (karta / BLIK / przelew) */
 	const chooseCore = useCallback(
 		(planKey, mods) => {
 			if (!canSubmitPurchaseRequest) return
+			if (planChangeByRequest(ent, paidPlanIds)) {
+				openPlanChangeRequest(planKey, mods)
+				return
+			}
 			setJustSent(false)
 			setNote('')
 			setCoreConfiguratorPlanKey(planKey)
 			setCoreConfiguratorMods(Array.isArray(mods) ? mods : [])
 			setCoreConfiguratorOpen(true)
 		},
-		[canSubmitPurchaseRequest]
+		[canSubmitPurchaseRequest, ent, paidPlanIds, openPlanChangeRequest]
 	)
 
 	/** Pakiet (PRO / Business) — ta sama ścieżka co dawne karty pakietów */
@@ -668,6 +669,10 @@ export default function PackagesPage() {
 				await showAlert(t('billingPackages.planSeatLimitExceeded', { used: teamSeats, maxUsers: tier.maxUsers }))
 				return
 			}
+			if (planChangeByRequest(ent, paidPlanIds)) {
+				openPlanChangeRequest(planKey, [])
+				return
+			}
 			setJustSent(false)
 			setNote('')
 			const cycle = billing === 'monthly' ? 'monthly' : 'annual'
@@ -678,7 +683,7 @@ export default function PackagesPage() {
 				setModal({ kind: 'plan', planKey, billingCycle: cycle })
 			}
 		},
-		[canSubmitPurchaseRequest, catalog, teamSeats, billing, p24Status, stripeStatus, requestPlanOnlineCheckout, showAlert, t]
+		[canSubmitPurchaseRequest, catalog, teamSeats, billing, p24Status, stripeStatus, requestPlanOnlineCheckout, showAlert, t, ent, paidPlanIds, openPlanChangeRequest]
 	)
 
 	const coreConfiguratorPayDisabled = useMemo(() => {
@@ -795,63 +800,35 @@ export default function PackagesPage() {
 			}
 			return
 		}
-		if (plan && catalog.tiers?.find(x => x.id === plan)?.tierType === 'core') {
-			if (ent && paidSubscriptionActive(ent, paidPlanIds) && ent.planKey === plan) {
-				appliedQueryRef.current = true
-				return
-			}
-			if (!ent) return
-			const tier = catalog.tiers.find(t => t.id === plan)
-			const seats = typeof ent.teamMemberCount === 'number' ? ent.teamMemberCount : null
-			if (seats != null && tier && seats > tier.maxUsers) {
-				appliedQueryRef.current = true
-				return
-			}
-			const modulesFiltered = parseModulesFromSearchParams(searchParams, catalog)
-			const checkoutNow = searchParams.get('checkout') === '1'
-			appliedQueryRef.current = true
-			setBilling(bill)
-			setNote('')
+		// Z adresu tylko plany w sprzedaży — Enterprise to wycena indywidualna, nie płatność z linku
+		const saleTier = plan ? [...(catalog.coreTiers || []), ...(catalog.bundles || [])].find(x => x.id === plan) : null
+		if (!saleTier) {
+			if (plan) appliedQueryRef.current = true
+			return
+		}
+		if (!ent) return
+		appliedQueryRef.current = true
+		// Opłacony plan: adres tylko podpowiada w kalkulatorze, płatność nie rusza (zmiana planu — prośbą)
+		if (planChangeByRequest(ent, paidPlanIds)) return
+		const seats = typeof ent.teamMemberCount === 'number' ? ent.teamMemberCount : null
+		if (seats != null && seats > saleTier.maxUsers) return
+		setBilling(bill)
+		setNote('')
+		if (saleTier.tierType === 'core') {
+			// Core z adresu zawsze przez konfigurator: karta tylko z kompletem cen Stripe (plan + moduły), inaczej BLIK / przelew;
+			// moduł nieznany w katalogu (stary link) odpada, ale nic nie płaci się samo
 			setCoreConfiguratorPlanKey(plan)
-			setCoreConfiguratorMods(modulesFiltered)
-			if (
-				checkoutNow &&
-				corePlanCheckoutAvailableFromUrl(stripeStatus, p24Status, plan, bill, modulesFiltered)
-			) {
-				const body = {
-					kind: 'plan',
-					planKey: plan,
-					billingCycle: bill,
-					...(modulesFiltered.length ? { moduleKeys: modulesFiltered } : {}),
-				}
-				requestPlanOnlineCheckout(body)
-				return
-			}
+			setCoreConfiguratorMods(parseModulesFromSearchParams(searchParams, catalog))
 			setCoreConfiguratorOpen(true)
 			return
 		}
-		if (plan && catalog.tiers?.some(t => t.id === plan)) {
-			if (ent && paidSubscriptionActive(ent, paidPlanIds) && ent.planKey === plan) {
-				appliedQueryRef.current = true
-				return
-			}
-			if (!ent) return
-			const tier = catalog.tiers.find(t => t.id === plan)
-			const seats = typeof ent.teamMemberCount === 'number' ? ent.teamMemberCount : null
-			if (seats != null && tier && seats > tier.maxUsers) {
-				appliedQueryRef.current = true
-				return
-			}
-			appliedQueryRef.current = true
-			setBilling(bill)
-			setNote('')
-			const body = { kind: 'plan', planKey: plan, billingCycle: bill }
-			const canOnline = p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)
-			if (canOnline) {
-				requestPlanOnlineCheckout(body)
-			} else {
-				setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
-			}
+		// Pakiet: płatność rusza sama tylko z checkout=1 (link „mam konto” z kalkulatora na landingu)
+		if (searchParams.get('checkout') !== '1') return
+		const body = { kind: 'plan', planKey: plan, billingCycle: bill }
+		if (p24Status?.ready || hasStripeMappingForBody(stripeStatus, body)) {
+			requestPlanOnlineCheckout(body)
+		} else {
+			setModal({ kind: 'plan', planKey: plan, billingCycle: bill })
 		}
 	}, [
 		catalog,
@@ -918,6 +895,7 @@ export default function PackagesPage() {
 					kind: 'plan',
 					planKey: modal.planKey,
 					billingCycle: modal.billingCycle,
+					...(modal.moduleKeys?.length ? { moduleKeys: modal.moduleKeys } : {}),
 					note,
 				})
 			} else {
@@ -947,8 +925,9 @@ export default function PackagesPage() {
 
 	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
 	const activePaid = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
+	const planChangeOnly = planChangeByRequest(ent, paidPlanIds)
 	const currentPlanForPicker =
-		activePaid && ent
+		planChangeOnly && ent
 			? {
 					planKey: ent.planKey,
 					label: planLabel(ent.planKey),
@@ -1297,6 +1276,7 @@ export default function PackagesPage() {
 					prefill={pickerPrefill}
 					canBuy={canSubmitPurchaseRequest}
 					canContact={isAdmin(role)}
+					changeByRequest={planChangeOnly}
 					busy={onlineStatusLoading || p24BusyKey !== null}
 					busyPlanKey={p24BusyKey?.startsWith('plan:') ? p24BusyKey.slice(5) : null}
 					planLabel={planLabel}
@@ -1764,11 +1744,11 @@ export default function PackagesPage() {
 					<div className="packages-modal" onClick={e => e.stopPropagation()}>
 						<h4>
 							{modal.kind === 'plan'
-								? `${planLabel(modal.planKey)} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
+								? `${[planLabel(modal.planKey), ...(modal.moduleKeys || []).map(m => moduleDisplayLabel(catalog, m, i18n.resolvedLanguage))].join(' + ')} · ${modal.billingCycle === 'annual' ? t('billingPackages.billingAnnual') : t('billingPackages.billingMonthly')}`
 								: `AI +${catalog.addons.find(x => x.id === modal.addonId)?.messages ?? modal.addonId}`}
 						</h4>
 						<p className="packages-modal__fallback-intro" style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.75rem' }}>
-							{t('billingPackages.emailOrderFallbackIntro')}
+							{modal.change ? t('billingPackages.changeRequestIntro') : t('billingPackages.emailOrderFallbackIntro')}
 						</p>
 						<label htmlFor="pkg-note" style={{ display: 'block', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.35rem' }}>
 							{modalLabels.noteLabel}

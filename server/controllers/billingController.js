@@ -66,7 +66,7 @@ exports.getEntitlements = async (req, res) => {
 
 exports.postPurchaseRequest = async (req, res) => {
 	try {
-		const { kind, planKey, addonId, billingCycle, note } = req.body || {}
+		const { kind, planKey, addonId, billingCycle, note, moduleKeys } = req.body || {}
 
 		await billingRequestService.createPurchaseMailRequest({
 			teamId: req.user.teamId,
@@ -75,6 +75,7 @@ exports.postPurchaseRequest = async (req, res) => {
 			planKey,
 			addonId,
 			billingCycle,
+			moduleKeys,
 			note,
 		})
 
@@ -209,6 +210,7 @@ exports.postP24Checkout = async (req, res) => {
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
 			e.code === 'ADDONS_DISCONTINUED' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
+			e.code === 'PLAN_CHANGE_REQUIRES_REQUEST' ||
 			e.code === 'P24_NOT_CONFIGURED' ||
 			e.code === 'INVOICE_INCOMPLETE'
 		) {
@@ -262,6 +264,7 @@ exports.postStripeCheckout = async (req, res) => {
 			e.code === 'ADDON_REQUIRES_PAID_PLAN' ||
 			e.code === 'ADDONS_DISCONTINUED' ||
 			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
+			e.code === 'PLAN_CHANGE_REQUIRES_REQUEST' ||
 			e.code === 'INVOICE_INCOMPLETE' ||
 			e.code === 'STRIPE_CONFIG'
 		) {

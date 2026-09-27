@@ -1,7 +1,10 @@
 const { escapeHtml, getEmailTemplate, sendEmail } = require('./emailService')
 const {
 	MONTHLY_NET_PRICES_PLN,
+	MODULE_MONTHLY_NET_PRICES_PLN,
 	AI_ADDON_PACKS,
+	planLabel,
+	moduleLabel,
 } = require('../constants/planCatalog')
 const { validateBillingPurchaseIntent } = require('./billingPurchaseIntentValidator')
 
@@ -42,18 +45,21 @@ function sanitizeNote(note) {
  * @param {string} [params.planKey]
  * @param {string} [params.addonId]
  * @param {'monthly'|'annual'} [params.billingCycle]
+ * @param {string[]} [params.moduleKeys] moduły do planu Core
  * @param {string} [params.note]
  */
 async function createPurchaseMailRequest(params) {
 	const to = billingSalesRecipients()
 
-	const { team, requester } = await validateBillingPurchaseIntent({
+	const { team, requester, planChange } = await validateBillingPurchaseIntent({
 		teamId: params.teamId,
 		requestingUserId: params.requestingUserId,
 		kind: params.kind,
 		planKey: params.planKey,
 		addonId: params.addonId,
 		billingCycle: params.billingCycle,
+		moduleKeys: params.moduleKeys,
+		channel: 'mail',
 	})
 
 	const kind = params.kind
@@ -62,11 +68,22 @@ async function createPurchaseMailRequest(params) {
 	let lines
 
 	if (kind === 'plan') {
-		const price = MONTHLY_NET_PRICES_PLN[params.planKey]
-		subject = `[Planopia] Zamówienie: plan ${params.planKey} (${params.billingCycle}) — ${team.name}`
+		// Moduły już zwalidowane (tylko Core, w sprzedaży albo posiadane) — do maila i ceny
+		const mods = Array.isArray(params.moduleKeys) ? params.moduleKeys : []
+		const price = (MONTHLY_NET_PRICES_PLN[params.planKey] || 0) + mods.reduce((sum, m) => sum + (MODULE_MONTHLY_NET_PRICES_PLN[m] || 0), 0)
+		const what = [planLabel(params.planKey, 'pl'), ...mods.map(m => moduleLabel(m, 'pl'))].join(' + ')
+		subject = planChange
+			? `[Planopia] Zmiana planu: ${what} (${params.billingCycle}) — ${team.name}`
+			: `[Planopia] Zamówienie: ${what} (${params.billingCycle}) — ${team.name}`
+		const currentMods = Array.isArray(team.billingModuleKeys) ? team.billingModuleKeys : []
 		lines = [
-			`<p><strong>Typ:</strong> subskrypcja</p>`,
-			`<p><strong>Plan:</strong> ${escapeHtml(params.planKey)}</p>`,
+			planChange
+				? `<p><strong>Typ:</strong> zmiana planu przy aktywnej subskrypcji — przenieś opłacony okres; nie pobieraj drugiej płatności obok działającej subskrypcji</p>`
+				: `<p><strong>Typ:</strong> subskrypcja</p>`,
+			planChange
+				? `<p><strong>Obecny plan:</strong> ${escapeHtml(planLabel(team.billingPlanKey, 'pl'))}${currentMods.length ? ' + ' + escapeHtml(currentMods.map(m => moduleLabel(m, 'pl')).join(', ')) : ''}${team.stripeSubscriptionId ? ' (subskrypcja kartą — Stripe)' : ''}</p>`
+				: '',
+			`<p><strong>Plan:</strong> ${escapeHtml(what)} (klucz: ${escapeHtml(params.planKey)}${mods.length ? ', moduły: ' + escapeHtml(mods.join(', ')) : ''})</p>`,
 			`<p><strong>Rozliczenie:</strong> ${escapeHtml(params.billingCycle)}</p>`,
 			`<p><strong>Cena katalogowa (netto mies.):</strong> ${price} PLN</p>`,
 		]

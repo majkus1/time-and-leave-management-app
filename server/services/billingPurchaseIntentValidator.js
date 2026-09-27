@@ -14,6 +14,7 @@ const {
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
+const { planChangeNeedsRequest } = require('../utils/billingPlanChange')
 
 /**
  * Moduły w sprzedaży albo dawny moduł, który zespół już ma (odnowienie) — np. osobny „Czat” sprzed „Zadania i czat”.
@@ -25,11 +26,13 @@ function moduleAllowedForPurchase(team, moduleKey) {
 }
 
 /**
- * Shared rules for email purchase requests and Przelewy24 checkout.
- * @returns {Promise<{ team: import('mongoose').Document, requester: import('mongoose').Document }>}
+ * Wspólne reguły dla zgłoszenia mailem, Przelewy24 i Stripe.
+ * channel: 'online' (domyślnie — płatność) albo 'mail' (zgłoszenie bez płatności, obsługa ręczna).
+ * @returns {Promise<{ team: import('mongoose').Document, requester: import('mongoose').Document, planChange: boolean }>}
  */
 async function validateBillingPurchaseIntent(params) {
 	const { teamId, requestingUserId, kind, planKey, addonId, billingCycle, moduleKeys } = params
+	const channel = params.channel === 'mail' ? 'mail' : 'online'
 
 	// AI jest bez limitu wiadomości — pakiety wycofane. Przed danymi do faktury, żeby odmowa mówiła właściwy powód;
 	// odmowa tutaj zamyka Stripe, P24 i zgłoszenie mailem naraz
@@ -57,6 +60,7 @@ async function validateBillingPurchaseIntent(params) {
 		throw err
 	}
 
+	let planChange = false
 	if (kind === 'plan') {
 		if (!isPaidPlanKey(planKey)) {
 			const err = new Error('Invalid plan')
@@ -69,14 +73,18 @@ async function validateBillingPurchaseIntent(params) {
 			throw err
 		}
 		await assertPaidPlanSeatLimit(teamId, planKey)
-		if (
-			entitlementsService.isPaidSubscriptionActive(team) &&
-			normalizePaidPlanKey(team.billingPlanKey) === normalizePaidPlanKey(planKey)
-		) {
+		// Opłacony okres albo działająca subskrypcja kartą: drugi plan online naliczyłby się obok starego (Stripe przy
+		// odnowieniu przywraca swój plan) albo przepalił przedpłatę P24 — zmianę przyjmujemy tylko jako zgłoszenie mailem
+		planChange = planChangeNeedsRequest({
+			paidActive: entitlementsService.isPaidSubscriptionActive(team),
+			stripeSubscriptionId: team.stripeSubscriptionId,
+			stripeSubscriptionStatus: team.stripeSubscriptionStatus,
+		})
+		if (planChange && channel !== 'mail') {
 			const err = new Error(
-				'Ten pakiet jest już aktywny dla zespołu. Napisz do nas, jeśli chcesz zmienić rozliczenie (np. na roczne) lub przejść na wyższy plan.'
+				'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.'
 			)
-			err.code = 'VALIDATION'
+			err.code = 'PLAN_CHANGE_REQUIRES_REQUEST'
 			throw err
 		}
 		const nk = normalizePaidPlanKey(planKey)
@@ -133,7 +141,7 @@ async function validateBillingPurchaseIntent(params) {
 		throw err
 	}
 
-	return { team, requester }
+	return { team, requester, planChange }
 }
 
 /**
