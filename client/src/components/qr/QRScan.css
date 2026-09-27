@@ -129,6 +129,12 @@
 	font-size: 13px;
 }
 
+/* Globalne span { color/font-size !important } dawało ciemnoniebieski tekst — niewidoczny w ciemnym motywie */
+.po-qr-scan__redirect span {
+	color: inherit !important;
+	font-size: inherit !important;
+}
+
 .po-qr-scan__redirect svg {
 	flex-shrink: 0;
 }

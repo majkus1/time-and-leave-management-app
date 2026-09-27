@@ -36,7 +36,7 @@ module.exports = {
 Każdy kod ma w Ustawieniach → Licznik i QR wybór „Sposób użycia kodu”:
 - **Wydruk** — domyślnie, jak dotąd. Prosto, ale zdjęcie wydruku działa z każdego miejsca.
 - **Tylko ekran (tablet)** — kod wyświetla tablet (lub dowolne urządzenie z przeglądarką) przy wejściu i **zmienia się co 30 sekund**. Zdjęcie zrobione wcześniej nie zadziała, wydruk nie jest przyjmowany. Administrator klika „Otwórz wyświetlacz” (albo kopiuje link) i otwiera go na tablecie — **tablet nie loguje się** kontem pracownika; link można w każdej chwili unieważnić przyciskiem „Nowy link”. Wyświetlacz ma pełny ekran i nie pozwala ekranowi zgasnąć (jeśli przeglądarka to wspiera); przy chwilowym braku internetu kod nadal się zmienia.
-- **Ekran + wydruk awaryjnie** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); taka sesja ma plakietkę „Skan z wydruku”.
+- **Ekran + wydruk** — preferowany kod z ekranu, ale wydruk nadal działa (np. gdy tablet jest wyłączony); taka sesja ma plakietkę „Skan z wydruku”.
 - Pracownik skanuje kod z ekranu tak samo, aparatem telefonu. Jeśli musi się zalogować, ma na to 10 minut od skanu — nie trzeba skanować ponownie. Ten jeden skan wystarcza na jedno zdarzenie (wejście albo wyjście), nie na oba.
 - To utrudnia oszukiwanie „ze zdjęcia z domu”, ale nie zapobiega zmowie (ktoś na miejscu przesyła zdjęcie ekranu od razu).
 
