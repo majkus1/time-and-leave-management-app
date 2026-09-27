@@ -6,7 +6,7 @@ const Settings = require('../models/Settings')(firmDb)
 const CalendarConfirmation = require('../models/CalendarConfirmation')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
-const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd } = require('../utils/workdayEntryValidation')
+const { normalizeWorkdayPayload, validateNewWorkdayEntry, toWarsawYmd, warsawDayStart } = require('../utils/workdayEntryValidation')
 const {
 	resolveTeamScopedTimesheetWriteAccess,
 	sendTeamScopedTimesheetWriteAccessError,
@@ -49,7 +49,9 @@ function isWeekend(date) {
 }
 
 async function isCalendarMonthConfirmed(userId, date) {
-	const checkDate = new Date(date)
+	// Miesiąc wg kalendarza warszawskiego — jak start licznika (warsawDayStart); inaczej na serwerze UTC licznik
+	// z 1. dnia miesiąca po północy trafiałby w potwierdzony poprzedni miesiąc i nie dałby się zatrzymać
+	const checkDate = warsawDayStart(date)
 	if (!userId || Number.isNaN(checkDate.getTime())) return false
 
 	const confirmation = await CalendarConfirmation.findOne({
@@ -82,8 +84,7 @@ async function ensureTimerMonthCanBeChanged(userId, date) {
  * @returns {Promise<Object|null>} Workday with active timer or null
  */
 exports.findActiveTimerWorkday = async function findActiveTimerWorkday(userId) {
-	const today = new Date()
-	today.setHours(0, 0, 0, 0)
+	const today = warsawDayStart()
 	
 	const yesterday = new Date(today)
 	yesterday.setDate(yesterday.getDate() - 1)
@@ -688,8 +689,7 @@ exports.startTimer = async (req, res) => {
 		const userId = req.user.userId
 		const resolvedActivityId = await resolveTimerActivityId(Settings, req.user.teamId, activityId ?? null)
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
+		const today = warsawDayStart()
 
 		// Check if timer can be started on this date
 		const canStart = await exports.canStartTimerOnDate(userId, today)
@@ -862,11 +862,9 @@ exports.stopTimer = async (req, res) => {
 		const overtimeHours = finalOvertimeTime / 3600 // convert seconds to hours
 
 		// Determine which workday to save the session to (today or the day timer started)
-		const timerStartDate = new Date(startTime)
-		timerStartDate.setHours(0, 0, 0, 0)
+		const timerStartDate = warsawDayStart(startTime)
 		
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
+		const today = warsawDayStart()
 		
 		// If timer started yesterday, we need to handle hours distribution
 		// For simplicity, save session to the day timer started
@@ -1081,7 +1079,7 @@ exports.splitSession = async (req, res) => {
 			const QRCode = require('../models/QRCode')(firmDb)
 			const qr = await QRCode.findOne({ _id: workday.activeTimer.qrCodeId, teamId: req.user.teamId, isActive: true }).select('mode geo')
 			if (requiresQrExitScan(qr)) {
-				return res.status(403).json({ message: 'Licznik uruchomiony tym kodem QR kończy tylko skan przy wyjściu — nie można go podzielić.', code: 'QR_EXIT_REQUIRED' })
+				return res.status(403).json({ message: 'Ten licznik zakończysz tylko skanem kodu QR przy wyjściu.', code: 'QR_EXIT_REQUIRED' })
 			}
 		}
 
@@ -1111,8 +1109,7 @@ exports.splitSession = async (req, res) => {
 		const overtimeHours = finalOvertimeTime / 3600 // convert seconds to hours
 
 		// Determine which workday to save the session to (day timer started)
-		const timerStartDate = new Date(startTime)
-		timerStartDate.setHours(0, 0, 0, 0)
+		const timerStartDate = warsawDayStart(startTime)
 		
 		const sessionWorkday = workday.date.getTime() === timerStartDate.getTime() 
 			? workday 
@@ -1174,8 +1171,7 @@ exports.splitSession = async (req, res) => {
 
 		// Start new session with new description (continue from where we left off)
 		// If timer was from yesterday, we need to move it to today's workday
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
+		const today = warsawDayStart()
 		
 		let activeTimerWorkday = workday
 		if (workday.date.getTime() !== today.getTime()) {
@@ -1365,8 +1361,7 @@ exports.getTodaySessions = async (req, res) => {
 			endDate.setHours(23, 59, 59, 999)
 		} else {
 			// Default to today if no month/year provided
-			const today = new Date()
-			today.setHours(0, 0, 0, 0)
+			const today = warsawDayStart()
 			startDate = today
 			endDate = new Date(today)
 			endDate.setHours(23, 59, 59, 999)
@@ -1488,8 +1483,7 @@ exports.getUserSessions = async (req, res) => {
 			endDate = new Date(yearNum, monthNum + 1, 0)
 			endDate.setHours(23, 59, 59, 999)
 		} else {
-			const today = new Date()
-			today.setHours(0, 0, 0, 0)
+			const today = warsawDayStart()
 			startDate = today
 			endDate = new Date(today)
 			endDate.setHours(23, 59, 59, 999)

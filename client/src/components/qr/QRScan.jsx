@@ -11,6 +11,14 @@ import './QRScan.css'
 // Kody odmowy z serwera (timeEntryController.registerTimeEntry), dla których jest własny widok i tłumaczenie
 const KNOWN_SCAN_ERRORS = ['SCREEN_REQUIRED', 'SCREEN_EXPIRED', 'GEO_OUTSIDE', 'GEO_DENIED', 'GEO_UNAVAILABLE', 'GEO_MISSING']
 
+const ScreenIcon = ({ className = '' }) => (
+	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+		<rect x="5" y="3" width="14" height="18" rx="2" strokeWidth={2} />
+		<path strokeLinecap="round" strokeWidth={2} d="M10 17.5h4" />
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h2v2H9zM13 8h2v2h-2zM9 12h2" />
+	</svg>
+)
+
 const PinIcon = ({ className = '' }) => (
 	<svg className={className} width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
@@ -84,6 +92,7 @@ function QRScan() {
 	const [registering, setRegistering] = useState(false)
 	const [registered, setRegistered] = useState(false)
 	const [entryType, setEntryType] = useState(null)
+	const [registeredAt, setRegisteredAt] = useState(null)
 	const [locating, setLocating] = useState(false)
 	// Odmowa z serwera z rozpoznanym kodem (ekran/lokalizacja) — własny widok zamiast alertu
 	const [scanError, setScanError] = useState(null)
@@ -149,19 +158,14 @@ function QRScan() {
 				setLocating(false)
 			}
 			const result = await registerTimeEntry.mutateAsync({ code, t: screenToken || undefined, p: scanPass || undefined, geo })
+			setRegisteredAt(new Date())
 			setRegistered(true)
 			setEntryType(result.type)
-
-			await showAlert(
-				result.type === 'entry'
-					? (t('qrScan.entryRegistered') || 'Wejście zarejestrowane!')
-					: (t('qrScan.exitRegistered') || 'Wyjście zarejestrowane!')
-			)
 
 			setTimeout(() => {
 				navigate('/dashboard')
 				window.location.reload()
-			}, 2000)
+			}, 3000)
 		} catch (error) {
 			setLocating(false)
 			const errorCode = error.response?.data?.code
@@ -228,7 +232,7 @@ function QRScan() {
 		return (
 			<QRScanShell>
 				<div className="po-qr-scan__icon po-qr-scan__icon--error">
-					{copy.geo ? <PinIcon /> : <QRIcon />}
+					{copy.geo ? <PinIcon /> : <ScreenIcon />}
 				</div>
 				<h2 className="po-qr-scan__title">{copy.title}</h2>
 				<p className="po-qr-scan__text po-qr-scan__text--spaced">{copy.body}</p>
@@ -243,7 +247,7 @@ function QRScan() {
 				<button
 					type="button"
 					onClick={() => navigate('/dashboard')}
-					className={copy.retry ? 'po-qr-scan__btn po-qr-scan__btn--secondary' : 'po-qr-scan__btn'}
+					className={copy.retry ? 'po-qr-scan__btn po-qr-scan__btn--secondary' : 'po-qr-scan__btn po-qr-scan__btn--spaced'}
 				>
 					{t('qrScan.backToDashboard')}
 				</button>
@@ -307,6 +311,11 @@ function QRScan() {
 					{t('qrScan.location') || 'Miejsce:'}{' '}
 					<span className="po-qr-scan__location-highlight">{qrData.name}</span>
 				</p>
+				{registeredAt && (
+					<p className="po-qr-scan__time">
+						{registeredAt.toLocaleTimeString(i18n.resolvedLanguage === 'en' ? 'en-GB' : 'pl-PL', { hour: '2-digit', minute: '2-digit' })}
+					</p>
+				)}
 				<div className="po-qr-scan__footer">
 					<div className="po-qr-scan__redirect">
 						<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

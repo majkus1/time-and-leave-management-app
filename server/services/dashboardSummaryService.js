@@ -14,6 +14,7 @@ const UserNotification = require('../models/UserNotification')(firmDb)
 const Settings = require('../models/Settings')(firmDb)
 const entitlementsService = require('./entitlementsService')
 const { isHoliday, getHolidaysInRange } = require('../utils/holidays')
+const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const { isBlockingLeaveRequest, isHourlyLeaveRequest } = require('../utils/leaveSettlement')
 const {
 	canSupervisorApproveLeaves,
@@ -1152,7 +1153,8 @@ async function buildDashboardSummary(userId) {
 	}
 	// Spójnie z TimerChrome / kalendarzami: licznik i QR aktywne, chyba że zespół wyłączył je jawnie.
 	const timerEnabledSetting = settingsDoc ? settingsDoc.timerEnabled !== false : true
-	const now = new Date()
+	// Dzień i miesiąc wg kalendarza warszawskiego (produkcja w UTC) — spójnie z licznikiem i QR
+	const now = warsawDayStart()
 	const todayStart = startOfDay(now)
 	const todayEnd = endOfDay(now)
 	const monthStart = startOfMonth(now)

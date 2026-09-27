@@ -28,6 +28,20 @@ function toWarsawYmd(input) {
 }
 
 /**
+ * Początek dnia kalendarzowego w Warszawie dla chwili `input`, zapisany jako północ w strefie serwera —
+ * w tej konwencji są dokumenty Workday/TimeEntry (licznik i QR). Na serwerze w UTC to 00:00Z właściwej daty
+ * warszawskiej: skan o 00:30 czasu PL trafia do nowego dnia, a nie do poprzedniego (jak przy setHours w UTC).
+ * @param {Date|string|number} [input]
+ * @returns {Date}
+ */
+function warsawDayStart(input = new Date()) {
+	const ymd = toWarsawYmd(input instanceof Date ? input : new Date(input))
+	if (!ymd) return new Date(NaN)
+	const [y, m, d] = ymd.split('-').map(Number)
+	return new Date(y, m - 1, d)
+}
+
+/**
  * @param {string} ymd
  * @returns {boolean}
  */
@@ -350,6 +364,7 @@ async function validateNewWorkdayEntry(deps) {
 
 module.exports = {
 	toWarsawYmd,
+	warsawDayStart,
 	isWeekendWarsawYmd,
 	normalizeWorkdayPayload,
 	validateNewWorkdayEntry,

@@ -165,7 +165,17 @@
 	border-color: var(--po-border);
 }
 
-/* Tryb kodu (wydruk / ekran) i link wyświetlacza */
+/* Tryb kodu (wydruk / ekran) i link wyświetlacza.
+   Karta centruje dzieci (align-items: center) — sekcje ustawień rozciągamy, żeby selekty miały równą szerokość. */
+.qr-code-generator__mode,
+.qr-code-generator__mode-hint,
+.qr-code-generator__display,
+.qr-code-generator__geo {
+	align-self: stretch;
+	width: 100%;
+	box-sizing: border-box;
+}
+
 .qr-code-generator__mode {
 	display: flex;
 	flex-direction: column;
@@ -178,6 +188,8 @@
 }
 
 .qr-code-generator__mode select {
+	width: 100%;
+	min-width: 0;
 	padding: 7px 10px;
 	border-radius: 8px;
 	border: 1px solid var(--po-border-strong, #cbd5e1);
@@ -187,7 +199,7 @@
 }
 
 .qr-code-generator__mode-hint {
-	margin: 0 0 10px;
+	margin: -8px 0 0;
 	font-size: 13px !important;
 	padding: 0;
 	line-height: 1.4;
@@ -199,7 +211,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
-	margin: 0 0 12px;
+	margin: 0;
 }
 
 .qr-code-generator__btn--display {
@@ -230,8 +242,22 @@
 /* Lokalizacja przy skanie (QRCodeGeoSettings) */
 .qr-code-generator__geo {
 	border-top: 1px dashed var(--po-border, #e2e8f0);
-	margin-top: 4px;
-	padding-top: 10px;
+	padding-top: 12px;
+	text-align: left;
+}
+
+.qr-code-generator__geo .qr-code-generator__mode-hint {
+	margin: 2px 0 10px;
+}
+
+.qr-code-generator__nowrap {
+	white-space: nowrap;
+}
+
+/* globalne span { font-size/color !important } — link zachowuje swój kolor */
+span.qr-code-generator__nowrap {
+	font-size: inherit !important;
+	color: inherit !important;
 }
 
 .qr-code-generator__geo-site {

@@ -108,10 +108,10 @@ export default function QRCodeGeoSettings({ qr }) {
 					{hasSite ? (
 						<p className="qr-code-generator__geo-line">
 							{t('settings.qrGeoSite')}{' '}
-							<a href={mapUrl} target="_blank" rel="noopener noreferrer">
+							<a className="qr-code-generator__nowrap" href={mapUrl} target="_blank" rel="noopener noreferrer">
 								{geo.lat.toFixed(5)}, {geo.lng.toFixed(5)}
 							</a>
-							{geo.siteAccuracyM ? ` (±${geo.siteAccuracyM} m)` : ''}
+							{geo.siteAccuracyM ? <span className="qr-code-generator__nowrap"> (±{geo.siteAccuracyM} m)</span> : null}
 						</p>
 					) : (
 						<p className="qr-code-generator__geo-line qr-code-generator__geo-line--warn">{t('settings.qrGeoNoSite')}</p>
@@ -122,7 +122,7 @@ export default function QRCodeGeoSettings({ qr }) {
 						</p>
 					)}
 					<button type="button" className="qr-code-generator__link-btn" onClick={() => captureSite(withPending({}))} disabled={busy}>
-						{locating ? t('settings.qrGeoLocating') : hasSite ? t('settings.qrGeoUpdateSite') : t('settings.qrGeoSetSite')}
+						{locating ? t('settings.qrGeoLocating') : t('settings.qrGeoSetSite')}
 					</button>
 					<p className="qr-code-generator__geo-line">{t('settings.qrGeoCoordsLabel')}</p>
 					<div className="qr-code-generator__geo-coords">

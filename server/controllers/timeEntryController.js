@@ -7,6 +7,7 @@ const Settings = require('../models/Settings')(firmDb)
 const LeaveRequest = require('../models/LeaveRequest')(firmDb)
 const { isHoliday } = require('../utils/holidays')
 const { NON_HOURLY_LEAVE_QUERY } = require('../utils/leaveSettlement')
+const { warsawDayStart } = require('../utils/workdayEntryValidation')
 const qrService = require('../services/qrService')
 const { scanPassIssuedAtMs } = require('../utils/qrScreenToken')
 const { toStoredGeo, buildSessionQrVerify } = require('../utils/qrGeoCheck')
@@ -80,8 +81,8 @@ async function canStartTimerOnDate(userId, date) {
 // Register time entry (entry or exit)
 function screenErrorMessage(reason) {
 	return reason === 'SCREEN_EXPIRED'
-		? 'Kod z ekranu wygasł. Zeskanuj go ponownie z ekranu przy wejściu.'
-		: 'Ten kod działa tylko z ekranu przy wejściu. Zeskanuj kod wyświetlany na tablecie.'
+		? 'Kod wygasł. Zeskanuj go jeszcze raz z tabletu.'
+		: 'Tu działa tylko kod z tabletu przy wejściu.'
 }
 
 function geoErrorMessage({ reason, distanceM }) {
@@ -89,7 +90,7 @@ function geoErrorMessage({ reason, distanceM }) {
 		const km = distanceM >= 1000 ? `${(distanceM / 1000).toFixed(1)} km` : `${distanceM} m`
 		return `Jesteś poza miejscem pracy (ok. ${km}). Zeskanuj kod na miejscu.`
 	}
-	if (reason === 'GEO_DENIED') return 'Ten kod wymaga zgody na lokalizację przy skanie. Zezwól na lokalizację i spróbuj ponownie.'
+	if (reason === 'GEO_DENIED') return 'Zezwól na lokalizację w przeglądarce i spróbuj ponownie.'
 	return 'Nie udało się ustalić lokalizacji. Włącz lokalizację w telefonie i spróbuj ponownie.'
 }
 
@@ -121,8 +122,7 @@ exports.registerTimeEntry = async (req, res) => {
 		}
 
 		// Get today's date (start of day)
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
+		const today = warsawDayStart()
 
 		// Ostatni wpis od wczoraj — nocna zmiana: wejście przed północą musi dać się zamknąć skanem po północy
 		const yesterday = new Date(today)
@@ -203,8 +203,7 @@ exports.registerTimeEntry = async (req, res) => {
 				const overtimeHours = finalOvertimeTime / 3600 // convert seconds to hours
 
 				// Determine which workday to save the session to (day timer started)
-				const timerStartDate = new Date(startTime)
-				timerStartDate.setHours(0, 0, 0, 0)
+				const timerStartDate = warsawDayStart(startTime)
 				
 				const sessionWorkday = workday.date.getTime() === timerStartDate.getTime() 
 					? workday 
@@ -361,8 +360,7 @@ exports.getTodayTimeEntries = async (req, res) => {
 	try {
 		const userId = req.user.userId
 
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
+		const today = warsawDayStart()
 		const tomorrow = new Date(today)
 		tomorrow.setDate(tomorrow.getDate() + 1)
 
@@ -384,8 +382,7 @@ exports.getTodayTimeEntries = async (req, res) => {
 // Helper function to update Workday from TimeEntry
 async function updateWorkdayFromTimeEntry(userId, timeEntry) {
 	try {
-		const entryDate = new Date(timeEntry.entryTime)
-		entryDate.setHours(0, 0, 0, 0)
+		const entryDate = warsawDayStart(timeEntry.entryTime)
 
 		// Calculate hours worked
 		const entryTime = new Date(timeEntry.entryTime)

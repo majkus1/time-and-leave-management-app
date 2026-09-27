@@ -217,3 +217,12 @@
 	background: rgba(96, 165, 250, 0.16);
 	color: #60a5fa;
 }
+
+/* Godzina rejestracji na ekranie sukcesu — widoczna na pierwszy rzut oka */
+.po-qr-scan__time {
+	margin: 6px 0 0;
+	font-size: 30px !important;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--po-text, #102f5e) !important;
+}

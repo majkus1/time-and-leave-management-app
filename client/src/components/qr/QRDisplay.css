@@ -38,7 +38,7 @@
 
 .po-qr-display__team {
 	margin: 0;
-	font-size: 16px !important;
+	font-size: clamp(13px, 1.3vw, 20px) !important;
 	font-weight: 600;
 	color: #0f7a3a !important;
 	text-transform: uppercase;
@@ -47,14 +47,14 @@
 
 .po-qr-display__place {
 	margin: 4px 0 0;
-	font-size: 36px !important;
+	font-size: clamp(26px, 3.2vw, 52px) !important;
 	font-weight: 800;
 	color: #102f5e !important;
 	line-height: 1.15;
 }
 
 .po-qr-display__clock {
-	font-size: 40px;
+	font-size: clamp(28px, 3.4vw, 56px);
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
 	color: #102f5e;
@@ -92,7 +92,7 @@
 }
 
 .po-qr-display__bar {
-	height: 8px;
+	height: clamp(8px, 0.7vw, 12px);
 	border-radius: 999px;
 	background: #dfe7e2;
 	overflow: hidden;
@@ -106,15 +106,16 @@
 	transition: transform 0.9s linear;
 }
 
+/* Odliczanie i podpowiedź czytelne z kilku metrów — rosną z ekranem (tablet → TV) */
 .po-qr-display__timer p {
 	margin: 8px 0 0;
-	font-size: 16px !important;
+	font-size: clamp(15px, 1.5vw, 24px) !important;
 	color: #475569 !important;
 }
 
 .po-qr-display__hint {
 	margin: 0;
-	font-size: 22px !important;
+	font-size: clamp(18px, 2.1vw, 34px) !important;
 	font-weight: 600;
 	color: #102f5e !important;
 	text-align: center;
