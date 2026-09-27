@@ -10,12 +10,7 @@ export const LANDING_TRIAL_DAYS = 30
 
 export const landingTrial = {
 	maxUsers: 5,
-	aiTrialOneOffTotal: 10,
 }
-
-export const landingCoreMinMonthlyNetPln = 69
-
-export const landingCoreAiPoolPerMonth = 50
 
 export const landingCoreTiers = [
 	{ id: "base_5" as const, maxUsers: 5, monthlyNetPln: 69 },
@@ -26,10 +21,10 @@ export const landingCoreTiers = [
 ]
 
 export const landingBundles = [
-	{ id: "pro_15" as const, maxUsers: 15, monthlyNetPln: 189, aiMessagesPerMonth: 50 },
-	{ id: "pro" as const, maxUsers: 30, monthlyNetPln: 239, aiMessagesPerMonth: 50 },
-	{ id: "pro_50" as const, maxUsers: 50, monthlyNetPln: 329, aiMessagesPerMonth: 50 },
-	{ id: "business" as const, maxUsers: 100, monthlyNetPln: 479, aiMessagesPerMonth: 300 },
+	{ id: "pro_15" as const, maxUsers: 15, monthlyNetPln: 189 },
+	{ id: "pro" as const, maxUsers: 30, monthlyNetPln: 239 },
+	{ id: "pro_50" as const, maxUsers: 50, monthlyNetPln: 329 },
+	{ id: "business" as const, maxUsers: 100, monthlyNetPln: 479 },
 ]
 
 export const landingModules = [
@@ -38,11 +33,24 @@ export const landingModules = [
 	{ id: "tasks_chat" as const, monthlyNetPln: 59 },
 ]
 
-export const landingAddons = [
-	{ id: "ai50" as const, messages: 50, pricePlnNet: 19 },
-	{ id: "ai200" as const, messages: 200, pricePlnNet: 49 },
-	{ id: "ai500" as const, messages: 500, pricePlnNet: 99 },
+/** Mapa „co jest gdzie” z planCatalog.FEATURES — kafelki „O aplikacji” i kalkulator cennika */
+export const landingFeatures = [
+	{ id: "timesheet" as const, plan: "free" as const },
+	{ id: "timesheet_print" as const, plan: "free" as const },
+	{ id: "leave" as const, plan: "core" as const },
+	{ id: "team_overview" as const, plan: "core" as const },
+	{ id: "team_reports" as const, plan: "core" as const },
+	{ id: "ai_assistant" as const, plan: "core" as const },
+	{ id: "notifications" as const, plan: "core" as const },
+	{ id: "timer_qr" as const, plan: "module" as const, module: "timer_qr" as const },
+	{ id: "schedules" as const, plan: "module" as const, module: "schedules_ai" as const },
+	{ id: "tasks_chat" as const, plan: "module" as const, module: "tasks_chat" as const },
+	{ id: "mobile" as const, plan: "all" as const },
+	{ id: "security" as const, plan: "all" as const },
+	{ id: "support" as const, plan: "all" as const },
 ]
 
 export type CorePlanId = (typeof landingCoreTiers)[number]['id']
+export type BundlePlanId = (typeof landingBundles)[number]['id']
 export type ModuleId = (typeof landingModules)[number]['id']
+export type FeatureId = (typeof landingFeatures)[number]['id']

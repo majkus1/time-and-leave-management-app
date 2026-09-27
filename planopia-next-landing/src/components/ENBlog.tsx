@@ -141,7 +141,7 @@ function ENBlog() {
 								Planopia AI Assistant: time tracking, leave, tasks, and schedules in one system
 							</h3>
 							<p className="text-gray-600 flex-1">
-								How to connect time tracking, leave, Kanban-style tasks, and schedules with intelligent summaries — team and HR automation without juggling five separate tools.
+								How to connect time tracking, leave, task boards, and schedules with intelligent summaries — team and HR automation without juggling five separate tools.
 							</p>
 							<Link
 								href="/en/blog/planopia-ai-assistant-time-tracking-leave-tasks-schedules"
@@ -161,7 +161,7 @@ function ENBlog() {
 								How to track time on construction sites (simply, without spreadsheets)
 							</h3>
 							<p className="text-gray-600 flex-1">
-								A practical guide for building companies: one system instead of paper and spreadsheets, overtime and crew schedules — plus Kanban boards and chat so the team gets an everyday tool, not “only leave management.”
+								A practical guide for building companies: one system instead of paper and spreadsheets, overtime and crew schedules — plus task boards and chat so the team gets an everyday tool, not “only leave management.”
 							</p>
 							<Link
 								href="/en/blog/time-tracking-on-construction-sites"

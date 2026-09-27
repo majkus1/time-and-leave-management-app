@@ -2,14 +2,20 @@
  * Spójny opis modelu: okres próbny → darmowy plan (ewidencja) → pakiety płatne.
  * Używany w meta, JSON-LD i treściach landing / blog (SEO + zgodność z produktem).
  */
+import { landingBundles, landingCoreTiers } from './landingPlanPricing'
+
+/** Ceny z planCatalog (generat: npm run knowledge:build) */
+const CORE_FROM = landingCoreTiers[0].monthlyNetPln
+const PAID_MAX = Math.max(...landingBundles.map(b => b.monthlyNetPln))
+
 export const planOfferingCopy = {
 	pl: {
 		metaLong:
-			'Planopia: ewidencja czasu pracy online, urlopy, grafiki, raporty PDF/Excel, czaty, tablice Kanban i Asystent AI bez Excela i papierowych wniosków. 30 dni za darmo z pełną aplikacją (do 5 użytkowników, limity Asystenta AI). Potem możesz zostać na bezpłatnym planie z ewidencją czasu pracy do 5 aktywnych kont albo wykupić pakiet z pełnymi modułami i AI — od 119 zł netto miesięcznie (Core).',
+			`Planopia: ewidencja czasu pracy online, urlopy, grafiki, raporty PDF/Excel, czaty, tablice zadań i Asystent AI bez Excela i papierowych wniosków. 30 dni za darmo z pełną aplikacją (do 5 użytkowników). Potem możesz zostać na bezpłatnym planie z ewidencją czasu pracy do 5 aktywnych kont albo wybrać plan Core z urlopami, raportami zespołu i Asystentem AI — od ${CORE_FROM} zł netto miesięcznie.`,
 		metaShort:
 			'Darmowa ewidencja czasu pracy, urlopy i grafiki bez Excela. 30 dni pełnej aplikacji za darmo, bez karty. Potem ewidencja do 5 osób lub pakiety z modułami i AI.',
 		jsonLdOfferDescription:
-			'30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub pakiety od 119 do 479 PLN netto miesięcznie (gotowe pakiety w aplikacji; większe zespoły — wycena indywidualna); dodatki AI po aktywnym pakiecie płatnym.',
+			`30 dni pełnej aplikacji za darmo; potem darmowy plan ewidencji czasu pracy do 5 aktywnych kont lub plany płatne od ${CORE_FROM} do ${PAID_MAX} PLN netto miesięcznie (Core, PRO, Business; ponad 100 osób — wycena indywidualna).`,
 		heroH1: 'Ewidencja czasu pracy, urlopy i grafiki w jednym systemie',
 		// Dwa zdania = dwie linie w hero (LandingHero łamie po \n): plan darmowy jest bezterminowy, 30 dni pełnej wersji to bonus.
 		heroSub: 'Darmowy plan bez limitu czasu dla zespołów do 5 osób.\nNa start 30 dni pełnej wersji — z urlopami i grafikami.',
@@ -38,11 +44,11 @@ export const planOfferingCopy = {
 	},
 	en: {
 		metaLong:
-			'Planopia: online time tracking, leave, schedules, PDF/Excel reports, team chat, Kanban boards, and an AI Assistant without scattered spreadsheets or paper requests. 30-day free trial with the full product (up to 5 users, AI limits during trial). Then stay on a free time tracking plan for up to 5 active accounts, or upgrade for full modules and AI — from 119 PLN net per month (Core).',
+			`Planopia: online time tracking, leave, schedules, PDF/Excel reports, team chat, task boards, and an AI Assistant without scattered spreadsheets or paper requests. 30-day free trial with the full product (up to 5 users). Then stay on a free time tracking plan for up to 5 active accounts, or choose the Core plan with leave, team reports and the AI Assistant — from ${CORE_FROM} PLN net per month.`,
 		metaShort:
 			'Free time tracking, leave, and schedules without spreadsheets. 30-day full trial, no card. Then free tier for 5 users or paid plans with full modules and AI.',
 		jsonLdOfferDescription:
-			'30-day full-product trial; then free time tracking tier for up to 5 active accounts, or paid plans from 119 to 479 PLN net per month (boxed tiers in-app; larger teams — custom quote); optional AI packs after an active paid plan.',
+			`30-day full-product trial; then a free time tracking tier for up to 5 active accounts, or paid plans from ${CORE_FROM} to ${PAID_MAX} PLN net per month (Core, PRO, Business; over 100 people — custom quote).`,
 		heroH1: 'Time tracking, leave and schedules in one system',
 		heroSub: 'A free plan with no time limit for teams of up to 5.\nStart with 30 days of the full version — leave and schedules included.',
 		valueEyebrow: 'Why not spreadsheets?',

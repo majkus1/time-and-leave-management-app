@@ -29,7 +29,7 @@ const faqItems = [
 	},
 	{
 		q: 'Czy Asystent AI ma limit wiadomości?',
-		a: 'Nie. W okresie próbnym, w pakietach Pro i Business oraz z modułem Grafiki + AI lub Asystent AI korzystasz bez liczników i bez dokupywania pakietów. Obowiązuje tylko rozsądne użycie, które chroni przed nadużyciami. Co obejmuje który plan, znajdziesz w cenniku na stronie głównej.',
+		a: 'Nie. W okresie próbnym i w każdym planie płatnym (Core, PRO, Business) korzystasz bez liczników i bez dokupywania pakietów. Obowiązuje tylko rozsądne użycie, które chroni przed nadużyciami. Co obejmuje który plan, znajdziesz w cenniku na stronie głównej.',
 	},
 	{
 		q: 'Czy Planopia automatyzuje całą ścieżkę wniosku urlopowego?',
@@ -155,7 +155,7 @@ function BlogAiAssistant() {
 						</h1>
 						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
 							Planopia to nie tylko ewidencja — to spójny ekosystem: czas pracy, wnioski urlopowe i kalendarz, tablice zadań, grafik i komunikacja.
-							<strong className="font-semibold text-gray-800"> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w planach z AI bez limitu wiadomości. Okres próbny i plany:{' '}
+							<strong className="font-semibold text-gray-800"> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w każdym planie płatnym bez limitu wiadomości. Okres próbny i plany:{' '}
 							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
 								cennik
 							</Link>
@@ -226,7 +226,7 @@ function BlogAiAssistant() {
 					<section className="mb-14">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">Zadania i grafik — priorytety i obłożenie zespołu</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							<strong>Zarządzanie zadaniami w zespole</strong> na tablicy (np. w stylu Kanban) oraz <strong>grafik pracy</strong> lub plan zmian dają obraz: kto realnie może wziąć temat, a kiedy zespół jest cienki przez urlopy lub sezonowy peak.{' '}
+							<strong>Zarządzanie zadaniami w zespole</strong> na tablicy zadań oraz <strong>grafik pracy</strong> lub plan zmian dają obraz: kto realnie może wziąć temat, a kiedy zespół jest cienki przez urlopy lub sezonowy peak.{' '}
 							<strong>Czy AI może pomóc w planowaniu grafiku?</strong> — może wspierać orientację i syntezę informacji z już wprowadzonych danych; decyzje kadrowe i organizacyjne pozostają po stronie ludzi i polityki firmy.
 						</p>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
@@ -247,7 +247,7 @@ function BlogAiAssistant() {
 					<section className="mb-14">
 						<h2 className="text-3xl font-bold text-gray-900 mb-6">Bezpieczeństwo i role</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. W planach z AI <strong>Asystent AI nie ma limitu wiadomości</strong> (obowiązuje rozsądne użycie); co obejmuje który plan, znajdziesz w{' '}
+							Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. W każdym planie płatnym <strong>Asystent AI nie ma limitu wiadomości</strong> (obowiązuje rozsądne użycie); co obejmuje który plan, znajdziesz w{' '}
 							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline">
 								cenniku
 							</Link>

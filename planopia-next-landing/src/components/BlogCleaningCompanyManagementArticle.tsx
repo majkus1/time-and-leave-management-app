@@ -159,7 +159,7 @@ export default function BlogCleaningCompanyManagementArticle() {
 							<li>grafik pracy koordynatorów i ekip sprzątających,</li>
 							<li>urlopy, inne nieobecności i proces decyzji,</li>
 							<li>ewidencję godzin, nadgodzin oraz raporty PDF i Excel,</li>
-							<li>opcjonalny Timer + QR do rejestracji czasu z telefonu,</li>
+							<li>opcjonalny moduł Timer i QR do rejestracji czasu z telefonu,</li>
 							<li>tablice zadań, komunikaty i czat do przekazywania ustaleń,</li>
 							<li>pracowników z kontem oraz osoby bez dostępu do aplikacji.</li>
 						</ul>

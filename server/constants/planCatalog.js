@@ -15,8 +15,8 @@ const TRIAL = {
 }
 
 /**
- * AI bez limitu wiadomości (od 09.2026): kto ma AI w planie (okres próbny, pakiety, Core z modułem Asystent AI
- * lub Grafiki + AI), nie widzi licznika. Zostaje ukryty miesięczny bezpiecznik na zespół — przed nadużyciem
+ * AI bez limitu wiadomości (od 09.2026): kto ma AI w planie (okres próbny i każdy plan płatny — Core ma asystenta
+ * w cenie, stare zespoły Core dostają go przez CORE_INCLUDED_CAPABILITIES), nie widzi licznika. Zostaje ukryty miesięczny bezpiecznik na zespół — przed nadużyciem
  * (np. skryptem), nie przed normalną pracą. Na serwerze nadpisywalny: AI_FAIR_USE_MONTHLY, AI_FAIR_USE_TRIAL_MONTHLY
  * (0 = awaryjne wyłączenie AI). Okres próbny niżej: zakłada się go bez weryfikacji maila, a realnie zużywa 1–6 wiadomości.
  */
@@ -201,6 +201,27 @@ const PLAN_LABELS = {
 	enterprise: { pl: 'Enterprise', en: 'Enterprise' },
 	trial: { pl: 'Okres próbny', en: 'Trial' },
 }
+
+/**
+ * Mapa „co jest gdzie” dla klienta (kafelki „O aplikacji”, kalkulator, porównanie planów, aplikacja):
+ * free = plan darmowy i wyżej, core = Core i wyżej, module = moduł do Core (albo PRO/Business), all = każdy plan.
+ * Teksty (nazwy, opisy) żyją w warstwie prezentacji; tu tylko przypisanie do planu.
+ */
+const FEATURES = [
+	{ id: 'timesheet', plan: 'free' },
+	{ id: 'timesheet_print', plan: 'free' },
+	{ id: 'leave', plan: 'core' },
+	{ id: 'team_overview', plan: 'core' },
+	{ id: 'team_reports', plan: 'core' },
+	{ id: 'ai_assistant', plan: 'core' },
+	{ id: 'notifications', plan: 'core' },
+	{ id: 'timer_qr', plan: 'module', module: 'timer_qr' },
+	{ id: 'schedules', plan: 'module', module: 'schedules_ai' },
+	{ id: 'tasks_chat', plan: 'module', module: 'tasks_chat' },
+	{ id: 'mobile', plan: 'all' },
+	{ id: 'security', plan: 'all' },
+	{ id: 'support', plan: 'all' },
+]
 
 const MODULE_LABELS = {
 	timer_qr: { pl: 'Timer i QR', en: 'Timer and QR' },
@@ -404,6 +425,7 @@ module.exports = {
 	CORE_INCLUDED_CAPABILITIES,
 	PLAN_LABELS,
 	MODULE_LABELS,
+	FEATURES,
 	MODULE_API_PREFIXES,
 	BUNDLE_MODULE_KEYS,
 	AI_ASSISTANT_MODULE_MONTHLY_MESSAGES,

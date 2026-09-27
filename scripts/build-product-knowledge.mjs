@@ -3,6 +3,7 @@
  * Generuje dla landingu (Next.js, budowany na Vercelu z podkatalogu, bez dostępu do server/):
  *  - planopia-next-landing/src/data/productKnowledge.generated.ts  — baza wiedzy z wyrenderowanym cennikiem
  *  - planopia-next-landing/src/data/landingPlanPricing.generated.ts — liczby cennika z planCatalog.js
+ *  - planopia-next-landing/public/llms.txt — opis produktu dla wyszukiwarek AI, z szablonu scripts/llms.template.txt
  *
  * Użycie: node scripts/build-product-knowledge.mjs [--check]
  *   --check: nie zapisuje, kończy się kodem 1, gdy pliki na dysku różnią się od świeżo wygenerowanych (CI).
@@ -21,6 +22,8 @@ const render = require(path.join(root, 'server/utils/productKnowledgeRender.js')
 
 const OUT_KNOWLEDGE = path.join(root, 'planopia-next-landing/src/data/productKnowledge.generated.ts')
 const OUT_PRICING = path.join(root, 'planopia-next-landing/src/data/landingPlanPricing.generated.ts')
+const LLMS_TEMPLATE = path.join(root, 'scripts/llms.template.txt')
+const OUT_LLMS = path.join(root, 'planopia-next-landing/public/llms.txt')
 
 const HEADER = `/**
  * PLIK GENEROWANY — nie edytuj ręcznie.
@@ -101,39 +104,44 @@ function buildPricingTs() {
 		'',
 		'export const landingTrial = {',
 		`\tmaxUsers: ${c.TRIAL.maxUsers},`,
-		`\taiTrialOneOffTotal: ${c.TRIAL.aiTrialOneOffTotal},`,
 		'}',
-		'',
-		`export const landingCoreMinMonthlyNetPln = ${Math.min(...core.map(k => c.MONTHLY_NET_PRICES_PLN[k]))}`,
-		'',
-		`export const landingCoreAiPoolPerMonth = ${c.AI_ASSISTANT_MODULE_MONTHLY_MESSAGES}`,
 		'',
 		'export const landingCoreTiers = [',
 		...core.map(k => `\t{ id: ${j(k)} as const, maxUsers: ${c.PAID_PLANS[k].maxUsers}, monthlyNetPln: ${c.MONTHLY_NET_PRICES_PLN[k]} },`),
 		']',
 		'',
 		'export const landingBundles = [',
-		...bundles.map(k => `\t{ id: ${j(k)} as const, maxUsers: ${c.PAID_PLANS[k].maxUsers}, monthlyNetPln: ${c.MONTHLY_NET_PRICES_PLN[k]}, aiMessagesPerMonth: ${c.PAID_PLANS[k].aiMessagesPerMonth} },`),
+		...bundles.map(k => `\t{ id: ${j(k)} as const, maxUsers: ${c.PAID_PLANS[k].maxUsers}, monthlyNetPln: ${c.MONTHLY_NET_PRICES_PLN[k]} },`),
 		']',
 		'',
 		'export const landingModules = [',
 		...c.SALE_MODULE_KEYS.map(k => `\t{ id: ${j(k)} as const, monthlyNetPln: ${c.MODULE_MONTHLY_NET_PRICES_PLN[k]} },`),
 		']',
 		'',
-		'export const landingAddons = [',
-		...Object.entries(c.AI_ADDON_PACKS).map(([k, v]) => `\t{ id: ${j(k)} as const, messages: ${v.messages}, pricePlnNet: ${v.pricePlnNet} },`),
+		'/** Mapa „co jest gdzie” z planCatalog.FEATURES — kafelki „O aplikacji” i kalkulator cennika */',
+		'export const landingFeatures = [',
+		...c.FEATURES.map(f => `\t{ id: ${j(f.id)} as const, plan: ${j(f.plan)} as const${f.module ? `, module: ${j(f.module)} as const` : ''} },`),
 		']',
 		'',
 		"export type CorePlanId = (typeof landingCoreTiers)[number]['id']",
+		"export type BundlePlanId = (typeof landingBundles)[number]['id']",
 		"export type ModuleId = (typeof landingModules)[number]['id']",
+		"export type FeatureId = (typeof landingFeatures)[number]['id']",
 		'',
 	]
 	return lines.join('\n')
 }
 
+/** llms.txt czytają wyszukiwarki AI — ceny z placeholderów, żeby nie powtarzały starego cennika */
+function buildLlmsTxt() {
+	const template = fs.readFileSync(LLMS_TEMPLATE, 'utf8').replace(/\r\n/g, '\n')
+	return render.renderKnowledgeBody(template, render.buildCatalogValues(planCatalog))
+}
+
 const outputs = [
 	[OUT_KNOWLEDGE, buildKnowledgeTs()],
 	[OUT_PRICING, buildPricingTs()],
+	[OUT_LLMS, buildLlmsTxt()],
 ]
 
 const check = process.argv.includes('--check')

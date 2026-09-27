@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import LandingFeatureTiles from './LandingFeatureTiles'
 
 const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
@@ -92,81 +93,7 @@ function ENProductPromotion() {
 						"
 					>
 						<div className="[grid-area:features] min-w-0">
-							<div className="grid sm:grid-cols-2 gap-4">
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/schedule time works.png" className="icon-landing-about" alt="Work time tracking icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Work time tracking</p>
-										<p className="text-sm text-gray-600">Calendar, overtime, and work summaries without rebuilding spreadsheets by hand.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/timer.png" className="icon-landing-about" alt="Automatic time registration icon (timer and QR)" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Automatic time registration</p>
-										<p className="text-sm text-gray-600">Work timer, QR check-in/out, tasks, and monthly time statistics.</p>
-										<Link href="/en/qr-time-clocking#photo-proof-clocking" className="about-new-feature">
-											<b>New</b> Tablet QR code every 30 s and location at scan
-										</Link>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/sunbed.png" className="icon-landing-about" alt="Leaves and absences icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Leaves and absences</p>
-										<p className="text-sm text-gray-600">Requests, approvals, and notifications without a paper workflow.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/pdf.png" className="icon-landing-about" alt="PDF and Excel reports icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Reports</p>
-										<p className="text-sm text-gray-600">PDF and Excel reports with data, statistics, and summaries for the team, accounting, and owners.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/project.png" className="icon-landing-about" alt="Work schedules icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Work schedules</p>
-										<p className="text-sm text-gray-600">Planning and managing work schedules for the entire team.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/chat.png" className="icon-landing-about" alt="Team chats icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Chats</p>
-										<p className="text-sm text-gray-600">Internal communication — team chats and department channels.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/task-list.png" className="icon-landing-about" alt="Kanban task boards icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Task boards</p>
-										<p className="text-sm text-gray-600">Project and task management in clear Kanban boards.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/verified.png" className="icon-landing-about" alt="Security and encryption icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Security</p>
-										<p className="text-sm text-gray-600">Secure login and encrypted connections protect your company.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/booking.png" className="icon-landing-about" alt="PWA and mobile app icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">PWA & mobile</p>
-										<p className="text-sm text-gray-600">Add to your home screen and use it like an app — including push notifications for important updates.</p>
-									</div>
-								</div>
-								<div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-									<img src="/img/technical-support.png" className="icon-landing-about" alt="Dedicated support icon" width={35} height={35} loading="lazy" decoding="async" />
-									<div>
-										<p className="font-semibold text-gray-900">Dedicated support</p>
-										<p className="text-sm text-gray-600">Chat and help for your team — whenever you need it.</p>
-									</div>
-								</div>
-							</div>
+							<LandingFeatureTiles locale="en" />
 						</div>
 
 						<aside
@@ -214,7 +141,7 @@ function ENProductPromotion() {
 						<p className="landing-about-heading-eyebrow landing-section-eyebrow">One app, many possibilities</p>
 						<h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">Who is Planopia for?</h2>
 						<p className="landing-about-intro mt-4 text-lg text-gray-600">
-							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant and no message limit on plans with AI.
+							From just a few to hundreds of employees — Planopia scales with your organization. One app for time tracking, leave, schedules, and reports, with the AI Assistant and no message limit on every paid plan.
 						</p>
 					</div>
 

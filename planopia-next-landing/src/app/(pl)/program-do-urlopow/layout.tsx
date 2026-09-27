@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
+import { landingCoreTiers } from '@/data/landingPlanPricing'
+
+/** Cena startowa planu z urlopami (Core) z planCatalog */
+const CORE_FROM = landingCoreTiers[0].monthlyNetPln
 
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
 	title: { absolute: 'Program do urlopów online — wnioski i kalendarz | Planopia' },
 	description:
-		'Program do urlopów online: wnioski, akceptacje i kalendarz zespołu. 30 dni za darmo, potem plan z urlopami od 119 zł netto/mies.',
+		`Program do urlopów online: wnioski, akceptacje i kalendarz zespołu. 30 dni za darmo, potem plan z urlopami od ${CORE_FROM} zł netto/mies.`,
 	keywords: [
 		'program do urlopów',
 		'aplikacja do urlopów',
@@ -38,7 +42,7 @@ export const metadata: Metadata = {
 		siteName: 'Planopia',
 		title: 'Program do urlopów online — wnioski i kalendarz | Planopia',
 		description:
-			'Wnioski urlopowe, akceptacje i kalendarz urlopów w jednej aplikacji. 30 dni pełnej Planopii za darmo, potem plan z urlopami od 119 zł netto/mies.',
+			`Wnioski urlopowe, akceptacje i kalendarz urlopów w jednej aplikacji. 30 dni pełnej Planopii za darmo, potem plan z urlopami od ${CORE_FROM} zł netto/mies.`,
 		images: [
 			{
 				url: '/img/plans-urlopnew.webp',

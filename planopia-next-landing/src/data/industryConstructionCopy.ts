@@ -67,7 +67,7 @@ export const industryConstructionCopy: Record<
 			'Grafiki i zmiany — planowanie pracy brygad i podgląd obłożenia.',
 			'Urlopy i nieobecności — wnioski i akceptacje w systemie, zamiast łańcuchów wiadomości.',
 			'QR i telefon — rejestrowanie czasu z placu budowy (PWA w przeglądarce); opcjonalnie kod na tablecie co 30 s, lokalizacja przy skanie i raport godzin osobno dla każdej budowy.',
-			'Tablice zadań (Kanban) — zlecenia, checklisty i status prac dla biura i terenu.',
+			'Tablice zadań — zlecenia, checklisty i status prac dla biura i terenu.',
 			'Czaty zespołowe — ustalenia, dokumenty i dopytywanie bez rozjechania wątków w komunikatorze.',
 		],
 		aiTitle: 'Asystent AI — mniej ręcznego liczenia',
@@ -116,7 +116,7 @@ export const industryConstructionCopy: Record<
 	en: {
 		heroH1: 'Construction time tracking and crew scheduling for building companies',
 		heroSub:
-			'One app for everyday work: time tracking, leave, crew schedules, Kanban tasks, and team chat — without spreadsheets or scattered messages. Start with a 30-day full trial, then free time tracking for up to 5 active accounts or paid plans.',
+			'One app for everyday work: time tracking, leave, crew schedules, task boards, and team chat — without spreadsheets or scattered messages. Start with a 30-day full trial, then free time tracking for up to 5 active accounts or paid plans.',
 		galleryTitle: 'What Planopia looks like — in-app screenshots',
 		videoEyebrow: 'Video tutorials',
 		videoTitle: 'See Planopia in action',
@@ -147,7 +147,7 @@ export const industryConstructionCopy: Record<
 			'Schedules and shifts — plan crews and see coverage at a glance.',
 			'Leave and absences — requests and approvals in the app instead of message threads.',
 			'QR and mobile — log time from the site using a phone browser (PWA); optionally a tablet code that changes every 30 s, location at scan, and an hours report per site.',
-			'Kanban boards — jobs, checklists, and status for office and field.',
+			'Task boards — jobs, checklists, and status for office and field.',
 			'Team chat — decisions and files without losing context in a personal messenger.',
 		],
 		aiTitle: 'AI assistant — less manual crunching',
@@ -182,7 +182,7 @@ export const industryConstructionCopy: Record<
 			},
 			{
 				q: 'Is it only for leave management?',
-				a: 'No. Planopia combines time tracking, schedules, leave, Kanban tasks, and chat — one coherent tool for daily operations.',
+				a: 'No. Planopia combines time tracking, schedules, leave, task boards, and chat — one coherent tool for daily operations.',
 			},
 		],
 		ctaTitle: 'Site and office under control?',

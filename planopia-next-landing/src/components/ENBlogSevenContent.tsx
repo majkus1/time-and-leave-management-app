@@ -74,7 +74,7 @@ export default function ENBlogSevenContent() {
 				"name": "What features does the comprehensive Planopia app offer?",
 				"acceptedAnswer": {
 					"@type": "Answer",
-					"text": "Planopia combines time tracking, leave management, work schedules, team chats, task boards (Kanban), and flexible role configuration. Everything in one app, without the need for multiple separate tools."
+					"text": "Planopia combines time tracking, leave management, work schedules, team chats, task boards, and flexible role configuration. Everything in one app, without the need for multiple separate tools."
 				}
 			}
 		]
@@ -170,7 +170,7 @@ export default function ENBlogSevenContent() {
 
 					<h2 className="text-2xl font-semibold mb-3 mt-8">Task Boards and Project Management</h2>
 					<p className="mb-4 text-gray-700">
-						<strong>Task boards</strong> in Kanban style allow you to manage projects and tasks in a clear way. 
+						<strong>Task boards</strong> let you manage projects and tasks clearly. 
 						You can create boards for different projects, assign tasks to team members, 
 						track progress, and manage priorities. Everything in one place, without the need for separate tools.
 					</p>
@@ -285,7 +285,7 @@ export default function ENBlogSevenContent() {
 								<p className="text-gray-700">
 									Planopia combines <Link href="/en#aboutapp" className="text-blue-600 hover:underline">time tracking</Link>, 
 									<Link href="/en/blog/leave-planning" className="text-blue-600 hover:underline"> leave management</Link>, 
-									work schedules, team chats, task boards (Kanban), and flexible role configuration. 
+									work schedules, team chats, task boards, and flexible role configuration. 
 									Everything in one app, without the need for multiple separate tools.
 								</p>
 							</div>

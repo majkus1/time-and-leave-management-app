@@ -1,0 +1,18 @@
+[
+	{ "label": "3 osoby, nic dodatkowego", "users": 3, "needs": {}, "kind": "free" },
+	{ "label": "3 osoby z urlopami", "users": 3, "needs": { "leave": true }, "kind": "core", "planKey": "base_5", "monthlyNetPln": 69 },
+	{ "label": "8 osób z urlopami", "users": 8, "needs": { "leave": true }, "kind": "core", "planKey": "base_s", "monthlyNetPln": 119 },
+	{ "label": "8 osób, urlopy i Timer i QR", "users": 8, "needs": { "leave": true, "modules": ["timer_qr"] }, "kind": "core", "planKey": "base_s", "modules": ["timer_qr"], "monthlyNetPln": 158 },
+	{ "label": "8 osób, Timer i QR oraz Grafiki — PRO taniej", "users": 8, "needs": { "modules": ["timer_qr", "schedules_ai"] }, "kind": "bundle", "planKey": "pro_15", "monthlyNetPln": 189, "coreMonthlyNetPln": 217 },
+	{ "label": "5 osób, wszystkie moduły — PRO taniej", "users": 5, "needs": { "modules": ["timer_qr", "schedules_ai", "tasks_chat"] }, "kind": "bundle", "planKey": "pro_15", "monthlyNetPln": 189, "coreMonthlyNetPln": 226 },
+	{ "label": "5 osób, dwa moduły — Core taniej", "users": 5, "needs": { "modules": ["timer_qr", "schedules_ai"] }, "kind": "core", "planKey": "base_5", "modules": ["timer_qr", "schedules_ai"], "monthlyNetPln": 167 },
+	{ "label": "26 osób z Timer i QR — PRO za 1 zł więcej", "users": 26, "needs": { "modules": ["timer_qr"] }, "kind": "bundle", "planKey": "pro", "monthlyNetPln": 239, "coreMonthlyNetPln": 238 },
+	{ "label": "40 osób z Grafikami — PRO do 50 za 1 zł więcej", "users": 40, "needs": { "modules": ["schedules_ai"] }, "kind": "bundle", "planKey": "pro_50", "monthlyNetPln": 329, "coreMonthlyNetPln": 328 },
+	{ "label": "80 osób, dwa moduły — Core taniej niż Business", "users": 80, "needs": { "modules": ["timer_qr", "schedules_ai"] }, "kind": "core", "planKey": "base_l", "modules": ["timer_qr", "schedules_ai"], "monthlyNetPln": 447 },
+	{ "label": "80 osób, wszystkie moduły — Business", "users": 80, "needs": { "modules": ["timer_qr", "schedules_ai", "tasks_chat"] }, "kind": "bundle", "planKey": "business", "monthlyNetPln": 479, "coreMonthlyNetPln": 506 },
+	{ "label": "ponad 100 osób", "users": 101, "needs": { "leave": true }, "kind": "custom" },
+	{ "label": "6 osób bez wyboru — darmowy tylko do 5", "users": 6, "needs": {}, "kind": "core", "planKey": "base_s", "monthlyNetPln": 119 },
+	{ "label": "0 osób traktowane jak 1", "users": 0, "needs": {}, "kind": "free" },
+	{ "label": "sam asystent AI", "users": 4, "needs": { "ai": true }, "kind": "core", "planKey": "base_5", "monthlyNetPln": 69 },
+	{ "label": "nieznany moduł pomijany", "users": 3, "needs": { "modules": ["chat"] }, "kind": "free" }
+]

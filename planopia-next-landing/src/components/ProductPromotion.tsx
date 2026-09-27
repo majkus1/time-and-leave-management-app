@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import LandingFeatureTiles from './LandingFeatureTiles'
 
 const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
@@ -93,96 +94,7 @@ function ProductPromotion() {
     >
       {/* Tekst + kafelki */}
       <div className="[grid-area:features] min-w-0">
-        {/* Feature grid */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          {/* 1 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-            <img src="/img/schedule time works.png" className='icon-landing-about' alt='Ikona ewidencji czasu pracy' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-              <p className="font-semibold text-gray-900">Ewidencja czasu pracy</p>
-              <p className="text-sm text-gray-600">Kalendarz, nadgodziny i podsumowania bez ręcznego składania arkuszy.</p>
-            </div>
-          </div>
-          {/* Timer */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-            <img src="/img/timer.png" className='icon-landing-about' alt='Ikona automatycznej rejestracji czasu (timer i QR)' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-              <p className="font-semibold text-gray-900">Automatyczna rejestracja czasu</p>
-              <p className="text-sm text-gray-600">Timer pracy, QR wejścia/wyjścia, zadania i miesięczne statystyki czasu.</p>
-              <Link href="/rejestracja-czasu-pracy-qr#ochrona-przed-zdjeciem" className="about-new-feature">
-                <b>Nowość</b> Kod QR na tablecie co 30 s i lokalizacja przy skanie
-              </Link>
-            </div>
-          </div>
-          {/* 2 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/sunbed.png" className='icon-landing-about' alt='Ikona urlopów i nieobecności' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-              <p className="font-semibold text-gray-900">Urlopy i nieobecności</p>
-              <p className="text-sm text-gray-600">Wnioski, akceptacje i powiadomienia bez papierowego obiegu.</p>
-            </div>
-          </div>
-          {/* 3 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/pdf.png" className='icon-landing-about' alt='Ikona raportów PDF i Excel' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-			<p className="font-semibold text-gray-900">Raporty</p>
-<p className="text-sm text-gray-600">Raporty PDF i Excel z danymi, statystykami i podsumowaniami dla zespołu, księgowości i właściciela.</p>
-            </div>
-
-          </div>
-          {/* 4 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/project.png" className='icon-landing-about' alt='Ikona grafiku pracy' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-			<p className="font-semibold text-gray-900">Grafik pracy</p>
-<p className="text-sm text-gray-600">Planowanie i zarządzanie grafikami pracy dla całego zespołu, z szybkim automatycznym wypełnianiem grafiku.</p>
-            </div>
-          </div>
-          {/* 5 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/chat.png" className='icon-landing-about' alt='Ikona czatów zespołowych' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-			<p className="font-semibold text-gray-900">Czaty</p>
-<p className="text-sm text-gray-600">Komunikacja wewnętrzna — czaty zespołowe i kanały działów.</p>
-            </div>
-          </div>
-          {/* 6 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/task-list.png" className='icon-landing-about' alt='Ikona tablic zadań Kanban' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-			<p className="font-semibold text-gray-900">Zadania i Projekty</p>
-<p className="text-sm text-gray-600">Zarządzanie zadaniami i projektami w przejrzystych tablicach Kanban.</p>
-            </div>
-          </div>
-          {/* 7 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/verified.png" className='icon-landing-about' alt='Ikona bezpieczeństwa i szyfrowania' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-              <p className="font-semibold text-gray-900">Bezpieczeństwo</p>
-              <p className="text-sm text-gray-600">Bezpieczne logowanie i szyfrowane połączenia chronią Twoją firmę.</p>
-            </div>
-
-          </div>
-          {/* 8 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/booking.png" className='icon-landing-about' alt='Ikona aplikacji PWA i wersji mobilnej' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-              <p className="font-semibold text-gray-900">PWA i mobile</p>
-              <p className="text-sm text-gray-600">Dodaj do ekranu i używaj jak appki — z powiadomieniami push o ważnych zdarzeniach.</p>
-            </div>
-
-          </div>
-          {/* 9 */}
-          <div className="flex gap-3 p-4 rounded-xl border border-gray-200">
-		  <img src="/img/technical-support.png" className='icon-landing-about' alt='Ikona indywidualnego wsparcia' width={35} height={35} loading="lazy" decoding="async" />
-            <div>
-			<p className="font-semibold text-gray-900">Indywidualne wsparcie</p>
-<p className="text-sm text-gray-600">Czat i pomoc dla Twojego zespołu — w razie pytań lub problemów.</p>
-            </div>
-          </div>
-        </div>
-
+        <LandingFeatureTiles locale="pl" />
       </div>
 
       <aside
@@ -232,7 +144,7 @@ function ProductPromotion() {
       <p className="landing-about-heading-eyebrow landing-section-eyebrow">Jedna aplikacja, wiele możliwości</p>
       <h2 className="landing-about-heading-title text-3xl md:text-4xl font-extrabold text-gray-900">Dla kogo jest Planopia?</h2>
       <p className="landing-about-intro mt-4 text-lg text-gray-600">
-        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję czasu pracy, urlopy, grafiki i raporty, z Asystentem AI bez limitu wiadomości w planach z AI.
+        Od kilku do kilkuset pracowników — Planopia skaluje się razem z Twoją organizacją. Jedna aplikacja na ewidencję czasu pracy, urlopy, grafiki i raporty, z Asystentem AI bez limitu wiadomości w każdym planie płatnym.
       </p>
     </div>
 

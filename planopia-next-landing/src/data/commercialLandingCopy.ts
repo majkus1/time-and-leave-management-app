@@ -4,6 +4,24 @@
  * Wyciagniete z CommercialSoftwareLanding.tsx: kazdy nowy wariant dokladal ~160 linii
  * do komponentu. Konwencja zgodna z industryGastronomyCopy.ts / industryCleaningCopy.ts.
  */
+import { landingBundles, landingCoreTiers, landingModules } from './landingPlanPricing'
+
+/** Ceny z planCatalog (generat: npm run knowledge:build) — teksty nie trzymają własnych liczb */
+function priceOf(list: readonly { id: string; monthlyNetPln: number }[], id: string) {
+	const found = list.find(item => item.id === id)
+	if (!found) throw new Error(`commercialLandingCopy: brak ceny ${id}`)
+	return found.monthlyNetPln
+}
+const CORE_5 = priceOf(landingCoreTiers, 'base_5')
+const CORE_15 = priceOf(landingCoreTiers, 'base_s')
+const CORE_30 = priceOf(landingCoreTiers, 'base_m')
+const CORE_50 = priceOf(landingCoreTiers, 'base_50')
+const CORE_100 = priceOf(landingCoreTiers, 'base_l')
+const PRO_15 = priceOf(landingBundles, 'pro_15')
+const BUSINESS = priceOf(landingBundles, 'business')
+const MOD_TIMER_QR = priceOf(landingModules, 'timer_qr')
+const MOD_SCHEDULES = priceOf(landingModules, 'schedules_ai')
+
 export type Locale = 'pl' | 'en'
 export type Variant = 'leave' | 'time' | 'schedule' | 'attendance' | 'overtime'
 
@@ -110,8 +128,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Wnioski urlopowe i kalendarz urlopów to część pełnej aplikacji. Masz je przez 30 dni okresu próbnego, a potem w dowolnym planie płatnym:',
 			pricingBullets: [
 				'30 dni za darmo — pełna aplikacja z urlopami dla zespołu do 5 osób.',
-				'Plan CORE od 119 zł netto / mies. (do 15 osób; 199 zł do 30, 349 zł do 100) — urlopy są w cenie planu.',
-				'Pakiety PRO (239 zł, do 30 osób) i BUSINESS (479 zł, do 100 osób) — urlopy plus wszystkie pozostałe moduły i Asystent AI.',
+				`Plan Core od ${CORE_5} zł netto / mies. (do 5 osób; ${CORE_15} zł do 15, ${CORE_30} zł do 30, ${CORE_50} zł do 50, ${CORE_100} zł do 100) — urlopy, raporty zespołu i Asystent AI są w cenie planu.`,
+				`Pakiety PRO (od ${PRO_15} zł, do 15 osób) i Business (${BUSINESS} zł, do 100 osób) — urlopy plus wszystkie moduły: Timer i QR, grafiki, zadania i czat.`,
 			],
 			pricingNote:
 				'Uwaga: bezpłatny plan po okresie próbnym obejmuje wyłącznie ewidencję czasu pracy (do 5 aktywnych kont). Moduł urlopów działa w okresie próbnym i w planach płatnych. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
@@ -120,7 +138,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Czy program do urlopów jest darmowy?',
-					a: 'Przez 30 dni korzystasz z pełnej aplikacji (z urlopami) za darmo, dla zespołu do 5 osób. Po okresie próbnym możesz zostać na bezpłatnym planie z ewidencją czasu pracy (do 5 aktywnych kont) albo wykupić plan płatny, który zawiera moduł urlopów — CORE od 119 zł netto miesięcznie lub pakiet PRO/BUSINESS.',
+					a: `Przez 30 dni korzystasz z pełnej aplikacji (z urlopami) za darmo, dla zespołu do 5 osób. Po okresie próbnym możesz zostać na bezpłatnym planie z ewidencją czasu pracy (do 5 aktywnych kont) albo wykupić plan płatny z urlopami — Core od ${CORE_5} zł netto miesięcznie (do 5 osób) lub pakiet PRO/Business.`,
 				},
 				{
 					q: 'Czy pracownik może złożyć wniosek z telefonu?',
@@ -141,7 +159,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Uporządkuj urlopy w firmie',
 			ctaNote:
-				'30 dni pełnej aplikacji za darmo. Potem plan z urlopami od 119 zł netto/mies. lub darmowa ewidencja czasu pracy.',
+				`30 dni pełnej aplikacji za darmo. Potem plan z urlopami od ${CORE_5} zł netto/mies. lub darmowa ewidencja czasu pracy.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
 				{ href: '/blog/program-do-urlopow-dla-malej-firmy', label: 'Program do urlopów dla małej firmy — jak wybrać' },
@@ -155,9 +173,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/plans-urlopnew.webp',
 			heroImageAlt: 'Kalendarz urlopów i wnioski urlopowe w aplikacji Planopia',
 			breadcrumbName: 'Program do urlopów',
-			offerPrice: '119',
+			offerPrice: String(CORE_5),
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; moduł urlopów w planach płatnych (CORE od 119 zł netto/mies. lub pakiet).',
+				`30 dni pełnej aplikacji za darmo; urlopy w planach płatnych (Core od ${CORE_5} zł netto/mies. lub pakiet).`,
 		},
 		en: {
 			eyebrow: 'Leave management software',
@@ -196,8 +214,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Leave requests and the leave calendar are part of the full app. You get them during the 30-day trial and then on any paid plan:',
 			pricingBullets: [
 				'30 days free — full app with leave for a team of up to 5 users.',
-				'CORE plan from 119 PLN net / month (up to 15 users; 199 up to 30, 349 up to 100) — leave is included in the plan.',
-				'PRO (239 PLN, up to 30 users) and BUSINESS (479 PLN, up to 100 users) — leave plus all other modules and the AI Assistant.',
+				`Core plan from ${CORE_5} PLN net / month (up to 5 users; ${CORE_15} up to 15, ${CORE_30} up to 30, ${CORE_50} up to 50, ${CORE_100} up to 100) — leave, team reports and the AI Assistant are included.`,
+				`PRO (from ${PRO_15} PLN, up to 15 users) and Business (${BUSINESS} PLN, up to 100 users) — leave plus every module: timer and QR, schedules, tasks and chat.`,
 			],
 			pricingNote:
 				'Note: the free tier after the trial covers time tracking only (up to 5 active accounts). The leave module works during the trial and on paid plans. Annual billing: pay for 10 months instead of 12.',
@@ -206,7 +224,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Is the leave software free?',
-					a: 'You get the full app (including leave) free for 30 days, for a team of up to 5 users. After the trial you can stay on the free time tracking tier (up to 5 active accounts) or buy a paid plan that includes the leave module — CORE from 119 PLN net per month, or a PRO/BUSINESS package.',
+					a: `You get the full app (including leave) free for 30 days, for a team of up to 5 users. After the trial you can stay on the free time tracking tier (up to 5 active accounts) or buy a paid plan with leave — Core from ${CORE_5} PLN net per month (up to 5 users), or a PRO/Business package.`,
 				},
 				{
 					q: 'Can employees request leave from a phone?',
@@ -227,7 +245,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Bring order to company leave',
 			ctaNote:
-				'30 days of the full app free. Then a plan with leave from 119 PLN net/month, or free time tracking.',
+				`30 days of the full app free. Then a plan with leave from ${CORE_5} PLN net/month, or free time tracking.`,
 			relatedTitle: 'Related resources',
 			related: [
 				{ href: '/en/blog/annual-leave-plan-excel-pdf-app', label: 'Annual leave plan: Excel, PDF, app' },
@@ -240,9 +258,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/plans-urlopnewen.webp',
 			heroImageAlt: 'Leave calendar and leave requests in the Planopia app',
 			breadcrumbName: 'Leave management software',
-			offerPrice: '119',
+			offerPrice: String(CORE_5),
 			offerDescription:
-				'30-day full trial free; leave module on paid plans (CORE from 119 PLN net/month or a package).',
+				`30-day full trial free; leave on paid plans (Core from ${CORE_5} PLN net/month or a package).`,
 		},
 	},
 	time: {
@@ -283,17 +301,17 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Ewidencja czasu pracy jest dostępna już w planie darmowym — to najtańszy sposób, by zacząć:',
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), bez podawania karty na start.',
-				'Po próbie: darmowa ewidencja czasu pracy do 5 aktywnych kont — bez opłat.',
-				'Większy zespół lub licznik czasu i QR: plan CORE od 119 zł netto/mies. lub pakiet PRO/BUSINESS.',
+				'Po próbie: darmowa ewidencja czasu pracy i wydruk ewidencji do 5 aktywnych kont — bez opłat.',
+				`Urlopy, raporty zespołu, Asystent AI albo większy zespół: plan Core od ${CORE_5} zł netto/mies. (do 5 osób; ${CORE_15} zł do 15) lub pakiet PRO/Business.`,
 			],
 			pricingNote:
-				'Licznik czasu i kody QR to moduł dodatkowy (na planie CORE od 39 zł netto/mies.) lub element pakietu PRO/BUSINESS. Ręczna ewidencja, kalendarz i eksport PDF/XLSX działają także w planie darmowym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
+				`Licznik czasu i kody QR to moduł „Timer i QR” (${MOD_TIMER_QR} zł netto/mies. do planu Core) lub element pakietu PRO/Business. Ręczna ewidencja, kalendarz i wydruk ewidencji każdej osoby (PDF/XLSX) działają także w planie darmowym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.`,
 			pricingCtaLabel: 'Zobacz pełny cennik',
 			faqTitle: 'Najczęstsze pytania',
 			faqs: [
 				{
 					q: 'Czy program do ewidencji czasu pracy jest darmowy?',
-					a: 'Tak — po 30-dniowym okresie próbnym z pełną aplikacją możesz zostać na bezpłatnym planie z ewidencją czasu pracy dla maksymalnie 5 aktywnych kont. Ręczne wpisy, kalendarz miesięczny i eksport PDF/Excel są w planie darmowym.',
+					a: 'Tak — po 30-dniowym okresie próbnym z pełną aplikacją możesz zostać na bezpłatnym planie z ewidencją czasu pracy dla maksymalnie 5 aktywnych kont. Ręczne wpisy, kalendarz miesięczny i wydruk ewidencji każdej osoby (PDF/Excel) są w planie darmowym.',
 				},
 				{
 					q: 'Czy każdy pracownik musi mieć konto?',
@@ -301,11 +319,11 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy mogę eksportować ewidencję do Excela lub PDF?',
-					a: 'Tak — raporty miesięczne wyeksportujesz do PDF i Excela (XLSX), np. do rozliczeń lub przekazania klientowi.',
+					a: 'Tak — miesięczną ewidencję każdej osoby wyeksportujesz do PDF i Excela (XLSX), także w planie darmowym, np. do rozliczeń lub przekazania klientowi. Raporty całego zespołu są w planie Core.',
 				},
 				{
 					q: 'Czy jest licznik czasu i kody QR?',
-					a: 'Tak — licznik czasu pracy oraz rejestracja wejść/wyjść przez QR są dostępne jako moduł dodatkowy na planie CORE lub w pakietach PRO/BUSINESS. W planie darmowym dostępna jest ręczna ewidencja.',
+					a: `Tak — licznik czasu pracy oraz rejestracja wejść/wyjść przez QR to moduł „Timer i QR” do planu Core (${MOD_TIMER_QR} zł netto/mies.) lub część pakietów PRO/Business. W planie darmowym dostępna jest ręczna ewidencja.`,
 				},
 				{
 					q: 'Czy działa na telefonie?',
@@ -314,7 +332,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Zacznij prowadzić ewidencję bez Excela',
 			ctaNote:
-				'30 dni pełnej aplikacji, potem darmowa ewidencja czasu pracy do 5 kont lub pakiet płatny z urlopami i AI.',
+				`30 dni pełnej aplikacji, potem darmowa ewidencja czasu pracy do 5 kont lub plan Core z urlopami i Asystentem AI od ${CORE_5} zł netto/mies.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
 				{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja: Excel czy program?' },
@@ -369,17 +387,17 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Time tracking is available on the free tier — the cheapest way to start:',
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), no card required to start.',
-				'After the trial: free time tracking for up to 5 active accounts — at no cost.',
-				'Bigger team, or time clock and QR: CORE plan from 119 PLN net/month, or a PRO/BUSINESS package.',
+				'After the trial: free time tracking and timesheet printouts for up to 5 active accounts — at no cost.',
+				`Leave, team reports, the AI Assistant or a bigger team: Core plan from ${CORE_5} PLN net/month (up to 5 users; ${CORE_15} up to 15), or a PRO/Business package.`,
 			],
 			pricingNote:
-				'The time clock and QR codes are an add-on module (on CORE from 39 PLN net/month) or part of a PRO/BUSINESS package. Manual time tracking, calendar, and PDF/XLSX export also work on the free tier. Annual billing: pay for 10 months instead of 12.',
+				`The time clock and QR codes are the “Timer and QR” module (${MOD_TIMER_QR} PLN net/month on Core) or part of a PRO/Business package. Manual time tracking, the calendar, and each person’s timesheet printout (PDF/XLSX) also work on the free tier. Annual billing: pay for 10 months instead of 12.`,
 			pricingCtaLabel: 'See full pricing',
 			faqTitle: 'FAQ',
 			faqs: [
 				{
 					q: 'Is the time tracking software free?',
-					a: 'Yes — after the 30-day full-app trial you can stay on a free tier with time tracking for up to 5 active accounts. Manual entries, the monthly calendar, and PDF/Excel export are included on the free tier.',
+					a: 'Yes — after the 30-day full-app trial you can stay on a free tier with time tracking for up to 5 active accounts. Manual entries, the monthly calendar, and each person’s timesheet printout (PDF/Excel) are included on the free tier.',
 				},
 				{
 					q: 'Does every employee need an account?',
@@ -387,11 +405,11 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Can I export records to Excel or PDF?',
-					a: 'Yes — monthly reports export to PDF and Excel (XLSX), for payroll or to share with a client.',
+					a: 'Yes — each person’s monthly timesheet exports to PDF and Excel (XLSX), also on the free tier, for payroll or to share with a client. Whole-team reports come with the Core plan.',
 				},
 				{
 					q: 'Is there a time clock and QR codes?',
-					a: 'Yes — a time clock and QR clock-in/clock-out are available as an add-on module on CORE or in PRO/BUSINESS packages. The free tier includes manual time tracking.',
+					a: `Yes — a time clock and QR clock-in/clock-out are the “Timer and QR” module on Core (${MOD_TIMER_QR} PLN net/month) or part of PRO/Business packages. The free tier includes manual time tracking.`,
 				},
 				{
 					q: 'Does it work on phones?',
@@ -400,7 +418,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			],
 			ctaTitle: 'Start tracking time without Excel',
 			ctaNote:
-				'30 days of the full app, then free time tracking for up to 5 accounts or a paid plan with leave and AI.',
+				`30 days of the full app, then free time tracking for up to 5 accounts, or the Core plan with leave and the AI Assistant from ${CORE_5} PLN net/month.`,
 			relatedTitle: 'Related resources',
 			related: [
 				{ href: '/en/blog/electronic-time-tracking', label: 'Electronic time tracking: Excel or software?' },
@@ -457,8 +475,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Grafiki są modułem płatnym — bezpłatny plan po okresie próbnym obejmuje wyłącznie ewidencję czasu pracy:',
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), z grafikami i bez podawania karty na start.',
-				'Po próbie: moduł „Grafiki + AI” do planu CORE za 59 zł netto / mies.',
-				'Albo pakiet PRO (239 zł, do 30 osób) lub BUSINESS (479 zł, do 100 osób), gdzie grafiki są w cenie.',
+				`Po próbie: moduł „Grafiki” (z układaniem grafiku przez AI) do planu Core za ${MOD_SCHEDULES} zł netto / mies. — razem od ${CORE_5 + MOD_SCHEDULES} zł (Core do 5 osób ${CORE_5} zł + moduł).`,
+				`Albo pakiet PRO (od ${PRO_15} zł, do 15 osób) lub Business (${BUSINESS} zł, do 100 osób), gdzie grafiki są w cenie.`,
 			],
 			pricingNote:
 				'Grafiki nie wchodzą w skład bezpłatnego planu — tam działa ewidencja czasu pracy do 5 aktywnych kont. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
@@ -483,12 +501,12 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy grafiki są dostępne w planie darmowym?',
-					a: 'Nie. Po 30-dniowym okresie próbnym grafiki wymagają modułu „Grafiki + AI” do planu CORE (59 zł netto miesięcznie) albo pakietu PRO lub BUSINESS. W planie bezpłatnym pozostaje ewidencja czasu pracy do 5 aktywnych kont.',
+					a: `Nie. Po 30-dniowym okresie próbnym grafiki wymagają modułu „Grafiki” do planu Core (${MOD_SCHEDULES} zł netto miesięcznie) albo pakietu PRO lub Business. W planie bezpłatnym pozostaje ewidencja czasu pracy do 5 aktywnych kont.`,
 				},
 			],
 			ctaTitle: 'Ułóż grafik bez arkusza i telefonów',
 			ctaNote:
-				'30 dni pełnej aplikacji z grafikami, potem moduł do planu CORE od 59 zł netto/mies. albo pakiet PRO/BUSINESS.',
+				`30 dni pełnej aplikacji z grafikami, potem moduł „Grafiki” do planu Core (${MOD_SCHEDULES} zł netto/mies.) albo pakiet PRO/Business.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
 				{ href: '/blog/jak-ulozyc-grafik-pracy-w-restauracji', label: 'Jak ułożyć grafik pracy w restauracji' },
@@ -500,9 +518,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/aigrafik.webp',
 			heroImageAlt: 'Grafik pracy zespołu w aplikacji Planopia',
 			breadcrumbName: 'Program do grafików pracy',
-			offerPrice: '178',
+			offerPrice: String(CORE_5 + MOD_SCHEDULES),
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (119 zł netto/mies.) z modułem Grafiki + AI (59 zł netto/mies.), razem 178 zł, albo pakiet PRO od 239 zł.',
+				`30 dni pełnej aplikacji za darmo; potem najtaniej plan Core do 5 osób (${CORE_5} zł netto/mies.) z modułem Grafiki (${MOD_SCHEDULES} zł netto/mies.), razem ${CORE_5 + MOD_SCHEDULES} zł, albo pakiet PRO od ${PRO_15} zł.`,
 		},
 		en: {
 			eyebrow: 'Work schedule software',
@@ -541,8 +559,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Scheduling is a paid module — the free tier after the trial covers time tracking only:',
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), scheduling included, no card required to start.',
-				'After the trial: the “Schedules + AI” module on a CORE plan for 59 PLN net/month.',
-				'Or a PRO (239 PLN, up to 30 users) or BUSINESS (479 PLN, up to 100 users) package, where scheduling is included.',
+				`After the trial: the “Schedules” module (with AI building the schedule) on a Core plan for ${MOD_SCHEDULES} PLN net/month — from ${CORE_5 + MOD_SCHEDULES} PLN in total (Core for up to 5 users ${CORE_5} PLN + the module).`,
+				`Or a PRO (from ${PRO_15} PLN, up to 15 users) or Business (${BUSINESS} PLN, up to 100 users) package, where scheduling is included.`,
 			],
 			pricingNote:
 				'Scheduling is not part of the free tier, which covers time tracking for up to 5 active accounts. Annual billing: you pay for 10 months instead of 12.',
@@ -567,12 +585,12 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Is scheduling available on the free tier?',
-					a: 'No. After the 30-day trial, scheduling requires the “Schedules + AI” module on a CORE plan (59 PLN net/month) or a PRO or BUSINESS package. The free tier keeps time tracking for up to 5 active accounts.',
+					a: `No. After the 30-day trial, scheduling requires the “Schedules” module on a Core plan (${MOD_SCHEDULES} PLN net/month) or a PRO or Business package. The free tier keeps time tracking for up to 5 active accounts.`,
 				},
 			],
 			ctaTitle: 'Build the roster without spreadsheets and phone calls',
 			ctaNote:
-				'30 days of the full app with scheduling, then the module on CORE from 59 PLN net/month or a PRO/BUSINESS package.',
+				`30 days of the full app with scheduling, then the “Schedules” module on Core (${MOD_SCHEDULES} PLN net/month) or a PRO/Business package.`,
 			relatedTitle: 'Related reading',
 			related: [
 				{ href: '/en/for-construction-industry', label: 'Crew scheduling for construction' },
@@ -582,9 +600,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/aigrafik-en.webp',
 			heroImageAlt: 'Team work schedule in the Planopia app',
 			breadcrumbName: 'Work schedule software',
-			offerPrice: '178',
+			offerPrice: String(CORE_5 + MOD_SCHEDULES),
 			offerDescription:
-				'30-day full trial free; the cheapest route is a CORE plan (119 PLN net/month) plus the Schedules + AI module (59 PLN net/month), 178 PLN together, or a PRO package from 239 PLN.',
+				`30-day full trial free; the cheapest route is a Core plan for up to 5 users (${CORE_5} PLN net/month) plus the Schedules module (${MOD_SCHEDULES} PLN net/month), ${CORE_5 + MOD_SCHEDULES} PLN together, or a PRO package from ${PRO_15} PLN.`,
 		},
 	},
 	attendance: {
@@ -627,11 +645,11 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Licznik czasu i kody QR to moduł płatny — sama ewidencja czasu pracy działa też w planie bezpłatnym:',
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), z QR i licznikiem czasu.',
-				'Po próbie: moduł „Timer + QR” do planu CORE za 39 zł netto / mies.',
-				'Albo pakiet PRO (239 zł, do 30 osób) lub BUSINESS (479 zł, do 100 osób), gdzie moduł jest w cenie.',
+				`Po próbie: moduł „Timer i QR” do planu Core za ${MOD_TIMER_QR} zł netto / mies. — razem od ${CORE_5 + MOD_TIMER_QR} zł (Core do 5 osób ${CORE_5} zł + moduł).`,
+				`Albo pakiet PRO (od ${PRO_15} zł, do 15 osób) lub Business (${BUSINESS} zł, do 100 osób), gdzie moduł jest w cenie.`,
 			],
 			pricingNote:
-				'W planie bezpłatnym zostaje ręczna ewidencja czasu pracy do 5 aktywnych kont — z kalendarzem i eksportem PDF/XLSX, ale bez QR i licznika. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
+				'W planie bezpłatnym zostaje ręczna ewidencja czasu pracy do 5 aktywnych kont — z kalendarzem i wydrukiem ewidencji (PDF/XLSX), ale bez QR i licznika. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
 			pricingCtaLabel: 'Zobacz pełny cennik',
 			faqTitle: 'Najczęstsze pytania',
 			faqs: [
@@ -665,12 +683,12 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy rejestracja przez QR jest w planie darmowym?',
-					a: 'Nie. Po 30-dniowym okresie próbnym QR i licznik czasu wymagają modułu „Timer + QR” do planu CORE (39 zł netto miesięcznie) albo pakietu PRO lub BUSINESS. Ręczna ewidencja czasu pracy pozostaje bezpłatna dla maksymalnie 5 aktywnych kont.',
+					a: `Nie. Po 30-dniowym okresie próbnym QR i licznik czasu wymagają modułu „Timer i QR” do planu Core (${MOD_TIMER_QR} zł netto miesięcznie) albo pakietu PRO lub Business. Ręczna ewidencja czasu pracy pozostaje bezpłatna dla maksymalnie 5 aktywnych kont.`,
 				},
 			],
 			ctaTitle: 'Zamień papierową listę na skan kodu',
 			ctaNote:
-				'30 dni pełnej aplikacji z QR i licznikiem, potem moduł do planu CORE od 39 zł netto/mies. albo pakiet PRO/BUSINESS.',
+				`30 dni pełnej aplikacji z QR i licznikiem, potem moduł „Timer i QR” do planu Core (${MOD_TIMER_QR} zł netto/mies.) albo pakiet PRO/Business.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
 				{ href: '/blog/ewidencja-czasu-pracy-excel-wzor', label: 'Wzór ewidencji czasu pracy — Excel i PDF' },
@@ -682,9 +700,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/desktopnews.webp',
 			heroImageAlt: 'Rejestracja czasu pracy i lista obecności w aplikacji Planopia',
 			breadcrumbName: 'Rejestracja czasu pracy przez QR',
-			offerPrice: '158',
+			offerPrice: String(CORE_5 + MOD_TIMER_QR),
 			offerDescription:
-				'30 dni pełnej aplikacji za darmo; potem najtaniej plan CORE (119 zł netto/mies.) z modułem Timer + QR (39 zł netto/mies.), razem 158 zł, albo pakiet PRO od 239 zł.',
+				`30 dni pełnej aplikacji za darmo; potem najtaniej plan Core do 5 osób (${CORE_5} zł netto/mies.) z modułem Timer i QR (${MOD_TIMER_QR} zł netto/mies.), razem ${CORE_5 + MOD_TIMER_QR} zł, albo pakiet PRO od ${PRO_15} zł.`,
 			heroBadge: { label: 'Nowość: ochrona przed skanem ze zdjęcia', href: '#ochrona-przed-zdjeciem' },
 			highlight: {
 				id: 'ochrona-przed-zdjeciem',
@@ -764,11 +782,11 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'The timer and QR codes are a paid module — plain time records also work on the free tier:',
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), with QR and the timer included.',
-				'After the trial: the “Timer + QR” module on a CORE plan for 39 PLN net/month.',
-				'Or a PRO (239 PLN, up to 30 users) or BUSINESS (479 PLN, up to 100 users) package, where it is included.',
+				`After the trial: the “Timer and QR” module on a Core plan for ${MOD_TIMER_QR} PLN net/month — from ${CORE_5 + MOD_TIMER_QR} PLN in total (Core for up to 5 users ${CORE_5} PLN + the module).`,
+				`Or a PRO (from ${PRO_15} PLN, up to 15 users) or Business (${BUSINESS} PLN, up to 100 users) package, where it is included.`,
 			],
 			pricingNote:
-				'The free tier keeps manual time records for up to 5 active accounts, with the monthly calendar and PDF/XLSX export, but without QR or the timer. Annual billing: you pay for 10 months instead of 12.',
+				'The free tier keeps manual time records for up to 5 active accounts, with the monthly calendar and timesheet printouts (PDF/XLSX), but without QR or the timer. Annual billing: you pay for 10 months instead of 12.',
 			pricingCtaLabel: 'See full pricing',
 			faqTitle: 'Frequently asked questions',
 			faqs: [
@@ -802,12 +820,12 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Is QR clocking available on the free tier?',
-					a: 'No. After the 30-day trial, QR and the timer require the “Timer + QR” module on a CORE plan (39 PLN net/month) or a PRO or BUSINESS package. Manual time records stay free for up to 5 active accounts.',
+					a: `No. After the 30-day trial, QR and the timer require the “Timer and QR” module on a Core plan (${MOD_TIMER_QR} PLN net/month) or a PRO or Business package. Manual time records stay free for up to 5 active accounts.`,
 				},
 			],
 			ctaTitle: 'Swap the paper sheet for a scan',
 			ctaNote:
-				'30 days of the full app with QR and the timer, then the module on CORE from 39 PLN net/month or a PRO/BUSINESS package.',
+				`30 days of the full app with QR and the timer, then the “Timer and QR” module on Core (${MOD_TIMER_QR} PLN net/month) or a PRO/Business package.`,
 			relatedTitle: 'Related reading',
 			related: [
 				{ href: '/en/time-tracking-software', label: 'Time tracking software' },
@@ -817,9 +835,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroImageSrc: '/img/desktop-ennews.webp',
 			heroImageAlt: 'QR time clocking and attendance in the Planopia app',
 			breadcrumbName: 'QR time clocking',
-			offerPrice: '158',
+			offerPrice: String(CORE_5 + MOD_TIMER_QR),
 			offerDescription:
-				'30-day full trial free; the cheapest route is a CORE plan (119 PLN net/month) plus the Timer + QR module (39 PLN net/month), 158 PLN together, or a PRO package from 239 PLN.',
+				`30-day full trial free; the cheapest route is a Core plan for up to 5 users (${CORE_5} PLN net/month) plus the Timer and QR module (${MOD_TIMER_QR} PLN net/month), ${CORE_5 + MOD_TIMER_QR} PLN together, or a PRO package from ${PRO_15} PLN.`,
 			heroBadge: { label: 'New: no more clock-ins from a photo', href: '#photo-proof-clocking' },
 			highlight: {
 				id: 'photo-proof-clocking',
@@ -900,10 +918,10 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 dni pełnej aplikacji za darmo (do 5 osób), bez podawania karty na start.',
 				'Po próbie: bezpłatna ewidencja czasu pracy i nadgodzin do 5 aktywnych kont.',
-				'Większy zespół: plan CORE od 119 zł netto/mies. albo pakiet PRO lub BUSINESS.',
+				`Urlopy, raporty zespołu, Asystent AI albo większy zespół: plan Core od ${CORE_5} zł netto/mies. (do 5 osób; ${CORE_15} zł do 15) albo pakiet PRO lub Business.`,
 			],
 			pricingNote:
-				'Automatyczne oznaczanie nadgodzin przez licznik czasu i kody QR to moduł dodatkowy (39 zł netto/mies. na planie CORE) lub część pakietu PRO/BUSINESS. Ręczne wpisy, kalendarz i eksport PDF/XLSX działają w planie bezpłatnym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.',
+				`Automatyczne oznaczanie nadgodzin przez licznik czasu i kody QR to moduł „Timer i QR” (${MOD_TIMER_QR} zł netto/mies. do planu Core) lub część pakietu PRO/Business. Ręczne wpisy, kalendarz i wydruk ewidencji każdej osoby (PDF/XLSX) działają w planie bezpłatnym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.`,
 			pricingCtaLabel: 'Zobacz pełny cennik',
 			faqTitle: 'Najczęstsze pytania',
 			faqs: [
@@ -913,7 +931,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy ewidencja nadgodzin jest darmowa?',
-					a: 'Tak. Nadgodziny wpisujesz razem z godzinami pracy w dziennym wpisie, a ten działa również na bezpłatnym planie z ewidencją czasu pracy dla maksymalnie 5 aktywnych kont. Eksport raportów do PDF i Excela też jest w planie bezpłatnym.',
+					a: 'Tak. Nadgodziny wpisujesz razem z godzinami pracy w dziennym wpisie, a ten działa również na bezpłatnym planie z ewidencją czasu pracy dla maksymalnie 5 aktywnych kont. Wydruk ewidencji każdej osoby do PDF i Excela też jest w planie bezpłatnym.',
 				},
 				{
 					q: 'Czy program pilnuje spójności wpisów?',
@@ -925,7 +943,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Czy mogę wyeksportować zestawienie nadgodzin?',
-					a: 'Tak — raporty miesięczne z godzinami i nadgodzinami wyeksportujesz do PDF i Excela (XLSX), na przykład dla księgowości.',
+					a: 'Tak — miesięczną ewidencję każdej osoby z godzinami i nadgodzinami wyeksportujesz do PDF i Excela (XLSX), na przykład dla księgowości. Zestawienie całego zespołu jest w raportach zespołu (plan Core).',
 				},
 			],
 			ctaTitle: 'Rozliczaj nadgodziny bez osobnego arkusza',
@@ -983,10 +1001,10 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			pricingBullets: [
 				'30 days of the full app free (up to 5 users), no card required to start.',
 				'After the trial: free time and overtime records for up to 5 active accounts.',
-				'A larger team: a CORE plan from 119 PLN net/month, or a PRO or BUSINESS package.',
+				`Leave, team reports, the AI Assistant or a larger team: a Core plan from ${CORE_5} PLN net/month (up to 5 users; ${CORE_15} up to 15), or a PRO or Business package.`,
 			],
 			pricingNote:
-				'Flagging overtime automatically through the work timer and QR codes is a paid module (39 PLN net/month on CORE) or part of a PRO/BUSINESS package. Manual entries, the calendar, and PDF/XLSX export work on the free tier. Annual billing: you pay for 10 months instead of 12.',
+				`Flagging overtime automatically through the work timer and QR codes is the “Timer and QR” module (${MOD_TIMER_QR} PLN net/month on Core) or part of a PRO/Business package. Manual entries, the calendar, and each person’s timesheet printout (PDF/XLSX) work on the free tier. Annual billing: you pay for 10 months instead of 12.`,
 			pricingCtaLabel: 'See full pricing',
 			faqTitle: 'Frequently asked questions',
 			faqs: [
@@ -996,7 +1014,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Is overtime tracking free?',
-					a: 'Yes. Overtime is entered together with working hours in the daily entry, which also works on the free tier for up to 5 active accounts. PDF and Excel exports are included on the free tier too.',
+					a: 'Yes. Overtime is entered together with working hours in the daily entry, which also works on the free tier for up to 5 active accounts. Each person’s timesheet printout to PDF and Excel is included on the free tier too.',
 				},
 				{
 					q: 'Does the app keep entries consistent?',
@@ -1008,7 +1026,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				},
 				{
 					q: 'Can I export an overtime summary?',
-					a: 'Yes — monthly reports with hours and overtime export to PDF and Excel (XLSX), for example for payroll.',
+					a: 'Yes — each person’s monthly timesheet with hours and overtime exports to PDF and Excel (XLSX), for example for payroll. A whole-team summary is in team reports (Core plan).',
 				},
 			],
 			ctaTitle: 'Settle overtime without a separate spreadsheet',

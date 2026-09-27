@@ -19,7 +19,7 @@ module.exports = {
 	},
 	body: {
 		pl: `### Co to jest
-Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopowych, grafików (harmonogramów zmian), zadań (tablice Kanban), czatu i komunikatów, z asystentem AI. Działa w przeglądarce na komputerze i telefonie; można ją zainstalować jak zwykłą aplikację (PWA). Dane każdej firmy są odizolowane od innych. Interfejs jest po polsku i po angielsku.
+Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopowych, grafików (harmonogramów zmian), tablic zadań, czatu i komunikatów, z asystentem AI. Działa w przeglądarce na komputerze i telefonie; można ją zainstalować jak zwykłą aplikację (PWA). Dane każdej firmy są odizolowane od innych. Interfejs jest po polsku i po angielsku.
 
 ### Jak zacząć
 - Rejestracja zespołu: {{app.url}}/team-registration — podajesz nazwę firmy (zespołu), imię, nazwisko i e-mail. Osoba zakładająca zostaje Administratorem. Bez karty płatniczej.

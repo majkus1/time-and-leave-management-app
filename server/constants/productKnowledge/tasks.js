@@ -3,7 +3,7 @@
 module.exports = {
 	id: 'tasks',
 	order: 5,
-	title: { pl: 'Zadania — tablice Kanban', en: 'Tasks — Kanban boards' },
+	title: { pl: 'Zadania — tablice zadań', en: 'Tasks — task boards' },
 	summary: {
 		pl: 'Tablice zadań w kolumnach, przypisania, terminy, komentarze; godziny z ewidencji można przypiąć do zadań.',
 		en: 'Task boards with columns, assignments, deadlines, comments; timesheet hours can be linked to tasks.',

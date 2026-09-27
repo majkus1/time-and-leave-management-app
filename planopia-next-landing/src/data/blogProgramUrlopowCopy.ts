@@ -17,7 +17,7 @@ export const blogProgramUrlopowCopy = {
 		},
 		{
 			q: 'Ile osób obsłuży program w małej firmie?',
-			a: 'Gotowe pakiety zaczynają się od zespołów do 15 osób i skalują się do 100+. Mała firma zwykle mieści się w najniższym pakiecie — szczegóły na stronie programu do urlopów i w cenniku.',
+			a: 'Plany płatne zaczynają się od zespołów do 5 osób i rosną progami do 100 osób, a większe firmy dostają wycenę indywidualną. Mała firma zwykle mieści się w najniższym progu planu Core — szczegóły na stronie programu do urlopów i w cenniku.',
 		},
 		{
 			q: 'Czy muszę rezygnować z Excela od razu?',

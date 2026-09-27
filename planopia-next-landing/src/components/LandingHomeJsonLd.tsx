@@ -1,6 +1,7 @@
 import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { LANDING_HERO_LCP } from '@/data/landingHeroAssets'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
+import { landingBundles, landingCoreTiers } from '@/data/landingPlanPricing'
 
 type Locale = 'pl' | 'en'
 
@@ -27,9 +28,10 @@ export default function LandingHomeJsonLd({ locale }: { locale: Locale }) {
 		description: offering.metaLong,
 		offers: {
 			'@type': 'AggregateOffer',
-			offerCount: '5',
+			// Darmowy + progi Core + pakiety — liczby z planCatalog
+			offerCount: String(1 + landingCoreTiers.length + landingBundles.length),
 			lowPrice: '0',
-			highPrice: '479',
+			highPrice: String(Math.max(...landingBundles.map(b => b.monthlyNetPln))),
 			priceCurrency: 'PLN',
 			description: offering.jsonLdOfferDescription,
 		},

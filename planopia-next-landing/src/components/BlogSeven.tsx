@@ -99,7 +99,7 @@ function BlogSeven() {
 								"name": "Jakie funkcje oferuje kompleksowa aplikacja Planopia?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "Planopia łączy w sobie ewidencję czasu pracy, zarządzanie urlopami, grafiki pracy, czaty zespołowe, tablice zadań (Kanban) i elastyczną konfigurację ról. Wszystko w jednej aplikacji, bez potrzeby korzystania z wielu osobnych narzędzi."
+									"text": "Planopia łączy w sobie ewidencję czasu pracy, zarządzanie urlopami, grafiki pracy, czaty zespołowe, tablice zadań i elastyczną konfigurację ról. Wszystko w jednej aplikacji, bez potrzeby korzystania z wielu osobnych narzędzi."
 								}
 							}
 						]
@@ -256,7 +256,7 @@ function BlogSeven() {
 
 				<h2 className="text-2xl font-semibold mb-3 mt-8">Tablice zadań i zarządzanie projektami</h2>
 				<p className="mb-4 text-gray-700">
-					<strong>Tablice zadań</strong> w stylu Kanban pozwalają na zarządzanie projektami i zadaniami w przejrzysty sposób. 
+					<strong>Tablice zadań</strong> pozwalają przejrzyście zarządzać projektami i zadaniami. 
 					Możesz tworzyć tablice dla różnych projektów, przypisywać zadania do członków zespołu, 
 					śledzić postępy i zarządzać priorytetami. Wszystko w jednym miejscu, bez potrzeby korzystania z osobnych narzędzi.
 				</p>
@@ -371,7 +371,7 @@ function BlogSeven() {
 								<p className="text-gray-700">
 									Planopia łączy w sobie <Link href="/#oaplikacji" className="text-blue-600 hover:underline">ewidencję czasu pracy</Link>, 
 									<Link href="/blog/planowanie-urlopow" className="text-blue-600 hover:underline"> zarządzanie urlopami</Link>, 
-									grafiki pracy, czaty zespołowe, tablice zadań (Kanban) i elastyczną konfigurację ról. 
+									grafiki pracy, czaty zespołowe, tablice zadań i elastyczną konfigurację ról. 
 									Wszystko w jednej aplikacji, bez potrzeby korzystania z wielu osobnych narzędzi.
 								</p>
 							</div>

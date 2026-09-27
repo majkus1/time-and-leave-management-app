@@ -1,821 +1,594 @@
 'use client'
 
 import Link from 'next/link'
-import { createPortal } from 'react-dom'
-import { useMemo, useState } from 'react'
-import { PAYMENT_BASE_URL, paymentHref } from '@/lib/paymentLinks'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { paymentHref } from '@/lib/paymentLinks'
+import { recommendPlan, type CalculatorNeeds, type PricingData } from '@/lib/pricingCalculator'
 import {
 	LANDING_ANNUAL_MONTHS_CHARGED,
+	LANDING_TRIAL_DAYS,
 	landingBundles,
-	landingCoreMinMonthlyNetPln,
 	landingCoreTiers,
+	landingFeatures,
 	landingModules,
 	landingTrial,
-	type CorePlanId,
+	type FeatureId,
 	type ModuleId,
 } from '@/data/landingPlanPricing'
-import '@/styles/landingPackagesLikeApp.css'
+import { FEATURE_COPY, MODULE_COPY, PLAN_NAME, PRICING_FEATURE_EVENT, type Locale } from '@/data/landingFeatureCopy'
+import '@/styles/landingFeaturesPricing.css'
 
-type Locale = 'pl' | 'en'
-type Billing = 'monthly' | 'yearly'
-type PricingIconName = 'trial' | 'free' | 'core' | 'pro' | 'business' | 'ai' | 'custom'
+type Billing = 'monthly' | 'annual'
+type NeedKey = 'leave' | 'reports' | 'ai' | ModuleId
 
+const REGISTER_URL = 'https://app.planopia.pl/team-registration'
+/** Kwoty w USD na wersji EN są orientacyjne — rozliczamy w PLN */
 const PLN_PER_USD = 3.69
+const USERS_MAX_SLIDER = 120
+const DEFAULT_USERS = 8
 
-function plnToUsd(pln: number): number {
-	return pln / PLN_PER_USD
+const PRICING: PricingData = {
+	freeMaxUsers: landingTrial.maxUsers,
+	coreTiers: landingCoreTiers,
+	bundles: landingBundles,
+	modules: landingModules,
 }
 
-function formatMoney(locale: Locale, amount: number, decimals: number) {
-	return amount.toLocaleString(locale === 'pl' ? 'pl-PL' : 'en-US', {
-		minimumFractionDigits: decimals,
-		maximumFractionDigits: decimals,
-	})
+/** Pola „czego potrzebujesz” — te same nazwy co kafelki „O aplikacji” */
+const NEED_FIELDS: { feature: FeatureId; need: NeedKey }[] = [
+	{ feature: 'leave', need: 'leave' },
+	{ feature: 'team_reports', need: 'reports' },
+	{ feature: 'ai_assistant', need: 'ai' },
+	{ feature: 'timer_qr', need: 'timer_qr' },
+	{ feature: 'schedules', need: 'schedules_ai' },
+	{ feature: 'tasks_chat', need: 'tasks_chat' },
+]
+
+/** Plakietka z kafelka → pole kalkulatora. Przegląd zespołu i powiadomienia są w Core, więc wystarczy dowolna funkcja Core. */
+const FEATURE_TO_NEED: Partial<Record<FeatureId, NeedKey>> = {
+	leave: 'leave',
+	team_overview: 'reports',
+	team_reports: 'reports',
+	ai_assistant: 'ai',
+	notifications: 'leave',
+	timer_qr: 'timer_qr',
+	schedules: 'schedules_ai',
+	tasks_chat: 'tasks_chat',
 }
 
-const MODULE_LABELS: Record<ModuleId, { pl: string; en: string }> = {
-	timer_qr: { pl: 'Timer i QR', en: 'Timer and QR' },
-	schedules_ai: { pl: 'Grafiki', en: 'Schedules' },
-	tasks_chat: { pl: 'Zadania i czat', en: 'Tasks and chat' },
-}
+const ALWAYS_INCLUDED: FeatureId[] = ['timesheet', 'timesheet_print', 'mobile']
 
-function PricingIcon({ name, locale }: { name: PricingIconName; locale: Locale }) {
-	const imgAlts: Record<'core' | 'pro' | 'business', string> =
-		locale === 'pl'
-			? {
-					core: 'Ikona pakietu Core Planopia',
-					pro: 'Ikona pakietu PRO Planopia',
-					business: 'Ikona pakietu Business Planopia',
-				}
-			: {
-					core: 'Planopia Core plan icon',
-					pro: 'Planopia PRO plan icon',
-					business: 'Planopia Business plan icon',
-				}
-	const common = {
-		fill: 'none',
-		stroke: 'currentColor',
-		strokeWidth: 1.8,
-		strokeLinecap: 'round' as const,
-		strokeLinejoin: 'round' as const,
-	}
-	const icons = {
-		trial: (
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<rect x="5" y="4.5" width="14" height="15" rx="2.5" {...common} />
-				<path d="M8 3v4M16 3v4M8 10h8M10 15l1.5 1.5L15 13" {...common} />
-			</svg>
-		),
-		free: (
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<circle cx="12" cy="12" r="8.5" {...common} />
-				<path d="M12 7v5l3 2" {...common} />
-			</svg>
-		),
-		core: (
-			<img src="/img/group-chat.png" alt={imgAlts.core} aria-hidden="true" />
-		),
-		pro: (
-			<img src="/img/startup.png" alt={imgAlts.pro} aria-hidden="true" />
-		),
-		business: (
-			<img src="/img/business-and-trade.png" alt={imgAlts.business} aria-hidden="true" />
-		),
-		ai: (
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" {...common} />
-				<path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z" {...common} />
-			</svg>
-		),
-		custom: (
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<path d="M6 4h8l4 4v12H6V4Z" {...common} />
-				<path d="M14 4v4h4M9 13h6M9 16h4" {...common} />
-			</svg>
-		),
-	}
-
-	return <span className={`pricing-icon pricing-icon--${name}`}>{icons[name]}</span>
-}
-
-function tierPriceDisplay(
-	locale: Locale,
-	monthlyNet: number,
-	billing: Billing,
-): { main: string; period: string; subline: string | null; strike: string | null } {
-	if (locale === 'en') {
-		const usdFromPln = (pln: number) => formatMoney('en', plnToUsd(pln), 2)
-		if (billing === 'monthly') {
-			return {
-				main: `$${usdFromPln(monthlyNet)}`,
-				period: ' / month',
-				subline: null,
-				strike: null,
-			}
-		}
-		const annualTotalPln = monthlyNet * LANDING_ANNUAL_MONTHS_CHARGED
-		const equivMonthlyPln = annualTotalPln / 12
-		return {
-			main: `$${usdFromPln(equivMonthlyPln)}`,
-			period: ' / month, billed annually',
-			subline: `Upfront: $${usdFromPln(annualTotalPln)} net / year`,
-			strike: `$${usdFromPln(monthlyNet)}`,
-		}
-	}
-	if (billing === 'monthly') {
-		return {
-			main: `${monthlyNet} zł`,
-			period: ' miesięcznie',
-			subline: null,
-			strike: null,
-		}
-	}
-	const annualTotal = monthlyNet * LANDING_ANNUAL_MONTHS_CHARGED
-	const equivMonthly = annualTotal / 12
-	const main = `${formatMoney('pl', equivMonthly, 2)} zł`
-	const period = ' miesięcznie przy rozliczeniu rocznym'
-	const subline = `Płatność z góry: ${formatMoney('pl', annualTotal, 0)} zł netto / rok`
-	const strike = `${monthlyNet} zł`
-	return { main, period, subline, strike }
-}
-
-function FreeTierCard({ locale }: { locale: Locale }) {
-	const t = copy[locale]
-	return (
-		<div className="pricing-free-card h-full flex flex-col text-left rounded-2xl p-5 md:p-6 bg-gradient-to-r from-slate-50 via-white to-emerald-50/40 border border-slate-200 shadow-sm w-full">
-			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-3">
-				<div className="pricing-card-title-row">
-					<PricingIcon name="free" locale={locale} />
-					<h3 className="pricing-free-title text-lg md:text-xl font-bold text-gray-900">{t.freeTitle}</h3>
-				</div>
-				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--free font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-slate-800 text-white shadow-sm">
-					{t.freeBadge}
-				</span>
-			</div>
-			<p className="text-gray-600 text-sm mb-3 leading-snug">{t.freeIntro}</p>
-			<ul className="grid grid-cols-1 gap-1.5 text-gray-700 text-base shrink-0">
-				{t.freeFeatures.map(line => (
-					<li key={line} className="flex gap-2 items-start">
-						<span className="pricing-feature-check mt-0.5 shrink-0">✓</span>
-						<span>{line}</span>
-					</li>
-				))}
-			</ul>
-			<div className="mt-auto pt-4 shrink-0">
-				<Link
-					href="https://app.planopia.pl/team-registration"
-					className="pricing-cta pricing-free-team-register-cta inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-md transition"
-				>
-					{t.freeCta}
-				</Link>
-			</div>
-		</div>
-	)
-}
-
-function TrialCard({ locale, lines }: { locale: Locale; lines: string[] }) {
-	const t = copy[locale]
-	return (
-		<div className="pricing-trial-card h-full flex flex-col text-left rounded-2xl p-6 md:p-8 bg-gradient-to-r from-emerald-50 via-white to-sky-50 border border-emerald-100 shadow-sm w-full">
-			<div className="pricing-card-heading flex flex-wrap items-start justify-between gap-3 mb-4 shrink-0">
-				<div className="pricing-card-title-row">
-					<PricingIcon name="trial" locale={locale} />
-					<h3 className="pricing-trial-title text-xl md:text-2xl font-bold text-gray-900">{t.trialTitle}</h3>
-				</div>
-				<span className="pricing-badge-pill pricing-badge-pill--hero pricing-badge-pill--trial font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-emerald-600 shadow-sm">
-					{t.trialBadge}
-				</span>
-			</div>
-			<ul className="grid grid-cols-1 gap-2 text-gray-700 text-base shrink-0">
-				{lines.map(line => (
-					<li key={line} className="flex gap-2 items-start">
-						<span className="pricing-feature-check mt-0.5">✓</span>
-						<span className="pricing-trial-feature-text">{line}</span>
-					</li>
-				))}
-			</ul>
-			<div className="mt-auto pt-6 shrink-0">
-				<Link
-					href="https://app.planopia.pl/team-registration"
-					className="pricing-cta pricing-cta--trial inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md transition"
-				>
-					{t.trialCta}
-				</Link>
-			</div>
-		</div>
-	)
-}
-
-const copy = {
+const COPY = {
 	pl: {
-		eyebrow: 'Cennik Planopia',
-		title: 'Prosty cennik. Darmowy start.',
-		subtitle:
-			'Najpierw 30 dni pełnej aplikacji za darmo. Potem darmowa ewidencja czasu pracy do 5 aktywnych kont albo pakiety z urlopami, grafikami, raportami, zadaniami i AI.',
-		paidPlansIntro: 'Pakiety płatne (subskrypcja) — gdy chcesz odejść od Excela i ręcznych akceptacji',
-		billingLabel: 'Rozliczenie',
-		billingMonthly: 'Miesięcznie',
-		billingYearly: 'Rocznie',
-		billingYearlySaving: 'oszczędzasz ok. 17%',
-		billingYearlyBadge: '2 miesiące w cenie',
-		billingYearlyHint: 'Płacisz z góry za 10 miesięcy — korzystasz przez pełne 12 miesięcy.',
-		trialTitle: '30 dni — pełna aplikacja',
-		trialBadge: 'bez karty',
-		trialCta: 'Załóż darmowy zespół',
-		freeTitle: 'Darmowa ewidencja czasu pracy',
-		freeBadge: '0 zł',
-		freeIntro:
-			'Po okresie próbnym mały zespół może dalej prowadzić ewidencję czasu online bez abonamentu.',
-		freeFeatures: ['Do 5 aktywnych kont w zespole', 'Kalendarze i rejestracja czasu pracy'],
-		freeCta: 'Zacznij od rejestracji zespołu',
-		fromWord: 'od',
-		recommended: 'Polecany',
-		heroCoreTitle: 'Core',
-		heroCoreLead: 'Dla firm, które chcą odejść od Excela i papierowych wniosków urlopowych.',
-		heroCoreTeamHint: 'Dla zespołów do 100 użytkowników.',
-		heroCoreFeat1: 'Ewidencja czasu pracy',
-		heroCoreFeat2: 'Urlopy i akceptacje',
-		heroCoreFeatReports: 'Raporty biznesowe',
-		heroCoreFeat3: 'Opcjonalnie: Timer + QR, Grafiki + AI, Zadania i Projekty, Czat i Asystent AI',
-		heroCoreCta: 'Wybierz Core',
-		heroProLead: 'Dla firm, które chcą zarządzać czasem pracy, urlopami, zadaniami i komunikacją w jednym miejscu.',
-		heroBusinessLead: 'Dla większych zespołów, które potrzebują wyższych limitów, wsparcia i dopasowania procesu.',
-		bundleModules: [
-			'Ewidencja czasu pracy',
-			'Urlopy i akceptacje',
-			'Raporty biznesowe',
-			'Timer + QR',
-			'Grafiki + AI',
-			'Zadania i Projekty',
-			'Czat zespołowy',
-		],
-		proBulletAi: 'Asystent AI bez limitu wiadomości',
-		proBulletUsers: 'Do 30 użytkowników',
-		businessBulletAi: 'Asystent AI bez limitu wiadomości',
-		businessBulletUsers: 'Do 100 użytkowników',
-		businessBulletPriority: 'Priorytetowe wsparcie',
-		businessBulletIntegrations: 'Dodatkowe funkcje i integracje na życzenie pod Twój biznes',
-		payBundleCta: 'Przejdź do płatności w aplikacji',
-		enterpriseStripTitle: 'Indywidualna wycena i podejście',
-		enterpriseStripBody: 'Gdy gotowe pakiety to za mało — napisz w formularzu, wrócimy z propozycją.',
-		enterpriseCta: 'Formularz — opisz potrzebę',
-		addonTitle: 'Asystent AI bez limitu wiadomości',
-		addonSubtitle:
-			'W okresie próbnym, w pakietach Pro i Business oraz z modułem Grafiki + AI lub Asystent AI. Bez liczników i bez dokupywania pakietów — obowiązuje tylko rozsądne użycie.',
-		addonOpenPackages: 'Otwórz Pakiety',
-		tiersFootnote:
-			'* Płatny pakiet możesz anulować w dowolnym momencie. Przyciski prowadzą do sekcji „Pakiety i rozliczenia” w aplikacji — dokończ zakup po zalogowaniu.',
-		coreModalTitle: 'Konfiguracja Core',
-		coreModalHint: 'Wybierz wielkość zespołu i potrzebne moduły dodatkowe — suma poniżej.',
-		coreStep1: 'Ile osób w zespole?',
-		coreStep2: 'Moduły w Core',
-		coreIncludedLabel: 'W cenie pakietu',
-		coreOptionalLabel: 'Moduły dodatkowe (opcjonalnie)',
-		coreIncludedBadge: 'W cenie',
-		coreStep3: 'Podsumowanie',
-		coreSeatShort: 'do {{max}} użytkowników',
-		coreAiFootnote: '* Asystent AI bez limitu wiadomości (w rozsądnym użyciu).',
-		coreTotalLabel: 'Razem',
-		coreUpsellPro:
-			'Przy tej konfiguracji pakiet PRO (239 zł / miesięcznie) może być korzystniejszy — rozważ przejście na PRO.',
-		coreUpsellProCta: 'Zobacz PRO w aplikacji',
-		coreContinueCta: 'Kontynuuj zakup w aplikacji',
-		cancel: 'Anuluj',
-		netPerMonthShort: 'netto / miesięcznie',
+		eyebrow: 'Cennik',
+		title: 'Policz cenę dla swojego zespołu',
+		subtitle: `Zacznij od ${LANDING_TRIAL_DAYS} dni pełnej aplikacji za darmo, bez karty. Potem wybierasz plan — albo zostajesz w darmowym planie, jeśli macie do ${landingTrial.maxUsers} osób.`,
+		people: 'Ile osób w zespole?',
+		always: 'Zawsze w cenie',
+		needs: 'Czego jeszcze potrzebujesz?',
+		needInCore: 'w planie Core',
+		needModule: (price: string) => `moduł + ${price} / mies.`,
+		billingGroup: 'Sposób rozliczenia',
+		monthly: 'Miesięcznie',
+		annual: 'Rocznie',
+		annualSave: '2 miesiące gratis',
+		recommended: 'Polecamy dla Was',
+		perMonth: 'netto / mies.',
+		perYear: 'netto / rok',
+		annualEquivalent: (x: string) => `czyli ${x} netto miesięcznie`,
+		freeName: 'Darmowy',
+		freePrice: '0 zł',
+		freePeriod: 'bez limitu czasu',
+		freeWhy: `Do ${landingTrial.maxUsers} osób ewidencja czasu i wydruk ewidencji są za darmo.`,
+		freeIncludes: 'W cenie: ewidencja czasu, wydruk ewidencji każdej osoby (PDF, Excel), aplikacja na telefon.',
+		freeAlt: (plan: string, price: string) => `Urlopy, raporty zespołu i asystent AI są w planie ${plan} — ${price}`,
+		customName: 'Ponad 100 osób',
+		customPrice: 'Wycena indywidualna',
+		customWhy: 'Napisz do nas — dopasujemy plan i warunki do wielkości firmy.',
+		customCta: 'Napisz do nas',
+		whyBundleCheaper: (core: string) => `Z tymi funkcjami ten plan wychodzi taniej niż Core z modułami (${core}).`,
+		whyBundleSame: 'Tyle samo co Core z wybranymi modułami, a masz wszystkie funkcje.',
+		whyBundleNudge: (diff: string) => `Tylko ${diff} więcej niż Core z wybranymi modułami, a masz wszystkie funkcje.`,
+		whyCoreModules: 'Płacisz tylko za moduły, których potrzebujesz.',
+		whyCore: 'Wszystko, czego zespół potrzebuje na co dzień.',
+		whyOverFree: (n: number) =>
+			`Darmowy plan obejmuje do ${landingTrial.maxUsers} osób — przy ${n} osobach to najtańszy plan.`,
+		includesCore: 'W cenie: ewidencja czasu, urlopy, przegląd i raporty zespołu, powiadomienia, asystent AI bez limitu',
+		includesBundle:
+			'Wszystko w cenie: ewidencja czasu, urlopy, przegląd i raporty zespołu, powiadomienia, asystent AI, Timer i QR, grafik pracy, zadania i czat.',
+		includesBusinessExtra: ' Priorytetowe wsparcie.',
+		cta: `Załóż zespół — ${LANDING_TRIAL_DAYS} dni za darmo`,
+		ctaExisting: 'Masz już konto? Wybierz ten plan w aplikacji',
+		altOr: (plan: string, price: string) => `Albo ${plan} — ${price}`,
+		altAll: (plan: string, price: string) => `Wszystkie funkcje: ${plan} — ${price}`,
+		trialNote: `Okres próbny: pełna aplikacja przez ${LANDING_TRIAL_DAYS} dni, do ${landingTrial.maxUsers} osób, bez karty. Plan wybierasz potem w aplikacji.`,
+		plansTitle: 'Wszystkie plany w skrócie',
+		plans: {
+			free: { name: 'Darmowy', price: '0 zł', desc: `Do ${landingTrial.maxUsers} osób: ewidencja czasu i wydruk ewidencji.` },
+			core: { name: 'Core', desc: 'Ewidencja, urlopy, przegląd i raporty zespołu, powiadomienia, asystent AI.' },
+			pro: { name: 'PRO', desc: 'Wszystko w cenie, także Timer i QR, grafik pracy, zadania i czat.' },
+			business: { name: 'Business', desc: 'Wszystko w cenie i priorytetowe wsparcie.' },
+		},
+		from: 'od',
+		upTo: (n: number) => `do ${n} os.`,
+		upToLong: (n: number) => `do ${n} osób`,
+		modulesLine: 'Moduły do Core',
+		compare: 'Porównaj wszystkie plany',
+		compareFeature: 'Funkcja',
+		comparePeople: 'Liczba osób',
+		comparePrice: 'Cena netto / mies.',
+		notes: `Ceny netto. Płacisz kartą, BLIK-iem lub przelewem. Rocznie płacisz za ${LANDING_ANNUAL_MONTHS_CHARGED} miesięcy zamiast 12. Plan możesz anulować w dowolnym momencie.`,
+		enterprise: 'Ponad 100 osób albo potrzebujesz czegoś szytego na miarę?',
+		enterpriseLink: 'Napisz do nas',
+		contactHref: '/kontakt',
 	},
 	en: {
-		eyebrow: 'Planopia pricing',
-		title: 'Simple pricing. Start free.',
-		subtitle:
-			'Start with a 30-day full-product trial. Then keep free time tracking for up to 5 active accounts, or choose paid plans with leave, schedules, reports, tasks, and AI. USD amounts are indicative (1 USD ≈ 3.69 PLN).',
-		paidPlansIntro: 'Paid plans (subscription) — when you want to move away from spreadsheets and manual approvals',
-		billingLabel: 'Billing',
-		billingMonthly: 'Monthly',
-		billingYearly: 'Yearly',
-		billingYearlySaving: 'save about 17%',
-		billingYearlyBadge: '2 months on us',
-		billingYearlyHint: 'Pay upfront for 10 months of list price — full 12 months of access.',
-		trialTitle: '30 days — full product',
-		trialBadge: 'no card',
-		trialCta: 'Create your free team',
-		freeTitle: 'Free time tracking — stays after the trial',
-		freeBadge: 'Free',
-		freeIntro:
-			'No subscription and no pressure: if you do not buy a paid plan after the trial, a small team can keep online time tracking.',
-		freeFeatures: ['Up to 5 active accounts', 'Calendars and time records'],
-		freeCta: 'Register your team to begin',
-		fromWord: 'from',
-		recommended: 'Recommended',
-		heroCoreTitle: 'Core',
-		heroCoreLead: 'For companies that want to leave spreadsheets and paper leave requests behind.',
-		heroCoreTeamHint: 'For teams up to 100 users.',
-		heroCoreFeat1: 'Time tracking',
-		heroCoreFeat2: 'Leave requests and approvals',
-		heroCoreFeatReports: 'Business reports',
-		heroCoreFeat3: 'Optional: Timer + QR, Schedules + AI, Tasks and Projects, Team chat, and AI Assistant',
-		heroCoreCta: 'Choose Core',
-		heroProLead: 'For companies that want time tracking, leave, tasks, and team communication in one place.',
-		heroBusinessLead: 'For larger teams that need higher limits, support, and process fit.',
-		bundleModules: [
-			'Time tracking',
-			'Leave requests and approvals',
-			'Business reports',
-			'Timer + QR',
-			'Schedules + AI',
-			'Tasks and Projects',
-			'Team chat',
-		],
-		proBulletAi: 'AI Assistant with no message limit',
-		proBulletUsers: 'Up to 30 users',
-		businessBulletAi: 'AI Assistant with no message limit',
-		businessBulletUsers: 'Up to 100 users',
-		businessBulletPriority: 'Priority support',
-		businessBulletIntegrations: 'Extra features and integrations tailored to your business',
-		payBundleCta: 'Continue to checkout in the app',
-		enterpriseStripTitle: 'Individual pricing & approach',
-		enterpriseStripBody:
-			'When off-the-shelf plans are not enough — tell us in the form; we’ll reply with a proposal.',
-		enterpriseCta: 'Open form — describe your needs',
-		addonTitle: 'AI Assistant with no message limit',
-		addonSubtitle:
-			'During the trial, on Pro and Business, and with the Schedules + AI or AI Assistant module. No counters and no top-up packs — fair use applies.',
-		addonOpenPackages: 'Open Packages',
-		tiersFootnote:
-			'* You can cancel a paid plan at any time. Buttons take you to Packages & billing in the app — complete your purchase after signing in.',
-		coreModalTitle: 'Configure Core',
-		coreModalHint: 'Pick team size and the add-on modules you need — totals below.',
-		coreStep1: 'How many people on the team?',
-		coreStep2: 'Modules in Core',
-		coreIncludedLabel: 'Included in the plan',
-		coreOptionalLabel: 'Optional add-on modules',
-		coreIncludedBadge: 'Included',
-		coreStep3: 'Summary',
-		coreSeatShort: 'Up to {{max}} users',
-		coreAiFootnote: '* AI Assistant with no message limit (fair use).',
-		coreTotalLabel: 'Total',
-		coreUpsellPro:
-			'At this configuration, the PRO bundle (239 PLN / month) may be better value — consider upgrading to PRO.',
-		coreUpsellProCta: 'Open PRO in the app',
-		coreContinueCta: 'Continue purchase in the app',
-		cancel: 'Cancel',
-		netPerMonthShort: 'net per month',
+		eyebrow: 'Pricing',
+		title: 'Work out the price for your team',
+		subtitle: `Start with ${LANDING_TRIAL_DAYS} days of the full app for free, no card needed. Then pick a plan — or stay on the free plan if you have up to ${landingTrial.maxUsers} people.`,
+		people: 'How many people are on your team?',
+		always: 'Always included',
+		needs: 'What else do you need?',
+		needInCore: 'in the Core plan',
+		needModule: (price: string) => `module + ${price} / mo`,
+		billingGroup: 'Billing period',
+		monthly: 'Monthly',
+		annual: 'Yearly',
+		annualSave: '2 months free',
+		recommended: 'Recommended for you',
+		perMonth: 'net / month',
+		perYear: 'net / year',
+		annualEquivalent: (x: string) => `that is ${x} net per month`,
+		freeName: 'Free',
+		freePrice: '$0',
+		freePeriod: 'no time limit',
+		freeWhy: `For up to ${landingTrial.maxUsers} people, time tracking and timesheet printouts are free.`,
+		freeIncludes: 'Included: time tracking, each person’s timesheet printout (PDF, Excel), phone app.',
+		freeAlt: (plan: string, price: string) => `Leave, team reports and the AI assistant come with ${plan} — ${price}`,
+		customName: 'Over 100 people',
+		customPrice: 'Custom quote',
+		customWhy: 'Write to us — we will fit the plan and terms to the size of your company.',
+		customCta: 'Contact us',
+		whyBundleCheaper: (core: string) => `With these features this plan is cheaper than Core with modules (${core}).`,
+		whyBundleSame: 'Same price as Core with the modules you picked — and you get every feature.',
+		whyBundleNudge: (diff: string) => `Only ${diff} more than Core with the modules you picked — and you get every feature.`,
+		whyCoreModules: 'You only pay for the modules you need.',
+		whyCore: 'Everything your team needs day to day.',
+		whyOverFree: (n: number) => `The free plan covers up to ${landingTrial.maxUsers} people — for ${n} people this is the cheapest plan.`,
+		includesCore: 'Included: time tracking, leave, team overview and reports, notifications, AI assistant with no limit',
+		includesBundle:
+			'Everything included: time tracking, leave, team overview and reports, notifications, AI assistant, timer and QR, work schedules, tasks and chat.',
+		includesBusinessExtra: ' Priority support.',
+		cta: `Create your team — ${LANDING_TRIAL_DAYS} days free`,
+		ctaExisting: 'Already have an account? Choose this plan in the app',
+		altOr: (plan: string, price: string) => `Or ${plan} — ${price}`,
+		altAll: (plan: string, price: string) => `Every feature: ${plan} — ${price}`,
+		trialNote: `Trial: the full app for ${LANDING_TRIAL_DAYS} days, up to ${landingTrial.maxUsers} people, no card. You choose a plan later in the app.`,
+		plansTitle: 'All plans at a glance',
+		plans: {
+			free: { name: 'Free', price: '$0', desc: `Up to ${landingTrial.maxUsers} people: time tracking and timesheet printouts.` },
+			core: { name: 'Core', desc: 'Time tracking, leave, team overview and reports, notifications, AI assistant.' },
+			pro: { name: 'PRO', desc: 'Everything included, also timer and QR, work schedules, tasks and chat.' },
+			business: { name: 'Business', desc: 'Everything included, plus priority support.' },
+		},
+		from: 'from',
+		upTo: (n: number) => `up to ${n}`,
+		upToLong: (n: number) => `up to ${n} people`,
+		modulesLine: 'Core modules',
+		compare: 'Compare all plans',
+		compareFeature: 'Feature',
+		comparePeople: 'Team size',
+		comparePrice: 'Net price / month',
+		notes: `Net prices, billed in PLN — USD amounts are approximate (1 USD ≈ ${PLN_PER_USD} PLN). Pay by card, BLIK or bank transfer. Yearly: you pay for ${LANDING_ANNUAL_MONTHS_CHARGED} months instead of 12. You can cancel a plan at any time.`,
+		enterprise: 'Over 100 people, or need something tailored?',
+		enterpriseLink: 'Contact us',
+		contactHref: '/en#contact',
 	},
 } as const
 
+function money(locale: Locale, pln: number) {
+	if (locale === 'en') {
+		const usd = pln / PLN_PER_USD
+		return `$${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+	}
+	const whole = Number.isInteger(pln)
+	return `${pln.toLocaleString('pl-PL', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 })} zł`
+}
+
+function peopleLabel(locale: Locale, n: number) {
+	if (locale === 'en') return n === 1 ? '1 person' : `${n} people`
+	if (n === 1) return '1 osoba'
+	const mod10 = n % 10
+	const mod100 = n % 100
+	if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return `${n} osoby`
+	return `${n} osób`
+}
+
+/** „netto / mies.” kończy się kropką — nie dokładamy drugiej */
+function sentence(text: string) {
+	return text.endsWith('.') ? text : `${text}.`
+}
+
+/** Rejestracja z wybranym planem — aplikacja podpowie go potem w Pakietach */
+function registerHref(params: { plan?: string; modules?: readonly string[]; users: number; billing: Billing }) {
+	const u = new URL(REGISTER_URL)
+	if (params.plan) u.searchParams.set('plan', params.plan)
+	if (params.modules?.length) u.searchParams.set('modules', params.modules.join(','))
+	u.searchParams.set('users', String(params.users))
+	u.searchParams.set('billing', params.billing)
+	return u.toString()
+}
+
+type Card = {
+	name: string
+	price: string
+	period: string
+	equivalent: string | null
+	why: string
+	includes: string
+	alt: string | null
+	cta: { href: string; label: string; internal: boolean }
+	existingHref: string | null
+}
+
 export default function LandingPricing({ locale }: { locale: Locale }) {
-	const t = copy[locale]
+	const t = COPY[locale]
+	const [users, setUsers] = useState(DEFAULT_USERS)
 	const [billing, setBilling] = useState<Billing>('monthly')
-	const [coreModalOpen, setCoreModalOpen] = useState(false)
-	const [corePlan, setCorePlan] = useState<CorePlanId>('base_s')
-	const [coreMods, setCoreMods] = useState<ModuleId[]>([])
+	const [checked, setChecked] = useState<Partial<Record<NeedKey, boolean>>>({ leave: true })
 
-	const billingCycleParam = billing === 'yearly' ? 'annual' : 'monthly'
-
-	const trialLines = useMemo(() => {
-		const maxU = landingTrial.maxUsers
-		if (locale === 'en') {
-			return [
-				'All features: time tracking, leave, schedules, chat, boards, AI Assistant',
-				'AI Assistant with no message limit',
-				`Up to ${maxU} users in the team`,
-				'No credit card and no commitment',
-			]
+	// Plakietka z kafelka „O aplikacji” zaznacza funkcję (LandingFeatureTiles)
+	useEffect(() => {
+		const onFeature = (e: Event) => {
+			const featureId = (e as CustomEvent<{ featureId?: FeatureId }>).detail?.featureId
+			const need = featureId ? FEATURE_TO_NEED[featureId] : undefined
+			if (need) setChecked(prev => ({ ...prev, [need]: true }))
 		}
-		return [
-			'Wszystkie funkcje: ewidencja, urlopy, grafiki, czat, tablice, Asystent AI',
-			'Asystent AI bez limitu wiadomości',
-			`Do ${maxU} użytkowników w zespole`,
-			'Bez karty płatniczej i bez zobowiązania',
-		]
-	}, [locale])
+		window.addEventListener(PRICING_FEATURE_EVENT, onFeature)
+		return () => window.removeEventListener(PRICING_FEATURE_EVENT, onFeature)
+	}, [])
 
-	const coreHeroDisplay = useMemo(
-		() => tierPriceDisplay(locale, landingCoreMinMonthlyNetPln, billing),
-		[locale, billing],
+	const needs: CalculatorNeeds = useMemo(
+		() => ({
+			leave: checked.leave,
+			reports: checked.reports,
+			ai: checked.ai,
+			modules: landingModules.map(m => m.id).filter(id => checked[id]),
+		}),
+		[checked],
 	)
+	const rec = useMemo(() => recommendPlan(users, needs, PRICING), [users, needs])
 
-	const coreEstimatedMonthly = useMemo(() => {
-		const tier = landingCoreTiers.find(x => x.id === corePlan)
-		const base = tier?.monthlyNetPln ?? 0
-		let m = 0
-		for (const id of coreMods) {
-			m += landingModules.find(mod => mod.id === id)?.monthlyNetPln ?? 0
+	const yearly = billing === 'annual'
+	const months = yearly ? LANDING_ANNUAL_MONTHS_CHARGED : 1
+	const period = yearly ? t.perYear : t.perMonth
+	const inline = (monthlyNet: number) => `${money(locale, monthlyNet * months)} ${period}`
+	const equivalent = (monthlyNet: number) =>
+		yearly ? t.annualEquivalent(money(locale, Math.round(((monthlyNet * months) / 12) * 100) / 100)) : null
+	const moduleNames = (mods: readonly string[]) => mods.map(m => MODULE_COPY[m as ModuleId][locale])
+	const coreName = (planKey: string, mods: readonly string[]) => [PLAN_NAME[planKey][locale], ...moduleNames(mods)].join(' + ')
+	const noNeeds = !checked.leave && !checked.reports && !checked.ai && needs.modules?.length === 0
+
+	let card: Card
+	if (rec.kind === 'free') {
+		const smallest = landingCoreTiers[0]
+		card = {
+			name: t.freeName,
+			price: t.freePrice,
+			period: t.freePeriod,
+			equivalent: null,
+			why: t.freeWhy,
+			includes: t.freeIncludes,
+			alt: sentence(t.freeAlt(PLAN_NAME[smallest.id][locale], inline(smallest.monthlyNetPln))),
+			cta: { href: registerHref({ users, billing }), label: t.cta, internal: false },
+			existingHref: null,
 		}
-		return base + m
-	}, [corePlan, coreMods])
+	} else if (rec.kind === 'custom') {
+		card = {
+			name: t.customName,
+			price: t.customPrice,
+			period: '',
+			equivalent: null,
+			why: t.customWhy,
+			includes: t.includesBundle,
+			alt: null,
+			cta: { href: t.contactHref, label: t.customCta, internal: true },
+			existingHref: null,
+		}
+	} else if (rec.kind === 'bundle') {
+		const { bundle, core } = rec
+		const diff = bundle.monthlyNetPln - core.monthlyNetPln
+		const why =
+			diff < 0 ? t.whyBundleCheaper(inline(core.monthlyNetPln)) : diff === 0 ? t.whyBundleSame : t.whyBundleNudge(money(locale, diff * months))
+		card = {
+			name: PLAN_NAME[bundle.planKey][locale],
+			price: money(locale, bundle.monthlyNetPln * months),
+			period,
+			equivalent: equivalent(bundle.monthlyNetPln),
+			why,
+			includes: t.includesBundle + (bundle.planKey === 'business' ? t.includesBusinessExtra : ''),
+			alt: sentence(t.altOr(coreName(core.planKey, core.modules), inline(core.monthlyNetPln))),
+			cta: { href: registerHref({ plan: bundle.planKey, users, billing }), label: t.cta, internal: false },
+			existingHref: paymentHref(bundle.planKey, { billing, checkout: true }),
+		}
+	} else {
+		const { core, bundle } = rec
+		const mods = core.modules
+		card = {
+			name: coreName(core.planKey, mods),
+			price: money(locale, core.monthlyNetPln * months),
+			period,
+			equivalent: equivalent(core.monthlyNetPln),
+			why: noNeeds ? t.whyOverFree(users) : mods.length ? t.whyCoreModules : t.whyCore,
+			includes: `${[t.includesCore, ...moduleNames(mods)].join(', ')}.`,
+			alt: sentence(t.altAll(PLAN_NAME[bundle.planKey][locale], inline(bundle.monthlyNetPln))),
+			cta: { href: registerHref({ plan: core.planKey, modules: mods, users, billing }), label: t.cta, internal: false },
+			existingHref: paymentHref(core.planKey, { billing, modules: mods.length ? mods : undefined, checkout: true }),
+		}
+	}
 
-	const proBundle = landingBundles.find(b => b.id === 'pro')
-	const selectedCoreTier = landingCoreTiers.find(t => t.id === corePlan)
-	const coreUpsellVsPro = Boolean(
-		proBundle &&
-			selectedCoreTier &&
-			selectedCoreTier.maxUsers <= proBundle.maxUsers &&
-			coreEstimatedMonthly > proBundle.monthlyNetPln,
-	)
-	const summaryDisplay = useMemo(() => tierPriceDisplay(locale, coreEstimatedMonthly, billing), [locale, coreEstimatedMonthly, billing])
+	// Wypełnienie paska suwaka (CSS nie zna wartości inputa)
+	const sliderFill = `${((Math.min(users, USERS_MAX_SLIDER) - 1) / (USERS_MAX_SLIDER - 1)) * 100}%`
+	const coreFrom = landingCoreTiers[0].monthlyNetPln
+	const proTiers = landingBundles.filter(b => b.id !== 'business')
+	const business = landingBundles.find(b => b.id === 'business')
 
-	const checkoutHref = paymentHref(corePlan, {
-		billing: billingCycleParam,
-		modules: coreMods.length ? coreMods : undefined,
-		checkout: true,
-	})
-
-	const modalNode =
-		coreModalOpen &&
-		createPortal(
-			<div className="landing-pricing-app-clone">
-				<div
-					className="packages-modal-overlay packages-modal-overlay--scroll"
-					role="dialog"
-					aria-modal="true"
-					aria-labelledby="landing-core-modal-title"
-					onClick={() => setCoreModalOpen(false)}
-				>
-					<div className="packages-modal packages-modal--wide" onClick={e => e.stopPropagation()}>
-					<button
-						type="button"
-						className="packages-modal__close"
-						aria-label={locale === 'pl' ? 'Zamknij modal konfiguracji Core' : 'Close Core configuration modal'}
-						onClick={() => setCoreModalOpen(false)}
-					>
-						×
-					</button>
-					<h4 id="landing-core-modal-title">{t.coreModalTitle}</h4>
-					<p className="packages-modal__fallback-intro packages-modal__fallback-intro--compact">{t.coreModalHint}</p>
-
-					<div className="packages-core-step">
-						<div className="packages-core-step__head">
-							<span className="packages-core-step__num" aria-hidden>
-								1
-							</span>
-							<p className="packages-core-step__title">{t.coreStep1}</p>
-						</div>
-						<fieldset className="packages-core-fieldset">
-							<legend className="packages-core-legend packages-core-legend--vh">{t.coreStep1}</legend>
-							{landingCoreTiers.map(ct => (
-								<label key={ct.id} className="packages-core-radio">
-									<input
-										type="radio"
-										name="landingCorePlan"
-										checked={corePlan === ct.id}
-										onChange={() => setCorePlan(ct.id)}
-									/>
-									<span>
-										{t.coreSeatShort.replace('{{max}}', String(ct.maxUsers))} — {ct.monthlyNetPln}{' '}
-										{locale === 'pl' ? 'zł / miesięcznie (netto)' : 'PLN / month (net)'}
-									</span>
-								</label>
-							))}
-						</fieldset>
-					</div>
-
-					<div className="packages-core-step">
-						<div className="packages-core-step__head">
-							<span className="packages-core-step__num" aria-hidden>
-								2
-							</span>
-							<p className="packages-core-step__title">{t.coreStep2}</p>
-						</div>
-						<fieldset className="packages-core-fieldset">
-							<legend className="packages-core-legend packages-core-legend--vh">{t.coreStep2}</legend>
-							<p className="packages-core-modules-group-label">{t.coreIncludedLabel}</p>
-							<label className="packages-core-check packages-core-check--included">
-								<input type="checkbox" checked disabled readOnly />
-								<span>{t.heroCoreFeat1}</span>
-								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
-							</label>
-							<label className="packages-core-check packages-core-check--included">
-								<input type="checkbox" checked disabled readOnly />
-								<span>{t.heroCoreFeat2}</span>
-								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
-							</label>
-							<label className="packages-core-check packages-core-check--included">
-								<input type="checkbox" checked disabled readOnly />
-								<span>{t.heroCoreFeatReports}</span>
-								<span className="packages-core-included-badge">{t.coreIncludedBadge}</span>
-							</label>
-							<p className="packages-core-modules-group-label packages-core-modules-group-label--optional">
-								{t.coreOptionalLabel}
-							</p>
-							{landingModules.map(m => (
-								<label key={m.id} className="packages-core-check">
-									<input
-										type="checkbox"
-										checked={coreMods.includes(m.id)}
-										onChange={() => {
-											setCoreMods(prev =>
-												prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id],
-											)
-										}}
-									/>
-									<span>
-										{MODULE_LABELS[m.id][locale]} (+{m.monthlyNetPln} PLN)
-									</span>
-								</label>
-							))}
-						</fieldset>
-						<p className="packages-core-module-footnote" role="note">
-							{t.coreAiFootnote}
-						</p>
-					</div>
-
-					<div className="packages-core-step packages-core-step--summary">
-						<div className="packages-core-step__head">
-							<span className="packages-core-step__num" aria-hidden>
-								3
-							</span>
-							<p className="packages-core-step__title">{t.coreStep3}</p>
-						</div>
-						<div className="packages-core-total" role="status">
-							<div className="packages-core-total__row">
-								<strong>{t.coreTotalLabel}</strong>{' '}
-								<span className="packages-core-total__amount">{summaryDisplay.main}</span>
-								{billing === 'monthly' && (
-									<span className="packages-core-total-note">
-										{' '}
-										{t.netPerMonthShort}
-									</span>
-								)}
-							</div>
-							{billing === 'yearly' && summaryDisplay.subline && (
-								<p className="packages-core-total-annual-note">{summaryDisplay.subline}</p>
-							)}
-						</div>
-						{coreUpsellVsPro && (
-							<div className="packages-core-upsell" role="status">
-								{t.coreUpsellPro}
-							</div>
-						)}
-					</div>
-
-					<div className="packages-modal__actions packages-modal__actions--stack packages-modal__actions--pay">
-						<a className="packages-pay-btn packages-pay-btn--primary" href={checkoutHref}>
-							{t.coreContinueCta}
-						</a>
-						{coreUpsellVsPro && (
-							<a
-								className="packages-pay-btn packages-pay-btn--upsell"
-								href={paymentHref('pro', { billing: billingCycleParam, checkout: true })}
-							>
-								{t.coreUpsellProCta}
-							</a>
-						)}
-						<button type="button" className="packages-pay-btn packages-pay-btn--ghost" onClick={() => setCoreModalOpen(false)}>
-							{t.cancel}
-						</button>
-					</div>
-					</div>
-				</div>
-			</div>,
-			document.body,
+	/** Komórka tabeli porównania: plan funkcji z planCatalog.FEATURES */
+	const matrixCell = (feature: (typeof landingFeatures)[number], column: 'free' | 'core' | 'bundle') => {
+		const yes = (
+			<span className="lp-compare__yes" aria-label={locale === 'pl' ? 'tak' : 'yes'}>
+				✓
+			</span>
 		)
+		const no = (
+			<span className="lp-compare__no" aria-label={locale === 'pl' ? 'nie' : 'no'}>
+				—
+			</span>
+		)
+		if (feature.plan === 'free' || feature.plan === 'all') return yes
+		if (column === 'free') return no
+		if (feature.plan === 'core' || column === 'bundle') return yes
+		const moduleId = 'module' in feature ? feature.module : null
+		const price = landingModules.find(m => m.id === moduleId)?.monthlyNetPln
+		return price != null ? <span className="lp-compare__extra">+ {money(locale, price)}</span> : no
+	}
 
 	return (
-		<section id={locale === 'pl' ? 'cennik' : 'prices'} className="landing-pricing py-12 px-4 bg-slate-50/80">
-			{modalNode}
-			<div className="max-w-7xl mx-auto">
-				<div className="landing-pricing-heading mb-10 text-left w-full">
-					<p className="landing-pricing-eyebrow landing-section-eyebrow">{t.eyebrow}</p>
-					<h2 className="landing-pricing-title">{t.title}</h2>
-					<p className="landing-pricing-subtitle">{t.subtitle}</p>
-				</div>
-				<div className="landing-pricing-free-options grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-10 items-stretch">
-					<TrialCard locale={locale} lines={trialLines} />
-					<FreeTierCard locale={locale} />
+		<section id={locale === 'pl' ? 'cennik' : 'prices'} className="lp-section py-12 px-4" aria-labelledby="lp-title">
+			<div className="max-w-6xl mx-auto">
+				<div className="landing-about-heading-block">
+					<p className="landing-about-heading-eyebrow landing-section-eyebrow">{t.eyebrow}</p>
+					<h2 id="lp-title" className="landing-about-heading-title">
+						{t.title}
+					</h2>
+					<p className="landing-about-intro mt-4 text-lg text-gray-600">{t.subtitle}</p>
 				</div>
 
-				<div className="landing-pricing-billing mb-8 flex flex-col gap-3 items-start" role="group" aria-label={t.billingLabel}>
-					<p
-						id={locale === 'pl' ? 'cennik-pakiety-platne' : 'prices-paid-plans'}
-						className="pricing-paid-plans-intro font-semibold text-gray-700 m-0 leading-snug scroll-mt-24"
-					>
-						{t.paidPlansIntro}
-					</p>
-					<div className="flex flex-row flex-wrap items-center gap-3">
-						<span className="text-sm font-semibold text-gray-800 shrink-0">{t.billingLabel}</span>
-						<div className="pricing-billing-toggle shrink-0">
-							<button
-								type="button"
-								className="pricing-billing-option rounded-lg px-4 py-2 text-sm font-semibold transition"
-								onClick={() => setBilling('monthly')}
-								aria-pressed={billing === 'monthly'}
-							>
-								{t.billingMonthly}
-							</button>
-							<button
-								type="button"
-								className="pricing-billing-option pricing-billing-option--yearly rounded-lg px-4 py-2 text-sm font-semibold transition"
-								onClick={() => setBilling('yearly')}
-								aria-pressed={billing === 'yearly'}
-							>
-								<span>{t.billingYearly}</span>
-								<span className="pricing-billing-saving">{t.billingYearlySaving}</span>
-							</button>
+				<div className="lp-calc">
+					<div className="lp-card">
+						<div className="lp-step">
+							<div className="lp-step__head">
+								<label className="lp-label" htmlFor="lp-users-range">
+									{t.people}
+								</label>
+								<output className="lp-users__value" htmlFor="lp-users-range" aria-live="polite">
+									{peopleLabel(locale, users)}
+								</output>
+							</div>
+							<div className="lp-users">
+								<input
+									id="lp-users-range"
+									type="range"
+									min={1}
+									max={USERS_MAX_SLIDER}
+									step={1}
+									value={Math.min(users, USERS_MAX_SLIDER)}
+									onChange={e => setUsers(Number(e.target.value))}
+									style={{ '--lp-fill': sliderFill } as CSSProperties}
+									aria-valuetext={peopleLabel(locale, users)}
+								/>
+								<input
+									type="number"
+									inputMode="numeric"
+									className="lp-users__number"
+									min={1}
+									max={999}
+									value={users}
+									onChange={e => setUsers(Math.max(1, Math.min(999, Math.floor(Number(e.target.value)) || 1)))}
+									aria-label={t.people}
+								/>
+							</div>
 						</div>
-					</div>
-					{billing === 'yearly' && (
-						<div className="flex flex-col gap-2.5 items-start max-w-xl rounded-xl border border-emerald-100/80 bg-emerald-50/50 px-4 py-3">
-							<span className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">
-								{t.billingYearlyBadge}
-							</span>
-							<p className="text-sm text-gray-600 leading-relaxed m-0">{t.billingYearlyHint}</p>
-						</div>
-					)}
-				</div>
 
-				<div className="landing-pricing-app-clone">
-					<div className="packages-grid packages-grid--hero">
-						<div className="packages-tier packages-tier--core-summary">
-							<PricingIcon name="core" locale={locale} />
-							<h3>{t.heroCoreTitle}</h3>
-							{coreHeroDisplay.strike && (
-								<p className="mb-1 text-sm text-gray-400 m-0">
-									<span className="line-through">{coreHeroDisplay.strike}</span>
-									<span className="ml-2 text-gray-500 not-italic no-underline">
-										{locale === 'pl' ? 'przy płatności miesięcznej' : 'if billed monthly'}
-									</span>
-								</p>
-							)}
-							<div className="packages-tier__price">
-								{t.fromWord} {coreHeroDisplay.main}
+						<div className="lp-step">
+							<div className="lp-step__head">
+								<div className="lp-label">{t.always}</div>
 							</div>
-							<div className="packages-tier__price-sub">
-								{billing === 'yearly' ? coreHeroDisplay.subline : t.netPerMonthShort}
-							</div>
-							<p className="packages-tier__lead">{t.heroCoreLead}</p>
-							<ul className="packages-tier__features">
-								<li className="packages-tier__feature">
-									<span className="packages-tier__feature-check" aria-hidden>
-										✓
-									</span>
-									<span className="packages-tier__feature-text">
-										<strong>{t.heroCoreFeat1}</strong>
-									</span>
-								</li>
-								<li className="packages-tier__feature">
-									<span className="packages-tier__feature-check" aria-hidden>
-										✓
-									</span>
-									<span className="packages-tier__feature-text">
-										<strong>{t.heroCoreFeat2}</strong>
-									</span>
-								</li>
-								<li className="packages-tier__feature">
-									<span className="packages-tier__feature-check" aria-hidden>
-										✓
-									</span>
-									<span className="packages-tier__feature-text">
-										<strong>{t.heroCoreFeatReports}</strong>
-									</span>
-								</li>
-								<li className="packages-tier__feature">
-									<span className="packages-tier__feature-check" aria-hidden>
-										✓
-									</span>
-									<span className="packages-tier__feature-text">{t.heroCoreFeat3}</span>
-								</li>
+							<ul className="lp-always">
+								{ALWAYS_INCLUDED.map(id => (
+									<li key={id} className="lp-always__item">
+										<span className="lp-check" aria-hidden="true">
+											✓
+										</span>
+										{FEATURE_COPY[id][locale].title}
+									</li>
+								))}
 							</ul>
-							<p className="packages-tier__hint">{t.heroCoreTeamHint}</p>
-							<button
-								type="button"
-								className="packages-tier__cta"
-								onClick={() => {
-									setCorePlan('base_s')
-									setCoreMods([])
-									setCoreModalOpen(true)
-								}}
-							>
-								{t.heroCoreCta}
-							</button>
 						</div>
 
-						{landingBundles.map(bundle => {
-							const isPro = bundle.id === 'pro'
-							const d = tierPriceDisplay(locale, bundle.monthlyNetPln, billing)
-							return (
-								<div key={bundle.id} className={`packages-tier${isPro ? ' packages-tier--highlight' : ''}`}>
-									{isPro && <span className="packages-tier__badge">{t.recommended}</span>}
-									<PricingIcon name={bundle.id === 'pro' ? 'pro' : 'business'} locale={locale} />
-									<h3>{bundle.id === 'pro' ? 'PRO' : 'Business'}</h3>
-									{d.strike && (
-										<p className="mb-1 text-sm text-gray-400 m-0">
-											<span className="line-through">{d.strike}</span>
-											<span className="ml-2 text-gray-500 not-italic no-underline">
-												{locale === 'pl' ? 'przy płatności miesięcznej' : 'if billed monthly'}
+						<fieldset className="lp-step lp-fieldset">
+							<legend className="lp-label lp-legend">{t.needs}</legend>
+							<div className="lp-needs">
+								{NEED_FIELDS.map(field => {
+									const on = Boolean(checked[field.need])
+									const modulePrice = landingModules.find(m => m.id === field.need)?.monthlyNetPln
+									return (
+										<label key={field.need} className={`lp-need${on ? ' lp-need--on' : ''}`}>
+											<input
+												type="checkbox"
+												checked={on}
+												onChange={e => setChecked(prev => ({ ...prev, [field.need]: e.target.checked }))}
+											/>
+											<span className="lp-need__body">
+												<span className="lp-need__text">{FEATURE_COPY[field.feature][locale].title}</span>
+												<span className="lp-need__hint">
+													{modulePrice != null ? t.needModule(money(locale, modulePrice)) : t.needInCore}
+												</span>
 											</span>
-										</p>
-									)}
-									<div className="packages-tier__price">{d.main}</div>
-									<div className="packages-tier__price-sub">{billing === 'yearly' ? d.subline : t.netPerMonthShort}</div>
-									{bundle.id === 'pro' ? (
-										<p className="packages-tier__lead">{t.heroProLead}</p>
-									) : (
-										<p className="packages-tier__lead">{t.heroBusinessLead}</p>
-									)}
-									<ul className="packages-tier__features">
-										{bundle.id === 'pro' ? (
-											<>
-												{t.bundleModules.map(module => (
-													<li key={module} className="packages-tier__feature">
-														<span className="packages-tier__feature-check" aria-hidden>
-															✓
-														</span>
-														<span className="packages-tier__feature-text">{module}</span>
-													</li>
-												))}
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{t.proBulletAi}</span>
-												</li>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{t.proBulletUsers}</span>
-												</li>
-											</>
-										) : (
-											<>
-												{t.bundleModules.map(module => (
-													<li key={module} className="packages-tier__feature">
-														<span className="packages-tier__feature-check" aria-hidden>
-															✓
-														</span>
-														<span className="packages-tier__feature-text">{module}</span>
-													</li>
-												))}
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{t.businessBulletAi}</span>
-												</li>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">{t.businessBulletUsers}</span>
-												</li>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">
-														<strong>{t.businessBulletPriority}</strong>
-													</span>
-												</li>
-												<li className="packages-tier__feature">
-													<span className="packages-tier__feature-check" aria-hidden>
-														✓
-													</span>
-													<span className="packages-tier__feature-text">
-														<strong>{t.businessBulletIntegrations}</strong>
-													</span>
-												</li>
-											</>
-										)}
-									</ul>
-									<a
-										className="packages-tier__bundle-cta"
-										href={paymentHref(bundle.id, { billing: billingCycleParam, checkout: true })}
-									>
-										{t.payBundleCta}
-									</a>
-								</div>
-							)
-						})}
+										</label>
+									)
+								})}
+							</div>
+						</fieldset>
+
+						<div className="lp-step">
+							<div className="lp-billing" role="group" aria-label={t.billingGroup}>
+								<button
+									type="button"
+									className={`lp-billing__btn${billing === 'monthly' ? ' lp-billing__btn--on' : ''}`}
+									aria-pressed={billing === 'monthly'}
+									onClick={() => setBilling('monthly')}
+								>
+									{t.monthly}
+								</button>
+								<button
+									type="button"
+									className={`lp-billing__btn${billing === 'annual' ? ' lp-billing__btn--on' : ''}`}
+									aria-pressed={billing === 'annual'}
+									onClick={() => setBilling('annual')}
+								>
+									{t.annual}
+									<small className="lp-billing__save">{t.annualSave}</small>
+								</button>
+							</div>
+						</div>
 					</div>
 
-					<section className="packages-enterprise-strip" aria-labelledby="landing-enterprise-heading">
-						<PricingIcon name="custom" locale={locale} />
-						<div className="packages-enterprise-strip__main">
-							<h3 id="landing-enterprise-heading">{t.enterpriseStripTitle}</h3>
-							<p className="packages-enterprise-strip__body">{t.enterpriseStripBody}</p>
+					<div className="lp-card lp-result" aria-live="polite">
+						<div className="lp-result__badge">{t.recommended}</div>
+						<div className="lp-result__name">{card.name}</div>
+						<div className="lp-result__price">
+							{card.price}
+							{card.period ? <small className="lp-result__period">{card.period}</small> : null}
 						</div>
-						<div className="packages-enterprise-strip__cta">
-							<Link className="packages-enterprise-strip__btn" href={locale === 'pl' ? '/kontakt' : '/en#contact'}>
-								{t.enterpriseCta}
+						{card.equivalent ? <div className="lp-result__equiv">{card.equivalent}</div> : null}
+						<div className="lp-result__why">{card.why}</div>
+						<div className="lp-result__includes">{card.includes}</div>
+						{card.cta.internal ? (
+							<Link className="lp-result__cta" href={card.cta.href}>
+								{card.cta.label}
 							</Link>
-						</div>
-					</section>
-
-					<div className="pricing-ai-addons mt-12 rounded-2xl border border-dashed p-6 md:p-8">
-						<div className="pricing-ai-addons__heading">
-							<PricingIcon name="ai" locale={locale} />
-							<h3 className="text-lg md:text-xl font-bold text-gray-900">{t.addonTitle}</h3>
-						</div>
-						<p className="text-sm text-gray-600 mt-1">{t.addonSubtitle}</p>
+						) : (
+							<a className="lp-result__cta" href={card.cta.href}>
+								{card.cta.label}
+							</a>
+						)}
+						{card.existingHref ? (
+							<a className="lp-result__existing" href={card.existingHref}>
+								{t.ctaExisting}
+							</a>
+						) : null}
+						{card.alt ? <div className="lp-result__alt">{card.alt}</div> : null}
+						<div className="lp-result__trial">{t.trialNote}</div>
 					</div>
 				</div>
 
-				<p className="mt-4 text-sm text-gray-500 leading-relaxed" role="note">
-					{t.tiersFootnote}{' '}
-					<Link href={PAYMENT_BASE_URL} className="landing-pricing-footnote-link underline font-medium">
-						{PAYMENT_BASE_URL.replace('https://', '')}
-					</Link>
-				</p>
+				<div id={locale === 'pl' ? 'cennik-pakiety-platne' : 'prices-paid-plans'} className="lp-plans scroll-mt-24">
+					<h3 className="lp-plans__title">{t.plansTitle}</h3>
+					<ul className="lp-plans__grid">
+						<li className="lp-plan">
+							<div className="lp-plan__name">{t.plans.free.name}</div>
+							<div className="lp-plan__price">{t.plans.free.price}</div>
+							<div className="lp-plan__desc">{t.plans.free.desc}</div>
+						</li>
+						<li className="lp-plan">
+							<div className="lp-plan__name">{t.plans.core.name}</div>
+							<div className="lp-plan__price">
+								{t.from} {money(locale, coreFrom)}
+							</div>
+							<div className="lp-plan__desc">{t.plans.core.desc}</div>
+							<div className="lp-plan__tiers">
+								{landingCoreTiers.map(tier => `${t.upTo(tier.maxUsers)} ${money(locale, tier.monthlyNetPln)}`).join(' · ')}
+							</div>
+						</li>
+						<li className="lp-plan">
+							<div className="lp-plan__name">{t.plans.pro.name}</div>
+							<div className="lp-plan__price">
+								{t.from} {money(locale, proTiers[0].monthlyNetPln)}
+							</div>
+							<div className="lp-plan__desc">{t.plans.pro.desc}</div>
+							<div className="lp-plan__tiers">
+								{proTiers.map(tier => `${t.upTo(tier.maxUsers)} ${money(locale, tier.monthlyNetPln)}`).join(' · ')}
+							</div>
+						</li>
+						{business ? (
+							<li className="lp-plan">
+								<div className="lp-plan__name">{t.plans.business.name}</div>
+								<div className="lp-plan__price">{money(locale, business.monthlyNetPln)}</div>
+								<div className="lp-plan__desc">{t.plans.business.desc}</div>
+								<div className="lp-plan__tiers">{t.upToLong(business.maxUsers)}</div>
+							</li>
+						) : null}
+					</ul>
+					<div className="lp-plans__modules">
+						<b>{t.modulesLine}:</b>{' '}
+						{landingModules.map(m => `${MODULE_COPY[m.id][locale]} + ${money(locale, m.monthlyNetPln)}`).join(' · ')} ({t.perMonth})
+					</div>
+
+					<details className="lp-compare">
+						<summary className="lp-compare__summary">{t.compare}</summary>
+						<div className="lp-compare__scroll">
+							<table className="lp-compare__table">
+								<thead>
+									<tr>
+										<th scope="col">{t.compareFeature}</th>
+										<th scope="col">{t.plans.free.name}</th>
+										<th scope="col">{t.plans.core.name}</th>
+										<th scope="col">{t.plans.pro.name}</th>
+										<th scope="col">{t.plans.business.name}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{landingFeatures.map(f => (
+										<tr key={f.id}>
+											<th scope="row">{FEATURE_COPY[f.id][locale].title}</th>
+											<td>{matrixCell(f, 'free')}</td>
+											<td>{matrixCell(f, 'core')}</td>
+											<td>{matrixCell(f, 'bundle')}</td>
+											<td>{matrixCell(f, 'bundle')}</td>
+										</tr>
+									))}
+									<tr>
+										<th scope="row">{t.comparePeople}</th>
+										<td>{t.upTo(landingTrial.maxUsers)}</td>
+										<td>{t.upTo(landingCoreTiers[landingCoreTiers.length - 1].maxUsers)}</td>
+										<td>{t.upTo(proTiers[proTiers.length - 1].maxUsers)}</td>
+										<td>{business ? t.upTo(business.maxUsers) : '—'}</td>
+									</tr>
+									<tr>
+										<th scope="row">{t.comparePrice}</th>
+										<td>{t.plans.free.price}</td>
+										<td>
+											{t.from} {money(locale, coreFrom)}
+										</td>
+										<td>
+											{t.from} {money(locale, proTiers[0].monthlyNetPln)}
+										</td>
+										<td>{business ? money(locale, business.monthlyNetPln) : '—'}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</details>
+
+					<div className="lp-notes">{t.notes}</div>
+					<div className="lp-notes">
+						{t.enterprise}{' '}
+						<Link href={t.contactHref} className="lp-link">
+							{t.enterpriseLink}
+						</Link>
+					</div>
+				</div>
 			</div>
 		</section>
 	)

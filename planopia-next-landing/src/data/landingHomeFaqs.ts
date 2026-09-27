@@ -1,8 +1,13 @@
+import { landingCoreTiers } from './landingPlanPricing'
+
+/** Cena startowa Core z planCatalog (generat) */
+const CORE_FROM = landingCoreTiers[0].monthlyNetPln
+
 export const landingHomeFaqs = {
 	pl: [
 		{
 			q: 'Czy Planopia jest darmowa?',
-			a: 'Tak. Każdy zespół zaczyna od 30 dni pełnej aplikacji — wszystkie moduły, bez karty płatniczej, z Asystentem AI bez limitu wiadomości. Po okresie próbnym możesz zostać na bezpłatnym planie z ewidencją czasu pracy do 5 aktywnych kont albo wykupić pakiet płatny z pełnym dostępem do urlopów, grafików, zadań, czatów, raportów i Asystenta AI — zgodnie z wybranym planem.',
+			a: `Tak. Każdy zespół zaczyna od 30 dni pełnej aplikacji — wszystkie moduły, bez karty płatniczej, z Asystentem AI bez limitu wiadomości. Po okresie próbnym możesz zostać na bezpłatnym planie (do 5 aktywnych kont) z ewidencją czasu pracy i wydrukiem ewidencji albo wybrać plan płatny: Core z urlopami, raportami zespołu i Asystentem AI od ${CORE_FROM} zł netto miesięcznie. Grafiki, Timer i QR oraz zadania i czat dobierasz jako moduły albo bierzesz wszystko w pakiecie PRO lub Business.`,
 		},
 		{
 			q: 'Czy na start potrzebuję karty płatniczej?',
@@ -10,7 +15,7 @@ export const landingHomeFaqs = {
 		},
 		{
 			q: 'Co obejmuje Planopia?',
-			a: 'W jednym miejscu prowadzisz ewidencję czasu pracy, urlopy i nieobecności, grafiki pracy, tablice zadań oraz czaty zespołowe, a dane wyeksportujesz do raportów PDF i Excel. W planach z AI masz też Asystenta AI bez limitu wiadomości.',
+			a: 'W jednym miejscu prowadzisz ewidencję czasu pracy, urlopy i nieobecności, grafiki pracy, tablice zadań oraz czaty zespołowe, a dane wyeksportujesz do raportów PDF i Excel. W każdym planie płatnym masz też Asystenta AI bez limitu wiadomości.',
 		},
 		{
 			q: 'Dla kogo jest aplikacja?',
@@ -22,7 +27,7 @@ export const landingHomeFaqs = {
 		},
 		{
 			q: 'Czy mogę wyeksportować dane do PDF lub Excela?',
-			a: 'Tak. Raporty czasu pracy, urlopów i grafików wygenerujesz w formatach PDF i Excel — gotowe do przekazania księgowości czy właścicielowi firmy.',
+			a: 'Tak. Raporty czasu pracy, urlopów i grafików wygenerujesz w formatach PDF i Excel — gotowe do przekazania księgowości czy właścicielowi firmy. W planie darmowym drukujesz ewidencję każdej osoby, a raporty całego zespołu są w planie Core.',
 		},
 		{
 			q: 'Czy moje dane są bezpieczne?',
@@ -32,7 +37,7 @@ export const landingHomeFaqs = {
 	en: [
 		{
 			q: 'Is Planopia free?',
-			a: 'Yes. Every team starts with a 30-day full-product trial — all modules, no credit card required, including the AI Assistant with no message limit. After the trial you can stay on a free time tracking plan for up to 5 active accounts, or upgrade to a paid plan with full access to leave, schedules, tasks, chats, reports, and the AI Assistant — according to your chosen plan.',
+			a: `Yes. Every team starts with a 30-day full-product trial — all modules, no credit card required, including the AI Assistant with no message limit. After the trial you can stay on the free plan (up to 5 active accounts) with time tracking and timesheet printouts, or choose a paid plan: Core with leave, team reports and the AI Assistant from ${CORE_FROM} PLN net per month. Add schedules, timer and QR, or tasks and chat as modules — or get everything in a PRO or Business package.`,
 		},
 		{
 			q: 'Do I need a credit card to start?',
@@ -40,7 +45,7 @@ export const landingHomeFaqs = {
 		},
 		{
 			q: 'What does Planopia include?',
-			a: 'In one place you get work time tracking, leave and absences, work schedules, task boards, and team chats, and you can export data to PDF and Excel reports. Plans with AI also include the AI Assistant with no message limit.',
+			a: 'In one place you get work time tracking, leave and absences, work schedules, task boards, and team chats, and you can export data to PDF and Excel reports. Every paid plan also includes the AI Assistant with no message limit.',
 		},
 		{
 			q: 'Who is Planopia for?',
@@ -52,7 +57,7 @@ export const landingHomeFaqs = {
 		},
 		{
 			q: 'Can I export data to PDF or Excel?',
-			a: 'Yes. You can generate time tracking, leave, and schedule reports in PDF and Excel — ready to share with accounting or the company owner.',
+			a: 'Yes. You can generate time tracking, leave, and schedule reports in PDF and Excel — ready to share with accounting or the company owner. On the free plan you print each person’s timesheet; whole-team reports come with the Core plan.',
 		},
 		{
 			q: 'Is my data secure?',

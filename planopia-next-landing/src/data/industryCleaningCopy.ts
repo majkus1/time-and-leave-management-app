@@ -53,7 +53,7 @@ export const industryCleaningCopy = {
 		},
 		{
 			q: 'Czy pracownik może rejestrować czas pracy telefonem?',
-			a: 'Tak. Planopia działa jako aplikacja internetowa PWA, a opcjonalny moduł Timer + QR pozwala rejestrować rozpoczęcie i zakończenie pracy z telefonu.',
+			a: 'Tak. Planopia działa jako aplikacja internetowa PWA, a opcjonalny moduł Timer i QR pozwala rejestrować rozpoczęcie i zakończenie pracy z telefonu.',
 		},
 		{
 			q: 'Czy Planopia ma GPS, NFC i śledzenie lokalizacji?',

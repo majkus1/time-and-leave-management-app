@@ -21,7 +21,7 @@ const strings = {
 			'Decyzje biznesowe — mniej zgadywania, więcej danych w jednym miejscu',
 		],
 		cta: 'Cennik — Asystent AI bez limitu',
-		ctaHref: '#cennik-pakiety-platne',
+		ctaHref: '#cennik',
 	},
 	en: {
 		eyebrow: 'Planopia AI Assistant',
@@ -35,7 +35,7 @@ const strings = {
 			'Business decisions — less guessing, more data in one place',
 		],
 		cta: 'Pricing — AI Assistant with no message limit',
-		ctaHref: '#prices-paid-plans',
+		ctaHref: '#prices',
 	},
 } as const
 

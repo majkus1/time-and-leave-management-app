@@ -64,7 +64,7 @@ const COPY: Record<
 		solutionBullets: [
 			'ewidencja i nadgodziny z podglądem miesiąca;',
 			'grafiki i urlopy — mniej telefonów „kto dziś wchodzi?”;',
-			'tablice zadań (Kanban) — zlecenia, fazy i statusy dla biura i ekip;',
+			'tablice zadań — zlecenia, fazy i statusy dla biura i ekip;',
 			'czaty zespołowe — ustalenia przy konkretnej budowie zamiast rozjeżdżających się wątków.',
 		],
 		autoTitle: 'Co daje automatyzacja raportów',
@@ -135,7 +135,7 @@ const COPY: Record<
 		solutionBullets: [
 			'time tracking and overtime with a clear monthly view;',
 			'schedules and leave — fewer “who is on today?” calls;',
-			'Kanban boards — jobs, phases, and status for office and crews;',
+			'Task boards — jobs, phases, and status for office and crews;',
 			'team chat — decisions tied to a site instead of random threads.',
 		],
 		autoTitle: 'What automation changes',
