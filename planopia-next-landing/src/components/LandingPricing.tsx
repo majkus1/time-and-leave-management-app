@@ -355,7 +355,7 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 
 	return (
 		<section id={locale === 'pl' ? 'cennik' : 'prices'} className="lp-section py-12 px-4" aria-labelledby="lp-title">
-			<div className="max-w-6xl mx-auto">
+			<div className="max-w-7xl mx-auto">
 				<div className="landing-about-heading-block">
 					<p className="landing-about-heading-eyebrow landing-section-eyebrow">{t.eyebrow}</p>
 					<h2 id="lp-title" className="landing-about-heading-title">
