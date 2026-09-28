@@ -156,7 +156,10 @@ Plik: `server/services/billingActivationService.js`
   - `maxUsers`,
   - `billingHadPaidPlan = true`,
   - `subscriptionType` (`enterprise` lub `premium`).
+- z `detachEndedStripeSubscription: true` (tylko reczna aktywacja) odpina zakonczona subskrypcje Stripe,
 - zapisuje `BillingLedgerEntry`.
+
+`activatePaidPlanManually(...)` — reczna aktywacja z endpointu internal: straznicy i tryb na sucho (sekcja 11).
 
 `applyAiAddonPack(...)`:
 - rowniez idempotentne przez `BillingLedgerEntry`,
@@ -172,7 +175,11 @@ Wspolne reguly:
 - poprawny `planKey` / `addonId`,
 - poprawny `billingCycle` dla planu,
 - limity miejsc dla planu,
-- addon tylko przy aktywnej platnej subskrypcji.
+- addon tylko przy aktywnej platnej subskrypcji,
+- online (P24, Stripe) tylko plany w sprzedazy (`SALE_PLAN_KEYS`) — Enterprise wylacznie zgloszeniem mailem,
+- zmiana planu przy oplaconym okresie albo zywej subskrypcji Stripe (`active`, `trialing`, `past_due`, `unpaid`):
+  online odmowa `PLAN_CHANGE_REQUIRES_REQUEST`, przyjmujemy tylko zgloszenie mailem (`channel: 'mail'`),
+  bo drugi plan naliczylby sie obok starego (`server/utils/billingPlanChange.js`).
 
 To jest kluczowe: niezaleznie od przyszlej bramki (Stripe), te walidacje powinny pozostac wspolne.
 
@@ -183,7 +190,10 @@ Plik: `server/services/billingRequestService.js`
 `POST /api/billing/purchase-request`:
 - przechodzi przez te same walidacje intencji zakupu,
 - wysyla mail do `BILLING_SALES_EMAIL`/`EMAIL_USER` + stale CC na admina,
-- dalsza aktywacja jest robiona recznie przez endpointy internal.
+- dalsza aktywacja jest robiona recznie przez endpointy internal,
+- zgloszenie przy aktywnym planie przychodzi jako „Zmiana planu” z danymi do przeniesienia okresu
+  (obecny plan i moduly, koniec oplaconego okresu, subskrypcja Stripe) oraz gotowa trescia aktywacji
+  (`server/utils/planChangeMail.js`) — procedura w sekcji 11.
 
 ## 11) Internal API do aktywacji (manual ops / M2M)
 
@@ -197,6 +207,39 @@ Endpointy:
 
 Auth:
 - header `X-Billing-Admin-Secret` == `BILLING_ADMIN_SECRET`.
+
+`activate-subscription` (`billingActivationService.activatePaidPlanManually`) — tresc: `teamId`, `planKey`,
+`billingCycle` (`monthly` / `annual`), `periodEnd` (ISO), `idempotencyKey`, `moduleKeys`, opcjonalnie `dryRun`, `force`:
+- dla Core `moduleKeys` obowiazkowe (takze puste `[]`) — aktywacja zapisuje dokladnie te liste, wiec podaj
+  pelna liste modulow zespolu po zmianie, nie tylko nowy modul; brak pola = blad walidacji,
+- dla PRO / Business / Enterprise bez `moduleKeys` (maja wszystkie moduly),
+- `dryRun: true` — sprawdza plan, moduly, limit miejsc, date i klucz bez zapisu; `stripeCancelRequired: true`
+  mowi, ze trzeba jeszcze anulowac subskrypcje Stripe,
+- 409 `MANUAL_ACTIVATION_CONFLICT` (w `meta.conflicts`): `PERIOD_END_IN_PAST`, `PERIOD_END_SHORTENS_PAID` (data
+  krotsza niz obecny oplacony okres), `STRIPE_SUBSCRIPTION_LIVE` (subskrypcja Stripe dziala — jej webhooki
+  nadpisalyby aktywacje); `force: true` (tylko boolean) swiadomie pomija tych straznikow, np. naprawa po nieudanym
+  webhooku — limitu miejsc nie pomija,
+- 409 `DUPLICATE_IDEMPOTENCY_KEY` — klucz juz uzyty, nic nie zmieniono (`meta`: kiedy i co zrobilo pierwsze
+  wywolanie); przy poprawce uzyj nowego klucza,
+- po aktywacji zakonczona (nie dzialajaca) subskrypcja Stripe jest odpinana (`stripeSubscriptionId = null`,
+  klient Stripe zostaje, ID trafia do ledgera jako `detachedStripeSubscriptionId`) — zespol przechodzi na
+  rozliczenie reczne: dostaje przypomnienia o koncu okresu i nie widzi przycisku anulowania platnosci cyklicznej.
+  Webhooki (`activatePaidPlan` bez flagi) nic nie odpinaja.
+
+Zmiana planu przy aktywnym planie (mail „Zmiana planu” — procedura z danymi i gotowa trescia aktywacji):
+1. Najpierw na sucho (`dryRun: true`) — zanim cokolwiek zostanie anulowane.
+2. Subskrypcja Stripe dziala: sprawdz w Stripe koniec biezacego okresu (odnowienie po zgloszeniu przesuwa date
+   z maila), uniewaznij otwarte faktury (zaplacona po zmianie przywrocilaby stary plan), anuluj od razu bez zwrotu
+   i bez rozliczenia proporcjonalnego (okres przenosimy), poczekaj na `customer.subscription.deleted`, aktywuj.
+   Anulowanie wpisuje do bazy date anulowania, wiec `periodEnd` bierzemy z maila albo ze Stripe, nie z bazy.
+3. Zalegla platnosc (`past_due` / `unpaid`): data w bazie to koniec karencji, nie oplaconego okresu — mail wstawia
+   w `periodEnd` napis zamiast daty (aktywacja sie na nim zatrzyma); przenosimy tylko oplacony okres.
+4. Drozszy plan: doplata za roznice za przeniesiony okres (mail liczy roznice wg cennika); tanszy — zwrot tylko po
+   ustaleniu z klientem, osobno.
+5. Nigdy nie zmieniaj planu ani ceny subskrypcji w panelu Stripe — metadane planu zostaja stare, odnowienia koncza
+   sie bledem.
+6. Po zmianie nie ma odnowienia karta: przed koncem okresu idzie przypomnienie, platnosc online w Pakietach
+   odblokowuje sie po koncu okresu.
 
 To jest dobre miejsce na przyszle automaty M2M, ale dla Stripe webhook lepiej trzymac dedykowany publiczny webhook route (tak jak P24), z weryfikacja podpisu Stripe.
 

@@ -14,7 +14,7 @@ const {
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
-const { planChangeNeedsRequest } = require('../utils/billingPlanChange')
+const { planChangeNeedsRequest, onlinePurchasablePlan } = require('../utils/billingPlanChange')
 
 /**
  * Moduły w sprzedaży albo dawny moduł, który zespół już ma (odnowienie) — np. osobny „Czat” sprzed „Zadania i czat”.
@@ -43,7 +43,7 @@ async function validateBillingPurchaseIntent(params) {
 	}
 
 	const team = await Team.findById(teamId).select(
-		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingModuleKeys billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus'
+		'name adminEmail billingPlanKey billingHadPaidPlan billingStatus billingPeriodEnd trialEndsAt billingModuleKeys billingInvoiceBuyerType billingInvoiceCompanyName billingInvoiceAddress billingInvoiceNip stripeSubscriptionId stripeSubscriptionStatus billingCycle'
 	)
 	if (!team) {
 		const err = new Error('Team not found')
@@ -64,6 +64,12 @@ async function validateBillingPurchaseIntent(params) {
 	if (kind === 'plan') {
 		if (!isPaidPlanKey(planKey)) {
 			const err = new Error('Invalid plan')
+			err.code = 'VALIDATION'
+			throw err
+		}
+		// Enterprise (ponad 100 osób) to wycena indywidualna — online tylko plany z cennika; zgłoszenie mailem zostaje
+		if (channel !== 'mail' && !onlinePurchasablePlan(planKey)) {
+			const err = new Error('Ten plan nie jest w sprzedaży online — dla zespołu powyżej 100 osób napisz do nas po wycenę.')
 			err.code = 'VALIDATION'
 			throw err
 		}

@@ -102,17 +102,23 @@ exports.postPurchaseRequest = async (req, res) => {
 
 exports.postInternalActivateSubscription = async (req, res) => {
 	try {
-		const { teamId, planKey, billingCycle, periodEnd, idempotencyKey } = req.body || {}
-		const result = await billingActivationService.activatePaidPlan({
+		const { teamId, planKey, billingCycle, periodEnd, idempotencyKey, moduleKeys, force, dryRun } = req.body || {}
+		// Strażnicy ręcznej obsługi (moduły Core, data, subskrypcja Stripe, klucz, na sucho) — w serwisie
+		const result = await billingActivationService.activatePaidPlanManually({
 			teamId,
 			planKey,
 			billingCycle,
 			periodEnd,
 			idempotencyKey,
-			actorLabel: 'internal_api',
+			moduleKeys,
+			force: force === true,
+			dryRun: dryRun === true,
 		})
 		res.json({ success: true, ...result })
 	} catch (e) {
+		if (e.code === 'DUPLICATE_IDEMPOTENCY_KEY' || e.code === 'MANUAL_ACTIVATION_CONFLICT') {
+			return res.status(409).json(billingClientErrorPayload(e))
+		}
 		if (e.code === 'VALIDATION' || e.code === 'NOT_FOUND' || e.code === 'PLAN_SEAT_LIMIT_EXCEEDED') {
 			return res.status(400).json(billingClientErrorPayload(e))
 		}
@@ -227,9 +233,19 @@ exports.postP24Checkout = async (req, res) => {
 
 exports.postStripeCheckout = async (req, res) => {
 	try {
-		const { priceId, priceIds, kind, planKey, addonId, billingCycle, moduleKey } = req.body || {}
+		const { priceId, priceIds, kind, planKey, addonId, billingCycle, moduleKey, moduleKeys } = req.body || {}
 		let resolvedPriceIds =
 			Array.isArray(priceIds) && priceIds.length > 0 ? priceIds.map(String) : null
+		// Moduły Core idą do Stripe tylko jako pozycje priceIds — priceId / kind kupiłyby sam plan, a moduły
+		// przepadłyby po cichu (np. nieodświeżona strona po zmianie koszyka)
+		const hasModuleKeys = moduleKeys != null && (!Array.isArray(moduleKeys) || moduleKeys.length > 0)
+		if (!resolvedPriceIds && hasModuleKeys) {
+			return res.status(400).json({
+				success: false,
+				message: 'Moduły do planu Core wybierz w konfiguratorze w Pakietach — odśwież stronę i spróbuj ponownie.',
+				code: 'VALIDATION',
+			})
+		}
 		if (!resolvedPriceIds && priceId) {
 			resolvedPriceIds = [String(priceId)]
 		}

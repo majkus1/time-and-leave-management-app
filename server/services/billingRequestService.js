@@ -1,12 +1,15 @@
+const crypto = require('crypto')
 const { escapeHtml, getEmailTemplate, sendEmail } = require('./emailService')
 const {
 	MONTHLY_NET_PRICES_PLN,
 	MODULE_MONTHLY_NET_PRICES_PLN,
 	AI_ADDON_PACKS,
+	normalizePaidPlanKey,
 	planLabel,
 	moduleLabel,
 } = require('../constants/planCatalog')
 const { validateBillingPurchaseIntent } = require('./billingPurchaseIntentValidator')
+const { planChangeMailLines } = require('../utils/planChangeMail')
 
 const MAX_NOTE_LEN = 2000
 
@@ -68,25 +71,36 @@ async function createPurchaseMailRequest(params) {
 	let lines
 
 	if (kind === 'plan') {
-		// Moduły już zwalidowane (tylko Core, w sprzedaży albo posiadane) — do maila i ceny
+		// Moduły już zwalidowane (tylko Core, w sprzedaży albo posiadane) — do maila i ceny.
+		// Klucz znormalizowany: stary alias „starter” ma cenę i nazwę Core do 15 osób
+		const planKey = normalizePaidPlanKey(params.planKey)
 		const mods = Array.isArray(params.moduleKeys) ? params.moduleKeys : []
-		const price = (MONTHLY_NET_PRICES_PLN[params.planKey] || 0) + mods.reduce((sum, m) => sum + (MODULE_MONTHLY_NET_PRICES_PLN[m] || 0), 0)
-		const what = [planLabel(params.planKey, 'pl'), ...mods.map(m => moduleLabel(m, 'pl'))].join(' + ')
+		const what = [planLabel(planKey, 'pl'), ...mods.map(m => moduleLabel(m, 'pl'))].join(' + ')
 		subject = planChange
 			? `[Planopia] Zmiana planu: ${what} (${params.billingCycle}) — ${team.name}`
 			: `[Planopia] Zamówienie: ${what} (${params.billingCycle}) — ${team.name}`
-		const currentMods = Array.isArray(team.billingModuleKeys) ? team.billingModuleKeys : []
-		lines = [
-			planChange
-				? `<p><strong>Typ:</strong> zmiana planu przy aktywnej subskrypcji — przenieś opłacony okres; nie pobieraj drugiej płatności obok działającej subskrypcji</p>`
-				: `<p><strong>Typ:</strong> subskrypcja</p>`,
-			planChange
-				? `<p><strong>Obecny plan:</strong> ${escapeHtml(planLabel(team.billingPlanKey, 'pl'))}${currentMods.length ? ' + ' + escapeHtml(currentMods.map(m => moduleLabel(m, 'pl')).join(', ')) : ''}${team.stripeSubscriptionId ? ' (subskrypcja kartą — Stripe)' : ''}</p>`
-				: '',
-			`<p><strong>Plan:</strong> ${escapeHtml(what)} (klucz: ${escapeHtml(params.planKey)}${mods.length ? ', moduły: ' + escapeHtml(mods.join(', ')) : ''})</p>`,
-			`<p><strong>Rozliczenie:</strong> ${escapeHtml(params.billingCycle)}</p>`,
-			`<p><strong>Cena katalogowa (netto mies.):</strong> ${price} PLN</p>`,
-		]
+		if (planChange) {
+			// Dane do przeniesienia opłaconego okresu i procedura — zła kolejność odbiera klientowi dostęp.
+			// Klucz jednorazowy per zgłoszenie: wspólny szablon wklejony drugi raz dawał ciche „duplicate”
+			const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 12)
+			const idempotencyKey = `zmiana-${team._id}-${stamp}-${crypto.randomBytes(2).toString('hex')}`
+			lines = planChangeMailLines({
+				team,
+				planKey,
+				moduleKeys: mods,
+				billingCycle: params.billingCycle,
+				idempotencyKey,
+				escapeHtml,
+			})
+		} else {
+			const price = (MONTHLY_NET_PRICES_PLN[planKey] || 0) + mods.reduce((sum, m) => sum + (MODULE_MONTHLY_NET_PRICES_PLN[m] || 0), 0)
+			lines = [
+				`<p><strong>Typ:</strong> subskrypcja</p>`,
+				`<p><strong>Plan:</strong> ${escapeHtml(what)} (klucz: ${escapeHtml(planKey)}${mods.length ? ', moduły: ' + escapeHtml(mods.join(', ')) : ''})</p>`,
+				`<p><strong>Rozliczenie:</strong> ${escapeHtml(params.billingCycle)}</p>`,
+				`<p><strong>Cena katalogowa (netto mies.):</strong> ${price} PLN</p>`,
+			]
+		}
 	} else {
 		const pack = AI_ADDON_PACKS[params.addonId]
 		subject = `[Planopia] Zamówienie: pakiet AI ${params.addonId} — ${team.name}`
@@ -98,16 +112,24 @@ async function createPurchaseMailRequest(params) {
 	}
 
 	const body = [
-		`<p>Nowe zgłoszenie zakupu z aplikacji Planopia.</p>`,
+		planChange ? `<p>Zgłoszenie zmiany planu z aplikacji Planopia.</p>` : `<p>Nowe zgłoszenie zakupu z aplikacji Planopia.</p>`,
 		...lines,
 		`<p><strong>Zespół:</strong> ${escapeHtml(team.name)} (id: ${escapeHtml(team._id.toString())})</p>`,
 		`<p><strong>E-mail admina zespołu:</strong> ${escapeHtml(team.adminEmail || '')}</p>`,
 		`<p><strong>Zgłaszający:</strong> ${escapeHtml(requester.firstName || '')} ${escapeHtml(requester.lastName || '')} &lt;${escapeHtml(requester.username)}&gt;</p>`,
 		note ? `<p><strong>Wiadomość od klienta:</strong><br/>${escapeHtml(note).replace(/\n/g, '<br/>')}</p>` : '',
-		`<p><em>Po potwierdzeniu płatności użyj endpointu aktywacji z kluczem BILLING_ADMIN_SECRET (idempotencyKey = unikalny identyfikator płatności).</em></p>`,
+		planChange
+			? ''
+			: `<p><em>Po potwierdzeniu płatności użyj endpointu aktywacji z kluczem BILLING_ADMIN_SECRET (idempotencyKey = unikalny identyfikator płatności; dla Core podaj moduleKeys — pełną listę modułów; najpierw sprawdź na sucho z dryRun: true).</em></p>`,
 	].join('')
 
-	const html = getEmailTemplate('Zamówienie Planopia — weryfikacja ręczna', body, null, null, null)
+	const html = getEmailTemplate(
+		planChange ? 'Zmiana planu Planopia — obsługa ręczna' : 'Zamówienie Planopia — weryfikacja ręczna',
+		body,
+		null,
+		null,
+		null
+	)
 
 	await sendEmail(to, 'https://app.planopia.pl', subject, html)
 

@@ -101,6 +101,8 @@ function billingAxiosErrorMessage(error, t) {
 	if (d?.code === 'INVOICE_INCOMPLETE' && d?.meta?.i18nKey && typeof d.meta.i18nKey === 'string') {
 		return t(`billingPackages.${d.meta.i18nKey}`)
 	}
+	// Serwer odpowiada po polsku — kod mapujemy na tekst w języku interfejsu
+	if (d?.code === 'PLAN_CHANGE_REQUIRES_REQUEST') return t('billingPackages.planChangeRequiresRequest')
 	return d?.message || error?.message || null
 }
 

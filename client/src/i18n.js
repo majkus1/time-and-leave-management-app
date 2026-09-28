@@ -525,6 +525,8 @@ i18n
 						teamSeatsInTeam_other: '{{count}} user accounts in this team (counts toward plan limits).',
 						planSeatLimitExceeded:
 							'Your team has {{used}} user accounts; this plan allows {{maxUsers}}. Remove or deactivate users in Team settings until you are within the limit, then try again.',
+						planChangeRequiresRequest:
+							'Your team has an active plan — to change the plan or add a module, use “Request a plan change” in Packages. We will carry over your paid period and confirm by email.',
 						planSeatsExceededShort: 'Too many users for this plan',
 						planSeatsExceededHint:
 							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
@@ -2917,6 +2919,8 @@ i18n
 						teamSeatsInTeam_other: '{{count}} kont użytkowników w zespole (liczy się do limitu planu).',
 						planSeatLimitExceeded:
 							'W zespole jest {{used}} użytkowników, a ten plan dopuszcza {{maxUsers}}. Usuń lub dezaktywuj konta w ustawieniach zespołu, a następnie spróbuj ponownie.',
+						planChangeRequiresRequest:
+							'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.',
 						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
 						planSeatsExceededHint:
 							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',

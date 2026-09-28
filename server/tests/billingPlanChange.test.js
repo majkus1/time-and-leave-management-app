@@ -1,6 +1,11 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
-const { planChangeNeedsRequest } = require('../utils/billingPlanChange')
+const {
+	planChangeNeedsRequest,
+	onlinePurchasablePlan,
+	manualActivationModuleKeys,
+	manualActivationConflicts,
+} = require('../utils/billingPlanChange')
 
 describe('planChangeNeedsRequest — zmiana planu tylko zgłoszeniem, gdy plan jest opłacony', () => {
 	it('opłacony plan (także z góry przez P24) — zgłoszenie', () => {
@@ -21,5 +26,90 @@ describe('planChangeNeedsRequest — zmiana planu tylko zgłoszeniem, gdy plan j
 		assert.equal(planChangeNeedsRequest({ paidActive: false }), false)
 		assert.equal(planChangeNeedsRequest({ paidActive: false, stripeSubscriptionId: null, stripeSubscriptionStatus: 'active' }), false)
 		assert.equal(planChangeNeedsRequest(null), false)
+	})
+})
+
+describe('onlinePurchasablePlan — online tylko plany w sprzedaży', () => {
+	it('nowe i stare klucze w sprzedaży, alias starter', () => {
+		for (const k of ['base_5', 'base_s', 'base_m', 'base_50', 'base_l', 'pro_15', 'pro', 'pro_50', 'business', 'starter']) {
+			assert.equal(onlinePurchasablePlan(k), true, k)
+		}
+	})
+
+	it('Enterprise i nieznane klucze nie', () => {
+		assert.equal(onlinePurchasablePlan('enterprise'), false)
+		assert.equal(onlinePurchasablePlan('trial'), false)
+		assert.equal(onlinePurchasablePlan(undefined), false)
+	})
+})
+
+describe('manualActivationModuleKeys — moduły przy ręcznej aktywacji', () => {
+	it('Core wymaga jawnej listy (także pustej), żeby nie skasować modułów po cichu', () => {
+		assert.throws(() => manualActivationModuleKeys('base_s', undefined), { code: 'VALIDATION' })
+		assert.deepEqual(manualActivationModuleKeys('base_s', []), [])
+		assert.deepEqual(manualActivationModuleKeys('base_s', ['timer_qr', 'tasks_chat']), ['timer_qr', 'tasks_chat'])
+	})
+
+	it('stare moduły klientów (np. osobny czat) są dozwolone', () => {
+		assert.deepEqual(manualActivationModuleKeys('base_m', ['tasks', 'chat']), ['tasks', 'chat'])
+	})
+
+	it('pakiety bez modułów; błędy na nieznanym i zduplikowanym module', () => {
+		assert.deepEqual(manualActivationModuleKeys('pro', undefined), [])
+		assert.deepEqual(manualActivationModuleKeys('business', []), [])
+		assert.throws(() => manualActivationModuleKeys('pro', ['timer_qr']), { code: 'VALIDATION' })
+		assert.throws(() => manualActivationModuleKeys('base_s', ['kanban']), { code: 'VALIDATION' })
+		assert.throws(() => manualActivationModuleKeys('base_s', ['timer_qr', 'timer_qr']), { code: 'VALIDATION' })
+		assert.throws(() => manualActivationModuleKeys('base_s', 'timer_qr'), { code: 'VALIDATION' })
+	})
+
+	it('nieznany plan — komunikat o planie, nie o modułach', () => {
+		assert.throws(() => manualActivationModuleKeys('trial', ['timer_qr']), { code: 'VALIDATION', message: 'Nieznany plan.' })
+		assert.deepEqual(manualActivationModuleKeys('starter', ['timer_qr']), ['timer_qr'])
+	})
+})
+
+describe('manualActivationConflicts — strażnicy ręcznej aktywacji', () => {
+	const now = new Date('2026-11-16T10:00:00Z')
+	const inDays = d => new Date(now.getTime() + d * 86400000)
+	const codes = r => r.conflicts.map(c => c.code)
+
+	it('data z przeszłości (np. z maila sprzed odnowienia) — odmowa', () => {
+		const r = manualActivationConflicts({ team: {}, periodEnd: inDays(-1), now })
+		assert.deepEqual(codes(r), ['PERIOD_END_IN_PAST'])
+	})
+
+	it('skracanie opłaconego okresu (zespół w międzyczasie opłacił dłużej) — odmowa; ta sama albo dłuższa data przechodzi', () => {
+		const team = { billingPeriodEnd: inDays(30) }
+		assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(10), now })), ['PERIOD_END_SHORTENS_PAID'])
+		assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(30), now })), [])
+		assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(60), now })), [])
+	})
+
+	it('po anulowaniu w Stripe (w bazie data anulowania, status canceled) — przeniesiona data przechodzi', () => {
+		const team = { billingPeriodEnd: inDays(-0.01), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'canceled' }
+		const r = manualActivationConflicts({ team, periodEnd: inDays(20), now })
+		assert.deepEqual(codes(r), [])
+		assert.equal(r.stripeCancelRequired, false)
+	})
+
+	it('działająca subskrypcja Stripe — aktywacja odmawia (webhooki by ją nadpisały)', () => {
+		for (const status of ['active', 'trialing', 'past_due', 'unpaid']) {
+			const team = { billingPeriodEnd: inDays(20), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: status }
+			assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(20), now })), ['STRIPE_SUBSCRIPTION_LIVE'], status)
+		}
+	})
+
+	it('na sucho przed anulowaniem: subskrypcja to krok do zrobienia, a karencji nie porównujemy', () => {
+		// past_due: w bazie koniec karencji, przenosimy krótszy opłacony okres — po anulowaniu i tak będzie data anulowania
+		const team = { billingPeriodEnd: inDays(25), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'past_due' }
+		const r = manualActivationConflicts({ team, periodEnd: inDays(18), now, dryRun: true })
+		assert.deepEqual(codes(r), [])
+		assert.equal(r.stripeCancelRequired, true)
+	})
+
+	it('na sucho bez Stripe (P24) — skracanie dalej wykrywane', () => {
+		const r = manualActivationConflicts({ team: { billingPeriodEnd: inDays(30) }, periodEnd: inDays(10), now, dryRun: true })
+		assert.deepEqual(codes(r), ['PERIOD_END_SHORTENS_PAID'])
 	})
 })
