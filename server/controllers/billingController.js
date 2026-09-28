@@ -9,7 +9,10 @@ const { buildPublicCatalog } = require('../services/billingCatalogService')
 const billingRequestService = require('../services/billingRequestService')
 const billingActivationService = require('../services/billingActivationService')
 const { getP24Config } = require('../services/przelewy24/p24Config')
-const { createCheckoutSessionAndRegister } = require('../services/przelewy24/p24CheckoutService')
+const {
+	createCheckoutSessionAndRegister,
+	createRenewalCheckoutSessionAndRegister,
+} = require('../services/przelewy24/p24CheckoutService')
 const { confirmP24ReturnForTeam } = require('../services/przelewy24/p24ReturnConfirmService')
 const {
 	createStripeCheckoutSession,
@@ -233,6 +236,36 @@ exports.postP24Checkout = async (req, res) => {
 			return res.status(502).json(billingGatewayErrorPayload(e))
 		}
 		console.error('billingController.postP24Checkout:', e)
+		res.status(500).json({ success: false, message: 'Server error' })
+	}
+}
+
+/** „Przedłuż plan” (BLIK / przelew) — plan i moduły z zespołu; przed końcem okresu nowy okres zaczyna się po obecnym */
+exports.postP24Renew = async (req, res) => {
+	try {
+		const { billingCycle } = req.body || {}
+		const result = await createRenewalCheckoutSessionAndRegister({
+			teamId: req.user.teamId,
+			userId: req.user.userId,
+			billingCycle,
+		})
+		res.json({ success: true, ...result })
+	} catch (e) {
+		if (
+			e.code === 'VALIDATION' ||
+			e.code === 'NOT_FOUND' ||
+			e.code === 'PLAN_SEAT_LIMIT_EXCEEDED' ||
+			e.code === 'PLAN_CHANGE_REQUIRES_REQUEST' ||
+			e.code === 'P24_NOT_CONFIGURED' ||
+			e.code === 'INVOICE_INCOMPLETE'
+		) {
+			return res.status(400).json(billingClientErrorPayload(e))
+		}
+		if (e.code === 'P24_API' || e.code === 'P24_PARSE') {
+			console.error('billingController.postP24Renew', e.code + ':', e.message, e.p24Response || '')
+			return res.status(502).json(billingGatewayErrorPayload(e))
+		}
+		console.error('billingController.postP24Renew:', e)
 		res.status(500).json({ success: false, message: 'Server error' })
 	}
 }

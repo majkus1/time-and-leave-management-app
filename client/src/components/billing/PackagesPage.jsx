@@ -12,6 +12,7 @@ import {
 	useBillingPurchaseRequest,
 	useBillingP24Status,
 	useBillingP24Checkout,
+	useBillingP24Renew,
 	useBillingP24ConfirmReturn,
 	useBillingStripeStatus,
 	useBillingStripeCheckout,
@@ -28,7 +29,12 @@ import { pricingFromCatalog, recommendPlan } from '../../utils/pricingCalculator
 import { ANNUAL_MONTHS_CHARGED, formatPlanMoney, isEnglishLang } from '../../utils/planPriceFormat'
 import { ownedSaleModules, usedSaleModules } from '../../utils/planModules'
 import { clearPricingIntent, readPricingIntent } from '../../utils/pricingIntent'
-import { paidPlanIdsFromCatalog, paidSubscriptionActive, planChangeByRequest } from '../../utils/billingPlanState'
+import {
+	paidPlanIdsFromCatalog,
+	paidSubscriptionActive,
+	planChangeByRequest,
+	renewalOffer,
+} from '../../utils/billingPlanState'
 import { useAuth } from '../../context/AuthContext'
 import { isAdmin, isHR } from '../../utils/roleHelpers'
 import './PackagesPage.css'
@@ -198,6 +204,7 @@ export default function PackagesPage() {
 	const { data: p24Status, isPending: p24StatusLoading } = useBillingP24Status()
 	const { data: stripeStatus, isPending: stripeStatusLoading } = useBillingStripeStatus()
 	const p24Checkout = useBillingP24Checkout()
+	const p24Renew = useBillingP24Renew()
 	const p24ConfirmReturn = useBillingP24ConfirmReturn()
 	const stripeCheckout = useBillingStripeCheckout()
 	const stripeCancelSubscription = useBillingStripeCancelSubscription()
@@ -688,6 +695,29 @@ export default function PackagesPage() {
 		[canSubmitPurchaseRequest, catalog, teamSeats, billing, p24Status, stripeStatus, requestPlanOnlineCheckout, showAlert, t, ent, paidPlanIds, openPlanChangeRequest]
 	)
 
+	/**
+	 * „Przedłuż plan” BLIK / przelewem: ten sam plan i moduły (serwer bierze je z zespołu), przed końcem okresu nowy
+	 * okres zaczyna się po obecnym — dlatego przypomnienie „Przedłuż pakiet” nie kończy się samą prośbą o zmianę planu.
+	 */
+	const startRenewal = useCallback(
+		async billingCycle => {
+			if (!canSubmitPurchaseRequest) return
+			if (!(await ensureInvoiceForPurchase())) return
+			setP24BusyKey(`renew:${billingCycle}`)
+			try {
+				const data = await p24Renew.mutateAsync({ billingCycle })
+				if (data?.redirectUrl) window.location.assign(data.redirectUrl)
+			} catch (e) {
+				await showAlert(
+					billingAxiosErrorMessage(e, t) || e.response?.data?.message || e.message || t('billingPackages.p24PayError')
+				)
+			} finally {
+				setP24BusyKey(null)
+			}
+		},
+		[canSubmitPurchaseRequest, ensureInvoiceForPurchase, p24Renew, showAlert, t]
+	)
+
 	const coreConfiguratorPayDisabled = useMemo(() => {
 		const planKey = coreConfiguratorPlanKey
 		const mods = coreConfiguratorMods
@@ -928,6 +958,9 @@ export default function PackagesPage() {
 	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
 	const activePaid = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
 	const planChangeOnly = planChangeByRequest(ent, paidPlanIds)
+	// Przedłużenie tylko dla osób, które mogą płacić, i gdy BLIK / przelew działa
+	const renewal = canSubmitPurchaseRequest && p24Status?.ready === true ? renewalOffer(ent, catalog) : null
+	const renewalDate = renewal ? formatPlanDate(renewal.periodEnd.toISOString(), localeTag) : null
 	const currentPlanForPicker =
 		planChangeOnly && ent
 			? {
@@ -1126,6 +1159,35 @@ export default function PackagesPage() {
 							<p className="packages-current-plan__seats" role="status">
 								{t('billingPackages.teamSeatsInTeam', { count: teamSeats })}
 							</p>
+						)}
+						{renewal && (
+							<div className="packages-renew">
+								<div className="packages-renew__heading">{t('billingPackages.renewTitle')}</div>
+								<p className="packages-current-plan__body">
+									{renewal.active
+										? t('billingPackages.renewBodyActive', { date: renewalDate })
+										: t('billingPackages.renewBodyLapsed', { date: renewalDate })}
+								</p>
+								<div className="packages-renew__actions">
+									<button
+										type="button"
+										className="packages-renew__btn"
+										disabled={p24BusyKey !== null}
+										onClick={() => void startRenewal('monthly')}
+									>
+										{p24BusyKey === 'renew:monthly' ? t('billingPackages.renewBusy') : t('billingPackages.renewMonthly')}
+									</button>
+									<button
+										type="button"
+										className="packages-renew__btn"
+										disabled={p24BusyKey !== null}
+										onClick={() => void startRenewal('annual')}
+									>
+										{p24BusyKey === 'renew:annual' ? t('billingPackages.renewBusy') : t('billingPackages.renewAnnual')}
+									</button>
+								</div>
+								<div className="packages-renew__note">{t('billingPackages.renewNote')}</div>
+							</div>
 						)}
 						{ent?.stripe?.canManagePaymentMethod && (
 							<div className="packages-stripe-card">

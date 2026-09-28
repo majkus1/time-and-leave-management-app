@@ -45,6 +45,14 @@ const billingPaymentSessionSchema = new mongoose.Schema(
 		},
 		p24OrderId: { type: String },
 		registerError: { type: String },
+		/**
+		 * Przedłużenie tego samego planu przed końcem okresu: koniec opłaconego okresu z chwili założenia sesji.
+		 * Finalizacja liczy nowy okres od tej daty (z sesji, nie z bieżącego stanu zespołu), więc ponowiona albo
+		 * równoległa finalizacja tej samej płatności nie dokłada drugiego okresu.
+		 */
+		renewFromPeriodEnd: { type: Date },
+		/** Płatność zaksięgowana bez zmiany zespołu — do ręcznego rozliczenia (plan_changed / already_covered) */
+		settlementNote: { type: String, maxlength: 200 },
 	},
 	{ collection: 'billingpaymentsessions', timestamps: true }
 )

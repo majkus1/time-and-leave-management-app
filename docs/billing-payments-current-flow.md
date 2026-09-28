@@ -97,6 +97,20 @@ Jesli register sie wywali:
 - status sesji -> `register_error`,
 - zapis bledu w `registerError`.
 
+Przedluzenie planu („Przedluz plan” w Pakietach): `POST /api/billing/p24/renew` (`{ billingCycle }`) ->
+`createRenewalCheckoutSessionAndRegister` — plan i moduly bierzemy z zespolu, nie od klienta (przedluzenie nie moze
+stac sie zmiana planu), dalej ta sama sciezka co checkout. Gdy walidator uzna platnosc za przedluzenie, sesja
+zapisuje `renewFromPeriodEnd` (koniec oplaconego okresu z chwili zalozenia sesji). Finalizacja
+(`p24FinalizePaidSession` -> `renewalFinalizeDecision`) liczy nowy okres od tej daty, nie od biezacego stanu zespolu:
+- ponowiona albo rownolegla finalizacja tej samej platnosci (webhook + powrot ze strony platnosci, ponowienie po
+  awarii, reczna aktywacja po nieudanym webhooku) zapisuje ten sam wynik — nie doklada drugiego okresu,
+- druga, inna platnosc z tej samej daty (juz zaksiegowana) doklada okres po poprzedniej,
+- plan albo moduly zmienione w miedzyczasie albo okres juz dluzszy (np. reczne przedluzenie) — zespolu nie zmieniamy,
+  sesja `paid` z `settlementNote` (`plan_changed` / `already_covered`) i blad `[p24] przedluzenie zaksiegowane bez
+  zmiany zespolu` w logach — do recznego rozliczenia.
+Po wygasnieciu (sesja bez `renewFromPeriodEnd`) — okres od platnosci, jak dotad. Przypomnienia „Przedluz pakiet”
+(7 dni i dzien przed koncem) mowia o przedluzeniu wprost.
+
 ## 6) Podpisy P24 (sign) i HTTP client
 
 Pliki:
@@ -179,7 +193,10 @@ Wspolne reguly:
 - online (P24, Stripe) tylko plany w sprzedazy (`SALE_PLAN_KEYS`) — Enterprise wylacznie zgloszeniem mailem,
 - zmiana planu przy oplaconym okresie albo zywej subskrypcji Stripe (`active`, `trialing`, `past_due`, `unpaid`):
   online odmowa `PLAN_CHANGE_REQUIRES_REQUEST`, przyjmujemy tylko zgloszenie mailem (`channel: 'mail'`),
-  bo drugi plan naliczylby sie obok starego (`server/utils/billingPlanChange.js`).
+  bo drugi plan naliczylby sie obok starego (`server/utils/billingPlanChange.js`),
+- wyjatek: przedluzenie TEGO SAMEGO planu z tymi samymi modulami BLIK / przelewem przed koncem okresu
+  (`isEarlyRenewal`, tylko P24 — `allowEarlyRenewal: true`; karta zaczelaby okres od razu). Bez dzialajacej
+  subskrypcji Stripe i tylko przy okresie z data konca (zespol rozliczany osobno faktura, np. Halo — nie).
 
 To jest kluczowe: niezaleznie od przyszlej bramki (Stripe), te walidacje powinny pozostac wspolne.
 

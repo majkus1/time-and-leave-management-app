@@ -120,9 +120,66 @@ function manualActivationConflicts({ team, periodEnd, now, dryRun = false, strip
 	return { conflicts, stripeCancelRequired: stripeLive }
 }
 
+function sameModuleSet(a, b) {
+	const x = new Set(Array.isArray(a) ? a : [])
+	const y = new Set(Array.isArray(b) ? b : [])
+	return x.size === y.size && [...x].every(k => y.has(k))
+}
+
+/** Ten sam plan (po normalizacji, np. starter → base_s) i — przy Core — ten sam zbiór modułów co zapisany w zespole */
+function samePlanAndModules(team, planKey, moduleKeys) {
+	const current = normalizePaidPlanKey(team?.billingPlanKey)
+	if (!isPaidPlanKey(current) || current !== normalizePaidPlanKey(planKey)) return false
+	return !isCorePlanKey(current) || sameModuleSet(moduleKeys, team.billingModuleKeys)
+}
+
+/**
+ * Przedłużenie tego samego planu przed końcem opłaconego okresu (BLIK / przelew): ten sam plan i — przy Core — te same
+ * moduły, okres z datą końca jeszcze trwa, bez działającej subskrypcji Stripe (ta odnawia się sama, druga płatność
+ * naliczyłaby się podwójnie). Pakiety mają wszystkie moduły, więc liczy się tylko plan. To nie zmiana planu —
+ * nowy okres zaczyna się po obecnym (renewalFinalizeDecision), więc nic nie przepada.
+ * @param {{ team: object, planKey: string, moduleKeys?: string[], at: Date }} p
+ */
+function isEarlyRenewal({ team, planKey, moduleKeys, at }) {
+	if (!team || team.billingStatus !== 'active') return false
+	if (Boolean(team.stripeSubscriptionId) && LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(team.stripeSubscriptionStatus)) {
+		return false
+	}
+	const end = team.billingPeriodEnd ? new Date(team.billingPeriodEnd) : null
+	if (!end || Number.isNaN(end.getTime()) || end <= at) return false
+	return samePlanAndModules(team, planKey, moduleKeys)
+}
+
+/**
+ * Finalizacja przedłużenia BLIK / przelewem (sesja z renewFromPeriodEnd). Okres liczymy z daty zapisanej w sesji,
+ * nie z bieżącego stanu zespołu: ponowiona albo równoległa finalizacja tej samej płatności (webhook i powrót ze strony
+ * płatności, ponowienie po awarii, ręczna aktywacja po nieudanym webhooku) nie może dołożyć drugiego okresu,
+ * a zmiana planu w międzyczasie nie może zostać nadpisana.
+ * @param {{ team: object|null, planKey: string, moduleKeys?: string[], renewFrom: Date, otherRenewalPaid: boolean, periodEndFrom: (start: Date) => Date }} p
+ * @returns {{ action: 'extend', start: Date } | { action: 'skip', reason: 'plan_changed' | 'already_covered' }}
+ */
+function renewalFinalizeDecision({ team, planKey, moduleKeys, renewFrom, otherRenewalPaid, periodEndFrom }) {
+	const current = team?.billingPeriodEnd ? new Date(team.billingPeriodEnd) : null
+	// Plan, moduły albo rozliczenie (brak daty końca) zmienione od założenia sesji — nie nadpisujemy, rozliczenie ręczne
+	if (!team || !samePlanAndModules(team, planKey, moduleKeys) || !current || Number.isNaN(current.getTime())) {
+		return { action: 'skip', reason: 'plan_changed' }
+	}
+	const from = new Date(renewFrom)
+	// Nikt nie ruszał okresu od założenia sesji — przedłużenie od końca, także gdy płatność doszła już po nim
+	if (current.getTime() === from.getTime()) return { action: 'extend', start: from }
+	// Wcześniej zaksięgowane INNE przedłużenie z tej samej daty (dwie płatności jedna po drugiej) — dokładamy po nim
+	if (otherRenewalPaid && current > from) return { action: 'extend', start: current }
+	// Okres zmienił się inaczej (ta sama płatność już przetworzona, równoległa finalizacja, ręczna aktywacja):
+	// ten sam wynik zapisujemy idempotentnie, ale nigdy nie skracamy okresu ani nie dokładamy go drugi raz
+	if (periodEndFrom(from) < current) return { action: 'skip', reason: 'already_covered' }
+	return { action: 'extend', start: from }
+}
+
 module.exports = {
 	planChangeNeedsRequest,
 	onlinePurchasablePlan,
+	isEarlyRenewal,
+	renewalFinalizeDecision,
 	manualActivationModuleKeys,
 	manualActivationConflicts,
 	hasOpenEndedBilling,

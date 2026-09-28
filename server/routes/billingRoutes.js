@@ -30,6 +30,13 @@ router.post(
 	billingController.postP24Checkout
 )
 router.post(
+	'/p24/renew',
+	authenticateToken,
+	requireBillingStaffRole,
+	billingP24CheckoutLimiter,
+	billingController.postP24Renew
+)
+router.post(
 	'/p24/confirm-return',
 	authenticateToken,
 	requireBillingStaffRole,

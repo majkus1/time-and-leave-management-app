@@ -216,6 +216,55 @@
 	cursor: wait;
 }
 
+/* Przedłużenie BLIK / przelewem w karcie obecnego planu — tokeny motywu (jasny i ciemny) */
+.packages-renew {
+	margin-top: 0.75rem;
+	padding-top: 0.65rem;
+	border-top: 1px solid var(--po-border, #e2e8f0);
+}
+
+.packages-renew__heading {
+	margin: 0 0 0.35rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--po-text, #213555);
+}
+
+.packages-renew__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.55rem;
+}
+
+.packages-renew__btn {
+	padding: 0.45rem 0.85rem;
+	font-size: 0.88rem;
+	font-weight: 600;
+	color: #fff;
+	background: var(--po-brand, #00a846);
+	border: 1px solid var(--po-brand, #00a846);
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.packages-renew__btn:hover:not(:disabled) {
+	background: var(--po-brand-hover, #009639);
+	border-color: var(--po-brand-hover, #009639);
+}
+
+.packages-renew__btn:disabled {
+	opacity: 0.65;
+	cursor: wait;
+}
+
+.packages-renew__note {
+	margin-top: 0.45rem;
+	font-size: 0.8rem;
+	line-height: 1.4;
+	color: var(--po-text-muted, #64748b);
+}
+
 .packages-usage__text {
 	margin: 0;
 	color: #475569;

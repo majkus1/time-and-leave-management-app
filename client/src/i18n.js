@@ -527,6 +527,15 @@ i18n
 							'Your team has {{used}} user accounts; this plan allows {{maxUsers}}. Remove or deactivate users in Team settings until you are within the limit, then try again.',
 						planChangeRequiresRequest:
 							'Your team has an active plan — to change the plan or add a module, use “Request a plan change” in Packages. We will carry over your paid period and confirm by email.',
+						renewTitle: 'Renew your plan (BLIK / bank transfer)',
+						renewBodyActive:
+							'Your plan is paid until {{date}}. You can renew it now — the new period starts on {{date}}, so you lose nothing.',
+						renewBodyLapsed: 'Your plan expired on {{date}}. The renewal takes effect right after payment.',
+						renewMonthly: 'Renew for a month',
+						renewAnnual: 'Renew for a year (pay for 10 months)',
+						renewBusy: 'Redirecting to payment…',
+						renewNote:
+							'Same plan and modules as now. You will see the amount before paying with Przelewy24. A different plan or modules can be chosen below.',
 						planSeatsExceededShort: 'Too many users for this plan',
 						planSeatsExceededHint:
 							'{{used}} users in team — this plan allows {{maxUsers}}. Reduce users first.',
@@ -2921,6 +2930,15 @@ i18n
 							'W zespole jest {{used}} użytkowników, a ten plan dopuszcza {{maxUsers}}. Usuń lub dezaktywuj konta w ustawieniach zespołu, a następnie spróbuj ponownie.',
 						planChangeRequiresRequest:
 							'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.',
+						renewTitle: 'Przedłuż plan (BLIK / przelew)',
+						renewBodyActive:
+							'Plan jest opłacony do {{date}}. Możesz przedłużyć go już teraz — nowy okres zacznie się {{date}}, więc nic nie przepada.',
+						renewBodyLapsed: 'Plan wygasł {{date}}. Przedłużenie zacznie działać od razu po płatności.',
+						renewMonthly: 'Przedłuż o miesiąc',
+						renewAnnual: 'Przedłuż o rok (płacisz za 10 miesięcy)',
+						renewBusy: 'Przekierowanie do płatności…',
+						renewNote:
+							'Ten sam plan i moduły co teraz. Kwotę zobaczysz przed płatnością w Przelewy24. Inny plan albo moduły wybierzesz niżej.',
 						planSeatsExceededShort: 'Za dużo użytkowników na ten plan',
 						planSeatsExceededHint:
 							'W zespole jest {{used}} użytkowników — ten plan: max. {{maxUsers}}. Najpierw zmniejsz liczbę kont.',

@@ -1,11 +1,15 @@
 const crypto = require('crypto')
 const { firmDb } = require('../../db/db')
 const BillingPaymentSession = require('../../models/BillingPaymentSession')(firmDb)
+const Team = require('../../models/Team')(firmDb)
 const { validateBillingPurchaseIntent } = require('../billingPurchaseIntentValidator')
 const {
 	p24CheckoutAmountGroszeForPlan,
 	checkoutAmountGroszeForAddon,
 	isModuleKey,
+	isPaidPlanKey,
+	isCorePlanKey,
+	normalizePaidPlanKey,
 	planLabel,
 	moduleLabel,
 } = require('../../constants/planCatalog')
@@ -49,7 +53,7 @@ async function createCheckoutSessionAndRegister(params) {
 		throw err
 	}
 
-	const { team, requester } = await validateBillingPurchaseIntent({
+	const { team, requester, renewal } = await validateBillingPurchaseIntent({
 		teamId: params.teamId,
 		requestingUserId: params.userId,
 		kind: params.kind,
@@ -57,6 +61,8 @@ async function createCheckoutSessionAndRegister(params) {
 		addonId: params.addonId,
 		billingCycle: params.billingCycle,
 		moduleKeys: params.moduleKeys,
+		// Ten sam plan przed końcem okresu przechodzi jako przedłużenie — okres liczy finalizeP24PaidSession od obecnego końca
+		allowEarlyRenewal: true,
 	})
 
 	const email = pickPayerEmail(team, requester)
@@ -115,6 +121,8 @@ async function createCheckoutSessionAndRegister(params) {
 		customerEmail: email,
 		note,
 		status: 'pending',
+		// Przedłużenie przed końcem okresu: finalizacja liczy nowy okres od tej daty (z sesji, nie z bieżącego stanu)
+		renewFromPeriodEnd: kind === 'plan' && renewal ? team.billingPeriodEnd : undefined,
 	})
 
 	const registerBody = {
@@ -161,4 +169,34 @@ async function createCheckoutSessionAndRegister(params) {
 	}
 }
 
-module.exports = { createCheckoutSessionAndRegister }
+/**
+ * „Przedłuż plan” w Pakietach (BLIK / przelew): plan i moduły bierzemy z zespołu, nie od klienta — przedłużenie
+ * nie może po cichu stać się zmianą planu. Przed końcem okresu nowy okres zacznie się po obecnym, po wygaśnięciu —
+ * od płatności (finalizeP24PaidSession).
+ * @param {{ teamId: string, userId: string, billingCycle: 'monthly'|'annual' }} params
+ */
+async function createRenewalCheckoutSessionAndRegister({ teamId, userId, billingCycle }) {
+	const team = await Team.findById(teamId).select('billingPlanKey billingModuleKeys').lean()
+	if (!team) {
+		const err = new Error('Team not found')
+		err.code = 'NOT_FOUND'
+		throw err
+	}
+	const planKey = normalizePaidPlanKey(team.billingPlanKey)
+	if (!isPaidPlanKey(planKey)) {
+		const err = new Error('Zespół nie ma planu do przedłużenia — wybierz plan w Pakietach.')
+		err.code = 'VALIDATION'
+		throw err
+	}
+	return createCheckoutSessionAndRegister({
+		teamId,
+		userId,
+		kind: 'plan',
+		planKey,
+		billingCycle,
+		// Pakiety mają wszystkie moduły w cenie — lista modułów tylko przy Core
+		moduleKeys: isCorePlanKey(planKey) && Array.isArray(team.billingModuleKeys) ? team.billingModuleKeys : [],
+	})
+}
+
+module.exports = { createCheckoutSessionAndRegister, createRenewalCheckoutSessionAndRegister }

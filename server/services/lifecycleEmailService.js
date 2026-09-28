@@ -213,6 +213,10 @@ function buildBillingEmail(kind, team, facts = {}) {
 				paragraph(
 					`pakiet <strong>${label}</strong> zespołu <strong>${name}</strong> jest opłacony do <strong>${until}</strong>. Płatność BLIK / przelewem jest jednorazowa i nie odnawia się automatycznie.`
 				) +
+				// Przedłużenie przed końcem liczy się od obecnego końca okresu (p24FinalizePaidSession) — warto to powiedzieć wprost
+				paragraph(
+					'Możesz przedłużyć pakiet już teraz w Pakietach („Przedłuż plan”) — nowy okres zacznie się po obecnym, więc nic nie przepada.'
+				) +
 				paragraph(
 					'Po tym dniu zespół przejdzie na plan darmowy: pozostanie ewidencja czasu pracy do 5 kont, a urlopy, grafiki, zadania, czat i asystent AI będą dostępne ponownie po przedłużeniu. Dane zespołu pozostają nienaruszone.'
 				) +

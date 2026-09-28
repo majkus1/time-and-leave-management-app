@@ -14,7 +14,7 @@ const {
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
-const { planChangeNeedsRequest, onlinePurchasablePlan } = require('../utils/billingPlanChange')
+const { planChangeNeedsRequest, onlinePurchasablePlan, isEarlyRenewal } = require('../utils/billingPlanChange')
 
 /**
  * Moduły w sprzedaży albo dawny moduł, który zespół już ma (odnowienie) — np. osobny „Czat” sprzed „Zadania i czat”.
@@ -28,7 +28,9 @@ function moduleAllowedForPurchase(team, moduleKey) {
 /**
  * Wspólne reguły dla zgłoszenia mailem, Przelewy24 i Stripe.
  * channel: 'online' (domyślnie — płatność) albo 'mail' (zgłoszenie bez płatności, obsługa ręczna).
- * @returns {Promise<{ team: import('mongoose').Document, requester: import('mongoose').Document, planChange: boolean }>}
+ * allowEarlyRenewal: tylko Przelewy24 — przedłużenie tego samego planu przed końcem okresu (nowy okres po obecnym);
+ * karta zaczęłaby okres od razu, więc Stripe tego nie przekazuje.
+ * @returns {Promise<{ team: import('mongoose').Document, requester: import('mongoose').Document, planChange: boolean, renewal: boolean }>}
  */
 async function validateBillingPurchaseIntent(params) {
 	const { teamId, requestingUserId, kind, planKey, addonId, billingCycle, moduleKeys } = params
@@ -61,6 +63,7 @@ async function validateBillingPurchaseIntent(params) {
 	}
 
 	let planChange = false
+	let renewal = false
 	if (kind === 'plan') {
 		if (!isPaidPlanKey(planKey)) {
 			const err = new Error('Invalid plan')
@@ -86,7 +89,13 @@ async function validateBillingPurchaseIntent(params) {
 			stripeSubscriptionId: team.stripeSubscriptionId,
 			stripeSubscriptionStatus: team.stripeSubscriptionStatus,
 		})
-		if (planChange && channel !== 'mail') {
+		// Przedłużenie tego samego planu BLIK / przelewem to nie zmiana planu: nowy okres zacznie się po obecnym
+		// (p24FinalizePaidSession), więc wcześniejsza płatność niczego nie zabiera
+		renewal =
+			planChange &&
+			params.allowEarlyRenewal === true &&
+			isEarlyRenewal({ team, planKey, moduleKeys: Array.isArray(moduleKeys) ? moduleKeys : [], at: new Date() })
+		if (planChange && channel !== 'mail' && !renewal) {
 			const err = new Error(
 				'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.'
 			)
@@ -147,7 +156,7 @@ async function validateBillingPurchaseIntent(params) {
 		throw err
 	}
 
-	return { team, requester, planChange }
+	return { team, requester, planChange, renewal }
 }
 
 /**

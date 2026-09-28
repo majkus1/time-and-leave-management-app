@@ -75,6 +75,24 @@ export function useBillingP24Checkout() {
 	})
 }
 
+/** „Przedłuż plan” BLIK / przelewem — plan i moduły bierze serwer z zespołu, klient wybiera tylko okres. */
+export function useBillingP24Renew() {
+	const qc = useQueryClient()
+	return useMutation({
+		mutationFn: async ({ billingCycle }) => {
+			const { data } = await axios.post(
+				`${API_URL}/api/billing/p24/renew`,
+				{ billingCycle },
+				{ withCredentials: true }
+			)
+			return data
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: BILLING_ENTITLEMENTS_QUERY_KEY })
+		},
+	})
+}
+
 /** Po powrocie z P24 — synchronizacja gdy webhook (ngrok) nie dotarł. */
 export function useBillingP24ConfirmReturn() {
 	const qc = useQueryClient()

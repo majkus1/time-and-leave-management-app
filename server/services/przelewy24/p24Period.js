@@ -1,7 +1,8 @@
 /**
- * Koniec okresu subskrypcji od momentu zaksięgowania płatności.
+ * Koniec okresu subskrypcji od jego początku: zaksięgowania płatności albo — przy przedłużeniu przed końcem —
+ * końca okresu zapisanego w sesji (renewalFinalizeDecision w server/utils/billingPlanChange.js).
  * Roczny pakiet w cenniku = 10 mies. opłaty, ale dostęp 12 mies. (jak w UI).
- * @param {Date} paymentDate
+ * @param {Date} paymentDate początek okresu
  * @param {'monthly'|'annual'} billingCycle
  */
 function subscriptionPeriodEnd(paymentDate, billingCycle) {

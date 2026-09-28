@@ -19,6 +19,27 @@ export function paidSubscriptionActive(ent, paidPlanIds, now = new Date()) {
 	return true
 }
 
+function liveStripeSubscription(ent) {
+	return Boolean(ent?.stripe?.subscriptionId) && LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(ent?.stripe?.subscriptionStatus)
+}
+
+/**
+ * „Przedłuż plan” BLIK / przelewem: plan w sprzedaży z datą końca, bez działającej subskrypcji kartą (ta odnawia
+ * się sama) i bez rozliczenia osobnego (ukryta data, np. faktura). Przed końcem okresu nowy okres zacznie się
+ * po obecnym, po wygaśnięciu — od płatności. Bliźniak serwera: isEarlyRenewal / renewalFinalizeDecision
+ * w server/utils/billingPlanChange.js.
+ * @returns {{ planKey: string, periodEnd: Date, active: boolean } | null}
+ */
+export function renewalOffer(ent, catalog, now = new Date()) {
+	if (!ent?.planKey || !ent.billingPeriodEnd || ent.hideBillingPeriodEnd) return null
+	if (liveStripeSubscription(ent)) return null
+	const saleIds = new Set([...(catalog?.coreTiers || []), ...(catalog?.bundles || [])].map(t => t.id))
+	if (!saleIds.has(ent.planKey)) return null
+	const periodEnd = new Date(ent.billingPeriodEnd)
+	if (Number.isNaN(periodEnd.getTime())) return null
+	return { planKey: ent.planKey, periodEnd, active: ent.billingStatus === 'active' && periodEnd > now }
+}
+
 /**
  * Opłacony plan albo działająca subskrypcja kartą (także ponawianie płatności po odrzuceniu karty):
  * zmiana planu i dodanie modułu tylko prośbą mailem — drugi plan online naliczyłby się obok starego.
@@ -26,5 +47,5 @@ export function paidSubscriptionActive(ent, paidPlanIds, now = new Date()) {
 export function planChangeByRequest(ent, paidPlanIds, now = new Date()) {
 	if (!ent) return false
 	if (paidSubscriptionActive(ent, paidPlanIds, now)) return true
-	return Boolean(ent.stripe?.subscriptionId) && LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(ent.stripe?.subscriptionStatus)
+	return liveStripeSubscription(ent)
 }
