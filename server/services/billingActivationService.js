@@ -71,6 +71,7 @@ function parseActivationInput({ teamId, planKey, billingCycle, periodEnd, idempo
  * Idempotent paid plan activation (manual ops today; same entrypoint for future Przelewy24 webhooks).
  * detachEndedStripeSubscription — tylko ręczna aktywacja: odpina zakończoną subskrypcję Stripe (zespół przechodzi
  * na rozliczenie ręczne), inaczej zostaje jej ID: brak przypomnień o końcu okresu i przycisk anulowania z błędem.
+ * stripeSubscriptionEnded — operator potwierdził, że subskrypcja nie działa mimo „żywego” statusu w bazie.
  */
 async function activatePaidPlan({
 	teamId,
@@ -82,6 +83,7 @@ async function activatePaidPlan({
 	enforceSeatLimit = true,
 	moduleKeys,
 	detachEndedStripeSubscription = false,
+	stripeSubscriptionEnded = false,
 }) {
 	const { nk, end } = parseActivationInput({ teamId, planKey, billingCycle, periodEnd, idempotencyKey })
 
@@ -115,15 +117,17 @@ async function activatePaidPlan({
 		const mods = Array.isArray(moduleKeys) ? moduleKeys.filter(isModuleKey) : []
 		team.billingModuleKeys = [...new Set(mods)]
 	}
+	// Działającej subskrypcji nie odpinamy (Stripe dalej by pobierał) — chyba że operator potwierdził w Stripe,
+	// że już nie działa, a status w bazie jest nieaktualny (stripeSubscriptionEnded)
 	let detachedStripeSubscriptionId = null
-	if (
-		detachEndedStripeSubscription &&
-		team.stripeSubscriptionId &&
-		!LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(team.stripeSubscriptionStatus)
-	) {
+	let detachedStripeSubscriptionStatus = null
+	const stripeLiveInDb = LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(team.stripeSubscriptionStatus)
+	if (detachEndedStripeSubscription && team.stripeSubscriptionId && (!stripeLiveInDb || stripeSubscriptionEnded === true)) {
 		detachedStripeSubscriptionId = String(team.stripeSubscriptionId)
+		detachedStripeSubscriptionStatus = team.stripeSubscriptionStatus || null
 		team.stripeSubscriptionId = null
 		team.stripeCancelAtPeriodEnd = false
+		if (stripeLiveInDb) team.stripeSubscriptionStatus = 'canceled'
 	}
 	team.subscriptionType = mapPlanToSubscriptionType(nk)
 	entitlementsService.ensureMonthRolloverInMemory(team)
@@ -140,7 +144,7 @@ async function activatePaidPlan({
 			moduleKeys: team.billingModuleKeys,
 			periodEnd: end.toISOString(),
 			actorLabel,
-			...(detachedStripeSubscriptionId ? { detachedStripeSubscriptionId } : {}),
+			...(detachedStripeSubscriptionId ? { detachedStripeSubscriptionId, detachedStripeSubscriptionStatus } : {}),
 		},
 	})
 
@@ -188,17 +192,23 @@ function manualActivationError(code, message, meta) {
 	return err
 }
 
-/** Powtórzony klucz — przy ręcznej obsłudze błąd zamiast cichego „duplicate”, żeby poprawka nie przepadła */
-function duplicateKeyError(entry) {
+/**
+ * Powtórzony klucz — przy ręcznej obsłudze błąd zamiast cichego „duplicate”, żeby poprawka nie przepadła.
+ * concurrent: dwa wywołania naraz — drugie zapisało już zespół, zanim unikalny indeks ledgera je zatrzymał.
+ */
+function duplicateKeyError(entry, { concurrent = false } = {}) {
 	const at = entry?.createdAt ? new Date(entry.createdAt).toISOString() : null
 	return manualActivationError(
 		'DUPLICATE_IDEMPOTENCY_KEY',
-		`Ten idempotencyKey był już użyty${at ? ` (${at})` : ''} — nic nie zmieniono. Przy poprawce albo kolejnej zmianie użyj nowego klucza.`,
+		concurrent
+			? 'Równoległe wywołanie z tym samym idempotencyKey — zespół mógł zostać zapisany przez oba; sprawdź jego stan (w ledgerze jest wpis pierwszego wywołania).'
+			: `Ten idempotencyKey był już użyty${at ? ` (${at})` : ''} — nic nie zmieniono. Przy poprawce albo kolejnej zmianie użyj nowego klucza.`,
 		{
 			appliedAt: at,
 			planKey: entry?.payload?.planKey || null,
 			moduleKeys: entry?.payload?.moduleKeys || null,
 			periodEnd: entry?.payload?.periodEnd || null,
+			concurrent,
 		}
 	)
 }
@@ -207,7 +217,9 @@ function duplicateKeyError(entry) {
  * Ręczna aktywacja (endpoint internal, obsługa zgłoszeń mailem). Ponad activatePaidPlan: moduły Core jawnie,
  * strażnicy daty i działającej subskrypcji Stripe (manualActivationConflicts), powtórzony klucz jako błąd,
  * tryb na sucho (dryRun) do sprawdzenia przed anulowaniem w Stripe, a po aktywacji odpięcie zakończonej subskrypcji.
- * force: true świadomie pomija strażników daty i Stripe (np. naprawa po nieudanym webhooku) — limitu miejsc nie.
+ * force: true świadomie pomija strażników (np. naprawa po nieudanym webhooku — subskrypcja zostaje podpięta),
+ * limitu miejsc nie. stripeSubscriptionEnded: true — operator sprawdził w Stripe, że subskrypcja nie działa mimo
+ * „żywego” statusu w bazie: nie blokuje i zostaje odpięta.
  */
 async function activatePaidPlanManually({
 	teamId,
@@ -218,6 +230,7 @@ async function activatePaidPlanManually({
 	moduleKeys,
 	force = false,
 	dryRun = false,
+	stripeSubscriptionEnded = false,
 	now = new Date(),
 }) {
 	const { nk, end } = parseActivationInput({ teamId, planKey, billingCycle, periodEnd, idempotencyKey })
@@ -228,13 +241,19 @@ async function activatePaidPlanManually({
 
 	// Pola jawnie — przy .lean() brak pola to undefined, strażnicy to obsługują
 	const team = await Team.findById(teamId)
-		.select('isActive billingPeriodEnd stripeSubscriptionId stripeSubscriptionStatus')
+		.select('isActive billingStatus billingPlanKey billingPeriodEnd stripeSubscriptionId stripeSubscriptionStatus')
 		.lean()
 	if (!team || team.isActive === false) {
 		throw manualActivationError('NOT_FOUND', 'Team not found')
 	}
 
-	const { conflicts, stripeCancelRequired } = manualActivationConflicts({ team, periodEnd: end, now, dryRun })
+	const { conflicts, stripeCancelRequired } = manualActivationConflicts({
+		team,
+		periodEnd: end,
+		now,
+		dryRun,
+		stripeSubscriptionEnded,
+	})
 	if (conflicts.length > 0 && !force) {
 		throw manualActivationError('MANUAL_ACTIVATION_CONFLICT', conflicts.map(c => c.message).join(' '), {
 			conflicts: conflicts.map(c => c.code),
@@ -249,6 +268,7 @@ async function activatePaidPlanManually({
 			ok: true,
 			dryRun: true,
 			stripeCancelRequired,
+			stripeSubscriptionStatus: team.stripeSubscriptionId ? team.stripeSubscriptionStatus || null : null,
 			forcedConflicts,
 			wouldApply: {
 				planKey: nk,
@@ -260,19 +280,41 @@ async function activatePaidPlanManually({
 		}
 	}
 
-	const result = await activatePaidPlan({
-		teamId,
-		planKey: nk,
-		billingCycle,
-		periodEnd: end,
-		idempotencyKey,
-		moduleKeys: mods,
-		actorLabel: 'internal_api',
-		detachEndedStripeSubscription: true,
-	})
-	// Wyścig dwóch identycznych wywołań — drugie też ma usłyszeć, że nic nie zmieniło
+	let result
+	try {
+		result = await activatePaidPlan({
+			teamId,
+			planKey: nk,
+			billingCycle,
+			periodEnd: end,
+			idempotencyKey,
+			moduleKeys: mods,
+			actorLabel: 'internal_api',
+			detachEndedStripeSubscription: true,
+			stripeSubscriptionEnded,
+		})
+	} catch (e) {
+		// Dwa wywołania naraz, oba po sprawdzeniu klucza: drugie zatrzymuje wersja dokumentu zespołu (nic nie zapisało)
+		// albo dopiero unikalny indeks ledgera (zespół już zapisany)
+		if (e?.name === 'VersionError') {
+			throw manualActivationError(
+				'CONCURRENT_UPDATE',
+				'Zespół zmienił się w trakcie aktywacji (równoległy zapis, np. drugie takie samo wywołanie) — to wywołanie niczego nie zmieniło. Sprawdź stan zespołu i w razie potrzeby powtórz.'
+			)
+		}
+		if (e?.code === 11000) {
+			throw duplicateKeyError(await BillingLedgerEntry.findOne({ idempotencyKey }).lean(), { concurrent: true })
+		}
+		throw e
+	}
+	// Wyścig, w którym drugie wywołanie zobaczyło już wpis — też ma usłyszeć, że nic nie zmieniło
 	if (result.duplicate) throw duplicateKeyError(await BillingLedgerEntry.findOne({ idempotencyKey }).lean())
-	return { ...result, forcedConflicts }
+	// Subskrypcja zostaje podpięta tylko przy force na działającej — mówimy to wprost, żeby nie była niespodzianką
+	const stripeSubscriptionKept =
+		team.stripeSubscriptionId && !result.detachedStripeSubscriptionId
+			? { id: String(team.stripeSubscriptionId), status: team.stripeSubscriptionStatus || null }
+			: null
+	return { ...result, forcedConflicts, ...(stripeSubscriptionKept ? { stripeSubscriptionKept } : {}) }
 }
 
 /**

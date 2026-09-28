@@ -96,20 +96,58 @@ describe('manualActivationConflicts — strażnicy ręcznej aktywacji', () => {
 	it('działająca subskrypcja Stripe — aktywacja odmawia (webhooki by ją nadpisały)', () => {
 		for (const status of ['active', 'trialing', 'past_due', 'unpaid']) {
 			const team = { billingPeriodEnd: inDays(20), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: status }
-			assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(20), now })), ['STRIPE_SUBSCRIPTION_LIVE'], status)
+			assert.ok(codes(manualActivationConflicts({ team, periodEnd: inDays(20), now })).includes('STRIPE_SUBSCRIPTION_LIVE'), status)
 		}
 	})
 
-	it('na sucho przed anulowaniem: subskrypcja to krok do zrobienia, a karencji nie porównujemy', () => {
-		// past_due: w bazie koniec karencji, przenosimy krótszy opłacony okres — po anulowaniu i tak będzie data anulowania
-		const team = { billingPeriodEnd: inDays(25), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'past_due' }
+	it('na sucho przed anulowaniem: subskrypcja to krok do zrobienia, a obecnego końca okresu nie porównujemy', () => {
+		// Anulowanie i tak wpisze w bazie datę anulowania — porównanie z obecnym końcem niczego by nie chroniło
+		const team = { billingPeriodEnd: inDays(25), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active' }
 		const r = manualActivationConflicts({ team, periodEnd: inDays(18), now, dryRun: true })
 		assert.deepEqual(codes(r), [])
 		assert.equal(r.stripeCancelRequired, true)
 	})
 
+	it('zaległość kartą (także powstała po zgłoszeniu) — już na sucho odmowa, żeby nie przenieść nieopłaconego okresu', () => {
+		for (const status of ['past_due', 'unpaid']) {
+			const team = { billingPeriodEnd: inDays(6), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: status }
+			const r = manualActivationConflicts({ team, periodEnd: inDays(30), now, dryRun: true })
+			assert.deepEqual(codes(r), ['STRIPE_PAYMENT_PAST_DUE'], status)
+			assert.match(r.conflicts[0].message, /zaległą płatność/)
+		}
+	})
+
+	it('nieaktualny „żywy” status potwierdzony jako zakończony (stripeSubscriptionEnded) — bez blokady Stripe', () => {
+		for (const status of ['active', 'past_due']) {
+			const team = { billingPeriodEnd: inDays(-150), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: status }
+			const r = manualActivationConflicts({ team, periodEnd: inDays(30), now, stripeSubscriptionEnded: true })
+			assert.deepEqual(codes(r), [], status)
+			assert.equal(r.stripeCancelRequired, false)
+		}
+		// Bez potwierdzenia ten sam stan blokuje
+		const stale = { billingPeriodEnd: inDays(-150), stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active' }
+		assert.deepEqual(codes(manualActivationConflicts({ team: stale, periodEnd: inDays(30), now })), ['STRIPE_SUBSCRIPTION_LIVE'])
+	})
+
 	it('na sucho bez Stripe (P24) — skracanie dalej wykrywane', () => {
 		const r = manualActivationConflicts({ team: { billingPeriodEnd: inDays(30) }, periodEnd: inDays(10), now, dryRun: true })
 		assert.deepEqual(codes(r), ['PERIOD_END_SHORTENS_PAID'])
+	})
+
+	it('rozliczenie osobne bez daty końca (np. Halo, faktura) — odmowa, żeby nie nadać daty, po której zniknie dostęp', () => {
+		const team = { billingStatus: 'active', billingPlanKey: 'starter', billingPeriodEnd: null }
+		assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(365), now })), ['OPEN_ENDED_BILLING'])
+		assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(365), now, dryRun: true })), ['OPEN_ENDED_BILLING'])
+	})
+
+	it('zwykłe zamówienie (okres próbny, brak planu, wygasły plan z datą) — bez blokady „bez daty końca”', () => {
+		for (const team of [
+			{ billingStatus: null, billingPlanKey: 'trial', billingPeriodEnd: null },
+			{},
+			{ billingStatus: 'active', billingPlanKey: 'base_s', billingPeriodEnd: inDays(-3) },
+			{ billingStatus: 'inactive', billingPlanKey: 'pro', billingPeriodEnd: null },
+		]) {
+			assert.deepEqual(codes(manualActivationConflicts({ team, periodEnd: inDays(30), now })), [], JSON.stringify(team))
+		}
 	})
 })

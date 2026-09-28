@@ -209,36 +209,54 @@ Auth:
 - header `X-Billing-Admin-Secret` == `BILLING_ADMIN_SECRET`.
 
 `activate-subscription` (`billingActivationService.activatePaidPlanManually`) — tresc: `teamId`, `planKey`,
-`billingCycle` (`monthly` / `annual`), `periodEnd` (ISO), `idempotencyKey`, `moduleKeys`, opcjonalnie `dryRun`, `force`:
+`billingCycle` (`monthly` / `annual`), `periodEnd` (ISO), `idempotencyKey`, `moduleKeys`, opcjonalnie `dryRun`,
+`force`, `stripeSubscriptionEnded` (wszystkie trzy tylko jako boolean `true`):
 - dla Core `moduleKeys` obowiazkowe (takze puste `[]`) — aktywacja zapisuje dokladnie te liste, wiec podaj
   pelna liste modulow zespolu po zmianie, nie tylko nowy modul; brak pola = blad walidacji,
 - dla PRO / Business / Enterprise bez `moduleKeys` (maja wszystkie moduly),
-- `dryRun: true` — sprawdza plan, moduly, limit miejsc, date i klucz bez zapisu; `stripeCancelRequired: true`
-  mowi, ze trzeba jeszcze anulowac subskrypcje Stripe,
-- 409 `MANUAL_ACTIVATION_CONFLICT` (w `meta.conflicts`): `PERIOD_END_IN_PAST`, `PERIOD_END_SHORTENS_PAID` (data
-  krotsza niz obecny oplacony okres), `STRIPE_SUBSCRIPTION_LIVE` (subskrypcja Stripe dziala — jej webhooki
-  nadpisalyby aktywacje); `force: true` (tylko boolean) swiadomie pomija tych straznikow, np. naprawa po nieudanym
-  webhooku — limitu miejsc nie pomija,
+- `dryRun: true` — sprawdza plan, moduly, limit miejsc, date, klucz i zaleglosc w Stripe bez zapisu;
+  `stripeCancelRequired: true` mowi, ze trzeba jeszcze anulowac subskrypcje Stripe, `stripeSubscriptionStatus`
+  pokazuje jej status z bazy,
+- 409 `MANUAL_ACTIVATION_CONFLICT` (w `meta.conflicts`):
+  - `PERIOD_END_IN_PAST`, `PERIOD_END_SHORTENS_PAID` (data krotsza niz obecny oplacony okres),
+  - `STRIPE_PAYMENT_PAST_DUE` (`past_due` / `unpaid` — okres w bazie to karencja, otwarta faktura to dlug klienta;
+    takze gdy zaleglosc powstala po zgloszeniu), zglaszany juz na sucho,
+  - `STRIPE_SUBSCRIPTION_LIVE` (subskrypcja Stripe dziala — jej webhooki nadpisalyby aktywacje),
+  - `OPEN_ENDED_BILLING` (oplacony plan bez daty konca, rozliczany osobno faktura — dzis tylko Halo; aktywacja
+    nadalaby date, a po niej odciela dostep — takich zespolow nie ruszamy),
+  - `force: true` swiadomie pomija tych straznikow (np. naprawa po nieudanym webhooku — dzialajaca subskrypcja
+    zostaje wtedy podpieta, odpowiedz zwraca `stripeSubscriptionKept`); limitu miejsc nie pomija,
+- `stripeSubscriptionEnded: true` — operator sprawdzil w Stripe, ze subskrypcja juz nie dziala, a status w bazie
+  jest nieaktualny: nie blokuje, subskrypcja zostaje odpieta, status poprawiony na `canceled`,
 - 409 `DUPLICATE_IDEMPOTENCY_KEY` — klucz juz uzyty, nic nie zmieniono (`meta`: kiedy i co zrobilo pierwsze
   wywolanie); przy poprawce uzyj nowego klucza,
+- 409 `CONCURRENT_UPDATE` — rownolegly zapis zespolu (np. dwa identyczne wywolania naraz); to wywolanie niczego
+  nie zmienilo,
 - po aktywacji zakonczona (nie dzialajaca) subskrypcja Stripe jest odpinana (`stripeSubscriptionId = null`,
-  klient Stripe zostaje, ID trafia do ledgera jako `detachedStripeSubscriptionId`) — zespol przechodzi na
-  rozliczenie reczne: dostaje przypomnienia o koncu okresu i nie widzi przycisku anulowania platnosci cyklicznej.
-  Webhooki (`activatePaidPlan` bez flagi) nic nie odpinaja.
+  klient Stripe zostaje, ID i pierwotny status trafiaja do ledgera jako `detachedStripeSubscriptionId` /
+  `detachedStripeSubscriptionStatus`) — zespol przechodzi na rozliczenie reczne: dostaje przypomnienia o koncu
+  okresu i nie widzi przycisku anulowania platnosci cyklicznej. Webhooki (`activatePaidPlan` bez flagi) nic nie
+  odpinaja.
 
 Zmiana planu przy aktywnym planie (mail „Zmiana planu” — procedura z danymi i gotowa trescia aktywacji):
 1. Najpierw na sucho (`dryRun: true`) — zanim cokolwiek zostanie anulowane.
 2. Subskrypcja Stripe dziala: sprawdz w Stripe koniec biezacego okresu (odnowienie po zgloszeniu przesuwa date
-   z maila), uniewaznij otwarte faktury (zaplacona po zmianie przywrocilaby stary plan), anuluj od razu bez zwrotu
-   i bez rozliczenia proporcjonalnego (okres przenosimy), poczekaj na `customer.subscription.deleted`, aktywuj.
-   Anulowanie wpisuje do bazy date anulowania, wiec `periodEnd` bierzemy z maila albo ze Stripe, nie z bazy.
+   z maila — pozniejsza date bierzemy tylko przy zaplaconej fakturze odnowienia), uniewaznij otwarte faktury
+   (zaplacona po zmianie przywrocilaby stary plan; fakture z zaleglocia dopiero po ustaleniu z klientem), anuluj od
+   razu bez zwrotu i bez rozliczenia proporcjonalnego (okres przenosimy), poczekaj na
+   `customer.subscription.deleted`, aktywuj. Anulowanie wpisuje do bazy date anulowania, wiec `periodEnd` bierzemy
+   z maila albo ze Stripe, nie z bazy. Jesli w Stripe subskrypcja jest juz anulowana (nieaktualny status w bazie),
+   zamiast anulowania dodaj `stripeSubscriptionEnded: true`.
 3. Zalegla platnosc (`past_due` / `unpaid`): data w bazie to koniec karencji, nie oplaconego okresu — mail wstawia
-   w `periodEnd` napis zamiast daty (aktywacja sie na nim zatrzyma); przenosimy tylko oplacony okres.
-4. Drozszy plan: doplata za roznice za przeniesiony okres (mail liczy roznice wg cennika); tanszy — zwrot tylko po
-   ustaleniu z klientem, osobno.
-5. Nigdy nie zmieniaj planu ani ceny subskrypcji w panelu Stripe — metadane planu zostaja stare, odnowienia koncza
+   w `periodEnd` napis zamiast daty (aktywacja sie na nim zatrzyma), a proba na sucho zglasza
+   `STRIPE_PAYMENT_PAST_DUE`; przenosimy tylko oplacony okres, `force` dopiero po rozliczeniu zaleglosci.
+4. Drozszy plan: doplata za roznice za przeniesiony okres (mail liczy roznice wg cennika — przy obecnym planie
+   rocznym stawka roczna: 10 × miesiac na 12 miesiecy); tanszy — zwrot tylko po ustaleniu z klientem, osobno.
+5. Zespol rozliczany osobno bez daty konca (faktura, np. Halo): w aplikacji nic nie zmieniamy — mail nie zawiera
+   tresci aktywacji, endpoint odmawia (`OPEN_ENDED_BILLING`); zmiane ustalamy z klientem.
+6. Nigdy nie zmieniaj planu ani ceny subskrypcji w panelu Stripe — metadane planu zostaja stare, odnowienia koncza
    sie bledem.
-6. Po zmianie nie ma odnowienia karta: przed koncem okresu idzie przypomnienie, platnosc online w Pakietach
+7. Po zmianie nie ma odnowienia karta: przed koncem okresu idzie przypomnienie, platnosc online w Pakietach
    odblokowuje sie po koncu okresu.
 
 To jest dobre miejsce na przyszle automaty M2M, ale dla Stripe webhook lepiej trzymac dedykowany publiczny webhook route (tak jak P24), z weryfikacja podpisu Stripe.

@@ -30,6 +30,11 @@ describe('planChangeMailLines — mail „Zmiana planu” z danymi do przeniesie
 		assert.deepEqual([...at].sort((a, b) => a - b), at, 'kolejność kroków')
 		assert.match(html, /bez zwrotu i bez rozliczenia proporcjonalnego/)
 		assert.doesNotMatch(html, /Zwrot albo kredyt/)
+		// Późniejsza data ze Stripe tylko przy zapłaconym odnowieniu; faktury z zaległością nie unieważniamy bez ustaleń
+		assert.match(html, /tylko wtedy, gdy faktura odnowienia jest zapłacona/)
+		assert.match(html, /Fakturę z zaległością unieważnij dopiero po ustaleniu z klientem/)
+		// Nieaktualny status w bazie — jawne potwierdzenie zamiast samego force
+		assert.match(html, /"stripeSubscriptionEnded": true/)
 		assert.match(html, /stripeCancelRequired: true<\/code> jest tu oczekiwana/)
 		assert.match(html, /Nie zmieniaj planu ani ceny subskrypcji w panelu Stripe/)
 	})
@@ -50,8 +55,14 @@ describe('planChangeMailLines — mail „Zmiana planu” z danymi do przeniesie
 		for (const team of [base, { ...base, stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active' }]) {
 			const html = mail(team, 'pro_15', [])
 			assert.match(html, /droższy o 31 PLN/)
-			assert.match(html, /Rozlicz dopłatę za przeniesiony okres: 31 PLN/)
+			assert.match(html, /Rozlicz dopłatę: 31 PLN netto na każdy miesiąc przeniesionego okresu/)
 		}
+	})
+
+	it('obecny plan rozliczany rocznie — dopłata stawką roczną (10 × miesiąc na 12), nie miesięczną', () => {
+		const html = mail({ ...base, billingCycle: 'annual' }, 'pro_15', [], 'annual')
+		assert.match(html, /droższy o 31 PLN netto \/ mies\. wg cennika\. Obecny plan jest rozliczany rocznie \(10 × miesiąc\), więc na miesiąc przeniesionego okresu to 25,83 PLN netto/)
+		assert.match(html, /Rozlicz dopłatę: 25,83 PLN netto na każdy miesiąc/)
 	})
 
 	it('pakiet jako obecny plan: bez listy funkcji w nazwie i cenie; tańszy plan bez dopłaty', () => {
@@ -90,6 +101,14 @@ describe('planChangeMailLines — mail „Zmiana planu” z danymi do przeniesie
 		const html = mail(base, 'starter', [])
 		assert.match(html, /klucz base_s/)
 		assert.match(html, /· 119 PLN netto \/ mies\. wg cennika<\/p>/)
+	})
+
+	it('rozliczenie osobne bez daty końca (np. Halo) — w aplikacji nic nie zmieniamy, bez treści aktywacji', () => {
+		const html = mail({ ...base, billingPlanKey: 'starter', billingModuleKeys: [], billingStatus: 'active', billingPeriodEnd: null }, 'base_m', [])
+		assert.match(html, /brak daty — zespół rozliczany osobno \(np\. fakturą\)/)
+		assert.match(html, /w aplikacji niczego nie zmieniaj/)
+		assert.match(html, /OPEN_ENDED_BILLING/)
+		assert.doesNotMatch(html, /<pre|idempotencyKey|dryRun/)
 	})
 
 	it('brak końca okresu (rozliczenie ręczne) — czytelna informacja i napis w treści aktywacji', () => {
