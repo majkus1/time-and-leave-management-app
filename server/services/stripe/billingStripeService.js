@@ -169,6 +169,38 @@ async function markStripeEvent(teamId, eventId, action, payload = {}) {
 	return true
 }
 
+/**
+ * Subskrypcja odpięta przy ręcznej zmianie planu (ledger: payload.detachedStripeSubscriptionId), której żaden zespół
+ * nie ma jako bieżącej. Jej spóźnione albo ponowione zdarzenia przypięłyby ją z powrotem i nadpisały nowy plan,
+ * moduły albo okres — pomijamy je przed jakimkolwiek zapisem i zapytaniem do Stripe.
+ * @returns {Promise<string|null>} teamId z wpisu odpięcia albo null
+ */
+async function detachedSubscriptionTeamId(subscriptionId) {
+	const sid = subscriptionId ? String(subscriptionId) : ''
+	if (!sid) return null
+	if (await Team.exists({ stripeSubscriptionId: sid })) return null
+	const entry = await BillingLedgerEntry.findOne({ 'payload.detachedStripeSubscriptionId': sid }).select('teamId').lean()
+	return entry ? String(entry.teamId) : null
+}
+
+async function ignoreDetachedSubscriptionEvent(event, teamId, subscriptionId) {
+	const marked = await markStripeEvent(teamId, event.id, 'stripe_detached_subscription_event_ignored', {
+		eventType: event.type,
+		subscriptionId,
+	})
+	if (marked) {
+		// Zapłacona faktura starego planu to pieniądze bez aktywacji — ktoś musi ją rozliczyć ręcznie
+		if (event.type === 'invoice.paid') {
+			console.error(
+				`[stripe] invoice.paid dla subskrypcji odpiętej przy ręcznej zmianie planu — pominięte, rozlicz ręcznie (zwrot albo zaliczenie): sub=${subscriptionId} team=${teamId}`
+			)
+		} else {
+			console.warn(`[stripe] ${event.type} dla subskrypcji odpiętej przy ręcznej zmianie planu — pominięte: sub=${subscriptionId} team=${teamId}`)
+		}
+	}
+	return { handled: true, eventType: event.type, ignored: true, reason: 'detached_subscription', duplicate: !marked }
+}
+
 async function createStripeCheckoutSession(params) {
 	const cfg = getStripeConfig()
 	if (!cfg.ready) {
@@ -508,6 +540,10 @@ async function handleCheckoutSessionCompleted(event) {
 
 async function handleInvoicePaid(event, stripe) {
 	const invoice = event.data?.object || {}
+	const invoiceSubscriptionId = resolveInvoiceSubscriptionId(invoice)
+	const detachedTeamId = await detachedSubscriptionTeamId(invoiceSubscriptionId)
+	if (detachedTeamId) return ignoreDetachedSubscriptionEvent(event, detachedTeamId, invoiceSubscriptionId)
+
 	const resolved = await resolveTeamAndPlanFromInvoice(stripe, invoice)
 	if (!resolved) return { handled: true, eventType: event.type, skipped: true }
 
@@ -547,6 +583,9 @@ async function handleInvoicePaid(event, stripe) {
 
 async function handleSubscriptionUpdated(event) {
 	const sub = event.data?.object || {}
+	const detachedTeamId = await detachedSubscriptionTeamId(stripeId(sub))
+	if (detachedTeamId) return ignoreDetachedSubscriptionEvent(event, detachedTeamId, stripeId(sub))
+
 	const teamId = await resolveTeamIdFromSubscription(sub)
 	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
 	const currentPeriodEnd = resolveSubscriptionPeriodEndSeconds(sub, getStripePriceDefinition)
@@ -633,6 +672,10 @@ async function handleSubscriptionUpdated(event) {
 
 async function handleSubscriptionDeleted(event) {
 	const sub = event.data?.object || {}
+	// Spóźnione „deleted” po ręcznej zmianie (np. ponowione z panelu) zdjęłoby nowy plan i wpisało datę anulowania
+	const detachedTeamId = await detachedSubscriptionTeamId(stripeId(sub))
+	if (detachedTeamId) return ignoreDetachedSubscriptionEvent(event, detachedTeamId, stripeId(sub))
+
 	const teamId = await resolveTeamIdFromSubscription(sub)
 	if (!teamId) return { handled: true, eventType: event.type, skipped: true }
 

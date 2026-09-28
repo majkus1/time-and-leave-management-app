@@ -236,7 +236,12 @@ Auth:
   klient Stripe zostaje, ID i pierwotny status trafiaja do ledgera jako `detachedStripeSubscriptionId` /
   `detachedStripeSubscriptionStatus`) — zespol przechodzi na rozliczenie reczne: dostaje przypomnienia o koncu
   okresu i nie widzi przycisku anulowania platnosci cyklicznej. Webhooki (`activatePaidPlan` bez flagi) nic nie
-  odpinaja.
+  odpinaja,
+- spoznione albo ponowione zdarzenia odpietej subskrypcji (`customer.subscription.updated` / `deleted`,
+  `invoice.paid`) webhook Stripe pomija, zanim cokolwiek zapisze albo zapyta Stripe — przypielyby ja z powrotem
+  i nadpisaly nowy plan, moduly albo okres (ledger: `stripe_detached_subscription_event_ignored`). Zaplacona stara
+  faktura laduje w logach jako blad `[stripe] invoice.paid dla subskrypcji odpietej…` — do recznego rozliczenia
+  (zwrot albo zaliczenie).
 
 Zmiana planu przy aktywnym planie (mail „Zmiana planu” — procedura z danymi i gotowa trescia aktywacji):
 1. Najpierw na sucho (`dryRun: true`) — zanim cokolwiek zostanie anulowane.
