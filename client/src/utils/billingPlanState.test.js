@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { paidPlanIdsFromCatalog, paidSubscriptionActive, planChangeByRequest, renewalOffer } from './billingPlanState'
+import { cardPaymentSuspended, paidPlanIdsFromCatalog, paidSubscriptionActive, planChangeByRequest, renewalOffer } from './billingPlanState'
 
 // Bliźniaczy zestaw do server/tests/billingPlanChange.test.js — ta sama reguła po obu stronach.
 const catalog = { tiers: ['base_5', 'base_s', 'base_m', 'base_50', 'base_l', 'pro_15', 'pro', 'pro_50', 'business', 'enterprise'].map(id => ({ id })) }
@@ -75,5 +75,24 @@ describe('renewalOffer — „Przedłuż plan” BLIK / przelewem', () => {
 		expect(renewalOffer({ planKey: 'base_s', billingStatus: 'active', billingPeriodEnd: future, hideBillingPeriodEnd: true }, saleCatalog, now)).toBe(null)
 		expect(renewalOffer({ planKey: 'trial', billingStatus: 'active', billingPeriodEnd: future }, saleCatalog, now)).toBe(null)
 		expect(renewalOffer({ planKey: 'enterprise', billingStatus: 'active', billingPeriodEnd: future }, saleCatalog, now)).toBe(null)
+	})
+})
+
+describe('cardPaymentSuspended — karta odrzucona po karencji', () => {
+	const stripe = status => ({ subscriptionId: 'sub_1', subscriptionStatus: status })
+
+	it('po karencji (koniec okresu minął) — wstrzymany, dla past_due i unpaid', () => {
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: past, stripe: stripe('past_due') }, now)).toBe(true)
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: past, stripe: stripe('unpaid') }, now)).toBe(true)
+	})
+
+	it('w karencji plan jeszcze działa — zwykłe teksty', () => {
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: future, stripe: stripe('past_due') }, now)).toBe(false)
+	})
+
+	it('działająca albo anulowana karta, brak karty — nie dotyczy', () => {
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'active', billingPeriodEnd: past, stripe: stripe('active') }, now)).toBe(false)
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: past, stripe: stripe('canceled') }, now)).toBe(false)
+		expect(cardPaymentSuspended({ planKey: 'pro', billingStatus: 'inactive', billingPeriodEnd: past }, now)).toBe(false)
 	})
 })

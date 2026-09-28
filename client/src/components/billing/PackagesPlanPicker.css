@@ -33,6 +33,12 @@
 	color: var(--po-text);
 }
 
+/* Plan wstrzymany (karta odrzucona) — nie w kolorze sukcesu */
+.ppk__current-note--warn {
+	border-left-color: var(--po-warning);
+	background: var(--po-warning-soft);
+}
+
 .ppk__grid {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);

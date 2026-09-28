@@ -15,8 +15,27 @@ import './QRDisplay.css'
  */
 const REFRESH_MS = 5 * 60 * 1000
 
+/**
+ * Link wyświetlacza działa jak hasło — po pierwszym otwarciu trzymamy go w pamięci, nie w pasku adresu. Najpierw pamięć
+ * karty (dwa wyświetlacze w jednej przeglądarce nie podmieniają sobie kodu), potem urządzenia (restart tabletu).
+ */
+const DISPLAY_TOKEN_KEY = 'planopia:qrDisplayToken'
+
+function readStoredDisplayToken() {
+	for (const storage of [() => sessionStorage, () => localStorage]) {
+		try {
+			const value = storage().getItem(DISPLAY_TOKEN_KEY)
+			if (value) return value
+		} catch {
+			// Pamięć niedostępna (tryb prywatny, blokada) — próbujemy następnej
+		}
+	}
+	return ''
+}
+
 export default function QRDisplay() {
-	const { displayToken } = useParams()
+	const { displayToken: urlToken } = useParams()
+	const [displayToken] = useState(() => urlToken || readStoredDisplayToken())
 	const { t, i18n } = useTranslation()
 	const [data, setData] = useState(null)
 	const [status, setStatus] = useState('loading') // loading | ok | invalid | offline
@@ -26,7 +45,24 @@ export default function QRDisplay() {
 	const offsetRef = useRef(0)
 	const wakeLockRef = useRef(null)
 
+	// Token z linku zapisujemy na tym urządzeniu i zdejmujemy z paska adresu: nie da się go przepisać z tabletu, nie trafia
+	// do historii ani analityki, a odświeżenie strony bierze go z pamięci urządzenia
+	useEffect(() => {
+		if (!urlToken) return
+		try {
+			sessionStorage.setItem(DISPLAY_TOKEN_KEY, urlToken)
+			localStorage.setItem(DISPLAY_TOKEN_KEY, urlToken)
+			window.history.replaceState(window.history.state, '', '/qr-display')
+		} catch {
+			// Bez pamięci urządzenia (np. tryb prywatny) link zostaje w adresie — inaczej odświeżenie zgubiłoby wyświetlacz
+		}
+	}, [urlToken])
+
 	const load = useCallback(async () => {
+		if (!displayToken) {
+			setStatus('invalid')
+			return
+		}
 		try {
 			const started = Date.now()
 			const { data: d } = await axios.get(`${API_URL}/api/qr/display/${encodeURIComponent(displayToken)}`)

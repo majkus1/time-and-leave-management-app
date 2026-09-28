@@ -170,7 +170,8 @@ Plik: `server/services/billingActivationService.js`
   - `maxUsers`,
   - `billingHadPaidPlan = true`,
   - `subscriptionType` (`enterprise` lub `premium`).
-- z `detachEndedStripeSubscription: true` (tylko reczna aktywacja) odpina zakonczona subskrypcje Stripe,
+- z `detachEndedStripeSubscription: true` (reczna aktywacja i platnosc BLIK / przelewem w `p24FinalizePaidSession`)
+  odpina zakonczona subskrypcje Stripe — zywej w bazie nie rusza,
 - zapisuje `BillingLedgerEntry`.
 
 `activatePaidPlanManually(...)` — reczna aktywacja z endpointu internal: straznicy i tryb na sucho (sekcja 11).
@@ -193,7 +194,9 @@ Wspolne reguly:
 - online (P24, Stripe) tylko plany w sprzedazy (`SALE_PLAN_KEYS`) — Enterprise wylacznie zgloszeniem mailem,
 - zmiana planu przy oplaconym okresie albo zywej subskrypcji Stripe (`active`, `trialing`, `past_due`, `unpaid`):
   online odmowa `PLAN_CHANGE_REQUIRES_REQUEST`, przyjmujemy tylko zgloszenie mailem (`channel: 'mail'`),
-  bo drugi plan naliczylby sie obok starego (`server/utils/billingPlanChange.js`),
+  bo drugi plan naliczylby sie obok starego (`server/utils/billingPlanChange.js`); `meta.reason`
+  (`planChangeBlockReason`): `paid_period` | `card_subscription` | `card_retry` — przy `card_retry` (`past_due` /
+  `unpaid`) komunikat kieruje do zmiany karty, bo Stripe dalej ponawia platnosc za stary plan,
 - wyjatek: przedluzenie TEGO SAMEGO planu z tymi samymi modulami BLIK / przelewem przed koncem okresu
   (`isEarlyRenewal`, tylko P24 — `allowEarlyRenewal: true`; karta zaczelaby okres od razu). Bez dzialajacej
   subskrypcji Stripe i tylko przy okresie z data konca (zespol rozliczany osobno faktura, np. Halo — nie).
@@ -252,8 +255,8 @@ Auth:
 - po aktywacji zakonczona (nie dzialajaca) subskrypcja Stripe jest odpinana (`stripeSubscriptionId = null`,
   klient Stripe zostaje, ID i pierwotny status trafiaja do ledgera jako `detachedStripeSubscriptionId` /
   `detachedStripeSubscriptionStatus`) — zespol przechodzi na rozliczenie reczne: dostaje przypomnienia o koncu
-  okresu i nie widzi przycisku anulowania platnosci cyklicznej. Webhooki (`activatePaidPlan` bez flagi) nic nie
-  odpinaja,
+  okresu i nie widzi przycisku anulowania platnosci cyklicznej. To samo robi oplacona sesja BLIK / przelew (zespol
+  po odrzuconej karcie przechodzi na P24). Webhooki Stripe (`activatePaidPlan` bez flagi) nic nie odpinaja,
 - spoznione albo ponowione zdarzenia odpietej subskrypcji (`customer.subscription.updated` / `deleted`,
   `invoice.paid`) webhook Stripe pomija, zanim cokolwiek zapisze albo zapyta Stripe — przypielyby ja z powrotem
   i nadpisaly nowy plan, moduly albo okres (ledger: `stripe_detached_subscription_event_ignored`). Zaplacona stara

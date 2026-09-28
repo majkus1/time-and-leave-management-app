@@ -30,6 +30,7 @@ import { ANNUAL_MONTHS_CHARGED, formatPlanMoney, isEnglishLang } from '../../uti
 import { ownedSaleModules, usedSaleModules } from '../../utils/planModules'
 import { clearPricingIntent, readPricingIntent } from '../../utils/pricingIntent'
 import {
+	cardPaymentSuspended,
 	paidPlanIdsFromCatalog,
 	paidSubscriptionActive,
 	planChangeByRequest,
@@ -107,8 +108,10 @@ function billingAxiosErrorMessage(error, t) {
 	if (d?.code === 'INVOICE_INCOMPLETE' && d?.meta?.i18nKey && typeof d.meta.i18nKey === 'string') {
 		return t(`billingPackages.${d.meta.i18nKey}`)
 	}
-	// Serwer odpowiada po polsku — kod mapujemy na tekst w języku interfejsu
-	if (d?.code === 'PLAN_CHANGE_REQUIRES_REQUEST') return t('billingPackages.planChangeRequiresRequest')
+	// Serwer odpowiada po polsku — kod mapujemy na tekst w języku interfejsu (po karencji odrzuconej karty — inny powód)
+	if (d?.code === 'PLAN_CHANGE_REQUIRES_REQUEST') {
+		return t(d?.meta?.reason === 'card_retry' ? 'billingPackages.cardRetryPending' : 'billingPackages.planChangeRequiresRequest')
+	}
 	return d?.message || error?.message || null
 }
 
@@ -958,6 +961,8 @@ export default function PackagesPage() {
 	const localeTag = i18n.resolvedLanguage === 'pl' ? 'pl-PL' : 'en-GB'
 	const activePaid = ent ? paidSubscriptionActive(ent, paidPlanIds) : false
 	const planChangeOnly = planChangeByRequest(ent, paidPlanIds)
+	// Karta odrzucona, karencja minęła — zespół na planie darmowym, Stripe ponawia: nie „aktywny plan”, tylko zmiana karty
+	const cardSuspended = cardPaymentSuspended(ent)
 	// Przedłużenie tylko dla osób, które mogą płacić, i gdy BLIK / przelew działa
 	const renewal = canSubmitPurchaseRequest && p24Status?.ready === true ? renewalOffer(ent, catalog) : null
 	const renewalDate = renewal ? formatPlanDate(renewal.periodEnd.toISOString(), localeTag) : null
@@ -1035,6 +1040,9 @@ export default function PackagesPage() {
 				plan: planLabel(ent.planKey),
 				until: formatPlanDate(ent.billingPeriodEnd, localeTag),
 			})
+		} else if (cardSuspended && ent.planKey && paidPlanIds.has(ent.planKey)) {
+			// Po karencji: „zamów plan poniżej” byłoby nieprawdą — płatność online czeka, aż Stripe skończy ponawiać
+			currentPlanBody = t('billingPackages.currentPlanCardSuspended', { plan: planLabel(ent.planKey) })
 		} else if (
 			ent.billingHadPaidPlan &&
 			ent.planKey &&
@@ -1078,9 +1086,11 @@ export default function PackagesPage() {
 							{!canSubmitPurchaseRequest
 								? t('billingPackages.paymentFailedBannerWorker')
 								: t(
-										ent?.stripe?.subscriptionStatus === 'unpaid'
-											? 'billingPackages.paymentFailedBannerAdminUnpaid'
-											: 'billingPackages.paymentFailedBannerAdmin',
+										cardSuspended
+											? 'billingPackages.paymentFailedBannerAdminSuspended'
+											: ent?.stripe?.subscriptionStatus === 'unpaid'
+												? 'billingPackages.paymentFailedBannerAdminUnpaid'
+												: 'billingPackages.paymentFailedBannerAdmin',
 										{ until: ent?.billingPeriodEnd ? formatPlanDate(ent.billingPeriodEnd, localeTag) : '—' }
 									)}
 						</span>
@@ -1341,6 +1351,7 @@ export default function PackagesPage() {
 					canBuy={canSubmitPurchaseRequest}
 					canContact={isAdmin(role)}
 					changeByRequest={planChangeOnly}
+					suspended={cardSuspended}
 					busy={onlineStatusLoading || p24BusyKey !== null}
 					busyPlanKey={p24BusyKey?.startsWith('plan:') ? p24BusyKey.slice(5) : null}
 					planLabel={planLabel}

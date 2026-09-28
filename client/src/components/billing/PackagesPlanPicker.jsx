@@ -31,6 +31,7 @@ export default function PackagesPlanPicker({
 	canBuy,
 	canContact,
 	changeByRequest,
+	suspended = false,
 	busy,
 	busyPlanKey,
 	planLabel,
@@ -190,8 +191,10 @@ export default function PackagesPlanPicker({
 				</h3>
 				<div className="ppk__subtitle">{t('billingPackages.picker.subtitle')}</div>
 				{currentPlan ? (
-					<div className="ppk__current-note" role="note">
-						{t('billingPackages.picker.currentPlanNote', { plan: currentPlan.label })}
+					<div className={`ppk__current-note${suspended ? ' ppk__current-note--warn' : ''}`} role="note">
+						{suspended
+							? t('billingPackages.picker.currentPlanSuspendedNote', { plan: currentPlan.label })
+							: t('billingPackages.picker.currentPlanNote', { plan: currentPlan.label })}
 					</div>
 				) : null}
 			</div>
@@ -346,7 +349,9 @@ export default function PackagesPlanPicker({
 								{mainAction.kind === 'contact' ? t('billingPackages.picker.contact') : buyLabel(mainAction)}
 							</button>
 							{changeByRequest && mainAction.kind !== 'contact' ? (
-								<div className="ppk__result-hint">{t('billingPackages.picker.changeByRequestNote')}</div>
+								<div className="ppk__result-hint">
+									{t(suspended ? 'billingPackages.picker.cardRetryNote' : 'billingPackages.picker.changeByRequestNote')}
+								</div>
 							) : null}
 						</>
 					)}

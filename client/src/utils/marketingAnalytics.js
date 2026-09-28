@@ -56,8 +56,14 @@ function setConsent(command, choice) {
 	})
 }
 
+/** Wyświetlacz i skan QR: w adresie są klucz wyświetlacza i przepustka skanu — nie mogą trafić do analityki */
+export function isAnalyticsExcludedPath(pathname) {
+	const p = String(pathname || '')
+	return p.startsWith('/qr-display') || p.startsWith('/qr-scan')
+}
+
 export function initializeMarketingAnalytics() {
-	if (initialized || typeof window === 'undefined') return
+	if (initialized || typeof window === 'undefined' || isAnalyticsExcludedPath(window.location.pathname)) return
 	const consent = readMarketingConsent() || DEFAULT_CONSENT
 
 	initialized = true

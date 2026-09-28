@@ -88,6 +88,9 @@ async function finalizeP24PaidSession(session, orderId) {
 			idempotencyKey,
 			actorLabel: 'p24',
 			moduleKeys: mk,
+			// Zespół przechodzi z karty na BLIK / przelew: zakończona subskrypcja nie może blokować przypomnień
+			// o końcu okresu ani zostawiać przycisku anulowania (działającej walidator i tak nie przepuści)
+			detachEndedStripeSubscription: true,
 		})
 	} else {
 		await billingActivationService.applyAiAddonPack({

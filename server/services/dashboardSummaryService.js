@@ -883,7 +883,8 @@ async function buildTeamInsights(userId, options = {}) {
 	const entitlements = entitlementsService.buildClientEntitlements(team, { activeSeatCount })
 	const modules = buildDashboardModules(entitlements, true)
 
-	const range = resolvePeriodRange(periodKey, new Date(), {
+	// Bieżący okres wg kalendarza warszawskiego — jak w podsumowaniu (1.10 po północy PL to już październik)
+	const range = resolvePeriodRange(periodKey, warsawDayStart(), {
 		startDate: options.startDate,
 		endDate: options.endDate,
 	})
@@ -958,7 +959,7 @@ async function buildTeamInsights(userId, options = {}) {
 		const upcomingCount = await LeaveRequest.countDocuments({
 			userId: { $in: leaveTargetIds },
 			status: { $in: ['status.accepted', 'status.sent'] },
-			startDate: { $gte: startOfDay(new Date()), $lte: addDays(endOfDay(new Date()), 45) },
+			startDate: { $gte: startOfDay(warsawDayStart()), $lte: addDays(endOfDay(warsawDayStart()), 45) },
 		})
 
 		leave = {
@@ -1108,8 +1109,11 @@ async function buildPersonalInsights({ viewer, teamSettings, settingsDoc, leaves
 		autoDeductLeaveLimits: settingsDoc?.autoDeductLeaveLimits === true,
 	}
 
-	const todayStart = startOfDay(new Date())
-	const year = new Date().getFullYear()
+	// „Dziś” i rok wg kalendarza warszawskiego — spójnie z resztą Przeglądu (produkcja w UTC; po północy PL
+	// blok osobisty inaczej mówiłby o wczorajszym dniu, a 1.01 liczyłby limity za poprzedni rok)
+	const today = warsawDayStart()
+	const todayStart = startOfDay(today)
+	const year = today.getFullYear()
 	const [viewerDoc, ownRequests, nextLeave] = await Promise.all([
 		User.findById(viewer._id).select('leaveTypeDays vacationDays').lean(),
 		LeaveRequest.find({
@@ -1130,7 +1134,7 @@ async function buildPersonalInsights({ viewer, teamSettings, settingsDoc, leaves
 			year,
 		}),
 		nextLeave,
-		holidays: buildNextHoliday(fullSettings),
+		holidays: buildNextHoliday(fullSettings, todayStart),
 	}
 }
 

@@ -2,6 +2,7 @@ const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const {
 	planChangeNeedsRequest,
+	planChangeBlockReason,
 	onlinePurchasablePlan,
 	manualActivationModuleKeys,
 	manualActivationConflicts,
@@ -229,5 +230,23 @@ describe('renewalFinalizeDecision — okres z sesji, bez podwójnego wydłużeni
 		assert.deepEqual(decide({ ...team(E), billingPlanKey: 'pro_15' }), { action: 'skip', reason: 'plan_changed' })
 		assert.deepEqual(decide(team(null)), { action: 'skip', reason: 'plan_changed' })
 		assert.deepEqual(decide(null), { action: 'skip', reason: 'plan_changed' })
+	})
+})
+
+describe('planChangeBlockReason — powód blokady płatności online (do komunikatu)', () => {
+	it('opłacony okres (także karencja liczona przez serwer jako opłacona)', () => {
+		assert.equal(planChangeBlockReason({ paidActive: true, stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'past_due' }), 'paid_period')
+	})
+
+	it('zaległa karta po karencji — zmiana karty, nie „aktywny plan”', () => {
+		for (const s of ['past_due', 'unpaid']) {
+			assert.equal(planChangeBlockReason({ paidActive: false, stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: s }), 'card_retry', s)
+		}
+	})
+
+	it('działająca karta bez opłaconego okresu; brak blokady po anulowaniu albo bez karty', () => {
+		assert.equal(planChangeBlockReason({ paidActive: false, stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'active' }), 'card_subscription')
+		assert.equal(planChangeBlockReason({ paidActive: false, stripeSubscriptionId: 'sub_1', stripeSubscriptionStatus: 'canceled' }), null)
+		assert.equal(planChangeBlockReason({ paidActive: false }), null)
 	})
 })

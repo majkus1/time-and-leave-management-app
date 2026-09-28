@@ -346,6 +346,7 @@ i18n
 							title: 'Work out the plan for your team',
 							subtitle: 'Tick what you need — we will recommend one plan. Net prices.',
 							currentPlanNote: 'You are on {{plan}}. Your price does not change — the calculator helps when your team size changes or you need a new module.',
+							currentPlanSuspendedNote: 'Your {{plan}} plan is paused — the card payment failed. It comes back as soon as you update the card.',
 							people: 'How many people are on your team?',
 							peopleValue_one: '{{count}} person',
 							peopleValue_other: '{{count}} people',
@@ -387,6 +388,7 @@ i18n
 							requestChange: 'Request a plan change',
 							requestChangeAlt: 'Request',
 							changeByRequestNote: 'You have an active plan, so there is no payment here — send a request and we will carry over your paid period and confirm by email.',
+							cardRetryNote: 'Stripe is still retrying the card payment for your plan, so we do not take a second payment here. Update the card above, or send a request if you prefer another plan or BLIK.',
 							chooseAlt: 'Choose',
 							altOr: 'Or {{plan}} — {{price}}',
 							altAll: 'Every feature: {{plan}} — {{price}}',
@@ -502,6 +504,12 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · paid through {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · manual billing (no renewal date here).',
 						currentPlanLapsed: '{{plan}} lapsed — order a plan below or email us.',
+						currentPlanCardSuspended:
+							'{{plan}} paused — the card payment failed and Stripe is retrying it. Update the card and the plan comes back right after a successful payment.',
+						paymentFailedBannerAdminSuspended:
+							'The card payment for your plan failed and the team is on the free plan now. Update the card — Stripe will retry the charge and the plan comes back right away. Prefer another plan or BLIK? Send a plan change request.',
+						cardRetryPending:
+							'The card payment for your current plan failed and Stripe is retrying it — update the card in Packages and the plan comes back right away. Prefer another plan or BLIK? Send a plan change request.',
 						currentPlanPaymentPastDue:
 							'{{plan}} · the last card payment failed. Access continues through {{until}} — update the card to keep the plan.',
 						freemiumSeatBlockedAdmin:
@@ -2155,7 +2163,8 @@ i18n
 						qrModeScreen: 'Screen only (tablet)',
 						qrModeScreenOrPrint: 'Screen + printout',
 						qrModeHint_print: 'A code to print. A photo of it works from anywhere.',
-						qrModeHint_screen: 'The tablet code changes every 30 s. Photos and printouts won’t work.',
+						qrModeHint_screen:
+							'The tablet code changes every 30 s. Photos and printouts won’t work. Treat the display link like a password — anyone who has it sees the current code from anywhere; if it leaks, click “New link”.',
 						qrModeHint_screen_or_print: 'Tablet code, printout as backup — printout scans are flagged.',
 						qrOpenDisplay: 'Open the display (tablet)',
 						qrCopyDisplayLink: 'Copy link',
@@ -2744,6 +2753,7 @@ i18n
 							title: 'Policz plan dla zespołu',
 							subtitle: 'Zaznaczcie, czego potrzebujecie — polecimy jeden plan. Ceny netto.',
 							currentPlanNote: 'Macie plan {{plan}}. Wasza cena się nie zmienia — kalkulator przyda się, gdy zmieni się liczba osób albo będziecie potrzebować nowego modułu.',
+							currentPlanSuspendedNote: 'Plan {{plan}} jest wstrzymany — płatność kartą nie przeszła. Wróci od razu po zmianie karty.',
 							people: 'Ile osób w zespole?',
 							peopleValue_one: '{{count}} osoba',
 							peopleValue_few: '{{count}} osoby',
@@ -2787,6 +2797,7 @@ i18n
 							requestChange: 'Poproś o zmianę planu',
 							requestChangeAlt: 'Poproś',
 							changeByRequestNote: 'Macie aktywny plan, więc nie pobieramy tu płatności — wyślijcie prośbę, przeniesiemy opłacony okres i potwierdzimy mailem.',
+							cardRetryNote: 'Stripe dalej ponawia płatność kartą za Wasz plan, więc nie pobieramy tu drugiej. Zmieńcie kartę wyżej albo wyślijcie prośbę, jeśli wolicie inny plan lub BLIK.',
 							chooseAlt: 'Wybierz',
 							altOr: 'Albo {{plan}} — {{price}}',
 							altAll: 'Wszystkie funkcje: {{plan}} — {{price}}',
@@ -2900,6 +2911,12 @@ i18n
 						currentPlanPaid: '{{plan}} · {{cycle}} · do {{until}}.',
 						currentPlanPaidNoEnd: '{{plan}} · {{cycle}} · rozliczenia ręczne (bez daty odnowienia).',
 						currentPlanLapsed: '{{plan}} nieaktywny — zamów plan poniżej.',
+						currentPlanCardSuspended:
+							'{{plan}} wstrzymany — płatność kartą nie przeszła, a Stripe ją ponawia. Zmień kartę, a plan wróci od razu po udanej płatności.',
+						paymentFailedBannerAdminSuspended:
+							'Płatność kartą za plan nie przeszła i zespół działa teraz w planie darmowym. Zmień kartę — Stripe ponowi obciążenie, a plan wróci od razu. Wolicie inny plan albo BLIK? Wyślijcie prośbę o zmianę planu.',
+						cardRetryPending:
+							'Płatność kartą za obecny plan nie przeszła i Stripe ją ponawia — zmień kartę w Pakietach, a plan wróci od razu. Wolicie inny plan albo BLIK? Wyślijcie prośbę o zmianę planu.',
 						currentPlanPaymentPastDue:
 							'{{plan}} · ostatnia płatność kartą nie powiodła się. Dostęp trwa do {{until}} — zmień kartę, aby zachować plan.',
 						freemiumSeatBlockedAdmin:
@@ -4524,7 +4541,8 @@ i18n
 						qrModeScreen: 'Tylko ekran (tablet)',
 						qrModeScreenOrPrint: 'Ekran + wydruk',
 						qrModeHint_print: 'Kod do wydruku. Jego zdjęcie zadziała z każdego miejsca.',
-						qrModeHint_screen: 'Kod na tablecie zmienia się co 30 s. Zdjęcie ani wydruk nie zadziałają.',
+						qrModeHint_screen:
+							'Kod na tablecie zmienia się co 30 s. Zdjęcie ani wydruk nie zadziałają. Link do wyświetlacza traktuj jak hasło — kto go ma, widzi aktualny kod z dowolnego miejsca; w razie wycieku kliknij „Nowy link”.',
 						qrModeHint_screen_or_print: 'Kod z tabletu, wydruk awaryjnie — skan z wydruku jest oznaczany.',
 						qrOpenDisplay: 'Otwórz wyświetlacz (tablet)',
 						qrCopyDisplayLink: 'Kopiuj link',

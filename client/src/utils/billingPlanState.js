@@ -19,6 +19,20 @@ export function paidSubscriptionActive(ent, paidPlanIds, now = new Date()) {
 	return true
 }
 
+const PAST_DUE_STRIPE_STATUSES = new Set(['past_due', 'unpaid'])
+
+/**
+ * Karta odrzucona, a karencja już minęła: Stripe dalej ponawia płatność, zespół jest na planie darmowym. Płatność online
+ * zostaje zablokowana (Stripe mógłby pobrać drugi raz), ale to nie „aktywny plan” — potrzebny inny komunikat.
+ * W karencji (koniec okresu w przyszłości) plan jeszcze działa i obowiązują zwykłe teksty.
+ * Bliźniak serwera: planChangeBlockReason === 'card_retry' w server/utils/billingPlanChange.js.
+ */
+export function cardPaymentSuspended(ent, now = new Date()) {
+	if (!ent?.stripe?.subscriptionId || !PAST_DUE_STRIPE_STATUSES.has(ent.stripe.subscriptionStatus)) return false
+	const end = ent.billingPeriodEnd ? new Date(ent.billingPeriodEnd) : null
+	return !end || Number.isNaN(end.getTime()) || end <= now
+}
+
 function liveStripeSubscription(ent) {
 	return Boolean(ent?.stripe?.subscriptionId) && LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(ent?.stripe?.subscriptionStatus)
 }

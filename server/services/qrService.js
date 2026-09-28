@@ -233,7 +233,10 @@ exports.setQRCodeGeo = async (qrCodeId, teamId, { policy, lat, lng, accuracy, ra
 	return { _id: qrCode._id, geo: qrCode.geo }
 }
 
-/** Ustawienie trybu kodu (Admin/HR, tylko własny zespół). Tryb ekranu dostaje sekret i link wyświetlacza przy pierwszym włączeniu. */
+/**
+ * Ustawienie trybu kodu (Admin/HR, tylko własny zespół). Tryb ekranu dostaje sekret i link wyświetlacza przy pierwszym
+ * włączeniu i przy każdym ponownym włączeniu po wydruku — stary link (np. skopiowany z tabletu) nie może ożyć.
+ */
 exports.setQRCodeMode = async (qrCodeId, teamId, mode) => {
 	if (!QR_MODES.includes(mode)) {
 		const err = new Error('Nieprawidłowy tryb kodu QR')
@@ -243,10 +246,11 @@ exports.setQRCodeMode = async (qrCodeId, teamId, mode) => {
 	const nextMode = normalizeQrMode(mode)
 	const qrCode = await QRCode.findOne({ _id: qrCodeId, teamId, isActive: true }).select('+screenSecret')
 	if (!qrCode) throw new Error('Kod QR nie znaleziony')
+	const reEnablingScreen = normalizeQrMode(qrCode.mode) === 'print' && nextMode !== 'print'
 	qrCode.mode = nextMode
 	if (nextMode !== 'print') {
-		if (!qrCode.screenSecret) qrCode.screenSecret = generateSecret()
-		if (!qrCode.displayToken) qrCode.displayToken = generateDisplayToken()
+		if (!qrCode.screenSecret || reEnablingScreen) qrCode.screenSecret = generateSecret()
+		if (!qrCode.displayToken || reEnablingScreen) qrCode.displayToken = generateDisplayToken()
 	}
 	await qrCode.save()
 	return { _id: qrCode._id, mode: qrCode.mode, displayToken: qrCode.displayToken }
@@ -264,7 +268,8 @@ exports.rotateDisplayLink = async (qrCodeId, teamId) => {
 
 /**
  * Dane dla wyświetlacza (publiczne, bez logowania — dostęp wyznacza token linku). Zwraca sekret, bo tablet liczy
- * token lokalnie (działa przy chwilowym braku sieci); kto ma link, ten i tak „stoi przed ekranem”. Link da się unieważnić.
+ * token lokalnie (działa przy chwilowym braku sieci). Link działa z każdego miejsca, więc jest jak hasło: aplikacja
+ * zdejmuje go z paska adresu tabletu, a Admin unieważnia go przyciskiem „Nowy link”.
  */
 exports.getDisplayData = async displayToken => {
 	if (!displayToken || typeof displayToken !== 'string' || displayToken.length < 16) return null

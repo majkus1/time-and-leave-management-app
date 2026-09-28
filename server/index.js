@@ -41,6 +41,11 @@ const { authenticateToken } = require('./middleware/authMiddleware')
 const http = require('http')
 const { Server } = require('socket.io')
 const app = express()
+// Za proxy Rendera (przed nim brzeg Cloudflare) req.ip bez tego to adres proxy, więc każdy limit „per IP” byłby
+// wspólny dla wszystkich klientów. Ufamy tylko najbliższemu przeskokowi — tej wartości klient nie podrobi nagłówkiem;
+// liczbę przeskoków można zmienić zmienną TRUST_PROXY_HOPS, gdy zmieni się infrastruktura.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '1', 10)
+app.set('trust proxy', Number.isFinite(trustProxyHops) && trustProxyHops >= 0 ? trustProxyHops : 1)
 const server = http.createServer(app)
 const io = new Server(server, {
 	cors: {

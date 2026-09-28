@@ -174,10 +174,25 @@ exports.timeEntryRegisterLimiter = rateLimit({
 	message: { message: 'Zbyt wiele prób skanowania. Spróbuj ponownie za minutę.' },
 })
 
-/** Publiczny wyświetlacz rotującego kodu QR — tablet odpytuje raz przy starcie i co kilka minut; limit per IP. */
+/** Publiczny wyświetlacz rotującego kodu QR — tablet odpytuje raz przy starcie i co kilka minut. */
 exports.qrDisplayPublicLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	max: envInt('QR_DISPLAY_PER_15MIN', 120),
 	standardHeaders: true,
 	legacyHeaders: false,
+	// Per link wyświetlacza (i IP): tablety różnych firm nie dzielą jednej puli, nawet gdy za proxy widać wspólny adres
+	keyGenerator: req => `qr-display:${String(req.params?.displayToken || '').slice(0, 64)}:${req.ip}`,
+})
+
+/**
+ * Nieaktualne albo wymyślone linki wyświetlacza — per IP, liczy tylko nieudane odczyty (404), więc działające tablety
+ * puli nie zużywają. Bez tego każdy losowy token miałby własną pulę w limiterze wyżej i zalewanie nie miałoby hamulca.
+ */
+exports.qrDisplayInvalidTokenLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: envInt('QR_DISPLAY_INVALID_PER_15MIN', 30),
+	standardHeaders: true,
+	legacyHeaders: false,
+	skipSuccessfulRequests: true,
+	keyGenerator: req => `qr-display-invalid:${req.ip}`,
 })

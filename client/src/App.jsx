@@ -166,6 +166,7 @@ function AppContent() {
 					<Route path="/new-password/:token" element={<NewPassword />} />
 					<Route path="/qr-scan/:code" element={<QRScan />} />
 					<Route path="/qr-display/:displayToken" element={<QRDisplay />} />
+					<Route path="/qr-display" element={<QRDisplay />} />
 					<Route element={<ProtectedRoute isLoggedIn={loggedIn} handleLogout={logout} />}>
 					<Route path="/dashboard" element={<FreemiumDashboardGuard><Dashboard /></FreemiumDashboardGuard>} />
 					<Route path="/work-time" element={<WorkTimePage />} />

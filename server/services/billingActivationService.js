@@ -69,8 +69,9 @@ function parseActivationInput({ teamId, planKey, billingCycle, periodEnd, idempo
 
 /**
  * Idempotent paid plan activation (manual ops today; same entrypoint for future Przelewy24 webhooks).
- * detachEndedStripeSubscription — tylko ręczna aktywacja: odpina zakończoną subskrypcję Stripe (zespół przechodzi
- * na rozliczenie ręczne), inaczej zostaje jej ID: brak przypomnień o końcu okresu i przycisk anulowania z błędem.
+ * detachEndedStripeSubscription — ręczna aktywacja i płatność BLIK / przelewem: odpina zakończoną subskrypcję Stripe
+ * (zespół przechodzi na rozliczenie ręczne albo P24), inaczej zostaje jej ID: brak przypomnień o końcu okresu
+ * i przycisk anulowania z błędem. Webhooki Stripe tej flagi nie przekazują.
  * stripeSubscriptionEnded — operator potwierdził, że subskrypcja nie działa mimo „żywego” statusu w bazie.
  */
 async function activatePaidPlan({

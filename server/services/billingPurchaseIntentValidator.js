@@ -14,7 +14,12 @@ const {
 const entitlementsService = require('./entitlementsService')
 const { assertPaidPlanSeatLimit } = require('./billingPlanSeatLimitService')
 const { assertTeamInvoiceComplete } = require('./billingInvoiceValidation')
-const { planChangeNeedsRequest, onlinePurchasablePlan, isEarlyRenewal } = require('../utils/billingPlanChange')
+const {
+	planChangeNeedsRequest,
+	planChangeBlockReason,
+	onlinePurchasablePlan,
+	isEarlyRenewal,
+} = require('../utils/billingPlanChange')
 
 /**
  * Moduły w sprzedaży albo dawny moduł, który zespół już ma (odnowienie) — np. osobny „Czat” sprzed „Zadania i czat”.
@@ -96,9 +101,19 @@ async function validateBillingPurchaseIntent(params) {
 			params.allowEarlyRenewal === true &&
 			isEarlyRenewal({ team, planKey, moduleKeys: Array.isArray(moduleKeys) ? moduleKeys : [], at: new Date() })
 		if (planChange && channel !== 'mail' && !renewal) {
+			// Po karencji zaległej płatności kartą zespół jest już na planie darmowym — „aktywny plan” byłby nieprawdą;
+			// blokada ta sama (Stripe dalej ponawia i mógłby pobrać drugi raz), inny tylko komunikat
+			const reason = planChangeBlockReason({
+				paidActive: entitlementsService.isPaidSubscriptionActive(team),
+				stripeSubscriptionId: team.stripeSubscriptionId,
+				stripeSubscriptionStatus: team.stripeSubscriptionStatus,
+			})
 			const err = new Error(
-				'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.'
+				reason === 'card_retry'
+					? 'Płatność kartą za obecny plan nie przeszła i Stripe ją ponawia — zmień kartę w Pakietach, a plan wróci od razu. Wolicie inny plan albo BLIK? Wyślijcie prośbę o zmianę planu.'
+					: 'Zespół ma aktywny plan — zmianę planu albo dodanie modułu zgłoś przyciskiem „Poproś o zmianę planu” w Pakietach. Przeniesiemy opłacony okres i potwierdzimy mailem.'
 			)
+			err.meta = { reason }
 			err.code = 'PLAN_CHANGE_REQUIRES_REQUEST'
 			throw err
 		}

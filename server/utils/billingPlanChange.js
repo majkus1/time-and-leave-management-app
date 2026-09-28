@@ -19,6 +19,19 @@ function planChangeNeedsRequest(state) {
 	return Boolean(state?.stripeSubscriptionId) && LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(state?.stripeSubscriptionStatus)
 }
 
+/**
+ * Dlaczego płatność online jest wstrzymana (do komunikatu, blokada ta sama): opłacony okres, zaległa płatność kartą po
+ * karencji (Stripe ponawia — zespół jest już na planie darmowym, więc „aktywny plan” byłby nieprawdą) albo działająca
+ * subskrypcja kartą.
+ * @returns {'paid_period'|'card_retry'|'card_subscription'|null}
+ */
+function planChangeBlockReason(state) {
+	if (state?.paidActive === true) return 'paid_period'
+	if (!state?.stripeSubscriptionId) return null
+	if (PAST_DUE_STRIPE_STATUSES.has(state.stripeSubscriptionStatus)) return 'card_retry'
+	return LIVE_STRIPE_SUBSCRIPTION_STATUSES.has(state.stripeSubscriptionStatus) ? 'card_subscription' : null
+}
+
 /** Płatność online tylko za plany w sprzedaży — Enterprise (ponad 100 osób) to wycena indywidualna */
 function onlinePurchasablePlan(planKey) {
 	return SALE_PLAN_KEYS.includes(normalizePaidPlanKey(planKey))
@@ -177,6 +190,7 @@ function renewalFinalizeDecision({ team, planKey, moduleKeys, renewFrom, otherRe
 
 module.exports = {
 	planChangeNeedsRequest,
+	planChangeBlockReason,
 	onlinePurchasablePlan,
 	isEarlyRenewal,
 	renewalFinalizeDecision,
