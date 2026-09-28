@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
-import { useTeamQRCodes, useGenerateQRCode, useDeleteQRCode, useSetQRCodeMode, useRotateQRDisplayLink } from '../../hooks/useQRCode'
+import { useTeamQRCodes, useGenerateQRCode, useDeleteQRCode, useRotateQRDisplayLink } from '../../hooks/useQRCode'
 import Loader from '../Loader'
 import QRCodeGeoSettings from './QRCodeGeoSettings'
+import QRCodeModeField from './QRCodeModeField'
 import './QRCode.css'
 
 function QRCodeGenerator() {
@@ -13,18 +14,9 @@ function QRCodeGenerator() {
 	const { data: qrCodes = [], isLoading } = useTeamQRCodes()
 	const generateQRCode = useGenerateQRCode()
 	const deleteQRCode = useDeleteQRCode()
-	const setQRCodeMode = useSetQRCodeMode()
 	const rotateDisplayLink = useRotateQRDisplayLink()
 
 	const displayUrl = token => `${window.location.origin}/qr-display/${token}`
-
-	const handleModeChange = async (id, mode) => {
-		try {
-			await setQRCodeMode.mutateAsync({ id, mode })
-		} catch (error) {
-			await showAlert(error.response?.data?.message || t('settings.qrModeError'))
-		}
-	}
 
 	const handleCopyDisplayLink = async token => {
 		try {
@@ -148,19 +140,7 @@ function QRCodeGenerator() {
 									{qr.name}
 								</h4>
 
-								<label className="qr-code-generator__mode">
-									<span>{t('settings.qrModeLabel')}</span>
-									<select
-										value={mode}
-										onChange={e => handleModeChange(qr._id, e.target.value)}
-										disabled={setQRCodeMode.isPending}
-									>
-										<option value="print">{t('settings.qrModePrint')}</option>
-										<option value="screen">{t('settings.qrModeScreen')}</option>
-										<option value="screen_or_print">{t('settings.qrModeScreenOrPrint')}</option>
-									</select>
-								</label>
-								<p className="qr-code-generator__mode-hint">{t(`settings.qrModeHint_${mode}`)}</p>
+								<QRCodeModeField qr={qr} />
 
 								{mode !== 'print' && qr.displayToken && (
 									<div className="qr-code-generator__display">

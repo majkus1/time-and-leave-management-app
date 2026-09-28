@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { API_URL } from '../config.js'
 
+// Odpowiedź zapisu od razu w liście kodów — karta zmienia się bez czekania na ponowne pobranie wszystkich kodów
+const mergeQRCodeIntoList = (queryClient, updated) => {
+	if (!updated?._id) return
+	queryClient.setQueryData(['qrCodes'], list =>
+		Array.isArray(list) ? list.map(q => (String(q._id) === String(updated._id) ? { ...q, ...updated } : q)) : list
+	)
+}
+
 // Get all QR codes for team
 export const useTeamQRCodes = () => {
 	return useQuery({
@@ -79,7 +87,11 @@ export const useSetQRCodeMode = () => {
 			const response = await axios.patch(`${API_URL}/api/qr/${id}/mode`, { mode }, { withCredentials: true })
 			return response.data
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
+		// Bez return: mutateAsync nie czeka na ponowne pobranie listy (to wyglądało na zawieszenie)
+		onSuccess: data => {
+			mergeQRCodeIntoList(queryClient, data)
+			queryClient.invalidateQueries({ queryKey: ['qrCodes'] })
+		},
 	})
 }
 
@@ -91,7 +103,11 @@ export const useSetQRCodeGeo = () => {
 			const response = await axios.patch(`${API_URL}/api/qr/${id}/geo`, body, { withCredentials: true })
 			return response.data
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
+		// Bez return: mutateAsync nie czeka na ponowne pobranie listy (to wyglądało na zawieszenie)
+		onSuccess: data => {
+			mergeQRCodeIntoList(queryClient, data)
+			queryClient.invalidateQueries({ queryKey: ['qrCodes'] })
+		},
 	})
 }
 
@@ -103,7 +119,11 @@ export const useRotateQRDisplayLink = () => {
 			const response = await axios.post(`${API_URL}/api/qr/${id}/display-link`, {}, { withCredentials: true })
 			return response.data
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['qrCodes'] }),
+		// Bez return: mutateAsync nie czeka na ponowne pobranie listy (to wyglądało na zawieszenie)
+		onSuccess: data => {
+			mergeQRCodeIntoList(queryClient, data)
+			queryClient.invalidateQueries({ queryKey: ['qrCodes'] })
+		},
 	})
 }
 

@@ -265,50 +265,6 @@
 	color: var(--po-text-muted, #64748b);
 }
 
-.packages-usage__text {
-	margin: 0;
-	color: #475569;
-	font-size: 0.9rem;
-	line-height: 1.45;
-}
-
-.packages-usage {
-	background: #f8fafc;
-	border: 1px solid #e2e8f0;
-	border-radius: 12px;
-	padding: 1rem 1.25rem;
-	margin-bottom: 1.5rem;
-}
-
-.packages-usage h3 {
-	margin: 0 0 0.75rem;
-	font-size: 1.05rem;
-	color: #0f172a;
-}
-
-.packages-usage dl {
-	margin: 0;
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0.35rem 1rem;
-	font-size: 0.9rem;
-}
-
-/** Odstęp listy limitów od akapitu powyżej — musi być `.packages-usage dl...`, bo `margin: 0` z `.packages-usage dl` ma wyższą specyficzność niż sama klasa na `dl`. */
-.packages-usage dl.packages-usage__stats {
-	margin-top: 0.75rem;
-}
-
-.packages-usage dt {
-	color: #64748b;
-}
-
-.packages-usage dd {
-	margin: 0;
-	font-weight: 600;
-	color: #1e293b;
-}
-
 .packages-billing-block {
 	margin-bottom: 1.75rem;
 	display: flex;
@@ -1451,7 +1407,6 @@
 .packages-invoice-section,
 .packages-current-plan,
 .packages-tier-card,
-.packages-usage,
 .packages-modal__content {
 	background: var(--po-surface);
 	border-color: var(--po-border);

@@ -207,6 +207,59 @@
 	text-align: left;
 }
 
+/* Nagłówek pola: etykieta i stan zapisu po prawej */
+.qr-code-generator__field-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+}
+
+/* Stan zapisu pola — widać, że zmiana poszła do serwera i że się udała */
+.qr-save-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+	color: var(--po-text-muted, #64748b);
+}
+
+.qr-save-status--saved {
+	color: var(--po-brand-text, #2e7d32);
+}
+
+.qr-save-status__spinner {
+	width: 11px;
+	height: 11px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: qr-save-spin 0.7s linear infinite;
+}
+
+@keyframes qr-save-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.qr-save-status__spinner {
+		animation-duration: 2.4s;
+	}
+}
+
+/* Pole w trakcie zapisu — przygaszone, kursor „w toku” */
+.qr-code-generator__mode select[aria-busy='true'],
+.qr-code-generator__geo-radius select[aria-busy='true'] {
+	opacity: 0.75;
+	cursor: progress;
+}
+
 .qr-code-generator__display {
 	display: flex;
 	flex-direction: column;

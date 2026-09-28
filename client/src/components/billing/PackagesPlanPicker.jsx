@@ -19,7 +19,8 @@ function sameModules(a, b) {
 
 /**
  * Kalkulator planu w Pakietach — ta sama logika co na landingu (utils/pricingCalculator).
- * Płatności zostają w PackagesPage: Core przechodzi przez konfigurator (onChooseCore), pakiety przez onChooseBundle.
+ * Płatności zostają w PackagesPage: Core z kalkulatora od razu do płatności, z kafelka „Skonfiguruj Core” przez
+ * konfigurator (onChooseCore), pakiety przez onChooseBundle.
  */
 export default function PackagesPlanPicker({
 	catalog,
@@ -160,7 +161,8 @@ export default function PackagesPlanPicker({
 	}
 	const run = action => {
 		if (!action || !canBuy || busy) return
-		if (action.kind === 'core') onChooseCore(action.planKey, action.modules || [])
+		// Z kalkulatora plan i moduły są już wybrane — od razu płatność, bez ponownej konfiguracji
+		if (action.kind === 'core') onChooseCore(action.planKey, action.modules || [], { direct: true })
 		if (action.kind === 'bundle') onChooseBundle(action.planKey)
 		if (action.kind === 'contact') onContact()
 	}

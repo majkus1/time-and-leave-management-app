@@ -2927,8 +2927,7 @@
 
 [data-theme='dark'] .packages-billing-toggle__label,
 [data-theme='dark'] .packages-billing-annual-hint,
-[data-theme='dark'] .packages-usd-hint,
-[data-theme='dark'] .packages-usage__text {
+[data-theme='dark'] .packages-usd-hint {
 	color: var(--po-text-muted) !important;
 }
 
@@ -2968,14 +2967,12 @@
 	color: var(--po-text-muted) !important;
 }
 
-[data-theme='dark'] .packages-usage,
 [data-theme='dark'] .packages-addon-row,
 [data-theme='dark'] .packages-tier__module-pick {
 	background: var(--po-surface-muted) !important;
 	border-color: var(--po-border) !important;
 }
 
-[data-theme='dark'] .packages-usage h3,
 [data-theme='dark'] .packages-tier__module-pick-title,
 [data-theme='dark'] .packages-current-plan h3 {
 	color: var(--po-text) !important;
@@ -6924,13 +6921,6 @@
 	color: var(--po-text) !important;
 }
 
-[data-theme='dark'] .packages-usage dt {
-	color: var(--po-text-muted) !important;
-}
-
-[data-theme='dark'] .packages-usage dd {
-	color: var(--po-text) !important;
-}
 
 [data-theme='dark'] .packages-addons {
 	background: var(--po-surface) !important;

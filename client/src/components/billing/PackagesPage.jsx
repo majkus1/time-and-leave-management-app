@@ -554,11 +554,12 @@ export default function PackagesPage() {
 	)
 
 	const executeCoreCheckout = useCallback(
-		async provider => {
+		async (provider, picked) => {
 			if (provider !== 'stripe' && provider !== 'p24') return
 			if (!canSubmitPurchaseRequest) return
-			const planKey = coreConfiguratorPlanKey
-			const mods = coreConfiguratorMods
+			// picked — plan i moduły z kalkulatora; bez niego stan konfiguratora
+			const planKey = picked?.planKey ?? coreConfiguratorPlanKey
+			const mods = picked?.mods ?? coreConfiguratorMods
 			const tier = catalog?.tiers?.find(t => t.id === planKey)
 			if (catalog && teamSeats != null && tier && teamSeats > tier.maxUsers) {
 				await showAlert(
@@ -654,13 +655,38 @@ export default function PackagesPage() {
 		[canSubmitPurchaseRequest, billing, i18n.resolvedLanguage, planLabel, ent, catalog, t]
 	)
 
-	/** Core z kalkulatora albo „Wszystkich planów” — płatność przez konfigurator (karta / BLIK / przelew) */
+	/**
+	 * Core z kalkulatora ({ direct: true }) — plan i moduły już wybrane, więc od razu płatność: wybór karta / BLIK,
+	 * a gdy działa tylko jeden sposób (rocznie tylko BLIK / przelew) — od razu on. Z kafelka „Skonfiguruj Core”
+	 * i bez płatności online — konfigurator.
+	 */
 	const chooseCore = useCallback(
-		(planKey, mods) => {
+		(planKey, mods, options) => {
 			if (!canSubmitPurchaseRequest) return
 			if (planChangeByRequest(ent, paidPlanIds)) {
 				openPlanChangeRequest(planKey, mods)
 				return
+			}
+			if (options?.direct) {
+				const modules = Array.isArray(mods) ? mods : []
+				const cycle = billing === 'monthly' ? 'monthly' : 'annual'
+				const body = { kind: 'plan', planKey, billingCycle: cycle, moduleKeys: modules }
+				const stripeIds = modules.length ? collectPriceIdsForStripeCheckout(stripeStatus, planKey, cycle, modules) : null
+				const stripeReady =
+					stripeStatus?.ready === true &&
+					cycle === 'monthly' &&
+					(modules.length ? Boolean(stripeIds) && stripeMapsAllPriceIds(stripeStatus, stripeIds) : hasStripeMappingForBody(stripeStatus, body))
+				const p24Ready = p24Status?.ready === true
+				if (stripeReady && p24Ready) {
+					setJustSent(false)
+					setNote('')
+					setPaymentChoiceModal({ ...body, core: true })
+					return
+				}
+				if (stripeReady || p24Ready) {
+					void executeCoreCheckout(stripeReady ? 'stripe' : 'p24', { planKey, mods: modules })
+					return
+				}
 			}
 			setJustSent(false)
 			setNote('')
@@ -668,7 +694,7 @@ export default function PackagesPage() {
 			setCoreConfiguratorMods(Array.isArray(mods) ? mods : [])
 			setCoreConfiguratorOpen(true)
 		},
-		[canSubmitPurchaseRequest, ent, paidPlanIds, openPlanChangeRequest]
+		[canSubmitPurchaseRequest, ent, paidPlanIds, openPlanChangeRequest, billing, stripeStatus, p24Status, executeCoreCheckout]
 	)
 
 	/** Pakiet (PRO / Business) — ta sama ścieżka co dawne karty pakietów */
@@ -977,15 +1003,6 @@ export default function PackagesPage() {
 	const coreIncludedRaw = t('billingPackages.coreIncludedItems', { returnObjects: true })
 	const coreIncludedItems = Array.isArray(coreIncludedRaw) ? coreIncludedRaw : []
 	const activeTrial = ent ? trialSubscriptionActive(ent) : false
-	const legacyGraceLastDay =
-		ent?.legacy && ent.legacyGrandfatheredActive && ent.legacyGrandfatheredAccessEndsAt
-			? formatLegacyGraceLastInclusiveDay(ent.legacyGrandfatheredAccessEndsAt, localeTag)
-			: null
-	const legacyGrandfatheredUsageStats =
-		Boolean(ent?.legacy && ent.legacyGrandfatheredActive) &&
-		(ent?.ai?.trialCap != null ||
-			ent?.ai?.monthlyIncluded != null ||
-			(ent?.ai?.packBalance ?? 0) > 0)
 
 	// Podgląd wyglądu baneru na dev: /packages?previewPaymentFailed=1 (tylko UI, bez zmian w API)
 	const previewPaymentFailed =
@@ -1251,92 +1268,6 @@ export default function PackagesPage() {
 										? 'Anuluj płatność cykliczną'
 										: 'Cancel recurring payment'}
 							</button>
-						)}
-					</div>
-				)}
-
-				{ent && (
-					<div className="packages-usage">
-						<h3>{t('billingPackages.usageTitle')}</h3>
-						{ent.ai?.unrestricted ? (
-							<p className="packages-usage__text">{t('billingPackages.internalUnlimitedAi')}</p>
-						) : ent.ai?.fairUse ? (
-							<p className="packages-usage__text">
-								{ent.ai.hasAccess
-									? t('billingPackages.aiUnlimitedUsage', { n: ent.ai.usedInMonth || 0 })
-									: t('billingPackages.aiFairUseReached')}
-							</p>
-						) : ent.legacy && ent.legacyGrandfatheredActive ? (
-							legacyGrandfatheredUsageStats ? (
-								<>
-									<p className="packages-usage__text">
-										{t('billingPackages.usageLegacyGrandfatheredPooledIntro', {
-											date: legacyGraceLastDay || '—',
-										})}
-									</p>
-									<dl className="packages-usage__stats">
-										<dt>{t('billingPackages.remaining')}</dt>
-										<dd>
-											{ent.ai.remainingApprox === Number.POSITIVE_INFINITY ||
-											ent.ai.remainingApprox == null
-												? '—'
-												: String(ent.ai.remainingApprox)}
-										</dd>
-										{ent.ai.trialCap != null && (
-											<>
-												<dt>{t('billingPackages.legacyTransitionAiPool')}</dt>
-												<dd>
-													{Math.max(0, ent.ai.trialCap - (ent.ai.trialUsed || 0))} / {ent.ai.trialCap}
-												</dd>
-											</>
-										)}
-										{ent.ai.monthlyIncluded != null && (
-											<>
-												<dt>{t('billingPackages.monthlyPool')}</dt>
-												<dd>
-													{Math.max(0, ent.ai.monthlyIncluded - (ent.ai.usedInMonth || 0))} /{' '}
-													{ent.ai.monthlyIncluded}
-												</dd>
-											</>
-										)}
-										<dt>{t('billingPackages.packBalance')}</dt>
-										<dd>{ent.ai.packBalance ?? 0}</dd>
-									</dl>
-								</>
-							) : (
-								<p className="packages-usage__text">{t('billingPackages.usageLegacyGrandfathered')}</p>
-							)
-						) : ent.legacy && !ent.legacyGrandfatheredActive ? (
-							<p className="packages-usage__text">{t('billingPackages.legacyGraceEndedUsage')}</p>
-						) : !((ent.ai?.packBalance ?? 0) > 0) ? (
-							<p className="packages-usage__text">{t('billingPackages.aiNotInPlan')}</p>
-						) : (
-							<dl>
-								<dt>{t('billingPackages.remaining')}</dt>
-								<dd>
-									{ent.ai.remainingApprox === Number.POSITIVE_INFINITY || ent.ai.remainingApprox == null
-										? '—'
-										: String(ent.ai.remainingApprox)}
-								</dd>
-								{ent.ai.trialCap != null && (
-									<>
-										<dt>{t('billingPackages.trialPool')}</dt>
-										<dd>
-											{Math.max(0, ent.ai.trialCap - (ent.ai.trialUsed || 0))} / {ent.ai.trialCap}
-										</dd>
-									</>
-								)}
-								{ent.ai.monthlyIncluded != null && (
-									<>
-										<dt>{t('billingPackages.monthlyPool')}</dt>
-										<dd>
-											{Math.max(0, ent.ai.monthlyIncluded - (ent.ai.usedInMonth || 0))} / {ent.ai.monthlyIncluded}
-										</dd>
-									</>
-								)}
-								<dt>{t('billingPackages.packBalance')}</dt>
-								<dd>{ent.ai.packBalance ?? 0}</dd>
-							</dl>
 						)}
 					</div>
 				)}
@@ -1897,7 +1828,8 @@ export default function PackagesPage() {
 								onClick={() => {
 									const body = paymentChoiceModal
 									setPaymentChoiceModal(null)
-									void startOnlineCheckout(body, { forceProvider: 'stripe' })
+									if (body.core) void executeCoreCheckout('stripe', { planKey: body.planKey, mods: body.moduleKeys })
+									else void startOnlineCheckout(body, { forceProvider: 'stripe' })
 								}}
 							>
 								{t('billingPackages.paymentChoiceStripeBtn')}
@@ -1911,7 +1843,8 @@ export default function PackagesPage() {
 								onClick={() => {
 									const body = paymentChoiceModal
 									setPaymentChoiceModal(null)
-									void startOnlineCheckout(body, { forceProvider: 'p24' })
+									if (body.core) void executeCoreCheckout('p24', { planKey: body.planKey, mods: body.moduleKeys })
+									else void startOnlineCheckout(body, { forceProvider: 'p24' })
 								}}
 							>
 								{t('billingPackages.paymentChoiceP24Btn')}
