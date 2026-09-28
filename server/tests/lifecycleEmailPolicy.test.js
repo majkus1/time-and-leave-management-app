@@ -33,6 +33,13 @@ test('wygasniecie: mail 1-7 dni po koncu, niezaleznie od dostawcy, raz na okres'
 
 const due = (ageDays, extra = {}) => dueLifecycleKind({ ageDays, usersCount: 1, paid: false, sentKinds: [], ...extra })
 
+test('osobisty mail od twórcy zastępuje automatyczne powitanie, dalsze kroki bez zmian', () => {
+	assert.equal(due(0, { sentKinds: ['founder_welcome'] }), null)
+	assert.equal(due(1, { sentKinds: ['founder_welcome', 'founder_new_team'] }), null)
+	assert.equal(due(2, { sentKinds: ['founder_welcome'] }), 'add_team')
+	assert.equal(due(8, { sentKinds: ['founder_welcome'] }), 'leaves_tip')
+})
+
 test('cykl: kazdy krok ma swoje okno, poza oknami nic', () => {
 	assert.equal(due(0), 'welcome')
 	assert.equal(due(1), 'welcome')

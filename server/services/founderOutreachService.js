@@ -101,6 +101,8 @@ function buildWelcomeText(team) {
 		'',
 		`Dziękuję za założenie zespołu „${team.name}” w Planopii. Piszę osobiście, bo zależy mi, żeby aplikacja zadziałała u Was od pierwszego dnia — bez czytania instrukcji.`,
 		'',
+		`Planopia jest tutaj: ${publicAppUrl}`,
+		'',
 		'Jeśli to pomoże, w 15 minut ustawimy razem zespół pod Waszą firmę: pracownicy, godziny pracy i święta, urlopy, grafik albo kody QR — co jest Wam potrzebne.',
 	]
 	if (calendar) {
@@ -180,9 +182,20 @@ async function notifyFounderNewTeam(team) {
 	}
 }
 
-/** Po rejestracji: powitanie do klienta + sygnał do twórcy. Błędy nie mogą psuć rejestracji — logujemy. */
-function onTeamRegistered(team) {
-	sendFounderWelcome(team).catch(err => console.error('[founder] welcome:', err.message))
+/**
+ * Po rejestracji: jedno powitanie do klienta + sygnał do twórcy. Błędy nie mogą psuć rejestracji — logujemy.
+ * fallbackWelcome — automatyczne powitanie, gdy osobisty mail nie wyszedł (brak FOUNDER_SMTP_*, błąd skrzynki);
+ * wysłany osobisty mail zamyka też powitanie w dziennym jobie (lifecycleEmailPolicy).
+ */
+function onTeamRegistered(team, { fallbackWelcome } = {}) {
+	const fallback = () =>
+		fallbackWelcome ? Promise.resolve(fallbackWelcome()).catch(err => console.error('[founder] welcome fallback:', err.message)) : null
+	sendFounderWelcome(team)
+		.then(r => (!r.sent && r.reason !== 'already-sent' ? fallback() : null))
+		.catch(err => {
+			console.error('[founder] welcome:', err.message)
+			return fallback()
+		})
 	notifyFounderNewTeam(team).catch(err => console.error('[founder] new-team notice:', err.message))
 }
 

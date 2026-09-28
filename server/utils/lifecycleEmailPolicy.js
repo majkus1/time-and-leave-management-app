@@ -47,6 +47,8 @@ function inWindow(kind, ageDays, trialDaysLeft) {
 function dueLifecycleKind({ ageDays, usersCount, paid, sentKinds = [], trialDaysLeft = null }) {
 	if (!Number.isFinite(ageDays) || ageDays < 0) return null
 	const sent = new Set(sentKinds)
+	// Osobisty mail od twórcy zastępuje automatyczne powitanie — klient dostaje jedno powitanie
+	if (sent.has('founder_welcome')) sent.add('welcome')
 	const lastSentIndex = LIFECYCLE_KINDS.reduce((acc, k, i) => (sent.has(k) ? i : acc), -1)
 
 	for (let i = LIFECYCLE_KINDS.length - 1; i >= 0; i--) {

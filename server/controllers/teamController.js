@@ -194,18 +194,12 @@ exports.registerTeam = async (req, res) => {
 		// dotychczasową wartość dashboardEnabled w swoim dokumencie ustawień.
 		await Settings.getSettings(newTeam._id);
 
-		// Powitanie z trzema krokami — od razu, nie z dziennego joba. Błąd maila nie psuje rejestracji.
-		try {
-			const lifecycleEmailService = require('../services/lifecycleEmailService')
-			void lifecycleEmailService.sendLifecycleEmailForTeam(newTeam, 'welcome').catch(err => {
-				console.error('[lifecycleEmails] welcome:', err.message)
-			})
-		} catch (err) {
-			console.error('[lifecycleEmails] welcome:', err.message)
-		}
-
-		// Osobisty mail od twórcy (własna skrzynka, czysty tekst) + sygnał „nowy zespół / zostawił numer”.
-		founderOutreachService.onTeamRegistered(newTeam)
+		// Jedno powitanie: osobisty mail od twórcy (własna skrzynka, czysty tekst). Automatyczne „trzy kroki” tylko,
+		// gdy osobisty nie wyszedł. Plus sygnał „nowy zespół / zostawił numer”. Błąd maila nie psuje rejestracji.
+		const lifecycleEmailService = require('../services/lifecycleEmailService')
+		founderOutreachService.onTeamRegistered(newTeam, {
+			fallbackWelcome: () => lifecycleEmailService.sendLifecycleEmailForTeam(newTeam, 'welcome'),
+		})
 
 		// Record legal document acceptances (TERMS and PRIVACY) — wymagane wyżej
 		// Note: DPA is automatically accepted when first employee is added
