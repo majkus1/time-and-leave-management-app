@@ -714,8 +714,6 @@ a.lp-result__alt-cta:focus-visible {
 
 .lp-plans__grid {
 	display: grid;
-	/* Każda karta własnej wysokości — rozwinięcie progów w jednej nie rozciąga sąsiednich */
-	align-items: start;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 0.85rem;
 	margin: 0;
@@ -785,7 +783,9 @@ a.lp-result__alt-cta:focus-visible {
 	color: #102f5e;
 }
 
+/* Lista progów otwiera się jako panel nad kartą — rząd kart zostaje równej wysokości */
 .lp-plan__more {
+	position: relative;
 	margin-top: 0.4rem;
 }
 
@@ -797,10 +797,19 @@ a.lp-result__alt-cta:focus-visible {
 }
 
 .lp-plan__tier-list {
+	position: absolute;
+	top: calc(100% + 0.4rem);
+	left: -0.5rem;
+	right: -0.5rem;
+	z-index: 5;
 	display: grid;
 	gap: 0.2rem;
-	margin: 0.45rem 0 0;
-	padding: 0;
+	margin: 0;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid rgba(16, 47, 94, 0.12);
+	border-radius: 0.65rem;
+	background: #ffffff;
+	box-shadow: 0 12px 28px rgba(16, 47, 94, 0.14);
 	list-style: none;
 	font-size: 13px;
 	color: rgba(16, 47, 94, 0.72);
