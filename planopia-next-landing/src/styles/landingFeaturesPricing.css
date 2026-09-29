@@ -91,6 +91,18 @@ button.lf-badge:focus-visible,
 	margin-bottom: 0.35rem;
 }
 
+/* Na telefonie zdanie legendy w swojej linii, plakietki pod nim */
+.lf-tiles__legend-text {
+	font-size: inherit !important;
+	color: inherit !important;
+}
+
+@media (max-width: 639px) {
+	.lf-tiles__legend-text {
+		flex-basis: 100%;
+	}
+}
+
 .lf-tiles__hint {
 	margin: 0 0 1rem;
 	font-size: 13.5px !important;
@@ -702,6 +714,8 @@ a.lp-result__alt-cta:focus-visible {
 
 .lp-plans__grid {
 	display: grid;
+	/* Każda karta własnej wysokości — rozwinięcie progów w jednej nie rozciąga sąsiednich */
+	align-items: start;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 0.85rem;
 	margin: 0;
@@ -821,6 +835,38 @@ a.lp-result__alt-cta:focus-visible {
 	border: 1px solid rgba(16, 47, 94, 0.11);
 	border-radius: 0.85rem;
 	background: #ffffff;
+}
+
+/* Rozwijanie: cienki szewron z CSS zamiast domyślnego ▶ (na telefonach renderuje się jak emotka) */
+.lp-plan__more summary,
+.lp-compare__summary {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	list-style: none;
+}
+
+.lp-plan__more summary::-webkit-details-marker,
+.lp-compare__summary::-webkit-details-marker {
+	display: none;
+}
+
+.lp-plan__more summary::before,
+.lp-compare__summary::before {
+	content: '';
+	flex: none;
+	width: 0.42em;
+	height: 0.42em;
+	margin-left: 0.1em;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 0.15s ease;
+}
+
+.lp-plan__more[open] > summary::before,
+.lp-compare[open] > .lp-compare__summary::before {
+	transform: rotate(45deg);
 }
 
 .lp-compare__summary {

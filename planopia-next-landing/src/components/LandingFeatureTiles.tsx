@@ -39,7 +39,8 @@ export default function LandingFeatureTiles({ locale }: { locale: Locale }) {
 	return (
 		<div className="lf-tiles">
 			<p className="lf-tiles__legend">
-				{t.legend} <span className="lf-badge lf-badge--free">{BADGE_COPY.free[locale]}</span>
+				<span className="lf-tiles__legend-text">{t.legend}</span>
+				<span className="lf-badge lf-badge--free">{BADGE_COPY.free[locale]}</span>
 				<span className="lf-badge lf-badge--core">{BADGE_COPY.core[locale]}</span>
 				<span className="lf-badge lf-badge--module">{t.moduleLegend}</span>
 				<span className="lf-badge lf-badge--all">{BADGE_COPY.all[locale]}</span>
