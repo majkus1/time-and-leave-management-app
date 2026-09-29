@@ -594,6 +594,80 @@ a.lp-result__existing:focus-visible {
 	text-underline-offset: 3px;
 }
 
+/* PRO taniej niż zaznaczony Core: obie ceny obok siebie — klient widzi, że to nie jest droższy plan */
+.lp-result__compare {
+	display: grid;
+	gap: 0.45rem;
+	margin: 1rem 0 0;
+	padding: 0.8rem 0.95rem;
+	border: 1px solid rgba(16, 47, 94, 0.11);
+	border-radius: 0.75rem;
+	background: #f8fafc;
+}
+
+.lp-result__compare-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font-size: 14px;
+	line-height: 1.35;
+	color: rgba(16, 47, 94, 0.85);
+}
+
+.lp-result__compare-row dt,
+.lp-result__compare-row dd {
+	margin: 0;
+}
+
+.lp-result__compare-row dd {
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.lp-result__compare-row--best {
+	font-weight: 700;
+	color: #006b34;
+}
+
+.lp-result__compare-sub {
+	font-size: 12.5px;
+	font-weight: 400;
+	color: rgba(16, 47, 94, 0.62);
+}
+
+.lp-result__saving {
+	justify-self: start;
+	padding: 0.15rem 0.65rem;
+	border-radius: 999px;
+	background: #dcfce7;
+	color: #166534;
+	font-size: 12.5px;
+	font-weight: 700;
+}
+
+/* Równorzędny drugi wybór — Core dokładnie z zaznaczonymi modułami */
+a.lp-result__alt-cta {
+	display: block;
+	margin-top: 0.65rem;
+	padding: 0.75rem 1rem;
+	border: 1.5px solid #059669;
+	border-radius: 0.8rem;
+	background: #ffffff;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.3;
+	text-align: center;
+	text-decoration: none !important;
+	color: #047857 !important;
+	transition: background 0.15s ease;
+}
+
+a.lp-result__alt-cta:hover,
+a.lp-result__alt-cta:focus-visible {
+	background: #f0fdf4;
+}
+
 .lp-result__alt {
 	margin-top: 1rem;
 	padding-top: 0.8rem;
@@ -682,6 +756,51 @@ a.lp-result__existing:focus-visible {
 	font-size: 13px;
 	line-height: 1.5;
 	color: rgba(16, 47, 94, 0.62);
+}
+
+/* Cena dla liczby osób z kalkulatora zamiast długiego ciągu progów */
+.lp-plan__for {
+	margin-top: auto;
+	padding-top: 0.5rem;
+	font-size: 14px;
+	line-height: 1.4;
+	color: rgba(16, 47, 94, 0.85);
+}
+
+.lp-plan__for b {
+	color: #102f5e;
+}
+
+.lp-plan__more {
+	margin-top: 0.4rem;
+}
+
+.lp-plan__more summary {
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	color: #047857;
+}
+
+.lp-plan__tier-list {
+	display: grid;
+	gap: 0.2rem;
+	margin: 0.45rem 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+	color: rgba(16, 47, 94, 0.72);
+}
+
+.lp-plan__tier-list li {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.lp-plan__tier--on {
+	font-weight: 700;
+	color: #102f5e;
 }
 
 .lp-plans__modules {

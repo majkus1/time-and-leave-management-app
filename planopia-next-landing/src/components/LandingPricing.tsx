@@ -86,9 +86,14 @@ const COPY = {
 		customPrice: 'Wycena indywidualna',
 		customWhy: 'Napisz do nas — dopasujemy plan i warunki do wielkości firmy.',
 		customCta: 'Napisz do nas',
-		whyBundleCheaper: (core: string) => `Z tymi funkcjami ten plan wychodzi taniej niż Core z modułami (${core}).`,
-		whyBundleSame: 'Tyle samo co Core z wybranymi modułami, a masz wszystkie funkcje.',
-		whyBundleNudge: (diff: string) => `Tylko ${diff} więcej niż Core z wybranymi modułami, a masz wszystkie funkcje.`,
+		whyBundleCheaper: 'Z zaznaczonymi funkcjami ten plan wychodzi taniej niż Core z modułami — i macie wszystkie funkcje.',
+		whyBundleSame: 'Tyle samo co Core z zaznaczonymi modułami, a macie wszystkie funkcje.',
+		compareChosen: 'To, co zaznaczyliście',
+		compareAll: 'wszystkie funkcje w cenie',
+		saving: (price: string) => `Oszczędzacie ${price}`,
+		chooseCoreInstead: (price: string) => `Wolę Core z zaznaczonymi modułami — ${price}`,
+		forPeople: (n: number) => `Dla ${n} ${n === 1 ? 'osoby' : 'osób'}:`,
+		otherSizes: 'Ceny dla innej liczby osób',
 		whyCoreModules: 'Płacisz tylko za moduły, których potrzebujesz.',
 		whyCore: 'Wszystko, czego zespół potrzebuje na co dzień.',
 		whyOverFree: (n: number) =>
@@ -99,7 +104,6 @@ const COPY = {
 		includesBusinessExtra: ' Priorytetowe wsparcie.',
 		cta: `Załóż zespół — ${LANDING_TRIAL_DAYS} dni za darmo`,
 		ctaExisting: 'Masz już konto? Wybierz ten plan w aplikacji',
-		altOr: (plan: string, price: string) => `Albo ${plan} — ${price}`,
 		altAll: (plan: string, price: string) => `Wszystkie funkcje: ${plan} — ${price}`,
 		trialNote: `Okres próbny: pełna aplikacja przez ${LANDING_TRIAL_DAYS} dni, do ${landingTrial.maxUsers} osób, bez karty. Plan wybierasz potem w aplikacji.`,
 		plansTitle: 'Wszystkie plany w skrócie',
@@ -149,9 +153,14 @@ const COPY = {
 		customPrice: 'Custom quote',
 		customWhy: 'Write to us — we will fit the plan and terms to the size of your company.',
 		customCta: 'Contact us',
-		whyBundleCheaper: (core: string) => `With these features this plan is cheaper than Core with modules (${core}).`,
+		whyBundleCheaper: 'With the features you picked, this plan costs less than Core with modules — and includes every feature.',
 		whyBundleSame: 'Same price as Core with the modules you picked — and you get every feature.',
-		whyBundleNudge: (diff: string) => `Only ${diff} more than Core with the modules you picked — and you get every feature.`,
+		compareChosen: 'What you picked',
+		compareAll: 'every feature included',
+		saving: (price: string) => `You save ${price}`,
+		chooseCoreInstead: (price: string) => `I prefer Core with the modules I picked — ${price}`,
+		forPeople: (n: number) => `For ${n} ${n === 1 ? 'person' : 'people'}:`,
+		otherSizes: 'Prices for other team sizes',
 		whyCoreModules: 'You only pay for the modules you need.',
 		whyCore: 'Everything your team needs day to day.',
 		whyOverFree: (n: number) => `The free plan covers up to ${landingTrial.maxUsers} people — for ${n} people this is the cheapest plan.`,
@@ -161,7 +170,6 @@ const COPY = {
 		includesBusinessExtra: ' Priority support.',
 		cta: `Create your team — ${LANDING_TRIAL_DAYS} days free`,
 		ctaExisting: 'Already have an account? Choose this plan in the app',
-		altOr: (plan: string, price: string) => `Or ${plan} — ${price}`,
 		altAll: (plan: string, price: string) => `Every feature: ${plan} — ${price}`,
 		trialNote: `Trial: the full app for ${LANDING_TRIAL_DAYS} days, up to ${landingTrial.maxUsers} people, no card. You choose a plan later in the app.`,
 		plansTitle: 'All plans at a glance',
@@ -227,6 +235,10 @@ type Card = {
 	why: string
 	includes: string
 	alt: string | null
+	/** PRO taniej niż to, co zaznaczono: obie ceny obok siebie i oszczędność */
+	compare: { chosenName: string; chosenPrice: string; bundleName: string; bundlePrice: string; saving: string | null } | null
+	/** Drugi, równorzędny wybór — Core dokładnie z zaznaczonymi modułami */
+	altCta: { href: string; label: string } | null
 	cta: { href: string; label: string; internal: boolean }
 	existingHref: string | null
 }
@@ -280,6 +292,8 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 			why: t.freeWhy,
 			includes: t.freeIncludes,
 			alt: sentence(t.freeAlt(PLAN_NAME[smallest.id][locale], inline(smallest.monthlyNetPln))),
+			compare: null,
+			altCta: null,
 			cta: { href: registerHref({ users, billing }), label: t.cta, internal: false },
 			existingHref: null,
 		}
@@ -292,14 +306,16 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 			why: t.customWhy,
 			includes: t.includesBundle,
 			alt: null,
+			compare: null,
+			altCta: null,
 			cta: { href: t.contactHref, label: t.customCta, internal: true },
 			existingHref: null,
 		}
 	} else if (rec.kind === 'bundle') {
 		const { bundle, core } = rec
 		const diff = bundle.monthlyNetPln - core.monthlyNetPln
-		const why =
-			diff < 0 ? t.whyBundleCheaper(inline(core.monthlyNetPln)) : diff === 0 ? t.whyBundleSame : t.whyBundleNudge(money(locale, diff * months))
+		// Kalkulator poleca pakiet tylko, gdy nie jest droższy (pricingCalculator) — diff <= 0
+		const why = diff < 0 ? t.whyBundleCheaper : t.whyBundleSame
 		card = {
 			name: PLAN_NAME[bundle.planKey][locale],
 			price: money(locale, bundle.monthlyNetPln * months),
@@ -307,7 +323,18 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 			equivalent: equivalent(bundle.monthlyNetPln),
 			why,
 			includes: t.includesBundle + (bundle.planKey === 'business' ? t.includesBusinessExtra : ''),
-			alt: sentence(t.altOr(coreName(core.planKey, core.modules), inline(core.monthlyNetPln))),
+			alt: null,
+			compare: {
+				chosenName: coreName(core.planKey, core.modules),
+				chosenPrice: inline(core.monthlyNetPln),
+				bundleName: PLAN_NAME[bundle.planKey][locale],
+				bundlePrice: inline(bundle.monthlyNetPln),
+				saving: diff < 0 ? t.saving(inline(-diff)) : null,
+			},
+			altCta: {
+				href: registerHref({ plan: core.planKey, modules: core.modules, users, billing }),
+				label: t.chooseCoreInstead(inline(core.monthlyNetPln)),
+			},
 			cta: { href: registerHref({ plan: bundle.planKey, users, billing }), label: t.cta, internal: false },
 			existingHref: paymentHref(bundle.planKey, { billing, checkout: true }),
 		}
@@ -322,6 +349,8 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 			why: noNeeds ? t.whyOverFree(users) : mods.length ? t.whyCoreModules : t.whyCore,
 			includes: `${[t.includesCore, ...moduleNames(mods)].join(', ')}.`,
 			alt: sentence(t.altAll(PLAN_NAME[bundle.planKey][locale], inline(bundle.monthlyNetPln))),
+			compare: null,
+			altCta: null,
 			cta: { href: registerHref({ plan: core.planKey, modules: mods, users, billing }), label: t.cta, internal: false },
 			existingHref: paymentHref(core.planKey, { billing, modules: mods.length ? mods : undefined, checkout: true }),
 		}
@@ -332,6 +361,9 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 	const coreFrom = landingCoreTiers[0].monthlyNetPln
 	const proTiers = landingBundles.filter(b => b.id !== 'business')
 	const business = landingBundles.find(b => b.id === 'business')
+	// Kafelki pokazują cenę dla liczby osób z kalkulatora; pełna lista progów po rozwinięciu
+	const coreForUsers = landingCoreTiers.find(x => x.maxUsers >= users) ?? null
+	const proForUsers = proTiers.find(x => x.maxUsers >= users) ?? null
 
 	/** Komórka tabeli porównania: plan funkcji z planCatalog.FEATURES */
 	const matrixCell = (feature: (typeof landingFeatures)[number], column: 'free' | 'core' | 'bundle') => {
@@ -474,6 +506,25 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						{card.equivalent ? <div className="lp-result__equiv">{card.equivalent}</div> : null}
 						<div className="lp-result__why">{card.why}</div>
 						<div className="lp-result__includes">{card.includes}</div>
+						{card.compare ? (
+							<dl className="lp-result__compare">
+								<div className="lp-result__compare-row">
+									<dt>
+										{t.compareChosen}
+										<div className="lp-result__compare-sub">{card.compare.chosenName}</div>
+									</dt>
+									<dd>{card.compare.chosenPrice}</dd>
+								</div>
+								<div className="lp-result__compare-row lp-result__compare-row--best">
+									<dt>
+										{card.compare.bundleName}
+										<div className="lp-result__compare-sub">{t.compareAll}</div>
+									</dt>
+									<dd>{card.compare.bundlePrice}</dd>
+								</div>
+								{card.compare.saving ? <div className="lp-result__saving">{card.compare.saving}</div> : null}
+							</dl>
+						) : null}
 						{card.cta.internal ? (
 							<Link className="lp-result__cta" href={card.cta.href}>
 								{card.cta.label}
@@ -486,6 +537,11 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 						{card.existingHref ? (
 							<a className="lp-result__existing" href={card.existingHref}>
 								{t.ctaExisting}
+							</a>
+						) : null}
+						{card.altCta ? (
+							<a className="lp-result__alt-cta" href={card.altCta.href}>
+								{card.altCta.label}
 							</a>
 						) : null}
 						{card.alt ? <div className="lp-result__alt">{card.alt}</div> : null}
@@ -507,9 +563,22 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 								{t.from} {money(locale, coreFrom)}
 							</div>
 							<div className="lp-plan__desc">{t.plans.core.desc}</div>
-							<div className="lp-plan__tiers">
-								{landingCoreTiers.map(tier => `${t.upTo(tier.maxUsers)} ${money(locale, tier.monthlyNetPln)}`).join(' · ')}
-							</div>
+							{coreForUsers ? (
+								<div className="lp-plan__for">
+									{t.forPeople(users)} <b>{money(locale, coreForUsers.monthlyNetPln)}</b> {t.perMonth}
+								</div>
+							) : null}
+							<details className="lp-plan__more">
+								<summary>{t.otherSizes}</summary>
+								<ul className="lp-plan__tier-list">
+									{landingCoreTiers.map(tier => (
+										<li key={tier.id} className={tier.id === coreForUsers?.id ? 'lp-plan__tier--on' : undefined}>
+											<div>{t.upToLong(tier.maxUsers)}</div>
+											<div>{money(locale, tier.monthlyNetPln)}</div>
+										</li>
+									))}
+								</ul>
+							</details>
 						</li>
 						<li className="lp-plan">
 							<div className="lp-plan__name">{t.plans.pro.name}</div>
@@ -517,9 +586,22 @@ export default function LandingPricing({ locale }: { locale: Locale }) {
 								{t.from} {money(locale, proTiers[0].monthlyNetPln)}
 							</div>
 							<div className="lp-plan__desc">{t.plans.pro.desc}</div>
-							<div className="lp-plan__tiers">
-								{proTiers.map(tier => `${t.upTo(tier.maxUsers)} ${money(locale, tier.monthlyNetPln)}`).join(' · ')}
-							</div>
+							{proForUsers ? (
+								<div className="lp-plan__for">
+									{t.forPeople(users)} <b>{money(locale, proForUsers.monthlyNetPln)}</b> {t.perMonth}
+								</div>
+							) : null}
+							<details className="lp-plan__more">
+								<summary>{t.otherSizes}</summary>
+								<ul className="lp-plan__tier-list">
+									{proTiers.map(tier => (
+										<li key={tier.id} className={tier.id === proForUsers?.id ? 'lp-plan__tier--on' : undefined}>
+											<div>{t.upToLong(tier.maxUsers)}</div>
+											<div>{money(locale, tier.monthlyNetPln)}</div>
+										</li>
+									))}
+								</ul>
+							</details>
 						</li>
 						{business ? (
 							<li className="lp-plan">

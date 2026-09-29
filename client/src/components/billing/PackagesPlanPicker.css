@@ -404,6 +404,121 @@
 	color: var(--po-brand-text);
 }
 
+/* Pakiet taniej niż zaznaczony Core: obie ceny obok siebie — nie wygląda na wciskanie droższego planu */
+.ppk__compare {
+	display: grid;
+	gap: 0.45rem;
+	margin: 1rem 0 0;
+	padding: 0.75rem 0.9rem;
+	border: 1px solid var(--po-border);
+	border-radius: 10px;
+	background: var(--po-surface-muted, #f8fafc);
+}
+
+.ppk__compare-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font-size: 0.88rem;
+	line-height: 1.35;
+	color: var(--po-text);
+}
+
+.ppk__compare-row dt,
+.ppk__compare-row dd {
+	margin: 0;
+}
+
+.ppk__compare-row dd {
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.ppk__compare-row--best {
+	font-weight: 700;
+	color: var(--po-brand-text, #2e7d32);
+}
+
+.ppk__compare-sub {
+	font-size: 0.78rem;
+	font-weight: 400;
+	color: var(--po-text-muted);
+}
+
+.ppk__saving {
+	justify-self: start;
+	padding: 0.15rem 0.6rem;
+	border-radius: 999px;
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text, #2e7d32);
+	font-size: 0.78rem;
+	font-weight: 700;
+}
+
+/* Równorzędny drugi wybór — Core dokładnie z zaznaczonymi modułami */
+.ppk__alt-cta {
+	display: block;
+	width: 100%;
+	margin-top: 0.6rem;
+	padding: 0.7rem 1rem;
+	border: 1.5px solid var(--po-brand);
+	border-radius: 10px;
+	background: transparent;
+	color: var(--po-brand-text, #2e7d32);
+	font-size: 0.95rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ppk__alt-cta:hover:not(:disabled) {
+	background: var(--po-brand-soft);
+}
+
+.ppk__alt-cta:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* Kafelek Core: cena dla liczby osób z kalkulatora, progi po rozwinięciu */
+.ppk__plan-for {
+	margin-top: 0.5rem;
+	font-size: 0.88rem;
+	color: var(--po-text);
+}
+
+.ppk__plan-more {
+	margin-top: 0.35rem;
+}
+
+.ppk__plan-more summary {
+	cursor: pointer;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--po-brand-text, #2e7d32);
+}
+
+.ppk__tier-list {
+	display: grid;
+	gap: 0.2rem;
+	margin: 0.4rem 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 0.82rem;
+	color: var(--po-text-muted);
+}
+
+.ppk__tier-list li {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.ppk__tier--on {
+	font-weight: 700;
+	color: var(--po-text);
+}
+
 .ppk__result-warn {
 	margin: 1rem 0 0;
 	padding: 0.6rem 0.8rem;

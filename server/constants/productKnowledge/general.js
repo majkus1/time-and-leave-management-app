@@ -31,7 +31,7 @@ Planopia to aplikacja webowa dla firm do ewidencji czasu pracy, wniosków urlopo
 Po {{trial.days}} dniach, jeśli zespół nie wybierze pakietu, zostaje na bezpłatnym planie bezterminowo:
 - działa: ewidencja czasu pracy (kalendarz miesięczny, wpisy ręczne, czynności) i wydruk ewidencji każdej osoby (PDF/Excel), edycja profilu; dla Administratora/HR: listy ewidencji zespołu, zarządzanie zespołem, ustawienia (weekendy, święta, godziny pracy, czynności, pracownicy bez dostępu), pakiety i rozliczenia;
 - limit: {{trial.maxUsers}} aktywnych kont;
-- nie działa: raporty zespołu (zbiorcze eksporty PDF/Excel z listy ewidencji — w ich miejscu jest informacja o planie Core), licznik czasu i kody QR, składanie wniosków urlopowych, grafiki, zadania, czat, komunikaty, asystent AI z danymi zespołu, Przegląd zespołu. Administrator i HR widzą w menu sekcję „Rozszerz plan” z modułami poza planem i ich ceną.
+- nie działa: raporty zespołu (zbiorcze eksporty PDF/Excel z listy ewidencji — w ich miejscu jest informacja o planie Core), licznik czasu i kody QR, składanie wniosków urlopowych, grafiki, zadania, czat, komunikaty, asystent AI z danymi zespołu, Przegląd zespołu.
 - Jeśli zespół ma więcej niż {{trial.maxUsers}} kont, aplikacja jest zablokowana dla wszystkich poza Administratorem i HR, którzy widzą tylko zarządzanie zespołem i pakiety — trzeba zmniejszyć zespół do {{trial.maxUsers}} kont albo wykupić pakiet. Dane nie znikają.
 
 ### Przegląd zespołu (dawniej „Start”)

@@ -31,11 +31,9 @@ export type Recommendation =
 	| { kind: 'core'; core: CoreOption; bundle: BundleOption }
 	| { kind: 'bundle'; bundle: BundleOption; core: CoreOption }
 
-/**
- * Pakiet polecamy także wtedy, gdy jest droższy od Core z modułami najwyżej o tyle złotych —
- * „za kilka złotych więcej masz wszystko”. Bez modułów zawsze Core (pakiet nie ma sensu).
- */
-export const BUNDLE_NUDGE_PLN = 10
+// Pakiet polecamy tylko wtedy, gdy nie jest droższy od Core z zaznaczonymi modułami — kalkulator pokazuje to, co
+// klient wybrał, a nie dopłatę „za kilka złotych więcej” (wyglądało na wciskanie droższego planu).
+// Bez modułów zawsze Core (pakiet nie ma sensu).
 
 function firstFitting<T extends PricingTier>(list: readonly T[], users: number): T | null {
 	return list.find(t => t.maxUsers >= users) ?? null
@@ -57,6 +55,6 @@ export function recommendPlan(usersInput: number, needs: CalculatorNeeds, pricin
 	const core: CoreOption = { planKey: tier.id, maxUsers: tier.maxUsers, modules, monthlyNetPln: tier.monthlyNetPln + modulesPrice }
 	const bundle: BundleOption = { planKey: bundleTier.id, maxUsers: bundleTier.maxUsers, monthlyNetPln: bundleTier.monthlyNetPln }
 
-	if (modules.length > 0 && bundle.monthlyNetPln <= core.monthlyNetPln + BUNDLE_NUDGE_PLN) return { kind: 'bundle', bundle, core }
+	if (modules.length > 0 && bundle.monthlyNetPln <= core.monthlyNetPln) return { kind: 'bundle', bundle, core }
 	return { kind: 'core', core, bundle }
 }

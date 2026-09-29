@@ -116,16 +116,21 @@ export default function PackagesPlanPicker({
 			price: money(bundle.monthlyNetPln * months),
 			period,
 			equivalent: yearly ? money((bundle.monthlyNetPln * months) / 12) : null,
-			why:
-				diff < 0
-					? t('billingPackages.picker.whyBundleCheaper', { price: inline(core.monthlyNetPln) })
-					: diff === 0
-						? t('billingPackages.picker.whyBundleSame')
-						: t('billingPackages.picker.whyBundleNudge', { price: money(diff * months) }),
+			// Kalkulator poleca pakiet tylko, gdy nie jest droższy (pricingCalculator) — diff <= 0
+			why: diff < 0 ? t('billingPackages.picker.whyBundleCheaper') : t('billingPackages.picker.whyBundleSame'),
 			includes:
 				t('billingPackages.picker.includesBundle') +
 				(bundle.planKey === 'business' ? t('billingPackages.picker.includesBusinessExtra') : ''),
-			alt: sentence(t('billingPackages.picker.altOr', { plan: coreName(core.planKey, core.modules), price: inline(core.monthlyNetPln) })),
+			alt: null,
+			// Obie ceny obok siebie — klient widzi, że pakiet nie jest droższy od tego, co zaznaczył
+			compare: {
+				chosenName: coreName(core.planKey, core.modules),
+				chosenPrice: inline(core.monthlyNetPln),
+				bundleName: planLabel(bundle.planKey),
+				bundlePrice: inline(bundle.monthlyNetPln),
+				saving: diff < 0 ? t('billingPackages.picker.saving', { price: inline(-diff) }) : null,
+			},
+			altCtaLabel: t('billingPackages.picker.chooseCoreInstead', { price: inline(core.monthlyNetPln) }),
 			action: { kind: 'bundle', planKey: bundle.planKey },
 			altAction: { kind: 'core', planKey: core.planKey, modules: core.modules },
 		}
@@ -181,6 +186,7 @@ export default function PackagesPlanPicker({
 	const coreFrom = pricing.coreTiers[0]?.monthlyNetPln
 	const proTiers = pricing.bundles.filter(b => b.id !== 'business')
 	const business = pricing.bundles.find(b => b.id === 'business')
+	const coreForUsers = pricing.coreTiers.find(x => x.maxUsers >= users) || null
 	const coreForSeats =
 		pricing.coreTiers.find(x => teamSeats == null || x.maxUsers >= teamSeats) || pricing.coreTiers[0]
 	const currentIsCore = Boolean(currentPlan && pricing.coreTiers.some(x => x.id === currentPlan.planKey))
@@ -325,6 +331,25 @@ export default function PackagesPlanPicker({
 					) : null}
 					<div className="ppk__result-why">{card.why}</div>
 					<div className="ppk__result-includes">{card.includes}</div>
+					{card.compare ? (
+						<dl className="ppk__compare">
+							<div className="ppk__compare-row">
+								<dt>
+									{t('billingPackages.picker.compareChosen')}
+									<div className="ppk__compare-sub">{card.compare.chosenName}</div>
+								</dt>
+								<dd>{card.compare.chosenPrice}</dd>
+							</div>
+							<div className="ppk__compare-row ppk__compare-row--best">
+								<dt>
+									{card.compare.bundleName}
+									<div className="ppk__compare-sub">{t('billingPackages.picker.compareAll')}</div>
+								</dt>
+								<dd>{card.compare.bundlePrice}</dd>
+							</div>
+							{card.compare.saving ? <div className="ppk__saving">{card.compare.saving}</div> : null}
+						</dl>
+					) : null}
 
 					{mainAction.kind === 'none' ? (
 						<div className="ppk__result-note">{mainAction.note}</div>
@@ -358,6 +383,11 @@ export default function PackagesPlanPicker({
 						</>
 					)}
 
+					{card.compare && card.altAction && canBuy && !isCurrent(card.altAction) && !seatsBlocked(card.altAction) ? (
+						<button type="button" className="ppk__alt-cta" disabled={busy} onClick={() => run(card.altAction)}>
+							{changeByRequest ? t('billingPackages.picker.requestChangeAlt') : card.altCtaLabel}
+						</button>
+					) : null}
 					{card.alt ? (
 						<div className="ppk__result-alt">
 							{card.alt}{' '}
@@ -381,11 +411,24 @@ export default function PackagesPlanPicker({
 							{t('billingPackages.picker.from')} {money(coreFrom)}
 						</div>
 						<div className="ppk__plan-desc">{t('billingPackages.picker.coreDesc')}</div>
-						<div className="ppk__plan-tiers">
-							{pricing.coreTiers
-								.map(x => `${t('billingPackages.picker.upTo', { n: x.maxUsers })} ${money(x.monthlyNetPln)}`)
-								.join(' · ')}
-						</div>
+						{/* Cena dla liczby osób z kalkulatora zamiast długiego ciągu progów; pełna lista po rozwinięciu */}
+						{coreForUsers ? (
+							<div className="ppk__plan-for">
+								{t('billingPackages.picker.forPeople', { count: users })} <b>{money(coreForUsers.monthlyNetPln)}</b>{' '}
+								{t('billingPackages.picker.perMonth')}
+							</div>
+						) : null}
+						<details className="ppk__plan-more">
+							<summary>{t('billingPackages.picker.otherSizes')}</summary>
+							<ul className="ppk__tier-list">
+								{pricing.coreTiers.map(x => (
+									<li key={x.id} className={x.id === coreForUsers?.id ? 'ppk__tier--on' : undefined}>
+										<span>{t('billingPackages.picker.upToLong', { n: x.maxUsers })}</span>
+										<span>{money(x.monthlyNetPln)}</span>
+									</li>
+								))}
+							</ul>
+						</details>
 						{canBuy && coreForSeats ? (
 							<button
 								type="button"

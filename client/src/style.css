@@ -4023,49 +4023,6 @@ button.ai-assistant-promo-fab-edge:focus-visible {
 	line-height: 1;
 }
 
-/* Moduły poza planem (Admin / HR): widoczne z ceną zamiast znikać z menu */
-.sidebar-locked {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	margin-top: 14px;
-}
-
-.sidebar-locked__title {
-	margin: 0 0 2px 4px;
-	font-size: 12px;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: #64748b;
-}
-
-.nav-link.nav-link--locked {
-	background: transparent;
-	border: 1px dashed #cbd5e1;
-}
-
-.nav-link.nav-link--locked .nav-icon img {
-	opacity: 0.6;
-	filter: grayscale(0.5);
-}
-
-.nav-link.nav-link--locked .nav-text {
-	color: #64748b !important;
-}
-
-.nav-lock-price {
-	flex: none;
-	padding: 2px 8px;
-	border-radius: 999px;
-	background: #e8f5e9;
-	/* span — globalny styl span narzuca 16px i kolor z !important */
-	color: #2e7d32 !important;
-	font-size: 11.5px !important;
-	font-weight: 700;
-	white-space: nowrap;
-}
-
 /* Raporty zespołu w planie darmowym: zamiast eksportu informacja o planie Core */
 .team-reports-lock {
 	display: inline-flex;
