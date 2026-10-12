@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
 import LandingFeatureTiles from './LandingFeatureTiles'
+import LandingTestimonials from './LandingTestimonials'
 
 const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
@@ -69,6 +70,8 @@ function ProductPromotion() {
 					</div>
 				</div>
 			</section>
+
+<LandingTestimonials locale="pl" />
 
 <section id="oaplikacji" className="py-12 bg-white px-4">
   <div className="max-w-7xl mx-auto">
