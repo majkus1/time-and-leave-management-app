@@ -367,6 +367,27 @@ entitlementsDescribe('entitlementsService (stałe daty)', () => {
 		assert.equal(e.effectiveMaxUsers(team, T_TRIAL_ENDED), TRIAL.maxUsers)
 	})
 
+	it('maxUsersOverride: aktywny Core bez daty końca (jak Halo) — limit 20 zamiast 15, tylko w górę', () => {
+		const halo = { name: 'Halo Rental System', isActive: true, maxUsers: 15, billingPlanKey: 'starter', billingStatus: 'active', billingPeriodEnd: null }
+		assert.equal(e.effectiveMaxUsers(halo), 15)
+		assert.equal(e.effectiveMaxUsers({ ...halo, maxUsersOverride: 20 }), 20)
+		// Nadpisanie nie obniża limitu planu i ignoruje śmieci
+		assert.equal(e.effectiveMaxUsers({ ...halo, maxUsersOverride: 10 }), 15)
+		assert.equal(e.effectiveMaxUsers({ ...halo, maxUsersOverride: '20' }), 20)
+		assert.equal(e.effectiveMaxUsers({ ...halo, maxUsersOverride: 19.5 }), 15)
+		// Przekroczenie miejsc liczone od tego samego limitu; plan, moduły i AI bez zmian
+		const ent = e.buildClientEntitlements({ ...halo, maxUsersOverride: 20 }, { activeSeatCount: 16 })
+		assert.equal(ent.maxUsers, 20)
+		assert.equal(ent.paidPlanSeatLimitExceeded ?? false, false)
+		assert.equal(ent.planKey, 'base_s')
+		assert.deepEqual(ent.modules.effectiveKeys, e.buildClientEntitlements(halo, { activeSeatCount: 15 }).modules.effectiveKeys)
+	})
+
+	it('maxUsersOverride: nie działa bez aktywnego płatnego planu (trial, plan darmowy)', () => {
+		const trialEnded = { name: 'X', isActive: true, maxUsers: 5, maxUsersOverride: 20, billingPlanKey: 'trial', billingStatus: 'expired', trialEndsAt: new Date('2026-04-01T00:00:00.000Z') }
+		assert.equal(e.effectiveMaxUsers(trialEnded, T_TRIAL_ENDED), TRIAL.maxUsers)
+	})
+
 	it('buildClientEntitlements: freemium + 50 miejsc → freemiumSeatBlocked (okres w przeszłości względem „teraz”)', () => {
 		// buildClientEntitlements() używa wewnątrz new Date(), nie parametru — koniec planu musi być w przeszłości realnego czasu testu.
 		const billingPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)

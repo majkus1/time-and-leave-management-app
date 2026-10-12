@@ -7,7 +7,7 @@ const { buildSettlementUnitLookup, resolveIncomingSettlementUnit } = require('..
 async function loadTeamForEntitlements(teamId) {
 	if (!teamId) return null
 	return Team.findById(teamId).select(
-		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
+		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'
 	)
 }
 
@@ -223,7 +223,7 @@ exports.updateSettings = async (req, res) => {
 			if (timerEnabled === true) {
 				const Team = require('../models/Team')(firmDb)
 				const team = await Team.findById(requestingUser.teamId).select(
-					'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
+					'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'
 				)
 				if (!entitlementsService.mayEnableTimerQrByBilling(team, new Date())) {
 					return res.status(400).json({

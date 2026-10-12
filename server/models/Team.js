@@ -38,6 +38,11 @@ const teamSchema = new mongoose.Schema({
 		type: Number,
 		default: 4
 	},
+	/** Indywidualny limit kont ustalony z klientem (np. rozliczenie fakturą) — przy aktywnym płatnym planie tylko podnosi limit planu */
+	maxUsersOverride: {
+		type: Number,
+		default: null,
+	},
 	currentUserCount: {
 		type: Number,
 		default: 1

@@ -52,7 +52,7 @@ async function planModuleApiGuardAsync(req, res, next) {
 		}
 
 		const team = await Team.findById(decoded.teamId).select(
-			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
+			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'
 		)
 		if (!team || team.isActive === false) return next()
 

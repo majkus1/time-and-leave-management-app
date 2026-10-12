@@ -6,7 +6,7 @@ const { buildDashboardSummary, buildTeamInsights } = require('../services/dashbo
 
 async function assertDashboardAllowed(req) {
 	const team = await Team.findById(req.user.teamId).select(
-		'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
+		'name billingPlanKey billingStatus trialEndsAt billingPeriodEnd billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team || team.isActive === false) {
 		const err = new Error('Team not found')

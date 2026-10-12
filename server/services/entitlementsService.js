@@ -213,7 +213,7 @@ async function syncTimerEnabledSettingForTeam(teamId) {
 async function syncDashboardEnabledSettingForTeam(teamId) {
 	if (!teamId) return
 	const team = await Team.findById(teamId).select(
-		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus'
+		'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'
 	)
 	if (!team) return
 	if (!isFreemiumTierTeam(team, new Date())) {
@@ -258,12 +258,19 @@ function ensureMonthRolloverInMemory(team) {
 	}
 }
 
+/** Limit kont płatnego planu, podniesiony indywidualnym Team.maxUsersOverride (liczba całkowita większa od limitu planu) */
+function paidPlanMaxUsers(team, nk) {
+	const planMax = PAID_PLANS[nk].maxUsers
+	const override = Number(team?.maxUsersOverride)
+	return Number.isInteger(override) && override > planMax ? override : planMax
+}
+
 function effectiveMaxUsers(team, now = new Date()) {
 	if (isSpecialNamedTeam(team)) return team.maxUsers
 	if (isLegacyPreBillingTeam(team, now)) return team.maxUsers
 	if (isPaidSubscriptionActive(team, now)) {
 		const nk = normalizePaidPlanKey(team.billingPlanKey)
-		if (PAID_PLANS[nk]) return PAID_PLANS[nk].maxUsers
+		if (PAID_PLANS[nk]) return paidPlanMaxUsers(team, nk)
 	}
 	if (isTrialActive(team, now)) return TRIAL.maxUsers
 	if (isTrialExpiredUnpaid(team, now)) return Math.min(team.maxUsers, TRIAL.maxUsers)
@@ -370,7 +377,7 @@ function buildClientEntitlements(team, options = {}) {
 		isPaidSubscriptionActive(team, now) &&
 		paidPlanNorm &&
 		PAID_PLANS[paidPlanNorm] &&
-		activeSeatCount > PAID_PLANS[paidPlanNorm].maxUsers
+		activeSeatCount > paidPlanMaxUsers(team, paidPlanNorm)
 
 	const modsEffective = effectiveBillingModuleKeys(team, now)
 
