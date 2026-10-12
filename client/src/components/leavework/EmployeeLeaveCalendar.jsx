@@ -12,6 +12,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import { formatLeaveQuantity } from '../../utils/leaveSettlement'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 function EmployeeLeaveCalendar() {
 	const { userId } = useParams()
@@ -91,7 +92,8 @@ function EmployeeLeaveCalendar() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

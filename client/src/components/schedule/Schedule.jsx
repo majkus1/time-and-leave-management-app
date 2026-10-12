@@ -32,6 +32,7 @@ import { isHolidayDate, getHolidaysInRange, toYmdLocal } from '../../utils/holid
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import ScheduleAutoAiPanel from './ScheduleAutoAiPanel'
 import { employeeHasApprovedLeaveOnDate } from '../../utils/leaveScheduleConflict'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 /** Polish (and some locales) return month names lowercase — capitalize for UI labels */
 function capitalizeMonthName(locale, monthIndexZeroBased) {
@@ -338,7 +339,8 @@ function Schedule() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

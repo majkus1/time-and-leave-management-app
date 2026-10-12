@@ -84,6 +84,7 @@ import {
 	buildFilteredRealTimeFromEntries,
 	getActivityFilterLabel,
 } from '../../utils/workActivityAggregation'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 const halfHourOptions = Array.from({ length: 48 }, (_, index) => {
 	const totalMinutes = index * 30
@@ -500,7 +501,8 @@ function UserCalendar() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

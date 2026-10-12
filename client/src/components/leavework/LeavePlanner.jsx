@@ -23,6 +23,7 @@ import {
 	filterLeaveRequestsByStatuses,
 	normalizeLeaveRequestStatus,
 } from '../../utils/leaveRequestPeriod'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 function LeavePlanner() {
 	const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
@@ -186,7 +187,8 @@ function LeavePlanner() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

@@ -18,6 +18,7 @@ import { API_URL } from '../../config.js'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
 import LeaveAvailabilityChecker from './LeaveAvailabilityChecker'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 function AdminAllLeaveCalendar() {
 	const colorsRef = useRef({})
@@ -141,7 +142,8 @@ function AdminAllLeaveCalendar() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

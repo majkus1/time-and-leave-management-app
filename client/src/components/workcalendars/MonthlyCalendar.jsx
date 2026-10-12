@@ -71,6 +71,7 @@ import {
 	aggregateActivityHours,
 	getActivityFilterLabel,
 } from '../../utils/workActivityAggregation'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 /** Zgodne z media query w style.css (szeroki miesięczny grid ~800px). */
 const MOBILE_CALENDAR_MAX_WIDTH = 900
@@ -485,7 +486,8 @@ function MonthlyCalendar() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

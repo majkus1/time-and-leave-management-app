@@ -55,6 +55,7 @@ import TaskFilterBar from '../workcalendars/TaskFilterBar'
 import { useBillingCatalog, useBillingEntitlements } from '../../hooks/useBilling'
 import { formatPlanMoney } from '../../utils/planPriceFormat'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 function workdayUserIdString(day) {
 	if (!day?.userId) return ''
@@ -204,7 +205,8 @@ function AdminUserList() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates

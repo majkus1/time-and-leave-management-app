@@ -32,6 +32,7 @@ import {
 	getLeaveRequestTypeStats,
 } from '../../utils/leaveRequestPeriod'
 import { buildReportFilename } from '../../utils/export/reportFilename'
+import { stepToNextUtcDay } from '../../utils/calendarDay'
 
 /** Domyślne filtry statusów (jak wcześniej: oczekujące, zaakceptowane, wysłane/L4). */
 const DEFAULT_STATUS_FILTERS = {
@@ -197,7 +198,8 @@ function VacationListUser() {
 					dates.push(currentDateStr)
 				}
 			}
-			current.setDate(current.getDate() + 1)
+			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
+			stepToNextUtcDay(current)
 		}
 		
 		return dates
