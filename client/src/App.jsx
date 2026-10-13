@@ -12,6 +12,7 @@ import SetPassword from './components/profile/SetPassword'
 import ResetPassword from './components/profile/ResetPassword'
 import ProtectedRoute from './components/route/ProtectedRoute'
 import Logs from './components/profile/Logs'
+import AdminPartners from './components/admin/AdminPartners'
 import FounderCallPage from './components/founderCall/FounderCallPage'
 import Settings from './components/profile/Settings'
 import AdminUserList from './components/listusers/AdminUserList'
@@ -213,6 +214,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
+						<Route path="/admin/partners" element={isPlatformSuperAdmin(username) ? <AdminPartners /> : <Navigate to="/" />} />
 						<Route path="/team-management" element={(isAdmin(role) || isPlatformSuperAdmin(username)) ? <Logs /> : <Navigate to="/" />} />
 						<Route path="/settings" element={<SettingsRouteGate />} />
 						<Route path="/team-access-notice" element={<TeamAccessNoticePage />} />

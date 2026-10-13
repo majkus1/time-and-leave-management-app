@@ -4,6 +4,7 @@ import { titilliumWeb } from "@/lib/siteFonts";
 import "../globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieConsent from "@/components/CookieConsent";
+import ReferralCapture from "@/components/ReferralCapture";
 import LandingChatWidgetLazy from "@/components/LandingChatWidgetLazy";
 import { LandingChatProvider } from "@/components/landingChat/LandingChatProvider";
 import { landingChatModulesForUi } from "@/lib/landingChat/modulesForUi";
@@ -121,6 +122,7 @@ export default function EnRootLayout({
           <LandingChatWidgetLazy />
         </LandingChatProvider>
         <CookieConsent />
+        <ReferralCapture />
       </body>
     </html>
   );

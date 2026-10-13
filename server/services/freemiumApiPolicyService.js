@@ -141,10 +141,10 @@ function pathStartsWithAny(path, prefixes) {
 }
 
 function isPlatformSuperAdminActivityApiPath(path) {
-	return path === '/api/super/activity' || path.startsWith('/api/super/activity/')
+	return path === '/api/super' || path.startsWith('/api/super/')
 }
 
-/** Monitor sesji platformy — tylko właściciel, poza polityką freemium / modułów planu. */
+/** Panele właściciela platformy (/api/super/*: monitor sesji, partnerzy) — poza polityką freemium / modułów planu. */
 function isPlatformSuperAdminActivityAllowed(path, decodedUser) {
 	return isPlatformSuperAdminActivityApiPath(path) && isSuperAdminUser({ username: decodedUser?.username })
 }

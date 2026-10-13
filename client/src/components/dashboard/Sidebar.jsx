@@ -625,6 +625,17 @@ function Sidebar() {
 							</NavLink>
 							)}
 
+							{username === 'michalipka1@gmail.com' && (
+							<NavLink
+								to="/admin/partners"
+								className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+								<div className="nav-icon">
+									<img src="/img/contact-list.png" alt="" />
+								</div>
+								<span className="nav-text">{t('sidebar.partnersAdmin')}</span>
+							</NavLink>
+							)}
+
 							{isAdmin(role) && (
 								<NavLink
 									to="/helpcenter"

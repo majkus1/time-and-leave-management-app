@@ -1,0 +1,172 @@
+/* Panel admina programu partnerskiego — tokeny motywu --po-* (jasny i ciemny) */
+.ap {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 1.5rem 1rem 3rem;
+	color: var(--po-text);
+}
+
+.ap__title {
+	margin: 0 0 0.35rem;
+	font-size: 1.5rem;
+}
+
+.ap__lead {
+	margin: 0 0 1.5rem;
+	color: var(--po-text-muted);
+}
+
+.ap__grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1000px) {
+	.ap__grid {
+		grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+		align-items: start;
+	}
+}
+
+.ap-card {
+	padding: 1.1rem 1.25rem;
+	border: 1px solid var(--po-border);
+	border-radius: 12px;
+	background: var(--po-surface);
+}
+
+.ap-card--wide {
+	margin-top: 1rem;
+}
+
+.ap-card h3 {
+	margin: 0 0 0.75rem;
+	font-size: 1.05rem;
+}
+
+.ap-card__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.ap-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.ap-table th,
+.ap-table td {
+	padding: 0.5rem 0.4rem;
+	border-bottom: 1px solid var(--po-border);
+	text-align: left;
+	vertical-align: middle;
+}
+
+.ap-table th {
+	color: var(--po-text-muted);
+	font-weight: 600;
+}
+
+.ap-row--on td {
+	background: var(--po-brand-soft);
+}
+
+.ap-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	justify-content: flex-end;
+}
+
+.ap-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-bottom: 0.7rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.ap-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem;
+}
+
+.ap-input {
+	width: 100%;
+	padding: 0.5rem 0.65rem;
+	border: 1px solid var(--po-border-strong, var(--po-border));
+	border-radius: 8px;
+	background: var(--po-surface);
+	color: var(--po-text);
+	font-size: 0.9rem;
+	font-weight: 400;
+}
+
+.ap-btn {
+	padding: 0.55rem 1rem;
+	border: none;
+	border-radius: 8px;
+	background: var(--po-brand);
+	color: #ffffff;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ap-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.ap-btn--ghost {
+	border: 1px solid var(--po-brand);
+	background: transparent;
+	color: var(--po-brand-text);
+}
+
+.ap-link {
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--po-brand-text);
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.ap-link--danger {
+	color: var(--po-danger);
+}
+
+.ap-muted {
+	color: var(--po-text-muted);
+	font-size: 0.85rem;
+	font-weight: 400;
+}
+
+.ap-search {
+	display: flex;
+	gap: 0.6rem;
+	margin-top: 1rem;
+}
+
+.ap-results {
+	margin: 0.75rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ap-results li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--po-border);
+}

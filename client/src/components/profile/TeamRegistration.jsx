@@ -12,6 +12,7 @@ import AuthLogo from '../shared/AuthLogo'
 import './AuthForms.css'
 import { trackRegistrationConversion } from '../../utils/marketingAnalytics.js'
 import { parsePricingIntent, savePricingIntent } from '../../utils/pricingIntent'
+import { readReferralCode } from '../../utils/referral'
 
 const TeamRegistration = () => {
 	const [formData, setFormData] = useState({
@@ -89,7 +90,9 @@ const TeamRegistration = () => {
 			devLog('[TeamRegistration] POST', `${API_URL}/api/teams/register`)
 			const response = await axios.post(`${API_URL}/api/teams/register`, {
 				...formData,
-				acceptedDocuments
+				acceptedDocuments,
+				// Kod partnera z linku ?ref (cookie z landingu lub aplikacji) — serwer przypisze zespół do partnera
+				referralCode: readReferralCode() || undefined,
 			}, {
 				withCredentials: true
 			})

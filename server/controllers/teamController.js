@@ -161,6 +161,17 @@ exports.registerTeam = async (req, res) => {
 					}
 				: {}
 
+		// Program partnerski: kod z linku ?ref (cookie planopia_ref) — błąd nigdy nie blokuje rejestracji
+		let referralFields = {}
+		try {
+			referralFields = await require('../services/partnerService').referralFieldsForRegistration({
+				referralCode: req.body.referralCode,
+				adminEmail,
+			})
+		} catch (err) {
+			console.error('[partner] referral at registration:', err.message)
+		}
+
 		const newTeam = new Team({
 			name: teamName,
 			adminEmail,
@@ -171,6 +182,7 @@ exports.registerTeam = async (req, res) => {
 			currentUserCount: 1,
 			maxUsers: maxUsers,
 			...trialBilling,
+			...referralFields,
 		})
 
 		await newTeam.save();

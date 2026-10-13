@@ -13,11 +13,14 @@ import "@fontsource/teko";               // domyślny styl Teko (400)
 import "@fontsource/teko/700.css";        // np. bold
 import { devLog } from './utils/devLog.js'
 import { initializeMarketingAnalytics } from './utils/marketingAnalytics.js'
+import { captureReferralFromUrl } from './utils/referral.js'
 
 // Set app element for react-modal once (prevents multiple registration warnings)
 if (typeof document !== 'undefined') {
 	Modal.setAppElement('#root')
 	initializeMarketingAnalytics()
+	// Program partnerski: kod z ?ref=KOD (first-touch) — gdy ktoś wchodzi z linku partnera prosto do aplikacji
+	captureReferralFromUrl()
 }
 
 // Rejestracja Service Worker z automatycznym odświeżaniem

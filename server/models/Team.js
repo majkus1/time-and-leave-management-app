@@ -191,6 +191,28 @@ const teamSchema = new mongoose.Schema({
 		type: Date,
 		default: null,
 	},
+	/** Typ organizacji: zwykła firma albo biuro rachunkowe (panel biura — dostęp do firm-klientów za ich zgodą) */
+	organizationType: {
+		type: String,
+		enum: ['company', 'office'],
+		default: 'company',
+	},
+	/** Program partnerski: kto polecił zespół (link ?ref, ręczne przypisanie admina albo powiązanie z biurem) */
+	referredByPartnerId: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Partner',
+		default: null,
+		index: true,
+	},
+	referredAt: {
+		type: Date,
+		default: null,
+	},
+	referralSource: {
+		type: String,
+		enum: ['link', 'admin', 'office_link', null],
+		default: null,
+	},
 	/** Dane demonstracyjne (services/demoDataService): { createdAt, users, workdays, … } — null gdy brak */
 	demoData: {
 		type: mongoose.Schema.Types.Mixed,
