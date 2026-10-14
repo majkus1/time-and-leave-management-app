@@ -9,7 +9,7 @@ import { useUsers } from '../../hooks/useUsers'
 import { useAllTeamWorkdays } from '../../hooks/useWorkdays'
 import { useAllAcceptedLeaveRequests } from '../../hooks/useLeaveRequests'
 import { useSettings } from '../../hooks/useSettings'
-import { getHolidaysInRange, isHolidayDate } from '../../utils/holidays'
+import { getHolidaysInRange } from '../../utils/holidays'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
 import Modal from 'react-modal'
 import { useDepartments } from '../../hooks/useDepartments'
@@ -55,7 +55,7 @@ import TaskFilterBar from '../workcalendars/TaskFilterBar'
 import { useBillingCatalog, useBillingEntitlements } from '../../hooks/useBilling'
 import { formatPlanMoney } from '../../utils/planPriceFormat'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
-import { stepToNextUtcDay } from '../../utils/calendarDay'
+import { workingDatesInRange } from '../../utils/calendarDay'
 
 function workdayUserIdString(day) {
 	if (!day?.userId) return ''
@@ -175,42 +175,9 @@ function AdminUserList() {
 		return t('workcalendar.overtime5plus')
 	}
 
-	// Funkcja pomocnicza do sprawdzania czy dzień jest weekendem
-	const isWeekend = (date) => {
-		const day = new Date(date).getDay()
-		return day === 0 || day === 6
-	}
-
 	// Funkcja pomocnicza do generowania dat w zakresie (z pominięciem weekendów i świąt)
 	const generateDateRangeForCalendar = useCallback(
-		(startDate, endDate) => {
-		const dates = []
-		const start = new Date(startDate)
-		const end = new Date(endDate)
-		const current = new Date(start)
-		const workOnWeekends = settings?.workOnWeekends !== false
-		
-		while (current <= end) {
-			const currentDateStr = new Date(current).toISOString().split('T')[0]
-			const isWeekendDay = isWeekend(current)
-			const holidayInfo = isHolidayDate(current, settings)
-			const isHolidayDay = holidayInfo !== null
-			
-			if (workOnWeekends) {
-				if (!isHolidayDay) {
-					dates.push(currentDateStr)
-				}
-			} else {
-				if (!isWeekendDay && !isHolidayDay) {
-					dates.push(currentDateStr)
-				}
-			}
-			// Krok w UTC — daty wniosków to północ UTC; krok lokalny gubił dzień przy zmianie czasu
-			stepToNextUtcDay(current)
-		}
-		
-		return dates
-		},
+		(startDate, endDate) => workingDatesInRange(startDate, endDate, settings),
 		[settings]
 	)
 

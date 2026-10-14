@@ -1,0 +1,161 @@
+/* Ustawienia → Biuro rachunkowe — tokeny motywu --po-* (jasny i ciemny) */
+.osp {
+	margin-bottom: 20px;
+	padding: 20px;
+	border-radius: 12px;
+	background: var(--po-surface);
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	color: var(--po-text);
+}
+
+.osp__title {
+	margin: 0 0 12px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #00a846;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.osp__lead {
+	margin: 0 0 16px;
+	color: var(--po-text-muted);
+	line-height: 1.5;
+}
+
+.osp-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.6rem;
+	padding: 0.7rem 0;
+	border-bottom: 1px solid var(--po-border);
+}
+
+.osp-row--invite {
+	padding: 0.8rem 1rem;
+	border: 1px solid var(--po-brand);
+	border-radius: 10px;
+	background: var(--po-brand-soft);
+	margin-bottom: 0.6rem;
+}
+
+.osp-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.8rem;
+}
+
+.osp-muted {
+	color: var(--po-text-muted);
+	font-size: 0.9rem;
+}
+
+.osp-add {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.6rem;
+	margin-top: 1rem;
+}
+
+.osp-field {
+	display: flex;
+	flex: 1 1 14rem;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.osp-input {
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--po-border-strong, var(--po-border));
+	border-radius: 8px;
+	background: var(--po-surface);
+	color: var(--po-text);
+	font-size: 0.95rem;
+	font-weight: 400;
+}
+
+.osp-btn {
+	padding: 0.55rem 1rem;
+	border: none;
+	border-radius: 8px;
+	background: var(--po-brand);
+	color: #ffffff;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.osp-btn:disabled {
+	opacity: 0.55;
+	cursor: default;
+}
+
+.osp-link {
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--po-brand-text);
+	font-weight: 600;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.osp-link--danger {
+	color: var(--po-danger);
+}
+
+.osp-consent {
+	margin-top: 1rem;
+	padding: 1rem 1.2rem;
+	border: 1px solid var(--po-border);
+	border-radius: 10px;
+	background: var(--po-surface-muted, var(--po-surface));
+	line-height: 1.5;
+}
+
+.osp-consent h4 {
+	margin: 0 0 0.5rem;
+	font-size: 1.05rem;
+}
+
+.osp-consent ul {
+	margin: 0.4rem 0 0.8rem;
+	padding-left: 1.4rem;
+	list-style: disc;
+}
+
+.osp-consent li {
+	list-style: disc;
+	margin: 0.15rem 0;
+}
+
+.osp-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.55rem;
+	margin: 0.8rem 0;
+	font-weight: 600;
+}
+
+.osp-check input {
+	margin-top: 0.25rem;
+}
+
+.osp-check a {
+	color: var(--po-brand-text);
+}
+
+.osp-history {
+	margin-top: 1rem;
+	color: var(--po-text-muted);
+	font-size: 0.9rem;
+}
+
+.osp-history summary {
+	cursor: pointer;
+}

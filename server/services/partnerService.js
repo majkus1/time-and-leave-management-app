@@ -156,7 +156,7 @@ async function searchTeams(query) {
 	const q = String(query || '').trim()
 	if (q.length < 2) return []
 	const teams = await Team.find({ name: { $regex: escapeRegex(q), $options: 'i' } })
-		.select('name adminEmail referredByPartnerId isActive')
+		.select('name adminEmail referredByPartnerId isActive organizationType')
 		.limit(20)
 		.lean()
 	return teams.map(t => ({
@@ -165,6 +165,7 @@ async function searchTeams(query) {
 		adminEmail: t.adminEmail,
 		referredByPartnerId: t.referredByPartnerId ? String(t.referredByPartnerId) : null,
 		isActive: t.isActive !== false,
+		organizationType: t.organizationType || 'company',
 	}))
 }
 

@@ -20,6 +20,7 @@ import { calculateHours } from '../../utils/timeHelpers'
 import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import QRCodeGenerator from '../qr/QRCodeGenerator'
 import WorkActivitiesSettingsSection from './WorkActivitiesSettingsSection'
+import OfficeAccessSettingsSection from './OfficeAccessSettingsSection'
 
 const NOTIFICATION_MODULE_REQUIREMENTS = {
 	chat: 'chat',
@@ -1177,6 +1178,9 @@ function Settings() {
 						</p>
 					</div>
 				)}
+
+				{/* Biuro rachunkowe — zgoda na udostępnienie danych; tylko Admin, także w planie darmowym */}
+				{isAdmin && <OfficeAccessSettingsSection />}
 
 				{/* QR / licznik — tylko przy module timer_qr lub trial/legacy/freemium (jak sidebar) */}
 				{canEditSettings && !freemiumSlimSettings && showTimerQrSettings && (

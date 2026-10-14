@@ -10,7 +10,7 @@ export function isFreemiumSeatEscapePath(pathname, role) {
 	const p = (pathname || '').replace(/\/+$/, '').split('?')[0] || '/'
 	if (p === '/team-access-notice') return true
 	const staff = isAdmin(role) || isHR(role)
-	if (staff && (p === '/packages' || p === '/partner')) return true
+	if (staff && (p === '/packages' || p === '/partner' || p === '/biuro')) return true
 	if (isAdmin(role) && (p === '/team-management' || p === '/helpcenter')) return true
 	return false
 }

@@ -460,6 +460,8 @@ app.use(
 // Program partnerski — panel admina platformy (partnerzy, przypisania zespołów)
 app.use('/api/super/partners', authenticateToken, requireSuperAdmin, require('./routes/superPartnerRoutes'))
 app.use('/api/partner', authenticateToken, require('./routes/partnerPortalRoutes'))
+app.use('/api/office-links', authenticateToken, require('./routes/officeLinkRoutes'))
+app.use('/api/biuro', authenticateToken, require('./routes/officeRoutes'))
 const { serveUploadMiddleware } = require('./middleware/serveUploadMiddleware')
 app.use('/uploads', authenticateToken, serveUploadMiddleware)
 

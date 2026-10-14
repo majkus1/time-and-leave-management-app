@@ -1,7 +1,7 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const { normalizeReferralCode, isSelfReferral, canReceiveReferrals } = require('../utils/referralCode')
-const { isPlatformSuperAdminActivityAllowed, isPartnerPortalApiPath } = require('../services/freemiumApiPolicyService')
+const { isPlatformSuperAdminActivityAllowed, isPartnerPortalApiPath, isPartnerProgramApiPath } = require('../services/freemiumApiPolicyService')
 
 describe('kody polecające programu partnerskiego', () => {
 	it('normalizacja: małe litery, cyfry i myślnik, 3–32 znaki', () => {
@@ -50,5 +50,14 @@ describe('kody polecające programu partnerskiego', () => {
 		assert.equal(isPartnerPortalApiPath('/api/partners'), false)
 		assert.equal(isPartnerPortalApiPath('/api/partnerx/overview'), false)
 		assert.equal(isPartnerPortalApiPath('/api/workdays'), false)
+	})
+
+	it('panel biura i powiązania firma–biuro poza strażnikiem planu — tylko te prefiksy', () => {
+		assert.equal(isPartnerProgramApiPath('/api/biuro/clients'), true)
+		assert.equal(isPartnerProgramApiPath('/api/office-links/connect'), true)
+		assert.equal(isPartnerProgramApiPath('/api/partner/overview'), true)
+		assert.equal(isPartnerProgramApiPath('/api/biurox'), false)
+		assert.equal(isPartnerProgramApiPath('/api/office-linksx/a'), false)
+		assert.equal(isPartnerProgramApiPath('/api/leaveworks/accepted-leave-requests'), false)
 	})
 })

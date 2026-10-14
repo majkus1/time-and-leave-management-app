@@ -103,6 +103,26 @@ exports.aiAssistantExportLimiter = rateLimit({
 	skipFailedRequests: false,
 })
 
+/** Biuro rachunkowe: zaproszenia firm po e-mailu — ochrona przed masowym sprawdzaniem adresów i spamem */
+exports.officeInviteLimiter = rateLimit({
+	windowMs: 60 * 60 * 1000,
+	max: 20,
+	message: { message: 'Zbyt wiele zaproszeń. Spróbuj ponownie za godzinę.' },
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+})
+
+/** Firma dodaje biuro po kodzie — ochrona przed zgadywaniem kodów */
+exports.officeConnectLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 10,
+	message: { message: 'Zbyt wiele prób. Spróbuj ponownie za 15 minut.' },
+	standardHeaders: true,
+	legacyHeaders: false,
+	keyGenerator: req => req.user?.userId?.toString?.() || req.ip,
+})
+
 function envInt(name, fallback) {
 	const n = parseInt(String(process.env[name] || ''), 10)
 	return Number.isFinite(n) && n > 0 ? n : fallback

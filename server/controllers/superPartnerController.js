@@ -1,5 +1,6 @@
 const partnerService = require('../services/partnerService')
 const commissionService = require('../services/commissionService')
+const officeAccessService = require('../services/officeAccessService')
 const Stripe = require('stripe')
 const { getStripeConfig } = require('../services/stripe/stripeConfig')
 
@@ -55,3 +56,6 @@ exports.recordManualInvoice = handle(async req =>
 		userId: req.user.userId,
 	})
 )
+
+// Biuro rachunkowe (etap 4): typ zespołu ustawia właściciel platformy
+exports.setOrganizationType = handle(async req => officeAccessService.setOrganizationType(req.params.teamId, req.body?.organizationType))

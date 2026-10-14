@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { stepToNextUtcDay } from './calendarDay'
+import { stepToNextUtcDay, workingDatesInRange } from './calendarDay'
 
 // Ta sama pętla co generateDateRangeForCalendar w kalendarzach (bez weekendów, bez świąt)
 function workdays(startDate, endDate) {
@@ -43,5 +43,20 @@ describe('stepToNextUtcDay — zakresy dat przez zmianę czasu (Europe/Warsaw)',
 			'2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04',
 		])
 		expect(workdays('2026-10-19', '2026-10-19')).toEqual(['2026-10-19'])
+	})
+})
+
+describe('workingDatesInRange — dni robocze wniosku (lista ewidencji i panel biura)', () => {
+	const utc = ymd => new Date(`${ymd}T00:00:00Z`)
+	it('bez weekendów i bez świąt polskich (11.11)', () => {
+		const settings = { workOnWeekends: false, includePolishHolidays: true }
+		expect(workingDatesInRange(utc('2026-11-09'), utc('2026-11-15'), settings)).toEqual(['2026-11-09', '2026-11-10', '2026-11-12', '2026-11-13'])
+	})
+	it('praca w weekendy: soboty i niedziele liczone', () => {
+		expect(workingDatesInRange(utc('2026-11-13'), utc('2026-11-15'), { workOnWeekends: true })).toEqual(['2026-11-13', '2026-11-14', '2026-11-15'])
+	})
+	it('święto własne zespołu pominięte', () => {
+		const settings = { workOnWeekends: false, includeCustomHolidays: true, customHolidays: [{ date: '2026-11-10', name: 'Firma' }] }
+		expect(workingDatesInRange(utc('2026-11-09'), utc('2026-11-10'), settings)).toEqual(['2026-11-09'])
 	})
 })

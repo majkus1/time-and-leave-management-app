@@ -14,6 +14,7 @@ import ProtectedRoute from './components/route/ProtectedRoute'
 import Logs from './components/profile/Logs'
 import AdminPartners from './components/admin/AdminPartners'
 import PartnerPanel from './components/partner/PartnerPanel'
+import OfficePanel from './components/office/OfficePanel'
 import FounderCallPage from './components/founderCall/FounderCallPage'
 import Settings from './components/profile/Settings'
 import AdminUserList from './components/listusers/AdminUserList'
@@ -215,6 +216,7 @@ function AppContent() {
 						<Route path="/leave-request-pdf-preview" element={<LeaveRequestPDFPreview />} />
 						<Route path="/edit-profile" element={<ChangePassword />} />
 						<Route path="/documents" element={isAdmin(role) ? <Legal /> : <Navigate to="/" />} />
+						<Route path="/biuro" element={isAdmin(role) || isHR(role) ? <OfficePanel /> : <Navigate to="/" />} />
 						<Route path="/partner" element={isAdmin(role) || isHR(role) ? <PartnerPanel /> : <Navigate to="/" />} />
 						<Route path="/admin/partners" element={isPlatformSuperAdmin(username) ? <AdminPartners /> : <Navigate to="/" />} />
 						<Route path="/team-management" element={(isAdmin(role) || isPlatformSuperAdmin(username)) ? <Logs /> : <Navigate to="/" />} />

@@ -1,0 +1,29 @@
+/* Panel biura rachunkowego — na bazie kart i tabel z AdminPartners.css (klasy ap-*) */
+.op-select {
+	width: auto;
+	max-width: 16rem;
+}
+
+.op-table td:not(:first-child),
+.op-table th:not(:first-child) {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.op-table tfoot td {
+	border-top: 2px solid var(--po-border);
+	font-weight: 700;
+}
+
+.op-ok {
+	color: var(--po-brand-text);
+	font-weight: 600;
+}
+
+.op-note {
+	margin-top: 0.8rem;
+}
+
+.op-end {
+	margin-top: 1rem;
+}

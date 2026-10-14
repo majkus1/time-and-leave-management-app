@@ -57,8 +57,8 @@ async function freemiumApiGuardAsync(req, res, next) {
 		if (freemiumApiPolicyService.isPlatformSuperAdminActivityAllowed(path, decoded)) {
 			return next()
 		}
-		// Panel partnera nie zależy od planu zespołu partnera — dostęp sprawdza serwis panelu
-		if (freemiumApiPolicyService.isPartnerPortalApiPath(path)) {
+		// Panel partnera i biura nie zależą od planu zespołu — dostęp sprawdzają serwisy
+		if (freemiumApiPolicyService.isPartnerProgramApiPath(path)) {
 			return next()
 		}
 

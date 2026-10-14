@@ -152,6 +152,20 @@ function isPartnerPortalApiPath(path) {
 	return path === '/api/partner' || path.startsWith('/api/partner/')
 }
 
+/**
+ * Program partnerski i biura rachunkowe (panel partnera, panel biura, powiązania firma–biuro) — poza strażnikami
+ * planu: to nie moduły produktu. O dostępie decydują serwisy (rola, typ zespołu, aktywne powiązanie).
+ */
+function isPartnerProgramApiPath(path) {
+	return (
+		isPartnerPortalApiPath(path) ||
+		path === '/api/biuro' ||
+		path.startsWith('/api/biuro/') ||
+		path === '/api/office-links' ||
+		path.startsWith('/api/office-links/')
+	)
+}
+
 /** Panele właściciela platformy (/api/super/*: monitor sesji, partnerzy) — poza polityką freemium / modułów planu. */
 function isPlatformSuperAdminActivityAllowed(path, decodedUser) {
 	return isPlatformSuperAdminActivityApiPath(path) && isSuperAdminUser({ username: decodedUser?.username })
@@ -180,5 +194,6 @@ module.exports = {
 	isFreemiumActiveTierAllowed,
 	isPlatformSuperAdminActivityAllowed,
 	isPartnerPortalApiPath,
+	isPartnerProgramApiPath,
 	isBillingStaffRoles,
 }

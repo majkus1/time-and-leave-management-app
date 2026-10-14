@@ -121,6 +121,15 @@ export default function AdminPartners() {
 		}
 	}
 
+	const setOrganizationType = async (teamId, organizationType) => {
+		try {
+			await axios.put(`${API_URL}/api/super/partners/teams/${teamId}/organization-type`, { organizationType }, { withCredentials: true })
+			setResults(prev => prev.map(r => (r.id === teamId ? { ...r, organizationType } : r)))
+		} catch (err) {
+			await showAlert(errorText(err))
+		}
+	}
+
 	const setPartnerTeam = async teamId => {
 		try {
 			const { data } = await axios.patch(`${API_URL}/api/super/partners/${selected.id}`, { partnerTeamId: teamId }, { withCredentials: true })
@@ -302,6 +311,7 @@ export default function AdminPartners() {
 								<li key={r.id}>
 									<span>
 										<b>{r.name}</b> <span className="ap-muted">{r.adminEmail}</span>
+										{r.organizationType === 'office' ? <span className="ap-muted"> · {t('adminPartners.officeBadge')}</span> : null}
 									</span>
 									<span className="ap-actions">
 										{r.referredByPartnerId === selected.id ? (
@@ -313,6 +323,9 @@ export default function AdminPartners() {
 										)}
 										<button type="button" className="ap-link" onClick={() => setPartnerTeam(r.id)}>
 											{t('adminPartners.setPartnerTeam')}
+										</button>
+										<button type="button" className="ap-link" onClick={() => setOrganizationType(r.id, r.organizationType === 'office' ? 'company' : 'office')}>
+											{r.organizationType === 'office' ? t('adminPartners.unmarkOffice') : t('adminPartners.markOffice')}
 										</button>
 									</span>
 								</li>
