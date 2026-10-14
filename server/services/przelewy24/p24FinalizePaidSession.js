@@ -7,6 +7,7 @@ const { getP24Config } = require('./p24Config')
 const { signVerify } = require('./p24Sign')
 const { p24Request, assertP24Ok } = require('./p24HttpClient')
 const { subscriptionPeriodEnd } = require('./p24Period')
+const commissionService = require('../commissionService')
 /** status=1 w GET /transaction/by/sessionId — opłacona (sandbox/prod). */
 function isP24TransactionPaidStatus(status) {
 	return status === 1 || status === '1' || status === 'success'
@@ -73,6 +74,8 @@ async function finalizeP24PaidSession(session, orderId) {
 				session.p24OrderId = String(orderId)
 				session.settlementNote = decision.reason
 				await session.save()
+				// Pieniądze wpłynęły — prowizja też; przy zwrocie admin cofa ją ręcznie w panelu partnerów
+				await commissionService.safeAccrueForP24Session(session, paymentNow)
 				return { ok: true, orderId: String(orderId), settlement: decision.reason }
 			}
 			periodStart = decision.start
@@ -104,6 +107,9 @@ async function finalizeP24PaidSession(session, orderId) {
 	session.status = 'paid'
 	session.p24OrderId = String(orderId)
 	await session.save()
+
+	// Prowizja partnera po zapisaniu płatności — błąd tylko w logu, klucz sesji chroni przed podwójnym naliczeniem
+	await commissionService.safeAccrueForP24Session(session, paymentNow)
 
 	return { ok: true, orderId: String(orderId) }
 }

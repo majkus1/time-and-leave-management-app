@@ -21,6 +21,7 @@ const {
 } = require('./stripeBillingPayloadCompatibility')
 const { isPaidPlanKey, normalizePaidPlanKey, isCorePlanKey, isModuleKey } = require('../../constants/planCatalog')
 const entitlementsService = require('../entitlementsService')
+const commissionService = require('../commissionService')
 
 /** Ile dni po końcu opłaconego okresu zespół zachowuje plan, gdy odnowienie kartą nie przeszło; potem freemium. */
 const STRIPE_PAST_DUE_GRACE_DAYS = (() => {
@@ -578,7 +579,18 @@ async function handleInvoicePaid(event, stripe) {
 		console.error('[stripe] syncSeatLimitAfterStripePaidInvoice:', e.message || e)
 	}
 
+	// Prowizja partnera — także przy duplikacie aktywacji (klucz faktury chroni przed podwójnym naliczeniem). Błąd tylko
+	// w logu, nigdy nie blokuje obsługi płatności; brakującą prowizję admin dolicza w panelu partnerów po id faktury.
+	await commissionService.safeAccrueForStripeInvoice({ invoice, teamId: resolved.teamId })
+
 	return { handled: true, eventType: event.type, duplicate: activation.duplicate === true }
+}
+
+/** Zwrot płatności kartą — cofnięcie prowizji partnera (wymaga zdarzenia charge.refunded w webhooku Stripe) */
+async function handleChargeRefunded(event, stripe) {
+	const charge = event.data?.object || {}
+	const result = await commissionService.safeReverseForStripeRefund({ charge, stripe })
+	return { handled: true, eventType: event.type, commission: result.reversed ? 'reversed' : result.reason }
 }
 
 async function handleSubscriptionUpdated(event) {
@@ -869,6 +881,8 @@ async function handleStripeWebhookEvent(rawBody, signatureHeader) {
 				return handleSubscriptionUpdated(event)
 			case 'customer.subscription.deleted':
 				return handleSubscriptionDeleted(event)
+			case 'charge.refunded':
+				return handleChargeRefunded(event, stripe)
 			default:
 				return { handled: true, eventType: event.type, ignored: true }
 		}

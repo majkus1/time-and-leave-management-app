@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { API_URL } from '../../config.js'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
+import AdminCommissions from './AdminCommissions'
 import './AdminPartners.css'
 
 const EMPTY_FORM = { name: '', email: '', code: '', nip: '', ratePercent: '20', commissionMonths: '', status: 'active', notes: '' }
@@ -33,6 +34,7 @@ export default function AdminPartners() {
 	const [teams, setTeams] = useState([])
 	const [query, setQuery] = useState('')
 	const [results, setResults] = useState([])
+	const [tab, setTab] = useState('partners')
 
 	const errorText = e => e?.response?.data?.message || t('adminPartners.error')
 	const appBase = typeof window !== 'undefined' ? window.location.origin.replace('app.', '') : ''
@@ -141,7 +143,17 @@ export default function AdminPartners() {
 			<h2 className="ap__title">{t('adminPartners.title')}</h2>
 			<p className="ap__lead">{t('adminPartners.lead')}</p>
 
-			<div className="ap__grid">
+			<div className="ap-tabs" role="tablist">
+				{['partners', 'commissions'].map(key => (
+					<button key={key} type="button" role="tab" aria-selected={tab === key} className={`ap-tab${tab === key ? ' ap-tab--on' : ''}`} onClick={() => setTab(key)}>
+						{t(`adminPartners.tab_${key}`)}
+					</button>
+				))}
+			</div>
+
+			{tab === 'commissions' ? <AdminCommissions partners={partners} /> : null}
+
+			<div className="ap__grid" hidden={tab !== 'partners'}>
 				<section className="ap-card">
 					<div className="ap-card__head">
 						<h3>{t('adminPartners.listTitle')}</h3>
@@ -176,13 +188,15 @@ export default function AdminPartners() {
 										</td>
 										<td>{p.referredCount}</td>
 										<td>{t(`adminPartners.status_${p.status}`)}</td>
-										<td className="ap-actions">
-											<button type="button" className="ap-link" onClick={() => startEdit(p)}>
-												{t('adminPartners.edit')}
-											</button>
-											<button type="button" className="ap-link" onClick={() => select(p)}>
-												{t('adminPartners.teams')}
-											</button>
+										<td>
+											<div className="ap-actions">
+												<button type="button" className="ap-link" onClick={() => startEdit(p)}>
+													{t('adminPartners.edit')}
+												</button>
+												<button type="button" className="ap-link" onClick={() => select(p)}>
+													{t('adminPartners.teams')}
+												</button>
+											</div>
 										</td>
 									</tr>
 								))}
@@ -237,7 +251,7 @@ export default function AdminPartners() {
 				</form>
 			</div>
 
-			{selected ? (
+			{selected && tab === 'partners' ? (
 				<section className="ap-card ap-card--wide">
 					<h3>{t('adminPartners.teamsTitle', { name: selected.name })}</h3>
 					<p className="ap-muted">
@@ -263,10 +277,12 @@ export default function AdminPartners() {
 										<td>{tm.planKey || '—'}</td>
 										<td>{date(tm.referredAt)}</td>
 										<td>{t(`adminPartners.source_${tm.referralSource || 'admin'}`)}</td>
-										<td className="ap-actions">
-											<button type="button" className="ap-link ap-link--danger" onClick={() => assign(tm.id, null)}>
-												{t('adminPartners.unassign')}
-											</button>
+										<td>
+											<div className="ap-actions">
+												<button type="button" className="ap-link ap-link--danger" onClick={() => assign(tm.id, null)}>
+													{t('adminPartners.unassign')}
+												</button>
+											</div>
 										</td>
 									</tr>
 								))}

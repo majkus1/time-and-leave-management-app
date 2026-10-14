@@ -15,7 +15,13 @@ export function normalizeReferralCode(raw: unknown): string | null {
 
 /** Wartość cookie: „kod.znacznikCzasu” (kod nie zawiera kropki) */
 export function parseReferralCookieValue(value: string): string | null {
-	const raw = decodeURIComponent(String(value ?? ''))
+	// Uszkodzone cookie (np. ręcznie zmienione) nie może wywrócić rejestracji — traktujemy jak brak kodu
+	let raw: string
+	try {
+		raw = decodeURIComponent(String(value ?? ''))
+	} catch {
+		return null
+	}
 	const dot = raw.lastIndexOf('.')
 	return normalizeReferralCode(dot > 0 ? raw.slice(0, dot) : raw)
 }
