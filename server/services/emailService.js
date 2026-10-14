@@ -827,6 +827,23 @@ async function sendBillingSeatOverLimitEmail(toEmail, teamName, { used, maxUsers
 	await sendEmail(toEmail, null, subject, html)
 }
 
+/** Biuro rachunkowe zaprasza firmę do udostępnienia danych — decyzja w Ustawieniach firmy (tylko Admin). */
+async function sendOfficeInviteEmail(toEmail, { officeName, companyName }) {
+	const safeOffice = escapeHtml(officeName || 'Biuro rachunkowe')
+	const safeCompany = escapeHtml(companyName || 'Państwa firma')
+	const subject = `Planopia — ${officeName || 'biuro rachunkowe'} zaprasza do udostępnienia danych`
+	const title = 'Zaproszenie od biura rachunkowego'
+	const content = `
+		<p style="margin:0 0 12px 0;">Dzień dobry,</p>
+		<p style="margin:0 0 12px 0;">Biuro <strong>${safeOffice}</strong> zaprasza firmę <strong>${safeCompany}</strong> do udostępnienia mu w Planopii danych do rozliczeń: ewidencji czasu pracy, nieobecności i sald urlopów pracowników.</p>
+		<p style="margin:0 0 12px 0;">Biuro zobaczy te dane <strong>tylko do odczytu</strong>, dopiero gdy administrator firmy wyrazi zgodę. Dostęp można odebrać w każdej chwili.</p>
+		<p style="margin:0 0 12px 0;">Zaproszenie czeka w aplikacji: <strong>Ustawienia → Biuro rachunkowe</strong>. Jeśli nie współpracują Państwo z tym biurem, wystarczy je odrzucić albo zignorować tę wiadomość.</p>
+		<p style="margin:0;">Pozdrawiamy,<br>Zespół Planopia</p>
+	`
+	const html = getEmailTemplate(title, content, 'Przejdź do ustawień', `${appUrl}/settings`, null)
+	await sendEmail(toEmail, null, subject, html)
+}
+
 /** Podziękowanie po zakupie pakietu. */
 async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 	const safeTeam = escapeHtml(teamName || 'Państwa zespół')
@@ -854,6 +871,7 @@ module.exports = {
 	notifyHelpCenterStaff,
 	sendBillingPurchaseThankYouEmail,
 	sendBillingSeatOverLimitEmail,
+	sendOfficeInviteEmail,
 	escapeHtml,
 	getEmailTemplate,
 }

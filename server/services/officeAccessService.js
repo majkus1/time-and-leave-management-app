@@ -14,6 +14,7 @@ const OfficeAuditLog = require('../models/OfficeAuditLog')(firmDb)
 const { ACTIVE_USER_FILTER } = require('../utils/teamScopeAccess')
 const { normalizeReferralCode, isSelfReferral } = require('../utils/referralCode')
 const { buildPersonalLeaveLimits } = require('./dashboardSummaryHelpers')
+const { sendOfficeInviteEmail } = require('./emailService')
 const {
 	OFFICE_ZONE,
 	canUseOfficePanel,
@@ -26,6 +27,7 @@ const {
 
 const OPEN = ['pending', 'active']
 const DECLINE_COOLDOWN_MS = 30 * 24 * 3600e3
+const INVITE_MAIL_INTERVAL_MS = 7 * 24 * 3600e3
 const SETTINGS_FIELDS = [
 	'workOnWeekends',
 	'includePolishHolidays',
@@ -281,12 +283,41 @@ async function inviteCompany(user, { email }) {
 	const office = await requireOffice(user)
 	const normalized = typeof email === 'string' ? email.trim().toLowerCase() : ''
 	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) || normalized.length > 200) throw httpError(400, 'Podaj poprawny e-mail administratora firmy')
+	let created = null
 	try {
-		await OfficeAccess.create({ officeTeamId: office._id, clientTeamId: null, status: 'pending', initiatedBy: 'office', invitedEmail: normalized, createdByUserId: user.userId })
+		created = await OfficeAccess.create({ officeTeamId: office._id, clientTeamId: null, status: 'pending', initiatedBy: 'office', invitedEmail: normalized, createdByUserId: user.userId })
 	} catch (error) {
 		if (error?.code !== 11000) throw error
 	}
+	// Mail tylko przy nowym zaproszeniu i w tle — odpowiedź (i jej czas) nie zależy od tego, czy firma istnieje
+	if (created) setImmediate(() => void notifyInvitedCompany(office, normalized, created._id))
 	return { ok: true }
+}
+
+/** Mail do administratora firmy — tylko gdy firma istnieje, nie ma już dostępu dla tego biura i nie odmówiła mu niedawno */
+async function notifyInvitedCompany(office, email, inviteId) {
+	try {
+		// Najwyżej jeden mail od tego biura na ten adres w tygodniu — „zaproś, wycofaj, zaproś” nie zrobi z tego spamu
+		const recentInvite = await OfficeAccess.exists({
+			_id: { $ne: inviteId },
+			officeTeamId: office._id,
+			invitedEmail: email,
+			createdAt: { $gte: new Date(Date.now() - INVITE_MAIL_INTERVAL_MS) },
+		})
+		if (recentInvite) return
+		const company = await Team.findOne({ adminEmail: email, isActive: { $ne: false } }).select('name').lean()
+		if (!company || String(company._id) === String(office._id)) return
+		const blocked = await OfficeAccess.exists({
+			officeTeamId: office._id,
+			clientTeamId: company._id,
+			$or: [{ status: 'active' }, { endedBy: 'company', endedAt: { $gte: new Date(Date.now() - DECLINE_COOLDOWN_MS) } }],
+		})
+		if (blocked) return
+		await sendOfficeInviteEmail(email, { officeName: office.name, companyName: company.name })
+		console.log('[office] wysłano mail o zaproszeniu od biura')
+	} catch (error) {
+		console.error('[office] nie wysłano maila o zaproszeniu:', error?.message || error)
+	}
 }
 
 async function officeEndLink(user, id) {
@@ -309,11 +340,13 @@ async function resolveOfficeClient(user, clientTeamIdRaw) {
 	return { office, client, access }
 }
 
+/** Wpis do historii dostępu firmy. Obowiązkowy: gdy zapis się nie uda, biuro nie dostaje danych (firma ma pełny ślad). */
 async function audit({ office, client, user, action, params, ip }) {
 	try {
 		await OfficeAuditLog.create({ officeTeamId: office._id, clientTeamId: client._id, userId: user.userId, action, params, ip: String(ip || '').slice(0, 100) })
 	} catch (error) {
-		console.error('[office] zapis logu audytowego nie powiódł się:', error?.message || error)
+		console.error('[office] zapis logu audytowego nie powiódł się — dane nie zostały wydane:', error?.message || error)
+		throw httpError(503, 'Chwilowy problem — spróbuj ponownie za moment')
 	}
 }
 
@@ -321,7 +354,7 @@ async function audit({ office, client, user, action, params, ip }) {
  * Miesiąc firmy dla biura: pracownicy (bez e-maili), dni pracy, zatwierdzone nieobecności, salda urlopów na rok
  * i potwierdzenia miesiąca. Podsumowania liczy klient tymi samymi funkcjami co lista ewidencji w aplikacji.
  */
-async function clientMonth(user, clientTeamIdRaw, query, ip) {
+async function clientMonth(user, clientTeamIdRaw, query, ip, action = 'view_month') {
 	const ym = parseYearMonth(query?.year, query?.month)
 	if (!ym) throw httpError(400, 'Podaj rok i miesiąc (0–11)')
 	const { office, client } = await resolveOfficeClient(user, clientTeamIdRaw)
@@ -356,7 +389,7 @@ async function clientMonth(user, clientTeamIdRaw, query, ip) {
 	}
 	const confirmationByUser = new Map(confirmations.map(c => [String(c.userId), c]))
 
-	await audit({ office, client, user, action: 'view_month', params: ym, ip })
+	await audit({ office, client, user, action, params: ym, ip })
 
 	return {
 		company: { id: String(client._id), name: client.name },
@@ -388,7 +421,71 @@ async function clientMonth(user, clientTeamIdRaw, query, ip) {
 	}
 }
 
+/**
+ * Dane do eksportu PDF/Excel miesiąca. Plik buduje przeglądarka z tych samych sum, które biuro widzi w panelu
+ * (jedno źródło obliczeń, czas polski przeglądarki), a serwer zapisuje eksport w logu audytowym firmy.
+ */
+async function clientMonthExport(user, clientTeamIdRaw, body, ip) {
+	const format = body?.format === 'pdf' ? 'pdf' : body?.format === 'xlsx' ? 'xlsx' : null
+	if (!format) throw httpError(400, 'Format: pdf albo xlsx')
+	// Rok i miesiąc jako tekst — te same reguły co w zapytaniu GET (parseYearMonth odrzuca obiekty)
+	const query = { year: typeof body?.year === 'number' ? String(body.year) : body?.year, month: typeof body?.month === 'number' ? String(body.month) : body?.month }
+	return clientMonth(user, clientTeamIdRaw, query, ip, format === 'pdf' ? 'export_pdf' : 'export_xlsx')
+}
+
+/** Wpisy logu z nazwą biura i osoby z biura */
+async function auditView(entries) {
+	const [teams, users] = await Promise.all([
+		Team.find({ _id: { $in: [...new Set(entries.flatMap(e => [String(e.officeTeamId), String(e.clientTeamId)]))] } }).select('name').lean(),
+		User.find({ _id: { $in: [...new Set(entries.map(e => String(e.userId)))] } }).select('firstName lastName').lean(),
+	])
+	const teamName = new Map(teams.map(t => [String(t._id), t.name]))
+	const userName = new Map(users.map(u => [String(u._id), `${u.firstName || ''} ${u.lastName || ''}`.trim()]))
+	return entries.map(e => ({
+		id: String(e._id),
+		officeName: teamName.get(String(e.officeTeamId)) || '—',
+		clientName: teamName.get(String(e.clientTeamId)) || '—',
+		userName: userName.get(String(e.userId)) || '—',
+		action: e.action,
+		year: e.params?.year ?? null,
+		month: e.params?.month ?? null,
+		at: e.at,
+	}))
+}
+
+/** Firma (Admin): kto z biura i kiedy oglądał albo eksportował jej dane — ostatnie 200 wpisów */
+async function companyAudit(user) {
+	const { clientTeamId } = await companyContext(user)
+	const entries = await OfficeAuditLog.find({ clientTeamId }).sort({ at: -1 }).limit(200).lean()
+	const view = await auditView(entries)
+	return { entries: view.map(({ clientName, ...rest }) => rest) }
+}
+
 // ——— admin platformy ———
+
+/** Admin platformy: powiązania biuro–firma i ostatnie wejścia biur */
+async function adminOfficeOverview() {
+	const [links, entries] = await Promise.all([
+		OfficeAccess.find({ status: { $in: ['active', 'pending'] } }).sort({ status: 1, createdAt: -1 }).limit(500).lean(),
+		OfficeAuditLog.find({}).sort({ at: -1 }).limit(300).lean(),
+	])
+	const teams = await Team.find({ _id: { $in: [...new Set(links.flatMap(l => [l.officeTeamId, l.clientTeamId].filter(Boolean).map(String)))] } }).select('name').lean()
+	const teamName = new Map(teams.map(t => [String(t._id), t.name]))
+	return {
+		links: links.map(l => ({
+			id: String(l._id),
+			officeName: teamName.get(String(l.officeTeamId)) || '—',
+			clientName: l.clientTeamId ? teamName.get(String(l.clientTeamId)) || '—' : null,
+			invitedEmail: l.status === 'pending' ? l.invitedEmail : '',
+			status: l.status,
+			initiatedBy: l.initiatedBy,
+			createdAt: l.createdAt,
+			acceptedAt: l.acceptedAt,
+			dpaVersion: l.dpaVersion,
+		})),
+		audit: await auditView(entries),
+	}
+}
 
 async function setOrganizationType(teamId, organizationType) {
 	const _id = oid(teamId)
@@ -410,6 +507,9 @@ module.exports = {
 	officeEndLink,
 	resolveOfficeClient,
 	clientMonth,
+	clientMonthExport,
+	companyAudit,
+	adminOfficeOverview,
 	setOrganizationType,
 	assignReferralThroughOffice,
 }

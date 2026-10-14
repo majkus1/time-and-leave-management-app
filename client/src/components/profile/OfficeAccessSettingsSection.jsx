@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
-import { useCompanyOfficeAction, useCompanyOfficeLinks } from '../../hooks/useOffice'
+import { useCompanyOfficeAction, useCompanyOfficeAudit, useCompanyOfficeLinks } from '../../hooks/useOffice'
 import './OfficeAccessSettingsSection.css'
 
 const DPA_URL = 'https://planopia.pl/dpa'
@@ -19,6 +19,8 @@ export default function OfficeAccessSettingsSection() {
 	// Zgoda dla: { kind: 'connect', code } albo { kind: 'accept', id, name }
 	const [consentFor, setConsentFor] = useState(null)
 	const [agreed, setAgreed] = useState(false)
+	const [auditOpen, setAuditOpen] = useState(false)
+	const audit = useCompanyOfficeAudit({ enabled: auditOpen })
 	const locale = i18n.resolvedLanguage === 'en' ? 'en-GB' : 'pl-PL'
 	const date = d => (d ? new Date(d).toLocaleDateString(locale) : '—')
 	const errorText = e => e?.response?.data?.message || t('officeSettings.error')
@@ -142,6 +144,22 @@ export default function OfficeAccessSettingsSection() {
 							</div>
 						</div>
 					) : null}
+
+					<details className="osp-history" onToggle={e => setAuditOpen(e.currentTarget.open)}>
+						<summary>{t('officeSettings.auditTitle')}</summary>
+						{audit.isLoading ? null : audit.data?.entries?.length ? (
+							<ul className="osp-audit">
+								{audit.data.entries.map(e => (
+									<li key={e.id}>
+										<span className="osp-muted">{new Date(e.at).toLocaleString(locale)}</span> — <b>{e.officeName}</b>, {e.userName}:{' '}
+										{t(`officeSettings.audit_${e.action}`, { month: new Date(e.year, e.month, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' }) })}
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="osp-muted">{t('officeSettings.auditEmpty')}</p>
+						)}
+					</details>
 
 					{data?.history?.length ? (
 						<details className="osp-history">

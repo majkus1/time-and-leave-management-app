@@ -27,3 +27,11 @@
 .op-end {
 	margin-top: 1rem;
 }
+
+.op-export {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem;
+	margin-top: 0.8rem;
+}

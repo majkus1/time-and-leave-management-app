@@ -15,6 +15,16 @@ export function useCompanyOfficeLinks({ enabled = true } = {}) {
 	})
 }
 
+/** Kto z biura i kiedy oglądał albo eksportował dane firmy */
+export function useCompanyOfficeAudit({ enabled = true } = {}) {
+	return useQuery({
+		queryKey: ['office-links', 'audit'],
+		queryFn: async () => (await axios.get(`${API_URL}/api/office-links/audit`, opts)).data,
+		enabled,
+		retry: false,
+	})
+}
+
 export function useCompanyOfficeAction() {
 	const queryClient = useQueryClient()
 	return useMutation({

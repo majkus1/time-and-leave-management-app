@@ -5,6 +5,7 @@ import { API_URL } from '../../config.js'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
 import AdminCommissions from './AdminCommissions'
+import AdminOffices from './AdminOffices'
 import './AdminPartners.css'
 
 const EMPTY_FORM = { name: '', email: '', code: '', nip: '', ratePercent: '20', commissionMonths: '', status: 'active', notes: '' }
@@ -153,7 +154,7 @@ export default function AdminPartners() {
 			<p className="ap__lead">{t('adminPartners.lead')}</p>
 
 			<div className="ap-tabs" role="tablist">
-				{['partners', 'commissions'].map(key => (
+				{['partners', 'commissions', 'offices'].map(key => (
 					<button key={key} type="button" role="tab" aria-selected={tab === key} className={`ap-tab${tab === key ? ' ap-tab--on' : ''}`} onClick={() => setTab(key)}>
 						{t(`adminPartners.tab_${key}`)}
 					</button>
@@ -161,6 +162,7 @@ export default function AdminPartners() {
 			</div>
 
 			{tab === 'commissions' ? <AdminCommissions partners={partners} /> : null}
+			{tab === 'offices' ? <AdminOffices /> : null}
 
 			<div className="ap__grid" hidden={tab !== 'partners'}>
 				<section className="ap-card">

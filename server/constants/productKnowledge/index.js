@@ -23,6 +23,8 @@ const modules = [
 	require('./settingsRoles'),
 	require('./packages'),
 	require('./ai'),
+	require('./partners'),
+	require('./accountingOffice'),
 ].sort((a, b) => a.order - b.order)
 
 /** Wspólny dla obu czatów blok „czego Planopia nie ma” — żeby model nie zmyślał funkcji. */

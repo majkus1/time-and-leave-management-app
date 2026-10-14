@@ -8,7 +8,7 @@ const planCatalog = require('../constants/planCatalog')
 const { modules, NOT_AVAILABLE_PL } = require('../constants/productKnowledge')
 const render = require('../utils/productKnowledgeRender')
 
-const REQUIRED_IDS = ['general', 'timeTracking', 'qr', 'leave', 'schedules', 'tasks', 'chat', 'settingsRoles', 'packages', 'ai']
+const REQUIRED_IDS = ['general', 'timeTracking', 'qr', 'leave', 'schedules', 'tasks', 'chat', 'settingsRoles', 'packages', 'ai', 'partners', 'accountingOffice']
 
 test('każdy moduł ma komplet pól i obowiązkowe sekcje', () => {
 	assert.deepEqual(modules.map(m => m.id), REQUIRED_IDS)

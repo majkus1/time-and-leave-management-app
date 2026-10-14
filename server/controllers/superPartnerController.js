@@ -58,4 +58,5 @@ exports.recordManualInvoice = handle(async req =>
 )
 
 // Biuro rachunkowe (etap 4): typ zespołu ustawia właściciel platformy
+exports.officeOverview = handle(async () => officeAccessService.adminOfficeOverview())
 exports.setOrganizationType = handle(async req => officeAccessService.setOrganizationType(req.params.teamId, req.body?.organizationType))
