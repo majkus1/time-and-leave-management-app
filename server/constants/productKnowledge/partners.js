@@ -20,7 +20,7 @@ module.exports = {
 	},
 	body: {
 		pl: `### Jak to działa
-- Partnera (np. biuro rachunkowe) zakłada Planopia — warunki ustalamy indywidualnie; standardowo 25% przez 12 miesięcy od pierwszej płatności poleconej firmy, potem 10% bez limitu czasu, dopóki firma płaci. Chęć współpracy: biuro@planopia.pl.
+- Partnera (np. biuro rachunkowe) zakłada Planopia — warunki ustalamy indywidualnie; standardowo 25% przez 12 miesięcy od pierwszej płatności poleconej firmy, potem 10% bez limitu czasu, dopóki firma płaci. Chęć współpracy: formularz na planopia.pl/program-partnerski albo biuro@planopia.pl.
 - Partner dostaje link planopia.pl/?ref=KOD. Kto wejdzie z tego linku i w ciągu 90 dni założy zespół, zostaje przypisany do partnera (liczy się pierwsze polecenie; zapamiętuje to funkcjonalne cookie z samym kodem partnera). Planopia może też przypisać firmę ręcznie.
 - Prowizja naliczana jest od kwot netto płatności poleconej firmy za plany: kartą, przez Przelewy24 albo z faktury. Okres prowizji liczy się od pierwszej płatności firmy (czas na okresie próbnym albo planie darmowym go nie skraca); gdy firma przestaje płacić, prowizji nie ma. Zwrot płatności cofa prowizję proporcjonalnie.
 - Po okresie (liczonym od pierwszej płatności) obowiązuje niższa stawka bez limitu czasu, jeśli partner ją ma; inaczej prowizja się kończy.

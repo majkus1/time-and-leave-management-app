@@ -142,6 +142,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
 
+    // Program partnerski — strona wysyłana biurom rachunkowym i partnerom (tylko PL)
+    {
+      url: 'https://planopia.pl/program-partnerski',
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+
     // Blog main pages
     {
       url: 'https://planopia.pl/blog',

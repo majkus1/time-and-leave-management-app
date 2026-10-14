@@ -31,6 +31,9 @@ export type FooterCopy = {
 	contactHeading: string
 	contactCta: string
 	contactCtaHref: string
+	/** Program partnerski — tylko PL, strona nie ma wersji EN */
+	partnerLabel?: string
+	partnerHref?: string
 }
 
 export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
@@ -48,6 +51,8 @@ export const FOOTER_UI: Record<LandingLocale, FooterCopy> = {
 		contactHeading: 'Kontakt',
 		contactCta: 'Umów rozmowę',
 		contactCtaHref: '/kontakt',
+		partnerLabel: 'Program partnerski',
+		partnerHref: '/program-partnerski',
 	},
 	en: {
 		legalHeading: 'Legal',

@@ -9,8 +9,9 @@
     "lint": "eslint",
     "seo:check": "node scripts/check-seo-metadata.mjs",
     "test:knowledge": "node --experimental-strip-types --test src/lib/landingChat/knowledgeSelect.test.mts src/lib/landingChat/landingChat.test.mts",
-    "test": "npm run test:knowledge && npm run test:pricing",
-    "test:pricing": "node --experimental-strip-types --test src/lib/pricingCalculator.test.mts"
+    "test": "npm run test:knowledge && npm run test:pricing && npm run test:partner",
+    "test:pricing": "node --experimental-strip-types --test src/lib/pricingCalculator.test.mts",
+    "test:partner": "node --experimental-strip-types --test src/lib/partnerEarnings.test.mts"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.2",

@@ -181,6 +181,16 @@ export default function LandingSiteFooter() {
 									{t.contactCta} →
 								</Link>
 							</p>
+							{t.partnerHref && (
+								<p className="mt-1 text-sm">
+									<Link
+										href={t.partnerHref}
+										className="font-medium text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
+									>
+										{t.partnerLabel} →
+									</Link>
+								</p>
+							)}
 						</div>
 
 						<p className="mt-4 border-t border-slate-200/80 pt-4 text-xs text-slate-500">

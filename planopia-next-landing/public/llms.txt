@@ -46,6 +46,7 @@ Planopia nie zastępuje systemu płacowego ani porady prawnej — to narzędzie 
 - [Budownictwo](https://planopia.pl/dla-branzy-budowlanej): ewidencja czasu na budowie
 - [Gastronomia](https://planopia.pl/dla-gastronomii): grafik pracy restauracji
 - [Firmy sprzątające](https://planopia.pl/dla-firm-sprzatajacych): grafik ekip i obiekty
+- [Program partnerski](https://planopia.pl/program-partnerski): prowizja za polecanie Planopii (25% przez rok, potem 10%), panel biura rachunkowego
 - [Blog](https://planopia.pl/blog): poradniki (urlopy, ewidencja, Excel, PWA, AI)
 
 ## Artykuły (najczęstsze zapytania)
