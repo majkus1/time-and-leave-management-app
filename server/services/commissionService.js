@@ -141,6 +141,8 @@ async function accrueForStripeInvoice({ invoice, teamId }) {
 
 /** P24 — po zapisaniu sesji jako opłaconej (kwota sesji jest netto, jak w katalogu) */
 async function accrueForP24Session(session, paidAt = new Date()) {
+	// Prowizja tylko od planów — dodatki (np. dawne pakiety AI) jej nie dają
+	if (session.kind !== 'plan') return { accrued: false, reason: 'not_plan' }
 	if (isP24TestPayment(session, process.env.P24_TEST_PRO_PRICE_GROSZE)) return { accrued: false, reason: 'test_payment' }
 	return accrue({
 		teamId: session.teamId,
@@ -321,7 +323,7 @@ async function retryAccrual({ sourceType, sourceId, stripe }) {
 	}
 	if (result.duplicate) throw httpError(409, 'Prowizja od tej płatności jest już naliczona', 'DUPLICATE')
 	if (!result.accrued) {
-		const text = { test_payment: 'To płatność testowa P24 — bez prowizji', currency: 'Płatność nie jest w złotówkach' }
+		const text = { test_payment: 'To płatność testowa P24 — bez prowizji', currency: 'Płatność nie jest w złotówkach', not_plan: 'Prowizja należy się tylko od planów' }
 		throw httpError(400, REASON_TEXT[result.reason] || text[result.reason] || 'Prowizja się nie należy', String(result.reason || '').toUpperCase())
 	}
 	return { entry: result.entry.toObject() }
