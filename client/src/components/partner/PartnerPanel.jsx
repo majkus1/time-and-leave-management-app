@@ -53,13 +53,19 @@ export default function PartnerPanel() {
 	}
 
 	const { partner, totals, months, teams } = overview.data
-	const terms = partner.commissionMonths
-		? t('partnerPanel.terms', { rate: percent(partner.commissionRate), count: partner.commissionMonths })
-		: t('partnerPanel.termsUnlimited', { rate: percent(partner.commissionRate) })
+	const later = partner.commissionMonths && partner.laterCommissionRate > 0 ? percent(partner.laterCommissionRate) : null
+	const terms = !partner.commissionMonths
+		? t('partnerPanel.termsUnlimited', { rate: percent(partner.commissionRate) })
+		: later
+			? t('partnerPanel.termsWithLater', { rate: percent(partner.commissionRate), count: partner.commissionMonths, later })
+			: t('partnerPanel.terms', { rate: percent(partner.commissionRate), count: partner.commissionMonths })
 	const rows = entries.data?.entries || []
 	// Okres prowizji startuje od pierwszej płatności firmy; bez limitu — „bez limitu”
-	const untilLabel = tm =>
-		!partner.commissionMonths ? t('partnerPanel.noLimit') : tm.commissionUntil ? date(tm.commissionUntil) : t('partnerPanel.untilAfterFirst', { count: partner.commissionMonths })
+	const untilLabel = tm => {
+		if (!partner.commissionMonths) return t('partnerPanel.noLimit')
+		const base = tm.commissionUntil ? date(tm.commissionUntil) : t('partnerPanel.untilAfterFirst', { count: partner.commissionMonths })
+		return later ? t('partnerPanel.thenLater', { until: base, later }) : base
+	}
 	const sourceLabel = en => `${t(`partnerPanel.src_${en.sourceType}`)}${en.kind === 'reversal' ? ` · ${t('partnerPanel.reversal')}` : ''}`
 
 	const copy = async () => {

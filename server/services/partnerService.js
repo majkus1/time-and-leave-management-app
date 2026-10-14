@@ -24,6 +24,7 @@ function partnerView(p, referredCount = 0) {
 		code: p.code,
 		commissionRate: p.commissionRate,
 		commissionMonths: p.commissionMonths ?? null,
+		laterCommissionRate: p.laterCommissionRate || 0,
 		status: p.status,
 		partnerTeamId: p.partnerTeamId ? String(p.partnerTeamId) : null,
 		notes: p.notes || '',
@@ -69,6 +70,12 @@ async function buildPartnerFields(input, { partial }) {
 		const rate = Number(input.commissionRate)
 		if (!Number.isFinite(rate) || rate < 0 || rate > 1) throw httpError(400, 'Stawka prowizji musi być między 0 a 1 (np. 0.2 = 20%)')
 		out.commissionRate = rate
+	}
+	if (input.laterCommissionRate !== undefined) {
+		const raw = input.laterCommissionRate
+		const later = raw === null || raw === '' ? 0 : Number(raw)
+		if (!Number.isFinite(later) || later < 0 || later > 1) throw httpError(400, 'Stawka po okresie musi być między 0 a 1 (np. 0.1 = 10%)')
+		out.laterCommissionRate = later
 	}
 	if (input.commissionMonths !== undefined) {
 		const raw = input.commissionMonths

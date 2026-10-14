@@ -13,8 +13,10 @@ const partnerSchema = new mongoose.Schema(
 		code: { type: String, required: true, trim: true, lowercase: true, maxlength: 32 },
 		/** Ułamek kwoty netto płatności, np. 0.2 = 20% */
 		commissionRate: { type: Number, default: 0.2, min: 0, max: 1 },
-		/** Ile miesięcy od polecenia naliczamy prowizję; null = bezterminowo */
+		/** Ile miesięcy od pierwszej płatności firmy obowiązuje commissionRate; null = bezterminowo */
 		commissionMonths: { type: Number, default: null, min: 1 },
+		/** Stawka po okresie commissionMonths, bez limitu czasu (np. 0.1 = 10%); 0 = po okresie prowizja się kończy */
+		laterCommissionRate: { type: Number, default: 0, min: 0, max: 1 },
 		status: { type: String, enum: ['active', 'paused'], default: 'active' },
 		partnerTeamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', default: null },
 		notes: { type: String, default: '', maxlength: 2000 },

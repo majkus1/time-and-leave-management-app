@@ -76,6 +76,7 @@ async function overview(user, now = new Date()) {
 			link: `${LANDING_URL}/?ref=${partner.code}`,
 			commissionRate: partner.commissionRate,
 			commissionMonths: partner.commissionMonths ?? null,
+			laterCommissionRate: partner.laterCommissionRate || 0,
 			status: partner.status,
 		},
 		totals: { accrued: sum(totals, 'accrued'), payable: sum(totals, 'payable'), paid: sum(totals, 'paid') },

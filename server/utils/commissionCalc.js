@@ -69,8 +69,11 @@ function evaluateCommission({ partner, team, netGrosze, paidAt, firstPaidAt = nu
 	// Wcześniejsza z dwóch: zapisana pierwsza płatność albo ta (np. faktura dopisana z datą sprzed pierwszej)
 	const windowStart = firstPaidAt && new Date(firstPaidAt) < new Date(paidAt) ? firstPaidAt : paidAt
 	const windowEnd = commissionWindowEnd(windowStart, partner.commissionMonths)
-	if (windowEnd && new Date(paidAt) >= windowEnd) return { eligible: false, reason: 'window_expired' }
-	const rate = Number(partner.commissionRate)
+	// Po okresie: druga stawka bez limitu czasu (laterCommissionRate), a gdy jej nie ma — koniec prowizji
+	const afterWindow = Boolean(windowEnd && new Date(paidAt) >= windowEnd)
+	const laterRate = Number(partner.laterCommissionRate) || 0
+	if (afterWindow && laterRate <= 0) return { eligible: false, reason: 'window_expired' }
+	const rate = afterWindow ? laterRate : Number(partner.commissionRate)
 	if (!Number.isFinite(rate) || rate <= 0) return { eligible: false, reason: 'zero_rate' }
 	const commissionGrosze = Math.round(net * rate)
 	if (commissionGrosze <= 0) return { eligible: false, reason: 'zero_amount' }

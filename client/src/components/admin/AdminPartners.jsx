@@ -10,7 +10,9 @@ import AdminCommissions from './AdminCommissions'
 import AdminOffices from './AdminOffices'
 import './AdminPartners.css'
 
-const EMPTY_FORM = { name: '', email: '', code: '', nip: '', ratePercent: '20', commissionMonths: '', status: 'active', notes: '' }
+// Domyślne warunki nowego partnera: 25% przez 12 mies. od pierwszej płatności firmy, potem 10% bez limitu
+const EMPTY_FORM = { name: '', email: '', code: '', nip: '', ratePercent: '25', commissionMonths: '12', laterRatePercent: '10', status: 'active', notes: '' }
+const pct = rate => String(Math.round((Number(rate) || 0) * 10000) / 100)
 
 function toForm(p) {
 	return {
@@ -20,6 +22,7 @@ function toForm(p) {
 		nip: p.nip || '',
 		ratePercent: String(Math.round(p.commissionRate * 10000) / 100),
 		commissionMonths: p.commissionMonths ? String(p.commissionMonths) : '',
+		laterRatePercent: pct(p.laterCommissionRate),
 		status: p.status,
 		notes: p.notes || '',
 	}
@@ -79,6 +82,8 @@ export default function AdminPartners() {
 			nip: form.nip,
 			commissionRate: Number(String(form.ratePercent).replace(',', '.')) / 100,
 			commissionMonths: form.commissionMonths === '' ? null : Number(form.commissionMonths),
+			// Stawka po okresie ma sens tylko przy ograniczonym okresie
+			laterCommissionRate: form.commissionMonths === '' ? 0 : Number(String(form.laterRatePercent || '0').replace(',', '.')) / 100,
 			status: form.status,
 			notes: form.notes,
 		}
@@ -206,6 +211,7 @@ export default function AdminPartners() {
 											<td>
 												{Math.round(p.commissionRate * 10000) / 100}%
 												{p.commissionMonths ? ` · ${t('adminPartners.monthsShort', { count: p.commissionMonths })}` : ''}
+												{p.commissionMonths && p.laterCommissionRate ? ` → ${pct(p.laterCommissionRate)}%` : ''}
 											</td>
 											<td>{p.referredCount}</td>
 											<td>{t(`adminPartners.status_${p.status}`)}</td>
@@ -256,6 +262,11 @@ export default function AdminPartners() {
 							{field('commissionMonths', { inputMode: 'numeric', placeholder: t('adminPartners.monthsUnlimited') })}
 						</label>
 					</div>
+					<label className="ap-field">
+						<span>{t('adminPartners.laterRatePercent')}</span>
+						{field('laterRatePercent', { inputMode: 'decimal', disabled: form.commissionMonths === '' })}
+						<small className="ap-muted">{t('adminPartners.laterRateHint')}</small>
+					</label>
 					<label className="ap-field">
 						<span>{t('adminPartners.status')}</span>
 						<select className="ap-input" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>

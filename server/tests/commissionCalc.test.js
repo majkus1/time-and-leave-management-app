@@ -47,6 +47,21 @@ describe('prowizje programu partnerskiego', () => {
 		assert.equal(unlimited.eligible, true)
 	})
 
+	it('po okresie druga stawka bez limitu (25% przez 12 mies., potem 10%)', () => {
+		const p2 = { ...partner, commissionRate: 0.25, commissionMonths: 12, laterCommissionRate: 0.1 }
+		const firstPaidAt = new Date('2026-01-15T10:00:00Z')
+		const inWindow = evaluateCommission({ partner: p2, team, netGrosze: 20000, paidAt: new Date('2026-12-15T10:00:00Z'), firstPaidAt })
+		assert.equal(inWindow.rate, 0.25)
+		assert.equal(inWindow.commissionGrosze, 5000)
+		const later = evaluateCommission({ partner: p2, team, netGrosze: 20000, paidAt: new Date('2027-01-15T10:00:00Z'), firstPaidAt })
+		assert.equal(later.rate, 0.1)
+		assert.equal(later.commissionGrosze, 2000)
+		const yearsLater = evaluateCommission({ partner: p2, team, netGrosze: 20000, paidAt: new Date('2030-05-15T10:00:00Z'), firstPaidAt })
+		assert.equal(yearsLater.commissionGrosze, 2000)
+		// Bez drugiej stawki — po okresie koniec
+		assert.equal(evaluateCommission({ partner: { ...p2, laterCommissionRate: 0 }, team, netGrosze: 20000, paidAt: new Date('2027-01-15T10:00:00Z'), firstPaidAt }).reason, 'window_expired')
+	})
+
 	it('bez polecenia, inny partner, wstrzymany partner, zero zł — bez prowizji', () => {
 		const paidAt = new Date('2026-03-01')
 		assert.equal(evaluateCommission({ partner, team: { ...team, referredByPartnerId: null }, netGrosze: 100, paidAt }).reason, 'no_partner')
