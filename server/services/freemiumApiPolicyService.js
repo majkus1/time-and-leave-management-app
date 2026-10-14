@@ -144,6 +144,14 @@ function isPlatformSuperAdminActivityApiPath(path) {
 	return path === '/api/super' || path.startsWith('/api/super/')
 }
 
+/**
+ * Panel partnera (/api/partner/*) — program partnerski, nie moduł produktu: działa niezależnie od planu zespołu
+ * partnera (także freemium i ponad limitem miejsc). Dostęp sprawdza serwis panelu (rola + zespół partnera).
+ */
+function isPartnerPortalApiPath(path) {
+	return path === '/api/partner' || path.startsWith('/api/partner/')
+}
+
 /** Panele właściciela platformy (/api/super/*: monitor sesji, partnerzy) — poza polityką freemium / modułów planu. */
 function isPlatformSuperAdminActivityAllowed(path, decodedUser) {
 	return isPlatformSuperAdminActivityApiPath(path) && isSuperAdminUser({ username: decodedUser?.username })
@@ -171,5 +179,6 @@ module.exports = {
 	isFreemiumSeatOverageAllowed,
 	isFreemiumActiveTierAllowed,
 	isPlatformSuperAdminActivityAllowed,
+	isPartnerPortalApiPath,
 	isBillingStaffRoles,
 }

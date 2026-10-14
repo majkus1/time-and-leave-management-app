@@ -16,6 +16,7 @@ import { canShowBillingModuleNav } from '../../utils/moduleNavAccess'
 import NotificationBell from '../NotificationBell'
 import SidebarThemeButton from '../shared/SidebarThemeButton'
 import { useTheme } from '../../context/ThemeContext'
+import { usePartnerMe } from '../../hooks/usePartnerPortal'
 
 function Sidebar() {
 	const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 1500)
@@ -67,6 +68,8 @@ function Sidebar() {
 	const isSupervisorRole = isSupervisor(role)
 	const isAdminRole = isAdmin(role)
 	const isHRRole = isHR(role)
+	// Link „Program partnerski” tylko dla Admin/HR zespołu partnera
+	const { data: partnerMe } = usePartnerMe({ enabled: !!loggedIn && (isAdminRole || isHRRole) })
 	// Przy blokadzie miejsc serwer odrzuca to zapytanie — bez bramki 403 wymusza twardy reload zamiast nawigacji.
 	const { data: supervisorConfig } = useSupervisorConfig(
 		userId,
@@ -623,6 +626,17 @@ function Sidebar() {
 								</div>
 								<span className="nav-text">{t('sidebar.btn9')}</span>
 							</NavLink>
+							)}
+
+							{(isAdminRole || isHRRole) && partnerMe?.isPartner && (
+								<NavLink
+									to="/partner"
+									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+									<div className="nav-icon">
+										<img src="/img/wallet.png" alt="" />
+									</div>
+									<span className="nav-text">{t('sidebar.partnerPanel')}</span>
+								</NavLink>
 							)}
 
 							{username === 'michalipka1@gmail.com' && (

@@ -1,7 +1,7 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const { normalizeReferralCode, isSelfReferral, canReceiveReferrals } = require('../utils/referralCode')
-const { isPlatformSuperAdminActivityAllowed } = require('../services/freemiumApiPolicyService')
+const { isPlatformSuperAdminActivityAllowed, isPartnerPortalApiPath } = require('../services/freemiumApiPolicyService')
 
 describe('kody polecające programu partnerskiego', () => {
 	it('normalizacja: małe litery, cyfry i myślnik, 3–32 znaki', () => {
@@ -42,5 +42,13 @@ describe('kody polecające programu partnerskiego', () => {
 		assert.equal(isPlatformSuperAdminActivityAllowed('/api/super/partners', { username: 'admin@firma.pl' }), false)
 		assert.equal(isPlatformSuperAdminActivityAllowed('/api/superpartners', owner), false)
 		assert.equal(isPlatformSuperAdminActivityAllowed('/api/partners', owner), false)
+	})
+
+	it('panel partnera /api/partner/* poza strażnikiem planu — tylko dokładny prefiks', () => {
+		assert.equal(isPartnerPortalApiPath('/api/partner/overview'), true)
+		assert.equal(isPartnerPortalApiPath('/api/partner'), true)
+		assert.equal(isPartnerPortalApiPath('/api/partners'), false)
+		assert.equal(isPartnerPortalApiPath('/api/partnerx/overview'), false)
+		assert.equal(isPartnerPortalApiPath('/api/workdays'), false)
 	})
 })

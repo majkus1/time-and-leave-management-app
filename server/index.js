@@ -459,6 +459,7 @@ app.use(
 )
 // Program partnerski — panel admina platformy (partnerzy, przypisania zespołów)
 app.use('/api/super/partners', authenticateToken, requireSuperAdmin, require('./routes/superPartnerRoutes'))
+app.use('/api/partner', authenticateToken, require('./routes/partnerPortalRoutes'))
 const { serveUploadMiddleware } = require('./middleware/serveUploadMiddleware')
 app.use('/uploads', authenticateToken, serveUploadMiddleware)
 

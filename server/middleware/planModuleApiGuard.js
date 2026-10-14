@@ -50,6 +50,10 @@ async function planModuleApiGuardAsync(req, res, next) {
 		if (freemiumApiPolicyService.isPlatformSuperAdminActivityAllowed(path, decoded)) {
 			return next()
 		}
+		// Panel partnera nie zależy od planu zespołu partnera — dostęp sprawdza serwis panelu
+		if (freemiumApiPolicyService.isPartnerPortalApiPath(path)) {
+			return next()
+		}
 
 		const team = await Team.findById(decoded.teamId).select(
 			'name billingPlanKey billingStatus billingPeriodEnd billingModuleKeys trialEndsAt billingHadPaidPlan maxUsers maxUsersOverride isActive stripeSubscriptionId stripeSubscriptionStatus'

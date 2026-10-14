@@ -1,0 +1,70 @@
+/* Panel partnera — na bazie kart i tabel z AdminPartners.css (klasy ap-*) */
+.pp-link .ap-input {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.pp-terms {
+	margin: 0.6rem 0 0;
+}
+
+.pp-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.pp-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	padding: 1rem 1.25rem;
+	border: 1px solid var(--po-border);
+	border-radius: 12px;
+	background: var(--po-surface);
+}
+
+.pp-tile span {
+	color: var(--po-text-muted);
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.pp-tile b {
+	font-size: 1.4rem;
+}
+
+.pp-tile--main {
+	border-color: var(--po-brand);
+	background: var(--po-brand-soft);
+}
+
+.pp-hint {
+	margin: 0.6rem 0 0;
+}
+
+.pp-paused {
+	margin: 0 0 1rem;
+}
+
+.pp-sub {
+	margin-top: 1.5rem !important;
+}
+
+.pp-click {
+	cursor: pointer;
+}
+
+.pp-badge {
+	display: inline-block;
+	padding: 0.15rem 0.55rem;
+	border-radius: 999px;
+	background: var(--po-surface-muted, var(--po-border));
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.pp-badge--paid {
+	background: var(--po-brand-soft);
+	color: var(--po-brand-text);
+}

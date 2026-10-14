@@ -22,6 +22,8 @@ function isFreemiumAppPathAllowed(pathname, { userIsAdmin, staffBilling, canCale
 	if (pathname === '/ai-assistant') return true
 	if (canCalendars && (pathname === '/calendars-list' || pathname.startsWith('/work-calendars/'))) return true
 	if (staffBilling && pathname === '/packages') return true
+	// Program partnerski nie zależy od planu zespołu partnera
+	if (staffBilling && pathname === '/partner') return true
 	if (
 		userIsAdmin &&
 		(pathname === '/team-management' ||
