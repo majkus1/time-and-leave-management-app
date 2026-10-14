@@ -4,7 +4,7 @@ const Partner = require('../models/Partner')(firmDb)
 const Team = require('../models/Team')(firmDb)
 const CommissionLedger = require('../models/CommissionLedger')(firmDb)
 const entitlementsService = require('./entitlementsService')
-const { commissionWindowEnd, isValidMonth, summarizeEntries } = require('../utils/commissionCalc')
+const { commissionLastDay, isValidMonth, summarizeEntries } = require('../utils/commissionCalc')
 
 const PANEL_ROLES = ['Admin', 'HR']
 const LANDING_URL = (process.env.LANDING_PUBLIC_URL || 'https://planopia.pl').replace(/\/$/, '')
@@ -82,7 +82,8 @@ async function overview(user, now = new Date()) {
 			name: t.name,
 			planState: teamPlanState(t, now),
 			referredAt: t.referredAt || t.createdAt,
-			commissionUntil: commissionWindowEnd(t.referredAt || t.createdAt, partner.commissionMonths),
+			// Ostatni dzień, w którym płatność jeszcze daje prowizję (okno liczone jest do rocznicy wyłącznie)
+			commissionUntil: commissionLastDay(t.referredAt || t.createdAt, partner.commissionMonths),
 			commissionGrosze: teamCommission.get(String(t._id)) || 0,
 		})),
 	}

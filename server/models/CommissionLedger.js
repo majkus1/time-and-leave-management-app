@@ -28,6 +28,8 @@ const commissionLedgerSchema = new mongoose.Schema(
 		 */
 		reversedGrosze: { type: Number, default: 0, min: 0 },
 		currency: { type: String, default: 'PLN', maxlength: 3 },
+		/** Klient Stripe płatności — każdy zakup kartą tworzy nowego klienta, więc zwrot starej faktury szukamy po nim */
+		stripeCustomerId: { type: String, default: null, maxlength: 100 },
 		/** Miesiąc rozliczeniowy 'YYYY-MM' (Europe/Warsaw) */
 		month: { type: String, required: true, match: /^\d{4}-\d{2}$/ },
 		occurredAt: { type: Date, required: true },
@@ -47,5 +49,6 @@ commissionLedgerSchema.index({ partnerId: 1, month: 1 })
 commissionLedgerSchema.index({ month: 1, status: 1 })
 commissionLedgerSchema.index({ sourceType: 1, sourceId: 1 })
 commissionLedgerSchema.index({ accrualId: 1 })
+commissionLedgerSchema.index({ stripeCustomerId: 1 }, { partialFilterExpression: { stripeCustomerId: { $type: 'string' } } })
 
 module.exports = conn => conn.models.CommissionLedger || conn.model('CommissionLedger', commissionLedgerSchema)

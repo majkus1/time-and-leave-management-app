@@ -9,6 +9,7 @@ const {
 	manualReversalAmount,
 	summarizeEntries,
 	isFutureDay,
+	commissionLastDay,
 } = require('../utils/commissionCalc')
 
 const PARTNER_ID = 'aaaaaaaaaaaaaaaaaaaaaaaa'
@@ -116,5 +117,11 @@ describe('prowizje programu partnerskiego', () => {
 			{ commissionGrosze: 500, status: 'accrued' },
 		])
 		assert.deepEqual(s, { accrued: -500, payable: 2000, paid: 3000, total: 4500, count: 4 })
+	})
+
+	it('ostatni dzień prowizji do wyświetlenia: dzień przed rocznicą (czas polski)', () => {
+		const last = commissionLastDay(new Date('2026-03-15T10:00:00Z'), 12)
+		assert.equal(last.toLocaleDateString('pl-PL', { timeZone: 'Europe/Warsaw' }), '14.03.2027')
+		assert.equal(commissionLastDay(new Date('2026-03-15T10:00:00Z'), null), null)
 	})
 })

@@ -242,3 +242,28 @@
 .ap-invoice + .ap-scroll {
 	margin-top: 1rem;
 }
+
+.ap-reverse {
+	margin-top: 1rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--po-danger);
+	border-radius: 10px;
+}
+
+.ap-reverse .ap-search {
+	align-items: flex-end;
+	margin-top: 0.6rem;
+}
+
+.ap-reverse .ap-field {
+	margin-bottom: 0;
+}
+
+.ap-field--grow {
+	flex: 1 1 18rem;
+}
+
+.ap-actions--start {
+	justify-content: flex-start;
+	margin-top: 0.6rem;
+}

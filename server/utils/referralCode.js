@@ -33,7 +33,21 @@ function canReceiveReferrals(partner) {
 	return Boolean(partner && partner.status === 'active' && normalizeReferralCode(partner.code))
 }
 
+/**
+ * Prosta kontrola formatu e-maila w czasie liniowym (bez wyrażenia z nawracaniem): jedna „@”, niepusta część
+ * lokalna, domena z kropką, bez białych znaków. Wywołujący i tak ogranicza długość.
+ */
+function isPlausibleEmail(value) {
+	if (typeof value !== 'string' || /\s/.test(value)) return false
+	const at = value.indexOf('@')
+	if (at < 1 || at !== value.lastIndexOf('@')) return false
+	const domain = value.slice(at + 1)
+	const dot = domain.lastIndexOf('.')
+	return dot > 0 && dot < domain.length - 1
+}
+
 module.exports = {
+	isPlausibleEmail,
 	normalizeReferralCode,
 	isSelfReferral,
 	canReceiveReferrals,

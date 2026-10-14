@@ -12,7 +12,7 @@ const LegalDocument = require('../models/LegalDocument')(firmDb)
 const OfficeAccess = require('../models/OfficeAccess')(firmDb)
 const OfficeAuditLog = require('../models/OfficeAuditLog')(firmDb)
 const { ACTIVE_USER_FILTER } = require('../utils/teamScopeAccess')
-const { normalizeReferralCode, isSelfReferral } = require('../utils/referralCode')
+const { normalizeReferralCode, isSelfReferral, isPlausibleEmail } = require('../utils/referralCode')
 const { buildPersonalLeaveLimits } = require('./dashboardSummaryHelpers')
 const { sendOfficeInviteEmail } = require('./emailService')
 const {
@@ -23,10 +23,11 @@ const {
 	monthQueryRange,
 	canAcceptInvite,
 	canEndLink,
+	DECLINE_COOLDOWN_MS,
+	visiblePendingInvites,
 } = require('../utils/officeAccessPolicy')
 
 const OPEN = ['pending', 'active']
-const DECLINE_COOLDOWN_MS = 30 * 24 * 3600e3
 const INVITE_MAIL_INTERVAL_MS = 7 * 24 * 3600e3
 const SETTINGS_FIELDS = [
 	'workOnWeekends',
@@ -114,23 +115,20 @@ async function linkView(access, otherTeamId) {
 
 async function companyLinks(user) {
 	const { clientTeamId, adminEmail } = await companyContext(user)
-	const [active, invites, ended, dpaVersion] = await Promise.all([
+	const [active, invites, ended, cooldown, dpaVersion] = await Promise.all([
 		OfficeAccess.find({ clientTeamId, status: 'active' }).sort({ acceptedAt: -1 }).lean(),
 		adminEmail ? OfficeAccess.find({ status: 'pending', invitedEmail: adminEmail }).sort({ createdAt: -1 }).lean() : [],
 		OfficeAccess.find({ clientTeamId, status: { $in: ['revoked', 'declined'] } }).sort({ endedAt: -1 }).limit(10).lean(),
+		// Okres ciszy osobnym zapytaniem — niezależnie od tego, ile wpisów pokazuje historia
+		OfficeAccess.find({ clientTeamId, endedBy: 'company', endedAt: { $gte: new Date(Date.now() - DECLINE_COOLDOWN_MS) } }).select('officeTeamId').lean(),
 		currentDpaVersion(),
 	])
-	// Bez zaproszeń od biura, które już ma dostęp, od własnego zespołu i od biura, któremu firma odmówiła albo odebrała
-	// dostęp w ostatnich 30 dniach (ponawianie zaproszeń byłoby spamem, którego firma nie ma jak zablokować)
-	const activeOffices = new Set(active.map(a => String(a.officeTeamId)))
-	const declinedRecently = new Set(
-		ended
-			.filter(e => e.endedBy === 'company' && e.endedAt && Date.now() - new Date(e.endedAt).getTime() < DECLINE_COOLDOWN_MS)
-			.map(e => String(e.officeTeamId))
-	)
-	const pending = invites.filter(
-		i => !activeOffices.has(String(i.officeTeamId)) && !declinedRecently.has(String(i.officeTeamId)) && String(i.officeTeamId) !== String(clientTeamId)
-	)
+	const pending = visiblePendingInvites({
+		invites,
+		activeOfficeIds: active.map(a => a.officeTeamId),
+		cooldownOfficeIds: cooldown.map(c => c.officeTeamId),
+		clientTeamId,
+	})
 	return {
 		dpaVersion,
 		links: await Promise.all([...pending, ...active].map(a => linkView(a, a.officeTeamId))),
@@ -210,6 +208,11 @@ async function acceptInvite(user, id, { consent }, meta) {
 	const access = await companyFindOwn(id, ctx)
 	if (!canAcceptInvite(access, ctx.adminEmail)) throw httpError(409, 'To zaproszenie zostało już obsłużone — odśwież stronę')
 	if (String(access.officeTeamId) === String(ctx.clientTeamId)) throw httpError(400, 'To Twój własny zespół')
+	// Zaproszenie od zespołu, który przestał być biurem (albo jest nieaktywny), nie może dać dostępu
+	const office = await Team.findById(access.officeTeamId).select('organizationType isActive').lean()
+	if (!office || office.organizationType !== 'office' || office.isActive === false) {
+		throw httpError(409, 'To biuro nie jest już dostępne w Planopii', 'OFFICE_UNAVAILABLE')
+	}
 	await activate(access, user, meta, ctx.clientTeamId)
 	return { id: String(access._id) }
 }
@@ -282,7 +285,8 @@ async function officeClients(user) {
 async function inviteCompany(user, { email }) {
 	const office = await requireOffice(user)
 	const normalized = typeof email === 'string' ? email.trim().toLowerCase() : ''
-	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) || normalized.length > 200) throw httpError(400, 'Podaj poprawny e-mail administratora firmy')
+	// Długość przed wyrażeniem — na długim tekście sprawdzenie formatu trwałoby sekundy (blokada serwera)
+	if (normalized.length > 200 || !isPlausibleEmail(normalized)) throw httpError(400, 'Podaj poprawny e-mail administratora firmy')
 	let created = null
 	try {
 		created = await OfficeAccess.create({ officeTeamId: office._id, clientTeamId: null, status: 'pending', initiatedBy: 'office', invitedEmail: normalized, createdByUserId: user.userId })
@@ -493,7 +497,17 @@ async function setOrganizationType(teamId, organizationType) {
 	if (!['company', 'office'].includes(organizationType)) throw httpError(400, 'Typ: company albo office')
 	const team = await Team.findByIdAndUpdate(_id, { $set: { organizationType } }, { new: true }).select('organizationType').lean()
 	if (!team) throw httpError(404, 'Zespół nie istnieje')
-	return { teamId: String(_id), organizationType: team.organizationType }
+	// Zespół, który przestaje być biurem, traci wszystkie powiązania i zaproszenia — po przywróceniu typu firmy muszą
+	// znów wyrazić zgodę, a nie odzyskać ją po cichu
+	let endedLinks = 0
+	if (organizationType !== 'office') {
+		const res = await OfficeAccess.updateMany(
+			{ officeTeamId: _id, status: { $in: OPEN } },
+			{ $set: { status: 'revoked', endedBy: 'admin', endedAt: new Date() } }
+		)
+		endedLinks = res.modifiedCount || 0
+	}
+	return { teamId: String(_id), organizationType: team.organizationType, endedLinks }
 }
 
 module.exports = {

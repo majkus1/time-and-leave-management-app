@@ -58,8 +58,22 @@ function canEndLink(access, { teamId, side, adminEmail = '' }) {
 	return String(access.clientTeamId) === String(teamId)
 }
 
+/** Po odmowie albo odebraniu dostępu przez firmę: przez tyle czasu zaproszenia od tego biura do niej nie wracają */
+const DECLINE_COOLDOWN_MS = 30 * 24 * 3600e3
+
+/**
+ * Zaproszenia, które firma widzi: bez biura, które już ma dostęp, bez własnego zespołu i bez biur, którym firma
+ * odmówiła albo odebrała dostęp w okresie ciszy (cooldownOfficeIds liczy wywołujący jednym zapytaniem).
+ */
+function visiblePendingInvites({ invites = [], activeOfficeIds = [], cooldownOfficeIds = [], clientTeamId }) {
+	const hidden = new Set([...activeOfficeIds, ...cooldownOfficeIds, clientTeamId].map(String))
+	return invites.filter(i => !hidden.has(String(i.officeTeamId)))
+}
+
 module.exports = {
 	OFFICE_ZONE: ZONE,
+	DECLINE_COOLDOWN_MS,
+	visiblePendingInvites,
 	OFFICE_PANEL_ROLES,
 	canUseOfficePanel,
 	canManageOfficeLinks,

@@ -41,7 +41,7 @@ async function loadReferral(teamId) {
 }
 
 /** Naliczenie od jednej płatności; ta sama płatność drugi raz = duplicate (unikalny idempotencyKey) */
-async function accrue({ teamId, sourceType, sourceId, netGrosze, paidGrosze, occurredAt, createdBy, note = '' }) {
+async function accrue({ teamId, sourceType, sourceId, netGrosze, paidGrosze, occurredAt, createdBy, note = '', stripeCustomerId = null }) {
 	const { team, partner } = await loadReferral(teamId)
 	const evaluation = evaluateCommission({ partner, team, netGrosze, paidAt: occurredAt })
 	if (!evaluation.eligible) return { accrued: false, reason: evaluation.reason }
@@ -61,6 +61,7 @@ async function accrue({ teamId, sourceType, sourceId, netGrosze, paidGrosze, occ
 			occurredAt,
 			createdBy,
 			note,
+			stripeCustomerId,
 		})
 		return { accrued: true, entry }
 	} catch (error) {
@@ -136,6 +137,7 @@ async function accrueForStripeInvoice({ invoice, teamId }) {
 		paidGrosze: Number(invoice.amount_paid) || 0,
 		occurredAt: Number.isFinite(paidAtSec) && paidAtSec > 0 ? new Date(paidAtSec * 1000) : new Date(),
 		createdBy: 'stripe',
+		stripeCustomerId: stripeId(invoice.customer) || null,
 	})
 }
 
@@ -209,9 +211,10 @@ async function reverseForStripeRefund({ charge, stripe }) {
  */
 async function safeReverseForStripeRefund({ charge, stripe }) {
 	try {
+		// Szybkie odrzucenie zwrotów bez prowizji (większość) bez pytania Stripe: po kliencie Stripe zapisanym przy
+		// naliczeniu — nie po bieżącym kliencie zespołu, bo nowy zakup kartą tworzy nowego klienta
 		const customerId = stripeId(charge?.customer)
-		const team = customerId ? await Team.findOne({ stripeCustomerId: customerId }).select('_id').lean() : null
-		if (!team || !(await CommissionLedger.exists({ teamId: team._id, sourceType: 'stripe_invoice', kind: 'accrual' }))) {
+		if (!customerId || !(await CommissionLedger.exists({ stripeCustomerId: customerId, sourceType: 'stripe_invoice', kind: 'accrual' }))) {
 			return { reversed: false, reason: 'no_accrual' }
 		}
 		const result = await reverseForStripeRefund({ charge, stripe })

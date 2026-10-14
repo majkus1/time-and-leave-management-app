@@ -48,6 +48,9 @@ export default function AdminCommissions({ partners }) {
 	const [teamQuery, setTeamQuery] = useState('')
 	const [teamResults, setTeamResults] = useState([])
 	const [busy, setBusy] = useState(false)
+	// Cofnięcie: { entry, amount, note, nonce } — nonce powstaje przy otwarciu formularza, więc ponowne wysłanie
+	// (np. po timeoutcie) nie utworzy drugiego cofnięcia
+	const [reversal, setReversal] = useState(null)
 	const [retry, setRetry] = useState({ sourceType: 'stripe_invoice', sourceId: '' })
 
 	const loadReport = useCallback(async () => {
@@ -122,13 +125,20 @@ export default function AdminCommissions({ partners }) {
 		})
 	}
 
-	const reverse = async entry => {
-		const text = window.prompt(t('adminCommissions.reversePrompt', { amount: zl(entry.baseNetGrosze) }), (entry.baseNetGrosze / 100).toFixed(2))
-		if (text == null) return
-		const gr = plnToGrosze(text)
+	const openReversal = entry =>
+		setReversal({ entry, amount: (entry.baseNetGrosze / 100).toFixed(2).replace('.', ','), note: '', nonce: nonce() })
+
+	const submitReversal = async e => {
+		e.preventDefault()
+		const gr = plnToGrosze(reversal.amount)
 		if (!gr) return showAlert(t('adminCommissions.badAmount'))
 		await run(async () => {
-			await axios.post(`${API}/commissions/entries/${entry.id}/reverse`, { refundedNetGrosze: gr, nonce: nonce() }, opts)
+			await axios.post(
+				`${API}/commissions/entries/${reversal.entry.id}/reverse`,
+				{ refundedNetGrosze: gr, nonce: reversal.nonce, note: reversal.note.trim() },
+				opts
+			)
+			setReversal(null)
 			await refresh()
 		})
 	}
@@ -302,7 +312,7 @@ export default function AdminCommissions({ partners }) {
 											<td>
 												<div className="ap-actions">
 													{en.kind === 'accrual' && (reversedByAccrual.get(en.id) || 0) < en.commissionGrosze ? (
-														<button type="button" className="ap-link ap-link--danger" onClick={() => reverse(en)} disabled={busy}>
+														<button type="button" className="ap-link ap-link--danger" onClick={() => openReversal(en)} disabled={busy}>
 															{t('adminCommissions.reverse')}
 														</button>
 													) : null}
@@ -318,6 +328,30 @@ export default function AdminCommissions({ partners }) {
 					{selected.payableGrosze < 0 ? (
 						<p className="ap-note">{t('adminCommissions.negativeBalance', { amount: zl(selected.payableGrosze) })}</p>
 					) : null}
+					{reversal ? (
+						<form className="ap-reverse" onSubmit={submitReversal}>
+							<b>{t('adminCommissions.reverseTitle', { team: reversal.entry.teamName, date: date(reversal.entry.occurredAt), amount: zl(reversal.entry.commissionGrosze) })}</b>
+							<div className="ap-search">
+								<label className="ap-field">
+									<span>{t('adminCommissions.reverseAmount')}</span>
+									<input className="ap-input" inputMode="decimal" value={reversal.amount} onChange={e => setReversal(r => ({ ...r, amount: e.target.value }))} required />
+								</label>
+								<label className="ap-field ap-field--grow">
+									<span>{t('adminCommissions.reverseNote')}</span>
+									<input className="ap-input" value={reversal.note} onChange={e => setReversal(r => ({ ...r, note: e.target.value }))} placeholder={t('adminCommissions.reverseNotePlaceholder')} required maxLength={500} />
+								</label>
+							</div>
+							<div className="ap-actions ap-actions--start">
+								<button type="submit" className="ap-btn" disabled={busy || !reversal.note.trim()}>
+									{t('adminCommissions.reverseSubmit')}
+								</button>
+								<button type="button" className="ap-link" onClick={() => setReversal(null)}>
+									{t('adminCommissions.cancel')}
+								</button>
+							</div>
+						</form>
+					) : null}
+
 					<form className="ap-search" onSubmit={markPaid} hidden={selected.payableGrosze < 0}>
 						<input type="date" className="ap-input" value={payout.paidAt} onChange={e => setPayout(p => ({ ...p, paidAt: e.target.value }))} required />
 						<input className="ap-input" value={payout.note} onChange={e => setPayout(p => ({ ...p, note: e.target.value }))} placeholder={t('adminCommissions.payoutNote')} />

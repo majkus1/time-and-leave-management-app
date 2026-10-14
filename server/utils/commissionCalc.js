@@ -31,6 +31,12 @@ function commissionWindowEnd(referredAt, commissionMonths) {
 	return moment.tz(referredAt, ZONE).startOf('day').add(commissionMonths, 'months').toDate()
 }
 
+/** Ostatni dzień okna prowizji (włącznie) — do wyświetlania; null = bezterminowo */
+function commissionLastDay(referredAt, commissionMonths) {
+	const end = commissionWindowEnd(referredAt, commissionMonths)
+	return end ? moment.tz(end, ZONE).subtract(1, 'day').toDate() : null
+}
+
 /** Czy data wypada po dzisiejszym dniu (czas polski) — faktura z jutrzejszą datą to pomyłka */
 function isFutureDay(date, now = new Date()) {
 	return moment.tz(date, ZONE).format('YYYY-MM-DD') > moment.tz(now, ZONE).format('YYYY-MM-DD')
@@ -137,6 +143,7 @@ module.exports = {
 	commissionMonth,
 	isValidMonth,
 	commissionWindowEnd,
+	commissionLastDay,
 	evaluateCommission,
 	stripeInvoiceNetGrosze,
 	refundReversalDelta,

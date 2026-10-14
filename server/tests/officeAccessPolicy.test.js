@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
-const { canUseOfficePanel, canManageOfficeLinks, parseYearMonth, monthQueryRange, canAcceptInvite, canEndLink } = require('../utils/officeAccessPolicy')
+const { canUseOfficePanel, canManageOfficeLinks, parseYearMonth, monthQueryRange, canAcceptInvite, canEndLink, visiblePendingInvites } = require('../utils/officeAccessPolicy')
 
 const OFFICE = 'aaaaaaaaaaaaaaaaaaaaaaaa'
 const CLIENT = 'bbbbbbbbbbbbbbbbbbbbbbbb'
@@ -59,5 +59,16 @@ describe('biuro rachunkowe — reguły dostępu', () => {
 		assert.equal(canEndLink(invite, { teamId: CLIENT, side: 'company', adminEmail: 'szef@firma.pl' }), true)
 		assert.equal(canEndLink(invite, { teamId: CLIENT, side: 'company', adminEmail: 'obcy@firma.pl' }), false)
 		assert.equal(canEndLink(invite, { teamId: OFFICE, side: 'office' }), true)
+	})
+
+	it('zaproszenia widoczne dla firmy: bez biur z dostępem, w okresie ciszy i własnego zespołu', () => {
+		const inv = id => ({ id, officeTeamId: id })
+		const visible = visiblePendingInvites({
+			invites: [inv('o1'), inv('o2'), inv('o3'), inv(CLIENT)],
+			activeOfficeIds: ['o1'],
+			cooldownOfficeIds: ['o2'],
+			clientTeamId: CLIENT,
+		})
+		assert.deepEqual(visible.map(v => v.id), ['o3'])
 	})
 })

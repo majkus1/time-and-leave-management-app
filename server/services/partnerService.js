@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const { firmDb } = require('../db/db')
 const Partner = require('../models/Partner')(firmDb)
 const Team = require('../models/Team')(firmDb)
-const { normalizeReferralCode, isSelfReferral, canReceiveReferrals } = require('../utils/referralCode')
+const { normalizeReferralCode, isSelfReferral, canReceiveReferrals, isPlausibleEmail } = require('../utils/referralCode')
 
 function httpError(status, message, code) {
 	const err = new Error(message)
@@ -55,7 +55,7 @@ async function buildPartnerFields(input, { partial }) {
 	}
 	if (!partial || input.email !== undefined) {
 		const email = String(input.email ?? '').trim().toLowerCase()
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError(400, 'Podaj poprawny e-mail partnera')
+		if (email.length > 200 || !isPlausibleEmail(email)) throw httpError(400, 'Podaj poprawny e-mail partnera')
 		out.email = email
 	}
 	if (!partial || input.code !== undefined) {
@@ -125,6 +125,10 @@ async function createPartner(input) {
 async function updatePartner(partnerId, input) {
 	if (!mongoose.Types.ObjectId.isValid(String(partnerId))) throw httpError(404, 'Partner nie istnieje')
 	const fields = await buildPartnerFields(input || {}, { partial: true })
+	// Firma polecona przez partnera jako jego „zespół partnera” widziałaby w panelu wszystkie jego polecenia i prowizje
+	if (fields.partnerTeamId && (await Team.exists({ _id: fields.partnerTeamId, referredByPartnerId: partnerId }))) {
+		throw httpError(400, 'To firma polecona przez tego partnera — nie może być jego zespołem', 'REFERRED_TEAM')
+	}
 	try {
 		const partner = await Partner.findByIdAndUpdate(partnerId, { $set: fields }, { new: true, runValidators: true }).lean()
 		if (!partner) throw httpError(404, 'Partner nie istnieje')

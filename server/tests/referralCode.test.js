@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
-const { normalizeReferralCode, isSelfReferral, canReceiveReferrals } = require('../utils/referralCode')
+const { normalizeReferralCode, isSelfReferral, canReceiveReferrals, isPlausibleEmail } = require('../utils/referralCode')
 const { isPlatformSuperAdminActivityAllowed, isPartnerPortalApiPath, isPartnerProgramApiPath } = require('../services/freemiumApiPolicyService')
 
 describe('kody polecające programu partnerskiego', () => {
@@ -59,5 +59,16 @@ describe('kody polecające programu partnerskiego', () => {
 		assert.equal(isPartnerProgramApiPath('/api/biurox'), false)
 		assert.equal(isPartnerProgramApiPath('/api/office-linksx/a'), false)
 		assert.equal(isPartnerProgramApiPath('/api/leaveworks/accepted-leave-requests'), false)
+	})
+
+	it('kontrola e-maila: format i czas liniowy na długim tekście (bez blokady serwera)', () => {
+		assert.equal(isPlausibleEmail('szef@firma.pl'), true)
+		assert.equal(isPlausibleEmail('a@b'), false)
+		assert.equal(isPlausibleEmail('a b@c.pl'), false)
+		assert.equal(isPlausibleEmail('a@@b.pl'), false)
+		assert.equal(isPlausibleEmail({ $ne: '' }), false)
+		const started = Date.now()
+		isPlausibleEmail('a@' + '.'.repeat(100000) + ' x')
+		assert.ok(Date.now() - started < 50)
 	})
 })
