@@ -29,6 +29,7 @@ const {
 
 const OPEN = ['pending', 'active']
 const INVITE_MAIL_INTERVAL_MS = 7 * 24 * 3600e3
+const VIEW_DEDUP_MS = 15 * 60 * 1000
 const SETTINGS_FIELDS = [
 	'workOnWeekends',
 	'includePolishHolidays',
@@ -347,6 +348,20 @@ async function resolveOfficeClient(user, clientTeamIdRaw) {
 /** Wpis do historii dostępu firmy. Obowiązkowy: gdy zapis się nie uda, biuro nie dostaje danych (firma ma pełny ślad). */
 async function audit({ office, client, user, action, params, ip }) {
 	try {
+		// Ponowne otwarcie tego samego miesiąca przez tę samą osobę w ciągu 15 min to jeden wpis — historia firmy
+		// pokazuje wejścia, a nie każde odświeżenie panelu. Eksporty zapisujemy zawsze.
+		if (action === 'view_month') {
+			const recent = await OfficeAuditLog.exists({
+				officeTeamId: office._id,
+				clientTeamId: client._id,
+				userId: user.userId,
+				action,
+				'params.year': params?.year,
+				'params.month': params?.month,
+				at: { $gte: new Date(Date.now() - VIEW_DEDUP_MS) },
+			})
+			if (recent) return
+		}
 		await OfficeAuditLog.create({ officeTeamId: office._id, clientTeamId: client._id, userId: user.userId, action, params, ip: String(ip || '').slice(0, 100) })
 	} catch (error) {
 		console.error('[office] zapis logu audytowego nie powiódł się — dane nie zostały wydane:', error?.message || error)

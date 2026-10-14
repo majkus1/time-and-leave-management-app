@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { usePartnerEntries, usePartnerOverview } from '../../hooks/usePartnerPortal'
 import { downloadExcelWorkbook } from '../../utils/export/excelDownload'
 import { buildPdfDocument, downloadPdf, pdfDataTable, pdfLabelValueLines, pdfTitleBlock } from '../../utils/export/pdfDownload'
 import Loader from '../Loader'
+import PanelPageLayout from '../shared/PanelPageLayout'
+import { useTableCellLabels } from '../../hooks/useTableCellLabels'
 import '../admin/AdminPartners.css'
 import './PartnerPanel.css'
 
@@ -27,17 +29,24 @@ export default function PartnerPanel() {
 	const entries = usePartnerEntries(month)
 	const [copied, setCopied] = useState(false)
 	const [busy, setBusy] = useState(false)
+	const rootRef = useRef(null)
+	useTableCellLabels(rootRef)
 
 	// Domyślnie najnowszy miesiąc z prowizjami
 	useEffect(() => {
 		if (!month && overview.data?.months?.length) setMonth(overview.data.months[0].month)
 	}, [overview.data, month])
 
-	if (overview.isLoading) return <Loader />
+	const layout = content => (
+		<PanelPageLayout title={t('partnerPanel.title')} icon="/img/wallet.png" contentRef={rootRef}>
+			{content}
+		</PanelPageLayout>
+	)
+
+	if (overview.isLoading) return layout(<Loader />)
 	if (overview.isError) {
-		return (
+		return layout(
 			<div className="ap">
-				<h2 className="ap__title">{t('partnerPanel.title')}</h2>
 				<p className="ap-muted">{overview.error?.response?.data?.message || t('partnerPanel.error')}</p>
 			</div>
 		)
@@ -131,16 +140,17 @@ export default function PartnerPanel() {
 			await downloadPdf(doc, `planopia-prowizje-${partner.code}-${month}.pdf`)
 		})
 
-	return (
+	return layout(
 		<div className="ap pp">
-			<h2 className="ap__title">{t('partnerPanel.title')}</h2>
 			<p className="ap__lead">{t('partnerPanel.lead', { name: partner.name })}</p>
 			{partner.status === 'paused' ? <p className="ap-note pp-paused">{t('partnerPanel.paused')}</p> : null}
 
 			<section className="ap-card">
 				<h3>{t('partnerPanel.linkTitle')}</h3>
 				<div className="ap-search pp-link">
-					<input className="ap-input" value={partner.link} readOnly onFocus={e => e.target.select()} aria-label={t('partnerPanel.linkTitle')} />
+					<div className="pp-link-text" aria-label={t('partnerPanel.linkTitle')}>
+						{partner.link}
+					</div>
 					<button type="button" className="ap-btn" onClick={copy}>
 						{copied ? t('partnerPanel.copied') : t('partnerPanel.copy')}
 					</button>

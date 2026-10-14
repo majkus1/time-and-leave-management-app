@@ -15,8 +15,8 @@
 	font-weight: 700;
 }
 
-.op-ok {
-	color: var(--po-brand-text);
+.ap .op-ok {
+	color: var(--po-brand-text) !important;
 	font-weight: 600;
 }
 

@@ -24,9 +24,9 @@
 	background: var(--po-surface);
 }
 
-.pp-tile span {
-	color: var(--po-text-muted);
-	font-size: 0.85rem;
+.ap .pp-tile span {
+	color: var(--po-text-muted) !important;
+	font-size: 0.85rem !important;
 	font-weight: 600;
 }
 
@@ -55,16 +55,32 @@
 	cursor: pointer;
 }
 
-.pp-badge {
+.ap .pp-badge {
 	display: inline-block;
 	padding: 0.15rem 0.55rem;
 	border-radius: 999px;
 	background: var(--po-surface-muted, var(--po-border));
-	font-size: 0.8rem;
+	color: var(--po-text-secondary) !important;
+	font-size: 0.8rem !important;
 	font-weight: 600;
+	white-space: nowrap;
 }
 
-.pp-badge--paid {
+.ap .pp-badge--paid {
 	background: var(--po-brand-soft);
-	color: var(--po-brand-text);
+	color: var(--po-brand-text) !important;
+}
+
+.pp-link-text {
+	flex: 1 1 14rem;
+	min-width: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--po-input-border, var(--po-border));
+	border-radius: 8px;
+	background: var(--po-input-bg, var(--po-surface));
+	color: var(--po-input-text, var(--po-text));
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.9rem;
+	overflow-wrap: anywhere;
+	user-select: all;
 }

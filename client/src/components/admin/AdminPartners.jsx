@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import { API_URL } from '../../config.js'
 import { useAlert } from '../../context/AlertContext'
 import Loader from '../Loader'
+import PanelPageLayout from '../shared/PanelPageLayout'
+import { useTableCellLabels } from '../../hooks/useTableCellLabels'
 import AdminCommissions from './AdminCommissions'
 import AdminOffices from './AdminOffices'
 import './AdminPartners.css'
@@ -36,6 +38,8 @@ export default function AdminPartners() {
 	const [query, setQuery] = useState('')
 	const [results, setResults] = useState([])
 	const [tab, setTab] = useState('partners')
+	const rootRef = useRef(null)
+	useTableCellLabels(rootRef)
 
 	const errorText = e => e?.response?.data?.message || t('adminPartners.error')
 	const appBase = typeof window !== 'undefined' ? window.location.origin.replace('app.', '') : ''
@@ -146,11 +150,16 @@ export default function AdminPartners() {
 		<input className="ap-input" value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} {...props} />
 	)
 
-	if (!partners) return <Loader />
+	const layout = content => (
+		<PanelPageLayout title={t('adminPartners.title')} icon="/img/contact-list.png" contentRef={rootRef}>
+			{content}
+		</PanelPageLayout>
+	)
 
-	return (
+	if (!partners) return layout(<Loader />)
+
+	return layout(
 		<div className="ap">
-			<h2 className="ap__title">{t('adminPartners.title')}</h2>
 			<p className="ap__lead">{t('adminPartners.lead')}</p>
 
 			<div className="ap-tabs" role="tablist">
@@ -175,44 +184,46 @@ export default function AdminPartners() {
 					{partners.length === 0 ? (
 						<p className="ap-muted">{t('adminPartners.empty')}</p>
 					) : (
-						<table className="ap-table">
-							<thead>
-								<tr>
-									<th>{t('adminPartners.name')}</th>
-									<th>{t('adminPartners.code')}</th>
-									<th>{t('adminPartners.rate')}</th>
-									<th>{t('adminPartners.referred')}</th>
-									<th>{t('adminPartners.status')}</th>
-									<th />
-								</tr>
-							</thead>
-							<tbody>
-								{partners.map(p => (
-									<tr key={p.id} className={selected?.id === p.id ? 'ap-row--on' : undefined}>
-										<td>{p.name}</td>
-										<td>
-											<code>{p.code}</code>
-										</td>
-										<td>
-											{Math.round(p.commissionRate * 10000) / 100}%
-											{p.commissionMonths ? ` · ${t('adminPartners.monthsShort', { count: p.commissionMonths })}` : ''}
-										</td>
-										<td>{p.referredCount}</td>
-										<td>{t(`adminPartners.status_${p.status}`)}</td>
-										<td>
-											<div className="ap-actions">
-												<button type="button" className="ap-link" onClick={() => startEdit(p)}>
-													{t('adminPartners.edit')}
-												</button>
-												<button type="button" className="ap-link" onClick={() => select(p)}>
-													{t('adminPartners.teams')}
-												</button>
-											</div>
-										</td>
+						<div className="ap-scroll">
+							<table className="ap-table">
+								<thead>
+									<tr>
+										<th>{t('adminPartners.name')}</th>
+										<th>{t('adminPartners.code')}</th>
+										<th>{t('adminPartners.rate')}</th>
+										<th>{t('adminPartners.referred')}</th>
+										<th>{t('adminPartners.status')}</th>
+										<th />
 									</tr>
-								))}
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									{partners.map(p => (
+										<tr key={p.id} className={selected?.id === p.id ? 'ap-row--on' : undefined}>
+											<td>{p.name}</td>
+											<td>
+												<code>{p.code}</code>
+											</td>
+											<td>
+												{Math.round(p.commissionRate * 10000) / 100}%
+												{p.commissionMonths ? ` · ${t('adminPartners.monthsShort', { count: p.commissionMonths })}` : ''}
+											</td>
+											<td>{p.referredCount}</td>
+											<td>{t(`adminPartners.status_${p.status}`)}</td>
+											<td>
+												<div className="ap-actions">
+													<button type="button" className="ap-link" onClick={() => startEdit(p)}>
+														{t('adminPartners.edit')}
+													</button>
+													<button type="button" className="ap-link" onClick={() => select(p)}>
+														{t('adminPartners.teams')}
+													</button>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
 					)}
 				</section>
 
@@ -271,34 +282,36 @@ export default function AdminPartners() {
 					{teams.length === 0 ? (
 						<p className="ap-muted">{t('adminPartners.noTeams')}</p>
 					) : (
-						<table className="ap-table">
-							<thead>
-								<tr>
-									<th>{t('adminPartners.team')}</th>
-									<th>{t('adminPartners.plan')}</th>
-									<th>{t('adminPartners.since')}</th>
-									<th>{t('adminPartners.source')}</th>
-									<th />
-								</tr>
-							</thead>
-							<tbody>
-								{teams.map(tm => (
-									<tr key={tm.id}>
-										<td>{tm.name}</td>
-										<td>{tm.planKey || '—'}</td>
-										<td>{date(tm.referredAt)}</td>
-										<td>{t(`adminPartners.source_${tm.referralSource || 'admin'}`)}</td>
-										<td>
-											<div className="ap-actions">
-												<button type="button" className="ap-link ap-link--danger" onClick={() => assign(tm.id, null)}>
-													{t('adminPartners.unassign')}
-												</button>
-											</div>
-										</td>
+						<div className="ap-scroll">
+							<table className="ap-table">
+								<thead>
+									<tr>
+										<th>{t('adminPartners.team')}</th>
+										<th>{t('adminPartners.plan')}</th>
+										<th>{t('adminPartners.since')}</th>
+										<th>{t('adminPartners.source')}</th>
+										<th />
 									</tr>
-								))}
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									{teams.map(tm => (
+										<tr key={tm.id}>
+											<td>{tm.name}</td>
+											<td>{tm.planKey || '—'}</td>
+											<td>{date(tm.referredAt)}</td>
+											<td>{t(`adminPartners.source_${tm.referralSource || 'admin'}`)}</td>
+											<td>
+												<div className="ap-actions">
+													<button type="button" className="ap-link ap-link--danger" onClick={() => assign(tm.id, null)}>
+														{t('adminPartners.unassign')}
+													</button>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
 					)}
 
 					<form className="ap-search" onSubmit={search}>

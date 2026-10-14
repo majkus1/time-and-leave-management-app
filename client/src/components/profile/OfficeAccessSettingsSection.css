@@ -172,3 +172,18 @@
 	list-style: disc;
 	margin: 0.2rem 0;
 }
+
+/* style.css wymusza na p/span #213555 (!important) — teksty pomocnicze sekcji mają być wyciszone w obu motywach */
+.osp .osp__lead,
+.osp .osp-muted {
+	color: var(--po-text-muted) !important;
+}
+
+.osp .osp-muted {
+	font-size: 0.9rem !important;
+}
+
+.osp-row > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}

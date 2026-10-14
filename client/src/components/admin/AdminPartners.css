@@ -2,8 +2,24 @@
 .ap {
 	max-width: 1200px;
 	margin: 0 auto;
-	padding: 1.5rem 1rem 3rem;
+	padding: 0 0 3rem;
 	color: var(--po-text);
+}
+
+.panel-page {
+	max-width: 1200px;
+}
+
+.panel-page__header {
+	margin-bottom: 16px;
+}
+
+.panel-page__header h2 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+	text-align: left;
 }
 
 .ap__title {
@@ -101,10 +117,10 @@
 .ap-input {
 	width: 100%;
 	padding: 0.5rem 0.65rem;
-	border: 1px solid var(--po-border-strong, var(--po-border));
+	border: 1px solid var(--po-input-border, var(--po-border-strong));
 	border-radius: 8px;
-	background: var(--po-surface);
-	color: var(--po-text);
+	background: var(--po-input-bg, var(--po-surface));
+	color: var(--po-input-text, var(--po-text));
 	font-size: 0.9rem;
 	font-weight: 400;
 }
@@ -217,7 +233,7 @@
 	margin-top: 1rem;
 }
 
-.ap-search .ap-input {
+.ap-search > .ap-input {
 	flex: 1 1 12rem;
 	width: auto;
 }
@@ -266,4 +282,112 @@
 .ap-actions--start {
 	justify-content: flex-start;
 	margin-top: 0.6rem;
+}
+
+/*
+ * style.css wymusza na wszystkich p/span kolor #213555 i 16px (!important) — w ciemnym motywie tekst znikał.
+ * W panelach tekst dziedziczy z kontenera, a klasy z własnym kolorem mają !important, żeby wygrać z tamtą regułą.
+ */
+.ap p,
+.ap span {
+	color: inherit !important;
+	font-size: inherit !important;
+}
+
+.ap .ap__lead {
+	color: var(--po-text-muted) !important;
+	font-size: 1rem !important;
+}
+
+.ap .ap-muted {
+	color: var(--po-text-muted) !important;
+	font-size: 0.85rem !important;
+}
+
+.ap .ap-note {
+	color: var(--po-text) !important;
+	font-size: 0.9rem !important;
+}
+
+.ap code {
+	padding: 0.1rem 0.35rem;
+	border-radius: 4px;
+	background: var(--po-surface-muted) !important;
+	color: var(--po-text) !important;
+	font-size: 0.85em;
+}
+
+/* Długie e-maile i nazwy nie rozpychają wierszy list */
+.ap-results li > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+/*
+ * Telefon: tabele jako karty — nagłówek kolumny przy każdej wartości (data-label z useTableCellLabels),
+ * pierwsza kolumna jako tytuł karty. Nic nie chowa się poza ekranem.
+ */
+@media (max-width: 640px) {
+	.ap-scroll {
+		overflow-x: visible;
+	}
+
+	.ap-scroll .ap-table thead {
+		display: none;
+	}
+
+	.ap-scroll .ap-table,
+	.ap-scroll .ap-table tbody,
+	.ap-scroll .ap-table tfoot,
+	.ap-scroll .ap-table tr,
+	.ap-scroll .ap-table td {
+		display: block;
+		width: 100%;
+	}
+
+	.ap-scroll .ap-table tr {
+		padding: 0.55rem 0;
+		border-bottom: 1px solid var(--po-border);
+	}
+
+	.ap-scroll .ap-table td {
+		overflow: hidden;
+		padding: 0.2rem 0;
+		border: none;
+		text-align: right !important;
+		white-space: normal !important;
+		overflow-wrap: anywhere;
+	}
+
+	.ap-scroll .ap-table td::before {
+		content: attr(data-label);
+		float: left;
+		max-width: 55%;
+		margin-right: 0.75rem;
+		color: var(--po-text-muted);
+		font-weight: 600;
+		text-align: left;
+	}
+
+	.ap-scroll .ap-table td:first-child {
+		font-weight: 600;
+		text-align: left !important;
+	}
+
+	.ap-scroll .ap-table td:first-child::before,
+	.ap-scroll .ap-table td[data-label='']::before {
+		content: none;
+	}
+
+	.ap-scroll .ap-table td .ap-actions {
+		justify-content: flex-end;
+	}
+
+	.ap-row--on {
+		background: var(--po-brand-soft);
+	}
+
+	.ap-row {
+		grid-template-columns: 1fr;
+	}
 }

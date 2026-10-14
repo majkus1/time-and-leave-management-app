@@ -636,7 +636,7 @@ function Sidebar() {
 									to="/biuro"
 									className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
 									<div className="nav-icon">
-										<img src="/img/contact-list.png" alt="" />
+										<img src="/img/business.png" alt="" />
 									</div>
 									<span className="nav-text">{t('sidebar.officePanel')}</span>
 								</NavLink>

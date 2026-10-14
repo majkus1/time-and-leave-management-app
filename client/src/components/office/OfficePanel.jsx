@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAlert } from '../../context/AlertContext'
 import { useOfficeAction, useOfficeClientMonth, useOfficeClients } from '../../hooks/useOffice'
 import { buildOfficeMonthRows, leavesInMonth, workdaysInMonth } from '../../utils/officeMonthReport'
 import Loader from '../Loader'
+import PanelPageLayout from '../shared/PanelPageLayout'
+import { useTableCellLabels } from '../../hooks/useTableCellLabels'
 import axios from 'axios'
 import { API_URL } from '../../config.js'
 import { getLeaveRequestTypeName } from '../../utils/leaveRequestTypes'
@@ -37,6 +39,8 @@ export default function OfficePanel() {
 	const [{ year, month }, setYm] = useState(currentYearMonth)
 	const [email, setEmail] = useState('')
 	const [exporting, setExporting] = useState(false)
+	const rootRef = useRef(null)
+	useTableCellLabels(rootRef)
 	const monthQuery = useOfficeClientMonth(clientTeamId, year, month)
 	const data = monthQuery.data
 
@@ -69,11 +73,16 @@ export default function OfficePanel() {
 		}
 	}
 
-	if (clients.isLoading) return <Loader />
+	const layout = content => (
+		<PanelPageLayout title={t('officePanel.title')} icon="/img/business.png" contentRef={rootRef}>
+			{content}
+		</PanelPageLayout>
+	)
+
+	if (clients.isLoading) return layout(<Loader />)
 	if (clients.isError) {
-		return (
+		return layout(
 			<div className="ap">
-				<h2 className="ap__title">{t('officePanel.title')}</h2>
 				<p className="ap-muted">{errorText(clients.error)}</p>
 			</div>
 		)
@@ -185,9 +194,8 @@ export default function OfficePanel() {
 		return `${num(r.mainLeave.remaining)} / ${num(r.mainLeave.limit)} ${unit}`
 	}
 
-	return (
+	return layout(
 		<div className="ap op">
-			<h2 className="ap__title">{t('officePanel.title')}</h2>
 			<p className="ap__lead">{t('officePanel.lead', { name: clients.data.office.name })}</p>
 
 			{list.length === 0 ? (
