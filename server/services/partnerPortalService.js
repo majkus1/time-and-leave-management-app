@@ -45,7 +45,7 @@ const sum = (rows, status) => rows.filter(r => r._id.status === status).reduce((
 
 async function overview(user, now = new Date()) {
 	const partner = await requirePartner(user)
-	const [teams, perTeam, perMonth, totals] = await Promise.all([
+	const [teams, perTeam, perMonth, totals, firstPaid] = await Promise.all([
 		// Bez .lean(): stan planu liczą helpery entitlements, które opierają się na domyślnych wartościach schematu
 		Team.find({ referredByPartnerId: partner._id })
 			.select('name billingPlanKey billingStatus trialEndsAt billingPeriodEnd billingHadPaidPlan maxUsers isActive stripeSubscriptionId stripeSubscriptionStatus referredAt createdAt')
@@ -56,7 +56,10 @@ async function overview(user, now = new Date()) {
 			{ $group: { _id: { month: '$month', status: '$status' }, sum: { $sum: '$commissionGrosze' }, base: { $sum: { $cond: [{ $eq: ['$kind', 'accrual'] }, '$baseNetGrosze', 0] } } } },
 		]),
 		CommissionLedger.aggregate([{ $match: { partnerId: partner._id } }, { $group: { _id: { status: '$status' }, sum: { $sum: '$commissionGrosze' } } }]),
+		// Pierwsza płatność każdej firmy z prowizją — od niej liczy się okres prowizji
+		CommissionLedger.aggregate([{ $match: { partnerId: partner._id, kind: 'accrual' } }, { $group: { _id: '$teamId', at: { $min: '$occurredAt' } } }]),
 	])
+	const firstPaidByTeam = new Map(firstPaid.map(r => [String(r._id), r.at]))
 	const teamCommission = new Map(perTeam.map(r => [String(r._id), r.sum]))
 	const months = new Map()
 	for (const r of perMonth) {
@@ -82,8 +85,10 @@ async function overview(user, now = new Date()) {
 			name: t.name,
 			planState: teamPlanState(t, now),
 			referredAt: t.referredAt || t.createdAt,
-			// Ostatni dzień, w którym płatność jeszcze daje prowizję (okno liczone jest do rocznicy wyłącznie)
-			commissionUntil: commissionLastDay(t.referredAt || t.createdAt, partner.commissionMonths),
+			// Ostatni dzień, w którym płatność jeszcze daje prowizję: okres od pierwszej płatności (rocznica wyłącznie).
+			// Przed pierwszą płatnością null — panel pokazuje „N mies. od pierwszej płatności”.
+			firstPaidAt: firstPaidByTeam.get(String(t._id)) || null,
+			commissionUntil: firstPaidByTeam.get(String(t._id)) ? commissionLastDay(firstPaidByTeam.get(String(t._id)), partner.commissionMonths) : null,
 			commissionGrosze: teamCommission.get(String(t._id)) || 0,
 		})),
 	}

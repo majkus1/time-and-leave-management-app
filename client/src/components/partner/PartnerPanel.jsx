@@ -57,6 +57,9 @@ export default function PartnerPanel() {
 		? t('partnerPanel.terms', { rate: percent(partner.commissionRate), count: partner.commissionMonths })
 		: t('partnerPanel.termsUnlimited', { rate: percent(partner.commissionRate) })
 	const rows = entries.data?.entries || []
+	// Okres prowizji startuje od pierwszej płatności firmy; bez limitu — „bez limitu”
+	const untilLabel = tm =>
+		!partner.commissionMonths ? t('partnerPanel.noLimit') : tm.commissionUntil ? date(tm.commissionUntil) : t('partnerPanel.untilAfterFirst', { count: partner.commissionMonths })
 	const sourceLabel = en => `${t(`partnerPanel.src_${en.sourceType}`)}${en.kind === 'reversal' ? ` · ${t('partnerPanel.reversal')}` : ''}`
 
 	const copy = async () => {
@@ -103,7 +106,7 @@ export default function PartnerPanel() {
 					columnNumFmt: { 5: '#,##0.00' },
 					rows: [
 						[t('partnerPanel.company'), t('partnerPanel.plan'), t('partnerPanel.since'), t('partnerPanel.until'), t('partnerPanel.commission')],
-						...teams.map(tm => [tm.name, t(`partnerPanel.plan_${tm.planState}`), date(tm.referredAt), tm.commissionUntil ? date(tm.commissionUntil) : t('partnerPanel.noLimit'), tm.commissionGrosze / 100]),
+						...teams.map(tm => [tm.name, t(`partnerPanel.plan_${tm.planState}`), date(tm.referredAt), untilLabel(tm), tm.commissionGrosze / 100]),
 					],
 				},
 			]
@@ -289,7 +292,7 @@ export default function PartnerPanel() {
 											<span className={`pp-badge pp-badge--${tm.planState}`}>{t(`partnerPanel.plan_${tm.planState}`)}</span>
 										</td>
 										<td>{date(tm.referredAt)}</td>
-										<td>{tm.commissionUntil ? date(tm.commissionUntil) : t('partnerPanel.noLimit')}</td>
+										<td>{untilLabel(tm)}</td>
 										<td>{zl(tm.commissionGrosze)}</td>
 									</tr>
 								))}

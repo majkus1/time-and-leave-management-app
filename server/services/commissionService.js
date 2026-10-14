@@ -40,10 +40,17 @@ async function loadReferral(teamId) {
 	return { team, partner }
 }
 
+/** Data pierwszej płatności firmy, od której ten partner dostał prowizję — początek okresu prowizji */
+async function firstPaidAt(teamId, partnerId) {
+	const first = await CommissionLedger.findOne({ teamId, partnerId, kind: 'accrual' }).sort({ occurredAt: 1 }).select('occurredAt').lean()
+	return first?.occurredAt || null
+}
+
 /** Naliczenie od jednej płatności; ta sama płatność drugi raz = duplicate (unikalny idempotencyKey) */
 async function accrue({ teamId, sourceType, sourceId, netGrosze, paidGrosze, occurredAt, createdBy, note = '', stripeCustomerId = null }) {
 	const { team, partner } = await loadReferral(teamId)
-	const evaluation = evaluateCommission({ partner, team, netGrosze, paidAt: occurredAt })
+	const first = partner && team ? await firstPaidAt(team._id, partner._id) : null
+	const evaluation = evaluateCommission({ partner, team, netGrosze, paidAt: occurredAt, firstPaidAt: first })
 	if (!evaluation.eligible) return { accrued: false, reason: evaluation.reason }
 	try {
 		const entry = await CommissionLedger.create({
@@ -265,7 +272,8 @@ async function recordManualInvoice({ teamId, invoiceNumber, netGrosze, paidAt, n
 	const paid = parseDate(paidAt, 'Data zapłaty')
 	const { team, partner } = await loadReferral(teamId)
 	if (!team) throw httpError(404, 'Zespół nie istnieje')
-	const check = evaluateCommission({ partner, team, netGrosze: net, paidAt: paid })
+	const first = partner ? await firstPaidAt(team._id, partner._id) : null
+	const check = evaluateCommission({ partner, team, netGrosze: net, paidAt: paid, firstPaidAt: first })
 	if (!check.eligible) throw httpError(400, REASON_TEXT[check.reason] || 'Prowizja się nie należy', check.reason.toUpperCase())
 	let invoice
 	try {

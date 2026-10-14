@@ -20,14 +20,14 @@ module.exports = {
 	},
 	body: {
 		pl: `### Jak to działa
-- Partnera (np. biuro rachunkowe) zakłada Planopia — warunki ustalamy indywidualnie: procent prowizji i okres (np. 12 miesięcy od polecenia albo bez limitu). Chęć współpracy: biuro@planopia.pl.
+- Partnera (np. biuro rachunkowe) zakłada Planopia — warunki ustalamy indywidualnie: procent prowizji i okres (np. 12 miesięcy od pierwszej płatności poleconej firmy albo bez limitu). Chęć współpracy: biuro@planopia.pl.
 - Partner dostaje link planopia.pl/?ref=KOD. Kto wejdzie z tego linku i w ciągu 90 dni założy zespół, zostaje przypisany do partnera (liczy się pierwsze polecenie; zapamiętuje to funkcjonalne cookie z samym kodem partnera). Planopia może też przypisać firmę ręcznie.
-- Prowizja naliczana jest od kwot netto płatności poleconej firmy za plany: kartą, przez Przelewy24 albo z faktury, w okresie prowizji. Zwrot płatności cofa prowizję proporcjonalnie.
-- Bez prowizji: płatności sprzed polecenia, po okresie prowizji, gdy partner jest wstrzymany, płatności testowe i polecenie samego siebie (ta sama firma, e-mail albo NIP).
+- Prowizja naliczana jest od kwot netto płatności poleconej firmy za plany: kartą, przez Przelewy24 albo z faktury. Okres prowizji liczy się od pierwszej płatności firmy (czas na okresie próbnym albo planie darmowym go nie skraca); gdy firma przestaje płacić, prowizji nie ma. Zwrot płatności cofa prowizję proporcjonalnie.
+- Bez prowizji: płatności sprzed polecenia, po okresie prowizji (liczonym od pierwszej płatności), gdy partner jest wstrzymany, płatności testowe i polecenie samego siebie (ta sama firma, e-mail albo NIP).
 - Rozliczenie: Planopia zamyka miesiąc → prowizje przechodzą do „do wypłaty” → partner wystawia fakturę na tę kwotę → Planopia oznacza wypłatę.
 
 ### Panel partnera
-- Menu → „Program partnerski” (Administrator i HR zespołu partnera): link do skopiowania i warunki, kwoty do wypłaty / naliczone / wypłacone, prowizje w miesiącach z listą płatności, polecone firmy (stan planu, od kiedy, do kiedy prowizja), eksport do Excela i zestawienie miesiąca w PDF do faktury.
+- Menu → „Program partnerski” (Administrator i HR zespołu partnera): link do skopiowania i warunki, kwoty do wypłaty / naliczone / wypłacone, prowizje w miesiącach z listą płatności, polecone firmy (stan planu, od kiedy, do kiedy prowizja — przed pierwszą płatnością „N mies. od 1. płatności”), eksport do Excela i zestawienie miesiąca w PDF do faktury.
 - Panel działa niezależnie od planu zespołu partnera.
 
 ### Czego NIE robi

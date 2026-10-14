@@ -47,7 +47,12 @@ function isFutureDay(date, now = new Date()) {
  * Stawkę i okno bierzemy z partnera w chwili płatności — późniejsza zmiana stawki nie przelicza historii.
  * @returns {{ eligible: boolean, reason?: string, rate?: number, commissionGrosze?: number, month?: string }}
  */
-function evaluateCommission({ partner, team, netGrosze, paidAt }) {
+/**
+ * firstPaidAt: data pierwszej płatności tej firmy, od której partner dostał prowizję (null = to jest pierwsza).
+ * Okres prowizji (commissionMonths) liczymy od niej — „procent od pierwszych N miesięcy płacenia”, niezależnie od tego,
+ * jak długo firma była na okresie próbnym albo planie darmowym.
+ */
+function evaluateCommission({ partner, team, netGrosze, paidAt, firstPaidAt = null }) {
 	const net = toInt(netGrosze)
 	if (!team || !team.referredByPartnerId) return { eligible: false, reason: 'no_partner' }
 	if (!partner || String(partner._id) !== String(team.referredByPartnerId)) return { eligible: false, reason: 'no_partner' }
@@ -61,7 +66,9 @@ function evaluateCommission({ partner, team, netGrosze, paidAt }) {
 	if (start && moment.tz(paidAt, ZONE).startOf('day').isBefore(moment.tz(start, ZONE).startOf('day'))) {
 		return { eligible: false, reason: 'before_referral' }
 	}
-	const windowEnd = start ? commissionWindowEnd(start, partner.commissionMonths) : null
+	// Wcześniejsza z dwóch: zapisana pierwsza płatność albo ta (np. faktura dopisana z datą sprzed pierwszej)
+	const windowStart = firstPaidAt && new Date(firstPaidAt) < new Date(paidAt) ? firstPaidAt : paidAt
+	const windowEnd = commissionWindowEnd(windowStart, partner.commissionMonths)
 	if (windowEnd && new Date(paidAt) >= windowEnd) return { eligible: false, reason: 'window_expired' }
 	const rate = Number(partner.commissionRate)
 	if (!Number.isFinite(rate) || rate <= 0) return { eligible: false, reason: 'zero_rate' }

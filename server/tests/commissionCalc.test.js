@@ -28,16 +28,21 @@ describe('prowizje programu partnerskiego', () => {
 		assert.deepEqual(r, { eligible: true, rate: 0.2, commissionGrosze: 3000, month: '2026-02' })
 	})
 
-	it('okno miesięcy: 12 miesięcy od dnia polecenia (czas polski), dzień rocznicy już poza oknem', () => {
+	it('okno miesięcy: 12 miesięcy od pierwszej płatności (czas polski), dzień rocznicy już poza oknem', () => {
+		const firstPaidAt = new Date('2026-01-15T10:00:00Z')
 		// 14.01.2027 23:00 w Polsce — ostatni dzień okna
-		const inside = evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-01-14T22:00:00Z') })
+		const inside = evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-01-14T22:00:00Z'), firstPaidAt })
 		assert.equal(inside.eligible, true)
-		// 15.01.2027 00:30 w Polsce — rocznica, niezależnie od godziny polecenia
-		const after = evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-01-14T23:30:00Z') })
+		// 15.01.2027 00:30 w Polsce — rocznica pierwszej płatności
+		const after = evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-01-14T23:30:00Z'), firstPaidAt })
 		assert.deepEqual(after, { eligible: false, reason: 'window_expired' })
-		const nightTeam = { ...team, referredAt: new Date('2026-01-14T23:30:00Z') } // 15.01 00:30 w Polsce
-		assert.equal(evaluateCommission({ partner, team: nightTeam, netGrosze: 10000, paidAt: new Date('2027-01-14T22:00:00Z') }).eligible, true)
-		assert.equal(evaluateCommission({ partner, team: nightTeam, netGrosze: 10000, paidAt: new Date('2027-01-15T00:00:00Z') }).reason, 'window_expired')
+		// Pierwsza płatność dopiero po 5 miesiącach próby/darmowego planu — okres liczy się od niej, nie od polecenia
+		const late = new Date('2026-06-20T10:00:00Z')
+		assert.equal(evaluateCommission({ partner, team, netGrosze: 10000, paidAt: late }).eligible, true)
+		assert.equal(evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-06-19T10:00:00Z'), firstPaidAt: late }).eligible, true)
+		assert.equal(evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2027-06-20T10:00:00Z'), firstPaidAt: late }).reason, 'window_expired')
+		// Faktura dopisana z datą sprzed zapisanej pierwszej płatności — okres liczy się od wcześniejszej
+		assert.equal(evaluateCommission({ partner, team, netGrosze: 10000, paidAt: new Date('2026-03-01T10:00:00Z'), firstPaidAt: late }).eligible, true)
 		const unlimited = evaluateCommission({ partner: { ...partner, commissionMonths: null }, team, netGrosze: 10000, paidAt: new Date('2031-06-01') })
 		assert.equal(unlimited.eligible, true)
 	})
