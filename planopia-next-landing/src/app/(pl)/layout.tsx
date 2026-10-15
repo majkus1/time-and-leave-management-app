@@ -10,6 +10,7 @@ import { LandingChatProvider } from "@/components/landingChat/LandingChatProvide
 import { landingChatModulesForUi } from "@/lib/landingChat/modulesForUi";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
+import { ANNOUNCE_DISMISS_SCRIPT } from "@/lib/announcementBar";
 
 const HOME_META_DESCRIPTION =
   "Planopia łączy ewidencję czasu pracy, urlopy, grafiki i zadania. Zacznij od 30 dni za darmo, bez karty; potem wybierz darmowy plan lub pakiet.";
@@ -106,7 +107,11 @@ export default function PlRootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pl">
+    // suppressHydrationWarning: skrypt w <head> może dodać klasę lab-off (zamknięty pasek ogłoszenia) przed hydratacją
+    <html lang="pl" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ANNOUNCE_DISMISS_SCRIPT }} />
+      </head>
       <body
         className={`${titilliumWeb.variable} ${titilliumWeb.className} antialiased`}
       >

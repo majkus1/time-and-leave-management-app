@@ -1,0 +1,145 @@
+/*
+ * Pasek ogłoszenia nad menu (strona główna PL). Jest częścią stałego nagłówka — jego wysokość trafia do
+ * --lab-h, z którego korzystają reguły zależne od wysokości nagłówka w globals.css (hero, menu mobilne, kotwice).
+ */
+
+/* Wysokość paska liczy się tylko, gdy pasek jest i nie został zamknięty (bez tego --lab-h = 0) */
+html:not(.lab-off):has(#planopiaheader .lab) {
+	--lab-h: 38px;
+}
+
+html.lab-off .lab {
+	display: none;
+}
+
+/* Nagłówek ma flex w wierszu — z paskiem układamy go w kolumnie */
+#planopiaheader:has(.lab) {
+	flex-direction: column;
+}
+
+.lab {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: var(--lab-h, 38px);
+	padding: 0 48px;
+	background: #0b1f3d;
+	font-family: var(--font-titillium-web), 'Titillium Web', system-ui, sans-serif;
+}
+
+.lab a.lab__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	height: 100%;
+	color: #ffffff !important;
+	text-decoration: none !important;
+}
+
+.lab .lab__badge {
+	flex: none;
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: #00a63e;
+	font-size: 11.5px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	line-height: 1.5;
+	color: #ffffff;
+}
+
+.lab .lab__text {
+	min-width: 0;
+	font-family: inherit !important;
+	font-size: 14.5px !important;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.92) !important;
+	-webkit-text-fill-color: rgba(255, 255, 255, 0.92) !important;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.lab .lab__text--short {
+	display: none;
+}
+
+.lab__arrow {
+	flex: none;
+	color: #3fd987;
+	transition: transform 0.18s ease;
+}
+
+.lab a.lab__link:hover .lab__text {
+	color: #ffffff !important;
+	-webkit-text-fill-color: #ffffff !important;
+	text-decoration: underline !important;
+	text-decoration-color: rgba(63, 217, 135, 0.7) !important;
+	text-underline-offset: 3px;
+}
+
+.lab a.lab__link:hover .lab__arrow {
+	transform: translateX(3px);
+}
+
+.lab a.lab__link:focus-visible,
+.lab .lab__close:focus-visible {
+	outline: 2px solid #3fd987;
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
+.lab .lab__close {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.6);
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.lab .lab__close:hover {
+	background: rgba(255, 255, 255, 0.1);
+	color: #ffffff;
+}
+
+@media (max-width: 760px) {
+	html:not(.lab-off):has(#planopiaheader .lab) {
+		--lab-h: 36px;
+	}
+
+	.lab {
+		padding: 0 44px 0 16px;
+		justify-content: flex-start;
+	}
+
+	.lab .lab__text--long {
+		display: none;
+	}
+
+	.lab .lab__text--short {
+		display: inline;
+		font-size: 14px !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lab__arrow,
+	.lab .lab__close {
+		transition: none;
+	}
+}

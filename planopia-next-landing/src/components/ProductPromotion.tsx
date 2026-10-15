@@ -175,10 +175,8 @@ function ProductPromotion() {
 
 <LandingPricing locale="pl" />
 
-{/* Pod instrukcją — pasek programu partnerskiego dla biur (tylko PL) */}
-<LandingVideoGuideTeaser locale="pl">
-	<LandingPartnerBand />
-</LandingVideoGuideTeaser>
+{/* Nad instrukcją — pasek programu partnerskiego dla biur (tylko PL) */}
+<LandingVideoGuideTeaser locale="pl" before={<LandingPartnerBand />} />
 
 <LandingContactSection locale="pl" />
 

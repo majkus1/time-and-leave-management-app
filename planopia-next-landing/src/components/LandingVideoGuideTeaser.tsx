@@ -28,8 +28,8 @@ const copy: Record<
 	},
 }
 
-/** children — dodatkowa karta w tej samej sekcji (np. pasek programu partnerskiego na stronie głównej PL) */
-export default function LandingVideoGuideTeaser({ locale, children }: { locale: Locale; children?: React.ReactNode }) {
+/** before — dodatkowa karta nad instrukcją w tej samej sekcji (np. pasek programu partnerskiego na stronie głównej PL) */
+export default function LandingVideoGuideTeaser({ locale, before }: { locale: Locale; before?: React.ReactNode }) {
 	const t = copy[locale]
 	return (
 		<section
@@ -37,6 +37,7 @@ export default function LandingVideoGuideTeaser({ locale, children }: { locale: 
 			className="landing-video-guide-teaser py-12 px-4 bg-white border-t border-gray-100"
 			aria-label={t.aria}>
 			<div className="max-w-7xl mx-auto">
+				{before ? <div className="mb-6">{before}</div> : null}
 				<div className="landing-video-guide-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 rounded-2xl border px-6 py-8 sm:px-8 sm:py-9">
 					<div className="min-w-0 flex-1">
 						<p className="landing-section-eyebrow mb-2">{t.kicker}</p>
@@ -59,7 +60,6 @@ export default function LandingVideoGuideTeaser({ locale, children }: { locale: 
 						</Link>
 					</div>
 				</div>
-				{children ? <div className="mt-6">{children}</div> : null}
 			</div>
 		</section>
 	)
