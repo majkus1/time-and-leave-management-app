@@ -13,7 +13,6 @@ import {
 	MOBILE_INDUSTRY_INSERT_INDEX,
 } from '@/data/landingNav'
 import { resetBodyScrollLock } from '@/lib/bodyScrollLock'
-import LandingAnnouncementBar from './landingHome/LandingAnnouncementBar'
 
 type Locale = 'pl' | 'en'
 
@@ -79,8 +78,6 @@ export default function LandingHeader({ locale }: { locale: Locale }) {
 	return (
 		<>
 			<header className="landing-polished-header bg-white top-0 z-50 w-full flex justify-between headerpromotionmenu" id="planopiaheader">
-				{/* Ogłoszenie nad menu — program partnerski (tylko PL) */}
-				{locale === 'pl' ? <LandingAnnouncementBar /> : null}
 				<div
 					className="landing-polished-header-inner max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent"
 					style={{ maxWidth: '1350px' }}

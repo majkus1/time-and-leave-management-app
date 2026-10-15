@@ -327,7 +327,7 @@ function Blog() {
 				<section
 					id="blog-index-hero"
 					className="border-b border-blue-100 bg-[#f4f8ff] px-4 py-12 md:py-16"
-					style={{ marginTop: '70px' }}
+					style={{ marginTop: 'calc(70px + var(--lab-h, 0px))' }}
 					aria-labelledby="blog-heading">
 					<div className="mx-auto max-w-7xl">
 						<p className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-emerald-700">Centrum wiedzy Planopii</p>

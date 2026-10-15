@@ -3303,8 +3303,13 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 #planopia-welcome.landing-hero-below-fixed-header,
 #blog-free-app-welcome.landing-hero-below-fixed-header,
 #blog-ai-assistant-welcome.landing-hero-below-fixed-header {
-	/* --lab-h: pasek ogłoszenia nad menu (strona główna), poza nią 0 */
+	/* --lab-h: pasek ogłoszenia nad menu (strony PL), bez niego 0 */
 	margin-top: calc(70px + var(--lab-h, 0px));
+}
+
+/* Hero tuż za .header-fixed-spacer (BlogHeader): pasek jest już wliczony w spacer — inaczej liczyłby się podwójnie */
+.header-fixed-spacer + .landing-hero-below-fixed-header:is(#planopia-welcome, #blog-free-app-welcome, #blog-ai-assistant-welcome) {
+	margin-top: 70px;
 }
 
 /* Wpis /blog/darmowa-aplikacja… — H1 bez „sztucznego” powiększenia z #planopia-welcome; czytelne px */
@@ -3334,7 +3339,7 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 /* Stały nagłówek jak na stronie głównej — wszystkie widoki z id="planopiaheader" */
 #planopiaheader {
 	position: fixed;
-	top: 0;
+	top: var(--lab-h, 0px); /* pod paskiem ogłoszenia, jeśli jest */
 	left: 0;
 	right: 0;
 	z-index: 10000;
@@ -3343,7 +3348,7 @@ div.fc.fc-media-screen.fc-direction-ltr.fc-theme-standard > div.fc-header-toolba
 
 /* BlogHeader + strony bez #planopia-welcome — treść zaczyna się pod fixed header */
 .header-fixed-spacer {
-	height: 70px;
+	height: calc(70px + var(--lab-h, 0px));
 	width: 100%;
 	flex-shrink: 0;
 	pointer-events: none;

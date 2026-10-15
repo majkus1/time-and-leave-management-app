@@ -11,6 +11,8 @@ import { landingChatModulesForUi } from "@/lib/landingChat/modulesForUi";
 import LandingNavigationEffects from "@/components/LandingNavigationEffects";
 import LandingSiteFooter from "@/components/LandingSiteFooter";
 import { ANNOUNCE_DISMISS_SCRIPT } from "@/lib/announcementBar";
+import LandingAnnouncementBar from "@/components/landingHome/LandingAnnouncementBar";
+import { PARTNER_PAGE_PATH, TERMS_LABEL } from "@/data/partnerProgramCopy";
 
 const HOME_META_DESCRIPTION =
   "Planopia łączy ewidencję czasu pracy, urlopy, grafiki i zadania. Zacznij od 30 dni za darmo, bez karty; potem wybierz darmowy plan lub pakiet.";
@@ -115,6 +117,8 @@ export default function PlRootLayout({
       <body
         className={`${titilliumWeb.variable} ${titilliumWeb.className} antialiased`}
       >
+        {/* Ogłoszenie nad menu na wszystkich stronach PL — nagłówki przesuwają się o --lab-h */}
+        <LandingAnnouncementBar href={PARTNER_PAGE_PATH} rate={TERMS_LABEL.initial} />
         <GoogleAnalytics />
         <LandingNavigationEffects />
         {/* Jeden stan czatu dla sekcji na stronie głównej i widgetu na pozostałych stronach */}

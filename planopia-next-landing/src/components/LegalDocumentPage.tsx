@@ -31,7 +31,7 @@ export default function LegalDocumentPage({ documentType, title, lang = 'pl' }: 
 			<>
 				<LegalHeader lang={lang} />
 				<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-					<div className="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl" style={{ marginTop: '50px' }}>
+					<div className="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl" style={{ marginTop: 'calc(50px + var(--lab-h, 0px))' }}>
 						<h1 className="text-2xl font-bold text-red-600 mb-4">
 							{lang === 'en' ? 'Error' : 'Błąd'}
 						</h1>
@@ -107,7 +107,7 @@ export default function LegalDocumentPage({ documentType, title, lang = 'pl' }: 
 		<>
 			<LegalHeader lang={lang} />
 			<div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-				<div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md" style={{ marginTop: '50px' }}>
+				<div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md" style={{ marginTop: 'calc(50px + var(--lab-h, 0px))' }}>
 					<h1 className="text-3xl font-bold text-gray-900 mb-6">{title}</h1>
 					<div className="prose max-w-none">
 						{content && renderMarkdown(content)}

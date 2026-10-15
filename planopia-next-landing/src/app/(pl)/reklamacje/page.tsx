@@ -8,7 +8,7 @@ export default function ReklamacjePage() {
 			<main className="min-h-screen bg-gray-50 pt-8 pb-16 px-4 sm:px-6">
 				<article
 					className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-10 mt-8"
-					style={{ marginTop: '50px' }}
+					style={{ marginTop: 'calc(50px + var(--lab-h, 0px))' }}
 				>
 					<h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reklamacje</h1>
 					<p className="mt-2 text-sm text-gray-500">

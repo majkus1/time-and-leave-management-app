@@ -1,10 +1,10 @@
 /*
- * Pasek ogłoszenia nad menu (strona główna PL). Jest częścią stałego nagłówka — jego wysokość trafia do
- * --lab-h, z którego korzystają reguły zależne od wysokości nagłówka w globals.css (hero, menu mobilne, kotwice).
+ * Pasek ogłoszenia nad menu (wszystkie strony PL, renderowany raz w layoucie). Przyklejony nad stałym nagłówkiem —
+ * jego wysokość trafia do --lab-h, o które globals.css przesuwa nagłówek, odstęp pod nim, hero, menu mobilne i kotwice.
  */
 
 /* Wysokość paska liczy się tylko, gdy pasek jest i nie został zamknięty (bez tego --lab-h = 0) */
-html:not(.lab-off):has(#planopiaheader .lab) {
+html:not(.lab-off):has(.lab) {
 	--lab-h: 38px;
 }
 
@@ -12,13 +12,13 @@ html.lab-off .lab {
 	display: none;
 }
 
-/* Nagłówek ma flex w wierszu — z paskiem układamy go w kolumnie */
-#planopiaheader:has(.lab) {
-	flex-direction: column;
-}
-
+/* z-index jak #planopiaheader (10000) — nad treścią, pod nim nic nie wchodzi, bo nagłówek zaczyna się pod paskiem */
 .lab {
-	position: relative;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 10000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -118,7 +118,7 @@ html.lab-off .lab {
 }
 
 @media (max-width: 760px) {
-	html:not(.lab-off):has(#planopiaheader .lab) {
+	html:not(.lab-off):has(.lab) {
 		--lab-h: 36px;
 	}
 
