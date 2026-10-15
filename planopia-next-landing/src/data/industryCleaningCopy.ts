@@ -65,7 +65,7 @@ export const industryCleaningCopy = {
 		},
 	],
 	ctaTitle: 'Mniej telefonów do ekip. Więcej kontroli nad realizacją pracy.',
-	ctaButton: 'Załóż zespół — 30 dni gratis',
+	ctaButton: 'Załóż darmowy zespół',
 	ctaNote:
 		'Przetestuj pełną Planopię przez 30 dni. Potem możesz zostać na darmowej ewidencji do 5 aktywnych kont lub wybrać plan z grafikami, urlopami, zadaniami, czatem i AI.',
 	blogLinkLabel: 'Poradnik: jak zarządzać firmą sprzątającą',

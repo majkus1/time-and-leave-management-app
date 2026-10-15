@@ -16,6 +16,11 @@ export const industryConstructionCopy: Record<
 		fieldCrewTitle: string
 		fieldCrewLead: string
 		fieldCrewBullets: string[]
+		fieldCrewEyebrow: string
+		fieldCrewNote: string
+		/** QR na placu budowy i wydajność (czynność + ilość) — sekcje z prawdziwymi zrzutami */
+		qrSpot: { eyebrow: string; title: string; lead: string; bullets: string[]; note: string }
+		outputSpot: { eyebrow: string; title: string; lead: string; bullets: string[] }
 		solutionTitle: string
 		solutionIntro: string
 		features: string[]
@@ -38,11 +43,11 @@ export const industryConstructionCopy: Record<
 		heroSub:
 			'Czas pracy, urlopy, grafiki brygad, zadania i czat w jednym miejscu — bez Excela. 30 dni za darmo, potem darmowa ewidencja do 5 osób lub pakiety płatne.',
 		galleryTitle: 'Jak wygląda Planopia w praktyce — zrzuty z aplikacji',
-		videoEyebrow: 'Instrukcja wideo',
-		videoTitle: 'Zobacz Planopię w działaniu',
+		videoEyebrow: 'Instrukcja',
+		videoTitle: 'Jak korzystać z Planopii — krok po kroku',
 		videoBody:
-			'Krótkie nagrania prosto z aplikacji — m.in. jak dodać godziny w ewidencji czasu pracy. Świetny start zaraz po założeniu zespołu.',
-		videoCta: 'Otwórz instrukcję wideo',
+			'Instrukcja obsługi każdego modułu: czas pracy, licznik czasu, dodawanie pracowników, grafiki i urlopy. Dobry start zaraz po założeniu zespołu.',
+		videoCta: 'Otwórz instrukcję',
 		videoHref: '/jak-korzystac',
 		problemsTitle: 'Co najczęściej psuje rozliczenia na budowie?',
 		problems: [
@@ -57,7 +62,34 @@ export const industryConstructionCopy: Record<
 			'Dodawanie pracowników bez dostępu do aplikacji — wliczają się do limitu miejsc, bez hasła i maila z zaproszeniem.',
 			'Ewidencja czasu pracy za ekipę — kalendarz, nadgodziny, raporty PDF i Excel do biura lub klienta.',
 			'Grafiki, urlopy i nieobecności za pracowników terenowych — w planie płatnym (po rozszerzeniu konta).',
+			'Brygadzista wpisuje też czynność i wykonaną ilość — tak samo jak pracownik z kontem.',
 		],
+		fieldCrewEyebrow: 'Pracownicy bez konta',
+		fieldCrewNote:
+			'Włączasz to w Ustawieniach zespołu. Przełożony prowadzi ewidencję osób ze swojego działu, a Administrator i HR — całego zespołu.',
+		qrSpot: {
+			eyebrow: 'QR na placu budowy',
+			title: 'Wejście i wyjście jednym skanem — godziny same trafiają do ewidencji',
+			lead: 'Przy wejściu na budowę wisi kod QR albo stoi tablet. Pracownik skanuje go telefonem na początku i na końcu pracy, a Planopia zapisuje sesję w jego ewidencji — z nazwą budowy.',
+			bullets: [
+				'Osobny kod dla każdej budowy — raport godzin z jednego miejsca do PDF i Excela.',
+				'Kod na tablecie zmienia się co 30 sekund, więc zdjęcie kodu zrobione wcześniej nie zadziała.',
+				'Lokalizacja tylko w chwili skanu: zapisujesz ją, oznaczasz skany poza miejscem albo je blokujesz.',
+				'Bez czytnika i dodatkowego sprzętu — wystarczy telefon pracownika.',
+			],
+			note: 'QR i licznik czasu to moduł „Timer i QR” (w pakiecie PRO albo do planu Core). Kod skanuje pracownik z kontem w aplikacji — za osoby bez konta godziny wpisuje brygadzista.',
+		},
+		outputSpot: {
+			eyebrow: 'Wydajność',
+			title: 'Ile okien, ile metrów tynku — wydajność bez osobnego arkusza',
+			lead: 'Przy sesji pracy albo wpisie brygadzisty zapisujesz czynność i wykonaną ilość. Planopia sumuje godziny i ilości dla każdej czynności i pokazuje wydajność na godzinę.',
+			bullets: [
+				'Czynności z jednostką ustawiasz sam — np. szt., m² albo mb.',
+				'Ilość wpisuje pracownik przy sesji licznika albo brygadzista za ekipę.',
+				'W podsumowaniu miesiąca: godziny, ilość i wydajność na godzinę dla każdej czynności.',
+				'Raport czynności zespołu do Excela i PDF (od planu Core).',
+			],
+		},
 		solutionTitle: 'Planopia dla budowlanki — porządek w jednym miejscu',
 		solutionIntro:
 			'Planopia to nie tylko urlopy i ewidencja — to narzędzie, z którego zespół korzysta codziennie: planuje pracę, komunikuje się i domyka zadania.',
@@ -106,7 +138,7 @@ export const industryConstructionCopy: Record<
 			},
 		],
 		ctaTitle: 'Porządek na budowie i w biurze?',
-		ctaButton: 'Załóż zespół — 30 dni gratis',
+		ctaButton: 'Załóż darmowy zespół',
 		ctaNote:
 			'30 dni pełnej aplikacji; potem darmowa ewidencja (5 kont) lub plan płatny — urlopy, grafik, czat, AI.',
 		blogLinkLabel: 'Przeczytaj artykuł: ewidencja czasu na budowie',
@@ -118,11 +150,11 @@ export const industryConstructionCopy: Record<
 		heroSub:
 			'One app for everyday work: time tracking, leave, crew schedules, task boards, and team chat — without spreadsheets or scattered messages. Start with a 30-day full trial, then free time tracking for up to 5 active accounts or paid plans.',
 		galleryTitle: 'What Planopia looks like — in-app screenshots',
-		videoEyebrow: 'Video tutorials',
-		videoTitle: 'See Planopia in action',
+		videoEyebrow: 'Guide',
+		videoTitle: 'How to use Planopia — step by step',
 		videoBody:
-			'Short clips recorded inside the app — for example, how to add hours in the time log. A great first step right after you create a team.',
-		videoCta: 'Open video tutorials',
+			'A guide to every module: the timesheet, the work timer, adding people, schedules and leave. A good start right after you create your team.',
+		videoCta: 'Open the guide',
 		videoHref: '/en/how-to-use',
 		problemsTitle: 'What usually breaks construction payroll and planning?',
 		problems: [
@@ -137,7 +169,34 @@ export const industryConstructionCopy: Record<
 			'Add employees without app access — they count toward your seat limit, with no password email or login.',
 			'Timesheets on their behalf — monthly calendar, overtime, PDF and Excel exports for the office or client.',
 			'Schedules, leave, and absences for field staff — on paid plans (after upgrading your account).',
+			'The foreman also logs the activity and quantity done — just as an employee with an account would.',
 		],
+		fieldCrewEyebrow: 'Workers without an account',
+		fieldCrewNote:
+			'You switch this on in team settings. A supervisor keeps records for people in their own department; admins and HR for the whole team.',
+		qrSpot: {
+			eyebrow: 'QR on site',
+			title: 'Clock in and out with one scan — hours land in the timesheet',
+			lead: 'A QR code hangs at the site entrance, or a tablet shows it. Workers scan it with their phone at the start and end of work, and Planopia saves the session in their timesheet — with the site name.',
+			bullets: [
+				'A separate code for each site — an hours report for a single site in PDF and Excel.',
+				'The tablet code changes every 30 seconds, so an earlier photo of the code will not work.',
+				'Location only at the moment of the scan: record it, flag off-site scans, or block them.',
+				'No reader or extra hardware — the worker’s phone is enough.',
+			],
+			note: 'QR and the work timer are the “Timer and QR” module (in the PRO package or added to Core). Workers with an app account scan the code — for people without an account the foreman logs the hours.',
+		},
+		outputSpot: {
+			eyebrow: 'Output',
+			title: 'How many windows, how many square metres — output without a separate spreadsheet',
+			lead: 'On a work session or a foreman’s entry you record the activity and the quantity done. Planopia totals hours and quantities per activity and shows output per hour.',
+			bullets: [
+				'You set up activities with a unit — e.g. pcs, m² or metres.',
+				'The quantity is entered by the worker on a timer session or by the foreman for the crew.',
+				'In the monthly summary: hours, quantity and output per hour for each activity.',
+				'A team activity report in Excel and PDF (from the Core plan).',
+			],
+		},
 		solutionTitle: 'Planopia for construction — one place for the team',
 		solutionIntro:
 			'Planopia is not only leave and time tracking — it is a tool your team uses daily to plan work, communicate, and close out jobs.',
@@ -186,7 +245,7 @@ export const industryConstructionCopy: Record<
 			},
 		],
 		ctaTitle: 'Site and office under control?',
-		ctaButton: 'Create your team — 30 days free',
+		ctaButton: 'Create your free team',
 		ctaNote:
 			'30 days full access; then free time tracking (5 accounts) or a paid plan — leave, schedules, chat, AI.',
 		blogLinkLabel: 'Read the article: time tracking on construction sites',

@@ -43,7 +43,7 @@ export const metadata: Metadata = {
 		description: META_DESCRIPTION,
 		images: [
 			{
-				url: '/img/worktimeblog.webp',
+				url: '/img/og/construction-en.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Planopia — construction time tracking',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: META_TITLE,
 		description: META_DESCRIPTION,
-		images: ['/img/worktimeblog.webp'],
+		images: ['/img/og/construction-en.jpg'],
 	},
 	alternates: {
 		canonical: '/en/for-construction-industry',

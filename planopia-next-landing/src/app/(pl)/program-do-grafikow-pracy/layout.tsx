@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'Program do grafików pracy online | Planopia'
 const META_DESCRIPTION =
 	'Program do tworzenia grafików pracy online: zmiany, minimalna obsada, automatyczne wypełnianie z uwzględnieniem urlopów i świąt. 30 dni za darmo.'
-const IMAGE = '/img/aigrafik.webp'
+const IMAGE = '/img/og/grafiki.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1898,
-				height: 910,
+				width: 1200,
+				height: 630,
 				alt: 'Program do grafików pracy Planopia — grafik zespołu',
 			},
 		],

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 		description: META_DESCRIPTION,
 		images: [
 			{
-				url: '/img/plans-urlopnewen.webp',
+				url: '/img/og/leave-en.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Planopia leave management software — calendar and requests',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: META_TITLE,
 		description: META_DESCRIPTION,
-		images: ['/img/plans-urlopnewen.webp'],
+		images: ['/img/og/leave-en.jpg'],
 	},
 	alternates: {
 		canonical: '/en/leave-management-software',

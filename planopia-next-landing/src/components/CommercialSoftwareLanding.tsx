@@ -1,26 +1,46 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
+import './productLanding/productLanding.css'
 import CommercialHighlight from './CommercialHighlight'
-import { LANDING_APP_GALLERY_IMAGES } from '../data/landingAppGallery'
+import { Arrow, BrowserShot, Check, HeroTitle, PhoneShot, splitFeature, type Shot } from './productLanding/parts'
+import { productShots } from '../data/productShots'
 import {
 	CANONICAL,
 	COPY,
 	PRICING_HREF_EN,
 	PRICING_HREF_PL,
 	REGISTER_HREF,
+	UI,
+	type Copy,
 	type Locale,
 	type Variant,
 } from '../data/commercialLandingCopy'
-
+import { LANDING_TRIAL_DAYS, landingTrial } from '../data/landingPlanPricing'
 
 type Props = { variant: Variant; locale: Locale }
 
+function facts(c: Copy, locale: Locale) {
+	const t = UI[locale]
+	const free = c.offerPrice === '0'
+	return [
+		{ value: `${LANDING_TRIAL_DAYS} ${t.factDays}`, label: t.factTrial },
+		free
+			? { value: t.factFreeValue, label: t.factFreeLabel(landingTrial.maxUsers) }
+			: { value: t.factFromValue(c.offerPrice), label: t.factFromLabel },
+		{ value: 'PDF + Excel', label: t.factExport },
+		{ value: t.factMobileValue, label: t.factMobileLabel },
+	]
+}
+
 export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 	const c = COPY[variant][locale]
+	const t = UI[locale]
 	const canonical = CANONICAL[variant][locale]
 	const pricingHref = locale === 'pl' ? PRICING_HREF_PL : PRICING_HREF_EN
 	const siteOrigin = 'https://planopia.pl'
+// Prawdziwe zrzuty modułu: pierwszy w hero, reszta w galerii
+	const { shots, phone } = productShots(variant, locale)
+	const heroShot: Shot = shots[0] ?? { src: c.heroImageSrc, alt: c.heroImageAlt, caption: '', width: 800, height: 533 }
+	const galleryShots = shots.slice(1)
 
 	// Cena idzie z danych wariantu, nie z warunku — inaczej nowa strona po cichu
 	// dziedziczylaby cene 0 zl z galezi `else`, co dla modulu platnego byloby nieprawda.
@@ -41,6 +61,7 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 		inLanguage: locale === 'pl' ? 'pl-PL' : 'en-US',
 		isPartOf: {
 			'@type': 'WebSite',
+			'@id': `${siteOrigin}/#website`,
 			name: 'Planopia',
 			url: siteOrigin,
 			publisher: {
@@ -56,7 +77,7 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 			applicationCategory: 'BusinessApplication',
 			operatingSystem: 'Web',
 			url: siteOrigin,
-			image: `${siteOrigin}${c.heroImageSrc}`,
+			image: `${siteOrigin}${heroShot.src}`,
 			offers: offer,
 		},
 	}
@@ -78,7 +99,7 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 	const faqSchema = {
 		'@context': 'https://schema.org',
 		'@type': 'FAQPage',
-		mainEntity: c.faqs.map((f) => ({
+		mainEntity: c.faqs.map(f => ({
 			'@type': 'Question',
 			name: f.q,
 			acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -91,209 +112,247 @@ export default function CommercialSoftwareLanding({ variant, locale }: Props) {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-			<main className="bg-white overflow-x-hidden">
-				<article className="break-words">
-					<section
-						className="px-4 pt-5 pb-10 md:py-12 bg-gradient-to-r from-blue-50 to-white"
-						aria-labelledby="commercial-hero-heading"
-					>
-						<div className="max-w-7xl mx-auto">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-								<header id="commercial-hero-heading" className="order-2 md:order-1 min-w-0 text-left">
-									{c.heroBadge ? (
-										<a href={c.heroBadge.href} className="commercial-hero-badge">
-											{c.heroBadge.label}
-											<b aria-hidden>→</b>
-										</a>
-									) : null}
-									<p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">{c.eyebrow}</p>
-									<h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 leading-tight">{c.heroH1}</h1>
-									<p className="text-lg text-gray-600 max-w-3xl">{c.heroSub}</p>
-									<div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center">
-										<a
-											href={REGISTER_HREF}
-											className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-green-600 px-6 py-3 text-center text-base font-semibold shadow-md transition hover:bg-green-700 white-text-btn"
-										>
-											{c.ctaButton}
-										</a>
-										<Link
-											href={c.secondaryHref}
-											className="inline-flex min-h-[48px] items-center justify-start px-1 text-left text-base font-semibold text-blue-700 underline-offset-4 hover:text-blue-800 hover:underline sm:px-2"
-										>
-											{c.secondaryLabel}
-										</Link>
-									</div>
-								</header>
-								<div className="order-1 md:order-2 min-w-0">
-									<Image
-										src={c.heroImageSrc}
-										alt={c.heroImageAlt}
-										className="rounded-xl w-full h-auto aspect-[3/2] object-cover"
-										priority
-										sizes="(max-width: 767px) calc(100vw - 2rem), 50vw"
-										width={800}
-										height={533}
-									/>
+			<main className="pdl">
+				<article>
+					{/* Hero */}
+					<section className="pdl-hero" aria-labelledby="commercial-hero-heading">
+						<div className="pdl-wrap pdl-hero__grid">
+							<header id="commercial-hero-heading" className="pdl-hero__copy">
+								{c.heroBadge ? (
+									<a href={c.heroBadge.href} className="pdl-badge">
+										<span className="pdl-badge__dot" />
+										{c.heroBadge.label}
+										<Arrow />
+									</a>
+								) : null}
+								<p className="pdl-pill">
+									<span className="pdl-dot" />
+									{c.eyebrow}
+								</p>
+								<HeroTitle text={c.heroH1} />
+								<p className="pdl-hero__lead">{c.heroSub}</p>
+								<div className="pdl-hero__ctas">
+									<a href={REGISTER_HREF} className="pdl-btn pdl-btn--primary">
+										{c.ctaButton}
+										<Arrow />
+									</a>
+									<Link href={c.secondaryHref} className="pdl-btn pdl-btn--ghost">
+										{c.secondaryLabel}
+									</Link>
 								</div>
+								<ul className="pdl-hero__checks">
+									{t.heroChecks.map(item => (
+										<li key={item}>
+											<Check size={16} />
+											{item}
+										</li>
+									))}
+								</ul>
+							</header>
+							<div className={`pdl-hero__visual${phone ? ' pdl-hero__visual--phone' : ''}`}>
+								<BrowserShot shot={heroShot} priority url="app.planopia.pl" />
+								{phone ? <PhoneShot shot={phone} /> : null}
 							</div>
+						</div>
+					</section>
+
+					{/* Fakty: próba, cena, eksport, telefon */}
+					{/* Pod paskiem faktów od razu ciemna sekcja „Nowość” — tło dociągnięte, żeby nie było białej szczeliny */}
+					<section className={`pdl-facts${c.highlight ? ' pdl-facts--dark' : ''}`} aria-label={t.factsLabel}>
+						<div className="pdl-wrap">
+							<dl className="pdl-facts__grid">
+								{facts(c, locale).map(f => (
+									<div key={f.label} className="pdl-facts__item">
+										<dt className="pdl-facts__value">{f.value}</dt>
+										<dd className="pdl-facts__label">{f.label}</dd>
+									</div>
+								))}
+							</dl>
 						</div>
 					</section>
 
 					{c.highlight ? <CommercialHighlight highlight={c.highlight} /> : null}
 
-					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
-						<section aria-labelledby="problems-heading">
-							<h2 id="problems-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
-								{c.problemsTitle}
-							</h2>
-							<ul className="list-none space-y-3 m-0 p-0">
+					{/* Problem */}
+					<section className="pdl-section pdl-section--paper" aria-labelledby="problems-heading">
+						<div className="pdl-wrap pdl-split">
+							<div>
+								<p className="pdl-eyebrow">{t.eyebrowProblem}</p>
+								<h2 id="problems-heading" className="pdl-h2">
+									{c.problemsTitle}
+								</h2>
+							</div>
+							<ol className="pdl-problems">
 								{c.problems.map((p, i) => (
-									<li
-										key={i}
-										className="flex gap-3 rounded-2xl border border-red-100/90 bg-gradient-to-r from-red-50/90 to-white px-4 py-3.5 text-gray-800 shadow-sm ring-1 ring-red-100/40"
-									>
-										<span className="font-bold text-red-600 shrink-0" aria-hidden>
-											!
-										</span>
-										<span>{p}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section
-							className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-100/80 md:p-8"
-							aria-labelledby="features-heading"
-						>
-							<h2 id="features-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
-								{c.featuresTitle}
-							</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{c.featuresIntro}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
-								{c.features.map((f, i) => (
-									<li
-										key={i}
-										className="flex gap-3 rounded-xl border border-gray-100 bg-slate-50/60 px-4 py-2.5 text-gray-800 shadow-sm"
-									>
-										<span className="text-blue-600 font-bold shrink-0" aria-hidden>
-											✓
-										</span>
-										<span>{f}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<div id="commercial-gallery" className="scroll-mt-24 rounded-2xl border border-gray-100/90 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-7 shadow-sm ring-1 ring-gray-100/70">
-							<LandingAppScreenshotGallery
-								locale={locale}
-								title={c.galleryTitle}
-								images={LANDING_APP_GALLERY_IMAGES}
-								sectionClassName="my-0"
-							/>
-						</div>
-
-						<section aria-labelledby="steps-heading">
-							<h2 id="steps-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
-								{c.stepsTitle}
-							</h2>
-							<ol className="list-none space-y-3 m-0 p-0">
-								{c.steps.map((s, i) => (
-									<li
-										key={i}
-										className="flex gap-4 rounded-2xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/50 to-white px-4 py-3.5 text-gray-800 ring-1 ring-emerald-100/40"
-									>
-										<div
-											className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold !text-white tabular-nums leading-none"
-											aria-hidden
-										>
-											{i + 1}
-										</div>
-										<span className="min-w-0 pt-0.5 leading-relaxed">{s}</span>
+									<li key={p}>
+										<span className="pdl-problems__num">{String(i + 1).padStart(2, '0')}</span>
+										<p className="pdl-problems__text">{p}</p>
 									</li>
 								))}
 							</ol>
-						</section>
+						</div>
+					</section>
 
-						<section
-							className="rounded-2xl border border-blue-100/90 bg-gradient-to-br from-blue-50/90 via-white to-emerald-50/40 p-6 shadow-md ring-1 ring-blue-100/60 md:p-8"
-							aria-labelledby="pricing-heading"
-						>
-							<h2 id="pricing-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
-								{c.pricingTitle}
-							</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{c.pricingIntro}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-800">
-								{c.pricingBullets.map((b, i) => (
-									<li key={i} className="flex gap-3 rounded-xl border border-blue-100/70 bg-white/80 px-4 py-2.5 shadow-sm">
-										<span className="text-emerald-600 font-bold shrink-0" aria-hidden>
-											✓
-										</span>
-										<span>{b}</span>
+					{/* Funkcje */}
+					<section className="pdl-section" aria-labelledby="features-heading">
+						<div className="pdl-wrap">
+							<div className="pdl-head">
+								<p className="pdl-eyebrow">{t.eyebrowFeatures}</p>
+								<h2 id="features-heading" className="pdl-h2">
+									{c.featuresTitle}
+								</h2>
+								<p className="pdl-lead">{c.featuresIntro}</p>
+							</div>
+							<ul className="pdl-features">
+								{c.features.map(f => {
+									const { title, text } = splitFeature(f)
+									return (
+										<li key={f} className="pdl-feature">
+											<span className="pdl-feature__icon">
+												<Check />
+											</span>
+											{title ? <h3 className="pdl-feature__title">{title}</h3> : null}
+											<p className="pdl-feature__text">{text}</p>
+										</li>
+									)
+								})}
+							</ul>
+						</div>
+					</section>
+
+					{/* Zrzuty z aplikacji */}
+					<section id="commercial-gallery" className="pdl-section pdl-section--dark" aria-labelledby="gallery-heading">
+						<div className="pdl-wrap">
+							<div className="pdl-head">
+								<p className="pdl-eyebrow">{t.eyebrowGallery}</p>
+								<h2 id="gallery-heading" className="pdl-h2">
+									{c.galleryTitle}
+								</h2>
+							</div>
+							{galleryShots.length ? (
+								<div className="pdl-gallery">
+									{galleryShots.map(s => (
+										<figure key={s.src} className="pdl-gallery__item">
+											<BrowserShot shot={s} url="app.planopia.pl" />
+											{s.caption ? <figcaption className="pdl-gallery__caption">{s.caption}</figcaption> : null}
+										</figure>
+									))}
+								</div>
+							) : (
+								<div className="pdl-gallery pdl-gallery--single">
+									<figure className="pdl-gallery__item">
+										<BrowserShot shot={heroShot} url="app.planopia.pl" />
+									</figure>
+								</div>
+							)}
+						</div>
+					</section>
+
+					{/* Jak zacząć */}
+					<section className="pdl-section pdl-section--paper" aria-labelledby="steps-heading">
+						<div className="pdl-wrap">
+							<div className="pdl-head">
+								<p className="pdl-eyebrow">{t.eyebrowSteps}</p>
+								<h2 id="steps-heading" className="pdl-h2">
+									{c.stepsTitle}
+								</h2>
+							</div>
+							<ol className="pdl-steps">
+								{c.steps.map((s, i) => (
+									<li key={s} className="pdl-step">
+										<span className="pdl-step__num">{String(i + 1).padStart(2, '0')}</span>
+										<p className="pdl-step__text">{s}</p>
 									</li>
 								))}
-							</ul>
-							<p className="text-sm text-gray-500 mt-4 leading-relaxed">{c.pricingNote}</p>
-							<div className="mt-5">
-								<Link
-									href={pricingHref}
-									className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-blue-600 px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
-								>
+							</ol>
+						</div>
+					</section>
+
+					{/* Cennik */}
+					<section className="pdl-section" aria-labelledby="pricing-heading">
+						<div className="pdl-wrap pdl-pricing">
+							<div>
+								<p className="pdl-eyebrow">{t.eyebrowPricing}</p>
+								<h2 id="pricing-heading" className="pdl-h2">
+									{c.pricingTitle}
+								</h2>
+								<p className="pdl-lead">{c.pricingIntro}</p>
+								<Link href={pricingHref} className="pdl-link">
 									{c.pricingCtaLabel}
+									<Arrow />
 								</Link>
 							</div>
-						</section>
+							<div className="pdl-pricing__card">
+								<ul className="pdl-pricing__list">
+									{c.pricingBullets.map(b => (
+										<li key={b}>
+											<span className="pdl-pricing__icon">
+												<Check size={14} />
+											</span>
+											<span>{b}</span>
+										</li>
+									))}
+								</ul>
+								<p className="pdl-pricing__note">{c.pricingNote}</p>
+							</div>
+						</div>
+					</section>
 
-						<section aria-labelledby="faq-heading">
-							<h2 id="faq-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-6">
-								{c.faqTitle}
-							</h2>
-							<div className="space-y-4 md:space-y-5">
+					{/* FAQ */}
+					<section className="pdl-section pdl-section--paper" aria-labelledby="faq-heading">
+						<div className="pdl-wrap pdl-faq">
+							<div className="pdl-faq__aside">
+								<p className="pdl-eyebrow">FAQ</p>
+								<h2 id="faq-heading" className="pdl-h2">
+									{c.faqTitle}
+								</h2>
+							</div>
+							<div className="pdl-faq__list">
 								{c.faqs.map((f, i) => (
-									<div key={i} className="rounded-2xl border border-gray-100 bg-white p-5 md:p-6 shadow-sm ring-1 ring-gray-100/80">
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
-										<p className="text-gray-700 m-0 leading-relaxed">{f.a}</p>
-									</div>
+									<details key={f.q} className="pdl-faq__item" open={i === 0}>
+										<summary>
+											<h3 className="pdl-faq__q">{f.q}</h3>
+											<span className="pdl-faq__icon" aria-hidden="true" />
+										</summary>
+										<p className="pdl-faq__a">{f.a}</p>
+									</details>
 								))}
 							</div>
-						</section>
+						</div>
+					</section>
 
-						<section aria-labelledby="commercial-cta-heading">
-							<div className="text-center bg-gradient-to-br from-blue-50 via-white to-emerald-50/90 p-6 sm:p-9 rounded-2xl shadow-md ring-1 ring-blue-100/60">
-								<h2
-									id="commercial-cta-heading"
-									className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug"
-								>
+					{/* Wezwanie do działania */}
+					<section className="pdl-cta" aria-labelledby="commercial-cta-heading">
+						<div className="pdl-wrap pdl-cta__inner">
+							<div>
+								<h2 id="commercial-cta-heading" className="pdl-cta__title">
 									{c.ctaTitle}
 								</h2>
-								<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-3xl mx-auto leading-snug sm:leading-relaxed m-0">
-									{c.ctaNote}
-								</p>
-								<a
-									href={REGISTER_HREF}
-									className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn text-center max-w-full"
-								>
-									{c.ctaButton}
-								</a>
+								<p className="pdl-cta__note">{c.ctaNote}</p>
 							</div>
-						</section>
+							<a href={REGISTER_HREF} className="pdl-btn pdl-btn--primary pdl-cta__btn">
+								{c.ctaButton}
+								<Arrow />
+							</a>
+						</div>
+					</section>
 
-						<nav className="border-t border-slate-200 pt-8" aria-label={c.relatedTitle}>
-							<p className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">{c.relatedTitle}</p>
-							<ul className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
-								{c.related.map((r) => (
+					{/* Powiązane */}
+					<nav className="pdl-related" aria-label={c.relatedTitle}>
+						<div className="pdl-wrap">
+							<p className="pdl-related__title">{c.relatedTitle}</p>
+							<ul className="pdl-related__list">
+								{c.related.map(r => (
 									<li key={r.href}>
-										<Link
-											href={r.href}
-											className="inline-flex items-center rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 transition"
-										>
+										<Link href={r.href}>
 											{r.label}
+											<Arrow />
 										</Link>
 									</li>
 								))}
 							</ul>
-						</nav>
-					</div>
+						</div>
+					</nav>
 				</article>
 			</main>
 		</>

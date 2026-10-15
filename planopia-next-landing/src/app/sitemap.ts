@@ -284,7 +284,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
 
-    // Blog — video tutorials / user guide
+    // Instrukcja obsługi (dawniej wideo — przekierowanie na /jak-korzystac)
     {
       url: 'https://planopia.pl/jak-korzystac',
       lastModified: new Date(),

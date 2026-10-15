@@ -35,8 +35,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: 'https://planopia.pl/img/headerimage.png',
-				width: 1200,
-				height: 630,
+				width: 1024,
+				height: 722,
 				alt: 'Privacy Policy - Planopia.pl',
 			},
 		],

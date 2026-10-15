@@ -1,0 +1,1174 @@
+/*
+ * Strony produktowe (/program-do-urlopow, /program-do-ewidencji-czasu-pracy, …) — ten sam język wizualny
+ * co /program-partnerski. Wszystko pod .pdl: globals.css wymusza h1–h6 18px, p/span 16px i kolor #213555
+ * z !important, więc typografia tutaj też idzie z !important i wyższą specyficznością.
+ */
+
+.pdl {
+	--pdl-ink: #0b1d36;
+	--pdl-navy: #0b1f3d;
+	--pdl-paper: #f5f3ed;
+	--pdl-paper-2: #ece8de;
+	--pdl-line: rgba(11, 29, 54, 0.12);
+	--pdl-line-dark: rgba(255, 255, 255, 0.14);
+	--pdl-muted: #4d5d75;
+	--pdl-muted-dark: rgba(255, 255, 255, 0.74);
+	--pdl-green: #00a63e;
+	--pdl-green-d: #008a3a;
+	--pdl-green-l: #3fd987;
+	--pdl-mint: #e3f5ea;
+	--pdl-gutter: clamp(16px, 4vw, 32px);
+	--pdl-font: var(--font-titillium-web), 'Titillium Web', system-ui, sans-serif;
+	background: #fff;
+	color: var(--pdl-ink);
+	font-family: var(--pdl-font);
+	overflow-x: clip;
+}
+
+.pdl *,
+.pdl *::before,
+.pdl *::after {
+	box-sizing: border-box;
+}
+
+.pdl h1,
+.pdl h2,
+.pdl h3,
+.pdl p,
+.pdl span,
+.pdl li,
+.pdl dt,
+.pdl dd,
+.pdl summary {
+	font-family: var(--pdl-font) !important;
+	font-size: inherit !important;
+	color: inherit !important;
+}
+
+/* Resety przez :where — zerowa specyficzność, klasy komponentu zawsze wygrywają */
+:where(.pdl) :where(h1, h2, h3, p, ul, ol, dl, dt, dd, figure) {
+	margin: 0;
+	padding: 0;
+}
+
+:where(.pdl) :where(ul, ol) {
+	list-style: none;
+}
+
+.pdl a {
+	color: inherit;
+}
+
+.pdl-wrap {
+	width: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 var(--pdl-gutter);
+}
+
+/* ---------- Przyciski i linki ---------- */
+
+.pdl .pdl-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	min-height: 54px;
+	padding: 0 24px;
+	border-radius: 10px;
+	font-size: 17px !important;
+	font-weight: 700;
+	text-decoration: none;
+	text-align: center;
+	transition:
+		background-color 0.18s ease,
+		border-color 0.18s ease;
+}
+
+.pdl .pdl-btn svg {
+	flex: none;
+	transition: transform 0.18s ease;
+}
+
+.pdl .pdl-btn:hover svg {
+	transform: translateX(3px);
+}
+
+.pdl a:focus-visible,
+.pdl summary:focus-visible {
+	outline: 3px solid var(--pdl-green-l);
+	outline-offset: 3px;
+}
+
+.pdl a.pdl-btn--primary {
+	background: var(--pdl-green);
+	border: 1px solid var(--pdl-green);
+	color: #fff !important;
+}
+
+.pdl a.pdl-btn--primary:hover {
+	background: var(--pdl-green-d);
+	border-color: var(--pdl-green-d);
+}
+
+.pdl a.pdl-btn--ghost {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	color: #fff !important;
+}
+
+.pdl a.pdl-btn--ghost:hover {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.55);
+}
+
+.pdl a.pdl-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 28px;
+	padding-bottom: 4px;
+	border-bottom: 2px solid var(--pdl-green);
+	font-size: 17px !important;
+	font-weight: 700;
+	color: var(--pdl-ink) !important;
+	text-decoration: none;
+}
+
+.pdl a.pdl-link:hover {
+	color: var(--pdl-green-d) !important;
+}
+
+/* ---------- Nagłówki sekcji ---------- */
+
+.pdl .pdl-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 13px !important;
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--pdl-green-d) !important;
+}
+
+.pdl .pdl-eyebrow::after {
+	content: '';
+	width: 32px;
+	height: 1px;
+	background: currentColor;
+	opacity: 0.6;
+}
+
+.pdl .pdl-h2 {
+	margin-top: 14px;
+	font-size: clamp(1.85rem, 1.25rem + 2.2vw, 3rem) !important;
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+	font-weight: 700;
+	color: var(--pdl-ink) !important;
+	text-wrap: balance;
+}
+
+.pdl .pdl-lead {
+	margin-top: 18px;
+	max-width: 42em;
+	font-size: clamp(1.05rem, 1rem + 0.25vw, 1.18rem) !important;
+	line-height: 1.6;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl-head {
+	max-width: 800px;
+	margin-bottom: clamp(32px, 4.5vw, 56px);
+}
+
+.pdl-section {
+	padding: clamp(64px, 8.5vw, 120px) 0;
+}
+
+.pdl-section--paper {
+	background: var(--pdl-paper);
+}
+
+.pdl-section--dark {
+	background: var(--pdl-navy);
+	color: #fff;
+}
+
+.pdl .pdl-section--dark .pdl-h2 {
+	color: #fff !important;
+}
+
+.pdl .pdl-section--dark .pdl-eyebrow {
+	color: var(--pdl-green-l) !important;
+}
+
+/* ---------- Hero ---------- */
+
+.pdl-hero {
+	position: relative;
+	isolation: isolate;
+	background: var(--pdl-navy);
+	color: #fff;
+	padding: clamp(40px, 6vw, 88px) 0 clamp(120px, 12vw, 160px);
+	overflow: hidden;
+}
+
+/* Drobna siatka wygaszana ku krawędziom */
+.pdl-hero::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background-image:
+		linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+	background-size: 56px 56px;
+	-webkit-mask-image: radial-gradient(ellipse 80% 70% at 72% 35%, #000 20%, transparent 75%);
+	mask-image: radial-gradient(ellipse 80% 70% at 72% 35%, #000 20%, transparent 75%);
+}
+
+.pdl-hero__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+	gap: clamp(36px, 5vw, 72px);
+	align-items: center;
+}
+
+.pdl-hero__copy {
+	min-width: 0;
+}
+
+.pdl .pdl-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 14px 7px 12px;
+	border: 1px solid var(--pdl-line-dark);
+	border-radius: 999px;
+	font-size: 13px !important;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.pdl-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--pdl-green-l);
+	box-shadow: 0 0 0 4px rgba(63, 217, 135, 0.18);
+}
+
+.pdl a.pdl-badge {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: fit-content;
+	max-width: 100%;
+	margin-bottom: 18px;
+	padding: 8px 14px;
+	border-radius: 10px;
+	background: rgba(63, 217, 135, 0.12);
+	border: 1px solid rgba(63, 217, 135, 0.35);
+	font-size: 14px !important;
+	font-weight: 700;
+	color: var(--pdl-green-l) !important;
+	text-decoration: none;
+}
+
+.pdl a.pdl-badge:hover {
+	background: rgba(63, 217, 135, 0.2);
+}
+
+.pdl-badge__dot {
+	flex: none;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--pdl-green-l);
+}
+
+.pdl .pdl-hero__title {
+	margin-top: 24px;
+	font-size: clamp(2.1rem, 1.2rem + 2.5vw, 3.25rem) !important;
+	line-height: 1.04;
+	letter-spacing: -0.035em;
+	font-weight: 700;
+	color: #fff !important;
+	text-wrap: balance;
+}
+
+/* Myślnik zostaje w treści nagłówka (SEO), ale dopowiedzenie przechodzi do nowej linii */
+.pdl .pdl-hero__dash {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.pdl .pdl-hero__accent {
+	display: block;
+	margin-top: 6px;
+	color: var(--pdl-green-l) !important;
+}
+
+.pdl .pdl-hero__lead {
+	margin-top: 24px;
+	max-width: 36em;
+	font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem) !important;
+	line-height: 1.6;
+	color: var(--pdl-muted-dark) !important;
+}
+
+.pdl-hero__ctas {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 32px;
+}
+
+.pdl-hero__checks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px 22px;
+	margin-top: 26px;
+}
+
+.pdl .pdl-hero__checks li {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 15px !important;
+	color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.pdl-hero__checks svg {
+	flex: none;
+	color: var(--pdl-green-l);
+}
+
+.pdl-hero__visual {
+	position: relative;
+	min-width: 0;
+}
+
+/* Telefon nachodzi na prawy dolny róg zrzutu — miejsce zostawia padding */
+.pdl-hero__visual--phone {
+	padding: 0 44px 56px 0;
+}
+
+.pdl-phone {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: clamp(112px, 12vw, 160px);
+	aspect-ratio: 9 / 17;
+	padding: 6px;
+	border-radius: 26px;
+	background: #0b1324;
+	overflow: hidden;
+	box-shadow:
+		0 34px 60px -18px rgba(0, 0, 0, 0.65),
+		0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.pdl-phone__img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top;
+	border-radius: 20px;
+	background: #fff;
+}
+
+/* ---------- Ramka przeglądarki ze zrzutem ---------- */
+
+.pdl-browser {
+	border-radius: 14px;
+	background: #fff;
+	overflow: hidden;
+	box-shadow:
+		0 50px 90px -40px rgba(0, 0, 0, 0.65),
+		0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.pdl-browser__bar {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 10px 14px;
+	background: #f2f4f8;
+	border-bottom: 1px solid var(--pdl-line);
+}
+
+.pdl-browser__bar i {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: rgba(11, 29, 54, 0.16);
+}
+
+.pdl .pdl-browser__url {
+	margin-left: 10px;
+	padding: 2px 12px;
+	border-radius: 6px;
+	background: #fff;
+	border: 1px solid var(--pdl-line);
+	font-size: 12px !important;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl-browser__img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* ---------- Fakty (nachodzą na hero) ---------- */
+
+/* Pasek nachodzi na hero; pod nim od razu tło następnej sekcji, bez białej szczeliny */
+.pdl-facts {
+	--pdl-overlap: clamp(80px, 8vw, 104px);
+	position: relative;
+	z-index: 2;
+	margin-top: calc(-1 * var(--pdl-overlap));
+	background: linear-gradient(180deg, transparent var(--pdl-overlap), var(--pdl-paper) var(--pdl-overlap));
+}
+
+/* Strona QR: pod paskiem ciemna sekcja „Nowość” */
+.pdl-facts--dark {
+	background: linear-gradient(180deg, transparent var(--pdl-overlap), #0b1f40 var(--pdl-overlap));
+}
+
+.pdl-facts__grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	background: #fff;
+	border-radius: 20px;
+	box-shadow:
+		0 36px 70px -36px rgba(11, 29, 54, 0.45),
+		0 0 0 1px var(--pdl-line);
+}
+
+.pdl-facts__item {
+	padding: clamp(20px, 2.4vw, 30px);
+	border-left: 1px solid var(--pdl-line);
+	min-width: 0;
+}
+
+.pdl-facts__item:first-child {
+	border-left: 0;
+}
+
+.pdl .pdl-facts__value {
+	display: block;
+	font-size: clamp(1.7rem, 1.2rem + 1.5vw, 2.5rem) !important;
+	line-height: 1.05;
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	color: var(--pdl-ink) !important;
+	white-space: nowrap;
+}
+
+.pdl .pdl-facts__item:first-child .pdl-facts__value {
+	color: var(--pdl-green) !important;
+}
+
+.pdl .pdl-facts__label {
+	display: block;
+	margin-top: 8px;
+	font-size: 14.5px !important;
+	line-height: 1.45;
+	color: var(--pdl-muted) !important;
+}
+
+/* ---------- Problem ---------- */
+
+.pdl-split {
+	display: grid;
+	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+	gap: clamp(32px, 6vw, 88px);
+	align-items: start;
+}
+
+.pdl-problems {
+	border-top: 1px solid var(--pdl-line);
+}
+
+.pdl-problems li {
+	display: grid;
+	grid-template-columns: 56px minmax(0, 1fr);
+	gap: 12px;
+	padding: 24px 0;
+	border-bottom: 1px solid var(--pdl-line);
+}
+
+.pdl .pdl-problems__num {
+	font-size: 15px !important;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: #b4532a !important;
+	font-variant-numeric: tabular-nums;
+	padding-top: 2px;
+}
+
+.pdl .pdl-problems__text {
+	font-size: clamp(1.05rem, 1rem + 0.3vw, 1.22rem) !important;
+	line-height: 1.5;
+	font-weight: 600;
+	color: var(--pdl-ink) !important;
+}
+
+/* ---------- Funkcje ---------- */
+
+.pdl-features {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.pdl-feature {
+	display: flex;
+	flex-direction: column;
+	padding: 26px 24px 28px;
+	border: 1px solid var(--pdl-line);
+	border-radius: 18px;
+	background: #fff;
+	min-width: 0;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.pdl-feature:hover {
+	border-color: rgba(0, 166, 62, 0.45);
+	box-shadow: 0 24px 48px -32px rgba(11, 29, 54, 0.35);
+}
+
+.pdl .pdl-feature__icon {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 12px;
+	background: var(--pdl-mint);
+	color: var(--pdl-green-d) !important;
+}
+
+.pdl .pdl-feature__title {
+	margin-top: 18px;
+	font-size: 1.15rem !important;
+	line-height: 1.3;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.pdl .pdl-feature__text {
+	margin-top: 8px;
+	font-size: 15.5px !important;
+	line-height: 1.6;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl .pdl-feature__title + .pdl-feature__text {
+	margin-top: 8px;
+}
+
+.pdl .pdl-feature__icon + .pdl-feature__text {
+	margin-top: 18px;
+	color: var(--pdl-ink) !important;
+	font-weight: 600;
+}
+
+/* ---------- Galeria ---------- */
+
+.pdl-gallery {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: clamp(20px, 3vw, 36px);
+}
+
+.pdl-gallery--single {
+	grid-template-columns: minmax(0, 1fr);
+	max-width: 980px;
+}
+
+.pdl-gallery__item {
+	min-width: 0;
+}
+
+.pdl-gallery__item:first-child:nth-last-child(odd) {
+	grid-column: 1 / -1;
+}
+
+.pdl .pdl-gallery__caption {
+	margin-top: 14px;
+	font-size: 15px !important;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* ---------- Kroki ---------- */
+
+.pdl-steps {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 28px;
+}
+
+.pdl-step {
+	position: relative;
+	min-width: 0;
+}
+
+/* Łącznik od numeru do następnego kroku */
+.pdl-step:not(:last-child)::after {
+	content: '';
+	position: absolute;
+	top: 26px;
+	left: 64px;
+	right: -18px;
+	height: 1px;
+	background: repeating-linear-gradient(90deg, rgba(11, 29, 54, 0.35) 0 6px, transparent 6px 12px);
+}
+
+.pdl .pdl-step__num {
+	display: grid;
+	place-items: center;
+	width: 52px;
+	height: 52px;
+	border-radius: 50%;
+	border: 1px solid var(--pdl-ink);
+	background: var(--pdl-paper);
+	font-size: 16px !important;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.pdl .pdl-step:last-child .pdl-step__num {
+	background: var(--pdl-green);
+	border-color: var(--pdl-green);
+	color: #fff !important;
+}
+
+.pdl .pdl-step__text {
+	margin-top: 22px;
+	font-size: 1.12rem !important;
+	line-height: 1.5;
+	font-weight: 600;
+}
+
+/* ---------- Cennik ---------- */
+
+.pdl-pricing {
+	display: grid;
+	grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+	gap: clamp(32px, 6vw, 88px);
+	align-items: center;
+}
+
+.pdl-pricing__card {
+	padding: clamp(24px, 3.5vw, 44px);
+	border-radius: 22px;
+	background: var(--pdl-navy);
+	color: #fff;
+	box-shadow: 0 40px 80px -48px rgba(11, 29, 54, 0.6);
+	min-width: 0;
+}
+
+.pdl-pricing__list {
+	display: grid;
+	gap: 18px;
+}
+
+.pdl .pdl-pricing__list li {
+	display: grid;
+	grid-template-columns: 26px minmax(0, 1fr);
+	gap: 14px;
+	font-size: 16.5px !important;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.pdl-pricing__icon {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	margin-top: 1px;
+	border-radius: 50%;
+	background: var(--pdl-green);
+}
+
+.pdl .pdl-pricing__icon {
+	color: #fff !important;
+}
+
+.pdl .pdl-pricing__note {
+	margin-top: 26px;
+	padding-top: 22px;
+	border-top: 1px solid var(--pdl-line-dark);
+	font-size: 14px !important;
+	line-height: 1.6;
+	color: rgba(255, 255, 255, 0.62) !important;
+}
+
+/* ---------- FAQ ---------- */
+
+.pdl-faq {
+	display: grid;
+	grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+	gap: clamp(32px, 6vw, 88px);
+	align-items: start;
+}
+
+.pdl-faq__aside {
+	position: sticky;
+	top: 110px;
+}
+
+.pdl-faq__list {
+	border-top: 1px solid var(--pdl-line);
+}
+
+.pdl-faq__item {
+	border-bottom: 1px solid var(--pdl-line);
+}
+
+.pdl .pdl-faq__item summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	padding: 22px 0;
+	cursor: pointer;
+	list-style: none;
+}
+
+.pdl-faq__item summary::-webkit-details-marker {
+	display: none;
+}
+
+.pdl .pdl-faq__q {
+	font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem) !important;
+	line-height: 1.35;
+	font-weight: 700;
+	color: var(--pdl-ink) !important;
+}
+
+.pdl-faq__icon {
+	position: relative;
+	flex: none;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 1px solid var(--pdl-line);
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		transform 0.25s ease;
+}
+
+.pdl-faq__icon::before,
+.pdl-faq__icon::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 12px;
+	height: 2px;
+	border-radius: 2px;
+	background: var(--pdl-ink);
+	transform: translate(-50%, -50%);
+}
+
+.pdl-faq__icon::after {
+	transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.pdl-faq__item[open] .pdl-faq__icon {
+	transform: rotate(45deg);
+	background: var(--pdl-green);
+	border-color: var(--pdl-green);
+}
+
+.pdl-faq__item[open] .pdl-faq__icon::before,
+.pdl-faq__item[open] .pdl-faq__icon::after {
+	background: #fff;
+}
+
+.pdl .pdl-faq__a {
+	max-width: 64ch;
+	padding: 0 52px 24px 0;
+	font-size: 16px !important;
+	line-height: 1.65;
+	color: var(--pdl-muted) !important;
+}
+
+/* ---------- CTA i powiązane ---------- */
+
+.pdl-cta {
+	position: relative;
+	isolation: isolate;
+	padding: clamp(56px, 7vw, 96px) 0;
+	background: var(--pdl-navy);
+	color: #fff;
+	overflow: hidden;
+}
+
+.pdl-cta::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background-image:
+		linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+	background-size: 48px 48px;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 60%);
+	mask-image: linear-gradient(90deg, transparent, #000 60%);
+}
+
+.pdl-cta__inner {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 32px;
+	align-items: center;
+}
+
+.pdl .pdl-cta__title {
+	font-size: clamp(1.75rem, 1.2rem + 2vw, 2.75rem) !important;
+	line-height: 1.1;
+	letter-spacing: -0.03em;
+	font-weight: 700;
+	color: #fff !important;
+	text-wrap: balance;
+}
+
+.pdl .pdl-cta__note {
+	margin-top: 14px;
+	max-width: 44em;
+	font-size: 17px !important;
+	line-height: 1.6;
+	color: var(--pdl-muted-dark) !important;
+}
+
+.pdl-related {
+	padding: 44px 0 56px;
+	background: #fff;
+}
+
+.pdl .pdl-related__title {
+	font-size: 13px !important;
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl-related__list {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0 32px;
+	margin-top: 16px;
+	border-top: 1px solid var(--pdl-line);
+}
+
+.pdl .pdl-related__list a {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 15px 0;
+	border-bottom: 1px solid var(--pdl-line);
+	font-size: 16px !important;
+	font-weight: 600;
+	color: var(--pdl-ink) !important;
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+
+.pdl .pdl-related__list a:hover {
+	color: var(--pdl-green-d) !important;
+}
+
+.pdl-related__list svg {
+	flex: none;
+	color: var(--pdl-green);
+}
+
+/* ---------- Responsywność ---------- */
+
+@media (max-width: 1080px) {
+	.pdl-features {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.pdl-related__list {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 960px) {
+	.pdl-hero__grid,
+	.pdl-split,
+	.pdl-pricing,
+	.pdl-faq,
+	.pdl-cta__inner {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.pdl-hero__visual {
+		max-width: 680px;
+	}
+
+	.pdl-facts__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.pdl-facts__item:nth-child(3) {
+		border-left: 0;
+	}
+
+	.pdl-facts__item:nth-child(n + 3) {
+		border-top: 1px solid var(--pdl-line);
+	}
+
+	.pdl-faq__aside {
+		position: static;
+	}
+
+	.pdl-gallery {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 640px) {
+	.pdl .pdl-btn {
+		width: 100%;
+	}
+
+	.pdl-hero__ctas {
+		flex-direction: column;
+	}
+
+	.pdl-features,
+	.pdl-related__list {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.pdl-facts__item {
+		padding: 18px 16px;
+	}
+
+	.pdl .pdl-facts__label {
+		font-size: 13.5px !important;
+	}
+
+	.pdl-steps {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0;
+	}
+
+	/* Telefon: oś pionowa */
+	.pdl-step {
+		display: grid;
+		grid-template-columns: 52px minmax(0, 1fr);
+		column-gap: 18px;
+		align-items: start;
+		padding-bottom: 28px;
+	}
+
+	.pdl-step:not(:last-child)::after {
+		top: 52px;
+		bottom: 0;
+		left: 26px;
+		right: auto;
+		width: 1px;
+		height: auto;
+		background: repeating-linear-gradient(180deg, rgba(11, 29, 54, 0.35) 0 6px, transparent 6px 12px);
+	}
+
+	.pdl .pdl-step__text {
+		margin-top: 12px;
+	}
+
+	.pdl .pdl-faq__a {
+		padding-right: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pdl *,
+	.pdl *::before,
+	.pdl *::after {
+		transition: none !important;
+	}
+}
+
+/* ---------- Strony branżowe: ilustracja w hero ---------- */
+
+.pdl-illustration {
+	border-radius: 22px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow:
+		0 50px 90px -40px rgba(0, 0, 0, 0.65),
+		0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.pdl-illustration__img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* ---------- Najważniejsze funkcje (tekst + zrzut naprzemiennie) ---------- */
+
+.pdl-spot__grid {
+	display: grid;
+	grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+	gap: clamp(32px, 5.5vw, 80px);
+	align-items: center;
+}
+
+.pdl-spot--flip .pdl-spot__copy {
+	order: 2;
+}
+
+.pdl-spot__copy {
+	min-width: 0;
+}
+
+.pdl .pdl-spot__num {
+	font-variant-numeric: tabular-nums;
+	color: var(--pdl-ink) !important;
+	opacity: 0.45;
+}
+
+.pdl-spot__list {
+	display: grid;
+	gap: 14px;
+	margin-top: 28px;
+}
+
+.pdl .pdl-spot__list li {
+	display: grid;
+	grid-template-columns: 26px minmax(0, 1fr);
+	gap: 12px;
+	font-size: 16.5px !important;
+	line-height: 1.55;
+	color: var(--pdl-ink) !important;
+}
+
+.pdl .pdl-spot__icon {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	margin-top: 1px;
+	border-radius: 50%;
+	background: var(--pdl-mint);
+	color: var(--pdl-green-d) !important;
+}
+
+.pdl .pdl-spot__note {
+	margin-top: 22px;
+	padding: 14px 16px;
+	border-radius: 12px;
+	border: 1px dashed rgba(11, 29, 54, 0.22);
+	font-size: 14.5px !important;
+	line-height: 1.55;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl-spot__visual {
+	min-width: 0;
+}
+
+/* Pionowy zrzut (formularz) — węższa ramka, żeby nie dominował sekcji */
+.pdl-spot__visual--tall {
+	max-width: 440px;
+	justify-self: center;
+	width: 100%;
+}
+
+.pdl-ai-visual {
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow:
+		0 40px 80px -48px rgba(11, 29, 54, 0.55),
+		0 0 0 1px var(--pdl-line);
+	background: #fff;
+}
+
+/* ---------- Karta instrukcji ---------- */
+
+.pdl-guide {
+	padding: 48px 0 64px;
+	background: #fff;
+}
+
+.pdl-guide__card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 24px 40px;
+	align-items: center;
+	padding: clamp(24px, 3.5vw, 40px);
+	border-radius: 20px;
+	background: var(--pdl-paper);
+	border: 1px solid var(--pdl-line);
+}
+
+.pdl .pdl-guide__title {
+	margin-top: 12px;
+	font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem) !important;
+	line-height: 1.2;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--pdl-ink) !important;
+}
+
+.pdl .pdl-guide__body {
+	margin-top: 10px;
+	max-width: 52em;
+	font-size: 16px !important;
+	line-height: 1.6;
+	color: var(--pdl-muted) !important;
+}
+
+.pdl a.pdl-guide__link {
+	margin-top: 0;
+	white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+	.pdl-spot__grid,
+	.pdl-guide__card {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.pdl-spot--flip .pdl-spot__copy {
+		order: 0;
+	}
+}
+
+/* Ostatnia karta funkcji sama w rzędzie — rozciągnięta, żeby siatka nie miała dziury */
+@media (min-width: 1081px) {
+	.pdl-feature:last-child:nth-child(3n + 1) {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (min-width: 641px) and (max-width: 1080px) {
+	.pdl-feature:last-child:nth-child(2n + 1) {
+		grid-column: 1 / -1;
+	}
+}

@@ -40,9 +40,9 @@ export const metadata: Metadata = {
 		description: META_DESCRIPTION,
 		images: [
 			{
-				url: '/img/headerimage.png',
-				width: 1024,
-				height: 722,
+				url: '/img/og/home-pl.jpg',
+				width: 1200,
+				height: 630,
 				alt: 'Planopia — ewidencja czasu pracy, urlopy i grafiki',
 			},
 		],
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: META_TITLE,
 		description: META_DESCRIPTION,
-		images: ['/img/headerimage.png'],
+		images: ['/img/og/home-pl.jpg'],
 	},
 }
 

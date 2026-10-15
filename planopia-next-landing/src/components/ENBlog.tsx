@@ -170,23 +170,23 @@ function ENBlog() {
 							</Link>
 						</div>
 
-						{/* Article card — video tutorials */}
+						{/* Article card — user guide */}
 						<div className="bg-gray-50 rounded-xl shadow hover:shadow-lg transition p-6 flex flex-col ring-1 ring-blue-100/80">
 							<div className="relative rounded-md mb-4 h-48 overflow-hidden bg-slate-900">
 								<img
 									src="/img/video.webp"
-									alt="Planopia video tutorials from the app"
+									alt="Planopia user guide"
 									className="h-full w-full object-cover opacity-90"
 								/>
 								<span className="boxvideo absolute bottom-3 left-3 inline-flex items-center rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow">
-									Video
+									Guide
 								</span>
 							</div>
 							<h3 className="text-xl font-semibold text-gray-800 mb-2">
-								Video tutorials — how to use Planopia
+								How to use Planopia — step-by-step guide
 							</h3>
 							<p className="text-gray-600 flex-1">
-								Short screen recordings from the app — for example, how to manually add work hours in the time log. Watch on your phone or desktop; we will keep adding new clips over time.
+								A written guide to every module — from the timesheet and the work timer to schedules, leave and team settings.
 							</p>
 							<Link
 								href="/en/how-to-use"

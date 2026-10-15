@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 			'Rejestracja godzin, nadgodziny i raporty PDF/Excel w jednej aplikacji. 30 dni pełnej Planopii, potem darmowa ewidencja do 5 aktywnych kont.',
 		images: [
 			{
-				url: '/img/desktopnews.webp',
+				url: '/img/og/ewidencja-czasu-pracy.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Program do ewidencji czasu pracy Planopia — kalendarz i raporty',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Program do ewidencji czasu pracy — Planopia',
 		description: 'Godziny, nadgodziny i raporty PDF/Excel online. 30 dni pełnej aplikacji, potem darmowa ewidencja do 5 kont.',
-		images: ['/img/desktopnews.webp'],
+		images: ['/img/og/ewidencja-czasu-pracy.jpg'],
 	},
 	alternates: {
 		canonical: '/program-do-ewidencji-czasu-pracy',

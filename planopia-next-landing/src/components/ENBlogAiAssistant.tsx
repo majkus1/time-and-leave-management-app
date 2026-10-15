@@ -39,8 +39,8 @@ const faqItems = [
 		a: 'Create a team in the app, invite users, and configure roles. After sign-in, explore time tracking, leave, tasks, and schedules — the AI Assistant uses your organization’s context within permissions.',
 	},
 	{
-		q: 'Where can I watch the product step by step?',
-		a: 'The blog includes video tutorials with short screen recordings — follow the link in this article or open the Blog section.',
+		q: 'Where can I find a step-by-step guide?',
+		a: 'The How to use page has a step-by-step guide to every module, from time tracking to schedules and leave. Follow the link in this article.',
 	},
 ]
 
@@ -256,13 +256,13 @@ function ENBlogAiAssistant() {
 					</section>
 
 					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">How to start and where to watch the product</h2>
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">How to start and where to find the guide</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Register your team (trial and plans are described on the product pages), invite users, and configure modules as needed. If you prefer video, open{' '}
+							Register your team (trial and plans are described on the product pages), invite users, and configure modules as needed. For a step-by-step walkthrough, open the{' '}
 							<Link href="/en/how-to-use" className="text-blue-600 font-medium hover:underline">
-								Planopia video tutorials
+								Planopia user guide
 							</Link>{' '}
-							— short screen recordings help you get started without reading a long manual.
+							— it covers every module, from time tracking to schedules and leave.
 						</p>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
 							For the trial → free time tracking → paid plans model, see also{' '}

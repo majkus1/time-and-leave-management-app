@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 			'Hours, overtime, monthly calendar, and PDF/Excel reports in one app. 30-day full trial, then free time tracking for up to 5 accounts.',
 		images: [
 			{
-				url: '/img/desktop-ennews.webp',
+				url: '/img/og/time-tracking-en.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Planopia time tracking software — calendar and reports',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Time tracking software — Planopia',
 		description: 'Hours, overtime, and PDF/Excel reports online. 30-day full trial, then free time tracking for up to 5 accounts.',
-		images: ['/img/desktop-ennews.webp'],
+		images: ['/img/og/time-tracking-en.jpg'],
 	},
 	alternates: {
 		canonical: '/en/time-tracking-software',

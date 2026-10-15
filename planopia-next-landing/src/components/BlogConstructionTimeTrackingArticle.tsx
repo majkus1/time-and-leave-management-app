@@ -44,11 +44,11 @@ const COPY: Record<
 		intro:
 			'Ewidencja czasu pracy na budowie to jeden z najczęstszych problemów w firmach budowlanych. Godziny lądują na kartkach, w SMS-ach albo w arkuszach — stąd błędy, spory i brak pewności przy rozliczeniach. Poniżej: jak to uprościć i jednocześnie dać zespołowi narzędzie na co dzień (nie tylko „do urlopów”).',
 		galleryTitle: 'Planopia w praktyce — zrzuty z aplikacji (desktop i telefon)',
-		videoEyebrow: 'Instrukcja wideo',
-		videoTitle: 'Zobacz Planopię w działaniu',
+		videoEyebrow: 'Instrukcja',
+		videoTitle: 'Jak korzystać z Planopii — krok po kroku',
 		videoBody:
-			'Krótkie nagrania prosto z aplikacji — m.in. jak dodać godziny w ewidencji czasu pracy. Świetny start zaraz po założeniu zespołu.',
-		videoCta: 'Otwórz instrukcję wideo',
+			'Instrukcja obsługi każdego modułu: czas pracy, licznik czasu, dodawanie pracowników, grafiki i urlopy. Dobry start zaraz po założeniu zespołu.',
+		videoCta: 'Otwórz instrukcję',
 		videoHref: '/jak-korzystac',
 		problemTitle: 'Jak to wygląda w praktyce',
 		problemBullets: [
@@ -115,11 +115,11 @@ const COPY: Record<
 		intro:
 			'Construction time tracking is one of the messiest operational topics for building companies. Hours end up on paper, in texts, or in spreadsheets — which means errors, disputes, and weak audit trails. Here is a simpler approach that also gives your team an everyday tool (not “only for leave”).',
 		galleryTitle: 'Planopia in practice — desktop and mobile screenshots',
-		videoEyebrow: 'Video tutorials',
-		videoTitle: 'See Planopia in action',
+		videoEyebrow: 'Guide',
+		videoTitle: 'How to use Planopia — step by step',
 		videoBody:
-			'Short clips recorded inside the app — for example, how to add hours in the time log. A great first step right after you create a team.',
-		videoCta: 'Open video tutorials',
+			'A guide to every module: the timesheet, the work timer, adding people, schedules and leave. A good start right after you create your team.',
+		videoCta: 'Open the guide',
 		videoHref: '/en/how-to-use',
 		problemTitle: 'What it looks like in the real world',
 		problemBullets: [

@@ -272,7 +272,8 @@ export default function LandingChatPanel({ variant }: { variant: Variant }) {
 					<Escalation />
 				) : (
 					<>
-						<div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+						{/* Przycisk pod polem, na całą szerokość — łatwiej trafić kciukiem i nie zabiera miejsca na tekst */}
+						<div className="flex flex-col gap-2">
 							<textarea
 								ref={inputRef}
 								value={input}
@@ -293,7 +294,7 @@ export default function LandingChatPanel({ variant }: { variant: Variant }) {
 								type="button"
 								onClick={submit}
 								disabled={busy || !input.trim()}
-								className="landing-chat-btn rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 sm:shrink-0"
+								className="landing-chat-btn w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
 							>
 								{copy.send}
 							</button>

@@ -57,8 +57,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnew.webp',
-        width: 1200,
-        height: 630,
+        width: 1918,
+        height: 910,
         alt: 'Dni wolne 2026 – kalendarz świąt w Polsce',
       },
     ],

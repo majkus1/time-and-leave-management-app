@@ -85,6 +85,46 @@ export type Copy = {
 	highlight?: Highlight
 }
 
+/** Wspólne teksty układu stron produktowych (te same dla każdego wariantu) */
+export const UI = {
+	pl: {
+		heroChecks: ['Bez karty na start', 'Działa na telefonie', 'Polskie prawo pracy i święta'],
+		factsLabel: 'Najważniejsze informacje',
+		factDays: 'dni',
+		factTrial: 'pełnej wersji za darmo',
+		factFreeValue: '0 zł',
+		factFreeLabel: (n: number) => `na stałe w planie darmowym do ${n} osób`,
+		factFromValue: (price: string) => `od ${price} zł`,
+		factFromLabel: 'netto miesięcznie po okresie próbnym',
+		factExport: 'eksport raportów',
+		factMobileValue: 'Telefon',
+		factMobileLabel: 'aplikacja w przeglądarce, bez instalacji',
+		eyebrowProblem: 'Problem',
+		eyebrowFeatures: 'Funkcje',
+		eyebrowGallery: 'W aplikacji',
+		eyebrowSteps: 'Start',
+		eyebrowPricing: 'Cennik',
+	},
+	en: {
+		heroChecks: ['No card to start', 'Works on your phone', 'Polish labour law and holidays'],
+		factsLabel: 'Key facts',
+		factDays: 'days',
+		factTrial: 'of the full version free',
+		factFreeValue: '0 PLN',
+		factFreeLabel: (n: number) => `forever on the free plan for up to ${n} people`,
+		factFromValue: (price: string) => `from ${price} PLN`,
+		factFromLabel: 'net per month after the trial',
+		factExport: 'report export',
+		factMobileValue: 'Mobile',
+		factMobileLabel: 'runs in the browser, nothing to install',
+		eyebrowProblem: 'The problem',
+		eyebrowFeatures: 'Features',
+		eyebrowGallery: 'In the app',
+		eyebrowSteps: 'Getting started',
+		eyebrowPricing: 'Pricing',
+	},
+}
+
 export const REGISTER_HREF = 'https://app.planopia.pl/team-registration'
 export const PRICING_HREF_PL = '/#cennik'
 export const PRICING_HREF_EN = '/en#prices'
@@ -96,7 +136,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Program do urlopów dla firmy — wnioski, kalendarz i akceptacje online',
 			heroSub:
 				'Zastąp Excela i maile jednym systemem do wniosków urlopowych. Pracownik składa wniosek z telefonu, przełożony akceptuje, a Ty widzisz cały zespół w kalendarzu urlopów. Wypróbuj 30 dni pełnej aplikacji za darmo (do 5 osób).',
-			ctaButton: 'Załóż darmowy zespół — 30 dni gratis',
+			ctaButton: 'Załóż darmowy zespół',
 			secondaryLabel: 'Zobacz aplikację',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Dlaczego Excel i maile do urlopów przestają wystarczać?',
@@ -115,13 +155,16 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Kalendarz urlopów zespołu i działów — jeden widok zamiast scalania plików.',
 				'Spójność z ewidencją czasu pracy — urlopy i nieobecności widoczne w tym samym koncie zespołu.',
 				'Eksport do PDF i Excela — kopia do archiwum lub kontroli.',
+				'Saldo urlopu każdej osoby — z opcjonalnym automatycznym odliczaniem dni po akceptacji i zwrotem po odrzuceniu.',
+				'Urlop na godziny — np. zwolnienie na opiekę nad dzieckiem rozliczane w godzinach, a nie w dniach.',
+				'Powiadomienia e-mail i push — przełożony od razu dostaje wniosek, a pracownik decyzję.',
 			],
 			galleryTitle: 'Urlopy w Planopii — zrzuty z aplikacji',
 			stepsTitle: 'Jak zacząć — 3 kroki',
 			steps: [
 				'Załóż darmowy zespół (30 dni pełnej aplikacji, do 5 osób).',
-				'Skonfiguruj typy wniosków i osoby akceptujące (Admin / HR / przełożony).',
-				'Pracownicy składają wnioski, a Ty zarządzasz urlopami z poziomu kalendarza.',
+				'Skonfiguruj typy wniosków (które wymagają akceptacji) i uprawnienia przełożonych.',
+				'Pracownicy składają wnioski, Ty akceptujesz je jednym kliknięciem, a kalendarz urlopów zespołu aktualizuje się sam.',
 			],
 			pricingTitle: 'Ile kosztuje moduł urlopów?',
 			pricingIntro:
@@ -169,6 +212,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 				{ href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
 				{ href: '/rejestracja-czasu-pracy-qr', label: 'Rejestracja czasu pracy przez QR' },
+				{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii krok po kroku' },
 			],
 			heroImageSrc: '/img/plans-urlopnew.webp',
 			heroImageAlt: 'Kalendarz urlopów i wnioski urlopowe w aplikacji Planopia',
@@ -182,7 +226,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Leave management software — requests, calendar, and approvals online',
 			heroSub:
 				'Replace spreadsheets and email threads with one leave request system. Employees request time off from their phone, managers approve, and you see the whole team in a leave calendar. Try 30 days of the full app for free (up to 5 users).',
-			ctaButton: 'Create your free team — 30 days free',
+			ctaButton: 'Create your free team',
 			secondaryLabel: 'See the app',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Why Excel and email stop working for leave',
@@ -201,13 +245,16 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Team and department leave calendar — one view instead of merging files.',
 				'Aligned with time tracking — leave and absences live in the same team account.',
 				'Export to PDF and Excel — a copy for archives or audits.',
+				'Leave balance per person — with optional automatic deduction on approval and refund on rejection.',
+				'Leave in hours — e.g. childcare time off counted in hours rather than days.',
+				'Email and push notifications — the approver gets the request at once, the employee gets the decision.',
 			],
 			galleryTitle: 'Leave in Planopia — in-app screenshots',
 			stepsTitle: 'Get started in 3 steps',
 			steps: [
 				'Create your free team (30-day full trial, up to 5 users).',
-				'Set up absence types and approvers (Admin / HR / supervisor).',
-				'Employees submit requests and you manage leave from the calendar.',
+				'Set up absence types (which need approval) and supervisor permissions.',
+				'Employees submit requests, you approve them in one click, and the team leave calendar updates itself.',
 			],
 			pricingTitle: 'How much does the leave module cost?',
 			pricingIntro:
@@ -254,6 +301,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/en/time-tracking-software', label: 'Time tracking software' },
 				{ href: '/en/work-schedule-software', label: 'Work schedule software' },
 				{ href: '/en/overtime-tracking', label: 'Overtime tracking' },
+				{ href: '/en/how-to-use', label: 'How to use Planopia — step-by-step guide' },
 			],
 			heroImageSrc: '/img/plans-urlopnewen.webp',
 			heroImageAlt: 'Leave calendar and leave requests in the Planopia app',
@@ -288,6 +336,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Eksport raportów do PDF i Excela (XLSX) — gotowe zestawienia miesiąca.',
 				'Działa w przeglądarce i na telefonie jako PWA — wygodne wpisy z dowolnego miejsca.',
 				'Opcjonalnie licznik czasu i kody QR (moduł płatny) — rejestracja wejść i wyjść.',
+				'Potwierdzenie miesiąca przez pracownika — po potwierdzeniu wpisy są zablokowane do edycji.',
+				'Akceptacja dni przez przełożonego — każdy dzień może zostać zatwierdzony albo odrzucony.',
+				'Cały miesiąc jednym krokiem — wypełnienie dni roboczych z gotowych godzin pracy zespołu.',
 			],
 			galleryTitle: 'Ewidencja w Planopii — zrzuty z aplikacji',
 			stepsTitle: 'Jak zacząć — 3 kroki',
@@ -342,6 +393,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/program-do-grafikow-pracy', label: 'Program do grafików pracy' },
 				{ href: '/rejestracja-czasu-pracy-qr', label: 'Rejestracja czasu pracy przez QR' },
 				{ href: '/ewidencja-nadgodzin', label: 'Ewidencja nadgodzin' },
+				{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii krok po kroku' },
 			],
 			heroImageSrc: '/img/desktopnews.webp',
 			heroImageAlt: 'Ewidencja czasu pracy i kalendarz miesięczny w aplikacji Planopia',
@@ -374,6 +426,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Export reports to PDF and Excel (XLSX) — ready monthly summaries.',
 				'Runs in the browser and on phones as a PWA — convenient entries from anywhere.',
 				'Optional time clock and QR codes (paid module) — clock-in/clock-out tracking.',
+				'Month confirmation by the employee — once confirmed, the entries are locked for editing.',
+				'Day approval by a supervisor — any day can be marked as approved or rejected.',
+				'A whole month in one step — fill working days from your team’s standard hours.',
 			],
 			galleryTitle: 'Time tracking in Planopia — in-app screenshots',
 			stepsTitle: 'Get started in 3 steps',
@@ -428,6 +483,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/en/work-schedule-software', label: 'Work schedule software' },
 				{ href: '/en/qr-time-clocking', label: 'QR time clocking' },
 				{ href: '/en/overtime-tracking', label: 'Overtime tracking' },
+				{ href: '/en/how-to-use', label: 'How to use Planopia — step-by-step guide' },
 			],
 			heroImageSrc: '/img/desktop-ennews.webp',
 			heroImageAlt: 'Time tracking and monthly calendar in the Planopia app',
@@ -443,7 +499,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Program do tworzenia grafików pracy online',
 			heroSub:
 				'Ułóż grafik zmianowy dla całego zespołu w jednym miejscu — z uwzględnieniem urlopów, świąt i minimalnej obsady. Planopia potrafi wypełnić grafik automatycznie, a Ty poprawiasz tylko to, co wymaga decyzji.',
-			ctaButton: 'Załóż darmowy zespół — 30 dni gratis',
+			ctaButton: 'Załóż darmowy zespół',
 			secondaryLabel: 'Zobacz aplikację',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Co utrudnia układanie grafiku pracy?',
@@ -456,12 +512,15 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			featuresIntro:
 				'Planopia układa grafik na podstawie tego, co już wie o zespole — kto ma urlop, które dni są wolne i ilu ludzi musi być na zmianie.',
 			features: [
-				'Automatyczne wypełnianie grafiku — pomija weekendy, święta i osoby z zatwierdzonym urlopem.',
+				'Automatyczne wypełnianie grafiku — w wybrane dni tygodnia, z pominięciem świąt i osób z zatwierdzonym urlopem.',
 				'Zmiany z godzinami i minimalną obsadą — każdą definiujesz osobno, także dla wybranych dni tygodnia.',
-				'Wersja robocza i opublikowana — zespół widzi dopiero grafik zatwierdzony, nie szkic.',
+				'Wersja robocza przy układaniu automatycznym — zespół zobaczy grafik dopiero po publikacji i dostanie powiadomienie.',
 				'Podgląd całego zespołu w jednym widoku, bez scalania plików.',
-				'Wnioski urlopowe i grafik w jednym systemie — zatwierdzony urlop od razu zwalnia osobę z grafiku.',
+				'Wnioski urlopowe i grafik w jednym systemie — na dzień zatwierdzonego urlopu nie wpiszesz zmiany, a kolizję z grafikiem widać przy wniosku.',
 				'Działa w przeglądarce i na telefonie jako PWA — zespół sprawdza grafik z dowolnego miejsca.',
+				'Dostępność pracowników — jako preferencja albo twardy warunek przy automatycznym układaniu.',
+				'Asystent AI — opisujesz słowami, jak ma wyglądać miesiąc, a AI przygotowuje szkic grafiku.',
+				'Powiadomienia e-mail i push po publikacji — każdy od razu wie, kiedy pracuje.',
 			],
 			galleryTitle: 'Grafik w Planopii — zrzuty z aplikacji',
 			stepsTitle: 'Jak zacząć — 3 kroki',
@@ -485,15 +544,15 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Czy program sam ułoży grafik pracy?',
-					a: 'Tak. Planopia wypełnia grafik automatycznie na podstawie zdefiniowanych zmian, pomijając weekendy, święta oraz osoby, które mają w danym dniu zatwierdzony urlop. Wynik jest punktem wyjścia — każdą pozycję możesz poprawić ręcznie przed publikacją.',
+					a: 'Tak. Planopia wypełnia grafik automatycznie na podstawie zdefiniowanych zmian — w dniach tygodnia, które dla nich wybierzesz, z pominięciem świąt oraz osób, które mają w danym dniu zatwierdzony urlop. Zmiany obsadza po równo, a jeśli włączysz dostępność, bierze pod uwagę preferencje pracowników. Wynik jest wersją roboczą — przejrzysz go przed publikacją.',
 				},
 				{
 					q: 'Czy grafik uwzględnia urlopy pracowników?',
-					a: 'Tak. Wnioski urlopowe i grafik działają w tym samym systemie, więc osoba z zatwierdzonym urlopem nie zostanie wpisana na zmianę. Nie trzeba pilnować tego w osobnym pliku.',
+					a: 'Tak. Wnioski urlopowe i grafik działają w tym samym systemie: automatyczne układanie pomija osoby z zatwierdzonym urlopem, a ręcznie nie wpiszesz zmiany na dzień urlopu. Jeśli urlop wypada na już opublikowaną zmianę, przy wniosku od razu widać kolizję do poprawienia.',
 				},
 				{
 					q: 'Czy pracownik widzi grafik od razu po utworzeniu?',
-					a: 'Nie. Grafik ma wersję roboczą i opublikowaną — zespół widzi dopiero tę zatwierdzoną. Dzięki temu nikt nie planuje na podstawie szkicu, który jeszcze się zmieni.',
+					a: 'Nie, jeśli układasz go automatycznie albo z pomocą AI: wygenerowane zmiany są wersją roboczą widoczną tylko dla osób zarządzających grafikiem. Zespół widzi je po publikacji i dostaje powiadomienie. Pojedyncza zmiana dodana ręcznie jest widoczna od razu.',
 				},
 				{
 					q: 'Czy da się ustawić różne zmiany na różne dni tygodnia?',
@@ -514,6 +573,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/dla-firm-sprzatajacych', label: 'Grafik ekip sprzątających' },
 				{ href: '/dla-branzy-budowlanej', label: 'Grafiki brygad na budowie' },
 				{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
+				{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii krok po kroku' },
 			],
 			heroImageSrc: '/img/aigrafik.webp',
 			heroImageAlt: 'Grafik pracy zespołu w aplikacji Planopia',
@@ -527,7 +587,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Work schedule software — build team rosters online',
 			heroSub:
 				'Plan shift rosters for the whole team in one place, with leave, public holidays, and minimum staffing already taken into account. Planopia can fill the schedule automatically, so you only adjust what needs a decision.',
-			ctaButton: 'Create your free team — 30 days free',
+			ctaButton: 'Create your free team',
 			secondaryLabel: 'See the app',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'What makes work scheduling painful',
@@ -540,12 +600,15 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			featuresIntro:
 				'Planopia builds the roster from what it already knows about your team — who is on leave, which days are off, and how many people each shift needs.',
 			features: [
-				'Automatic roster fill — skips weekends, public holidays, and anyone with approved leave.',
+				'Automatic roster fill — on the weekdays you choose, skipping public holidays and anyone with approved leave.',
 				'Shifts with hours and minimum staffing — defined separately, and per weekday if needed.',
-				'Draft and published versions — the team only sees an approved roster, never a draft.',
+				'A draft when the roster is filled automatically — the team sees it only after you publish, with a notification.',
 				'One view of the whole team instead of merging files.',
-				'Leave requests and rosters in one system — approved leave frees the person automatically.',
+				'Leave requests and rosters in one system — no shift can be added on an approved leave day, and clashes show on the request.',
 				'Works in the browser and on phones as a PWA — the team checks the roster anywhere.',
+				'Employee availability — as a preference or a hard rule when the roster is filled automatically.',
+				'AI Assistant — describe the month in plain words and AI drafts the roster.',
+				'Email and push notifications on publishing — everyone knows when they work.',
 			],
 			galleryTitle: 'Scheduling in Planopia — app screenshots',
 			stepsTitle: 'How to start — 3 steps',
@@ -569,15 +632,15 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Can the software build the schedule for me?',
-					a: 'Yes. Planopia fills the roster automatically from the shifts you define, skipping weekends, public holidays, and anyone with approved leave that day. The result is a starting point — you can adjust any entry before publishing.',
+					a: 'Yes. Planopia fills the roster automatically from the shifts you define — on the weekdays you pick for them, skipping public holidays and anyone with approved leave that day. Shifts are spread evenly, and with availability switched on it respects employee preferences. The result is a draft you review before publishing.',
 				},
 				{
 					q: 'Does the schedule account for employee leave?',
-					a: 'Yes. Leave requests and rosters live in the same system, so someone with approved leave is never rostered onto a shift. There is no separate file to keep in sync.',
+					a: 'Yes. Leave requests and rosters live in the same system: automatic filling skips people with approved leave, and you cannot add a shift on a leave day by hand. If leave falls on a shift that is already published, the clash shows on the request so you can fix it.',
 				},
 				{
 					q: 'Do employees see the schedule as soon as it is created?',
-					a: 'No. A roster has a draft and a published version, and the team only sees the published one. Nobody plans around a draft that is still going to change.',
+					a: 'Not if you build it automatically or with AI: generated shifts are a draft visible only to people who manage the schedule. The team sees them after you publish and gets a notification. A single shift added by hand is visible straight away.',
 				},
 				{
 					q: 'Can I set different shifts for different weekdays?',
@@ -596,6 +659,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/en/for-construction-industry', label: 'Crew scheduling for construction' },
 				{ href: '/en/time-tracking-software', label: 'Time tracking software' },
 				{ href: '/en/leave-management-software', label: 'Leave management software' },
+				{ href: '/en/how-to-use', label: 'How to use Planopia — step-by-step guide' },
 			],
 			heroImageSrc: '/img/aigrafik-en.webp',
 			heroImageAlt: 'Team work schedule in the Planopia app',
@@ -611,7 +675,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Rejestracja czasu pracy przez QR i elektroniczna lista obecności',
 			heroSub:
 				'Zamiast papierowej listy obecności — kod QR w wejściu i licznik czasu w telefonie. Pracownik skanuje kod przy wejściu i wyjściu, a Ty masz gotowe godziny w ewidencji, bez przepisywania z kartki.',
-			ctaButton: 'Załóż darmowy zespół — 30 dni gratis',
+			ctaButton: 'Załóż darmowy zespół',
 			secondaryLabel: 'Zobacz aplikację',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Dlaczego papierowa lista obecności to za mało?',
@@ -631,7 +695,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'Licznik czasu pracy z przerwami — alternatywa dla QR, gdy praca odbywa się przy biurku.',
 				'Czynność, zadanie i wykonana ilość (np. szt., m²) przy sesji — wydajność bez osobnego arkusza.',
 				'Zarejestrowane godziny trafiają do tej samej ewidencji, z której robisz raporty PDF i Excel — także osobno dla jednej budowy.',
-				'Podgląd dla Admina, HR i przełożonego — kto pracuje teraz, bez dzwonienia po ekipach.',
+				'Przegląd zespołu dla Admina, HR i przełożonego — ile osób ma teraz uruchomiony licznik i kto nie ma jeszcze wpisu z dzisiaj.',
+				'Promień miejsca od 30 m do 2 km — dopasowany do budowy, sklepu albo biura.',
 			],
 			galleryTitle: 'Rejestracja czasu w Planopii — zrzuty z aplikacji',
 			stepsTitle: 'Jak zacząć — 3 kroki',
@@ -655,7 +720,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Czy lista obecności wystarczy zamiast ewidencji czasu pracy?',
-					a: 'Nie. Lista obecności potwierdza jedynie stawienie się do pracy. Ewidencja musi dodatkowo wykazywać godzinę rozpoczęcia i zakończenia pracy, godziny nadliczbowe i nocne oraz rodzaj nieobecności. Rejestracja przez QR zapisuje godziny, więc od razu buduje ewidencję, a nie samą listę.',
+					a: 'Nie. Lista obecności potwierdza jedynie stawienie się do pracy. Ewidencja czasu pracy musi wykazywać m.in. godziny pracy, nadgodziny i nieobecności. Rejestracja przez QR zapisuje godzinę wejścia i wyjścia prosto do kalendarza ewidencji, a nadgodziny i nieobecności uzupełniasz w tym samym miejscu — zamiast listy masz ewidencję.',
 				},
 				{
 					q: 'Czy potrzebny jest czytnik kodów albo dodatkowy sprzęt?',
@@ -696,6 +761,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
 				{ href: '/ewidencja-nadgodzin', label: 'Ewidencja nadgodzin' },
 				{ href: '/dla-branzy-budowlanej', label: 'Dla firm budowlanych' },
+				{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii krok po kroku' },
 			],
 			heroImageSrc: '/img/desktopnews.webp',
 			heroImageAlt: 'Rejestracja czasu pracy i lista obecności w aplikacji Planopia',
@@ -748,7 +814,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'QR time clocking and electronic attendance records',
 			heroSub:
 				'Replace the paper attendance sheet with a QR code at the entrance and a timer on the phone. People scan in and out, and the hours land in your time records without anyone retyping them.',
-			ctaButton: 'Create your free team — 30 days free',
+			ctaButton: 'Create your free team',
 			secondaryLabel: 'See the app',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Why a paper attendance sheet is not enough',
@@ -768,7 +834,8 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				'A work timer with breaks — an alternative to QR for desk-based work.',
 				'Activity, task, and quantity done (e.g. pcs, m²) on each session — productivity without a separate spreadsheet.',
 				'Recorded hours feed the same time records you export to PDF and Excel — also for a single site.',
-				'A live view for admins, HR, and supervisors — who is working right now, without phoning around.',
+				'A team overview for admins, HR, and supervisors — how many timers are running now and who has no entry yet today.',
+				'Site radius from 30 m to 2 km — set to fit a building site, a shop, or an office.',
 			],
 			galleryTitle: 'Time clocking in Planopia — app screenshots',
 			stepsTitle: 'How to start — 3 steps',
@@ -792,7 +859,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			faqs: [
 				{
 					q: 'Is an attendance sheet enough instead of time records?',
-					a: 'No. An attendance sheet only confirms that someone turned up. Time records also have to show start and end times, overtime and night hours, and the type of any absence. QR clocking captures the hours, so it builds records rather than just a list.',
+					a: 'No. An attendance sheet only confirms that someone turned up. Time records also have to show working hours, overtime, and absences, among other things. QR clocking saves entry and exit times straight into the timesheet calendar, and you add overtime and absences in the same place — so you get records, not just a list.',
 				},
 				{
 					q: 'Do I need a scanner or extra hardware?',
@@ -831,6 +898,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/en/time-tracking-software', label: 'Time tracking software' },
 				{ href: '/en/for-construction-industry', label: 'For construction' },
 				{ href: '/en/work-schedule-software', label: 'Work schedule software' },
+				{ href: '/en/how-to-use', label: 'How to use Planopia — step-by-step guide' },
 			],
 			heroImageSrc: '/img/desktop-ennews.webp',
 			heroImageAlt: 'QR time clocking and attendance in the Planopia app',
@@ -885,7 +953,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Ewidencja nadgodzin — rozliczanie godzin nadliczbowych online',
 			heroSub:
 				'Nadgodziny wykazuje się przy konkretnym dniu, a nie ryczałtem na koniec miesiąca. W Planopii dopisujesz je do dziennego wpisu, a raport miesięczny liczy się sam. Ręczna ewidencja działa też w planie bezpłatnym.',
-			ctaButton: 'Załóż darmowy zespół — 30 dni gratis',
+			ctaButton: 'Załóż darmowy zespół',
 			secondaryLabel: 'Zobacz aplikację',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'Co najczęściej psuje rozliczanie nadgodzin?',
@@ -900,9 +968,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			features: [
 				'Nadgodziny przy konkretnym dniu, w krokach co pół godziny — zgodnie z tym, jak wykazuje się je w dokumentacji.',
 				'Walidacja przy zapisie: nadgodziny bez podanych godzin pracy nie przejdą, a wpisana nieobecność je czyści.',
-				'Podgląd całego zespołu — widzisz, gdzie nadgodziny narastają, zanim zrobi się problem.',
+				'Podgląd całego zespołu (plan Core) — nadgodziny każdej osoby w miesiącu i udział nadgodzin w raporcie zespołu.',
 				'Raporty miesięczne z podsumowaniem godzin i nadgodzin, eksport do PDF i Excela.',
-				'Licznik czasu pracy potrafi oznaczyć nadgodziny osobno już w trakcie pracy (moduł płatny).',
+				'Tryb nadgodzin w liczniku czasu — pracownik włącza go przy pracy ponad normę, a ten czas sam trafia do nadgodzin (moduł płatny).',
 				'Nieobecności i urlopy w tym samym systemie — nadgodziny nie doliczą się do dnia wolnego.',
 			],
 			galleryTitle: 'Nadgodziny w Planopii — zrzuty z aplikacji',
@@ -921,7 +989,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				`Urlopy, raporty zespołu, Asystent AI albo większy zespół: plan Core od ${CORE_5} zł netto/mies. (do 5 osób; ${CORE_15} zł do 15) albo pakiet PRO lub Business.`,
 			],
 			pricingNote:
-				`Automatyczne oznaczanie nadgodzin przez licznik czasu i kody QR to moduł „Timer i QR” (${MOD_TIMER_QR} zł netto/mies. do planu Core) lub część pakietu PRO/Business. Ręczne wpisy, kalendarz i wydruk ewidencji każdej osoby (PDF/XLSX) działają w planie bezpłatnym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.`,
+				`Licznik czasu z trybem nadgodzin i rejestracja przez QR to moduł „Timer i QR” (${MOD_TIMER_QR} zł netto/mies. do planu Core) lub część pakietu PRO/Business. Ręczne wpisy, kalendarz i wydruk ewidencji każdej osoby (PDF/XLSX) działają w planie bezpłatnym. Rozliczenie roczne: płacisz za 10 miesięcy zamiast 12.`,
 			pricingCtaLabel: 'Zobacz pełny cennik',
 			faqTitle: 'Najczęstsze pytania',
 			faqs: [
@@ -955,6 +1023,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/blog/ewidencja-czasu-pracy-excel-wzor', label: 'Wzór ewidencji czasu pracy — Excel i PDF' },
 				{ href: '/rejestracja-czasu-pracy-qr', label: 'Rejestracja czasu pracy przez QR' },
 				{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja — Excel czy program?' },
+				{ href: '/jak-korzystac', label: 'Instrukcja obsługi Planopii krok po kroku' },
 			],
 			heroImageSrc: '/img/desktopnews.webp',
 			heroImageAlt: 'Ewidencja nadgodzin i godzin pracy w aplikacji Planopia',
@@ -968,7 +1037,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			heroH1: 'Overtime tracking — record and settle overtime hours online',
 			heroSub:
 				'Overtime belongs to a specific day, not to a lump sum at the end of the month. In Planopia you add it to the daily entry and the monthly report adds itself up. Manual records work on the free tier too.',
-			ctaButton: 'Create your free team — 30 days free',
+			ctaButton: 'Create your free team',
 			secondaryLabel: 'See the app',
 			secondaryHref: '#commercial-gallery',
 			problemsTitle: 'What usually breaks overtime settlement',
@@ -983,9 +1052,9 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 			features: [
 				'Overtime on a specific day, in half-hour steps.',
 				'Validation on save: overtime without work hours is rejected, and marking an absence clears it.',
-				'A view across the team — you see overtime building up before it becomes a problem.',
+				'A team view (Core plan) — each person’s overtime for the month and the overtime share in the team report.',
 				'Monthly reports totalling hours and overtime, exported to PDF and Excel.',
-				'The work timer can flag overtime separately while the work is happening (paid module).',
+				'An overtime mode in the work timer — the employee switches it on for extra hours and that time goes to overtime automatically (paid module).',
 				'Absences and leave in the same system, so overtime is never added to a day off.',
 			],
 			galleryTitle: 'Overtime in Planopia — app screenshots',
@@ -1004,7 +1073,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				`Leave, team reports, the AI Assistant or a larger team: a Core plan from ${CORE_5} PLN net/month (up to 5 users; ${CORE_15} up to 15), or a PRO or Business package.`,
 			],
 			pricingNote:
-				`Flagging overtime automatically through the work timer and QR codes is the “Timer and QR” module (${MOD_TIMER_QR} PLN net/month on Core) or part of a PRO/Business package. Manual entries, the calendar, and each person’s timesheet printout (PDF/XLSX) work on the free tier. Annual billing: you pay for 10 months instead of 12.`,
+				`The work timer with overtime mode and QR clocking are the “Timer and QR” module (${MOD_TIMER_QR} PLN net/month on Core) or part of a PRO/Business package. Manual entries, the calendar, and each person’s timesheet printout (PDF/XLSX) work on the free tier. Annual billing: you pay for 10 months instead of 12.`,
 			pricingCtaLabel: 'See full pricing',
 			faqTitle: 'Frequently asked questions',
 			faqs: [
@@ -1037,6 +1106,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				{ href: '/en/time-tracking-software', label: 'Time tracking software' },
 				{ href: '/en/blog/electronic-time-tracking', label: 'Electronic time tracking' },
 				{ href: '/en/work-schedule-software', label: 'Work schedule software' },
+				{ href: '/en/how-to-use', label: 'How to use Planopia — step-by-step guide' },
 			],
 			heroImageSrc: '/img/desktop-ennews.webp',
 			heroImageAlt: 'Overtime and working hours in the Planopia app',

@@ -36,13 +36,13 @@ export const metadata: Metadata = {
 		siteName: 'Planopia',
 		title: 'Grafik pracy dla gastronomii i restauracji | Planopia',
 		description: 'Zmiany, godziny, urlopy i zadania zespołu restauracji w jednym systemie.',
-		images: [{ url: '/img/gastronomia.webp', width: 1536, height: 1024, alt: 'Planopia — grafik pracy i organizacja zespołu gastronomii' }],
+		images: [{ url: '/img/og/gastronomia.jpg', width: 1200, height: 630, alt: 'Planopia — grafik pracy i organizacja zespołu gastronomii' }],
 	},
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Grafik pracy dla gastronomii — Planopia',
 		description: 'Grafik restauracji, ewidencja godzin, urlopy i zadania w jednym miejscu.',
-		images: ['/img/gastronomia.webp'],
+		images: ['/img/og/gastronomia.jpg'],
 	},
 	// Brak wersji EN tej strony — deklarujemy ja jako wylacznie polska,
 	// zeby nie obiecywac Google odpowiednika, ktorego nie ma.

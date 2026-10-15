@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnewen.webp',
-        width: 1200,
-        height: 630,
+        width: 1918,
+        height: 905,
         alt: 'Employee Leave Planning – Best Tools and Practices',
       },
     ],

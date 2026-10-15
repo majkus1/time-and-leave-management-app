@@ -47,8 +47,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: '/img/desktop.png',
-				width: 1200,
-				height: 630,
+				width: 1918,
+				height: 910,
 				alt: 'Leave Management in a Company - Planopia',
 			},
 		],

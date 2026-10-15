@@ -7,9 +7,12 @@ export const LANDING_HERO_LCP = {
 	absoluteUrl: 'https://planopia.pl/img/headerimage4.webp',
 } as const
 
-/** OG/Twitter — PNG 1200×630 dla podglądów w SERP i social (nie blokuje LCP strony). */
+/** OG/Twitter — grafika 1200×630 z ekranem aplikacji, osobno PL i EN (domyślna dla stron bez własnej). */
 export const LANDING_OG_IMAGE = {
-	url: 'https://planopia.pl/img/headerimage.png',
+	url: {
+		pl: 'https://planopia.pl/img/og/home-pl.jpg',
+		en: 'https://planopia.pl/img/og/home-en.jpg',
+	},
 	width: 1200,
 	height: 630,
 	alt: {

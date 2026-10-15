@@ -40,8 +40,8 @@ const faqItems = [
 		a: 'Załóż zespół w aplikacji, zaproś użytkowników i skonfiguruj role. Po zalogowaniu sprawdź moduły czasu pracy, urlopów, zadań i grafiku — Asystent AI korzysta z kontekstu Twojej organizacji w ramach uprawnień.',
 	},
 	{
-		q: 'Gdzie obejrzeć działanie aplikacji krok po kroku?',
-		a: 'Na blogu dostępna jest instrukcja wideo z krótkimi nagraniami z interfejsu — link znajdziesz w treści artykułu lub w sekcji Blog.',
+		q: 'Gdzie znajdę instrukcję obsługi krok po kroku?',
+		a: 'Na stronie „Jak korzystać” jest instrukcja obsługi krok po kroku — opis każdego modułu, od ewidencji czasu pracy po grafiki i urlopy. Link znajdziesz w treści artykułu.',
 	},
 ]
 
@@ -259,13 +259,13 @@ function BlogAiAssistant() {
 					</section>
 
 					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Jak zacząć i gdzie obejrzeć interfejs</h2>
+						<h2 className="text-3xl font-bold text-gray-900 mb-6">Jak zacząć i gdzie znaleźć instrukcję</h2>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Zarejestruj zespół (okres próbny i plany opisane są na stronie produktu), zaproś użytkowników i skonfiguruj moduły zgodnie z potrzebami. Jeśli wolisz format wideo, zajrzyj do{' '}
+							Zarejestruj zespół (okres próbny i plany opisane są na stronie produktu), zaproś użytkowników i skonfiguruj moduły zgodnie z potrzebami. Krok po kroku prowadzi{' '}
 							<Link href="/jak-korzystac" className="text-blue-600 font-medium hover:underline">
-								instrukcji wideo Planopii
+								instrukcja obsługi Planopii
 							</Link>{' '}
-							— krótkie nagrania z aplikacji ułatwiają start bez czytania długiej dokumentacji.
+							— opis każdego modułu, od ewidencji czasu pracy po grafiki i urlopy.
 						</p>
 						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
 							Porównanie modelu „próba → darmowa ewidencja → pakiety” znajdziesz też w artykule{' '}

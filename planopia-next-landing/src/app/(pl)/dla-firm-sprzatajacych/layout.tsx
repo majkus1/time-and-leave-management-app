@@ -36,13 +36,13 @@ export const metadata: Metadata = {
 		siteName: 'Planopia',
 		title: 'Program dla firmy sprzątającej: grafik pracy | Planopia',
 		description: 'Grafik ekip, godziny, urlopy, zastępstwa i zadania w jednym systemie.',
-		images: [{ url: '/img/sprzatajaca.webp', width: 1536, height: 1024, alt: 'Planopia — organizacja pracy firmy sprzątającej' }],
+		images: [{ url: '/img/og/sprzatanie.jpg', width: 1200, height: 630, alt: 'Planopia — organizacja pracy firmy sprzątającej' }],
 	},
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Program dla firmy sprzątającej — Planopia',
 		description: 'Grafik ekip, ewidencja godzin, urlopy i zadania w jednym miejscu.',
-		images: ['/img/sprzatajaca.webp'],
+		images: ['/img/og/sprzatanie.jpg'],
 	},
 	// Brak wersji EN tej strony — deklarujemy ja jako wylacznie polska,
 	// zeby nie obiecywac Google odpowiednika, ktorego nie ma.

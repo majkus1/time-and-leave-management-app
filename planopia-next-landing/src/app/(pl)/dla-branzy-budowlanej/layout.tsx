@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 			'Jedna aplikacja na budowę i biuro: czas pracy brygad, grafiki, urlopy i raporty. 30 dni pełnej aplikacji za darmo.',
 		images: [
 			{
-				url: '/img/worktimeblog.webp',
+				url: '/img/og/budownictwo.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Planopia — ewidencja czasu pracy dla firm budowlanych',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Ewidencja czasu pracy na budowie — Planopia',
 		description: 'Czas pracy brygad bez logowania, grafiki, urlopy i raporty PDF/Excel.',
-		images: ['/img/worktimeblog.webp'],
+		images: ['/img/og/budownictwo.jpg'],
 	},
 	alternates: {
 		canonical: '/dla-branzy-budowlanej',

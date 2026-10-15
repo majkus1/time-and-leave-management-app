@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'Ewidencja nadgodzin — rozliczanie godzin | Planopia'
 const META_DESCRIPTION =
 	'Ewidencja nadgodzin online: godziny nadliczbowe przy konkretnym dniu, raporty PDF i Excel. Działa też w bezpłatnym planie do 5 kont.'
-const IMAGE = '/img/desktopnews.webp'
+const IMAGE = '/img/og/nadgodziny.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1918,
-				height: 910,
+				width: 1200,
+				height: 630,
 				alt: 'Ewidencja nadgodzin w aplikacji Planopia',
 			},
 		],

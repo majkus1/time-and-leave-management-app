@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     description: 'Dowiedz się więcej o ewidencji czasu pracy, zarządzaniu urlopami i pracy zdalnej. Porady i nowości od twórców aplikacji Planopia.',
     images: [
       {
-        url: 'https://planopia.pl/img/blog.webp',
-        width: 1200,
-        height: 630,
+        url: 'https://planopia.pl/img/worktimeblog.webp',
+        width: 1036,
+        height: 691,
         alt: 'Blog Planopii – Porady o ewidencji czasu pracy i HR',
       },
     ],
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Blog Planopii – Porady o ewidencji czasu pracy i HR',
     description: 'Porady o ewidencji czasu pracy, urlopach, grafikach i zarządzaniu zespołem.',
-    images: ['https://planopia.pl/img/blog.webp'],
+    images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {
     canonical: 'https://planopia.pl/blog',

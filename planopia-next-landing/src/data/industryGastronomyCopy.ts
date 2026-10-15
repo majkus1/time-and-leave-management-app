@@ -65,7 +65,7 @@ export const industryGastronomyCopy = {
 		},
 	],
 	ctaTitle: 'Mniej telefonów o grafik. Więcej kontroli nad zespołem.',
-	ctaButton: 'Załóż zespół — 30 dni gratis',
+	ctaButton: 'Załóż darmowy zespół',
 	ctaNote:
 		'Przetestuj pełną Planopię przez 30 dni. Potem możesz zostać na darmowej ewidencji do 5 aktywnych kont lub wybrać plan z grafikami, urlopami, zadaniami, czatem i AI.',
 	blogLinkLabel: 'Poradnik: jak ułożyć grafik pracy w restauracji',

@@ -1,0 +1,188 @@
+/*
+ * „Dlaczego nie Excel?” — porównanie Excel kontra Planopia (strona główna PL i EN).
+ * globals.css wymusza p/span 16px i kolor z !important, stąd !important przy typografii.
+ */
+
+.landing-value-proof-section {
+	padding-top: clamp(56px, 7vw, 96px) !important;
+	padding-bottom: clamp(56px, 7vw, 96px) !important;
+}
+
+.landing-value-proof {
+	align-items: center !important;
+	gap: clamp(28px, 4vw, 64px) !important;
+}
+
+.landing-value-proof p.landing-value-proof__lead {
+	font-size: 17px !important;
+	color: rgba(16, 47, 94, 0.82) !important;
+	-webkit-text-fill-color: rgba(16, 47, 94, 0.82) !important;
+}
+
+.lvc {
+	--lvc-ink: #0b1d36;
+	--lvc-muted: #66758c;
+	--lvc-line: rgba(16, 47, 94, 0.09);
+	--lvc-green: #00a63e;
+	--lvc-green-d: #008a3a;
+	border-radius: 18px;
+	background: #fff;
+	overflow: hidden;
+	box-shadow:
+		0 30px 60px -36px rgba(16, 47, 94, 0.35),
+		0 0 0 1px rgba(16, 47, 94, 0.1);
+	font-family: var(--font-titillium-web), 'Titillium Web', system-ui, sans-serif;
+}
+
+.lvc span {
+	font-family: inherit !important;
+	font-size: inherit !important;
+	color: inherit !important;
+}
+
+.lvc__head,
+.lvc__row {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lvc .lvc__label {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 15px 22px;
+	font-size: 13px !important;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.lvc .lvc__label--excel {
+	background: #f5f7fb;
+	color: var(--lvc-muted) !important;
+}
+
+.lvc .lvc__label--app {
+	background: #ecf8f1;
+	color: var(--lvc-green-d) !important;
+}
+
+.lvc .lvc__logo {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	background: var(--lvc-green);
+	color: #fff !important;
+}
+
+.lvc__rows {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.lvc__row {
+	border-top: 1px solid var(--lvc-line);
+}
+
+.lvc p.lvc__cell {
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 0;
+	padding: 17px 22px;
+	font-family: inherit !important;
+	font-size: 15.5px !important;
+	line-height: 1.45;
+}
+
+.lvc p.lvc__cell--excel {
+	background: #fbfcfe;
+	color: var(--lvc-muted) !important;
+}
+
+.lvc p.lvc__cell--app {
+	background: #f7fcf9;
+	color: var(--lvc-ink) !important;
+	font-weight: 600;
+}
+
+.lvc .lvc__icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 22px;
+	height: 22px;
+	margin-top: 0;
+	border-radius: 50%;
+}
+
+.lvc .lvc__icon--no {
+	background: #e9edf3;
+	color: #8a96a8 !important;
+}
+
+.lvc .lvc__icon--yes {
+	background: var(--lvc-green);
+	color: #fff !important;
+}
+
+.lvc .lvc__text {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Etykieta kolumny w komórce: na komputerze tylko dla czytników ekranu, na telefonie widoczna */
+.lvc .lvc__tag {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+	.lvc__head {
+		display: none;
+	}
+
+	.lvc__row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.lvc p.lvc__cell {
+		flex-wrap: wrap;
+		gap: 6px 10px;
+		padding: 14px 16px;
+		font-size: 15px !important;
+	}
+
+	.lvc p.lvc__cell--excel {
+		padding-bottom: 10px;
+	}
+
+	.lvc p.lvc__cell--app {
+		padding-top: 10px;
+	}
+
+	.lvc .lvc__tag {
+		position: static;
+		width: auto;
+		height: auto;
+		overflow: visible;
+		clip: auto;
+		flex-basis: 100%;
+		font-size: 11px !important;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.lvc .lvc__cell--app .lvc__tag {
+		color: var(--lvc-green-d) !important;
+	}
+}

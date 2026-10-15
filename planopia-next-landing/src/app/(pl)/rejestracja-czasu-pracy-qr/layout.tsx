@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'Rejestracja czasu pracy QR i lista obecności | Planopia'
 const META_DESCRIPTION =
 	'Rejestracja czasu pracy przez kod QR zamiast papierowej listy obecności. Wejście i wyjście skanem z telefonu, godziny od razu w ewidencji.'
-const IMAGE = '/img/desktopnews.webp'
+const IMAGE = '/img/og/rejestracja-qr.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1918,
-				height: 910,
+				width: 1200,
+				height: 630,
 				alt: 'Rejestracja czasu pracy przez QR w aplikacji Planopia',
 			},
 		],

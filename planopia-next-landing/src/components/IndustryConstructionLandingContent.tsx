@@ -1,20 +1,20 @@
-import Link from 'next/link'
-import IndustryConstructionHero from './IndustryConstructionHero'
-import {
-	IndustryConstructionAiSection,
-	IndustryConstructionGallerySection,
-} from './IndustryConstructionLazySections'
+import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
+import IndustryLanding from './productLanding/IndustryLanding'
 import { industryConstructionCopy, type IndustryConstructionLocale } from '@/data/industryConstructionCopy'
 import { INDUSTRY_CONSTRUCTION_HERO } from '@/data/industryConstructionHeroAssets'
-import { LANDING_APP_GALLERY_IMAGES } from '@/data/landingAppGallery'
+import { shot } from '@/data/productShots'
 
 type Props = { locale: IndustryConstructionLocale }
+
+const blogPath: Record<IndustryConstructionLocale, string> = {
+	pl: '/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie',
+	en: '/en/blog/time-tracking-on-construction-sites',
+}
 
 export default function IndustryConstructionLandingContent({ locale }: Props) {
 	const c = industryConstructionCopy[locale]
 	const canonical =
 		locale === 'pl' ? 'https://planopia.pl/dla-branzy-budowlanej' : 'https://planopia.pl/en/for-construction-industry'
-	const registerHref = 'https://app.planopia.pl/team-registration'
 
 	const siteOrigin = 'https://planopia.pl'
 	const webPageId = `${canonical}#webpage`
@@ -100,166 +100,34 @@ export default function IndustryConstructionLandingContent({ locale }: Props) {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-			<main className="bg-white overflow-x-hidden">
-				<article className="break-words">
-					<IndustryConstructionHero locale={locale} />
-
-					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
-						<section aria-labelledby="problems-heading">
-							<h2 id="problems-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
-								{c.problemsTitle}
-							</h2>
-							<ul className="list-none space-y-3 m-0 p-0">
-								{c.problems.map((p, i) => (
-									<li
-										key={i}
-										className="flex gap-3 rounded-2xl border border-red-100/90 bg-gradient-to-r from-red-50/90 to-white px-4 py-3.5 text-gray-800 shadow-sm ring-1 ring-red-100/40"
-									>
-										<span className="font-bold text-red-600 shrink-0" aria-hidden>
-											!
-										</span>
-										<span>{p}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section
-							className="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50/95 via-white to-orange-50/40 p-6 shadow-md ring-1 ring-amber-100/70 md:p-8"
-							aria-labelledby="field-crew-heading"
-						>
-							<h2 id="field-crew-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
-								{c.fieldCrewTitle}
-							</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{c.fieldCrewLead}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-800">
-								{c.fieldCrewBullets.map((b, i) => (
-									<li
-										key={i}
-										className="flex gap-3 rounded-xl border border-amber-100/80 bg-white/80 px-4 py-2.5 shadow-sm"
-									>
-										<span className="text-amber-700 font-bold shrink-0" aria-hidden>
-											✓
-										</span>
-										<span>{b}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section
-							className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-100/80 md:p-8"
-							aria-labelledby="solution-heading"
-						>
-							<h2 id="solution-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
-								{c.solutionTitle}
-							</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{c.solutionIntro}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
-								{c.features.map((f, i) => (
-									<li
-										key={i}
-										className="flex gap-3 rounded-xl border border-gray-100 bg-slate-50/60 px-4 py-2.5 text-gray-800 shadow-sm"
-									>
-										<span className="text-blue-600 font-bold shrink-0" aria-hidden>
-											✓
-										</span>
-										<span>{f}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<IndustryConstructionGallerySection
-							locale={locale}
-							title={c.galleryTitle}
-							images={LANDING_APP_GALLERY_IMAGES}
-						/>
-
-						<IndustryConstructionAiSection locale={locale} title={c.aiTitle} bullets={c.aiBullets} />
-
-						<section aria-labelledby="steps-heading">
-							<h2 id="steps-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
-								{c.stepsTitle}
-							</h2>
-							<ol className="list-none space-y-3 m-0 p-0">
-								{c.steps.map((s, i) => (
-									<li
-										key={i}
-										className="flex gap-4 rounded-2xl border border-emerald-100/80 bg-gradient-to-r from-emerald-50/50 to-white px-4 py-3.5 text-gray-800 ring-1 ring-emerald-100/40"
-									>
-										<div
-											className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold !text-white tabular-nums leading-none"
-											aria-hidden
-										>
-											{i + 1}
-										</div>
-										<span className="min-w-0 pt-0.5 leading-relaxed">{s}</span>
-									</li>
-								))}
-							</ol>
-						</section>
-
-						<section aria-labelledby="faq-heading">
-							<h2 id="faq-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-6">
-								{c.faqTitle}
-							</h2>
-							<div className="space-y-4 md:space-y-5">
-								{c.faqs.map((f, i) => (
-									<div
-										key={i}
-										className="rounded-2xl border border-gray-100 bg-white p-5 md:p-6 shadow-sm ring-1 ring-gray-100/80"
-									>
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
-										<p className="text-gray-700 m-0 leading-relaxed">{f.a}</p>
-									</div>
-								))}
-							</div>
-						</section>
-
-						<section className="pb-0" aria-labelledby="industry-landing-cta-h">
-							<div className="text-center bg-gradient-to-br from-blue-50 via-white to-emerald-50/90 p-6 sm:p-9 rounded-2xl shadow-md ring-1 ring-blue-100/60">
-								<h2
-									id="industry-landing-cta-h"
-									className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug"
-								>
-									{c.ctaTitle}
-								</h2>
-								<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-3xl mx-auto leading-snug sm:leading-relaxed m-0">
-									{c.ctaNote}
-								</p>
-								<a
-									href={registerHref}
-									className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 shadow-lg hover:bg-green-700 transition text-sm sm:text-base md:text-lg white-text-btn text-center max-w-full"
-								>
-									{c.ctaButton}
-								</a>
-							</div>
-						</section>
-
-						<section
-							className="construction-video-card rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/90 to-slate-100/70 px-5 py-7 shadow-md ring-1 ring-slate-200/60 md:px-8 md:py-8"
-							aria-labelledby="construction-video-teaser"
-						>
-							<div className="mx-auto flex max-w-2xl flex-col gap-3 md:gap-4">
-								<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{c.videoEyebrow}</p>
-								<h2 id="construction-video-teaser" className="text-xl font-bold leading-snug text-gray-900 md:text-2xl">
-									{c.videoTitle}
-								</h2>
-								<p className="text-sm leading-relaxed text-gray-600 md:text-base">{c.videoBody}</p>
-								<div className="pt-1">
-									<Link
-										href={c.videoHref}
-										className="construction-solid-btn construction-solid-btn--blue inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold shadow-md transition hover:bg-blue-700 sm:w-auto sm:px-6"
-									>
-										{c.videoCta}
-									</Link>
-								</div>
-							</div>
-						</section>
-					</div>
-				</article>
-			</main>
+			<IndustryLanding
+				locale={locale}
+				eyebrow={locale === 'pl' ? 'Branża: budownictwo' : 'Industry: construction'}
+				heroH1={c.heroH1}
+				heroSub={c.heroSub}
+				ctaButton={c.ctaButton}
+				secondary={{ label: c.blogLinkLabel, href: blogPath[locale] }}
+				heroImage={{ src: INDUSTRY_CONSTRUCTION_HERO.src, alt: c.heroImageAlt, width: INDUSTRY_CONSTRUCTION_HERO.width, height: INDUSTRY_CONSTRUCTION_HERO.height }}
+				problemsTitle={c.problemsTitle}
+				problems={c.problems}
+				spotlights={[
+					{ id: 'field-crew', eyebrow: c.fieldCrewEyebrow, title: c.fieldCrewTitle, lead: c.fieldCrewLead, bullets: c.fieldCrewBullets, note: c.fieldCrewNote, shot: shot(locale, 'create-noaccess') },
+					{ id: 'qr-site', ...c.qrSpot, shot: shot(locale, 'qr-codes') },
+					{ id: 'output', ...c.outputSpot, shot: shot(locale, 'qr-sessions') },
+				]}
+				solutionTitle={c.solutionTitle}
+				solutionIntro={c.solutionIntro}
+				features={c.features}
+				galleryTitle={c.galleryTitle}
+				gallery={[shot(locale, 'managed-calendar'), shot(locale, 'schedule'), shot(locale, 'board')]}
+				ai={{ title: c.aiTitle, bullets: c.aiBullets, visual: <ConstructionAiAssistantScreenshot locale={locale} /> }}
+				stepsTitle={c.stepsTitle}
+				steps={c.steps}
+				faqTitle={c.faqTitle}
+				faqs={c.faqs}
+				cta={{ title: c.ctaTitle, note: c.ctaNote, button: c.ctaButton }}
+				guide={{ eyebrow: c.videoEyebrow, title: c.videoTitle, body: c.videoBody, href: c.videoHref, cta: c.videoCta }}
+			/>
 		</>
 	)
 }

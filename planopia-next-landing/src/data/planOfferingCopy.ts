@@ -23,16 +23,18 @@ export const planOfferingCopy = {
 		valueTitle: 'Excel nie przypilnuje procesu. Planopia tak.',
 		valueLead:
 			'Excel jest darmowy tylko do momentu, w którym ktoś musi zbierać pliki, przepisywać urlopy i przygotowywać raporty.',
-		valueCards: [
-			{
-				title: 'Koniec z rozproszonymi arkuszami',
-				text: 'Czas pracy, urlopy, grafiki i zadania w jednym miejscu. Bez szukania po plikach, mailach i czatach.',
-			},
-			{
-				title: 'Urlopy bez gonienia po akceptacje',
-				text: 'Wniosek, akceptacja, historia zmian i powiadomienia zostają w aplikacji.',
-			},
-		],
+		// Porównanie wiersz w wiersz: po lewej to, co czytelnik zna z Excela, po prawej to samo w Planopii
+		valueCompare: {
+			excelLabel: 'W Excelu',
+			appLabel: 'W Planopii',
+			rows: [
+				{ excel: 'Zbierasz arkusze od kierowników i scalasz je ręcznie', app: 'Pracownicy wpisują godziny sami, a Ty widzisz cały zespół' },
+				{ excel: 'Wnioski urlopowe przychodzą mailem, SMS-em i na kartkach', app: 'Wniosek, akceptacja i powiadomienie w jednym miejscu' },
+				{ excel: 'Saldo urlopu liczysz ręcznie i łatwo o pomyłkę', app: 'Saldo urlopu liczy się samo po każdym wniosku' },
+				{ excel: 'Grafik żyje w osobnym pliku i kilku wersjach', app: 'Grafik w tej samej aplikacji co ewidencja i urlopy' },
+				{ excel: 'Raport na koniec miesiąca składasz godzinami', app: 'Raport PDF lub Excel jednym kliknięciem' },
+			],
+		},
 		// Sekcja #oaplikacji. Nazywa specjalizacje (czas pracy zespolu) zamiast szerokiej
 		// kategorii „zarzadzanie firma", ktorej produkt nie obejmuje.
 		aboutEyebrow: 'Co znajdziesz w Planopii',
@@ -55,16 +57,17 @@ export const planOfferingCopy = {
 		valueTitle: 'Spreadsheets do not manage the process. Planopia does.',
 		valueLead:
 			'Spreadsheets are free until someone has to collect files, rewrite leave requests, and prepare reports.',
-		valueCards: [
-			{
-				title: 'No more scattered sheets',
-				text: 'Time, leave, schedules, and tasks in one place. No digging through files, emails, and chats.',
-			},
-			{
-				title: 'Leave without approval chasing',
-				text: 'Requests, approvals, change history, and notifications stay inside the app.',
-			},
-		],
+		valueCompare: {
+			excelLabel: 'In spreadsheets',
+			appLabel: 'In Planopia',
+			rows: [
+				{ excel: 'You collect sheets from managers and merge them by hand', app: 'Employees log their own hours and you see the whole team' },
+				{ excel: 'Leave requests arrive by email, text and on paper', app: 'Request, approval and notification in one place' },
+				{ excel: 'You calculate leave balances by hand and mistakes happen', app: 'Leave balance updates itself after every request' },
+				{ excel: 'The schedule lives in a separate file with several versions', app: 'Schedule in the same app as time tracking and leave' },
+				{ excel: 'Month-end reports take hours to put together', app: 'PDF or Excel report in one click' },
+			],
+		},
 		// Blizniak sekcji #oaplikacji — musi mowic to samo co wersja PL.
 		aboutEyebrow: 'What you get in Planopia',
 		aboutTitle: "Everything around your team's working time",

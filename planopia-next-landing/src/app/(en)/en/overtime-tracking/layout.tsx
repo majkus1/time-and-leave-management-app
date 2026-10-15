@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'Overtime tracking software | Planopia'
 const META_DESCRIPTION =
 	'Track overtime hours against the day they happened, not a monthly total. Monthly PDF and Excel reports. Free tier for up to 5 active accounts.'
-const IMAGE = '/img/desktop-ennews.webp'
+const IMAGE = '/img/og/overtime-en.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1918,
-				height: 908,
+				width: 1200,
+				height: 630,
 				alt: 'Overtime tracking in the Planopia app',
 			},
 		],

@@ -59,11 +59,11 @@ export const metadata: Metadata = {
     description: HOME_META_DESCRIPTION,
     images: [
       {
-        url: LANDING_OG_IMAGE.url,
+        url: LANDING_OG_IMAGE.url.pl,
         width: LANDING_OG_IMAGE.width,
         height: LANDING_OG_IMAGE.height,
         alt: LANDING_OG_IMAGE.alt.pl,
-        type: 'image/png',
+        type: 'image/jpeg',
       },
     ],
   },
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Planopia — darmowa ewidencja czasu pracy online | 30 dni',
     description: HOME_META_DESCRIPTION,
-    images: [LANDING_OG_IMAGE.url],
+    images: [LANDING_OG_IMAGE.url.pl],
   },
   alternates: {
     canonical: 'https://planopia.pl',

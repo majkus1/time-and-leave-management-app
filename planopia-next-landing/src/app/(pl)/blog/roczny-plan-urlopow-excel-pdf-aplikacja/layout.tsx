@@ -50,8 +50,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: 'https://planopia.pl/img/roczny-plan.webp',
-				width: 1200,
-				height: 630,
+				width: 1540,
+				height: 1020,
 				alt: 'Plan urlopów i wnioski urlopowe w Planopii',
 			},
 		],

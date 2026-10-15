@@ -34,14 +34,14 @@ module.exports = {
 
 ### Podgląd i potwierdzanie (Administrator, HR, przełożony)
 - „Ewidencja czasu pracy” w menu: kalendarze pracowników — Administrator i HR widzą cały zespół, przełożony swój dział lub wybrane osoby (wg uprawnień). Filtr miesiąca, działu, osoby.
-- Uprawniona osoba może edytować wpisy pracownika w jego kalendarzu, zatwierdzać lub odrzucać dni (zielone/czerwone) i potwierdzać cały miesiąc.
+- Uprawniona osoba może zatwierdzać lub odrzucać dni (zielone/czerwone) i potwierdzać cały miesiąc. Wpisy edytuje tylko za pracowników bez dostępu do aplikacji (po włączeniu tej opcji w Ustawieniach) — pracownik z kontem poprawia swoje wpisy sam.
 - Pracownicy bez dostępu do aplikacji: po włączeniu w Ustawieniach uprawnieni użytkownicy prowadzą ewidencję za osoby, które same nie logują się (patrz „Ustawienia i role”).
 
 ### Raporty i eksporty
 - Raporty zespołu (plan Core i wyżej, okres próbny): na dole listy kalendarzy — Excel/PDF raport zespołu (godziny, nadgodziny, urlopy w okresie), Excel/PDF wg osób, raport zadań i czynności (godziny, ilości, wydajność), gdy są dane.
 - Kalendarz jednej osoby: u góry PDF z podsumowaniem miesiąca.
-- Własna ewidencja: pracownik pobiera PDF/Excel swojego miesiąca ze strony „Czas pracy”.
-- W planie darmowym działa wydruk ewidencji każdej osoby (PDF/Excel z jej kalendarza i własny miesiąc na stronie „Czas pracy”); zamiast raportów zespołu jest informacja o planie Core.
+- Strona „Czas pracy” (własna ewidencja) nie ma przycisku eksportu — PDF/Excel miesiąca pracownika pobiera Administrator, HR lub przełożony z jego kalendarza w „Ewidencji czasu pracy”.
+- W planie darmowym działa wydruk ewidencji każdej osoby (PDF/Excel z jej kalendarza w „Ewidencji czasu pracy”); zamiast raportów zespołu jest informacja o planie Core.
 
 ### Czego NIE robi
 - Nie śledzi lokalizacji GPS ani aktywności na komputerze (nie ma zrzutów ekranu, monitoringu aplikacji). Wyjątek: przy kodzie QR można włączyć jednorazowy odczyt lokalizacji w chwili skanu (moduł QR).

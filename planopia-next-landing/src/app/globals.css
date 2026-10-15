@@ -2945,31 +2945,8 @@ textarea {
 	line-height: 1.68;
 }
 
-.landing-value-proof__grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 14px;
-}
 
-.landing-value-proof__card {
-	min-height: 100%;
-	border: 1px solid rgba(16, 47, 94, 0.1);
-	border-radius: 8px;
-	background: #ffffff;
-	box-shadow: 0 12px 28px rgba(16, 47, 94, 0.06);
-	padding: 18px;
-}
 
-.landing-value-proof__card h3 {
-	margin: 0 0 8px;
-	color: #102f5e !important;
-	-webkit-text-fill-color: #102f5e !important;
-	font-family: 'Titillium Web', serif !important;
-	font-size: 17px !important;
-	font-weight: 700 !important;
-	letter-spacing: 0;
-	line-height: 1.35;
-}
 
 .landing-value-proof h2.landing-value-proof__title {
 	font-family: 'Titillium Web', serif !important;
@@ -2978,19 +2955,7 @@ textarea {
 	line-height: 1.2 !important;
 }
 
-.landing-value-proof .landing-value-proof__card h3 {
-	font-family: 'Titillium Web', serif !important;
-	font-size: 17px !important;
-	font-weight: 700 !important;
-	line-height: 1.35 !important;
-}
 
-.landing-value-proof__card p {
-	margin: 0;
-	color: rgba(16, 47, 94, 0.72);
-	font-size: 14px;
-	line-height: 1.62;
-}
 
 /* Eyebrow <p> above H2 in landing sections — unified 15px, all breakpoints */
 .landing-section-eyebrow {
@@ -3285,13 +3250,7 @@ textarea {
 		line-height: 1.58;
 	}
 
-	.landing-value-proof__grid {
-		grid-template-columns: 1fr;
-	}
 
-	.landing-value-proof__card {
-		padding: 16px;
-	}
 }
 
 .underheadertwo {
@@ -5337,13 +5296,6 @@ a.landing-polished-hero-cta:focus-visible,
 	letter-spacing: 0 !important;
 }
 
-.landing-value-proof .landing-value-proof__card h3 {
-	font-family: 'Titillium Web', serif !important;
-	font-size: 17px !important;
-	font-weight: 700 !important;
-	line-height: 1.35 !important;
-	letter-spacing: 0 !important;
-}
 
 @media (max-width: 768px) {
 	.landing-value-proof h2.landing-value-proof__title,

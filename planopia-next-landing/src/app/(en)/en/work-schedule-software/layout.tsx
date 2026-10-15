@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'Work schedule software for teams | Planopia'
 const META_DESCRIPTION =
 	'Build team work schedules online: shifts, minimum staffing, and automatic fill that skips leave and public holidays. 30 days free, no card needed.'
-const IMAGE = '/img/aigrafik-en.webp'
+const IMAGE = '/img/og/schedule-en.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1895,
-				height: 910,
+				width: 1200,
+				height: 630,
 				alt: 'Planopia work schedule software — team roster',
 			},
 		],

@@ -78,7 +78,7 @@ export const BLOG_TOPICS_PL = [
 	{
 		id: 'produkt',
 		title: 'Planopia — produkt i pomoc',
-		description: 'Moduły, AI, instalacja PWA i instrukcje wideo.',
+		description: 'Moduły, AI, instalacja PWA i instrukcja obsługi.',
 		links: [
 			{ href: '/blog/kompleksowa-aplikacja-do-zarzadzania-firma', label: 'Ewidencja, urlopy i grafik w jednej aplikacji' },
 			{ href: '/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik', label: 'Asystent AI w Planopii' },

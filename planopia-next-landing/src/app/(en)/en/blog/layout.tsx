@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     description: BLOG_META_DESCRIPTION,
     images: [
       {
-        url: 'https://planopia.pl/img/blog.webp',
-        width: 1200,
-        height: 630,
+        url: 'https://planopia.pl/img/worktimeblog.webp',
+        width: 1036,
+        height: 691,
         alt: 'Planopia Blog – Tips on Work Time Tracking and HR',
       },
     ],
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Planopia Blog — Time Tracking and Leave',
     description: BLOG_META_DESCRIPTION,
-    images: ['https://planopia.pl/img/blog.webp'],
+    images: ['https://planopia.pl/img/worktimeblog.webp'],
   },
   alternates: {
     canonical: 'https://planopia.pl/en/blog',

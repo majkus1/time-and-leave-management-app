@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: 'https://planopia.pl/img/plans-urlopnew.webp',
-        width: 1200,
-        height: 630,
+        width: 1918,
+        height: 910,
         alt: 'Planowanie urlopów pracowników – jak uniknąć chaosu w firmie?',
       },
     ],

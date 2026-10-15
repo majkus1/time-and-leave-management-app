@@ -47,8 +47,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: 'https://planopia.pl/img/worktimeblog.webp',
-				width: 1200,
-				height: 630,
+				width: 1036,
+				height: 691,
 				alt: 'Ewidencja czasu pracy na budowie — Planopia',
 			},
 		],

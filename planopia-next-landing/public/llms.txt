@@ -57,7 +57,7 @@ Planopia nie zastępuje systemu płacowego ani porady prawnej — to narzędzie 
 - [Darmowa aplikacja do ewidencji czasu pracy](https://planopia.pl/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy)
 - [Ewidencja czasu pracy na budowie](https://planopia.pl/blog/jak-prowadzic-ewidencje-czasu-pracy-na-budowie)
 - [Asystent AI w Planopii](https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik)
-- [Instrukcja wideo](https://planopia.pl/blog/instrukcja-wideo-planopia)
+- [Instrukcja obsługi](https://planopia.pl/jak-korzystac): każdy moduł krok po kroku
 
 ## Aplikacja
 

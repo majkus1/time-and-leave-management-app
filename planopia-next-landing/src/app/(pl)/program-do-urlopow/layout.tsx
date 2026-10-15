@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 			`Wnioski urlopowe, akceptacje i kalendarz urlopów w jednej aplikacji. 30 dni pełnej Planopii za darmo, potem plan z urlopami od ${CORE_FROM} zł netto/mies.`,
 		images: [
 			{
-				url: '/img/plans-urlopnew.webp',
+				url: '/img/og/urlopy.jpg',
 				width: 1200,
 				height: 630,
 				alt: 'Program do urlopów Planopia — kalendarz i wnioski urlopowe',
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		title: 'Program do urlopów dla firmy — Planopia',
 		description: 'Wnioski urlopowe, akceptacje i kalendarz urlopów online. 30 dni pełnej aplikacji za darmo.',
-		images: ['/img/plans-urlopnew.webp'],
+		images: ['/img/og/urlopy.jpg'],
 	},
 	alternates: {
 		canonical: '/program-do-urlopow',

@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: 'https://planopia.pl/img/pwa1.png',
-        width: 1200,
-        height: 630,
+        width: 412,
+        height: 892,
         alt: 'Instalacja Planopii jako PWA',
       },
     ],

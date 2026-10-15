@@ -590,10 +590,13 @@
 
 /* ---------- Pasek warunków (nachodzi na hero) ---------- */
 
+/* Pasek nachodzi na hero; pod nim od razu tło następnej sekcji (papier), bez białej szczeliny */
 .plp-terms {
+	--plp-overlap: clamp(84px, 9vw, 112px);
 	position: relative;
 	z-index: 2;
-	margin-top: calc(-1 * clamp(84px, 9vw, 112px));
+	margin-top: calc(-1 * var(--plp-overlap));
+	background: linear-gradient(180deg, transparent var(--plp-overlap), var(--plp-paper) var(--plp-overlap));
 }
 
 .plp-terms__grid {

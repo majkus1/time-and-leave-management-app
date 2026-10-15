@@ -44,8 +44,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: '/img/roczny-plan.webp',
-				width: 1200,
-				height: 630,
+				width: 1540,
+				height: 1020,
 				alt: 'Leave planning and requests in Planopia',
 			},
 		],

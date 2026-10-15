@@ -1,12 +1,9 @@
-import Link from 'next/link'
-import IndustryCleaningHero from './IndustryCleaningHero'
-import LandingAppScreenshotGallery from './LandingAppScreenshotGallery'
+import IndustryLanding from './productLanding/IndustryLanding'
 import ConstructionAiAssistantScreenshot from './ConstructionAiAssistantScreenshot'
 import { industryCleaningCopy as copy } from '@/data/industryCleaningCopy'
-import { LANDING_APP_GALLERY_IMAGES } from '@/data/landingAppGallery'
+import { shot } from '@/data/productShots'
 
 const canonical = 'https://planopia.pl/dla-firm-sprzatajacych'
-const registerHref = 'https://app.planopia.pl/team-registration'
 
 export default function IndustryCleaningLandingContent() {
 	const webPageSchema = {
@@ -63,114 +60,45 @@ export default function IndustryCleaningLandingContent() {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-			<main className="bg-white overflow-x-hidden">
-				<article className="break-words">
-					<IndustryCleaningHero />
-					<div className="max-w-4xl mx-auto px-4 sm:px-5 pt-8 md:pt-10 pb-12 md:pb-16 flex flex-col gap-10 md:gap-12">
-						<section aria-labelledby="cleaning-problems-heading">
-							<h2 id="cleaning-problems-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">
-								{copy.problemsTitle}
-							</h2>
-							<ul className="list-none space-y-3 m-0 p-0">
-								{copy.problems.map(problem => (
-									<li key={problem} className="flex gap-3 rounded-xl border border-red-100 bg-red-50/60 px-4 py-3.5 text-gray-800 shadow-sm">
-										<span className="font-bold text-red-600 shrink-0" aria-hidden>!</span>
-										<span>{problem}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section className="rounded-xl border border-sky-200 bg-sky-50/60 p-6 shadow-sm md:p-8" aria-labelledby="cleaning-team-heading">
-							<h2 id="cleaning-team-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">{copy.teamTitle}</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{copy.teamLead}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-800">
-								{copy.teamBullets.map(item => (
-									<li key={item} className="flex gap-3 rounded-lg border border-sky-100 bg-white/85 px-4 py-2.5 shadow-sm">
-										<span className="text-sky-700 font-bold shrink-0" aria-hidden>✓</span>
-										<span>{item}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm ring-1 ring-gray-100 md:p-8" aria-labelledby="cleaning-solution-heading">
-							<h2 id="cleaning-solution-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">{copy.solutionTitle}</h2>
-							<p className="text-gray-700 mb-5 leading-relaxed">{copy.solutionIntro}</p>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
-								{copy.features.map(feature => (
-									<li key={feature} className="flex gap-3 rounded-lg border border-gray-100 bg-slate-50/70 px-4 py-2.5 text-gray-800">
-										<span className="text-blue-600 font-bold shrink-0" aria-hidden>✓</span>
-										<span>{feature}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<div className="rounded-xl border border-gray-100 bg-gray-50/60 p-5 shadow-sm md:p-7">
-							<LandingAppScreenshotGallery locale="pl" title={copy.galleryTitle} images={LANDING_APP_GALLERY_IMAGES} sectionClassName="my-0" />
-						</div>
-
-						<section className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-5 py-7 shadow-sm md:px-8" aria-labelledby="cleaning-ai-heading">
-							<h2 id="cleaning-ai-heading" className="text-xl md:text-2xl font-bold text-gray-900 mb-4">{copy.aiTitle}</h2>
-							<div className="mb-5 overflow-hidden rounded-xl border border-indigo-200/70 bg-white shadow-sm">
-								<ConstructionAiAssistantScreenshot locale="pl" />
-							</div>
-							<ul className="list-none space-y-2.5 m-0 p-0 text-gray-700">
-								{copy.aiBullets.map(item => (
-									<li key={item} className="flex gap-3 rounded-lg border border-indigo-100 bg-white/80 px-3 py-2">
-										<span className="text-indigo-600 font-bold shrink-0" aria-hidden>✓</span>
-										<span>{item}</span>
-									</li>
-								))}
-							</ul>
-						</section>
-
-						<section aria-labelledby="cleaning-steps-heading">
-							<h2 id="cleaning-steps-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-5">{copy.stepsTitle}</h2>
-							<ol className="list-none space-y-3 m-0 p-0">
-								{copy.steps.map((step, index) => (
-									<li key={step} className="flex gap-4 rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-3.5 text-gray-800">
-										<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold !text-white" aria-hidden>{index + 1}</span>
-										<span className="min-w-0 pt-0.5 leading-relaxed">{step}</span>
-									</li>
-								))}
-							</ol>
-						</section>
-
-						<section aria-labelledby="cleaning-faq-heading">
-							<h2 id="cleaning-faq-heading" className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-6">{copy.faqTitle}</h2>
-							<div className="space-y-4">
-								{copy.faqs.map(faq => (
-									<div key={faq.q} className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm md:p-6">
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.q}</h3>
-										<p className="text-gray-700 m-0 leading-relaxed">{faq.a}</p>
-									</div>
-								))}
-							</div>
-						</section>
-
-						<section aria-labelledby="cleaning-cta-heading">
-							<div className="text-center bg-gradient-to-br from-blue-50 via-white to-emerald-50 p-6 sm:p-9 rounded-xl shadow-md ring-1 ring-blue-100">
-								<h2 id="cleaning-cta-heading" className="industry-cta-heading w-full text-center text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-snug">{copy.ctaTitle}</h2>
-								<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-6 max-w-3xl mx-auto leading-relaxed">{copy.ctaNote}</p>
-								<a href={registerHref} className="inline-block rounded-xl bg-green-600 text-white font-semibold py-3 px-5 sm:py-4 sm:px-8 shadow-lg hover:bg-green-700 transition white-text-btn text-center">
-									{copy.ctaButton}
-								</a>
-							</div>
-						</section>
-
-						<section className="rounded-xl border border-slate-200 bg-slate-50/80 px-5 py-7 shadow-sm md:px-8" aria-labelledby="cleaning-guide-heading">
-							<p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Praktyczny poradnik</p>
-							<h2 id="cleaning-guide-heading" className="mt-2 text-xl font-bold leading-snug text-gray-900 md:text-2xl">Jak zarządzać firmą sprzątającą?</h2>
-							<p className="mt-3 text-sm leading-relaxed text-gray-600 md:text-base">Proces krok po kroku: standard pracy, harmonogram ekip, obiekty, zastępstwa, kontrola wykonania i rozliczenie godzin.</p>
-							<Link href="/blog/jak-zarzadzac-firma-sprzatajaca" className="construction-solid-btn construction-solid-btn--blue mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold shadow-md transition hover:bg-blue-700">
-								Czytaj poradnik
-							</Link>
-						</section>
-					</div>
-				</article>
-			</main>
+			<IndustryLanding
+				locale="pl"
+				eyebrow="Branża: firmy sprzątające"
+				heroH1={copy.heroH1}
+				heroSub={copy.heroSub}
+				ctaButton={copy.ctaButton}
+				secondary={{ label: 'Zobacz aplikację', href: '#industry-gallery' }}
+				heroImage={{ src: '/img/sprzatajaca.webp', alt: 'Grafik ekip i ewidencja czasu pracy firmy sprzątającej w Planopii', width: 1536, height: 1024 }}
+				problemsTitle={copy.problemsTitle}
+				problems={[...copy.problems]}
+				spotlights={[
+					{ id: 'team', eyebrow: 'Ekipy na wielu obiektach', title: copy.teamTitle, lead: copy.teamLead, bullets: [...copy.teamBullets], shot: shot('pl', 'schedule') },
+					{
+					id: 'absence',
+					eyebrow: 'Nagła nieobecność',
+					title: 'Nieobecność na obiekcie? Zastępstwo planujesz, zanim zrobi się problem',
+					lead: 'Gdy wniosek urlopowy nachodzi na opublikowany grafik, koordynator od razu widzi, którą zmianę na którym obiekcie trzeba obsadzić — i może wcześniej znaleźć zastępstwo.',
+					bullets: [
+						'Kolizja z grafikiem widoczna przy wniosku urlopowym.',
+						'Na dzień zatwierdzonego urlopu nie wpiszesz zmiany.',
+						'Automatyczne układanie pomija osoby na urlopie i dni świąteczne.',
+						'Po publikacji grafiku pracownicy dostają powiadomienie.',
+					],
+					shot: shot('pl', 'leave-conflict'),
+				},
+				]}
+				solutionTitle={copy.solutionTitle}
+				solutionIntro={copy.solutionIntro}
+				features={[...copy.features]}
+				galleryTitle={copy.galleryTitle}
+				gallery={[shot('pl', 'dashboard'), shot('pl', 'schedule-auto'), shot('pl', 'dashboard-stats')]}
+				ai={{ title: copy.aiTitle, bullets: [...copy.aiBullets], visual: <ConstructionAiAssistantScreenshot locale="pl" /> }}
+				stepsTitle={copy.stepsTitle}
+				steps={[...copy.steps]}
+				faqTitle={copy.faqTitle}
+				faqs={[...copy.faqs]}
+				cta={{ title: copy.ctaTitle, note: copy.ctaNote, button: copy.ctaButton }}
+				guide={{ eyebrow: 'Praktyczny poradnik', title: 'Jak zarządzać firmą sprzątającą?', body: 'Proces krok po kroku: standard pracy, harmonogram ekip, obiekty, zastępstwa, kontrola wykonania i rozliczenie godzin.', href: '/blog/jak-zarzadzac-firma-sprzatajaca', cta: 'Czytaj poradnik' }}
+			/>
 		</>
 	)
 }

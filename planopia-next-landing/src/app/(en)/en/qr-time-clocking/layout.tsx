@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 const META_TITLE = 'QR time clocking and attendance | Planopia'
 const META_DESCRIPTION =
 	'Replace the paper attendance sheet with QR time clocking. People scan in and out from a phone, and hours land straight in your time records.'
-const IMAGE = '/img/desktop-ennews.webp'
+const IMAGE = '/img/og/qr-en.jpg'
 
 export const metadata: Metadata = {
 	metadataBase: new URL('https://planopia.pl'),
@@ -43,8 +43,8 @@ export const metadata: Metadata = {
 		images: [
 			{
 				url: IMAGE,
-				width: 1918,
-				height: 908,
+				width: 1200,
+				height: 630,
 				alt: 'QR time clocking in the Planopia app',
 			},
 		],

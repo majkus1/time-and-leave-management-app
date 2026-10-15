@@ -6,6 +6,7 @@ import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
 import LandingFeatureTiles from './LandingFeatureTiles'
 import LandingTestimonials from './LandingTestimonials'
+import ValueComparison from './landingHome/ValueComparison'
 
 const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
@@ -51,25 +52,7 @@ const faqs = landingHomeFaqs.en
 function ENProductPromotion() {
 	return (
 		<>
-			<section className="landing-value-proof-section px-4" aria-labelledby="planopia-value-proof-heading-en">
-				<div className="landing-value-proof max-w-7xl mx-auto">
-					<div className="landing-value-proof__header">
-						<p className="landing-value-proof__eyebrow landing-section-eyebrow">{planOfferingCopy.en.valueEyebrow}</p>
-						<h2 id="planopia-value-proof-heading-en" className="landing-value-proof__title">
-							{planOfferingCopy.en.valueTitle}
-						</h2>
-						<p className="landing-value-proof__lead">{planOfferingCopy.en.valueLead}</p>
-					</div>
-					<div className="landing-value-proof__grid">
-						{planOfferingCopy.en.valueCards.map(card => (
-							<article className="landing-value-proof__card" key={card.title}>
-								<h3>{card.title}</h3>
-								<p>{card.text}</p>
-							</article>
-						))}
-					</div>
-				</div>
-			</section>
+			<ValueComparison locale="en" />
 
 			<LandingTestimonials locale="en" />
 
