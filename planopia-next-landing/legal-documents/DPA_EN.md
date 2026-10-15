@@ -1,6 +1,6 @@
 # Data Processing Agreement (DPA)
 
-**Version 1.2 - effective from September 27, 2026**
+**Version 1.3 - effective from October 16, 2026**
 
 ## 1. Parties to the Agreement
 
@@ -12,11 +12,13 @@
 
 2.1. The Controller entrusts, and the Processor accepts, the processing of personal data to the extent necessary for providing services through the Planopia.pl platform.
 
-2.2. Processing includes, among other things: time tracking (including clock-in and clock-out with QR codes, optionally with a location check at scan — as set out in section 2.4), leave and absence management, work schedules, task boards (Kanban), team communication, and — when enabled on the plan — OpenAI API-based features (e.g. AI Assistant, schedule AI support), as set out in section 2.3.
+2.2. Processing includes, among other things: time tracking (including clock-in and clock-out with QR codes, optionally with a location check at scan — as set out in section 2.4), leave and absence management, work schedules, task boards, team communication, and — when enabled on the plan — OpenAI API-based features (e.g. AI Assistant, schedule AI support), as set out in section 2.3.
 
 2.3. **AI features:** The Processor sends User queries and selected, aggregated Controller Account data to OpenAI (OpenAI, L.L.C., USA) solely to generate a response. AI Assistant chat history is not stored permanently in the Processor’s database — it is saved in the User’s browser (localStorage). The Processor stores usage counters for AI limits, among other things. The Controller should not include in queries more personal data than necessary to use the Service.
 
 2.4. **Location at QR code scan:** the feature is off by default; the Controller enables it for a selected code. The employee's device location is read once, at the moment of scanning, with consent given in the browser. The Processor stores only the result of the check (at the workplace / outside it / no consent / no signal), the distance from the place and the reading accuracy — without the employee's coordinates and without tracking their location. The Controller is responsible for informing employees about this feature and for the legal basis of its use.
+
+2.5. **Sharing data with an accounting or payroll office:** on the Controller’s instruction, given in the Application by a user with the Administrator role, the Processor gives an accounting or payroll office chosen by the Controller that has a Planopia account (the "Office") read-only access to: the employee list (first name, last name, position), monthly time records (working days, hours, overtime, absences), approved leave and leave balances, whether the monthly timesheet was confirmed, and the configured leave types and holiday calendar, as well as the ability to download a monthly summary in Excel or PDF. The Office cannot change the data. The Processor records the instruction (user, date, IP address, browser information, version of this agreement) and every time the Office opens or exports the data; the history is available to the Controller and retained for 2 years. The Controller can revoke the instruction at any time in Settings — the Office’s access ends immediately. The Controller governs its legal relationship with the Office (including any data processing agreement between them) on its own; the Processor is not responsible for processing of data the Office downloads outside the Application.
 
 ## 3. Categories of Data and Data Subjects
 
@@ -38,7 +40,7 @@
    - Not take any action without the Controller's consent
    - Assist the Controller in fulfilling data subjects' rights
 
-4.2. The Processor may not disclose personal data to third parties without the Controller's consent, unless required by law.
+4.2. The Processor may not disclose personal data to third parties without the Controller's consent, unless required by law. Sharing data with the Office on the Controller’s instruction follows section 2.5.
 
 ## 5. Sub-processing (Sub-processors)
 
@@ -118,5 +120,5 @@
 - Staff training on GDPR
 - Security incident management procedures
 
-**Last updated: September 27, 2026**
+**Last updated: October 16, 2026**
 

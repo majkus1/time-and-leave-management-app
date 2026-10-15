@@ -1,6 +1,6 @@
 # Polityka prywatności Planopia.pl
 
-**Wersja 1.3 - obowiązuje od 27.09.2026r.**
+**Wersja 1.4 - obowiązuje od 16.10.2026r.**
 
 ## 1. Administrator danych
 
@@ -16,6 +16,7 @@ Kontakt: biuro@planopia.pl
    - Świadczenie usług przez platformę Planopia.pl (podstawa: art. 6 ust. 1 lit. b RODO - wykonanie umowy)
    - Wypełnienie obowiązków prawnych (podstawa: art. 6 ust. 1 lit. c RODO)
    - Marketing bezpośredni wyłącznie wobec Klientów (podstawa: art. 6 ust. 1 lit. f RODO - prawnie uzasadniony interes). Marketing nie obejmuje danych pracowników Klientów.
+   - Prowadzenie programu partnerskiego: przypisanie zespołu do partnera, z którego linku założono konto, oraz naliczanie i wypłata prowizji (podstawa: art. 6 ust. 1 lit. b RODO wobec partnera - wykonanie umowy partnerskiej; art. 6 ust. 1 lit. f RODO wobec poleconego Klienta - prawnie uzasadniony interes w rozliczeniu prowizji)
 
 2.2. W przypadku danych pracowników Klientów - Klient jest administratorem danych, a my jesteśmy podmiotem przetwarzającym (szczegóły w DPA).
 
@@ -49,6 +50,16 @@ Kontakt: biuro@planopia.pl
    - Zapisujemy wyłącznie wynik (w miejscu pracy / poza nim / brak zgody / brak sygnału), odległość od miejsca i dokładność odczytu. **Nie zapisujemy współrzędnych pracownika** i nie śledzimy jego położenia w czasie pracy.
    - Wynik jest częścią danych o czasie pracy i przechowujemy go na tych samych zasadach.
 
+3.6. **Program partnerski:**
+   - Dane partnerów (podmiotów, z którymi zawieramy umowę partnerską): nazwa lub imię i nazwisko, NIP, adres e-mail, kod polecający oraz dane potrzebne do rozliczenia prowizji.
+   - Gdy zespół zostanie założony z linku partnera (albo przypiszemy go do partnera na podstawie umowy), zapisujemy przy zespole identyfikator partnera, datę i sposób przypisania.
+   - Partner widzi w swoim panelu: nazwę poleconego zespołu, stan jego planu (np. okres próbny, plan płatny), datę założenia oraz kwoty netto płatności za plan i naliczone od nich prowizje. Partner **nie widzi** danych pracowników poleconych firm ani danych płatniczych (np. danych karty czy identyfikatorów transakcji).
+
+3.7. **Udostępnienie danych biuru rachunkowemu lub kadrowemu** (opcjonalne — decyduje o nim Klient):
+   - Administrator zespołu Klienta może w Ustawieniach udostępnić dane wskazanemu biuru rachunkowemu lub kadrowemu, które ma konto w Planopii. Biuro ma dostęp **tylko do odczytu** do: listy pracowników (imię, nazwisko, stanowisko), ewidencji czasu pracy w miesiącach (dni pracy, godziny, nadgodziny, nieobecności), zatwierdzonych urlopów i sald urlopowych, informacji o potwierdzeniu ewidencji miesiąca oraz ustawionych typów urlopów i kalendarza świąt. Biuro może pobrać zestawienie miesiąca w formacie Excel lub PDF.
+   - Udostępniamy te dane na polecenie Klienta jako administratora danych jego pracowników (szczegóły w DPA). Zapisujemy, kto i kiedy udzielił dostępu, wraz z adresem IP, informacją o przeglądarce i wersją DPA. Klient może odebrać dostęp w każdej chwili — przestaje on działać od razu.
+   - Każde wejście biura do danych oraz każdy eksport zapisujemy w historii dostępu (kto z biura, kiedy, którego miesiąca dotyczył, adres IP). Historia jest widoczna dla Klienta.
+
 ## 4. Odbiorcy danych
 
 4.1. Dane mogą być przekazywane:
@@ -56,6 +67,8 @@ Kontakt: biuro@planopia.pl
    - **OpenAI** (OpenAI, L.L.C.) — wyłącznie przy korzystaniu z funkcji AI opisanych w ust. 3.4
    - Operatorom płatności (m.in. Przelewy24, Stripe) — w zakresie danych niezbędnych do rozliczenia subskrypcji
    - Google LLC (Google Analytics, Google Tag Manager) — analiza ruchu oraz pomiar skuteczności kampanii na stronach planopia.pl i app.planopia.pl
+   - Partnerom programu partnerskiego — w zakresie opisanym w pkt 3.6
+   - Biurom rachunkowym i kadrowym wskazanym przez Klienta — w zakresie opisanym w pkt 3.7
    - Organom państwowym na żądanie wynikające z przepisów prawa
 
 4.2. Wszyscy podwykonawcy są zobowiązani do przestrzegania zasad ochrony danych osobowych.
@@ -75,6 +88,8 @@ Kontakt: biuro@planopia.pl
    - **Dane użytkowników zespołu:** Po usunięciu użytkownika z zespołu przez administratora, dane użytkownika są przechowywane przez okres 30 dni (okres karencji). Po tym okresie dane zostaną trwale usunięte. Administrator może w każdej chwili przywrócić użytkownika lub trwale usunąć go przed upływem okresu karencji. Klient (administrator) jest odpowiedzialny za zarządzanie danymi swoich pracowników zgodnie z przepisami prawa pracy. Użytkownik nie może usunąć własnego konta - wymaga to działania administratora.
    - **Dane fakturowe:** 5 lat (zgodnie z przepisami podatkowymi)
    - **Logi techniczne:** 90 dni (okres można przedłużyć lub skrócić na pisemne żądanie Klienta)
+   - **Dane programu partnerskiego** (przypisanie zespołu do partnera, prowizje i ich rozliczenia): przez czas trwania umowy partnerskiej, a dane rozliczeniowe — przez okres wymagany przepisami podatkowymi
+   - **Historia dostępu biura rachunkowego:** 2 lata od zdarzenia
    - **Dane do momentu cofnięcia zgody** (jeśli przetwarzanie odbywa się na podstawie zgody)
 
 5.2. Po zakończeniu subskrypcji/rozwiązaniu umowy dane zespołu zostaną usunięte w terminie 30 dni, z wyjątkiem danych wymaganych przepisami prawa (np. przepisy podatkowe). Dane użytkowników są przechowywane przez 30 dni po usunięciu (okres karencji), a następnie trwale usuwane.
@@ -102,6 +117,8 @@ Kontakt: biuro@planopia.pl
    - Umożliwienia działania funkcji podstawowych
    - Analizy ruchu i sposobu korzystania ze strony (Google Analytics 4) - wyłącznie po wyrażeniu zgody
    - Pomiaru skuteczności kampanii i przypisywania rejestracji do reklam (Google Ads) - wyłącznie po wyrażeniu zgody marketingowej
+
+7.1a. **Plik cookie programu partnerskiego (planopia_ref):** gdy wejdziesz na planopia.pl lub app.planopia.pl z linku partnera (parametr ?ref w adresie), zapisujemy na 90 dni plik cookie zawierający wyłącznie kod partnera i datę wejścia. Służy on tylko do przypisania zakładanego zespołu do partnera, który go polecił; nie wykorzystujemy go do analityki, reklamy ani śledzenia. Zapisujemy wyłącznie pierwsze polecenie — późniejsze linki innych partnerów go nie nadpisują. Plik można w każdej chwili usunąć w ustawieniach przeglądarki.
 
 7.2. Przed wyrażeniem zgody tag Google działa w trybie Consent Mode z wyłączonym zapisem danych analitycznych i reklamowych. Może wtedy wysyłać do Google ograniczone sygnały techniczne bez plików cookie, służące zagregowanemu pomiarowi i modelowaniu skuteczności. Opcjonalne pliki cookie analityczne i marketingowe nie są zapisywane ani odczytywane do czasu udzielenia odpowiedniej zgody.
 
@@ -132,5 +149,5 @@ Kontakt: biuro@planopia.pl
 
 9.2. O istotnych zmianach poinformujemy użytkowników.
 
-**Data ostatniej aktualizacji: 27.09.2026r.**
+**Data ostatniej aktualizacji: 16.10.2026r.**
 

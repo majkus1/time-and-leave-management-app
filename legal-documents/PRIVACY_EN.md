@@ -1,6 +1,6 @@
 # Privacy Policy for Planopia.pl
 
-**Version 1.3 - effective from September 27, 2026**
+**Version 1.4 - effective from October 16, 2026**
 
 ## 1. Data Controller
 
@@ -16,6 +16,7 @@ Contact: biuro@planopia.pl
    - Providing services through the Planopia.pl platform (legal basis: Art. 6(1)(b) GDPR - contract performance)
    - Fulfilling legal obligations (legal basis: Art. 6(1)(c) GDPR)
    - Direct marketing only towards Clients (legal basis: Art. 6(1)(f) GDPR - legitimate interest). Marketing does not include Client employees' data.
+   - Running the partner program: assigning a team to the partner whose link was used to create the account, and calculating and paying commissions (legal basis: Art. 6(1)(b) GDPR towards the partner - performance of the partner agreement; Art. 6(1)(f) GDPR towards the referred Client - legitimate interest in settling commissions)
 
 2.2. For Client employees' data - the Client is the data controller, and we are the data processor (details in DPA).
 
@@ -49,6 +50,16 @@ Contact: biuro@planopia.pl
    - We store only the result (at the workplace / outside it / no consent / no signal), the distance from the place and the reading accuracy. **We do not store the employee's coordinates** and do not track their location during work.
    - The result is part of working time data and is retained on the same terms.
 
+3.6. **Partner program:**
+   - Partner data (entities we have a partner agreement with): name or first and last name, tax ID (NIP), email address, referral code and the data needed to settle commissions.
+   - When a team is created from a partner’s link (or we assign it to a partner under an agreement), we store the partner identifier, the date and the method of assignment with the team.
+   - In their panel the partner sees: the referred team’s name, its plan status (e.g. trial, paid plan), the date it was created, and the net amounts of plan payments with the commissions calculated from them. The partner **does not see** the referred companies’ employee data or payment data (e.g. card details or transaction identifiers).
+
+3.7. **Sharing data with an accounting or payroll office** (optional — decided by the Client):
+   - The Client’s team administrator can, in Settings, share data with a chosen accounting or payroll office that has a Planopia account. The office has **read-only** access to: the employee list (first name, last name, position), monthly time records (working days, hours, overtime, absences), approved leave and leave balances, whether the monthly timesheet was confirmed, and the configured leave types and holiday calendar. The office can download a monthly summary in Excel or PDF.
+   - We share this data on the instruction of the Client as the controller of its employees’ data (details in the DPA). We record who granted access and when, together with the IP address, browser information and the DPA version. The Client can revoke access at any time — it stops working immediately.
+   - Every time the office opens the data or exports it, we record it in the access history (who from the office, when, which month, IP address). The history is visible to the Client.
+
 ## 4. Data Recipients
 
 4.1. Data may be transferred to:
@@ -56,6 +67,8 @@ Contact: biuro@planopia.pl
    - **OpenAI** (OpenAI, L.L.C.) — only when using AI features described in section 3.4
    - Payment operators (including Przelewy24, Stripe) — to the extent necessary for subscription billing
    - Google LLC (Google Analytics, Google Tag Manager) — traffic analysis and campaign performance measurement on planopia.pl and app.planopia.pl
+   - Partner program partners — to the extent described in section 3.6
+   - Accounting and payroll offices chosen by the Client — to the extent described in section 3.7
    - Government authorities upon request under applicable law
 
 4.2. All subcontractors are obligated to comply with data protection principles.
@@ -75,6 +88,8 @@ Contact: biuro@planopia.pl
    - **Team user data:** After a user is deleted from the team by an administrator, user data is retained for 30 days (retention period). After this period, data will be permanently deleted. The administrator can restore the user or permanently delete them at any time before the retention period expires. The Client (administrator) is responsible for managing their employees' data in accordance with labor law. Users cannot delete their own accounts - this requires administrator action.
    - **Billing data:** 5 years (in accordance with tax regulations)
    - **Technical logs:** 90 days (period can be extended or shortened upon Client's written request)
+   - **Partner program data** (team-to-partner assignment, commissions and their settlement): for the duration of the partner agreement, and settlement data for the period required by tax law
+   - **Accounting office access history:** 2 years from the event
    - **Data until consent withdrawal** (if processing is based on consent)
 
 5.2. After subscription termination/contract end, team data will be deleted within 30 days, except for data required by law (e.g., tax regulations). User data is retained for 30 days after deletion (retention period), then permanently deleted.
@@ -102,6 +117,8 @@ Contact: biuro@planopia.pl
    - Enabling basic functionality
    - Analysis of traffic and website usage (Google Analytics 4) - only after consent
    - Measurement of campaign performance and attribution of sign-ups to ads (Google Ads) - only after marketing consent
+
+7.1a. **Partner program cookie (planopia_ref):** when you visit planopia.pl or app.planopia.pl from a partner’s link (the ?ref parameter in the address), we store a cookie for 90 days that contains only the partner code and the date of the visit. It is used only to assign the team being created to the partner who referred it; we do not use it for analytics, advertising or tracking. Only the first referral is stored — later links from other partners do not overwrite it. You can delete the cookie at any time in your browser settings.
 
 7.2. Before consent is given, the Google tag operates in Consent Mode with analytics and advertising storage denied. It may then send limited, cookieless technical signals to Google for aggregate measurement and modelling. Optional analytics and marketing cookies are not written or read until the relevant consent is granted.
 
@@ -132,5 +149,5 @@ Contact: biuro@planopia.pl
 
 9.2. Users will be notified of significant changes.
 
-**Last updated: September 27, 2026**
+**Last updated: October 16, 2026**
 

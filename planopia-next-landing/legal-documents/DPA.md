@@ -1,6 +1,6 @@
 # Umowa powierzenia przetwarzania danych osobowych (DPA)
 
-**Wersja 1.2 - obowiązuje od 27.09.2026r.**
+**Wersja 1.3 - obowiązuje od 16.10.2026r.**
 
 ## 1. Strony umowy
 
@@ -12,11 +12,13 @@
 
 2.1. Administrator powierza, a Procesor przyjmuje przetwarzanie danych osobowych w zakresie niezbędnym do świadczenia usług przez platformę Planopia.pl.
 
-2.2. Przetwarzanie obejmuje m.in.: ewidencję czasu pracy (w tym rejestrację wejść i wyjść kodami QR, opcjonalnie z weryfikacją lokalizacji przy skanie — zgodnie z ust. 2.4), zarządzanie urlopami i nieobecnościami, grafiki pracy, tablice zadań (Kanban), komunikację zespołową oraz — jeśli włączone w ramach planu — funkcje oparte o API OpenAI (np. Asystent AI, wsparcie AI w grafiku), zgodnie z ust. 2.3.
+2.2. Przetwarzanie obejmuje m.in.: ewidencję czasu pracy (w tym rejestrację wejść i wyjść kodami QR, opcjonalnie z weryfikacją lokalizacji przy skanie — zgodnie z ust. 2.4), zarządzanie urlopami i nieobecnościami, grafiki pracy, tablice zadań, komunikację zespołową oraz — jeśli włączone w ramach planu — funkcje oparte o API OpenAI (np. Asystent AI, wsparcie AI w grafiku), zgodnie z ust. 2.3.
 
 2.3. **Funkcje AI:** Procesor przekazuje do OpenAI (OpenAI, L.L.C., USA) treść zapytań Użytkownika oraz wybrane, zagregowane dane z Konta Administratora wyłącznie w celu wygenerowania odpowiedzi. Historia rozmowy w Asystencie AI nie jest trwale przechowywana w bazie Procesora — jest zapisywana w przeglądarce Użytkownika (localStorage). Procesor przechowuje m.in. liczniki wykorzystania limitów AI. Administrator powinien nie umieszczać w zapytaniach danych wykraczających poza to, co jest potrzebne do korzystania z Usługi.
 
 2.4. **Lokalizacja przy skanie kodu QR:** funkcja jest domyślnie wyłączona; włącza ją Administrator dla wybranego kodu. Lokalizacja urządzenia pracownika jest odczytywana jednorazowo w chwili skanu, za zgodą udzieloną w przeglądarce. Procesor zapisuje wyłącznie wynik weryfikacji (w miejscu pracy / poza nim / brak zgody / brak sygnału), odległość od miejsca i dokładność odczytu — bez współrzędnych pracownika i bez śledzenia jego położenia. Administrator odpowiada za poinformowanie pracowników o tej funkcji i za podstawę prawną jej stosowania.
+
+2.5. **Udostępnienie danych biuru rachunkowemu lub kadrowemu:** na polecenie Administratora, wydane w Aplikacji przez użytkownika z rolą Administratora, Procesor udostępnia wskazanemu przez Administratora biuru rachunkowemu lub kadrowemu, posiadającemu konto w Planopii (dalej: "Biuro"), dostęp tylko do odczytu do: listy pracowników (imię, nazwisko, stanowisko), ewidencji czasu pracy w miesiącach (dni pracy, godziny, nadgodziny, nieobecności), zatwierdzonych urlopów i sald urlopowych, informacji o potwierdzeniu ewidencji miesiąca oraz ustawionych typów urlopów i kalendarza świąt, a także możliwość pobrania zestawienia miesiąca w formacie Excel lub PDF. Biuro nie może zmieniać danych. Procesor rejestruje wydanie polecenia (użytkownik, data, adres IP, informacja o przeglądarce, wersja niniejszej umowy) oraz każde wejście Biura do danych i każdy eksport; historia jest dostępna dla Administratora i przechowywana przez 2 lata. Administrator może cofnąć polecenie w każdej chwili w Ustawieniach — dostęp Biura wygasa natychmiast. Stosunek prawny między Administratorem a Biurem (w tym ewentualną umowę powierzenia przetwarzania danych) Administrator reguluje we własnym zakresie; Procesor nie odpowiada za przetwarzanie danych pobranych przez Biuro poza Aplikacją.
 
 ## 3. Kategorie danych i osób
 
@@ -38,7 +40,7 @@
    - Niepodejmowania działań bez zgody Administratora
    - Pomocy Administratorowi w realizacji praw osób, których dane dotyczą
 
-4.2. Procesor nie może ujawniać danych osobowych osobom trzecim bez zgody Administratora, chyba że wynika to z przepisów prawa.
+4.2. Procesor nie może ujawniać danych osobowych osobom trzecim bez zgody Administratora, chyba że wynika to z przepisów prawa. Udostępnienie danych Biuru na polecenie Administratora odbywa się na zasadach ust. 2.5.
 
 ## 5. Podpowierzenie (Subprocesorzy)
 
@@ -118,5 +120,5 @@
 - Szkolenia personelu w zakresie RODO
 - Procedury zarządzania incydentami bezpieczeństwa
 
-**Data ostatniej aktualizacji: 27.09.2026r.**
+**Data ostatniej aktualizacji: 16.10.2026r.**
 
