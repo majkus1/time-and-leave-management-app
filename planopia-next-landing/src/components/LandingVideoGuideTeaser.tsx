@@ -28,7 +28,8 @@ const copy: Record<
 	},
 }
 
-export default function LandingVideoGuideTeaser({ locale }: { locale: Locale }) {
+/** children — dodatkowa karta w tej samej sekcji (np. pasek programu partnerskiego na stronie głównej PL) */
+export default function LandingVideoGuideTeaser({ locale, children }: { locale: Locale; children?: React.ReactNode }) {
 	const t = copy[locale]
 	return (
 		<section
@@ -52,23 +53,13 @@ export default function LandingVideoGuideTeaser({ locale }: { locale: Locale }) 
 								stroke="currentColor"
 								viewBox="0 0 24 24"
 								aria-hidden>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-								/>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.5C10.5 5.3 8.4 4.5 6 4.5c-1.1 0-2.1.2-3 .5v13c.9-.3 1.9-.5 3-.5 2.4 0 4.5.8 6 2m0-13c1.5-1.2 3.6-2 6-2 1.1 0 2.1.2 3 .5v13c-.9-.3-1.9-.5-3-.5-2.4 0-4.5.8-6 2m0-13v13" />
 							</svg>
 							{t.cta}
 						</Link>
 					</div>
 				</div>
+				{children ? <div className="mt-6">{children}</div> : null}
 			</div>
 		</section>
 	)

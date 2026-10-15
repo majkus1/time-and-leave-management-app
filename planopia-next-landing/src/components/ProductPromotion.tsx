@@ -7,6 +7,7 @@ import { planOfferingCopy } from '@/data/planOfferingCopy'
 import LandingFeatureTiles from './LandingFeatureTiles'
 import LandingTestimonials from './LandingTestimonials'
 import ValueComparison from './landingHome/ValueComparison'
+import LandingPartnerBand from './landingHome/LandingPartnerBand'
 
 const LandingVideoGuideTeaser = dynamic(() => import('./LandingVideoGuideTeaser'), {
 	loading: () => <div className="min-h-[120px] w-full" aria-hidden />,
@@ -174,7 +175,10 @@ function ProductPromotion() {
 
 <LandingPricing locale="pl" />
 
-<LandingVideoGuideTeaser locale="pl" />
+{/* Pod instrukcją — pasek programu partnerskiego dla biur (tylko PL) */}
+<LandingVideoGuideTeaser locale="pl">
+	<LandingPartnerBand />
+</LandingVideoGuideTeaser>
 
 <LandingContactSection locale="pl" />
 
