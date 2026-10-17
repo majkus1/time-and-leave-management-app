@@ -2,6 +2,7 @@ import { landingHomeFaqs } from '@/data/landingHomeFaqs'
 import { LANDING_HERO_LCP } from '@/data/landingHeroAssets'
 import { planOfferingCopy } from '@/data/planOfferingCopy'
 import { landingBundles, landingCoreTiers } from '@/data/landingPlanPricing'
+import { ORGANIZATION_ID, organizationSchema } from '@/data/organizationSchema'
 
 type Locale = 'pl' | 'en'
 
@@ -25,6 +26,7 @@ export default function LandingHomeJsonLd({ locale }: { locale: Locale }) {
 			'@type': 'Person',
 			name: 'Michał Lipka',
 		},
+		publisher: { '@id': ORGANIZATION_ID },
 		description: offering.metaLong,
 		offers: {
 			'@type': 'AggregateOffer',
@@ -50,6 +52,7 @@ export default function LandingHomeJsonLd({ locale }: { locale: Locale }) {
 			'@id': 'https://planopia.pl/#website',
 			name: 'Planopia',
 			url: 'https://planopia.pl',
+			publisher: { '@id': ORGANIZATION_ID },
 		},
 		primaryImageOfPage: {
 			'@type': 'ImageObject',
@@ -59,6 +62,9 @@ export default function LandingHomeJsonLd({ locale }: { locale: Locale }) {
 			caption: offering.heroH1,
 		},
 	}
+
+	// Pełne dane firmy tylko tu i na /kontakt — reszta stron odwołuje się do tego samego @id
+	const orgSchema = { '@context': 'https://schema.org', ...organizationSchema(locale) }
 
 	const faqSchema = {
 		'@context': 'https://schema.org',
@@ -72,6 +78,7 @@ export default function LandingHomeJsonLd({ locale }: { locale: Locale }) {
 
 	return (
 		<>
+			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />

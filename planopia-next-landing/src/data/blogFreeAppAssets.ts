@@ -9,8 +9,8 @@ export const BLOG_FREE_APP_POSTER = {
 
 export const BLOG_FREE_APP_OG = {
 	url: 'https://planopia.pl/img/desktopnews.webp',
-	width: 1200,
-	height: 630,
+	width: 1918,
+	height: 910,
 	alt: {
 		pl: 'Darmowa aplikacja do ewidencji czasu pracy — Planopia',
 		en: 'Free time tracking app — Planopia',

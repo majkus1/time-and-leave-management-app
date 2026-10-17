@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import { blogFreeAppCopy } from '@/data/blogFreeAppCopy'
+import { FEATURE_COPY } from '@/data/landingFeatureCopy'
+import { landingFeatures, landingModules } from '@/data/landingPlanPricing'
 
 function renderFaqAnswer(locale: 'pl' | 'en', index: number, answer: string) {
 	if (locale === 'pl' && index === 0) {
 		return (
 			<>
-				{answer} — zobacz{' '}
+				{answer} Zobacz{' '}
 				<Link href="/#cennik" className="text-blue-600 hover:underline">
 					cennik
 				</Link>
@@ -17,7 +19,7 @@ function renderFaqAnswer(locale: 'pl' | 'en', index: number, answer: string) {
 	if (locale === 'pl' && index === 1) {
 		return (
 			<>
-				{answer} — szczegóły w{' '}
+				{answer} Szczegóły w{' '}
 				<Link href="/#cennik" className="text-blue-600 hover:underline">
 					cenniku
 				</Link>
@@ -30,6 +32,69 @@ function renderFaqAnswer(locale: 'pl' | 'en', index: number, answer: string) {
 
 export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) {
 	const copy = blogFreeAppCopy[locale]
+
+	// Wspólny dla PL i EN: co jest w darmowym planie, w okresie próbnym i w Core — tabela z planCatalog (ten sam generat co cennik)
+	const plansSection = (
+		<>
+			<div className="mb-12">
+				<h2 className="text-3xl font-bold text-gray-900 mb-4">{copy.plansTitle}</h2>
+				<p className="text-lg text-gray-700 mb-6">{copy.plansLead}</p>
+				<div className="grid md:grid-cols-2 gap-6">
+					{copy.planCards.map(card => (
+						<div key={card.title} className="bg-gray-50 p-6 rounded-lg">
+							<h3 className="text-xl font-semibold text-gray-900 mb-1">{card.title}</h3>
+							<p className="text-sm font-semibold text-green-700 mb-3">{card.note}</p>
+							<ul className="text-gray-700 space-y-2">
+								{card.items.map(item => (
+									<li key={item}>• {item}</li>
+								))}
+							</ul>
+						</div>
+					))}
+				</div>
+			</div>
+
+			<div className="mb-12">
+				<h2 className="text-3xl font-bold text-gray-900 mb-6">{copy.tableTitle}</h2>
+				<div className="overflow-x-auto">
+					<table className="w-full border-collapse border border-gray-300">
+						<thead>
+							<tr className="bg-gray-100">
+								<th className="border border-gray-300 p-3 text-left">{copy.tableHead.feature}</th>
+								<th className="border border-gray-300 p-3 text-center">{copy.tableHead.free}</th>
+								<th className="border border-gray-300 p-3 text-center">{copy.tableHead.trial}</th>
+								<th className="border border-gray-300 p-3 text-center">{copy.tableHead.core}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{landingFeatures.map(feature => {
+								const included = feature.plan === 'free' || feature.plan === 'all'
+								const addon = feature.plan === 'module' ? landingModules.find(m => m.id === feature.module) : null
+								return (
+									<tr key={feature.id}>
+										<td className="border border-gray-300 p-3 font-semibold">{FEATURE_COPY[feature.id][locale].title}</td>
+										<td className={`border border-gray-300 p-3 text-center ${included ? 'text-green-600' : 'text-gray-400'}`}>
+											{included ? '✓' : '—'}
+										</td>
+										<td className="border border-gray-300 p-3 text-center text-green-600">✓</td>
+										<td className="border border-gray-300 p-3 text-center text-green-600">
+											{addon ? copy.tableModule.replace('{price}', String(addon.monthlyNetPln)) : '✓'}
+										</td>
+									</tr>
+								)
+							})}
+						</tbody>
+					</table>
+				</div>
+				<p className="mt-3 text-sm text-gray-600">
+					{copy.tableNote}{' '}
+					<Link href={copy.pricingHref} className="text-blue-600 hover:underline">
+						{copy.pricingLabel}
+					</Link>
+				</p>
+			</div>
+		</>
+	)
 
 	return (
 		<article className="px-4 py-16 bg-white">
@@ -98,98 +163,7 @@ export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) 
 							</div>
 						</div>
 
-						{/* Features */}
-						<div className="mb-12">
-							<h2 className="text-3xl font-bold text-gray-900 mb-6">
-								Funkcje darmowej aplikacji do ewidencji czasu pracy
-							</h2>
-							<div className="grid md:grid-cols-2 gap-6">
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">📊 Ewidencja czasu pracy</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Rejestracja godzin pracy w czasie rzeczywistym</li>
-										<li>• Automatyczne obliczanie nadgodzin</li>
-										<li>• Kalendarz pracy z wizualizacją</li>
-										<li>• Eksport danych do PDF i Excel</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">🏖️ Zarządzanie urlopami</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Wnioski urlopowe online</li>
-										<li>• System akceptacji przez przełożonych</li>
-										<li>• Kalendarz urlopów zespołu</li>
-										<li>• Powiadomienia email</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">📱 Dostępność</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Aplikacja PWA (Progressive Web App)</li>
-										<li>• Działanie na wszystkich urządzeniach</li>
-										<li>• Synchronizacja w czasie rzeczywistym</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">🔒 Bezpieczeństwo</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Szyfrowane połączenia SSL</li>
-										<li>• Bezpieczne logowanie</li>
-										<li>• Regularne kopie zapasowe</li>
-										<li>• Zgodność z RODO</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-
-						{/* Comparison */}
-						<div className="mb-12">
-							<h2 className="text-3xl font-bold text-gray-900 mb-6">
-								Dlaczego Planopia to najlepsza darmowa aplikacja do ewidencji czasu pracy?
-							</h2>
-							<div className="overflow-x-auto">
-								<table className="w-full border-collapse border border-gray-300">
-									<thead>
-										<tr className="bg-gray-100">
-											<th className="border border-gray-300 p-4 text-left">Funkcja</th>
-											<th className="border border-gray-300 p-4 text-center">
-												Planopia (próba + darmowy plan ewidencji)
-											</th>
-											<th className="border border-gray-300 p-4 text-center">Konkurencja</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Ewidencja czasu pracy</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">
-												✅ Pełna funkcjonalność
-											</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Ograniczona</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Zarządzanie urlopami</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Kompletny system</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Brak lub płatne</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Raporty PDF</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Bez ograniczeń</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Ograniczone</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Wsparcie techniczne</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Email + chat</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Tylko płatne</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Aktualizacje</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Regularne</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Rzadkie</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
+						{plansSection}
 
 						{/* How to start */}
 						<div className="mb-12">
@@ -212,7 +186,9 @@ export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) 
 								<div className="text-center p-6 bg-purple-50 rounded-lg">
 									<div className="text-4xl font-bold text-purple-600 mb-2">3</div>
 									<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Zacznij pracę</h3>
-									<p className="text-gray-700">Rozpocznij ewidencję czasu pracy i zarządzanie urlopami już dziś!</p>
+									<p className="text-gray-700">
+										Wpisujcie godziny od pierwszego dnia. Przez 30 dni sprawdzicie też urlopy, grafiki i Asystenta AI.
+									</p>
 								</div>
 							</div>
 						</div>
@@ -256,92 +232,7 @@ export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) 
 							</div>
 						</div>
 
-						{/* Features */}
-						<div className="mb-12">
-							<h2 className="text-3xl font-bold text-gray-900 mb-6">Free time tracking app features</h2>
-							<div className="grid md:grid-cols-2 gap-6">
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">📊 Work Hours Tracking</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Real-time work hours registration</li>
-										<li>• Automatic overtime calculations</li>
-										<li>• Work calendar with visualization</li>
-										<li>• Data export to PDF and Excel</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">🏖️ Leave Management</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Online leave requests</li>
-										<li>• Supervisor approval system</li>
-										<li>• Team leave calendar</li>
-										<li>• Email notifications</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">📱 Accessibility</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• PWA (Progressive Web App)</li>
-										<li>• Works on all devices</li>
-										<li>• Real-time synchronization</li>
-									</ul>
-								</div>
-								<div className="bg-gray-50 p-6 rounded-lg">
-									<h3 className="text-xl font-semibold text-gray-900 mb-3">🔒 Security</h3>
-									<ul className="text-gray-700 space-y-2">
-										<li>• SSL encrypted connections</li>
-										<li>• Secure login</li>
-										<li>• Regular backups</li>
-										<li>• GDPR compliance</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-
-						{/* Comparison */}
-						<div className="mb-12">
-							<h2 className="text-3xl font-bold text-gray-900 mb-6">
-								Why Planopia is the best free time tracking app?
-							</h2>
-							<div className="overflow-x-auto">
-								<table className="w-full border-collapse border border-gray-300">
-									<thead>
-										<tr className="bg-gray-100">
-											<th className="border border-gray-300 p-4 text-left">Feature</th>
-											<th className="border border-gray-300 p-4 text-center">Planopia (trial + free tier)</th>
-											<th className="border border-gray-300 p-4 text-center">Competition</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Work Hours Tracking</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Full functionality</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Limited</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Leave Management</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Complete system</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Missing or paid</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">PDF Reports</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Unlimited</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Limited</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Technical Support</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Email + chat</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Paid only</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-4 font-semibold">Updates</td>
-											<td className="border border-gray-300 p-4 text-center text-green-600">✅ Regular</td>
-											<td className="border border-gray-300 p-4 text-center text-red-600">❌ Rare</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</div>
+						{plansSection}
 
 						{/* How to start */}
 						<div className="mb-12">
@@ -362,7 +253,9 @@ export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) 
 								<div className="text-center p-6 bg-purple-50 rounded-lg">
 									<div className="text-4xl font-bold text-purple-600 mb-2">3</div>
 									<h3 className="text-xl font-semibold text-gray-900 mb-3 justify-center">Start Working</h3>
-									<p className="text-gray-700">Begin time tracking and leave management today!</p>
+									<p className="text-gray-700">
+										Log hours from day one. For 30 days you can also try leave, schedules and the AI Assistant.
+									</p>
 								</div>
 							</div>
 						</div>
@@ -390,13 +283,13 @@ export default function BlogFreeAppArticle({ locale }: { locale: 'pl' | 'en' }) 
 				<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-5 sm:p-8 rounded-2xl shadow-sm">
 					<h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 justify-center leading-snug">
 						{locale === 'pl'
-							? 'Gotowy na darmową aplikację do ewidencji czasu pracy?'
-							: 'Ready for a free time tracking app?'}
+							? 'Gotowy na darmową ewidencję czasu pracy?'
+							: 'Ready for free time tracking?'}
 					</h2>
 					<p className="text-sm sm:text-base md:text-lg text-gray-700 mb-5 sm:mb-6 max-w-2xl mx-auto leading-snug sm:leading-relaxed">
 						{locale === 'pl'
-							? 'Rozpocznij zarządzanie urlopami już dziś i uporządkuj planowanie w Twojej firmie!'
-							: 'Start managing leave today and streamline planning in your company!'}
+							? 'Załóż zespół w kilka minut — ewidencja czasu pracy za darmo, a pełna aplikacja przez pierwszy miesiąc.'
+							: 'Set up your team in minutes — free time tracking, and the full app for your first month.'}
 					</p>
 					<Link
 						href="https://app.planopia.pl/team-registration"

@@ -7,7 +7,7 @@ export type BlogInternalLink = {
 
 export const BLOG_PILLAR_PL: BlogInternalLink = {
 	href: '/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy',
-	label: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów',
+	label: 'Darmowa aplikacja do ewidencji czasu pracy',
 }
 
 export const BLOG_PILLAR_EN: BlogInternalLink = {
@@ -24,6 +24,7 @@ export const BLOG_TOPICS_PL = [
 		links: [
 			{ href: BLOG_PILLAR_PL.href, label: '★ Główny przewodnik (pillar)' },
 			{ href: '/program-do-ewidencji-czasu-pracy', label: 'Program do ewidencji czasu pracy' },
+			{ href: '/blog/programy-do-ewidencji-czasu-pracy-porownanie', label: 'Programy do ewidencji czasu pracy — porównanie' },
 			{ href: '/blog/ewidencja-czasu-pracy-online', label: 'Ewidencja online — aplikacja web' },
 			{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja — Excel vs program' },
 			{ href: '/blog/ewidencja-czasu-pracy-excel-wzor', label: 'Ewidencja czasu pracy — darmowy wzór Excel i PDF' },
@@ -36,6 +37,7 @@ export const BLOG_TOPICS_PL = [
 		title: 'Urlopy i planowanie',
 		description: 'Kalendarz, wnioski, Excel/PDF i święta w Polsce.',
 		links: [
+			{ href: '/blog/programy-do-urlopow-porownanie', label: 'Programy do urlopów — porównanie' },
 			{ href: '/blog/plan-urlopow-2027-excel-pdf', label: 'Plan urlopów 2027 — darmowy wzór Excel i PDF' },
 			{ href: '/blog/urlop-wypoczynkowy-ile-dni', label: 'Urlop wypoczynkowy 2026 — wymiar i kalkulator' },
 			{ href: '/blog/urlopy-i-dni-wolne-dla-pracownikow', label: 'Urlopy i dni wolne pracownika — pełna lista' },
@@ -172,6 +174,14 @@ const L = {
 		href: '/blog/ewidencja-czasu-pracy-excel-wzor',
 		label: 'Ewidencja czasu pracy — darmowy wzór Excel i PDF',
 	},
+	porownanieUrlopow: {
+		href: '/blog/programy-do-urlopow-porownanie',
+		label: 'Programy do urlopów dla firm — porównanie 2026',
+	},
+	porownanieProgramow: {
+		href: '/blog/programy-do-ewidencji-czasu-pracy-porownanie',
+		label: 'Programy do ewidencji czasu pracy — porównanie 2026',
+	},
 } as const
 
 /** Konfiguracja powiązań per slug (ścieżka bez /blog/). */
@@ -186,25 +196,33 @@ export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
 	},
 	'darmowa-aplikacja-do-ewidencji-czasu-pracy': {
 		relatedTitle: 'Więcej o ewidencji i urlopach',
-		related: [L.programEwidencja, L.online, L.elektroniczna, L.programUrlopow, L.budowa, L.rocznyPlan],
+		related: [L.porownanieProgramow, L.programEwidencja, L.online, L.elektroniczna, L.programUrlopow, L.budowa],
+	},
+	'programy-do-ewidencji-czasu-pracy-porownanie': {
+		relatedTitle: 'Więcej o ewidencji czasu pracy',
+		related: [L.programEwidencja, L.pillar, L.wzorEwidencji, L.elektroniczna, L.budowa, L.porownanieUrlopow],
+	},
+	'programy-do-urlopow-porownanie': {
+		relatedTitle: 'Więcej o urlopach',
+		related: [L.programUrlopow, L.programUrlopowMalaFirma, L.urlopWypoczynkowy, L.rocznyPlan, L.porownanieProgramow, L.zarzadzanie],
 	},
 	'ewidencja-czasu-pracy-online': {
 		showPillarBanner: true,
-		related: [L.wzorEwidencji, L.programEwidencja, L.pillar, L.elektroniczna, L.budowa, L.kompleksowa],
+		related: [L.porownanieProgramow, L.wzorEwidencji, L.programEwidencja, L.pillar, L.elektroniczna, L.budowa],
 	},
 	'elektroniczna-ewidencja-czasu-pracy': {
 		showPillarBanner: true,
-		related: [L.wzorEwidencji, L.programEwidencja, L.pillar, L.online, L.budowa, L.planowanie],
+		related: [L.porownanieProgramow, L.wzorEwidencji, L.programEwidencja, L.pillar, L.online, L.budowa],
 	},
 	'program-do-urlopow-dla-malej-firmy': {
 		relatedTitle: 'Więcej o urlopach',
-		related: [L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.rocznyPlan, L.planowanie, L.zarzadzanie],
+		related: [L.porownanieUrlopow, L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.rocznyPlan, L.planowanie],
 	},
 	'planowanie-urlopow': {
-		related: [L.dniWolne2027, L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.zarzadzanie, L.rocznyPlan],
+		related: [L.dniWolne2027, L.programUrlopow, L.porownanieUrlopow, L.urlopWypoczynkowy, L.zarzadzanie, L.rocznyPlan],
 	},
 	'zarzadzanie-urlopami': {
-		related: [L.programUrlopow, L.urlopWypoczynkowy, L.l4NaUrlopie, L.programUrlopowMalaFirma, L.planowanie, L.rocznyPlan],
+		related: [L.programUrlopow, L.porownanieUrlopow, L.urlopWypoczynkowy, L.programUrlopowMalaFirma, L.planowanie, L.rocznyPlan],
 	},
 	'roczny-plan-urlopow-excel-pdf-aplikacja': {
 		related: [L.programUrlopow, L.urlopWypoczynkowy, L.programUrlopowMalaFirma, L.dniWolne2027, L.planowanie, L.zarzadzanie],
@@ -230,13 +248,13 @@ export const BLOG_ARTICLE_LINKS_PL: Record<string, BlogArticleLinkConfig> = {
 	},
 	'ewidencja-czasu-pracy-excel-wzor': {
 		relatedTitle: 'Więcej o ewidencji czasu pracy',
-		related: [L.programEwidencja, L.pillar, L.online, L.elektroniczna, L.budowa, L.planUrlopow2027],
+		related: [L.programEwidencja, L.porownanieProgramow, L.pillar, L.online, L.elektroniczna, L.budowa],
 	},
 	'kompleksowa-aplikacja-do-zarzadzania-firma': {
 		related: [L.pillar, L.online, L.planowanie, L.ai],
 	},
 	'jak-prowadzic-ewidencje-czasu-pracy-na-budowie': {
-		related: [L.budowaLanding, L.pillar, L.online, L.elektroniczna],
+		related: [L.budowaLanding, L.pillar, L.porownanieProgramow, L.online, L.elektroniczna],
 	},
 	'jak-ulozyc-grafik-pracy-w-restauracji': {
 		relatedTitle: 'Więcej o grafiku i organizacji zespołu',

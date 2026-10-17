@@ -41,6 +41,7 @@ const categories: { value: BlogCategory; label: string }[] = [
 /** Kotwice z okruszków w artykułach (np. /blog#urlopy) — wejście pod taki adres od razu pokazuje ten temat */
 const categoryAnchors: Partial<Record<string, BlogCategory>> = {
 	urlopy: 'leave',
+	ewidencja: 'time',
 }
 
 const categoryLabels: Record<Exclude<BlogCategory, 'all'>, string> = {
@@ -54,13 +55,31 @@ const categoryLabels: Record<Exclude<BlogCategory, 'all'>, string> = {
 const articles: BlogArticle[] = [
 	{
 		href: BLOG_PILLAR_PL.href,
-		title: 'Darmowa aplikacja do ewidencji czasu pracy i urlopów',
-		description: 'Kompletny przewodnik po ewidencji czasu, urlopach i modelu Planopii: 30 dni pełnej aplikacji, a później darmowa ewidencja lub pakiety płatne.',
+		title: 'Darmowa aplikacja do ewidencji czasu pracy',
+		description: 'Co jest za darmo w Planopii, a co w okresie próbnym: ewidencja do 5 kont bez limitu czasu, a przez pierwsze 30 dni pełna aplikacja z urlopami.',
 		image: '/img/ewidencjas.webp',
 		imageAlt: 'Darmowa aplikacja do ewidencji czasu pracy Planopia',
 		category: 'time',
 		featured: true,
 		badge: 'Główny przewodnik',
+	},
+	{
+		href: '/blog/programy-do-ewidencji-czasu-pracy-porownanie',
+		title: 'Programy do ewidencji czasu pracy — porównanie 2026',
+		description: 'Sześć programów po polsku: darmowe plany, okresy próbne, ceny za osobę i za zespół, urlopy, grafiki i rejestracja czasu. Dane z cenników dostawców.',
+		image: '/img/product/pl-time-calendar.webp',
+		imageAlt: 'Kalendarz ewidencji czasu pracy w aplikacji Planopia',
+		category: 'time',
+		badge: 'Porównanie',
+	},
+	{
+		href: '/blog/programy-do-urlopow-porownanie',
+		title: 'Programy do urlopów dla firm — porównanie 2026',
+		description: 'Siedem programów do wniosków urlopowych: ceny, okresy próbne, wieloetapowa akceptacja, pula dni, urlop w godzinach i plan urlopów.',
+		image: '/img/product/pl-leave-plans.webp',
+		imageAlt: 'Kalendarz urlopów całego zespołu w Planopii',
+		category: 'leave',
+		badge: 'Porównanie',
 	},
 	{
 		href: '/blog/urlop-wypoczynkowy-ile-dni',

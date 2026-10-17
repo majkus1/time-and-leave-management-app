@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 
 const META_TITLE = "Free Time Tracking App for Teams | Planopia";
-const META_DESCRIPTION =
-  "Track work hours and leave in one app. Start with a 30-day full trial, then use free time tracking for up to 5 active accounts.";
 import { BLOG_FREE_APP_OG } from "@/data/blogFreeAppAssets";
+import { blogFreeAppCopy } from "@/data/blogFreeAppCopy";
+
+const META_DESCRIPTION = blogFreeAppCopy.en.metaDescription;
 
 export const metadata: Metadata = {
   title: {
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     url: 'https://planopia.pl/en/blog/free-time-tracking-app',
     siteName: 'Planopia',
     publishedTime: '2024-10-18T12:00:00.000Z',
-    modifiedTime: '2026-03-27T12:00:00.000Z',
+    modifiedTime: '2026-10-17T12:00:00.000Z',
     authors: ['Michał Lipka'],
     title: META_TITLE,
     description: META_DESCRIPTION,

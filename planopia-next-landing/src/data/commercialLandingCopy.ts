@@ -205,6 +205,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				`30 dni pełnej aplikacji za darmo. Potem plan z urlopami od ${CORE_5} zł netto/mies. lub darmowa ewidencja czasu pracy.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
+				{ href: '/blog/programy-do-urlopow-porownanie', label: 'Programy do urlopów — porównanie 2026' },
 				{ href: '/blog/program-do-urlopow-dla-malej-firmy', label: 'Program do urlopów dla małej firmy — jak wybrać' },
 				{ href: '/blog/roczny-plan-urlopow-excel-pdf-aplikacja', label: 'Roczny plan urlopów: Excel, PDF, aplikacja' },
 				{ href: '/blog/zarzadzanie-urlopami', label: 'Zarządzanie urlopami w firmie' },
@@ -386,6 +387,7 @@ export const COPY: Record<Variant, Record<Locale, Copy>> = {
 				`30 dni pełnej aplikacji, potem darmowa ewidencja czasu pracy do 5 kont lub plan Core z urlopami i Asystentem AI od ${CORE_5} zł netto/mies.`,
 			relatedTitle: 'Powiązane materiały',
 			related: [
+				{ href: '/blog/programy-do-ewidencji-czasu-pracy-porownanie', label: 'Programy do ewidencji czasu pracy — porównanie 2026' },
 				{ href: '/blog/elektroniczna-ewidencja-czasu-pracy', label: 'Elektroniczna ewidencja: Excel czy program?' },
 				{ href: '/blog/ewidencja-czasu-pracy-online', label: 'Ewidencja czasu pracy online' },
 				{ href: '/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy', label: 'Darmowa aplikacja do ewidencji' },

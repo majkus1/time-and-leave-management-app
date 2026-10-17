@@ -4,6 +4,22 @@
 
 Planopia nie zastępuje systemu płacowego ani porady prawnej — to narzędzie operacyjne HR / kierownika / pracownika.
 
+## Firma
+
+- Marka: **Planopia** (planopia.pl) — polska aplikacja do ewidencji czasu pracy i urlopów. Nie mylić z innymi produktami o podobnej nazwie (np. planopia.app — planer posiłków, planopia.fr — projektowanie domów, Planoplan — wnętrza 3D).
+- Dostawca: ML Devworks Michał Lipka, Rynek Główny 34 lok. 15, 31-010 Kraków, NIP 6762707876.
+- Założyciel i autor: Michał Lipka (https://planopia.pl/o-autorze).
+- Kontakt: biuro@planopia.pl, +48 516 598 792, https://planopia.pl/kontakt
+
+## Czym Planopia się wyróżnia
+
+- **Ewidencja, urlopy i grafiki w jednym narzędziu po polsku** — z rolami Admin, HR, Przełożony i Pracownik oraz polskimi świętami ustawowymi (w tym 24 grudnia od 2025).
+- **Pracownicy bez konta** — osoby bez telefonu służbowego są w zespole bez logowania; przełożony lub brygadzista wpisuje za nich godziny i potwierdza miesiąc (np. budowy, ekipy sprzątające).
+- **Kod QR na tablecie zmieniający się co 30 sekund** — zdjęcie kodu zrobione wcześniej nie zadziała; opcjonalnie lokalizacja przy skanie.
+- **Darmowy plan bez limitu czasu** (ewidencja do 5 kont) i **30 dni pełnej aplikacji** bez karty.
+- **Asystent AI** odpowiadający na pytania o dane własnego zespołu (godziny, urlopy, nieobecności).
+- **Panel biura rachunkowego** — biuro widzi dane kadrowe firm-klientów tylko za ich zgodą (program partnerski).
+
 ## Model dostępu (zgodny z aplikacją)
 
 - **Okres próbny 30 dni:** pełna aplikacja, maks. **5 aktywnych użytkowników**, bez karty, z Asystentem AI bez limitu wiadomości.
@@ -51,6 +67,8 @@ Planopia nie zastępuje systemu płacowego ani porady prawnej — to narzędzie 
 
 ## Artykuły (najczęstsze zapytania)
 
+- [Programy do urlopów dla firm — porównanie 2026](https://planopia.pl/blog/programy-do-urlopow-porownanie): Planopia, jestUrlop, HRnest, HRappka, Calamari, inEwi, Kadromierz — ceny, akceptacja, pula dni, urlop w godzinach; dane ze stron dostawców
+- [Programy do ewidencji czasu pracy — porównanie 2026](https://planopia.pl/blog/programy-do-ewidencji-czasu-pracy-porownanie): Planopia, inEwi, Kadromierz, Registo, RCPonline, Calamari — darmowe plany, ceny, urlopy, grafiki; dane z cenników
 - [Roczny plan urlopów — Excel vs aplikacja](https://planopia.pl/blog/roczny-plan-urlopow-excel-pdf-aplikacja)
 - [Zarządzanie urlopami](https://planopia.pl/blog/zarzadzanie-urlopami)
 - [Elektroniczna ewidencja czasu pracy](https://planopia.pl/blog/elektroniczna-ewidencja-czasu-pracy)
