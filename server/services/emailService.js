@@ -8,6 +8,7 @@ const { getLeaveRequestTypeName } = require('../utils/leaveRequestTypes')
 const { formatLeaveQuantityValue, getLeaveRequestQuantityLabel } = require('../utils/leaveSettlement')
 const { getLeaveStatusText } = require('../utils/leaveStatusText')
 const { formatTaskScheduleForNotification } = require('../utils/taskScheduleTime')
+const { htmlToText } = require('../utils/htmlToText')
 
 /** Powiadomienia wewnętrzne: nowe zgłoszenia / aktywność w dyskusji Help Center */
 const HELP_CENTER_STAFF_EMAILS = ['planopiaapp@gmail.com', 'michalipka1@gmail.com']
@@ -171,21 +172,32 @@ function getTransporter() {
 function fromAddress() {
 	const explicit = (process.env.EMAIL_FROM || '').trim()
 	if (explicit) return explicit
-	const fromEmail = (process.env.SMTP_USER || process.env.EMAIL_USER || 'michalipka1@gmail.com').trim()
-	return `"Planopia" <${fromEmail}>`
+	return '"Planopia" <powiadomienia@planopia.pl>'
 }
 
-const sendEmail = async (to, link, subject, html, meta = {}) => {
-	const recipients = normalizeEmailRecipients(to)
-	if (recipients.length === 0) return
+/** Czy jest z czym wysyłać — dostawca z SMTP_* (np. Resend) albo dawny Gmail z EMAIL_*. */
+function isMailConfigured() {
+	return Boolean((process.env.SMTP_USER || process.env.EMAIL_USER) && (process.env.SMTP_PASS || process.env.EMAIL_PASS))
+}
 
+/** Odpowiedzi na maile z aplikacji trafiają do skrzynki biura, a nie na adres nadawcy (powiadomienia@ nie jest skrzynką). */
+function replyToAddress() {
+	return (process.env.EMAIL_REPLY_TO || 'biuro@planopia.pl').trim()
+}
+
+/**
+ * Jedna droga wysyłki dla całej aplikacji (powiadomienia, lifecycle, maile od założyciela, formularze publiczne).
+ * Uzupełnia nadawcę, adres do odpowiedzi i wersję tekstową, jeśli nie podano ich wprost.
+ */
+async function sendMail(message) {
+	const mail = {
+		from: fromAddress(),
+		replyTo: replyToAddress(),
+		...message,
+	}
+	if (!mail.text && mail.html) mail.text = htmlToText(mail.html)
 	try {
-		await getTransporter().sendMail({
-			from: fromAddress(),
-			to: recipients.length === 1 ? recipients[0] : recipients,
-			subject,
-			html,
-		})
+		return await getTransporter().sendMail(mail)
 	} catch (error) {
 		// Zerwane połączenie z puli — następny mail zbuduje transporter od nowa.
 		try {
@@ -194,6 +206,17 @@ const sendEmail = async (to, link, subject, html, meta = {}) => {
 		sharedTransporter = null
 		throw error
 	}
+}
+
+const sendEmail = async (to, link, subject, html, meta = {}) => {
+	const recipients = normalizeEmailRecipients(to)
+	if (recipients.length === 0) return
+
+	await sendMail({
+		to: recipients.length === 1 ? recipients[0] : recipients,
+		subject,
+		html,
+	})
 
 	const teamId = meta && meta.teamId
 	if (teamId) {
@@ -707,13 +730,13 @@ const sendSchedulePublishedEmailNotification = async ({
 
 /**
  * Powiadomienie e-mail do autora zgłoszenia (odpowiedź obsługi / zmiana statusu).
- * Wymaga EMAIL_USER i EMAIL_PASS; błędy są logowane, nie rzucane na zewnątrz.
+ * Wymaga skonfigurowanej wysyłki (SMTP_* albo EMAIL_*); błędy są logowane, nie rzucane na zewnątrz.
  */
 async function notifyTicketReporter({ recipientEmail, kind, topic, extra }) {
 	try {
 		if (!recipientEmail || typeof recipientEmail !== 'string') return
-		if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-			console.warn('[notifyTicketReporter] Brak EMAIL_USER / EMAIL_PASS — pomijam powiadomienie e-mail')
+		if (!isMailConfigured()) {
+			console.warn('[notifyTicketReporter] Brak konfiguracji wysyłki (SMTP_USER/SMTP_PASS) — pomijam powiadomienie e-mail')
 			return
 		}
 		const helpUrl = `${appUrl}/helpcenter`
@@ -754,8 +777,8 @@ async function notifyTicketReporter({ recipientEmail, kind, topic, extra }) {
  */
 async function notifyHelpCenterStaff({ kind, ticket, messagePreview, authorEmail, isStaffMessage }) {
 	try {
-		if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-			console.warn('[notifyHelpCenterStaff] Brak EMAIL_USER / EMAIL_PASS — pomijam')
+		if (!isMailConfigured()) {
+			console.warn('[notifyHelpCenterStaff] Brak konfiguracji wysyłki (SMTP_USER/SMTP_PASS) — pomijam')
 			return
 		}
 		if (!ticket) return
@@ -862,6 +885,7 @@ async function sendBillingPurchaseThankYouEmail(toEmail, teamName) {
 
 module.exports = {
 	sendEmail,
+	sendMail,
 	sendEmailToHR,
 	sendTaskNotification,
 	sendTaskCommentEmailNotification,

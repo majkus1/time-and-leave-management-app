@@ -29,8 +29,10 @@ function Login() {
 	const location = useLocation()
 	const redirectAfterLogin = (() => {
 		const loc = location.state?.from
-		if (!loc?.pathname) return '/'
-		return `${loc.pathname}${loc.search || ''}${loc.hash || ''}`
+		const pathname = typeof loc?.pathname === 'string' ? loc.pathname : ''
+		// Tylko ścieżki wewnętrzne: „//host” i „/\host” przeglądarka potraktowałaby jako obcą domenę (open redirect)
+		if (!pathname.startsWith('/') || pathname.startsWith('//') || pathname.startsWith('/\\')) return '/'
+		return `${pathname}${loc.search || ''}${loc.hash || ''}`
 	})()
 	const { t } = useTranslation()
 	const { refreshUserData, loggedIn, isCheckingAuth } = useAuth()

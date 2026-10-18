@@ -4,31 +4,22 @@
  * DRY: Reusable across all email endpoints
  */
 
-import nodemailer from 'nodemailer'
+import nodemailer, { type Transporter } from 'nodemailer'
+import { smtpTransportOptions } from '@/lib/landingMail'
 
-let transporter: nodemailer.Transporter | null = null
+let transporter: Transporter | null = null
 
-export function getEmailTransporter(): nodemailer.Transporter {
+export function getEmailTransporter(): Transporter {
 	if (transporter) {
 		return transporter
 	}
 
-	const emailUser = process.env.EMAIL_USER
-	const emailPass = process.env.EMAIL_PASS
-
-	if (!emailUser || !emailPass) {
-		throw new Error('EMAIL_USER and EMAIL_PASS must be set in environment variables')
+	const options = smtpTransportOptions()
+	if (!options.auth.user || !options.auth.pass) {
+		throw new Error('SMTP_USER/SMTP_PASS (or EMAIL_USER/EMAIL_PASS) must be set in environment variables')
 	}
 
-	transporter = nodemailer.createTransport({
-		host: 'smtp.gmail.com',
-		port: 465,
-		secure: true,
-		auth: {
-			user: emailUser,
-			pass: emailPass,
-		},
-	})
+	transporter = nodemailer.createTransport(options)
 
 	return transporter
 }

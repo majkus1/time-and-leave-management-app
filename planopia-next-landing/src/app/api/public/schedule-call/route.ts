@@ -7,6 +7,7 @@ import {
 	getClientIp,
 	isMailEnabled,
 	isValidEmail,
+	landingFrom,
 	optionalText,
 	sanitizeText,
 } from '@/lib/landingMail'
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
 			.join('\n')
 
 		await createLandingTransporter().sendMail({
-			from: `"Planopia (formularz)" <${process.env.EMAIL_USER}>`,
+			from: landingFrom('formularz'),
 			to: OFFICE_TO,
 			replyTo: email,
 			subject: scheduledLabel ? 'Prośba o rozmowę — formularz' : 'Nowe zgłoszenie kontaktowe',

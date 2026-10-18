@@ -7,6 +7,7 @@ import {
 	escapeHtml,
 	getClientIp,
 	isMailEnabled,
+	landingFrom,
 } from '@/lib/landingMail'
 
 const MAX_MESSAGE = 4000
@@ -140,7 +141,7 @@ ${transcriptHtml}
 `.trim()
 
 		await transporter.sendMail({
-			from: `"Planopia (czat)" <${process.env.EMAIL_USER}>`,
+			from: landingFrom('czat'),
 			to: [OFFICE_TO, CHAT_MAIL_COPY_TO],
 			replyTo: replyEmail || undefined,
 			subject: subj,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getEmailTransporter } from '@/lib/email/transporter'
+import { landingFrom } from '@/lib/landingMail'
 import { generatePackageRequestEmail } from '@/lib/email/templates'
 import { validatePackageRequest } from '@/lib/validations/packageRequest'
 
@@ -36,13 +37,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Send email
-    const emailUser = process.env.EMAIL_USER
-    if (!emailUser) {
-      throw new Error('EMAIL_USER not configured')
-    }
-
     await transporter.sendMail({
-      from: `"Planopia" <${emailUser}>`,
+      from: landingFrom(),
       to: 'biuro@planopia.pl',
       subject: `Nowe zgłoszenie pakietu: ${data.packageType}`,
       html: htmlContent,

@@ -1,25 +1,29 @@
-const nodemailer = require('nodemailer')
 const { firmDb } = require('../db/db')
 const LifecycleEmailLog = require('../models/LifecycleEmailLog')(firmDb)
-const { sendEmail } = require('./emailService')
+const { sendMail } = require('./emailService')
 const { publicAppUrl } = require('../config')
+const { buildFounderWelcomeText, FOUNDER_WELCOME_SUBJECT } = require('../utils/founderWelcomeText')
 
 /**
  * Osobisty kontakt twórcy z nowym zespołem — celowo obok automatów lifecycle (inny nadawca, czysty tekst, bez szablonu).
- * Konfiguracja w .env:
- *   FOUNDER_SMTP_USER  — skrzynka Gmail twórcy (nadawca), np. michalipka1@gmail.com
- *   FOUNDER_SMTP_PASS  — hasło aplikacji Gmail (Konto Google → Bezpieczeństwo → Hasła aplikacji), nie hasło do konta
- *   FOUNDER_CALENDAR_URL — link do rezerwacji; domyślnie własna strona w aplikacji: {appUrl}/umow-rozmowe (założyciel
- *                          dostaje maile z rezerwacjami — founderCallService); zewnętrzny kalendarz tylko, gdy ustawiony
- *   FOUNDER_NAME — podpis, domyślnie „Michał Lipka”
- * Bez FOUNDER_SMTP_* mail powitalny nie wychodzi (log), a powiadomienie o nowym zespole idzie z systemowej skrzynki.
+ * Wysyłka tą samą drogą co reszta aplikacji (emailService.sendMail → dostawca z SMTP_*), z adresu w domenie planopia.pl.
+ * Konfiguracja w .env (wszystko opcjonalne):
+ *   FOUNDER_FROM_EMAIL   — nadawca maili od twórcy i adres do odpowiedzi; domyślnie biuro@planopia.pl
+ *   FOUNDER_NOTIFY_EMAIL — dokąd idą powiadomienia dla twórcy (nowy zespół, rezerwacje rozmów); domyślnie jego skrzynka
+ *   FOUNDER_CALENDAR_URL — link do rezerwacji; domyślnie własna strona w aplikacji: {appUrl}/umow-rozmowe
+ *   FOUNDER_NAME         — podpis, domyślnie „Michał Lipka”
  */
-const FOUNDER_EMAIL_FALLBACK = 'michalipka1@gmail.com'
 const WELCOME_KIND = 'founder_welcome'
 const NEW_TEAM_KIND = 'founder_new_team'
 
+/** Adres nadawcy maili od twórcy — w domenie planopia.pl (odpowiedzi trafiają do biura). */
 function founderEmail() {
-	return (process.env.FOUNDER_SMTP_USER || FOUNDER_EMAIL_FALLBACK).trim()
+	return (process.env.FOUNDER_FROM_EMAIL || 'biuro@planopia.pl').trim()
+}
+
+/** Skrzynka, w której twórca czyta powiadomienia wewnętrzne — osobna od adresu nadawcy. */
+function founderNotifyEmail() {
+	return (process.env.FOUNDER_NOTIFY_EMAIL || 'michalipka1@gmail.com').trim()
 }
 
 function founderName() {
@@ -33,45 +37,23 @@ function founderCalendarUrl() {
 }
 
 /**
- * Mail z skrzynki założyciela (czysty tekst, opcjonalne załączniki); bez FOUNDER_SMTP_* — z systemowej skrzynki.
- * personal=true: podpis nadawcy imieniem (odpowiedź trafia do założyciela).
+ * Mail od twórcy (czysty tekst, opcjonalne załączniki).
+ * personal=true: podpis nadawcy imieniem i nazwiskiem; w pozostałych przypadkach „Planopia”.
  */
 async function sendFounderMail({ to, subject, text, attachments = [], personal = false }) {
 	if (!to) return { sent: false, reason: 'no-recipient' }
-	if (isFounderSmtpConfigured()) {
-		await getFounderTransporter().sendMail({
-			from: personal ? `"${founderName()}" <${founderEmail()}>` : `"Planopia" <${founderEmail()}>`,
-			to,
-			replyTo: founderEmail(),
-			subject,
-			text,
-			attachments,
-		})
-		return { sent: true, via: 'founder' }
-	}
-	const html = `<pre style="font-family:inherit;white-space:pre-wrap">${String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</pre>`
-	await sendEmail(to, null, subject, html)
-	return { sent: true, via: 'system' }
-}
-
-function isFounderSmtpConfigured() {
-	return Boolean((process.env.FOUNDER_SMTP_USER || '').trim() && (process.env.FOUNDER_SMTP_PASS || '').trim())
-}
-
-let transporter = null
-function getFounderTransporter() {
-	if (transporter) return transporter
-	const port = Number(process.env.FOUNDER_SMTP_PORT || 465)
-	transporter = nodemailer.createTransport({
-		host: process.env.FOUNDER_SMTP_HOST || 'smtp.gmail.com',
-		port,
-		secure: port === 465,
-		auth: { user: process.env.FOUNDER_SMTP_USER.trim(), pass: process.env.FOUNDER_SMTP_PASS.trim() },
+	await sendMail({
+		from: personal ? `"${founderName()}" <${founderEmail()}>` : `"Planopia" <${founderEmail()}>`,
+		replyTo: founderEmail(),
+		to,
+		subject,
+		text,
+		attachments,
 	})
-	return transporter
+	return { sent: true }
 }
 
-/** Jak lifecycle: jeden mail danego rodzaju na zespół; przy błędzie SMTP wpis jest zwalniany. */
+/** Jak lifecycle: jeden mail danego rodzaju na zespół; przy błędzie wysyłki wpis jest zwalniany. */
 async function claim(teamId, kind, to) {
 	try {
 		await LifecycleEmailLog.create({ teamId, kind, to })
@@ -93,60 +75,26 @@ function normalizePhone(raw) {
 }
 
 function buildWelcomeText(team) {
-	const name = String(team.adminFirstName || '').trim()
-	const calendar = founderCalendarUrl()
-	const phone = String(team.adminPhone || '').trim()
-	const lines = [
-		name ? `Dzień dobry, ${name}!` : 'Dzień dobry!',
-		'',
-		`Dziękuję za założenie zespołu „${team.name}” w Planopii. Piszę osobiście, bo zależy mi, żeby aplikacja zadziałała u Was od pierwszego dnia — bez czytania instrukcji.`,
-		'',
-		`Planopia jest tutaj: ${publicAppUrl}`,
-		'',
-		'Jeśli to pomoże, w 15 minut ustawimy razem zespół pod Waszą firmę: pracownicy, godziny pracy i święta, urlopy, grafik albo kody QR — co jest Wam potrzebne.',
-	]
-	if (calendar) {
-		lines.push(`Wystarczy wybrać termin: ${calendar}`)
-	}
-	if (phone) {
-		lines.push('', `Numer ${phone} mam zapisany — zadzwonię w najbliższy dzień roboczy. Jeśli lepsza jest konkretna pora, proszę o krótką odpowiedź.`)
-	}
-	lines.push(
-		'',
-		'Można też po prostu odpisać na tę wiadomość z pytaniem — odpowiadam osobiście, zwykle tego samego dnia.',
-		'',
-		'Pozdrawiam serdecznie,',
-		founderName(),
-		'założyciel Planopii',
-		founderEmail()
-	)
-	return lines.join('\n')
+	return buildFounderWelcomeText({
+		adminFirstName: team.adminFirstName,
+		teamName: team.name,
+		phone: team.adminPhone,
+		calendarUrl: founderCalendarUrl(),
+		founderName: founderName(),
+		replyEmail: founderEmail(),
+	})
 }
 
-/** Powitanie od twórcy — czysty tekst, z jego skrzynki. Nic nie robi bez FOUNDER_SMTP_*. */
+/** Powitanie od twórcy — czysty tekst, z adresu biura w domenie planopia.pl. */
 async function sendFounderWelcome(team) {
 	if (!team?._id || !team.adminEmail) return { sent: false, reason: 'no-team' }
-	if (!isFounderSmtpConfigured()) {
-		console.info('[founder] welcome skipped: FOUNDER_SMTP_USER/PASS not set')
-		return { sent: false, reason: 'not-configured' }
-	}
 	const to = String(team.adminEmail).trim()
 	if (!(await claim(team._id, WELCOME_KIND, to))) return { sent: false, reason: 'already-sent' }
 	try {
-		await getFounderTransporter().sendMail({
-			from: `"${founderName()}" <${founderEmail()}>`,
-			to,
-			replyTo: founderEmail(),
-			subject: `Witam w Planopii — ${founderName().split(' ')[0]}, założyciel Planopii`,
-			text: buildWelcomeText(team),
-		})
+		await sendFounderMail({ to, subject: FOUNDER_WELCOME_SUBJECT, text: buildWelcomeText(team), personal: true })
 		return { sent: true }
 	} catch (e) {
 		await release(team._id, WELCOME_KIND)
-		try {
-			transporter?.close?.()
-		} catch (_) {}
-		transporter = null
 		throw e
 	}
 }
@@ -157,7 +105,7 @@ async function sendFounderWelcome(team) {
  */
 async function notifyFounderNewTeam(team) {
 	if (!team?._id) return { sent: false, reason: 'no-team' }
-	const to = founderEmail()
+	const to = founderNotifyEmail()
 	if (!(await claim(team._id, NEW_TEAM_KIND, to))) return { sent: false, reason: 'already-sent' }
 	const phone = String(team.adminPhone || '').trim()
 	const subject = phone ? `[Planopia] Nowy zespół: ${team.name} — ZOSTAWIŁ NUMER` : `[Planopia] Nowy zespół: ${team.name}`
@@ -170,11 +118,7 @@ async function notifyFounderNewTeam(team) {
 		phone ? 'Zadzwoń w najbliższy dzień roboczy (15 min wdrożenia).' : 'Bez numeru — kontakt tylko, jeśli odpisze na mail powitalny.',
 	].join('\n')
 	try {
-		if (isFounderSmtpConfigured()) {
-			await getFounderTransporter().sendMail({ from: `"Planopia" <${founderEmail()}>`, to, subject, text })
-		} else {
-			await sendEmail(to, null, subject, `<pre style="font-family:inherit;white-space:pre-wrap">${text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</pre>`)
-		}
+		await sendFounderMail({ to, subject, text })
 		return { sent: true }
 	} catch (e) {
 		await release(team._id, NEW_TEAM_KIND)
@@ -184,7 +128,7 @@ async function notifyFounderNewTeam(team) {
 
 /**
  * Po rejestracji: jedno powitanie do klienta + sygnał do twórcy. Błędy nie mogą psuć rejestracji — logujemy.
- * fallbackWelcome — automatyczne powitanie, gdy osobisty mail nie wyszedł (brak FOUNDER_SMTP_*, błąd skrzynki);
+ * fallbackWelcome — automatyczne powitanie, gdy osobisty mail nie wyszedł (błąd wysyłki);
  * wysłany osobisty mail zamyka też powitanie w dziennym jobie (lifecycleEmailPolicy).
  */
 function onTeamRegistered(team, { fallbackWelcome } = {}) {
@@ -210,6 +154,7 @@ function founderCallForTeam(team, now = new Date()) {
 
 module.exports = {
 	founderEmail,
+	founderNotifyEmail,
 	sendFounderMail,
 	onTeamRegistered,
 	sendFounderWelcome,

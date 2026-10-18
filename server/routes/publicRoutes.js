@@ -1,30 +1,25 @@
 require('dotenv').config()
 const express = require('express')
 const router = express.Router()
-const nodemailer = require('nodemailer')
 const userController = require('../controllers/userController')
 const { resetPasswordLimiter } = require('../utils/rateLimiters')
+const { sendMail, escapeHtml } = require('../services/emailService')
+const { founderNotifyEmail } = require('../services/founderOutreachService')
+
+// Dane z publicznego formularza trafiają do HTML maila — zawsze jako tekst (escape), nigdy jako znaczniki
+const asText = (value, max) => String(value ?? '').trim().slice(0, max)
+const looksLikeEmail = value => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(value)
 
 router.post('/request-demo', async (req, res) => {
-	const { email } = req.body
+	const email = asText(req.body?.email, 320)
 	if (!email) return res.status(400).json({ message: 'Email is required' })
 
 	try {
-		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
-			port: 465,
-			secure: true,
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		})
-
-		await transporter.sendMail({
-			from: `"Planopia" <${process.env.EMAIL_USER}>`,
-			to: 'michalipka1@gmail.com',
+		await sendMail({
+			to: founderNotifyEmail(),
+			...(looksLikeEmail(email) ? { replyTo: email } : {}),
 			subject: 'Demo account request',
-			html: `<p>Email użytkownika: <strong>${email}</strong></p><p>Poproszono o konto testowe.</p>`,
+			html: `<p>Email użytkownika: <strong>${escapeHtml(email)}</strong></p><p>Poproszono o konto testowe.</p>`,
 		})
 
 		res.status(200).json({ message: 'Email sent successfully' })
@@ -35,36 +30,29 @@ router.post('/request-demo', async (req, res) => {
 })
 
 router.post('/schedule-call', async (req, res) => {
-	const { email, datetime, message } = req.body
+	const email = asText(req.body?.email, 320)
+	const datetime = req.body?.datetime
+	const message = asText(req.body?.message, 4000)
 
-	if (!email || (!datetime && (!message || message.trim() === ''))) {
+	if (!email || (!datetime && !message)) {
 		return res.status(400).json({ message: 'Wymagany jest termin lub wiadomość oraz adres email.' })
 	}
 
 	try {
-		const transporter = nodemailer.createTransport({
-			host: 'smtp.gmail.com',
-			port: 465,
-			secure: true,
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		})
+		let htmlContent = `<p>Email klienta: <strong>${escapeHtml(email)}</strong></p>`
 
-		let htmlContent = `<p>Email klienta: <strong>${email}</strong></p>`
-
-		if (datetime) {
-			htmlContent += `<p>Wybrany termin: <strong>${new Date(datetime).toLocaleString('pl-PL')}</strong></p>`
+		const when = datetime ? new Date(datetime) : null
+		if (when && !Number.isNaN(when.getTime())) {
+			htmlContent += `<p>Wybrany termin: <strong>${escapeHtml(when.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' }))}</strong></p>`
 		}
 
-		if (message && message.trim() !== '') {
-			htmlContent += `<p>Wiadomość od klienta:</p><blockquote>${message.trim()}</blockquote>`
+		if (message) {
+			htmlContent += `<p>Wiadomość od klienta:</p><blockquote style="white-space:pre-wrap">${escapeHtml(message)}</blockquote>`
 		}
 
-		await transporter.sendMail({
-			from: `"Planopia" <${process.env.EMAIL_USER}>`,
-			to: 'michalipka1@gmail.com',
+		await sendMail({
+			to: founderNotifyEmail(),
+			...(looksLikeEmail(email) ? { replyTo: email } : {}),
 			subject: 'Nowe zgłoszenie kontaktowe',
 			html: htmlContent,
 		})

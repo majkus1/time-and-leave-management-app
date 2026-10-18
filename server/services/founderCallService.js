@@ -101,7 +101,7 @@ async function bookSlot({ teamId, userId, slotStart, phone, note, now = new Date
 
 async function sendBookingEmails({ booking, team, name, email }) {
 	const when = formatSlotPl(booking.slotStart)
-	const founderTo = founderOutreach.founderEmail()
+	const founderTo = founderOutreach.founderNotifyEmail()
 	const summary = `Planopia — rozmowa wdrożeniowa: ${team.name}`
 	const ics = buildIcs({
 		start: booking.slotStart,
@@ -109,7 +109,7 @@ async function sendBookingEmails({ booking, team, name, email }) {
 		summary,
 		description: `${name} <${email}>${booking.phone ? `, tel. ${booking.phone}` : ''}${booking.note ? `\n${booking.note}` : ''}`,
 		uid: `founder-call-${booking._id}@planopia.pl`,
-		organizerEmail: founderTo,
+		organizerEmail: founderOutreach.founderEmail(),
 	})
 	const attachments = [{ filename: 'rozmowa-planopia.ics', content: ics, contentType: 'text/calendar; charset=utf-8; method=PUBLISH' }]
 
@@ -157,7 +157,7 @@ async function cancelMyBooking({ teamId, now = new Date() }) {
 	await booking.save()
 	founderOutreach
 		.sendFounderMail({
-			to: founderOutreach.founderEmail(),
+			to: founderOutreach.founderNotifyEmail(),
 			subject: `[Planopia] Odwołana rozmowa ${formatSlotPl(booking.slotStart)} — ${booking.name}`,
 			text: `Zespół ${teamId}: ${booking.name} <${booking.email}> odwołał rozmowę ${formatSlotPl(booking.slotStart)}.`,
 		})

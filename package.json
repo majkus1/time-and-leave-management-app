@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:server": "node --test server/tests/entitlementsAndFreemiumPolicy.test.js server/tests/freemiumApiPolicy.test.js server/tests/lifecycleEmailPolicy.test.js server/tests/openaiRequestBody.test.js server/tests/openaiPricing.test.js server/tests/productKnowledge.test.js server/tests/qrScreenToken.test.js server/tests/qrGeoCheck.test.js server/tests/qrDisplayRateLimit.test.js server/tests/referralCode.test.js server/tests/commissionCalc.test.js server/tests/officeAccessPolicy.test.js server/tests/warsawDayStart.test.js server/tests/aiDateRange.test.js server/tests/qrTimeEntry.test.js server/tests/timerWorkActivity.test.js server/tests/planCatalog.test.js server/tests/billingPlanChange.test.js server/tests/planChangeMail.test.js server/tests/aiHelpPrompt.test.js server/tests/boardAccess.test.js server/tests/logAccessPolicy.test.js server/tests/vacationAccessPolicy.test.js server/tests/authTokens.test.js server/tests/userProfileAccessPolicy.test.js server/tests/chatChannelAccess.test.js server/tests/teamScopeAccess.test.js server/tests/timesheetAccess.test.js server/tests/supervisorAccessPolicy.test.js server/tests/uploadAccessPolicy.test.js server/tests/attachmentUploadPolicy.test.js server/tests/dashboardSummaryService.test.js server/tests/stripeBillingPayloadCompatibility.test.js server/tests/founderCallSlots.test.js server/tests/taskCalendarScope.test.js server/tests/deleteUserAndScheduleAccess.test.js server/tests/supervisorScope.test.js server/tests/aiDataScope.test.js server/tests/leaveSettlement.test.js server/tests/leaveHourlyValidation.test.js server/tests/leaveDuplicateRequest.test.js server/tests/leaveRecipients.test.js server/tests/leaveRecipientsService.test.js server/tests/leaveBalanceAutoDeduction.test.js server/tests/leaveLimitView.test.js server/tests/scheduleVisibility.test.js",
+    "test:server": "node --test server/tests/entitlementsAndFreemiumPolicy.test.js server/tests/htmlToText.test.js server/tests/founderWelcomeText.test.js server/tests/freemiumApiPolicy.test.js server/tests/lifecycleEmailPolicy.test.js server/tests/openaiRequestBody.test.js server/tests/openaiPricing.test.js server/tests/productKnowledge.test.js server/tests/qrScreenToken.test.js server/tests/qrGeoCheck.test.js server/tests/qrDisplayRateLimit.test.js server/tests/referralCode.test.js server/tests/commissionCalc.test.js server/tests/officeAccessPolicy.test.js server/tests/warsawDayStart.test.js server/tests/aiDateRange.test.js server/tests/qrTimeEntry.test.js server/tests/timerWorkActivity.test.js server/tests/planCatalog.test.js server/tests/billingPlanChange.test.js server/tests/planChangeMail.test.js server/tests/aiHelpPrompt.test.js server/tests/boardAccess.test.js server/tests/logAccessPolicy.test.js server/tests/vacationAccessPolicy.test.js server/tests/authTokens.test.js server/tests/userProfileAccessPolicy.test.js server/tests/chatChannelAccess.test.js server/tests/teamScopeAccess.test.js server/tests/timesheetAccess.test.js server/tests/supervisorAccessPolicy.test.js server/tests/uploadAccessPolicy.test.js server/tests/attachmentUploadPolicy.test.js server/tests/dashboardSummaryService.test.js server/tests/stripeBillingPayloadCompatibility.test.js server/tests/founderCallSlots.test.js server/tests/taskCalendarScope.test.js server/tests/deleteUserAndScheduleAccess.test.js server/tests/supervisorScope.test.js server/tests/aiDataScope.test.js server/tests/leaveSettlement.test.js server/tests/leaveHourlyValidation.test.js server/tests/leaveDuplicateRequest.test.js server/tests/leaveRecipients.test.js server/tests/leaveRecipientsService.test.js server/tests/leaveBalanceAutoDeduction.test.js server/tests/leaveLimitView.test.js server/tests/scheduleVisibility.test.js",
     "knowledge:build": "node scripts/build-product-knowledge.mjs",
     "knowledge:check": "node scripts/build-product-knowledge.mjs --check",
     "ai:usage": "node server/scripts/aiUsageReport.js",
@@ -14,6 +14,9 @@
     "simulate:legacy-grace": "node server/scripts/simulateTeamLegacyGrace.js",
     "simulate:business-plan": "node server/scripts/simulateTeamBusinessPlan.js",
     "simulate:halo-like": "node server/scripts/simulateTeamHaloLike.js"
+  },
+  "engines": {
+    "node": "22.x"
   },
   "keywords": [],
   "author": "",
@@ -42,7 +45,7 @@
     "moment-timezone": "^0.5.46",
     "mongoose": "^8.4.0",
     "multer": "^2.0.1",
-    "nodemailer": "^7.0.12",
+    "nodemailer": "^10.1.3",
     "open-sans-fonts": "^1.6.2",
     "pdfmake": "^0.3.7",
     "react-datepicker": "^8.4.0",

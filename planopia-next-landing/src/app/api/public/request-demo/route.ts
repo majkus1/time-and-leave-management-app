@@ -1,45 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { OFFICE_TO, createLandingTransporter, escapeHtml, isMailEnabled, isValidEmail, landingFrom } from '@/lib/landingMail'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json()
+    const body = await request.json().catch(() => null)
+    const email = isValidEmail(body?.email)
 
     if (!email) {
-      return NextResponse.json(
-        { message: 'Email is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Email is required' }, { status: 400 })
+    }
+    if (!isMailEnabled()) {
+      return NextResponse.json({ message: 'Server error while sending email' }, { status: 500 })
     }
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    })
-
-    // Send email
-    await transporter.sendMail({
-      from: `"Planopia" <${process.env.EMAIL_USER}>`,
-      to: 'biuro@planopia.pl',
+    // Adres z formularza tylko jako tekst — bez escapowania dałoby się wstrzyknąć HTML do maila biura
+    await createLandingTransporter().sendMail({
+      from: landingFrom('formularz'),
+      to: OFFICE_TO,
+      replyTo: email,
       subject: 'Demo account request',
-      html: `<p>Email użytkownika: <strong>${email}</strong></p><p>Poproszono o konto testowe.</p>`,
+      html: `<p>Email użytkownika: <strong>${escapeHtml(email)}</strong></p><p>Poproszono o konto testowe.</p>`,
     })
 
-    return NextResponse.json(
-      { message: 'Email sent successfully' },
-      { status: 200 }
-    )
+    return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 })
   } catch (error) {
     console.error('Email send error:', error)
-    return NextResponse.json(
-      { message: 'Server error while sending email' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Server error while sending email' }, { status: 500 })
   }
 }

@@ -8,7 +8,7 @@ import { appHomePath } from '../../utils/appHomePath'
 function returnPathFromState(state) {
 	const from = state?.from
 	const pathname = typeof from?.pathname === 'string' ? from.pathname : ''
-	if (!pathname.startsWith('/') || pathname.startsWith('//')) return null
+	if (!pathname.startsWith('/') || pathname.startsWith('//') || pathname.startsWith('/\\')) return null
 	if (pathname === '/' || pathname === '/login' || pathname === '/team-registration') return null
 	return `${pathname}${from.search || ''}${from.hash || ''}`
 }

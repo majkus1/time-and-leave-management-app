@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { landingContactRateLimit } from '@/lib/landingChat/rateLimit'
-import { OFFICE_TO, createLandingTransporter, escapeHtml, getClientIp, isMailEnabled } from '@/lib/landingMail'
+import { OFFICE_TO, createLandingTransporter, escapeHtml, getClientIp, isMailEnabled, landingFrom } from '@/lib/landingMail'
 import { validatePartnerApplication } from '@/lib/validations/partnerApplication'
 
 /** Wiersz maila tylko wtedy, gdy pole faktycznie przyszło */
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 			.join('\n')
 
 		await createLandingTransporter().sendMail({
-			from: `"Planopia (formularz)" <${process.env.EMAIL_USER}>`,
+			from: landingFrom('formularz'),
 			to: OFFICE_TO,
 			replyTo: a.email,
 			subject: `Program partnerski — zgłoszenie: ${a.company ?? a.name}`.replace(/[\r\n]+/g, ' '),

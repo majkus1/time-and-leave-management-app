@@ -33,21 +33,41 @@ export function escapeHtml(value: string): string {
 		.replace(/'/g, '&#39;')
 }
 
+/**
+ * Dostawca SMTP z env (SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS — np. Resend, jak w API); bez nich
+ * dotychczasowy Gmail z EMAIL_USER / EMAIL_PASS, żeby wdrożenie kodu nie zatrzymało formularzy przed zmianą env.
+ */
+export function smtpTransportOptions() {
+	const port = Number(process.env.SMTP_PORT || 465)
+	return {
+		host: process.env.SMTP_HOST?.trim() || 'smtp.gmail.com',
+		port,
+		secure: port === 465,
+		auth: {
+			user: (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim(),
+			pass: (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim(),
+		},
+	}
+}
+
+/** Nadawca w domenie planopia.pl; `label` podpowiada w skrzynce biura, skąd przyszło zgłoszenie (np. „czat”). */
+export function landingFrom(label?: string): string {
+	const address = (
+		process.env.EMAIL_FROM_ADDRESS ||
+		(process.env.SMTP_HOST ? 'powiadomienia@planopia.pl' : process.env.EMAIL_USER) ||
+		'powiadomienia@planopia.pl'
+	).trim()
+	return label ? `"Planopia (${label})" <${address}>` : `"Planopia" <${address}>`
+}
+
 export function isMailEnabled(): boolean {
 	if (process.env.LANDING_CHAT_MAIL_ENABLED === 'false') return false
-	return Boolean(process.env.EMAIL_USER?.trim() && process.env.EMAIL_PASS?.trim())
+	const { auth } = smtpTransportOptions()
+	return Boolean(auth.user && auth.pass)
 }
 
 export function createLandingTransporter() {
-	return nodemailer.createTransport({
-		host: 'smtp.gmail.com',
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASS,
-		},
-	})
+	return nodemailer.createTransport(smtpTransportOptions())
 }
 
 /** Zwraca przycięty tekst albo null, gdy pusty lub dłuższy niż `maxLength`. */
