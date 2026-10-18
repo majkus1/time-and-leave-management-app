@@ -27,10 +27,10 @@ export default function BlogFreeAppJsonLd({ locale }: Props) {
 			},
 		},
 		description: t.metaDescription,
-		image: BLOG_FREE_APP_OG.url,
+		image: BLOG_FREE_APP_OG.url[locale],
 		primaryImageOfPage: {
 			'@type': 'ImageObject',
-			url: BLOG_FREE_APP_OG.url,
+			url: BLOG_FREE_APP_OG.url[locale],
 			width: BLOG_FREE_APP_OG.width,
 			height: BLOG_FREE_APP_OG.height,
 			caption: t.heroH1,

@@ -1,22 +1,14 @@
-'use client'
-
-import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import MobileMenu from './MobileMenu'
-import HamburgerButton from './HamburgerButton'
-import LandingIndustriesDropdown from './LandingIndustriesDropdown'
-import LandingSolutionsDropdown from './LandingSolutionsDropdown'
-import {
-	industryMobileConfig,
-	landingMobileNavItemsPl,
-	MOBILE_INDUSTRY_INSERT_INDEX,
-} from '../data/landingNav'
+import BlogArticleShell, { ArticleCta, ArticleNote } from './blogArticle/BlogArticleShell'
 import BlogRelatedLinks from './BlogRelatedLinks'
-import BlogAiAssistantHeroVideo from './BlogAiAssistantHeroVideo'
 import BlogArticleCredibility from './BlogArticleCredibility'
+import { shot } from '@/data/productShots'
+import { LANDING_TRIAL_DAYS, landingCoreTiers, landingTrial } from '@/data/landingPlanPricing'
 
 const PAGE_URL = 'https://planopia.pl/blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik'
 const ARTICLE_IMAGE = 'https://planopia.pl/img/aiass.webp'
+const REGISTER = 'https://app.planopia.pl/team-registration'
 
 const faqItems = [
 	{
@@ -45,9 +37,14 @@ const faqItems = [
 	},
 ]
 
+/**
+ * /blog/asystent-ai-planopia-ewidencja-urlopy-zadania-grafik — treść bez zmian, oprawa jak strony produktowe
+ * (BlogArticleShell). Film z autoodtwarzaniem w hero zastąpił jego plakat (ten sam obraz co image w JSON-LD),
+ * żeby strona nie odtwarzała niczego sama.
+ */
 function BlogAiAssistant() {
-	const [menuOpen, setMenuOpen] = useState(false)
-	const toggleMenu = () => setMenuOpen(prev => !prev)
+	const dashboard = shot('pl', 'dashboard')
+	const scheduleAuto = shot('pl', 'schedule-auto')
 
 	const articleLd = {
 		'@context': 'https://schema.org',
@@ -83,220 +80,148 @@ function BlogAiAssistant() {
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
 
-			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
-				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
-					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }} />
-					</Link>
-					<nav className="hidden desktop:flex space-x-8 navdesktop">
-						<Link href="/#oaplikacji" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							O Aplikacji
-						</Link>
-						<Link href="/#asystent-ai" className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
-							Asystent AI
-						</Link>
-						<Link href="/#cennik" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Cennik
-						</Link>
-						<LandingSolutionsDropdown locale="pl" />
-						<LandingIndustriesDropdown locale="pl" />
-						<Link href="/blog" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition" onClick={toggleMenu}>
-							Blog
-						</Link>
-						<Link href="/#kontakt" className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Kontakt
-						</Link>
-						<Link
-							href="https://app.planopia.pl/"
-							onClick={toggleMenu}
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Logowanie
-						</Link>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
-						>
-							Załóż darmowy zespół
-						</Link>
-						<Link href="/en/blog/planopia-ai-assistant-time-tracking-leave-tasks-schedules" className="flex items-center languagechoose">
-							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
-						</Link>
-					</nav>
-					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
-				</div>
-			</header>
-
-			<MobileMenu
-				isOpen={menuOpen}
-				onClose={toggleMenu}
-				lang="pl"
-				menuItems={landingMobileNavItemsPl()}
-				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
-				{...industryMobileConfig('pl')}
-				loginHref="https://app.planopia.pl/"
-				registerHref="https://app.planopia.pl/team-registration"
-				languageSwitcher={{
-					href: '/en/blog/planopia-ai-assistant-time-tracking-leave-tasks-schedules',
-					flagSrc: '/img/united-kingdom.webp',
-					alt: 'English version',
-				}}
-			/>
-
-			<section
-				className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-14 bg-gradient-to-br from-slate-50 via-indigo-50/40 to-emerald-50/30 landing-hero-below-fixed-header"
-				id="blog-ai-assistant-welcome"
-			>
-				<div className="max-w-4xl md:max-w-5xl xl:max-w-6xl mx-auto w-full">
-					<div className="rounded-2xl md:rounded-3xl border border-indigo-100/90 bg-white shadow-md md:shadow-lg px-6 py-9 sm:px-10 sm:py-10 md:px-12 md:py-12 lg:px-16 lg:py-14 text-left md:text-center ring-1 ring-slate-200/60">
-						<h1 className="font-bold text-gray-900 mb-4 sm:mb-5 md:mb-6 blogh1 leading-[1.2] tracking-tight max-w-5xl md:mx-auto">
-							Asystent AI w Planopii: od ewidencji czasu i urlopów po zadania i grafik — jeden system zamiast pięciu narzędzi
-						</h1>
-						<p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl md:max-w-4xl mx-0 md:mx-auto mb-6 sm:mb-8 md:mb-10 leading-snug sm:leading-relaxed">
-							Planopia to nie tylko ewidencja — to spójny ekosystem: czas pracy, wnioski urlopowe i kalendarz, tablice zadań, grafik i komunikacja.
-							<strong className="font-semibold text-gray-800"> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w każdym planie płatnym bez limitu wiadomości. Okres próbny i plany:{' '}
-							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline whitespace-nowrap">
-								cennik
-							</Link>
-							.
-						</p>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							className="inline-block bg-green-600 text-white font-semibold py-3 px-6 sm:py-4 sm:px-8 rounded-xl shadow-lg hover:bg-green-700 transition text-base sm:text-lg white-text-btn"
-						>
-							Załóż darmowy zespół
-						</Link>
-					</div>
-					<BlogAiAssistantHeroVideo locale="pl" />
-				</div>
-			</section>
-
-			<article className="px-4 py-16 bg-white">
-				<div className="max-w-4xl mx-auto">
-					<p className="text-lg text-gray-700 mb-10 leading-relaxed">
-						Firmy szukające <strong>automatyzacji pracy zespołu</strong> i prostszego <strong>HR</strong> często kończą z kilkoma narzędziami naraz:
-						arkusz do godzin, inny do urlopów, tablica karteczek do zadań, e-mail do potwierdzeń. Ten artykuł pokazuje, jak{' '}
-						<strong>aplikacja z AI do ewidencji czasu pracy</strong> — gdy jest zintegrowana z urlopami, zadaniami i grafikiem — realnie zmniejsza tarcie codziennej pracy, bez obiecywania „magii” ani zastępowania ludzkiej decyzji.
+			<BlogArticleShell
+				crumb={{ label: 'Planopia i instrukcje', href: '/blog' }}
+				pill="Asystent AI"
+				h1="Asystent AI w Planopii: od ewidencji czasu i urlopów po zadania i grafik — jeden system zamiast pięciu narzędzi"
+				lead={
+					<p>
+						Planopia to nie tylko ewidencja — to spójny ekosystem: czas pracy, wnioski urlopowe i kalendarz, tablice zadań, grafik i komunikacja.
+						<strong> Asystent AI</strong> działa tam, gdzie dane już są: podpowiada, streszcza i przyspiesza orientację — w każdym planie płatnym bez limitu wiadomości. Okres próbny i plany:{' '}
+						<Link href="/#cennik">cennik</Link>
+						.
 					</p>
+				}
+				primary={{ href: REGISTER, label: 'Załóż darmowy zespół' }}
+				secondary={{ href: '/#cennik', label: 'Zobacz cennik' }}
+				meta={{ iso: '2026-03-27', label: 'Zaktualizowano 27 marca 2026 r. · Michał Lipka' }}
+				image={{ src: '/img/aiass.webp', alt: 'Planopia — Asystent AI, podsumowania i kontekst z aplikacji', width: 1900, height: 911 }}
+				toc={[
+					{ id: 'dlaczego-polaczone-moduly', label: 'Dlaczego AI ma sens przy połączonych modułach?' },
+					{ id: 'co-robi-asystent', label: 'Co robi Asystent AI w Planopii?' },
+					{ id: 'urlopy-i-ewidencja', label: 'Urlopy i ewidencja' },
+					{ id: 'zadania-i-grafik', label: 'Zadania i grafik' },
+					{ id: 'automatyzacja', label: 'Automatyzacja bez rozpraszania danych' },
+					{ id: 'bezpieczenstwo', label: 'Bezpieczeństwo i role' },
+					{ id: 'jak-zaczac', label: 'Jak zacząć i gdzie znaleźć instrukcję' },
+					{ id: 'faq', label: 'Często zadawane pytania' },
+				]}
+				cta={{
+					title: 'Sprawdź Asystenta AI na danych swojego zespołu',
+					note: `${LANDING_TRIAL_DAYS} dni pełnej aplikacji z Asystentem AI za darmo, do ${landingTrial.maxUsers} osób, bez karty. Potem plan Core od ${landingCoreTiers[0].monthlyNetPln} zł netto miesięcznie — Asystent AI jest w nim bez limitu wiadomości.`,
+					primary: { href: REGISTER, label: 'Załóż darmowy zespół' },
+				}}
+			>
+				<p>
+					Firmy szukające <strong>automatyzacji pracy zespołu</strong> i prostszego <strong>HR</strong> często kończą z kilkoma narzędziami naraz:
+					arkusz do godzin, inny do urlopów, tablica karteczek do zadań, e-mail do potwierdzeń. Ten artykuł pokazuje, jak{' '}
+					<strong>aplikacja z AI do ewidencji czasu pracy</strong> — gdy jest zintegrowana z urlopami, zadaniami i grafikiem — realnie zmniejsza tarcie codziennej pracy, bez obiecywania „magii” ani zastępowania ludzkiej decyzji.
+				</p>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Dlaczego AI „dopiero ma sens”, gdy moduły są połączone?
-						</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Modele językowe najlepiej wspierają pracę wtedy, gdy mają dostęp do spójnego kontekstu. Gdy <strong>ewidencja czasu pracy i urlopy</strong> siedzą w jednym systemie razem z <strong>zadania</strong> w zespole i <strong>grafikiem</strong> lub planem zmian, użytkownik nie musi wklejać do czatu wycinków z pięciu źródeł — aplikacja już wie, kto jest na zmianie, kto ma wniosek urlopowy i co wisiało na tablicy.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							To prosta idea <strong>automatyzacji procesów HR</strong> i operacyjnych: jedna baza prawdy zamiast wersji „wersja końcowa_2_FINAL.xlsx”. Mniej ręcznego przepisywania, mniej pytań „kto ma dziś pierwszą zmianę?” rozstrzyganych przez łańcuch maili.
-						</p>
-						<div className="bg-indigo-50 border-l-4 border-indigo-500 p-6 rounded-r-lg">
-							<p className="text-indigo-900 font-semibold mb-2">Krótko: jeden system zamiast pięciu narzędzi</p>
-							<p className="text-indigo-950/90">
-								Planopia łączy te obszary w jednym interfejsie — stąd sensowne podsumowania i pytania do Asystenta w kontekście Twojej organizacji, a nie ogólne porady z internetu.
-							</p>
-						</div>
-					</section>
+				<h2 id="dlaczego-polaczone-moduly">Dlaczego AI „dopiero ma sens”, gdy moduły są połączone?</h2>
+				<p>
+					Modele językowe najlepiej wspierają pracę wtedy, gdy mają dostęp do spójnego kontekstu. Gdy <strong>ewidencja czasu pracy i urlopy</strong> siedzą w jednym systemie razem z <strong>zadania</strong> w zespole i <strong>grafikiem</strong> lub planem zmian, użytkownik nie musi wklejać do czatu wycinków z pięciu źródeł — aplikacja już wie, kto jest na zmianie, kto ma wniosek urlopowy i co wisiało na tablicy.
+				</p>
+				<p>
+					To prosta idea <strong>automatyzacji procesów HR</strong> i operacyjnych: jedna baza prawdy zamiast wersji „wersja końcowa_2_FINAL.xlsx”. Mniej ręcznego przepisywania, mniej pytań „kto ma dziś pierwszą zmianę?” rozstrzyganych przez łańcuch maili.
+				</p>
+				<ArticleNote tone="mint">
+					<p>
+						<strong>Krótko: jeden system zamiast pięciu narzędzi</strong>
+					</p>
+					<p>
+						Planopia łączy te obszary w jednym interfejsie — stąd sensowne podsumowania i pytania do Asystenta w kontekście Twojej organizacji, a nie ogólne porady z internetu.
+					</p>
+				</ArticleNote>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Co robi Asystent AI w Planopii?</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Asystent nie jest od rozstrzygania sporów prawnych ani od zastępowania regulaminu pracy. Jest od tego, by — na bazie danych i uprawnień w aplikacji — pomóc w <strong>podsumowaniach</strong>, szybkiej orientacji i typowych pytaniach użytkownika: co dziś wymaga uwagi, jak wygląda obłożenie, jakie są proste zależności między wpisami.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							W praktyce oznacza to mniej czasu na szukanie informacji w menu i więcej na realną pracę menedżerską. To podejście do <strong>Planopia Asystent AI</strong> stoi bliżej wsparcia operacyjnego niż „czatu z internetem” — bo kotwica jest w Twoim zespole.
-						</p>
-						<ul className="list-disc pl-6 text-lg text-gray-700 space-y-2 mb-4">
-							<li>orientacja w sytuacji zespołu: kalendarz, nieobecności, aktywne zadania;</li>
-							<li>krótkie streszczenia i wyjaśnienia w języku naturalnym — z uwzględnieniem limitów i polityki produktu;</li>
-							<li>spójność z modułami: czas pracy, urlopy, zadania, grafik — zależnie od pakietu.</li>
-						</ul>
-					</section>
+				<h2 id="co-robi-asystent">Co robi Asystent AI w Planopii?</h2>
+				<p>
+					Asystent nie jest od rozstrzygania sporów prawnych ani od zastępowania regulaminu pracy. Jest od tego, by — na bazie danych i uprawnień w aplikacji — pomóc w <strong>podsumowaniach</strong>, szybkiej orientacji i typowych pytaniach użytkownika: co dziś wymaga uwagi, jak wygląda obłożenie, jakie są proste zależności między wpisami.
+				</p>
+				<p>
+					W praktyce oznacza to mniej czasu na szukanie informacji w menu i więcej na realną pracę menedżerską. To podejście do <strong>Planopia Asystent AI</strong> stoi bliżej wsparcia operacyjnego niż „czatu z internetem” — bo kotwica jest w Twoim zespole.
+				</p>
+				<ul>
+					<li>orientacja w sytuacji zespołu: kalendarz, nieobecności, aktywne zadania;</li>
+					<li>krótkie streszczenia i wyjaśnienia w języku naturalnym — z uwzględnieniem limitów i polityki produktu;</li>
+					<li>spójność z modułami: czas pracy, urlopy, zadania, grafik — zależnie od pakietu.</li>
+				</ul>
+				<figure>
+					<Image src={dashboard.src} alt={dashboard.alt} width={dashboard.width} height={dashboard.height} unoptimized />
+					<figcaption>{dashboard.caption}</figcaption>
+				</figure>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Urlopy i ewidencja — mniej błędów, szybsza orientacja</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							<strong>Kalendarz urlopów online</strong> w jednym systemie z ewidencją oznacza, że widzisz nie tylko „kto napisał w mailu”, ale kto realnie ma wprowadzony wniosek i status. To fundament pod <strong>automatyzację wniosków urlopowych i ewidencji</strong> w sensie organizacyjnym: przepływ jest zamknięty w aplikacji, a nie rozrzucony.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Dla pracownika to przejrzystość: gdzie jest mój wniosek, co zostało do zatwierdzenia. Dla zespołu — mniej konfliktów terminów i szybsza odpowiedź na pytanie „kiedy mogę zaplanować wdrożenie”, gdy widać urlopy obok grafiku.
-						</p>
-					</section>
+				<ArticleCta
+					title="Asystent AI w okresie próbnym"
+					text={`${LANDING_TRIAL_DAYS} dni pełnej aplikacji bez karty — z Asystentem AI bez limitu wiadomości. Potem Asystent jest w planie Core i wyższych, nie w planie darmowym.`}
+					link={{ href: REGISTER, label: 'Wypróbuj za darmo' }}
+				/>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Zadania i grafik — priorytety i obłożenie zespołu</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							<strong>Zarządzanie zadaniami w zespole</strong> na tablicy zadań oraz <strong>grafik pracy</strong> lub plan zmian dają obraz: kto realnie może wziąć temat, a kiedy zespół jest cienki przez urlopy lub sezonowy peak.{' '}
-							<strong>Czy AI może pomóc w planowaniu grafiku?</strong> — może wspierać orientację i syntezę informacji z już wprowadzonych danych; decyzje kadrowe i organizacyjne pozostają po stronie ludzi i polityki firmy.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							W połączeniu z Asystentem łatwiej zobaczyć „co pilne” obok „kto dostępny” — bez zastępowania menedżera, ale z mniejszym narzutem na ręczne zestawianie tabel.
-						</p>
-					</section>
+				<h2 id="urlopy-i-ewidencja">Urlopy i ewidencja — mniej błędów, szybsza orientacja</h2>
+				<p>
+					<strong>Kalendarz urlopów online</strong> w jednym systemie z ewidencją oznacza, że widzisz nie tylko „kto napisał w mailu”, ale kto realnie ma wprowadzony wniosek i status. To fundament pod <strong>automatyzację wniosków urlopowych i ewidencji</strong> w sensie organizacyjnym: przepływ jest zamknięty w aplikacji, a nie rozrzucony.
+				</p>
+				<p>
+					Dla pracownika to przejrzystość: gdzie jest mój wniosek, co zostało do zatwierdzenia. Dla zespołu — mniej konfliktów terminów i szybsza odpowiedź na pytanie „kiedy mogę zaplanować wdrożenie”, gdy widać urlopy obok grafiku.
+				</p>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Automatyzacja w firmie bez rozpraszania danych</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							<strong>Automatyzacja pracy zespołu</strong> zaczyna się często od porządku: wspólne miejsce na czas, nieobecności i zadania. Dopiero potem sensowne są integracje i inteligentne podpowiedzi. Planopia adresuje też <strong>narzędzie HR dla małej firmy</strong>: prosty start, role, skalowanie w górę gdy przybywa ludzi i modułów.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Zamiast pytania „jak połączyć ewidencję czasu pracy z urlopami i zadaniami?” rozstrzygniętego przez import CSV na ślepo — dostajesz jeden przepływ w jednej aplikacji. To obniża koszt utrzymania i szkolenia zespołu w porównaniu z zestawem rozłącznych narzędzi.
-						</p>
-					</section>
+				<h2 id="zadania-i-grafik">Zadania i grafik — priorytety i obłożenie zespołu</h2>
+				<p>
+					<strong>Zarządzanie zadaniami w zespole</strong> na tablicy zadań oraz <strong>grafik pracy</strong> lub plan zmian dają obraz: kto realnie może wziąć temat, a kiedy zespół jest cienki przez urlopy lub sezonowy peak.{' '}
+					<strong>Czy AI może pomóc w planowaniu grafiku?</strong> — może wspierać orientację i syntezę informacji z już wprowadzonych danych; decyzje kadrowe i organizacyjne pozostają po stronie ludzi i polityki firmy.
+				</p>
+				<p>
+					W połączeniu z Asystentem łatwiej zobaczyć „co pilne” obok „kto dostępny” — bez zastępowania menedżera, ale z mniejszym narzutem na ręczne zestawianie tabel.
+				</p>
+				<figure>
+					<Image src={scheduleAuto.src} alt={scheduleAuto.alt} width={scheduleAuto.width} height={scheduleAuto.height} unoptimized />
+					<figcaption>{scheduleAuto.caption}</figcaption>
+				</figure>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Bezpieczeństwo i role</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. W każdym planie płatnym <strong>Asystent AI nie ma limitu wiadomości</strong> (obowiązuje rozsądne użycie); co obejmuje który plan, znajdziesz w{' '}
-							<Link href="/#cennik" className="text-blue-600 font-medium hover:underline">
-								cenniku
-							</Link>
-							.
-						</p>
-						<p className="text-lg text-gray-700 leading-relaxed">
-							Traktuj Asystenta jako warstwę pomocy na danych, które już świadomie wprowadzasz do systemu — zgodnie z RODO, dobrymi praktykami i wewnętrznymi procedurami Twojej organizacji.
-						</p>
-					</section>
+				<h2 id="automatyzacja">Automatyzacja w firmie bez rozpraszania danych</h2>
+				<p>
+					<strong>Automatyzacja pracy zespołu</strong> zaczyna się często od porządku: wspólne miejsce na czas, nieobecności i zadania. Dopiero potem sensowne są integracje i inteligentne podpowiedzi. Planopia adresuje też <strong>narzędzie HR dla małej firmy</strong>: prosty start, role, skalowanie w górę gdy przybywa ludzi i modułów.
+				</p>
+				<p>
+					Zamiast pytania „jak połączyć ewidencję czasu pracy z urlopami i zadaniami?” rozstrzygniętego przez import CSV na ślepo — dostajesz jeden przepływ w jednej aplikacji. To obniża koszt utrzymania i szkolenia zespołu w porównaniu z zestawem rozłącznych narzędzi.
+				</p>
 
-					<section className="mb-14">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Jak zacząć i gdzie znaleźć instrukcję</h2>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Zarejestruj zespół (okres próbny i plany opisane są na stronie produktu), zaproś użytkowników i skonfiguruj moduły zgodnie z potrzebami. Krok po kroku prowadzi{' '}
-							<Link href="/jak-korzystac" className="text-blue-600 font-medium hover:underline">
-								instrukcja obsługi Planopii
-							</Link>{' '}
-							— opis każdego modułu, od ewidencji czasu pracy po grafiki i urlopy.
-						</p>
-						<p className="text-lg text-gray-700 mb-4 leading-relaxed">
-							Porównanie modelu „próba → darmowa ewidencja → pakiety” znajdziesz też w artykule{' '}
-							<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="text-blue-600 font-medium hover:underline">
-								o darmowej aplikacji do ewidencji czasu pracy
-							</Link>
-							.
-						</p>
-						<div className="bg-emerald-50 border border-emerald-200/80 rounded-xl p-6 text-center">
-							<p className="text-lg text-emerald-900 font-semibold mb-3">Gotowy przetestować Planopię?</p>
-							<Link
-								href="https://app.planopia.pl/team-registration"
-								className="inline-block bg-green-600 text-white font-semibold py-3 px-8 rounded-xl shadow hover:bg-green-700 transition white-text-btn"
-							>
-								Załóż darmowy zespół
-							</Link>
-						</div>
-					</section>
+				<h2 id="bezpieczenstwo">Bezpieczeństwo i role</h2>
+				<p>
+					Dostęp do danych jest podzielony rolami i uprawnieniami — Asystent AI nie „obejdzie” polityki widoczności ustawionej w aplikacji. W każdym planie płatnym <strong>Asystent AI nie ma limitu wiadomości</strong> (obowiązuje rozsądne użycie); co obejmuje który plan, znajdziesz w{' '}
+					<Link href="/#cennik">cenniku</Link>
+					.
+				</p>
+				<p>
+					Traktuj Asystenta jako warstwę pomocy na danych, które już świadomie wprowadzasz do systemu — zgodnie z RODO, dobrymi praktykami i wewnętrznymi procedurami Twojej organizacji.
+				</p>
 
-					<section className="mb-8">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">Często zadawane pytania</h2>
-						<div className="space-y-6">
-							{faqItems.map((item) => (
-								<div key={item.q} className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-									<h3 className="text-xl font-semibold text-gray-900 mb-2">{item.q}</h3>
-									<p className="text-gray-700 leading-relaxed">{item.a}</p>
-								</div>
-							))}
-						</div>
-					</section>
+				<h2 id="jak-zaczac">Jak zacząć i gdzie znaleźć instrukcję</h2>
+				<p>
+					Zarejestruj zespół (okres próbny i plany opisane są na stronie produktu), zaproś użytkowników i skonfiguruj moduły zgodnie z potrzebami. Krok po kroku prowadzi{' '}
+					<Link href="/jak-korzystac">instrukcja obsługi Planopii</Link>{' '}
+					— opis każdego modułu, od ewidencji czasu pracy po grafiki i urlopy.
+				</p>
+				<p>
+					Porównanie modelu „próba → darmowa ewidencja → pakiety” znajdziesz też w artykule{' '}
+					<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy">o darmowej aplikacji do ewidencji czasu pracy</Link>
+					.
+				</p>
+				<ArticleCta
+					title="Gotowy przetestować Planopię?"
+					text={`Załóż zespół i przez ${LANDING_TRIAL_DAYS} dni korzystaj z pełnej aplikacji, także z Asystenta AI — bez karty.`}
+					link={{ href: REGISTER, label: 'Załóż darmowy zespół' }}
+				/>
 
+				<h2 id="faq">Często zadawane pytania</h2>
+				{faqItems.map((item) => (
+					<div key={item.q}>
+						<h3>{item.q}</h3>
+						<p>{item.a}</p>
+					</div>
+				))}
+
+				<div className="bart-extras">
 					<BlogRelatedLinks slug="asystent-ai-planopia-ewidencja-urlopy-zadania-grafik" className="mt-10" />
 					<BlogArticleCredibility
 						author="Michał Lipka"
@@ -304,8 +229,7 @@ function BlogAiAssistant() {
 						updatedOn={{ iso: '2026-03-27', label: '27 marca 2026 r.' }}
 					/>
 				</div>
-			</article>
-
+			</BlogArticleShell>
 		</>
 	)
 }

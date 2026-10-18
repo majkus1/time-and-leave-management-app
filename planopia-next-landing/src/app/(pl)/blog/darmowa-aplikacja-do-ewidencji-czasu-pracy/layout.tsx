@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     description: META_DESCRIPTION,
     images: [
       {
-        url: BLOG_FREE_APP_OG.url,
+        url: BLOG_FREE_APP_OG.url.pl,
         width: BLOG_FREE_APP_OG.width,
         height: BLOG_FREE_APP_OG.height,
         alt: BLOG_FREE_APP_OG.alt.pl,
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: META_TITLE,
     description: META_DESCRIPTION,
-    images: [BLOG_FREE_APP_OG.url],
+    images: [BLOG_FREE_APP_OG.url.pl],
   },
   alternates: {
     canonical: 'https://planopia.pl/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy',

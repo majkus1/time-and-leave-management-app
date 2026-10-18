@@ -1,24 +1,17 @@
-﻿'use client'
-
-import { useState } from 'react'
+﻿import Image from 'next/image'
 import Link from 'next/link'
-import MobileMenu from './MobileMenu'
-import HamburgerButton from './HamburgerButton'
-import LandingIndustriesDropdown from './LandingIndustriesDropdown'
-import LandingSolutionsDropdown from './LandingSolutionsDropdown'
-import {
-	industryMobileConfig,
-	landingMobileNavItemsPl,
-	MOBILE_INDUSTRY_INSERT_INDEX,
-} from '../data/landingNav'
-import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
+import BlogArticleShell, { ArticleCta } from './blogArticle/BlogArticleShell'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import LeaveTemplateBanner from './LeaveTemplateBanner'
 import BlogArticleCredibility from './BlogArticleCredibility'
+import { shot } from '@/data/productShots'
+import { LANDING_TRIAL_DAYS, landingCoreTiers, landingTrial } from '@/data/landingPlanPricing'
 
+const REGISTER = 'https://app.planopia.pl/team-registration'
+
+/** /blog/planowanie-urlopow — treść bez zmian, oprawa jak strony produktowe (BlogArticleShell). */
 function BlogThree() {
-	const [menuOpen, setMenuOpen] = useState(false)
-	const toggleMenu = () => setMenuOpen(prev => !prev)
+	const leavePlans = shot('pl', 'leave-plans')
 
 	return (
 		<>
@@ -51,133 +44,49 @@ function BlogThree() {
 				}}
 			/>
 
-			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
-				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
-					<Link href="/" className="logoinmenu text-2xl font-bold text-blue-700 companyname" style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.webp" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-					</Link>
-					<nav className="hidden desktop:flex space-x-8 navdesktop">
-						<Link
-							href="/#oaplikacji"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							O Aplikacji
-						</Link>
-						<Link
-							href="/#asystent-ai"
-							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
-							Asystent AI
-						</Link>
-						<Link
-							href="/#cennik"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Cennik
-						</Link>
-						<LandingSolutionsDropdown locale="pl" />
-						<LandingIndustriesDropdown locale="pl" />
-						<Link
-							href="/blog"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
-							onClick={toggleMenu}>
-							Blog
-						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Kontakt
-						</Link>
-						<Link
-							href="https://app.planopia.pl/"
-							onClick={toggleMenu}
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Logowanie
-						</Link>
-
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
-						>
-							Załóż darmowy zespół
-						</Link>
-						<Link href="/en/blog/leave-planning" className="flex items-center languagechoose">
-							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
-						</Link>
-					</nav>
-
-					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
-				</div>
-			</header>
-			<div className="header-fixed-spacer" aria-hidden="true" />
-
-			{/* Professional Mobile Menu */}
-			<MobileMenu
-				isOpen={menuOpen}
-				onClose={toggleMenu}
-				lang="pl"
-				menuItems={landingMobileNavItemsPl()}
-				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
-				{...industryMobileConfig('pl')}
-				loginHref="https://app.planopia.pl/"
-				registerHref="https://app.planopia.pl/team-registration"
-				languageSwitcher={{
-					href: '/en/blog/leave-planning',
-					flagSrc: '/img/united-kingdom.webp',
-					alt: 'English version'
+			<BlogArticleShell
+				crumb={{ label: 'Urlopy i planowanie', href: '/blog#urlopy' }}
+				pill="Planowanie urlopów"
+				h1="Aplikacja do urlopów: planowanie, wnioski i kalendarz online"
+				lead={
+					<p>
+						<strong>Planowanie urlopów</strong> to jedno z najczęstszych wyzwań w działach HR i u menedżerów zespołów.
+						Tradycyjne metody – papierowe wnioski czy Excel – prowadzą do chaosu i błędów.
+						Dowiedz się, jak <strong>kalendarz urlopowy online</strong> i aplikacje takie jak Planopia
+						pomagają w prostym i skutecznym zarządzaniu nieobecnościami.
+					</p>
+				}
+				primary={{ href: REGISTER, label: 'Załóż darmowy zespół' }}
+				secondary={{ href: '/#cennik', label: 'Zobacz cennik' }}
+				note={
+					<>
+						<strong>Darmowa ewidencja czasu pracy</strong> — 30 dni z modułem urlopów; potem bezpłatna ewidencja do 5 kont lub pakiet z urlopami
+					</>
+				}
+				meta={{ iso: '2026-05-17', label: 'Zaktualizowano 17 maja 2026 r. · Michał Lipka' }}
+				image={{ src: '/img/plans-urlopnew.webp', alt: 'Program do planowania urlopów – Planopia', width: 1918, height: 910 }}
+				toc={[
+					{ id: 'dlaczego-planowanie', label: 'Dlaczego planowanie urlopów jest kluczowe?' },
+					{ id: 'problemy', label: 'Najczęstsze problemy' },
+					{ id: 'jak-usprawnic', label: 'Jak usprawnić planowanie urlopów?' },
+					{ id: 'planopia', label: 'Planopia – aplikacja do urlopów' },
+					{ id: 'podsumowanie', label: 'Podsumowanie' },
+				]}
+				cta={{
+					title: 'Zaplanuj urlopy zespołu bez Excela',
+					note: `${LANDING_TRIAL_DAYS} dni pełnej aplikacji za darmo, do ${landingTrial.maxUsers} osób, bez karty. Potem plan Core z urlopami od ${landingCoreTiers[0].monthlyNetPln} zł netto miesięcznie albo darmowa ewidencja czasu pracy.`,
+					primary: { href: REGISTER, label: 'Załóż darmowy zespół' },
 				}}
-			/>
-
-			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white" id="blog-hero">
-				<div className="max-w-7xl mx-auto text-left content-blog">
-					<div className="grid xl:grid-cols-2 gap-10 items-center">
-						<div>
-							<h1 className="text-4xl font-bold mb-6">
-								Aplikacja do urlopów: planowanie, wnioski i kalendarz online
-							</h1>
-							<p className="text-gray-700 text-lg">
-								<strong>Planowanie urlopów</strong> to jedno z najczęstszych wyzwań w działach HR i u menedżerów zespołów. 
-								Tradycyjne metody – papierowe wnioski czy Excel – prowadzą do chaosu i błędów. 
-								Dowiedz się, jak <strong>kalendarz urlopowy online</strong> i aplikacje takie jak Planopia 
-								pomagają w prostym i skutecznym zarządzaniu nieobecnościami.
-							</p>
-
-							<BlogHeroDualCtaCards
-								locale="pl"
-								trial={
-									<>
-										<span className="font-semibold text-emerald-900">Darmowa ewidencja czasu pracy</span>
-										{' '}
-										— 30 dni z modułem urlopów; potem bezpłatna ewidencja do 5 kont lub pakiet z urlopami
-									</>
-								}
-							/>
-						</div>
-
-						<img
-							src="/img/plans-urlopnew.webp"
-							alt="Program do planowania urlopów – Planopia"
-							className="rounded-xl w-full h-auto aspect-[4/2] shadow-lg mockup-blog-desktop"
-						/>
-						<img
-							src="/img/planurlopblog.webp"
-							alt="Program do planowania urlopów – Planopia"
-							className="rounded-xl shadow-xl ring-1 ring-black/5 mx-auto mockup-blog-mobile"
-						/>
-					</div>
-				</div>
-			</section>
-
-			<article className="max-w-6xl mx-auto px-6 py-12">
-				<h2 className="text-2xl font-semibold mb-3">Dlaczego planowanie urlopów jest kluczowe?</h2>
-				<p className="mb-4 text-gray-700">
-					Brak przejrzystości w urlopach powoduje konflikty, niedobory kadrowe i spadek efektywności. 
-					 <strong> Centralny kalendarz urlopowy</strong> pozwala zachować ciągłość pracy i unikać sytuacji, w których kilku 
+			>
+				<h2 id="dlaczego-planowanie">Dlaczego planowanie urlopów jest kluczowe?</h2>
+				<p>
+					Brak przejrzystości w urlopach powoduje konflikty, niedobory kadrowe i spadek efektywności.
+					 <strong> Centralny kalendarz urlopowy</strong> pozwala zachować ciągłość pracy i unikać sytuacji, w których kilku
 					kluczowych pracowników znika w tym samym czasie. Dobre zarządzanie urlopami wspiera także morale i satysfakcję pracowników.
 				</p>
 
-				<h2 className="text-2xl font-semibold mb-3">Najczęstsze problemy w zarządzaniu urlopami</h2>
-				<ul className="list-disc pl-6 mb-4 text-gray-700">
+				<h2 id="problemy">Najczęstsze problemy w zarządzaniu urlopami</h2>
+				<ul>
 					<li>Brak wspólnego kalendarza urlopowego dla zespołu</li>
 					<li>Ręczne wnioski w Excelu lub na papierze – podatne na błędy</li>
 					<li>Brak automatycznych powiadomień o wnioskach</li>
@@ -185,11 +94,11 @@ function BlogThree() {
 					<li>Brak historii urlopowej i łatwego dostępu do raportów</li>
 				</ul>
 
-				<h2 className="text-2xl font-semibold mb-3">Jak usprawnić planowanie urlopów?</h2>
-				<p className="mb-4 text-gray-700">
+				<h2 id="jak-usprawnic">Jak usprawnić planowanie urlopów?</h2>
+				<p>
 					Wdrożenie <strong>aplikacji do urlopów</strong> rozwiązuje większość problemów. Dzięki Planopii możesz:
 				</p>
-				<ul className="list-disc pl-6 mb-4 text-gray-700">
+				<ul>
 					<li>Udostępnić pracownikom wspólny kalendarz nieobecności</li>
 					<li>Automatycznie wysyłać powiadomienia do przełożonych</li>
 					<li>Wprowadzić role i priorytety w akceptacji urlopów</li>
@@ -197,49 +106,54 @@ function BlogThree() {
 					<li>Eksportować dane do raportów w PDF i XLSX</li>
 				</ul>
 
-				<h2 className="text-2xl font-semibold mb-3">Planopia – aplikacja do planowania urlopów</h2>
-				<p className="mb-4 text-gray-700">
-					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong> 
+				<ArticleCta
+					title="Kalendarz urlopów zespołu w Planopii"
+					text={`Wnioski, akceptacje i kalendarz nieobecności w jednym miejscu — ${LANDING_TRIAL_DAYS} dni pełnej aplikacji bez karty.`}
+					link={{ href: REGISTER, label: 'Wypróbuj za darmo' }}
+				/>
+
+				<h2 id="planopia">Planopia – aplikacja do planowania urlopów</h2>
+				<p>
+					<strong>Planopia</strong> to prosta w obsłudze aplikacja, która łączy <strong>ewidencję czasu pracy</strong>{' '}
 					z planowaniem urlopów. Przez pierwszy miesiąc (30 dni) masz pełne moduły w zespole do 5 osób; po próbie urlopy i pozostałe funkcje HR są w pakietach płatnych, a ewidencję czasu możesz prowadzić dalej bezpłatnie (do 5 aktywnych kont).
 					Jeśli szukasz gotowego narzędzia, zobacz nasz{' '}
-					<Link href="/program-do-urlopow" className="text-blue-700 underline-offset-2 hover:underline font-medium">
-						program do urlopów
-					</Link>{' '}
+					<Link href="/program-do-urlopow">program do urlopów</Link>{' '}
 					— a wybór dla mniejszego zespołu ułatwi przewodnik{' '}
-					<Link href="/blog/program-do-urlopow-dla-malej-firmy" className="text-blue-700 underline-offset-2 hover:underline font-medium">
-						program do urlopów dla małej firmy
-					</Link>
+					<Link href="/blog/program-do-urlopow-dla-malej-firmy">program do urlopów dla małej firmy</Link>
 					.
 				</p>
-				<ul className="list-disc pl-6 mb-4 text-gray-700">
+				<figure>
+					<Image src={leavePlans.src} alt={leavePlans.alt} width={leavePlans.width} height={leavePlans.height} unoptimized />
+					<figcaption>{leavePlans.caption}</figcaption>
+				</figure>
+				<ul>
 					<li>Pracownicy składają wnioski urlopowe online</li>
 					<li>Menedżerowie akceptują wnioski jednym kliknięciem</li>
 					<li>Urlopy trafiają od razu do kalendarza zespołu</li>
 					<li>Historia i raporty urlopów w jednym miejscu</li>
 				</ul>
 
-				<h2 className="text-2xl font-semibold mb-3">Podsumowanie</h2>
-				<p className="mb-4 text-gray-700">
-					<strong>Planowanie urlopów online</strong> to sposób na porządek, przejrzystość i mniej stresu w zarządzaniu firmą. 
-					Dzięki aplikacji Planopia unikniesz chaosu, przyspieszysz akceptacje i zyskasz kontrolę nad dostępnością zespołu. 
+				<h2 id="podsumowanie">Podsumowanie</h2>
+				<p>
+					<strong>Planowanie urlopów online</strong> to sposób na porządek, przejrzystość i mniej stresu w zarządzaniu firmą.
+					Dzięki aplikacji Planopia unikniesz chaosu, przyspieszysz akceptacje i zyskasz kontrolę nad dostępnością zespołu.
 					Zacznij od <strong>30 dni pełnej aplikacji</strong> (do 5 osób), potem zostań na darmowej ewidencji lub wykup moduł urlopów w pakiecie płatnym.
 				</p>
 
-				<p className="mt-8 font-medium text-blue-600">
-					Wypróbuj Planopię – <Link href="https://app.planopia.pl/team-registration" className="underline">Załóż darmowy zespół i zacznij planować urlopy online</Link>.
+				<p>
+					Wypróbuj Planopię – <Link href={REGISTER}>Załóż darmowy zespół i zacznij planować urlopy online</Link>.
 				</p>
 
-				<LeaveTemplateBanner className="mt-10" />
-
-				<BlogRelatedLinks slug="planowanie-urlopow" className="mt-10" />
-				<BlogArticleCredibility
-					author="Michał Lipka"
-					authorHref="/o-autorze"
-					updatedOn={{ iso: '2026-05-17', label: '17 maja 2026 r.' }}
-				/>
-			</article>
-
-			{/* FOOTER */}
+				<div className="bart-extras">
+					<LeaveTemplateBanner />
+					<BlogRelatedLinks slug="planowanie-urlopow" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-05-17', label: '17 maja 2026 r.' }}
+					/>
+				</div>
+			</BlogArticleShell>
 		</>
 	)
 }

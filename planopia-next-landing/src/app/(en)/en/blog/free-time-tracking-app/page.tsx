@@ -1,7 +1,6 @@
 import BlogHeader from '@/components/BlogHeader'
 import BlogFreeAppJsonLd from '@/components/BlogFreeAppJsonLd'
-import BlogFreeAppHeroSection from '@/components/BlogFreeAppHeroSection'
-import BlogFreeAppArticle from '@/components/BlogFreeAppArticle'
+import BlogFreeAppLanding from '@/components/blogFreeApp/BlogFreeAppLanding'
 
 export default function BlogFreeAppEnPage() {
 	return (
@@ -12,8 +11,7 @@ export default function BlogFreeAppEnPage() {
 				enUrl="/en/blog/free-time-tracking-app"
 				plUrl="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy"
 			/>
-			<BlogFreeAppHeroSection locale="en" />
-			<BlogFreeAppArticle locale="en" />
+			<BlogFreeAppLanding locale="en" />
 		</>
 	)
 }

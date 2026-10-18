@@ -1,8 +1,14 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import BlogHeroDualCtaCards from './BlogHeroDualCtaCards'
 import AnimatedBlogImages from './AnimatedBlogImages'
+import BlogArticleShell, { ArticleCta, ArticleNote } from './blogArticle/BlogArticleShell'
 import { blogArticleOfferLine } from '@/data/planOfferingCopy'
+import { shot } from '@/data/productShots'
+import { LANDING_TRIAL_DAYS, landingCoreTiers, landingTrial } from '@/data/landingPlanPricing'
+
+const REGISTER = 'https://app.planopia.pl/team-registration'
 
 type Locale = 'pl' | 'en'
 
@@ -234,7 +240,7 @@ function stripBoldMarkersForJsonLd(s: string): string {
 	return s.replace(/\*\*(.+?)\*\*/g, '$1')
 }
 
-export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }) {
+function articleData(locale: Locale) {
 	const t = UI[locale]
 	// Zawsze najswiezszy dostepny wzor — etykiety CTA sa bez roku, wiec podmiana nie tworzy rozjazdu.
 	const downloadHref = '/downloads/roczny-plan-urlopow-2027-planopia.xlsx'
@@ -276,6 +282,191 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 			acceptedAnswer: { '@type': 'Answer', text: stripBoldMarkersForJsonLd(item.a) },
 		})),
 	}
+
+	const jsonLd = (
+		<>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+			/>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+			/>
+		</>
+	)
+
+	return { t, downloadHref, dateModified, overtimeHref, jsonLd }
+}
+
+/** Wersja PL w oprawie stron produktowych (BlogArticleShell) — teksty z tego samego słownika UI co wcześniej */
+function PlShellArticle() {
+	const { t, downloadHref, dateModified, overtimeHref, jsonLd } = articleData('pl')
+	const leaveForm = shot('pl', 'leave-form')
+	const leavePlans = shot('pl', 'leave-plans')
+
+	return (
+		<>
+			{jsonLd}
+
+			<BlogArticleShell
+				crumb={{ label: 'Urlopy i planowanie', href: '/blog#urlopy' }}
+				pill="Planowanie urlopów"
+				h1={t.h1}
+				lead={
+					<p>
+						<RichInline text={t.lead} />
+					</p>
+				}
+				primary={{ href: downloadHref, label: 'Pobierz szablon Excel', download: true }}
+				secondary={{ href: REGISTER, label: 'Załóż darmowy zespół' }}
+				note={
+					<>
+						<strong>Gotowy szablon Excel:</strong> pracownicy, wnioski, dni robocze, roczny widok i podsumowanie
+						obłożenia. <strong>Urlopy i ewidencja w jednym koncie</strong> — 30 dni pełnej aplikacji (do 5 osób); potem
+						darmowa ewidencja do 5 kont lub pakiety z urlopami.
+					</>
+				}
+				meta={{ iso: dateModified, label: 'Zaktualizowano 31 sierpnia 2026 r. · Michał Lipka' }}
+				image={{ src: '/img/roczny-plan.webp', alt: 'Plan urlopów i wnioski urlopowe w Planopii', width: 1540, height: 1020 }}
+				toc={[
+					{ id: 'dlaczego-excel-pdf', label: 'Dlaczego Excel lub PDF?' },
+					{ id: 'plan-w-arkuszu', label: 'Plan urlopów w arkuszu' },
+					{ id: 'ograniczenia', label: 'Ograniczenia Excela i PDF' },
+					{ id: 'checklista', label: 'Co powinien umieć program?' },
+					{ id: 'nadgodziny', label: 'Nadgodziny i czas pracy' },
+					{ id: 'program-kadrowy', label: 'Program kadrowy dla małej firmy' },
+					{ id: 'planopia', label: 'Planopia w tym scenariuszu' },
+					{ id: 'faq-leave-excel', label: 'Najczęstsze pytania' },
+				]}
+				cta={{
+					title: 'Zamień arkusz urlopów na wnioski online',
+					note: `${LANDING_TRIAL_DAYS} dni pełnej aplikacji za darmo, do ${landingTrial.maxUsers} osób, bez karty. Potem plan Core z urlopami od ${landingCoreTiers[0].monthlyNetPln} zł netto miesięcznie albo darmowa ewidencja czasu pracy.`,
+					primary: { href: REGISTER, label: 'Załóż darmowy zespół' },
+				}}
+			>
+				<h2 id="dlaczego-excel-pdf">{t.h2Why}</h2>
+				<p>
+					<RichInline text={t.pWhy} />
+				</p>
+
+				<h2 id="plan-w-arkuszu">{t.h2Structure}</h2>
+				<p>
+					<RichInline text={t.pStructure} />
+				</p>
+				<div className="bart-table-wrap">
+					<table>
+						<caption>{t.tableCaption}</caption>
+						<thead>
+							<tr>
+								<th scope="col">{t.colEmployee}</th>
+								<th scope="col">{t.colDays}</th>
+								<th scope="col">{t.colStatus}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>…</td>
+								<td>…</td>
+								<td>…</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<h2 id="ograniczenia">{t.h2Limits}</h2>
+				<p>
+					<RichInline text={t.pLimits} />
+				</p>
+
+				<ArticleCta
+					title="Wnioski urlopowe bez scalania plików"
+					text={`Pracownik składa wniosek, przełożony go akceptuje, a urlop od razu widać w kalendarzu zespołu — ${LANDING_TRIAL_DAYS} dni pełnej aplikacji bez karty.`}
+					link={{ href: REGISTER, label: 'Wypróbuj za darmo' }}
+				/>
+
+				<h2 id="checklista">{t.h2Checklist}</h2>
+				<ol>
+					{t.checklist.map((item, i) => (
+						<li key={i}>{item}</li>
+					))}
+				</ol>
+				<figure>
+					<Image src={leaveForm.src} alt={leaveForm.alt} width={leaveForm.width} height={leaveForm.height} unoptimized />
+					<figcaption>{leaveForm.caption}</figcaption>
+				</figure>
+
+				<h2 id="nadgodziny">{t.h2Overtime}</h2>
+				<p>
+					<RichInline text={t.pOvertime} /> <Link href={overtimeHref}>ewidencja czasu pracy online</Link>
+					{' — oraz '}
+					<Link href="/blog/elektroniczna-ewidencja-czasu-pracy">elektroniczna ewidencja czasu pracy</Link>.
+				</p>
+
+				<h2 id="program-kadrowy">{t.h2Hr}</h2>
+				<p>
+					<RichInline text={t.pHr} />
+				</p>
+
+				<h2 id="planopia">{t.h2Planopia}</h2>
+				<ul>
+					{t.planopiaList.map((line, i) => (
+						<li key={i}>
+							<RichInline text={line} />
+						</li>
+					))}
+				</ul>
+				<figure>
+					<Image src={leavePlans.src} alt={leavePlans.alt} width={leavePlans.width} height={leavePlans.height} unoptimized />
+					<figcaption>{leavePlans.caption}</figcaption>
+				</figure>
+
+				<h2 id="faq-leave-excel">{t.h2Faq}</h2>
+				<dl>
+					{t.faq.map((item, i) => (
+						<div key={i}>
+							<dt>
+								<strong>{item.q}</strong>
+							</dt>
+							<dd>
+								<RichInline text={item.a} />
+							</dd>
+						</div>
+					))}
+				</dl>
+
+				<ArticleNote>
+					<h3>{t.ctaTitle}</h3>
+					<p>{t.ctaLead}</p>
+					<p>
+						<a href={downloadHref} download className="pdl-btn pdl-btn--primary">
+							{t.ctaBtn}
+						</a>
+					</p>
+				</ArticleNote>
+
+				<div className="bart-extras">
+					<nav aria-label={t.relatedTitle}>
+						<p>
+							<strong>{t.relatedTitle}</strong>
+						</p>
+						<ul>
+							{t.related.map(r => (
+								<li key={r.href}>
+									<Link href={r.href}>{r.label}</Link>
+								</li>
+							))}
+						</ul>
+					</nav>
+				</div>
+			</BlogArticleShell>
+		</>
+	)
+}
+
+/** EN zostaje w starym układzie do czasu swojej konwersji */
+function LegacyArticle({ locale }: { locale: Locale }) {
+	const { t, downloadHref, overtimeHref, jsonLd } = articleData(locale)
 
 	const desktopHeroImages =
 		locale === 'en'
@@ -323,14 +514,7 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 
 	return (
 		<>
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
-			/>
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-			/>
+			{jsonLd}
 
 			<section
 				className="px-4 py-10 bg-gradient-to-r from-emerald-50/90 via-white to-sky-50/50"
@@ -509,4 +693,8 @@ export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }
 
 		</>
 	)
+}
+
+export default function BlogLeavePlanExcelContent({ locale }: { locale: Locale }) {
+	return locale === 'pl' ? <PlShellArticle /> : <LegacyArticle locale={locale} />
 }

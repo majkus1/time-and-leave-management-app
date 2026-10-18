@@ -1,22 +1,17 @@
-﻿'use client'
-
-import { useState } from 'react'
+﻿import Image from 'next/image'
 import Link from 'next/link'
-import MobileMenu from './MobileMenu'
-import HamburgerButton from './HamburgerButton'
-import LandingIndustriesDropdown from './LandingIndustriesDropdown'
-import LandingSolutionsDropdown from './LandingSolutionsDropdown'
-import {
-	industryMobileConfig,
-	landingMobileNavItemsPl,
-	MOBILE_INDUSTRY_INSERT_INDEX,
-} from '../data/landingNav'
+import BlogArticleShell, { ArticleCta, ArticleNote } from './blogArticle/BlogArticleShell'
 import BlogRelatedLinks from './BlogRelatedLinks'
 import BlogArticleCredibility from './BlogArticleCredibility'
+import { shot } from '@/data/productShots'
+import { LANDING_TRIAL_DAYS, landingTrial } from '@/data/landingPlanPricing'
 
+const REGISTER = 'https://app.planopia.pl/team-registration'
+
+/** /blog/elektroniczna-ewidencja-czasu-pracy — treść bez zmian, oprawa jak strony produktowe (BlogArticleShell). */
 function BlogFive() {
-	const [menuOpen, setMenuOpen] = useState(false)
-	const toggleMenu = () => setMenuOpen(prev => !prev)
+	const timeCalendar = shot('pl', 'time-calendar')
+	const worktime = shot('pl', 'worktime')
 
 	return (
 		<>
@@ -92,407 +87,261 @@ function BlogFive() {
 				}}
 			/>
 
-			{/* HEADER + MENU */}
-			<header className="bg-white top-0 z-50 w-full flex justify-between" id="planopiaheader">
-				<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 menucontent" style={{ maxWidth: '1350px' }}>
-					<Link
-						href="/"
-						className="logoinmenu text-2xl font-bold text-blue-700 companyname"
-						style={{ marginBottom: '0px' }}>
-						<img src="/img/new-logoplanopia.png" alt="logo oficjalne planopia" style={{ maxWidth: '180px' }}/>
-					</Link>
-					<nav className="hidden desktop:flex space-x-8 navdesktop">
-						<Link
-							href="/#oaplikacji"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							O Aplikacji
-						</Link>
-						<Link
-							href="/#asystent-ai"
-							className="cursor-pointer text-blue-600 font-medium hover:text-indigo-600 transition">
-							Asystent AI
-						</Link>
-						<Link
-							href="/#cennik"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Cennik
-						</Link>
-						<LandingSolutionsDropdown locale="pl" />
-						<LandingIndustriesDropdown locale="pl" />
-						<Link
-							href="/blog"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition"
-							onClick={toggleMenu}>
-							Blog
-						</Link>
-						<Link
-							href="/#kontakt"
-							className="cursor-pointer text-blue-600 font-medium hover:text-blue-700 transition">
-							Kontakt
-						</Link>
-						<Link
-							href="https://app.planopia.pl"
-							onClick={toggleMenu}
-							className="bg-transparent text-blue-600 font-semibold py-2 px-4 border border-blue-600 rounded hover:bg-blue-50 hover:text-blue-700 transition"
-						>
-							Logowanie
-						</Link>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							onClick={toggleMenu}
-							className="bg-green-600 text-white font-semibold py-2 px-4 rounded shadow hover:bg-green-700 transition ctamenu"
-						>
-							Załóż darmowy zespół
-						</Link>
-						<Link href="/en/blog/electronic-time-tracking" className="flex items-center languagechoose">
-							<img src="/img/united-kingdom.webp" alt="English version" className="w-6 h-6" />
-						</Link>
-					</nav>
-					<HamburgerButton isOpen={menuOpen} onClick={toggleMenu} />
-				</div>
-			</header>
-
-			{/* Professional Mobile Menu */}
-			<MobileMenu
-				isOpen={menuOpen}
-				onClose={toggleMenu}
-				lang="pl"
-				menuItems={landingMobileNavItemsPl()}
-				industryInsertIndex={MOBILE_INDUSTRY_INSERT_INDEX}
-				{...industryMobileConfig('pl')}
-				loginHref="https://app.planopia.pl/"
-				registerHref="https://app.planopia.pl/team-registration"
-				languageSwitcher={{
-					href: '/en/blog/electronic-time-tracking',
-					flagSrc: '/img/united-kingdom.webp',
-					alt: 'English version'
+			<BlogArticleShell
+				crumb={{ label: 'Ewidencja czasu pracy', href: '/blog#ewidencja' }}
+				pill="Ewidencja elektroniczna"
+				h1="Elektroniczna ewidencja czasu pracy: papier, Excel czy program?"
+				lead={
+					<p>
+						Dowiedz się wszystkiego o elektronicznej ewidencji czasu pracy. Kompletny przewodnik po wyborze najlepszego programu do ewidencji czasu pracy dla Twojej firmy.
+					</p>
+				}
+				primary={{ href: REGISTER, label: 'Wypróbuj Planopię za darmo' }}
+				secondary={{ href: '/#cennik', label: 'Zobacz cennik' }}
+				meta={{ iso: '2026-05-31', label: 'Zaktualizowano 31 maja 2026 r. · Michał Lipka' }}
+				image={{ src: '/img/desktopnews.webp', alt: 'Elektroniczna ewidencja czasu pracy w Planopii — widok na komputerze', width: 1918, height: 910 }}
+				toc={[
+					{ id: 'czym-jest', label: 'Czym jest elektroniczna ewidencja?' },
+					{ id: 'excel-a-program', label: 'Excel a program' },
+					{ id: 'porownanie', label: 'Papier, Excel czy program — porównanie' },
+					{ id: 'korzysci', label: 'Korzyści' },
+					{ id: 'jak-wybrac', label: 'Jak wybrać program?' },
+					{ id: 'planopia', label: 'Planopia' },
+					{ id: 'faq', label: 'Najczęstsze pytania' },
+				]}
+				cta={{
+					title: 'Gotowy na elektroniczną ewidencję czasu pracy?',
+					note: `Załóż zespół w Planopii i przetestuj elektroniczną ewidencję czasu pracy — pełna aplikacja przez ${LANDING_TRIAL_DAYS} dni, potem darmowy plan ewidencji do 5 aktywnych kont lub pakiety płatne.`,
+					primary: { href: REGISTER, label: 'Wypróbuj Planopię za darmo' },
 				}}
-			/>
+			>
+				{/* Baner filaru był na górze wpisu — zostaje przed treścią */}
+				<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" position="top" />
 
-			{/* HERO */}
-			<section className="px-4 py-10 bg-gradient-to-r from-blue-50 to-white landing-hero-below-fixed-header" id="planopia-welcome">
-				<div className="max-w-7xl mx-auto text-left">
-					<div className="grid gap-10 items-center">
-						<div className="ordering text-left md:text-center">
-							<h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6 blogh1 mt-4">
-								Elektroniczna ewidencja czasu pracy: papier, Excel czy program?
-							</h1>
-							<p className="text-xl text-gray-600 max-w-4xl mx-0 md:mx-auto mb-8">
-								Dowiedz się wszystkiego o elektronicznej ewidencji czasu pracy. Kompletny przewodnik po wyborze najlepszego programu do ewidencji czasu pracy dla Twojej firmy.
-							</p>
-							<div className="max-w-4xl mx-0 md:mx-auto text-left mb-6">
-								<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" position="top" />
-								<BlogArticleCredibility
-									author="Michał Lipka"
-									authorHref="/o-autorze"
-									updatedOn={{ iso: '2026-05-31', label: '31 maja 2026 r.' }}
-								/>
-							</div>
-							<div>
-								<Link
-									href="https://app.planopia.pl/team-registration"
-									className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-								>
-									Wypróbuj Planopię za darmo
-								</Link>
-							</div>
-						</div>
+				<h2 id="czym-jest">Czym jest elektroniczna ewidencja czasu pracy?</h2>
+				<p>
+					Elektroniczna ewidencja czasu pracy to nowoczesny system rejestrowania godzin pracy pracowników za pomocą specjalistycznego oprogramowania.
+					Zastępuje tradycyjne metody jak papierowe listy obecności czy arkusze kalkulacyjne Excel.
+				</p>
+				<p>
+					<strong>Program do ewidencji czasu pracy</strong> automatycznie oblicza godziny pracy, nadgodziny, dni wolne i generuje raporty,
+					co znacznie usprawnia proces zarządzania czasem pracy w firmie.
+				</p>
+				<figure>
+					<Image src={timeCalendar.src} alt={timeCalendar.alt} width={timeCalendar.width} height={timeCalendar.height} unoptimized />
+					<figcaption>{timeCalendar.caption}</figcaption>
+				</figure>
+
+				<h2 id="excel-a-program">Excel a program do elektronicznej ewidencji czasu pracy</h2>
+				<p>
+					Wiele firm zaczyna od arkusza Excel — to rozwiązanie na start, ale przy większym zespole rośnie ryzyko pomyłek, rozproszenia plików i braku jednej aktualnej wersji.{' '}
+					<strong>Program do ewidencji czasu pracy</strong> w formie aplikacji webowej trzyma dane centralnie, ułatwia wpisy z telefonu lub komputera i przyspiesza raporty dla kadr.
+				</p>
+				<p>
+					Planopia umożliwia prowadzenie <strong>ewidencji czasu pracy online</strong> z przeglądarki (także jako PWA na telefonie), eksport zestawień do PDF/XLSX oraz — po wybraniu odpowiedniego pakietu — korzystanie z modułów urlopowych i pozostałych funkcji HR.
+				</p>
+				<p>
+					Zobacz też:{' '}
+					<Link href="/blog/ewidencja-czasu-pracy-online">ewidencja czasu pracy online — podejścia i funkcje</Link>
+					{' · '}
+					<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy">darmowa aplikacja do ewidencji czasu pracy po okresie próbnym</Link>
+					.
+				</p>
+
+				<h2 id="porownanie">Papier, Excel czy program do ewidencji — porównanie</h2>
+				<p>
+					Krótkie zestawienie najczęstszych metod prowadzenia ewidencji czasu pracy — od papierowej listy obecności,
+					przez arkusz Excel, po program online taki jak Planopia.
+				</p>
+				<div className="bart-table-wrap">
+					<table>
+						<caption className="sr-only">Porównanie metod ewidencji czasu pracy: papier, Excel i program online</caption>
+						<thead>
+							<tr>
+								<th scope="col">Funkcja</th>
+								<th scope="col">Papier</th>
+								<th scope="col">Excel</th>
+								<th scope="col">Program (Planopia)</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<th scope="row">Liczenie godzin i nadgodzin</th>
+								<td>ręcznie</td>
+								<td>formuły, łatwo o błąd</td>
+								<td>automatyczne</td>
+							</tr>
+							<tr>
+								<th scope="row">Jedna aktualna wersja danych</th>
+								<td>nie</td>
+								<td>trudne przy kilku osobach</td>
+								<td>tak, centralnie</td>
+							</tr>
+							<tr>
+								<th scope="row">Dostęp z telefonu</th>
+								<td>nie</td>
+								<td>ograniczony</td>
+								<td>tak (PWA w przeglądarce)</td>
+							</tr>
+							<tr>
+								<th scope="row">Raporty PDF / Excel</th>
+								<td>ręcznie</td>
+								<td>ręcznie</td>
+								<td>eksport jednym kliknięciem</td>
+							</tr>
+							<tr>
+								<th scope="row">Urlopy i nieobecności</th>
+								<td>osobno</td>
+								<td>osobny arkusz</td>
+								<td>w tym samym koncie (plan płatny)</td>
+							</tr>
+							<tr>
+								<th scope="row">Koszt na start</th>
+								<td>niski</td>
+								<td>niski</td>
+								<td>30 dni za darmo, potem darmowa ewidencja do 5 kont</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<p>
+					Szukasz gotowego narzędzia? Zobacz <Link href="/program-do-ewidencji-czasu-pracy">program do ewidencji czasu pracy</Link>.
+				</p>
+
+				<ArticleCta
+					title="Ewidencja czasu pracy bez arkuszy"
+					text={`Godziny, nadgodziny i wydruki do PDF i Excela w jednym miejscu — ${LANDING_TRIAL_DAYS} dni pełnej aplikacji bez karty, potem darmowa ewidencja do 5 kont.`}
+					link={{ href: REGISTER, label: 'Załóż darmowy zespół' }}
+				/>
+
+				<h2 id="korzysci">Korzyści z elektronicznej ewidencji czasu pracy</h2>
+				<div className="bart-cards">
+					<div className="bart-card">
+						<h3>⚡ Automatyzacja procesów</h3>
+						<ul>
+							<li>Automatyczne obliczanie godzin pracy</li>
+							<li>Eliminacja błędów ludzkich</li>
+							<li>Szybsze przetwarzanie danych</li>
+							<li>Integracja z systemami HR</li>
+						</ul>
+					</div>
+					<div className="bart-card">
+						<h3>💰 Oszczędności kosztów</h3>
+						<ul>
+							<li>Redukcja czasu administracyjnego</li>
+							<li>Mniej błędów w rozliczeniach</li>
+							<li>Automatyczne raporty</li>
+							<li>Zgodność z przepisami prawa</li>
+						</ul>
+					</div>
+					<div className="bart-card">
+						<h3>📊 Lepsze raportowanie</h3>
+						<ul>
+							<li>Szczegółowe raporty czasowe</li>
+							<li>Analiza produktywności</li>
+							<li>Monitoring projektów</li>
+							<li>Eksport do różnych formatów</li>
+						</ul>
+					</div>
+					<div className="bart-card">
+						<h3>🔒 Bezpieczeństwo danych</h3>
+						<ul>
+							<li>Szyfrowane przechowywanie</li>
+							<li>Kontrola dostępu</li>
+							<li>Regularne kopie zapasowe</li>
+							<li>Zgodność z RODO</li>
+						</ul>
 					</div>
 				</div>
-			</section>
 
-			{/* MAIN CONTENT */}
-			<article className="px-4 py-16 bg-white">
-				<div className="max-w-4xl mx-auto">
-					
-					{/* Introduction */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Czym jest elektroniczna ewidencja czasu pracy?
-						</h2>
-						<p className="text-lg text-gray-700 mb-4">
-							Elektroniczna ewidencja czasu pracy to nowoczesny system rejestrowania godzin pracy pracowników za pomocą specjalistycznego oprogramowania. 
-							Zastępuje tradycyjne metody jak papierowe listy obecności czy arkusze kalkulacyjne Excel.
-						</p>
-						<p className="text-lg text-gray-700 mb-6">
-							<strong>Program do ewidencji czasu pracy</strong> automatycznie oblicza godziny pracy, nadgodziny, dni wolne i generuje raporty, 
-							co znacznie usprawnia proces zarządzania czasem pracy w firmie.
-						</p>
-					</div>
+				<h2 id="jak-wybrac">Jak wybrać najlepszy program do ewidencji czasu pracy?</h2>
+				<h3>1. Określ potrzeby firmy</h3>
+				<p>
+					Przed wyborem programu do ewidencji czasu pracy zastanów się nad specyfiką swojej firmy.
+					Czy potrzebujesz prostego systemu dla małego zespołu, czy zaawansowanego rozwiązania dla dużej organizacji?
+				</p>
+				<h3>2. Sprawdź funkcjonalności</h3>
+				<p>
+					Najlepszy program do ewidencji czasu pracy powinien oferować: rejestrację czasu w czasie rzeczywistym,
+					automatyczne obliczanie nadgodzin, integrację z systemami HR, raportowanie i eksport danych.
+				</p>
+				<h3>3. Zwróć uwagę na łatwość użycia</h3>
+				<p>
+					Elektroniczna ewidencja czasu pracy powinna być intuicyjna dla wszystkich pracowników.
+					Sprawdź czy interfejs jest przyjazny i czy nie wymaga długiego szkolenia.
+				</p>
+				<h3>4. Sprawdź bezpieczeństwo i zgodność</h3>
+				<p>
+					Program do ewidencji czasu pracy musi być zgodny z polskim prawem pracy i RODO.
+					Sprawdź czy oferuje szyfrowanie danych i regularne kopie zapasowe.
+				</p>
 
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Excel a program do elektronicznej ewidencji czasu pracy
-						</h2>
-						<p className="text-lg text-gray-700 mb-4">
-							Wiele firm zaczyna od arkusza Excel — to rozwiązanie na start, ale przy większym zespole rośnie ryzyko pomyłek, rozproszenia plików i braku jednej aktualnej wersji.{' '}
-							<strong>Program do ewidencji czasu pracy</strong> w formie aplikacji webowej trzyma dane centralnie, ułatwia wpisy z telefonu lub komputera i przyspiesza raporty dla kadr.
-						</p>
-						<p className="text-lg text-gray-700 mb-4">
-							Planopia umożliwia prowadzenie <strong>ewidencji czasu pracy online</strong> z przeglądarki (także jako PWA na telefonie), eksport zestawień do PDF/XLSX oraz — po wybraniu odpowiedniego pakietu — korzystanie z modułów urlopowych i pozostałych funkcji HR.
-						</p>
-						<p className="text-lg text-gray-700">
-							Zobacz też:{' '}
-							<Link href="/blog/ewidencja-czasu-pracy-online" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
-								ewidencja czasu pracy online — podejścia i funkcje
-							</Link>
-							{' · '}
-							<Link href="/blog/darmowa-aplikacja-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
-								darmowa aplikacja do ewidencji czasu pracy po okresie próbnym
-							</Link>
-							.
-						</p>
-					</div>
-
-					{/* Comparison table */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Papier, Excel czy program do ewidencji — porównanie
-						</h2>
-						<p className="text-lg text-gray-700 mb-6">
-							Krótkie zestawienie najczęstszych metod prowadzenia ewidencji czasu pracy — od papierowej listy obecności,
-							przez arkusz Excel, po program online taki jak Planopia.
-						</p>
-						<div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-							<table className="w-full text-left text-sm md:text-base">
-								<caption className="sr-only">
-									Porównanie metod ewidencji czasu pracy: papier, Excel i program online
-								</caption>
-								<thead>
-									<tr className="bg-slate-50 border-b border-slate-200">
-										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Funkcja</th>
-										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Papier</th>
-										<th scope="col" className="px-4 py-3 font-semibold text-gray-900">Excel</th>
-										<th scope="col" className="px-4 py-3 font-semibold text-emerald-800">Program (Planopia)</th>
-									</tr>
-								</thead>
-								<tbody className="text-gray-700">
-									<tr className="border-b border-slate-100">
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Liczenie godzin i nadgodzin</th>
-										<td className="px-4 py-3">ręcznie</td>
-										<td className="px-4 py-3">formuły, łatwo o błąd</td>
-										<td className="px-4 py-3 bg-emerald-50/40">automatyczne</td>
-									</tr>
-									<tr className="border-b border-slate-100">
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Jedna aktualna wersja danych</th>
-										<td className="px-4 py-3">nie</td>
-										<td className="px-4 py-3">trudne przy kilku osobach</td>
-										<td className="px-4 py-3 bg-emerald-50/40">tak, centralnie</td>
-									</tr>
-									<tr className="border-b border-slate-100">
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Dostęp z telefonu</th>
-										<td className="px-4 py-3">nie</td>
-										<td className="px-4 py-3">ograniczony</td>
-										<td className="px-4 py-3 bg-emerald-50/40">tak (PWA w przeglądarce)</td>
-									</tr>
-									<tr className="border-b border-slate-100">
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Raporty PDF / Excel</th>
-										<td className="px-4 py-3">ręcznie</td>
-										<td className="px-4 py-3">ręcznie</td>
-										<td className="px-4 py-3 bg-emerald-50/40">eksport jednym kliknięciem</td>
-									</tr>
-									<tr className="border-b border-slate-100">
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Urlopy i nieobecności</th>
-										<td className="px-4 py-3">osobno</td>
-										<td className="px-4 py-3">osobny arkusz</td>
-										<td className="px-4 py-3 bg-emerald-50/40">w tym samym koncie (plan płatny)</td>
-									</tr>
-									<tr>
-										<th scope="row" className="px-4 py-3 font-medium text-gray-900">Koszt na start</th>
-										<td className="px-4 py-3">niski</td>
-										<td className="px-4 py-3">niski</td>
-										<td className="px-4 py-3 bg-emerald-50/40">30 dni za darmo, potem darmowa ewidencja do 5 kont</td>
-									</tr>
-								</tbody>
-							</table>
+				<h2 id="planopia">Planopia - najlepszy program do elektronicznej ewidencji czasu pracy</h2>
+				<ArticleNote tone="mint">
+					<h3>Dlaczego Planopia?</h3>
+					<div className="bart-cards">
+						<div className="bart-card">
+							<h4>✅ Pełna funkcjonalność</h4>
+							<ul>
+								<li>Elektroniczna ewidencja czasu pracy</li>
+								<li>Zarządzanie urlopami</li>
+								<li>Automatyczne raporty</li>
+								<li>Integracja z kalendarzami</li>
+							</ul>
 						</div>
-						<p className="text-sm text-gray-500 mt-3">
-							Szukasz gotowego narzędzia? Zobacz{' '}
-							<Link href="/program-do-ewidencji-czasu-pracy" className="font-medium text-emerald-700 underline-offset-2 hover:underline">
-								program do ewidencji czasu pracy
-							</Link>
-							.
-						</p>
-					</div>
-
-					{/* Benefits */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Korzyści z elektronicznej ewidencji czasu pracy
-						</h2>
-						<div className="grid md:grid-cols-2 gap-6">
-							<div className="bg-blue-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">⚡ Automatyzacja procesów</h3>
-								<ul className="text-gray-700 space-y-2">
-									<li>• Automatyczne obliczanie godzin pracy</li>
-									<li>• Eliminacja błędów ludzkich</li>
-									<li>• Szybsze przetwarzanie danych</li>
-									<li>• Integracja z systemami HR</li>
-								</ul>
-							</div>
-							<div className="bg-green-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">💰 Oszczędności kosztów</h3>
-								<ul className="text-gray-700 space-y-2">
-									<li>• Redukcja czasu administracyjnego</li>
-									<li>• Mniej błędów w rozliczeniach</li>
-									<li>• Automatyczne raporty</li>
-									<li>• Zgodność z przepisami prawa</li>
-								</ul>
-							</div>
-							<div className="bg-purple-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">📊 Lepsze raportowanie</h3>
-								<ul className="text-gray-700 space-y-2">
-									<li>• Szczegółowe raporty czasowe</li>
-									<li>• Analiza produktywności</li>
-									<li>• Monitoring projektów</li>
-									<li>• Eksport do różnych formatów</li>
-								</ul>
-							</div>
-							<div className="bg-orange-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">🔒 Bezpieczeństwo danych</h3>
-								<ul className="text-gray-700 space-y-2">
-									<li>• Szyfrowane przechowywanie</li>
-									<li>• Kontrola dostępu</li>
-									<li>• Regularne kopie zapasowe</li>
-									<li>• Zgodność z RODO</li>
-								</ul>
-							</div>
+						<div className="bart-card">
+							<h4>✅ Darmowa dla małych firm</h4>
+							<ul>
+								<li>30 dni pełnej aplikacji; potem darmowa ewidencja do 5 kont lub pakiet płatny</li>
+								<li>Pełna funkcjonalność</li>
+								<li>Bez ukrytych kosztów</li>
+								<li>Wsparcie techniczne</li>
+							</ul>
 						</div>
 					</div>
+				</ArticleNote>
+				<figure>
+					<Image src={worktime.src} alt={worktime.alt} width={worktime.width} height={worktime.height} unoptimized />
+					<figcaption>{worktime.caption}</figcaption>
+				</figure>
 
-					{/* How to choose */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Jak wybrać najlepszy program do ewidencji czasu pracy?
-						</h2>
-						<div className="space-y-6">
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">1. Określ potrzeby firmy</h3>
-								<p className="text-gray-700">
-									Przed wyborem programu do ewidencji czasu pracy zastanów się nad specyfiką swojej firmy. 
-									Czy potrzebujesz prostego systemu dla małego zespołu, czy zaawansowanego rozwiązania dla dużej organizacji?
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">2. Sprawdź funkcjonalności</h3>
-								<p className="text-gray-700">
-									Najlepszy program do ewidencji czasu pracy powinien oferować: rejestrację czasu w czasie rzeczywistym, 
-									automatyczne obliczanie nadgodzin, integrację z systemami HR, raportowanie i eksport danych.
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">3. Zwróć uwagę na łatwość użycia</h3>
-								<p className="text-gray-700">
-									Elektroniczna ewidencja czasu pracy powinna być intuicyjna dla wszystkich pracowników. 
-									Sprawdź czy interfejs jest przyjazny i czy nie wymaga długiego szkolenia.
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">4. Sprawdź bezpieczeństwo i zgodność</h3>
-								<p className="text-gray-700">
-									Program do ewidencji czasu pracy musi być zgodny z polskim prawem pracy i RODO. 
-									Sprawdź czy oferuje szyfrowanie danych i regularne kopie zapasowe.
-								</p>
-							</div>
-						</div>
-					</div>
+				<ArticleCta
+					title="Sprawdź Planopię w swoim zespole"
+					text={`Pełna aplikacja z urlopami, raportami i Asystentem AI przez ${LANDING_TRIAL_DAYS} dni, do ${landingTrial.maxUsers} osób, bez karty.`}
+					link={{ href: REGISTER, label: 'Wypróbuj za darmo' }}
+				/>
 
-					{/* Planopia section */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Planopia - najlepszy program do elektronicznej ewidencji czasu pracy
-						</h2>
-						<div className="bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl">
-							<h3 className="text-2xl font-bold text-gray-900 mb-4">Dlaczego Planopia?</h3>
-							<div className="grid md:grid-cols-2 gap-6">
-								<div>
-									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Pełna funkcjonalność</h4>
-									<ul className="text-gray-700 space-y-2">
-										<li>• Elektroniczna ewidencja czasu pracy</li>
-										<li>• Zarządzanie urlopami</li>
-										<li>• Automatyczne raporty</li>
-										<li>• Integracja z kalendarzami</li>
-									</ul>
-								</div>
-								<div>
-									<h4 className="text-lg font-semibold text-gray-900 mb-3">✅ Darmowa dla małych firm</h4>
-									<ul className="text-gray-700 space-y-2">
-										<li>• 30 dni pełnej aplikacji; potem darmowa ewidencja do 5 kont lub pakiet płatny</li>
-										<li>• Pełna funkcjonalność</li>
-										<li>• Bez ukrytych kosztów</li>
-										<li>• Wsparcie techniczne</li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
+				<h2 id="faq">Często zadawane pytania o elektroniczną ewidencję czasu pracy</h2>
+				<h3>Czy elektroniczna ewidencja czasu pracy jest obowiązkowa?</h3>
+				<p>
+					Tak, zgodnie z polskim prawem pracy każdy pracodawca musi prowadzić ewidencję czasu pracy swoich pracowników.
+					Elektroniczna ewidencja czasu pracy jest pełnoprawną metodą spełnienia tego obowiązku.
+				</p>
+				<h3>Jak długo trwa wdrożenie programu do ewidencji czasu pracy?</h3>
+				<p>
+					Wdrożenie elektronicznej ewidencji czasu pracy w Planopii trwa zaledwie kilka minut.
+					Możesz rozpocząć korzystanie z systemu natychmiast po rejestracji zespołu.
+				</p>
+				<h3>Czy program do ewidencji czasu pracy jest bezpieczny?</h3>
+				<p>
+					Planopia oferuje najwyższe standardy bezpieczeństwa: szyfrowanie danych, bezpieczne serwery,
+					regularne kopie zapasowe i pełną zgodność z RODO.
+				</p>
+				<h3>Czy mogę eksportować dane z programu do ewidencji czasu pracy?</h3>
+				<p>
+					Tak! Planopia umożliwia eksport wszystkich danych do formatów PDF i Excel.
+					Twoje dane zawsze pozostają Twoje i możesz je pobrać w każdej chwili.
+				</p>
 
-					{/* FAQ */}
-					<div className="mb-12">
-						<h2 className="text-3xl font-bold text-gray-900 mb-6">
-							Często zadawane pytania o elektroniczną ewidencję czasu pracy
-						</h2>
-						<div className="space-y-6">
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Czy elektroniczna ewidencja czasu pracy jest obowiązkowa?
-								</h3>
-								<p className="text-gray-700">
-									Tak, zgodnie z polskim prawem pracy każdy pracodawca musi prowadzić ewidencję czasu pracy swoich pracowników. 
-									Elektroniczna ewidencja czasu pracy jest pełnoprawną metodą spełnienia tego obowiązku.
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Jak długo trwa wdrożenie programu do ewidencji czasu pracy?
-								</h3>
-								<p className="text-gray-700">
-									Wdrożenie elektronicznej ewidencji czasu pracy w Planopii trwa zaledwie kilka minut. 
-									Możesz rozpocząć korzystanie z systemu natychmiast po rejestracji zespołu.
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Czy program do ewidencji czasu pracy jest bezpieczny?
-								</h3>
-								<p className="text-gray-700">
-									Planopia oferuje najwyższe standardy bezpieczeństwa: szyfrowanie danych, bezpieczne serwery, 
-									regularne kopie zapasowe i pełną zgodność z RODO.
-								</p>
-							</div>
-							<div className="bg-gray-50 p-6 rounded-lg">
-								<h3 className="text-xl font-semibold text-gray-900 mb-3">
-									Czy mogę eksportować dane z programu do ewidencji czasu pracy?
-								</h3>
-								<p className="text-gray-700">
-									Tak! Planopia umożliwia eksport wszystkich danych do formatów PDF i Excel. 
-									Twoje dane zawsze pozostają Twoje i możesz je pobrać w każdej chwili.
-								</p>
-							</div>
-						</div>
-					</div>
-
-					{/* CTA */}
-					<div className="text-center bg-gradient-to-r from-blue-50 to-green-50 p-8 rounded-2xl">
-						<h2 className="text-3xl font-bold text-gray-900 mb-4 justify-center">
-							Gotowy na elektroniczną ewidencję czasu pracy?
-						</h2>
-						<p className="text-xl text-gray-700 mb-6">
-							Załóż zespół w Planopii i przetestuj elektroniczną ewidencję czasu pracy — pełna aplikacja przez 30 dni, potem darmowy plan ewidencji do 5 aktywnych kont lub pakiety płatne.
-						</p>
-						<Link
-							href="https://app.planopia.pl/team-registration"
-							className="inline-block bg-green-600 text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:bg-green-700 transition text-lg white-text-btn"
-						>
-							Wypróbuj Planopię za darmo
-						</Link>
-					</div>
-
-					<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" className="mt-10 max-w-4xl mx-auto" />
+				<div className="bart-extras">
+					<BlogRelatedLinks slug="elektroniczna-ewidencja-czasu-pracy" />
+					<BlogArticleCredibility
+						author="Michał Lipka"
+						authorHref="/o-autorze"
+						updatedOn={{ iso: '2026-05-31', label: '31 maja 2026 r.' }}
+					/>
 				</div>
-			</article>
-
-			{/* FOOTER */}
+			</BlogArticleShell>
 		</>
 	)
 }
