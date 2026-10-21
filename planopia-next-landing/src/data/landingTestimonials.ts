@@ -23,7 +23,6 @@ export const landingTestimonials: Testimonial[] = [
 		},
 		author: { pl: 'Klaudia Pawłowska', en: 'Klaudia Pawłowska' },
 		role: { pl: 'Główna Księgowa', en: 'Chief Accountant' },
-		since: { pl: 'Z Planopią od 2025 r.', en: 'Using Planopia since 2025' },
 	},
 	{
 		id: 'smart-cube',
@@ -44,11 +43,13 @@ export const testimonialsCopy = {
 		title: 'Firmy, które pracują z Planopią na co dzień',
 		intro: 'Ewidencja czasu, urlopy i grafiki w prawdziwych zespołach — oto, co mówią nasi klienci.',
 		translated: null as string | null,
+		carousel: { region: 'Opinie klientów', prev: 'Poprzednia opinia', next: 'Następna opinia', goTo: 'Pokaż opinię' },
 	},
 	en: {
 		eyebrow: 'Customer stories',
 		title: 'Teams that run on Planopia every day',
 		intro: 'Time tracking, leave and schedules in real teams — here is what our customers say.',
 		translated: 'Translated from Polish',
+		carousel: { region: 'Customer stories', prev: 'Previous story', next: 'Next story', goTo: 'Show story' },
 	},
 }

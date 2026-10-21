@@ -1,9 +1,10 @@
 import { landingTestimonials, testimonialsCopy } from '@/data/landingTestimonials'
 import '@/styles/landingTestimonials.css'
+import TestimonialsCarousel from './TestimonialsCarousel'
 
 type Locale = 'pl' | 'en'
 
-/** Opinie i logo klientów — wysoko na stronie głównej, buduje zaufanie przed opisem funkcji. */
+/** Opinie i logo klientów — wysoko na stronie głównej, buduje zaufanie przed opisem funkcji. Jedna karta naraz (karuzela). */
 export default function LandingTestimonials({ locale }: { locale: Locale }) {
 	const t = testimonialsCopy[locale]
 	const headingId = locale === 'pl' ? 'landing-testimonials-heading' : 'landing-testimonials-heading-en'
@@ -19,7 +20,7 @@ export default function LandingTestimonials({ locale }: { locale: Locale }) {
 					<p className="landing-about-intro mt-4 text-lg text-gray-600">{t.intro}</p>
 				</div>
 
-				<div className="lt-list">
+				<TestimonialsCarousel labels={t.carousel}>
 					{landingTestimonials.map(item => (
 						<figure className="lt-card" key={item.id}>
 							<div className="lt-card__brand">
@@ -54,7 +55,7 @@ export default function LandingTestimonials({ locale }: { locale: Locale }) {
 							</div>
 						</figure>
 					))}
-				</div>
+				</TestimonialsCarousel>
 			</div>
 		</section>
 	)

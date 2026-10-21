@@ -6,12 +6,6 @@
 	scroll-margin-top: 80px;
 }
 
-.lt-list {
-	display: grid;
-	gap: 1.25rem;
-	margin-top: 2.25rem;
-}
-
 .lt-card {
 	position: relative;
 	display: grid;
@@ -130,4 +124,116 @@
 	color: rgba(16, 47, 94, 0.5);
 	font-size: 12.5px;
 	font-style: italic;
+}
+
+/* ---------- Karuzela: jedna opinia naraz ---------- */
+
+.lt-carousel {
+	margin-top: 2.25rem;
+}
+
+.lt-carousel__viewport {
+	overflow: hidden;
+	/* Miejsce na cień karty, który inaczej ucina overflow. Boki = margines sekcji (px-4, 16 px) —
+	   więcej dałoby przewijanie w poziomie na węższych ekranach */
+	margin: -1rem -1rem -2.75rem;
+	padding: 1rem 1rem 2.75rem;
+	touch-action: pan-y;
+}
+
+.lt-carousel__track {
+	display: flex;
+	align-items: stretch;
+	/* odstęp większy niż boczny zapas viewportu — sąsiednia karta nie wystaje */
+	gap: 4rem;
+	transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.lt-carousel__slide {
+	flex: 0 0 100%;
+	min-width: 0;
+}
+
+.lt-carousel__slide > .lt-card {
+	height: 100%;
+	box-shadow: 0 14px 26px -8px rgba(16, 47, 94, 0.14);
+}
+
+/* Nieaktywne karty lekko wygaszone podczas przesuwania */
+.lt-carousel__slide[aria-hidden='true'] > .lt-card {
+	opacity: 0.35;
+	transition: opacity 0.6s ease;
+}
+
+.lt-carousel__slide[aria-hidden='false'] > .lt-card {
+	opacity: 1;
+	transition: opacity 0.6s ease;
+}
+
+.lt-carousel__controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.lt-carousel__arrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border: 1px solid rgba(16, 47, 94, 0.14);
+	border-radius: 999px;
+	background: #ffffff;
+	color: #102f5e;
+	cursor: pointer;
+	box-shadow: 0 6px 16px rgba(16, 47, 94, 0.08);
+	transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.lt-carousel__arrow:hover {
+	border-color: #00a846;
+	color: #00a846;
+	transform: translateY(-1px);
+}
+
+.lt-carousel__arrow:focus-visible,
+.lt-carousel__dot:focus-visible {
+	outline: 2px solid #00a846;
+	outline-offset: 3px;
+}
+
+.lt-carousel__dots {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.lt-carousel__dot {
+	width: 10px;
+	height: 10px;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background: rgba(16, 47, 94, 0.18);
+	cursor: pointer;
+	transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.lt-carousel__dot:hover {
+	background: rgba(16, 47, 94, 0.35);
+}
+
+.lt-carousel__dot.is-active {
+	width: 28px;
+	background: #00a846;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lt-carousel__track,
+	.lt-carousel__slide > .lt-card {
+		transition: none;
+	}
 }
