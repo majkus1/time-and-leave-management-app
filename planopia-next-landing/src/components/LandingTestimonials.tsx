@@ -35,7 +35,7 @@ export default function LandingTestimonials({ locale }: { locale: Locale }) {
 										decoding="async"
 									/>
 								</picture>
-								<div className="lt-card__since">{item.since[locale]}</div>
+								{item.since ? <div className="lt-card__since">{item.since[locale]}</div> : null}
 							</div>
 							<div className="lt-card__body">
 								<div className="lt-card__mark" aria-hidden="true">
@@ -45,7 +45,7 @@ export default function LandingTestimonials({ locale }: { locale: Locale }) {
 									<p>{item.quote[locale]}</p>
 								</blockquote>
 								<figcaption className="lt-card__author">
-									<div className="lt-card__name">{item.author}</div>
+									<div className="lt-card__name">{item.author[locale]}</div>
 									<div className="lt-card__role">
 										{item.role[locale]}, {item.company}
 									</div>

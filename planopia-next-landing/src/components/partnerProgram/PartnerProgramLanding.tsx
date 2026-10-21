@@ -479,7 +479,7 @@ export default function PartnerProgramLanding() {
 										loading="lazy"
 									/>
 									<span>
-										<span className="plp-quote__name">{testimonial.author}</span>
+										<span className="plp-quote__name">{testimonial.author.pl}</span>
 										<span className="plp-quote__role">
 											{testimonial.role.pl}, {testimonial.company}
 										</span>
